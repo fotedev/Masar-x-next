@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block access to admin areas
+Disallow: /admin*
+
+# Block access to API endpoints
+Disallow: /api/
+
+# Block access to development files
+Disallow: /src/
+Disallow: /node_modules/
+
+# Sitemap
+Sitemap: https://masarx.vercel.app/sitemap.xml
