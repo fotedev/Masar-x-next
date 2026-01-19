@@ -1,0 +1,486 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base font family */
+@layer base {
+  body {
+    font-family: "Cairo", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+
+  --radius: 0.5rem;
+
+  --brand-navy: 15, 23, 42;
+  --brand-blue: 59, 130, 246;
+  --brand-sky: 14, 165, 233;
+  --brand-orange: 245, 158, 11;
+
+  --primary-gradient: linear-gradient(
+    135deg,
+    rgb(var(--brand-navy)) 0%,
+    #1e3a8a 100%
+  );
+  --secondary-gradient: linear-gradient(
+    135deg,
+    rgb(var(--brand-blue)) 0%,
+    rgb(var(--brand-sky)) 100%
+  );
+  --accent-gradient: linear-gradient(
+    135deg,
+    rgb(var(--brand-orange)) 0%,
+    #fbbf24 100%
+  );
+  --success-gradient: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+
+  --brand-navy: 2, 6, 23;
+  --brand-blue: 96, 165, 250;
+  --brand-sky: 56, 189, 248;
+  --brand-orange: 251, 191, 36;
+
+  --primary-gradient: linear-gradient(
+    135deg,
+    rgb(var(--brand-navy)) 0%,
+    #0f172a 100%
+  );
+  --secondary-gradient: linear-gradient(
+    135deg,
+    #1e3a8a 0%,
+    rgb(var(--brand-blue)) 100%
+  );
+  --accent-gradient: linear-gradient(
+    135deg,
+    #b45309 0%,
+    rgb(var(--brand-orange)) 100%
+  );
+  --success-gradient: linear-gradient(135deg, #064e3b 0%, #10b981 100%);
+  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass morphism effect */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Modern button styles */
+.btn-primary {
+  background: var(--primary-gradient);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
+}
+
+.btn-secondary {
+  background: var(--secondary-gradient);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Enhanced card hover effects */
+.modern-card {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+}
+
+.modern-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2);
+  border-color: var(--brand-blue);
+}
+
+/* Animated gradient backgrounds */
+.animated-bg {
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--secondary-gradient);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-gradient);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--brand-blue), 0.2);
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--brand-blue), 0.4);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  /* Ensure minimum touch targets */
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Better text readability on mobile */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Better spacing for mobile */
+  .mobile-spacing {
+    margin: 0.5rem 0;
+  }
+
+  /* Horizontal scroll for tabs/filters on mobile */
+  .scroll-x-mobile {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .scroll-x-mobile::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Webkit */
+  }
+}
+
+/* Text gradients */
+.text-gradient-primary {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-secondary {
+  background: var(--secondary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced mobile responsive improvements */
+@media (max-width: 1023px) {
+  /* Better spacing for mobile header */
+  .mobile-nav-spacing {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Ensure theme button is always accessible */
+  .theme-toggle-mobile {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Better touch targets for mobile */
+  .mobile-touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Improved mobile menu scrolling */
+  .mobile-menu-scroll {
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Tablet-specific adjustments */
+  .tablet-nav-item {
+    padding: 0.75rem 1rem;
+  }
+
+  .tablet-text-size {
+    font-size: 0.95rem;
+  }
+}
+
+/* Large screen header improvements */
+@media (min-width: 1024px) {
+  /* Desktop header enhancements */
+  .desktop-header-spacing {
+    max-width: 7xl;
+    margin: 0 auto;
+  }
+}
+
+/* Prevent Cumulative Layout Shift (CLS) */
+.cls-prevent {
+  /* Reserve space for dynamic content */
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  contain: layout;
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Better contrast for text - WCAG AA compliant */
+.text-high-contrast {
+  color: #0f172a; /* slate-900 */
+}
+
+.dark .text-high-contrast {
+  color: #f8fafc; /* slate-50 */
+}
+
+.text-medium-contrast {
+  color: #334155; /* slate-700 */
+}
+
+.dark .text-medium-contrast {
+  color: #cbd5e1; /* slate-300 */
+}
+
+/* Improve contrast for specific elements */
+.select-contrast {
+  color: #1f2937; /* gray-800 */
+}
+
+.dark .select-contrast {
+  color: #ffffff; /* white */
+}
+
+.placeholder-contrast::placeholder {
+  color: #6b7280; /* gray-500 */
+}
+
+.dark .placeholder-contrast::placeholder {
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Stable filter layout */
+.filter-container {
+  min-height: 160px; /* Increased space for filter section */
+  contain: layout;
+  position: relative;
+}
+
+/* Stable grid layout */
+.summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  contain: layout;
+}
+
+/* Reserve space for loading states */
+.loading-placeholder {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  contain: layout;
+}
+
+/* Stable card heights */
+.summary-card {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 640px) {
+  /* Improve touch targets */
+  .mobile-touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Better spacing for mobile cards */
+  .mobile-card-spacing {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Optimize text sizes for small screens */
+  .mobile-text-optimize {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  /* Better button spacing on mobile */
+  .mobile-button-spacing {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  .mobile-no-overflow {
+    overflow-x: hidden;
+  }
+
+  /* Better modal sizing on mobile */
+  .mobile-modal {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+
+  /* Improve form inputs on mobile */
+  .mobile-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+}
+
+/* Chat page specific mobile improvements */
+@media (max-width: 768px) {
+  /* Hide chat list on mobile when chatting */
+  .chat-list-mobile-hidden {
+    display: none;
+  }
+
+  /* Full width chat window on mobile */
+  .chat-window-mobile {
+    width: 100%;
+    height: calc(100vh - 64px); /* Adjust based on header height */
+  }
+}

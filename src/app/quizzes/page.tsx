@@ -1,0 +1,1316 @@
+'use client';
+
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Play,
+  BookOpen,
+  Download,
+  Sparkles,
+  Upload,
+  X,
+} from "lucide-react";
+import { quizService } from "../../lib/quiz";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
+import { aiAssistant } from "../../lib/gemini";
+import type { Quiz, Summary } from "../../types/database";
+import { LatexRenderer } from "../../components/LatexRenderer";
+
+function QuizDashboardPage() {
+  const router = useRouter();
+  const { user, isAdmin } = useAuth();
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [attemptsLoading, setAttemptsLoading] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importJson, setImportJson] = useState("");
+  const [importMode, setImportMode] = useState<"json" | "text">("json");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [filters, setFilters] = useState({
+    search: "",
+    subject: "",
+    department: "",
+    year: "",
+  });
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    durationMinutes: "",
+    department: "",
+    year: "",
+    subject: "",
+    summaryId: "",
+    questions: [
+      {
+        question: "",
+        options: ["", "", "", ""],
+        correctAnswer: 0,
+        explanation: "",
+        type: "multiple-choice" as "multiple-choice" | "true-false",
+        imageUrl: "",
+      },
+    ],
+  });
+
+  useEffect(() => {
+    loadQuizzes();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    // keep this as a lightweight ping so we can show a loading state on the button
+    loadMyAttempts();
+  }, [user]);
+
+  useEffect(() => {
+    if (formData.subject && formData.department) {
+      fetchSummaries();
+    } else {
+      setSummaries([]);
+    }
+  }, [formData.subject, formData.department]);
+
+  const fetchSummaries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("summaries")
+        .select("*")
+        .eq("subject", formData.subject)
+        .eq("department", formData.department)
+        .eq("status", "approved");
+
+      if (error) throw error;
+      setSummaries(data || []);
+    } catch (error) {
+      console.error("Error fetching summaries:", error);
+    }
+  };
+
+  const loadMyAttempts = async () => {
+    try {
+      if (!user) return;
+      setAttemptsLoading(true);
+      await quizService.getUserAttempts(user.id);
+    } catch (error) {
+      console.error("Error loading quiz attempts:", error);
+    } finally {
+      setAttemptsLoading(false);
+    }
+  };
+
+  const loadQuizzes = async () => {
+    try {
+      setLoading(true);
+      let query = supabase.from("quizzes").select("*");
+
+      // Normal users should only see approved quizzes
+      // Admins can see all quizzes (including pending/rejected)
+      if (!isAdmin) {
+        query = query.eq("status", "approved");
+      }
+
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
+
+      if (error) throw error;
+      setQuizzes(data || []);
+    } catch (error) {
+      console.error("Error loading quizzes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const quizzesWithMeta = useMemo(() => {
+    return quizzes.map((quiz) => {
+      let subject = (quiz as any).subject || "";
+      let department = (quiz as any).department || "";
+      let year = (quiz as any).year || "";
+      let parsedDescription = "";
+
+      try {
+        const parsed = JSON.parse(quiz.description || "{}");
+        if (typeof parsed === "object" && parsed !== null) {
+          if (!subject && parsed.subject) subject = parsed.subject;
+          if (!department && parsed.department) department = parsed.department;
+          if (!year && parsed.year) year = parsed.year;
+          if (parsed.description) parsedDescription = parsed.description;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      return {
+        quiz,
+        meta: {
+          subject: (subject || "").toString(),
+          department: (department || "").toString(),
+          year: (year || "").toString(),
+          descriptionText: (parsedDescription || "").toString(),
+        },
+      };
+    });
+  }, [quizzes]);
+
+  const filterOptions = useMemo(() => {
+    const subjects = new Set<string>();
+    const departments = new Set<string>();
+    const years = new Set<string>();
+
+    quizzesWithMeta.forEach(({ meta }) => {
+      if (meta.subject) subjects.add(meta.subject);
+      if (meta.department) departments.add(meta.department);
+      if (meta.year) years.add(meta.year);
+    });
+
+    return {
+      subjects: Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar")),
+      departments: Array.from(departments).sort((a, b) => a.localeCompare(b, "ar")),
+      years: Array.from(years).sort((a, b) => a.localeCompare(b, "ar")),
+    };
+  }, [quizzesWithMeta]);
+
+  const filteredQuizzes = useMemo(() => {
+    const s = filters.search.trim().toLowerCase();
+
+    return quizzesWithMeta
+      .filter(({ quiz, meta }) => {
+        if (filters.subject && meta.subject !== filters.subject) return false;
+        if (filters.department && meta.department !== filters.department) return false;
+        if (filters.year && meta.year !== filters.year) return false;
+
+        if (!s) return true;
+
+        const title = (quiz.title || "").toLowerCase();
+        const rawDesc = (quiz.description || "").toLowerCase();
+        const parsedDesc = (meta.descriptionText || "").toLowerCase();
+
+        return title.includes(s) || rawDesc.includes(s) || parsedDesc.includes(s);
+      })
+      .map(({ quiz }) => quiz);
+  }, [filters.department, filters.search, filters.subject, filters.year, quizzesWithMeta]);
+
+  const handleSaveQuiz = async () => {
+    try {
+      if (!user) return;
+
+      const durationMinutesNum = formData.durationMinutes
+        ? Number(formData.durationMinutes)
+        : null;
+      const durationSeconds =
+        typeof durationMinutesNum === "number" && !Number.isNaN(durationMinutesNum) && durationMinutesNum > 0
+          ? Math.round(durationMinutesNum * 60)
+          : null;
+
+      const quizData = {
+        title: formData.title,
+        summary_id: formData.summaryId || null,
+        questions: formData.questions.map((q) => ({
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          imageUrl: q.imageUrl,
+        })),
+      };
+
+      // Prepare description with additional fields
+      const descriptionData = {
+        description: formData.description,
+        department: formData.department,
+        year: formData.year,
+        subject: formData.subject,
+      };
+      const fullDescription = JSON.stringify(descriptionData);
+
+      console.log("Saving quiz with data:", {
+        title: formData.title,
+        summary_id: formData.summaryId,
+        editingQuizId: editingQuiz?.id,
+      });
+
+      if (editingQuiz) {
+        // Update existing quiz
+        const { error: quizError } = await supabase
+          .from("quizzes")
+          .update({
+            title: formData.title,
+            description: fullDescription,
+            summary_id: formData.summaryId || null,
+            duration_seconds: durationSeconds,
+          })
+          .eq("id", editingQuiz.id);
+
+        if (quizError) throw quizError;
+
+        // Delete existing questions and add new ones
+        const { error: deleteError } = await supabase
+          .from("quiz_questions")
+          .delete()
+          .eq("quiz_id", editingQuiz.id);
+
+        if (deleteError) throw deleteError;
+
+        // Add new questions
+        const questionsToInsert = formData.questions.map((q, index) => ({
+          quiz_id: editingQuiz.id,
+          question: q.question,
+          options: q.type === "true-false" ? ["صح", "خطأ"] : q.options,
+          correct_answer: q.correctAnswer,
+          explanation: q.explanation,
+          image_url: q.imageUrl,
+          order_index: index,
+        }));
+
+        const { error: questionsError } = await supabase
+          .from("quiz_questions")
+          .insert(questionsToInsert);
+
+        if (questionsError) throw questionsError;
+      } else {
+        // Create new quiz
+        const { data: quiz, error: quizError } = await supabase
+          .from("quizzes")
+          .insert({
+            title: quizData.title,
+            description: fullDescription,
+            summary_id: quizData.summary_id,
+            user_id: user.id,
+            source_type: "manual",
+            duration_seconds: durationSeconds,
+          })
+          .select()
+          .single();
+
+        if (quizError) throw quizError;
+
+        const questionsToInsert = quizData.questions.map((q, index) => ({
+          quiz_id: quiz.id,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correctAnswer,
+          explanation: q.explanation,
+          image_url: q.imageUrl,
+          order_index: index,
+        }));
+
+        const { error: questionsError } = await supabase
+          .from("quiz_questions")
+          .insert(questionsToInsert);
+
+        if (questionsError) throw questionsError;
+      }
+
+      await loadQuizzes();
+      alert("تم حفظ الامتحان بنجاح");
+      setShowCreateForm(false);
+      setEditingQuiz(null);
+      setFormData({
+        title: "",
+        description: "",
+        durationMinutes: "",
+        department: "",
+        year: "",
+        subject: "",
+        summaryId: "",
+        questions: [
+          {
+            question: "",
+            options: ["", "", "", ""],
+            correctAnswer: 0,
+            explanation: "",
+            type: "multiple-choice",
+            imageUrl: "",
+          },
+        ],
+      });
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      alert(
+        "حدث خطأ أثناء حفظ الامتحان: " +
+          (error instanceof Error ? error.message : "خطأ غير معروف")
+      );
+    }
+  };
+
+  const handleEditQuiz = async (quiz: Quiz) => {
+    try {
+      // Load quiz questions
+      const { data: questions, error } = await supabase
+        .from("quiz_questions")
+        .select("*")
+        .eq("quiz_id", quiz.id)
+        .order("order_index");
+
+      if (error) throw error;
+
+      // Parse additional fields from description if available
+      let parsedDescription = quiz.description || "";
+      let department = "";
+      let year = "";
+      let subject = "";
+
+      try {
+        const parsed = JSON.parse(quiz.description || "{}");
+        if (typeof parsed === "object" && parsed !== null) {
+          department = parsed.department || "";
+          year = parsed.year || "";
+          subject = parsed.subject || "";
+          parsedDescription = parsed.description || "";
+        }
+      } catch (e) {
+        // If parsing fails, use description as is
+      }
+
+      setEditingQuiz(quiz);
+      const durationMinutes = (quiz as any).duration_seconds
+        ? String(Math.round(Number((quiz as any).duration_seconds) / 60))
+        : "";
+      setFormData({
+        title: quiz.title,
+        description: parsedDescription,
+        durationMinutes,
+        department,
+        year,
+        subject,
+        summaryId: quiz.summary_id || "",
+        questions: questions.map((q: any) => {
+          const isTrueFalse =
+            q.options.length === 2 &&
+            q.options.includes("صح") &&
+            q.options.includes("خطأ");
+          return {
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correct_answer,
+            explanation: q.explanation || "",
+            type: isTrueFalse ? "true-false" : "multiple-choice",
+            imageUrl: q.image_url || "",
+          };
+        }),
+      });
+      setShowCreateForm(true);
+    } catch (error) {
+      console.error("Error loading quiz for editing:", error);
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الاختبار؟")) return;
+
+    try {
+      const { error } = await supabase
+        .from("quizzes")
+        .delete()
+        .eq("id", quizId);
+
+      if (error) throw error;
+      await loadQuizzes();
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+    }
+  };
+
+  const addQuestion = () => {
+    setFormData({
+      ...formData,
+      questions: [
+        ...formData.questions,
+        {
+          question: "",
+          options: ["", "", "", ""],
+          correctAnswer: 0,
+          explanation: "",
+          type: "multiple-choice",
+          imageUrl: "",
+        },
+      ],
+    });
+  };
+
+  const deleteQuestion = (index: number) => {
+    if (formData.questions.length <= 1) {
+      alert("يجب أن يحتوي الامتحان على سؤال واحد على الأقل");
+      return;
+    }
+    const updatedQuestions = formData.questions.filter((_, i) => i !== index);
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const updateQuestion = (index: number, field: string, value: any) => {
+    const updatedQuestions = [...formData.questions];
+
+    if (field === "type") {
+      // Handle type switching
+      if (value === "true-false") {
+        updatedQuestions[index] = {
+          ...updatedQuestions[index],
+          type: "true-false",
+          options: ["صح", "خطأ"],
+          correctAnswer: 0, // Default to "True"
+        };
+      } else {
+        updatedQuestions[index] = {
+          ...updatedQuestions[index],
+          type: "multiple-choice",
+          options: ["", "", "", ""],
+          correctAnswer: 0,
+        };
+      }
+    } else {
+      updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
+    }
+
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleImageUpload = async (index: number, file: File) => {
+    try {
+      if (!user) return;
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("quiz-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("quiz-images").getPublicUrl(filePath);
+
+      updateQuestion(index, "imageUrl", publicUrl);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("حدث خطأ أثناء رفع الصورة");
+    }
+  };
+
+  const updateOption = (
+    questionIndex: number,
+    optionIndex: number,
+    value: string
+  ) => {
+    const updatedQuestions = [...formData.questions];
+    updatedQuestions[questionIndex].options[optionIndex] = value;
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleImport = async (mode: "json" | "text") => {
+    if (mode === "json") {
+      try {
+        const questions = JSON.parse(importJson);
+        if (!Array.isArray(questions)) {
+          alert("تنسيق JSON غير صحيح. يجب أن يكون مصفوفة من الأسئلة.");
+          return;
+        }
+
+        // Validate structure
+        const isValid = questions.every(
+          (q) =>
+            q.question &&
+            Array.isArray(q.options) &&
+            q.options.length >= 2 && // Allow 2 or more options
+            typeof q.correctAnswer === "number" &&
+            q.correctAnswer >= 0 &&
+            q.correctAnswer < q.options.length
+        );
+
+        if (!isValid) {
+          alert(
+            "تنسيق الأسئلة غير صحيح. تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة."
+          );
+          return;
+        }
+
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          questions: [
+            ...prevFormData.questions,
+            ...questions.map((q: any) => ({
+              ...q,
+              type: q.type || "multiple-choice", // Default to multiple-choice
+              imageUrl: q.imageUrl || "",
+            })),
+          ],
+        }));
+        setShowImportModal(false);
+        setImportJson("");
+        alert("تم استيراد الأسئلة بنجاح!");
+      } catch (e) {
+        alert("حدث خطأ أثناء تحليل JSON. تأكد من صحة التنسيق.");
+      }
+    } else if (mode === "text") {
+      if (!importJson.trim()) return;
+
+      try {
+        setIsGenerating(true);
+        const result = await aiAssistant.generateQuiz(importJson);
+
+        if (result && Array.isArray(result.questions)) {
+          setFormData({
+            ...formData,
+            title: result.title || formData.title,
+            questions: result.questions.map((q: any) => ({
+              ...q,
+              imageUrl: q.imageUrl || "",
+            })),
+          });
+          setShowImportModal(false);
+          setImportJson("");
+          setImportMode("json"); // Reset mode
+          alert("تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!");
+        } else {
+          throw new Error("Invalid format received from AI");
+        }
+      } catch (error) {
+        console.error("Error generating quiz:", error);
+        alert("حدث خطأ أثناء إنشاء الأسئلة. حاول مرة أخرى.");
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            إدارة الامتحانات
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            إنشاء وإدارة امتحانات المواد
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreateForm(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          امتحان جديد
+        </button>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            type="text"
+            value={filters.search}
+            onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+            placeholder="ابحث في العنوان أو الوصف..."
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
+          />
+
+          <select
+            value={filters.subject}
+            onChange={(e) => setFilters((p) => ({ ...p, subject: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
+          >
+            <option value="">كل المواد</option>
+            {filterOptions.subjects.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.department}
+            onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
+          >
+            <option value="">كل الأقسام</option>
+            {filterOptions.departments.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.year}
+            onChange={(e) => setFilters((p) => ({ ...p, year: e.target.value }))}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
+          >
+            <option value="">كل المستويات</option>
+            {filterOptions.years.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {(filters.search || filters.subject || filters.department || filters.year) && (
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => setFilters({ search: "", subject: "", department: "", year: "" })}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
+            >
+              <X className="w-4 h-4" />
+              مسح الفلاتر
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!isAdmin && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
+          <button
+            onClick={() => router.push("/quiz-attempts")}
+            disabled={attemptsLoading}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors disabled:opacity-60"
+          >
+            <div className="font-bold text-gray-900 dark:text-white">
+              امتحاناتي السابقة
+            </div>
+            {attemptsLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+            ) : (
+              <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                عرض التفاصيل
+              </div>
+            )}
+          </button>
+        </div>
+      )}
+
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-2xl">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              {importMode === "json"
+                ? "استيراد أسئلة من NotebookLM"
+                : "إنشاء أسئلة بالذكاء الاصطناعي"}
+            </h3>
+
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setImportMode("json")}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  importMode === "json"
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+              >
+                استيراد JSON
+              </button>
+              <button
+                onClick={() => setImportMode("text")}
+                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  importMode === "text"
+                    ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span>توليد من النص</span>
+                </div>
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              {importMode === "json"
+                ? "الصق كود JSON المستخرج من NotebookLM هنا. ستتم إضافة الأسئلة الجديدة إلى الأسئلة الحالية."
+                : "الصق نص المحاضرة أو الملخص هنا، وسيقوم الذكاء الاصطناعي بإنشاء أسئلة عليه."}
+            </p>
+            <textarea
+              value={importJson}
+              onChange={(e) => setImportJson(e.target.value)}
+              className="w-full h-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm"
+              placeholder={
+                importMode === "json"
+                  ? '[{"question": "...", "options": ["..."], "correctAnswer": 0, "explanation": "..."}]'
+                  : "الصق النص هنا..."
+              }
+            />
+            <div className="flex justify-end gap-4 mt-4">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                إلغاء
+              </button>
+              {importMode === "json" ? (
+                <button
+                  onClick={() => handleImport("json")}
+                  disabled={!importJson.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  استيراد
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleImport("text")}
+                  disabled={!importJson.trim() || isGenerating}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span>جاري التوليد...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>توليد الأسئلة</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateForm && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              {editingQuiz ? "تحرير الامتحان" : "إنشاء امتحان جديد"}
+            </h2>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              <Download className="w-4 h-4" />
+              استيراد
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                عنوان الامتحان
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                placeholder="مثال: امتحان في مادة الرياضيات"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                مدة الامتحان بالدقائق (اختياري)
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={formData.durationMinutes}
+                onChange={(e) =>
+                  setFormData({ ...formData, durationMinutes: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                placeholder="مثال: 30"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  التخصص <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.department}
+                  onChange={(e) =>
+                    setFormData({ ...formData, department: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">اختر التخصص</option>
+                  <option value="ذكاء اصطناعي">ذكاء اصطناعي ☝</option>
+                  <option value="هندسة برمجيات">هندسة برمجيات</option>
+                  <option value="علوم الحاسب ونظم المعلومات">
+                    علوم الحاسب ونظم المعلومات
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  المستوى الدراسي <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.year}
+                  onChange={(e) =>
+                    setFormData({ ...formData, year: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">اختر المستوي</option>
+                  <option value="المستوى الأول">المستوى الأول</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  اسم المادة <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.subject}
+                  onChange={(e) =>
+                    setFormData({ ...formData, subject: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">اختر المادة</option>
+                  <option value="أساسيات تكنولوجيا المعلومات">
+                    أساسيات تكنولوجيا المعلومات
+                  </option>
+                  <option value="الرسم باليد">الرسم باليد</option>
+                  <option value="سلوكيات الهيئات">سلوكيات الهيئات</option>
+                  <option value="فيزياء 1">فيزياء 1</option>
+                  <option value="رياضيات 1">رياضيات 1</option>
+                  <option value="حقوق الإنسان">حقوق الإنسان</option>
+                  <option value="الكترونيات">الكترونيات</option>
+                  <option value="لغة انجليزية">لغة انجليزية</option>
+                  <option value="ثقافه اسلامية">ثقافه اسلامية</option>
+                  <option value="تفكير علمي">تفكير علمي</option>
+                  <option value="اساسيات الرياضيات">اساسيات الرياضيات</option>
+                </select>
+              </div>
+
+              {summaries.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    ربط بملخص (اختياري)
+                  </label>
+                  <select
+                    value={formData.summaryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, summaryId: e.target.value })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="">اختر ملخصاً</option>
+                    {summaries.map((summary) => (
+                      <option key={summary.id} value={summary.id}>
+                        {summary.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                وصف الامتحان (اختياري)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                rows={3}
+                placeholder="وصف مختصر للامتحان..."
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  الأسئلة
+                </h3>
+                <button
+                  onClick={addQuestion}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  إضافة سؤال
+                </button>
+              </div>
+
+              {formData.questions.map((question, questionIndex) => (
+                <div
+                  key={questionIndex}
+                  className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4"
+                >
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        السؤال {questionIndex + 1}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={question.type}
+                          onChange={(e) =>
+                            updateQuestion(
+                              questionIndex,
+                              "type",
+                              e.target.value
+                            )
+                          }
+                          className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="multiple-choice">
+                            اختيار من متعدد
+                          </option>
+                          <option value="true-false">صح / خطأ</option>
+                        </select>
+                        <button
+                          onClick={() => deleteQuestion(questionIndex)}
+                          className="text-red-600 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="حذف السؤال"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      value={question.question}
+                      onChange={(e) =>
+                        updateQuestion(
+                          questionIndex,
+                          "question",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-2"
+                      placeholder="اكتب السؤال هنا..."
+                    />
+                    {/* Preview for LaTeX */}
+                    {question.question && (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <span className="font-bold ml-2">معاينة:</span>
+                        <LatexRenderer text={question.question} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Image Upload UI */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      صورة السؤال (اختياري)
+                    </label>
+                    <div className="flex items-start gap-4">
+                      {question.imageUrl ? (
+                        <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                          <img
+                            src={question.imageUrl}
+                            alt="Question"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() =>
+                              updateQuestion(questionIndex, "imageUrl", "")
+                            }
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              رفع صورة
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(questionIndex, file);
+                            }}
+                          />
+                        </label>
+                      )}
+                      <div className="flex-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p>
+                          يمكنك رفع صورة للسؤال إذا كان يحتوي على معادلات معقدة
+                          أو رسوم بيانية.
+                        </p>
+                        <p className="mt-1">الصيغ المدعومة: JPG, PNG, WebP</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      الخيارات
+                    </label>
+                    {question.type === "true-false" ? (
+                      <div className="flex gap-4">
+                        {question.options.map((option, optionIndex) => (
+                          <label
+                            key={optionIndex}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
+                              question.correctAnswer === optionIndex
+                                ? "bg-blue-50 border-blue-500 dark:bg-blue-900/20 dark:border-blue-500"
+                                : "border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`correct-${questionIndex}`}
+                              checked={question.correctAnswer === optionIndex}
+                              onChange={() =>
+                                updateQuestion(
+                                  questionIndex,
+                                  "correctAnswer",
+                                  optionIndex
+                                )
+                              }
+                              className="text-blue-600"
+                            />
+                            <span className="text-gray-900 dark:text-white font-medium">
+                              {option}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      question.options.map((option, optionIndex) => (
+                        <div
+                          key={optionIndex}
+                          className="flex items-center gap-2 mb-2"
+                        >
+                          <input
+                            type="radio"
+                            name={`correct-${questionIndex}`}
+                            checked={question.correctAnswer === optionIndex}
+                            onChange={() =>
+                              updateQuestion(
+                                questionIndex,
+                                "correctAnswer",
+                                optionIndex
+                              )
+                            }
+                            className="text-blue-600"
+                          />
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) =>
+                              updateOption(
+                                questionIndex,
+                                optionIndex,
+                                e.target.value
+                              )
+                            }
+                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            placeholder={`الخيار ${optionIndex + 1}`}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      شرح الإجابة (اختياري)
+                    </label>
+                    <input
+                      type="text"
+                      value={question.explanation}
+                      onChange={(e) =>
+                        updateQuestion(
+                          questionIndex,
+                          "explanation",
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder="شرح لماذا هذه الإجابة صحيحة..."
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setEditingQuiz(null);
+                  setFormData({
+                    title: "",
+                    description: "",
+                    durationMinutes: "",
+                    department: "",
+                    year: "",
+                    subject: "",
+                    summaryId: "",
+                    questions: [
+                      {
+                        question: "",
+                        options: ["", "", "", ""],
+                        correctAnswer: 0,
+                        explanation: "",
+                        type: "multiple-choice",
+                        imageUrl: "",
+                      },
+                    ],
+                  });
+                }}
+                className="px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleSaveQuiz}
+                disabled={
+                  !formData.title.trim() ||
+                  !formData.department ||
+                  !formData.year ||
+                  !formData.subject.trim() ||
+                  formData.questions.some((q) => !q.question.trim())
+                }
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {editingQuiz ? "تحديث الامتحان" : "إنشاء الامتحان"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredQuizzes.map((quiz) => (
+          <div
+            key={quiz.id}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {quiz.title}
+                </h3>
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(quiz.description || "{}");
+                    if (typeof parsed === "object" && parsed !== null) {
+                      return (
+                        <div className="space-y-1 mb-3">
+                          <div className="flex flex-wrap gap-2">
+                            {parsed.subject && (
+                              <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs rounded-full font-medium">
+                                {parsed.subject}
+                              </span>
+                            )}
+                            {parsed.department && (
+                              <span className="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs rounded-full font-medium">
+                                {parsed.department}
+                              </span>
+                            )}
+                            {quiz.summary_id && (
+                              <span className="px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded-full font-medium flex items-center gap-1">
+                                <BookOpen className="w-3 h-3" />
+                                مرتبط بملخص
+                              </span>
+                            )}
+                          </div>
+                          {parsed.description && (
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                              {parsed.description}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    }
+                  } catch (e) {}
+                  return quiz.description ? (
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
+                      {quiz.description}
+                    </p>
+                  ) : null;
+                })()}
+                <p className="text-gray-500 dark:text-gray-500 text-xs">
+                  تم الإنشاء:{" "}
+                  {new Date(quiz.created_at).toLocaleDateString("ar-EG")}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push(`/quiz-play/${quiz.id}`)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                <Play className="w-4 h-4" />
+                ابدأ
+              </button>
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => handleEditQuiz(quiz)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    تعديل
+                  </button>
+                  <button
+                    onClick={() => handleDeleteQuiz(quiz.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    حذف
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {quizzes.length === 0 && (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            لا توجد امتحانات
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            ابدأ بإنشاء امتحان جديد
+          </p>
+        </div>
+      )}
+
+      {quizzes.length > 0 && filteredQuizzes.length === 0 && (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            لا توجد نتائج
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">جرّب تغيير الفلاتر أو مسحها</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default QuizDashboardPage;
