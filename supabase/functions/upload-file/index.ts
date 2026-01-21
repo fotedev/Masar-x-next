@@ -23,10 +23,10 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-        // Get authenticated user safely - make it optional
+        // Get authenticated user safely
         const authHeader = req.headers.get('Authorization')
         let user = null
-        let userId = 'guest'
+        let userId = ''
 
         if (authHeader && authHeader.startsWith('Bearer ')) {
             // Get Supabase client with user's authorization
@@ -47,6 +47,16 @@ Deno.serve(async (req: Request) => {
                 user = authUser
                 userId = authUser.id
             }
+        }
+
+        if (!user) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }),
+                {
+                    status: 401,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                }
+            )
         }
 
         console.log(`📤 Upload request from: ${userId}`)
@@ -85,6 +95,17 @@ Deno.serve(async (req: Request) => {
             )
         }
 
+        const allowedContentTypes = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
+        if (!allowedContentTypes.has(contentType)) {
+            return new Response(
+                JSON.stringify({ error: 'Unsupported file type' }),
+                {
+                    status: 400,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                }
+            )
+        }
+
         // Validate file size (base64 is ~33% larger than original)
         const estimatedFileSize = (file.length * 0.75) // Rough estimation
         if (estimatedFileSize > 10 * 1024 * 1024) { // 10MB limit
@@ -102,23 +123,6 @@ Deno.serve(async (req: Request) => {
         const apiKey = Deno.env.get('CLOUDINARY_API_KEY')
         const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET')
         const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET')
-
-        console.log('🔍 Cloudinary config check:', {
-            cloudName: cloudName ? '✅ Set' : '❌ Missing',
-            apiKey: apiKey ? '✅ Set' : '❌ Missing',
-            apiSecret: apiSecret ? '✅ Set' : '❌ Missing',
-            uploadPreset: uploadPreset ? '✅ Set' : '❌ Missing'
-        })
-
-        // Log all environment variables for debugging
-        console.log('🔧 Environment variables status:', {
-            'CLOUDINARY_CLOUD_NAME': Deno.env.get('CLOUDINARY_CLOUD_NAME') ? 'Set' : 'NOT SET',
-            'CLOUDINARY_API_KEY': Deno.env.get('CLOUDINARY_API_KEY') ? 'Set' : 'NOT SET',
-            'CLOUDINARY_API_SECRET': Deno.env.get('CLOUDINARY_API_SECRET') ? 'Set' : 'NOT SET',
-            'CLOUDINARY_UPLOAD_PRESET': Deno.env.get('CLOUDINARY_UPLOAD_PRESET') ? 'Set' : 'NOT SET',
-            'SUPABASE_URL': Deno.env.get('SUPABASE_URL') ? 'Set' : 'NOT SET',
-            'SUPABASE_ANON_KEY': Deno.env.get('SUPABASE_ANON_KEY') ? 'Set' : 'NOT SET'
-        })
 
         if (!cloudName || !apiKey || !apiSecret || !uploadPreset) {
             console.error('❌ Missing Cloudinary credentials:', {
