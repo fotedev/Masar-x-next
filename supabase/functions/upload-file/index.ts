@@ -23,41 +23,33 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-        // Get authenticated user safely
+        // Get authenticated user safely - make it optional
         const authHeader = req.headers.get('Authorization')
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return new Response(
-                JSON.stringify({ error: 'Unauthorized: Missing or invalid authorization header' }),
+        let user = null
+        let userId = 'guest'
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            // Get Supabase client with user's authorization
+            const supabaseClient = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_ANON_KEY') ?? '',
                 {
-                    status: 401,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    global: {
+                        headers: { Authorization: authHeader },
+                    },
                 }
             )
-        }
 
-        // Get Supabase client with user's authorization
-        const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            {
-                global: {
-                    headers: { Authorization: authHeader },
-                },
+            const token = authHeader.replace('Bearer ', '')
+            const { data: { user: authUser } } = await supabaseClient.auth.getUser(token)
+            
+            if (authUser) {
+                user = authUser
+                userId = authUser.id
             }
-        )
-
-        const token = authHeader.replace('Bearer ', '')
-        const { data: { user } } = await supabaseClient.auth.getUser(token)
-
-        if (!user) {
-            return new Response(
-                JSON.stringify({ error: 'Unauthorized' }),
-                {
-                    status: 401,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-                }
-            )
         }
+
+        console.log(`📤 Upload request from: ${userId}`)
 
         // Parse and validate request body
         let requestBody: UploadRequest
@@ -173,7 +165,7 @@ Deno.serve(async (req: Request) => {
         formData.append('type', 'upload')
         // Use a unique public_id to avoid collisions
         const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
-        formData.append('public_id', `${user.id}_${Date.now()}_${sanitizedFileName}`)
+        formData.append('public_id', `${userId}_${Date.now()}_${sanitizedFileName}`)
 
         console.log('Uploading to Cloudinary:', {
             folder,

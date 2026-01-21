@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { quizService } from "../../lib/quiz";
+import MathDisplay from "../../components/MathDisplay";
 
 export default function QuizAttemptsPage() {
   const { user } = useAuth();
@@ -13,14 +14,55 @@ export default function QuizAttemptsPage() {
   const [loading, setLoading] = useState(true);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedQuizQuestions, setExpandedQuizQuestions] = useState<any[] | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        if (!user) return;
         setLoading(true);
-        const data = await quizService.getUserAttempts(user.id);
-        setAttempts(data || []);
+        
+        // 1. Load from DB if user is logged in
+        let dbAttempts: any[] = [];
+        if (user) {
+          try {
+            dbAttempts = await quizService.getUserAttempts(user.id);
+          } catch (e) {
+            console.error("Failed to load DB attempts", e);
+          }
+        }
+
+        // 2. Load from localStorage
+        let localAttempts: any[] = [];
+        try {
+          const localData = localStorage.getItem('quiz_history');
+          if (localData) {
+            localAttempts = JSON.parse(localData);
+          }
+        } catch (e) {
+          console.error("Failed to load local history", e);
+        }
+
+        // 3. Merge and deduplicate
+        // If an attempt is in both, DB version is usually better (has quiz title etc)
+        // But local version might have more details if sync failed.
+        // For now, let's just combine them and filter by ID.
+        const combined = [...dbAttempts];
+        
+        localAttempts.forEach(local => {
+          const exists = combined.some(db => db.id === local.id);
+          if (!exists) {
+            combined.push(local);
+          }
+        });
+
+        // Sort by date descending
+        combined.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime();
+          const dateB = new Date(b.created_at || 0).getTime();
+          return dateB - dateA;
+        });
+
+        setAttempts(combined);
       } catch (error) {
         console.error("Error loading quiz attempts:", error);
       } finally {
@@ -31,23 +73,56 @@ export default function QuizAttemptsPage() {
     load();
   }, [user]);
 
+  useEffect(() => {
+    const fetchQuizQuestions = async () => {
+      if (expandedId) {
+        const expandedAttempt = attempts.find(a => a.id === expandedId);
+        if (expandedAttempt && expandedAttempt.quiz_id) {
+          try {
+            const { questions } = await quizService.getQuiz(expandedAttempt.quiz_id);
+            setExpandedQuizQuestions(questions);
+          } catch (error) {
+            console.error("Error fetching quiz questions:", error);
+            setExpandedQuizQuestions(null);
+          }
+        }
+ else {
+            setExpandedQuizQuestions(null);
+          }
+      } else {
+        setExpandedQuizQuestions(null);
+      }
+    };
+
+    fetchQuizQuestions();
+  }, [expandedId, attempts]);
+
   const attemptsWithDerived = useMemo(() => {
     return attempts.map((a) => {
       const startedAt = a.started_at ? new Date(a.started_at) : null;
       const finishedAt = a.finished_at ? new Date(a.finished_at) : null;
+      
+      const answersWithQuestions = a.answers?.map((answer: any) => {
+        const question = expandedQuizQuestions?.find(
+          (q) => q.id === answer.question_id
+        );
+        return { ...answer, question };
+      });
+
       return {
         ...a,
         _startedAt: startedAt,
         _finishedAt: finishedAt,
+        _answersWithQuestions: answersWithQuestions,
       };
     });
-  }, [attempts]);
+  }, [attempts, expandedQuizQuestions]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-almarai">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
             نتائج الامتحانات السابقة
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -55,13 +130,26 @@ export default function QuizAttemptsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => router.push("/quizzes")}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          العودة
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (confirm("هل أنت متأكد من مسح سجل الامتحانات المحلي؟")) {
+                localStorage.removeItem('quiz_history');
+                window.location.reload();
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          >
+            مسح السجل المحلي
+          </button>
+          <button
+            onClick={() => router.push("/quizzes")}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            العودة
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -82,17 +170,24 @@ export default function QuizAttemptsPage() {
             return (
               <div
                 key={a.id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden"
               >
                 <button
                   onClick={() =>
                     setExpandedId((prev) => (prev === a.id ? null : a.id))
                   }
-                  className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
+                  className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
                 >
-                  <div>
-                    <div className="font-bold text-gray-900 dark:text-white">
-                      {title}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-bold text-lg text-gray-900 dark:text-white">
+                        {title}
+                      </div>
+                      {a.is_local && (
+                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-full border border-blue-100 dark:border-blue-800">
+                          محلي
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {a.created_at
@@ -102,10 +197,10 @@ export default function QuizAttemptsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                    <div className="text-md font-bold text-gray-800 dark:text-gray-100">
                       {a.score}/{a.total_questions}
                       {typeof a.time_taken_seconds === "number"
-                        ? ` - ${a.time_taken_seconds}s`
+                        ? ` - ${Math.floor(a.time_taken_seconds / 60)}د ${a.time_taken_seconds % 60}ث`
                         : ""}
                     </div>
                     {isExpanded ? (
@@ -117,35 +212,130 @@ export default function QuizAttemptsPage() {
                 </button>
 
                 {isExpanded && (
-                  <div className="p-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          بدأ في
+                  <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                      نتيجة الامتحان
+                    </h2>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                      <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">الدرجات</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                          {a.score}/{a.total_questions}
                         </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">النتيجة</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                          {a.total_questions > 0
+                            ? `${((a.score / a.total_questions) * 100).toFixed(0)}%`
+                            : "0%"}
+                        </div>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg p-4">
+                        <div className="text-xs">الأسئلة الصحيحة</div>
+                        <div className="text-xl font-bold mt-1">
+                          {a.answers?.filter((ans: any) => ans.is_correct).length ?? 0}
+                        </div>
+                      </div>
+                      <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg p-4">
+                        <div className="text-xs">الأسئلة الخاطئة</div>
+                        <div className="text-xl font-bold mt-1">
+                          {a.answers?.filter((ans: any) => !ans.is_correct).length ?? 0}
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">الأسئلة المحلولة</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                          {a.answers?.length ?? 0}
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">الأسئلة الغير محلولة</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                          {(a.total_questions ?? 0) - (a.answers?.length ?? 0)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-6">
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">بدأ في</div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {a._startedAt ? a._startedAt.toLocaleString("ar-EG") : "-"}
                         </div>
                       </div>
                       <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          انتهى في
-                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">المدة المستغرقة</div>
                         <div className="font-semibold text-gray-900 dark:text-white">
-                          {a._finishedAt
-                            ? a._finishedAt.toLocaleString("ar-EG")
+                          {typeof a.time_taken_seconds === "number"
+                            ? `${Math.floor(a.time_taken_seconds / 60)} دقيقة و ${
+                                a.time_taken_seconds % 60
+                              } ثانية`
                             : "-"}
                         </div>
                       </div>
                     </div>
-
+                    
                     <div className="mt-4">
                       <div className="text-sm font-bold text-gray-900 dark:text-white mb-2">
                         الإجابات
                       </div>
-                      <pre className="text-xs bg-gray-50 dark:bg-gray-900/40 p-3 rounded-lg overflow-auto border border-gray-100 dark:border-gray-700">
-                        {JSON.stringify(a.answers ?? [], null, 2)}
-                      </pre>
+                      <div className="space-y-4">
+                        {a._answersWithQuestions?.map((answer: any, index: number) => (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-lg border ${
+                              answer.is_correct
+                                ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-700"
+                                : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-700"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                              {answer.is_correct ? (
+                                <span className="text-green-600 dark:text-green-400">
+                                  &#10004;
+                                </span>
+                              ) : (
+                                <span className="text-red-600 dark:text-red-400">
+                                  &#10006;
+                                </span>
+                              )}
+                              <span className="text-gray-900 dark:text-white">
+                                السؤال {index + 1}
+                              </span>
+                            </div>
+
+                            {answer.question && (
+                              <MathDisplay latex={answer.question.question} />
+                            )}
+
+                            {answer.question?.options?.map(
+                              (option: string, optionIndex: number) => (
+                                <div
+                                  key={optionIndex}
+                                  className={`p-2 rounded-md mb-1 text-sm ${optionIndex === answer.selected_option
+                                      ? answer.is_correct
+                                        ? "bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 font-semibold"
+                                        : "bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100 font-semibold"
+                                      : optionIndex === answer.question?.correct_answer
+                                        ? "bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100"
+                                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                    }`}
+                                >
+                                  {String.fromCharCode(65 + optionIndex)}. <MathDisplay latex={option} />
+                                </div>
+                              )
+                            )}
+
+                            {answer.question?.explanation && (
+                              <div className="mt-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
+                                <span className="font-bold">شرح:</span> <MathDisplay latex={answer.question.explanation} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

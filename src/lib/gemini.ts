@@ -12,19 +12,21 @@ console.log('⏸️ Skipping Gemini initialization during module load - will ini
 console.log('🧪 API will be tested on first actual usage');
 
 // Set initial status based on saved status
-const savedStatus = localStorage.getItem('gemini_api_status');
-if (savedStatus === 'working') {
-  console.log('📊 Using saved status: working');
-  isAIWorking = true;
-} else if (savedStatus === 'quota_exceeded') {
-  console.log('📊 Using saved status: quota exceeded (fallback mode)');
-  isAIWorking = false;
-} else if (savedStatus === 'error') {
-  console.log('📊 Using saved status: error (fallback mode)');
-  isAIWorking = false;
-} else {
-  console.log('📊 No saved status, assuming working');
-  isAIWorking = true;
+if (typeof window !== 'undefined') {
+  const savedStatus = localStorage.getItem('gemini_api_status');
+  if (savedStatus === 'working') {
+    console.log('📊 Using saved status: working');
+    isAIWorking = true;
+  } else if (savedStatus === 'quota_exceeded') {
+    console.log('📊 Using saved status: quota exceeded (fallback mode)');
+    isAIWorking = false;
+  } else if (savedStatus === 'error') {
+    console.log('📊 Using saved status: error (fallback mode)');
+    isAIWorking = false;
+  } else {
+    console.log('📊 No saved status, assuming working');
+    isAIWorking = true;
+  }
 }
 
 export interface ChatChunk {
@@ -245,6 +247,13 @@ export class AiAssistant {
   // Get all chunks
   getAllChunks(): ChatChunk[] {
     return this.chatChunks;
+  }
+
+  // Get random chunks for quiz generation
+  getRandomChunks(count: number = 5): ChatChunk[] {
+    if (this.chatChunks.length === 0) return [];
+    const shuffled = [...this.chatChunks].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, shuffled.length));
   }
 
   // Clear all data

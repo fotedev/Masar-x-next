@@ -10,6 +10,20 @@ const nextConfig = {
             },
         ],
     },
+    async redirects() {
+        return [
+            {
+                source: '/home',
+                destination: '/',
+                permanent: true,
+            },
+            {
+                source: '/admin',
+                destination: '/admin-dashboard',
+                permanent: true,
+            },
+        ];
+    },
 };
 
 export default nextConfig;

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { quizService } from "../../lib/quiz";
 import { supabase } from "../../lib/supabase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { useAuth } from "../../contexts/AuthContext";
 import { aiAssistant } from "../../lib/gemini";
 import type { Quiz, Summary } from "../../types/database";
@@ -474,23 +475,12 @@ function QuizDashboardPage() {
 
   const handleImageUpload = async (index: number, file: File) => {
     try {
-      if (!user) return;
+      const result = await uploadToCloudinary(file, {
+        folder: 'quiz-images',
+        resourceType: 'image'
+      });
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("quiz-images")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("quiz-images").getPublicUrl(filePath);
-
-      updateQuestion(index, "imageUrl", publicUrl);
+      updateQuestion(index, "imageUrl", result.url);
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("حدث خطأ أثناء رفع الصورة");
