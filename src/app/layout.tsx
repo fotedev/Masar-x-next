@@ -14,8 +14,6 @@ export const metadata: Metadata = {
   description: "Your path to academic excellence with study summaries and quizzes.",
 };
 
-export const dynamic = "force-dynamic";
-
 export default function RootLayout({
   children,
 }: Readonly<{
