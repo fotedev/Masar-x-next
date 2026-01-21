@@ -2,6 +2,106 @@
 
 A modern, feature-rich educational platform for university students featuring study summaries, interactive courses, quizzes, AI-powered assistance, and comprehensive learning management tools.
 
+## Security & Ops Work (Jan 2026)
+
+### What was done
+
+#### Next.js
+- Restricted `next/image` remote domains (removed wildcard `**`).
+- Removed global `force-dynamic` from the app root layout to restore caching/static optimization.
+
+#### Client
+- Removed console logs that printed whether Supabase env vars are set.
+
+#### Supabase (DB)
+- Added a unique index on `rate_limits(identifier, endpoint)` so `check_rate_limit` can safely use `ON CONFLICT`.
+- Added `system_logs` table with RLS:
+  - Authenticated users can insert.
+  - Only admins can select.
+  - Service role has full access.
+- Added secure password-reset token support:
+  - Added `token_hash` column + index on `password_reset_tokens`.
+  - Backfilled `token_hash` from plaintext `token`.
+- Restricted Supabase Storage uploads for `summaries-pdfs`:
+  - Dropped anonymous insert policy.
+  - Only authenticated users can upload.
+
+#### Supabase (Edge Functions)
+- `request-password-reset`:
+  - Adds rate limiting (`check_rate_limit`) for password reset requests.
+  - Stores `token_hash` (SHA-256) and also stores plaintext `token` temporarily for backwards compatibility.
+- `delete-file`:
+  - Enforces ownership by requiring `publicId` to start with `${user.id}_`.
+
+### Files changed / added
+
+#### App
+- `next.config.mjs`
+- `src/app/layout.tsx`
+- `src/lib/supabase.ts`
+
+#### Supabase migrations (new)
+- `supabase/migrations/20260121054000_fix_rate_limits_unique.sql`
+- `supabase/migrations/20260121054110_create_system_logs.sql`
+- `supabase/migrations/20260121054220_add_token_hash_column.sql`
+- `supabase/migrations/20260121054330_backfill_token_hash.sql`
+- `supabase/migrations/20260121054500_restrict_storage_uploads.sql`
+
+#### Supabase Edge Functions (changed)
+- `supabase/functions/request-password-reset/index.ts`
+- `supabase/functions/delete-file/index.ts`
+
+### What you need to do
+
+#### 1) Apply DB migrations
+- Run the new migrations (local or remote) using your normal Supabase migration flow.
+- Verify:
+  - `rate_limits` has a unique constraint/index on `(identifier, endpoint)`.
+  - `system_logs` exists and RLS policies behave as expected.
+  - `password_reset_tokens.token_hash` exists and is populated.
+  - Storage policy for `summaries-pdfs` no longer allows anonymous insert.
+
+#### 2) Redeploy All Supabase Edge Functions
+```bash
+# إعادة نشر جميع وظائف Edge Functions
+npx supabase functions deploy gemini-chat
+npx supabase functions deploy upload-avatar
+npx supabase functions deploy delete-avatar
+npx supabase functions deploy upload-file
+npx supabase functions deploy delete-file
+npx supabase functions deploy auth-hook-email
+npx supabase functions deploy cloudinary-webhook
+npx supabase functions deploy request-password-reset
+npx supabase functions deploy reset-password
+npx supabase functions deploy summarize-chat
+```
+
+Or deploy all at once:
+```bash
+# إعادة نشر جميع الوظائف دفعة واحدة
+for func in gemini-chat upload-avatar delete-avatar upload-file delete-file auth-hook-email cloudinary-webhook request-password-reset reset-password summarize-chat; do
+  echo "Deploying $func..."
+  npx supabase functions deploy $func
+done
+```
+
+#### 3) Build and Start Application
+```bash
+# بناء التطبيق للإنتاج
+npm run build
+
+# تشغيل الخادم في وضع الإنتاج
+npm run start
+```
+
+#### 4) Remaining security tasks (still pending)
+- Update `supabase/functions/reset-password/index.ts` to verify/reset using `token_hash` (SHA-256) instead of plaintext `token`, then later remove plaintext token storage.
+- Update `supabase/functions/upload-file/index.ts` to:
+  - Require authentication (no guest uploads).
+  - Enforce a MIME allowlist (e.g. pdf/jpeg/png/webp).
+  - Remove environment-variable debug logging.
+
+
 ## Features
 
 ### Core Features

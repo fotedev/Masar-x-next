@@ -53,6 +53,17 @@ Deno.serve(async (req: Request) => {
             )
         }
 
+        // Enforce ownership: publicId must start with user id prefix
+        if (!publicId.startsWith(`${user.id}_`)) {
+            return new Response(
+                JSON.stringify({ error: 'Forbidden' }),
+                {
+                    status: 403,
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                }
+            )
+        }
+
         // Get Cloudinary credentials from environment
         const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME')
         const apiKey = Deno.env.get('CLOUDINARY_API_KEY')
