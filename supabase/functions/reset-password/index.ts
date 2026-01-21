@@ -29,6 +29,11 @@ serve(async (req) => {
 
     // Clean token - remove any trailing :number (React dev artifact)
     const cleanToken = token.replace(/:\d+$/, '');
+    const tokenDataBytes = new TextEncoder().encode(cleanToken);
+    const tokenHashBuffer = await crypto.subtle.digest('SHA-256', tokenDataBytes);
+    const tokenHash = Array.from(new Uint8Array(tokenHashBuffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
 
     // Create Supabase client with service role key
     const supabaseAdmin = createClient(
@@ -40,7 +45,7 @@ serve(async (req) => {
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from("password_reset_tokens")
       .select("user_id, email, expires_at, used_at")
-      .eq("token", cleanToken)
+      .eq("token_hash", tokenHash)
       .single();
 
     if (tokenError || !tokenData) {
@@ -118,7 +123,7 @@ serve(async (req) => {
     const { error: markError } = await supabaseAdmin
       .from("password_reset_tokens")
       .update({ used_at: new Date().toISOString() })
-      .eq("token", cleanToken);
+      .eq("token_hash", tokenHash);
 
     if (markError) {
       console.warn("Failed to mark token as used:", markError);

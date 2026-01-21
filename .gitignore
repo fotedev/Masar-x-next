@@ -131,6 +131,11 @@ EMAILJS_SETUP.md
 email.js.template.html
 emailjs_template.txt
 prompt_1.txt
+report*-.txt
+report_1.txt
+report_2.txt
+report_3.txt
+
 
 # Database setup files
 add_admin_user.sql
