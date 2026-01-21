@@ -16,6 +16,21 @@ const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 // =====================
+// Helpers
+// =====================
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return toHex(hash);
+}
+
+// =====================
 // Email sender
 // =====================
 async function sendPasswordResetEmail(email: string, resetToken: string) {
@@ -83,6 +98,28 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // =====================
+    // Rate limit by email (max 3 per 24h)
+    // =====================
+    try {
+      const { data: allowed, error: rlError } = await supabase.rpc('check_rate_limit', {
+        p_identifier: email,
+        p_endpoint: 'request-password-reset',
+        p_max_requests: 3,
+        p_window_minutes: 1440,
+      });
+      if (rlError) {
+        console.warn('rate limit check failed (allowing request):', rlError.message);
+      } else if (allowed === false) {
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (_e) {
+      // allow on error
+    }
+
+    // =====================
     // Get user by email (safe lookup)
     // =====================
     let user;
@@ -122,11 +159,13 @@ serve(async (req) => {
     }
 
     const resetToken = nanoid(32);
+    const tokenHash = await sha256(resetToken);
 
     const { error: insertError } = await supabase.from("password_reset_tokens").insert({
       user_id: user.id,
       email,
       token: resetToken,
+      token_hash: tokenHash,
       expires_at: new Date(Date.now() + 86400000).toISOString(),
     });
 
