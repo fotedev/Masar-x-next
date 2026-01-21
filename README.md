@@ -81,7 +81,7 @@ A modern, feature-rich educational platform for university students featuring st
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd masarx
+   cd masarx_next
    ```
 
 2. Install dependencies:
@@ -376,6 +376,29 @@ The platform uses a comprehensive PostgreSQL database with 20+ tables, views, an
 - **Performance**: Optimized rendering with React best practices
 - **Accessibility**: WCAG 2.1 AA compliance
 - **Security First**: Secure coding practices and input validation
+
+## Testing
+
+### Developer Testing Tools
+
+Masar X includes a comprehensive testing suite located in the `test_quiz/` directory to facilitate development and testing of the quiz system.
+
+#### Available Test Scripts
+
+- **`test-quiz-answers.js`** - Automated quiz completion with random answers
+- **`test-quiz-navigation.js`** - Navigation and auto-save testing
+- **`test-quiz-timer.js`** - Timer functionality and auto-completion testing
+- **`test-quiz-bulk.js`** - Bulk testing with multiple concurrent attempts
+
+#### Quick Start
+
+```bash
+cd test_quiz
+npm install
+node test-quiz-answers.js <quiz-id>
+```
+
+See `test_quiz/README.md` for detailed usage instructions.
 
 ## Contributing
 

@@ -77,7 +77,7 @@ export function useNews() {
     subject: string | null = null,
     department: string | null = null,
     year: string | null = null
-  ) => {
+  ): Promise<News | null> => {
     try {
       const newsToInsert = {
         ...newsData,
@@ -115,8 +115,11 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
+
+      return data;
     } catch (error) {
       console.error("Error adding news:", error);
+      return null;
     }
   };
 

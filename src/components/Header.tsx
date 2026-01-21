@@ -96,7 +96,7 @@ export const Header = React.memo(function Header() {
               <button
                 onClick={() => handleNavigate("courses")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  currentPage === "courses"
+                  currentPage === "courses" || currentPage.startsWith("courses/")
                     ? "bg-green-500/10 text-green-600 dark:text-green-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
@@ -118,10 +118,9 @@ export const Header = React.memo(function Header() {
               </button>
 
               <button
-                onClick={() => handleNavigate("ai-assistant-upload")}
+                onClick={() => handleNavigate("ai-assistant")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  currentPage === "ai-assistant-upload" ||
-                  currentPage === "ai-assistant-chat"
+                  currentPage === "ai-assistant"
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
@@ -320,10 +319,9 @@ export const Header = React.memo(function Header() {
                   </button>
 
                   <button
-                    onClick={() => handleNavigate("ai-assistant-upload")}
+                    onClick={() => handleNavigate("ai-assistant")}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all touch-manipulation ${
-                      currentPage === "ai-assistant-upload" ||
-                      currentPage === "ai-assistant-chat"
+                      currentPage === "ai-assistant"
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     }`}

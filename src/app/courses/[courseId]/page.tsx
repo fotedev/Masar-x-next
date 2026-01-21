@@ -640,7 +640,7 @@ export default function CourseDetailPage() {
         return (
           <div className="space-y-3">
             <Button
-              onClick={() => router.push("/ai-assistant-chat")}
+              onClick={() => router.push("/ai-assistant")}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageSquare className="w-4 h-4 ml-2" />
@@ -765,7 +765,7 @@ export default function CourseDetailPage() {
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 يمكنك الآن الوصول لجميع محتويات الكورس والمساعد الذكي.
               </p>
-              <Button onClick={() => router.push("/ai-assistant-chat")} size="lg">
+              <Button onClick={() => router.push("/ai-assistant")} size="lg">
                 <MessageSquare className="w-5 h-5 ml-2" />
                 بدء المساعد الذكي
               </Button>

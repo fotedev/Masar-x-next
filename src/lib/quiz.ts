@@ -83,7 +83,105 @@ export class QuizService {
         }
     }
 
-    // Submit a quiz attempt
+    // Start or resume a quiz attempt
+    async startAttempt(quizId: string, userId: string) {
+        try {
+            // Check for existing unfinished attempt (finished_at is null)
+            const { data: existingAttempt } = await supabase
+                .from('quiz_attempts')
+                .select('*')
+                .eq('quiz_id', quizId)
+                .eq('user_id', userId)
+                .is('finished_at', null)
+                .single();
+
+            if (existingAttempt) {
+                // Fetch existing answers for this attempt
+                const { data: answers, error: answersError } = await supabase
+                    .from('quiz_answers')
+                    .select('*')
+                    .eq('attempt_id', existingAttempt.id);
+
+                if (answersError) throw answersError;
+
+                return { attempt: existingAttempt, answers: answers || [] };
+            }
+
+            // Create new attempt
+            const { data: newAttempt, error: createError } = await supabase
+                .from('quiz_attempts')
+                .insert({
+                    quiz_id: quizId,
+                    user_id: userId,
+                    score: 0,
+                    total_questions: 0,
+                    started_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (createError) throw createError;
+
+            return { attempt: newAttempt, answers: [] };
+        } catch (error) {
+            console.error('Error starting attempt:', error);
+            throw error;
+        }
+    }
+
+    // Save a single answer
+    async saveAnswer(attemptId: string, questionId: string, selectedOption: number, isCorrect: boolean) {
+        try {
+            // Upsert answer
+            const { error: answerError } = await supabase
+                .from('quiz_answers')
+                .upsert({
+                    attempt_id: attemptId,
+                    question_id: questionId,
+                    selected_option: selectedOption,
+                    is_correct: isCorrect,
+                    created_at: new Date().toISOString()
+                }, { onConflict: 'attempt_id, question_id' });
+
+            if (answerError) throw answerError;
+
+        } catch (error) {
+            console.error('Error saving answer:', error);
+            throw error;
+        }
+    }
+
+    // Finish a quiz attempt
+    async finishAttempt(
+        attemptId: string,
+        score: number,
+        totalQuestions: number,
+        answers: any[] // Kept for backward compatibility if needed, but we rely on quiz_answers table now
+    ) {
+        try {
+            const finishedAt = new Date().toISOString();
+
+            // Calculate time taken if needed, or let the frontend pass it. 
+            // For now, we'll just mark it completed.
+
+            const { error } = await supabase
+                .from('quiz_attempts')
+                .update({
+                    score: score,
+                    total_questions: totalQuestions,
+                    finished_at: finishedAt,
+                    answers: answers // Optional: store JSON backup
+                })
+                .eq('id', attemptId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error finishing attempt:', error);
+            throw error;
+        }
+    }
+
+    // Submit a quiz attempt (Legacy/Fallback)
     async submitAttempt(
         quizId: string,
         userId: string | null,
@@ -94,6 +192,8 @@ export class QuizService {
         finishedAt?: string,
         timeTakenSeconds?: number
     ) {
+        // ... legacy implementation or redirect to finishAttempt if attemptId is known
+        // For now keeping as is for backward compatibility or non-logged in users if any
         try {
             const basePayload = {
                 quiz_id: quizId,
@@ -109,69 +209,11 @@ export class QuizService {
                 finished_at: finishedAt ?? null,
                 time_taken_seconds:
                     typeof timeTakenSeconds === 'number' ? timeTakenSeconds : null,
+                status: 'completed'
             };
 
-            const tryInsert = async (payload: Record<string, any>) => {
-                const { error } = await supabase.from('quiz_attempts').insert(payload);
-                if (error) throw error;
-            };
-
-            try {
-                await tryInsert(payloadFull);
-                return;
-            } catch (error: any) {
-                const message = typeof error?.message === 'string' ? error.message : '';
-                const code = error?.code;
-                const details = error?.details;
-                const hint = error?.hint;
-
-                console.error('Error submitting attempt (full payload):', {
-                    message,
-                    code,
-                    details,
-                    hint,
-                });
-
-                // PostgREST returns 400 for schema mismatch (missing columns) when migrations aren't applied.
-                const looksLikeMissingColumn =
-                    code === 'PGRST204' ||
-                    code === '42703' ||
-                    /column/i.test(message) ||
-                    /could not find/i.test(message) ||
-                    /schema cache/i.test(message);
-
-                if (!looksLikeMissingColumn) throw error;
-
-                // Retry with fewer optional fields for backward compatibility.
-                try {
-                    await tryInsert({ ...basePayload, answers });
-                    return;
-                } catch (error2: any) {
-                    const message2 = typeof error2?.message === 'string' ? error2.message : '';
-                    const code2 = error2?.code;
-                    const details2 = error2?.details;
-                    const hint2 = error2?.hint;
-
-                    console.error('Error submitting attempt (retry with answers):', {
-                        message: message2,
-                        code: code2,
-                        details: details2,
-                        hint: hint2,
-                    });
-
-                    const stillMissingColumn =
-                        code2 === 'PGRST204' ||
-                        code2 === '42703' ||
-                        /column/i.test(message2) ||
-                        /could not find/i.test(message2) ||
-                        /schema cache/i.test(message2);
-
-                    if (!stillMissingColumn) throw error2;
-
-                    await tryInsert(basePayload);
-                    return;
-                }
-            }
+            const { error } = await supabase.from('quiz_attempts').insert(payloadFull);
+            if (error) throw error;
         } catch (error) {
             console.error('Error submitting attempt:', error);
             throw error;

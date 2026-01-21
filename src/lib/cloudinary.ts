@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 /**
  * Cloudinary utility functions using Supabase Edge Functions
  * Updated to use shared Supabase client to prevent multiple GoTrueClient instances
+ * Now supports guest uploads with optional authentication
  */
 
 export interface CloudinaryUploadOptions {
@@ -21,6 +22,7 @@ export interface CloudinaryUploadResult {
 
 /**
  * Upload a file to Cloudinary via Supabase Edge Function
+ * Supports both authenticated users and guests
  */
 export const uploadToCloudinary = async (
   file: File,
@@ -39,31 +41,55 @@ export const uploadToCloudinary = async (
   // Update progress: Conversion complete, starting upload
   onProgress?.(30, 'جاري رفع الملف...')
 
-  // Get current session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  // Get current session - make it optional for guest uploads
+  const { data: { session } } = await supabase.auth.getSession()
 
-  if (sessionError) {
-    console.error('Session error:', sessionError)
-    throw new Error('فشل في التحقق من حالة تسجيل الدخول')
+  if (session) {
+    console.log('✅ Session found for user:', session.user?.email)
+  } else {
+    console.log('ℹ️ No active session found - proceeding as guest')
   }
 
-  if (!session || !session.access_token) {
-    console.warn('No active session found')
-    throw new Error('يجب تسجيل الدخول أولاً لرفع الملفات')
+  // For guest uploads, use direct fetch to avoid automatic auth header injection
+  let uploadPromise: Promise<any>
+
+  if (session?.access_token) {
+    // Authenticated upload using Supabase client
+    uploadPromise = supabase.functions.invoke('upload-file', {
+      body: {
+        file: base64,
+        fileName: file.name,
+        contentType: file.type,
+        folder: options.folder || 'masarx-uploads',
+        resourceType: options.resourceType || 'auto',
+      }
+    })
+  } else {
+    // Guest upload using direct fetch
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    uploadPromise = fetch(`${supabaseUrl}/functions/v1/upload-file`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': anonKey!,
+      },
+      body: JSON.stringify({
+        file: base64,
+        fileName: file.name,
+        contentType: file.type,
+        folder: options.folder || 'masarx-uploads',
+        resourceType: options.resourceType || 'auto',
+      })
+    }).then(async (response) => {
+      const data = await response.json()
+      if (!response.ok) {
+        return { data: null, error: { message: data.error || 'Upload failed' } }
+      }
+      return { data, error: null }
+    })
   }
-
-  console.log('✅ Session found for user:', session.user?.email)
-
-  // Call Edge Function with timeout
-  const uploadPromise = supabase.functions.invoke('upload-file', {
-    body: {
-      file: base64,
-      fileName: file.name,
-      contentType: file.type,
-      folder: options.folder || 'masarx-uploads',
-      resourceType: options.resourceType || 'auto',
-    }
-  })
 
   // Add timeout for large files (5 minutes)
   const timeoutPromise = new Promise((_, reject) => {

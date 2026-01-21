@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Almarai } from "next/font/google";
 import "../index.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
@@ -7,6 +7,7 @@ import { NotificationProvider } from "../components/NotificationManager";
 import { Layout } from "../components/Layout";
 
 const inter = Inter({ subsets: ["latin"] });
+const almarai = Almarai({ subsets: ["arabic"], weight: ['300', '400', '700', '800'] });
 
 export const metadata: Metadata = {
   title: "Masar X - Study Summaries Platform",
@@ -22,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${almarai.className}`}>
         <AuthProvider>
           <ThemeProvider>
             <NotificationProvider>

@@ -1,4 +1,4 @@
-# دليل مطور Masar X - Developer Context Guide
+# دليل المطور - Masar X Developer Context Guide
 
 ## نظرة عامة على المشروع
 Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript، متخصصة في تقديم خدمات تعليمية للطلاب الجامعيين في الشرق الأوسط.
@@ -15,10 +15,9 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 ## هيكل المشروع (Architecture)
 
 ### Frontend Stack
+- **Next.js 14** مع App Router للتطبيقات الحديثة
 - **React 18** مع TypeScript صارم
-- **Vite** للتطوير السريع
 - **Tailwind CSS** مع PostCSS للتصميم
-- **React Router** للتنقل
 - **Context API** لإدارة الحالة العامة
 
 ### Backend Stack
@@ -38,11 +37,11 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 
 ### `/src` - الكود الأساسي
 
-#### `App.tsx` - نقطة الدخول الرئيسية
-- **Lazy loading** للصفحات غير الحرجة لتحسين الأداء
-- **Protected routes** للصفحات المحمية
-- **Suspense boundaries** للتحميل التدريجي
-- **Onboarding flow** للمستخدمين الجدد
+#### `/app` - صفحات Next.js App Router
+- **layout.tsx**: التخطيط الجذر للتطبيق
+- **page.tsx**: الصفحة الرئيسية
+- **loading.tsx** & **error.tsx**: معالجة الحالات الخاصة
+- **middleware.ts**: معالجة الطلبات والمصادقة
 
 #### `/contexts` - إدارة الحالة العامة
 - `AuthContext.tsx`: نظام المصادقة المتقدم
@@ -63,32 +62,35 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 - `useSummaries.ts`: إدارة التلخيصات
 - `useToast.ts`: نظام الإشعارات المحلية
 
-#### `/pages` - صفحات التطبيق
-**الصفحات العامة:**
-- `HomePage.tsx`: الصفحة الرئيسية مع التنقل الذكي
-- `NewsPage.tsx`: الأخبار والإعلانات
-- `SubjectsPage.tsx`: تصفح المواد الدراسية
-- `SubjectSummariesPage.tsx`: تلخيصات المادة المحددة
+#### `/app` - صفحات التطبيق (App Router)
+**الصفحات الأساسية:**
+- `/page.tsx`: الصفحة الرئيسية مع التنقل الذكي
+- `/news/page.tsx`: الأخبار والإعلانات
+- `/subjects/page.tsx`: تصفح المواد الدراسية
+- `/subjects/[id]/page.tsx`: تلخيصات المادة المحددة
 
 **نظام المصادقة:**
-- `LoginPage.tsx`, `SignUpPage.tsx`: تسجيل الدخول والتسجيل
-- `ResetPasswordPage.tsx`: إعادة تعيين كلمة المرور
-- `ProfilePage.tsx`: إدارة الملف الشخصي
+- `/login/page.tsx`: تسجيل الدخول
+- `/signup/page.tsx`: إنشاء حساب جديد
+- `/reset-password/page.tsx`: إعادة تعيين كلمة المرور
+- `/profile/page.tsx`: إدارة الملف الشخصي
 
 **المحتوى التعليمي:**
-- `CoursesPage.tsx`: تصفح الدورات
-- `CourseDetailPage.tsx`: تفاصيل الدورة مع المحتوى
-- `AddSummaryPage.tsx`, `EditSummaryPage.tsx`: إدارة التلخيصات
-- `QuizDashboardPage.tsx`, `QuizPlayPage.tsx`: نظام الاختبارات
+- `/courses/page.tsx`: تصفح الدورات
+- `/courses/[id]/page.tsx`: تفاصيل الدورة مع المحتوى
+- `/summaries/add/page.tsx`: إضافة تلخيص جديد
+- `/summaries/[id]/edit/page.tsx`: تعديل التلخيصات
+- `/quizzes/page.tsx`: لوحة الاختبارات
+- `/quiz-play/[id]/page.tsx`: تشغيل الاختبارات
 
 **الإدارة:**
-- `AdminDashboard.tsx`: لوحة تحكم شاملة
-- `InstructorDashboard.tsx`: إدارة المدرسين
-- `AdminAnalyticsPage.tsx`: التحليلات والإحصائيات
+- `/admin/page.tsx`: لوحة تحكم شاملة
+- `/admin/instructor/page.tsx`: إدارة المدرسين
+- `/admin/analytics/page.tsx`: التحليلات والإحصائيات
 
 **AI Assistant:**
-- `AiAssistantChatPage.tsx`: المحادثة مع AI
-- `AiAssistantUploadPage.tsx`: رفع الملفات للتحليل
+- `/ai-assistant/page.tsx`: المحادثة مع AI
+- `/ai-assistant/upload/page.tsx`: رفع الملفات للتحليل
 
 #### `/components` - المكونات القابلة لإعادة الاستخدام
 **المكونات الأساسية:**
@@ -245,9 +247,12 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 - تحسين الصور تلقائيًا
 - تخزين آمن مع URLs موقّعة
 
-### EmailJS
-- إشعارات البريد الإلكتروني
-- إعادة تعيين كلمة المرور
+### Brevo (Sendinblue)
+- إرسال إشعارات البريد الإلكتروني المتقدمة
+- إدارة حملات التسويق عبر البريد الإلكتروني
+- إعادة تعيين كلمة المرور وإشعارات النظام
+- تتبع وتحليلات البريد الإلكتروني
+- قوالب بريد إلكتروني مخصصة وقابلة للبرمجة
 
 ---
 
@@ -280,9 +285,9 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 ### البيئة المحلية
 ```bash
 npm install
-npm run dev  # تطوير
+npm run dev  # تطوير (http://localhost:3000)
 npm run build  # بناء للإنتاج
-npm run preview  # معاينة البناء
+npm run start  # تشغيل الإنتاج محلياً
 ```
 
 ### قاعدة البيانات
@@ -296,7 +301,7 @@ npx supabase db remote commit  # للإنتاج
 - Node.js 18+
 - Supabase account
 - Google Gemini API key
-- EmailJS account
+- Brevo account (Sendinblue)
 - مفاتيح Cloudinary
 
 ---
@@ -304,10 +309,10 @@ npx supabase db remote commit  # للإنتاج
 ## نقاط الاهتمام الخاصة
 
 ### الأداء
-- Lazy loading للصفحات غير الحرجة
-- Code splitting مع Vite
+- Lazy loading للصفحات مع Next.js App Router
+- Code splitting تلقائي مع Next.js
 - Query caching لتقليل الاستعلامات
-- Image optimization مع Cloudinary
+- Image optimization مع Next.js و Cloudinary
 
 ### تجربة المستخدم
 - دعم كامل للغة العربية مع RTL
@@ -343,10 +348,7 @@ npx supabase db remote commit  # للإنتاج
 - فلترة والبحث المتقدم في الدورات
 
 ### قيد التطوير 🔄
-- إنشاء شهادات التخرج
-- دمج الفيديو المحلي
 - تعلم الند للند
-- مساعد AI تعليمي متقدم
 
 ---
 
@@ -360,5 +362,5 @@ npx supabase db remote commit  # للإنتاج
 
 ---
 
-*آخر تحديث: 18 يناير 2026*
+*آخر تحديث: 20 يناير 2026*
 *المطور: فريق تطوير Masar X*
