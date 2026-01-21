@@ -17,6 +17,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
 
 # IDE and editor files
 .vscode/
@@ -25,8 +26,8 @@ out/
 *.swo
 *~
 
-# CSS configuration files
-.cssrc.json
+# CSS configuration files (commented out - now tracked)
+# .cssrc.json
 
 # OS generated files
 .DS_Store
@@ -40,6 +41,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Runtime data
 pids
@@ -69,18 +73,32 @@ jspm_packages/
 # Output of 'npm pack'
 *.tgz
 
+# Local development files
+.env.backup
+.env.example
+
 # Yarn Integrity file
 .yarn-integrity
+
+# Turbo
+.turbo
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
+
+# Additional cache directories
+.cache/
+*.tsbuildinfo
 
 # Next.js build output
 .next
 
 # Nuxt.js build / generate output
 .nuxt
+
+# Sentry Config File
+.sentryclirc
 
 # Gatsby files
 
@@ -91,6 +109,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+test_quiz
 
 # Debug files
 tsc_output*.txt
@@ -123,6 +142,9 @@ create_profiles_table.sql
 .cursor/
 .vite/
 test.html
+
+# Vite timestamp files
+vite.config.ts.timestamp-*.mjs
 public/logo_alt*.png
 public/logo_alt*.svg
 
@@ -138,4 +160,8 @@ test-upload.js
 TROUBLESHOODING.md
 SUPABASE_ENV_SETUP.md
 notebooklm_extractor.js
+
+# Test scripts (contain sensitive testing logic)
+test-*.js
+check-*.js
 

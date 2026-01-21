@@ -102,32 +102,34 @@ function NewsPage() {
     }
 
     try {
-      await addNews(newsData, fileUrl, imageUrls, customCategory);
+      const addedNews = await addNews(newsData, fileUrl, imageUrls, customCategory);
 
-      notifyAdmins(
-        "خبر جديد يحتاج مراجعة",
-        `تم إضافة خبر جديد بعنوان "${newsData.title}" من نوع ${
-          newsData.type === "announcement"
-            ? "إعلان"
-            : newsData.type === "update"
-            ? "تحديث"
-            : "مهم جداً"
-        }`,
-        "admin_submission",
-        "temp_id", // Placeholder
-        "news"
-      );
+      if (addedNews) {
+        notifyAdmins(
+          "خبر جديد يحتاج مراجعة",
+          `تم إضافة خبر جديد بعنوان "${newsData.title}" من نوع ${
+            newsData.type === "announcement"
+              ? "إعلان"
+              : newsData.type === "update"
+              ? "تحديث"
+              : "مهم جداً"
+          }`,
+          "admin_submission",
+          addedNews.id,
+          "news"
+        );
 
-      notifyAllUsers(
-        "خبر جديد!",
-        `تم نشر خبر جديد: "${newsData.title}"`,
-        "content_published",
-        "temp_id", // Placeholder
-        "news"
-      );
+        notifyAllUsers(
+          "خبر جديد!",
+          `تم نشر خبر جديد: "${newsData.title}"`,
+          "content_published",
+          addedNews.id,
+          "news"
+        );
 
-      setShowAddNews(false);
-      console.log("✅ تم إضافة الخبر بنجاح!");
+        setShowAddNews(false);
+        console.log("✅ تم إضافة الخبر بنجاح!");
+      }
     } catch (error) {
       console.error("Error adding news:", error);
     } finally {

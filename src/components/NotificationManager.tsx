@@ -40,7 +40,11 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [permission, setPermission] =
     useState<NotificationPermission>("default");
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isSupported] = useState(() => "Notification" in window);
+  const [isSupported, setIsSupported] = useState(false);
+
+  useEffect(() => {
+    setIsSupported(typeof window !== "undefined" && "Notification" in window);
+  }, []);
 
   useEffect(() => {
     if (isSupported) {
@@ -58,7 +62,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       if (
         "serviceWorker" in navigator &&
         Notification.permission === "granted" &&
-        !import.meta.env.DEV
+        !process.env.NODE_ENV || process.env.NODE_ENV !== 'development'
       ) {
         navigator.serviceWorker
           .register("/sw.js")
@@ -87,7 +91,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       if (result === "granted") {
         // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
-        if ("serviceWorker" in navigator && !import.meta.env.DEV) {
+        if ("serviceWorker" in navigator && (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development')) {
           const registration = await navigator.serviceWorker.register("/sw.js");
           console.log(
             "Service Worker registered for notifications:",
@@ -246,7 +250,7 @@ export function NotificationToggle() {
           console.log("Notifications granted, registering service worker...");
 
           // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
-          if ("serviceWorker" in navigator && !import.meta.env.DEV) {
+          if ("serviceWorker" in navigator && (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development')) {
             try {
               const registration = await navigator.serviceWorker.register(
                 "/sw.js"
