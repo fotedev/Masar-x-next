@@ -121,7 +121,7 @@ A modern, feature-rich educational platform for university students featuring st
 
 The platform currently has 2 active admin users:
 
-1. **أحمد أبو العلايون** - ahmedaboalayoun0016k@gmail.com
+1. **أحمد أبوالعيون** - ahmedaboalayoun0016k@gmail.com
 2. **خالد "القائد"** - ksabry797@gmail.com
 
 **Note:** Admin roles are managed through both the `admins` table and auth metadata. Use the admin dashboard to manage user roles and permissions.
