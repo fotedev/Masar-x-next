@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -9,7 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
 import { FileDropzone } from "../../components/FileDropzone";
 
-export default function EditSummaryPage() {
+function EditSummaryContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const summaryId = (params?.summaryId as string) || (searchParams?.get("id") as string);
@@ -31,6 +31,8 @@ export default function EditSummaryPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadStage, setUploadStage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSummary = async () => {
@@ -75,6 +77,8 @@ export default function EditSummaryPage() {
     e.preventDefault();
     setSaving(true);
     setError("");
+    setUploadProgress(null);
+    setUploadStage(null);
 
     try {
       let pdfUrl = currentPdfUrl;
@@ -82,6 +86,10 @@ export default function EditSummaryPage() {
       if (pdfFile) {
         const cloudinaryResult = await uploadToCloudinary(pdfFile, {
           folder: "masarx-summaries",
+          onProgress: (progress, stage) => {
+            setUploadProgress(progress);
+            setUploadStage(stage);
+          },
         });
         pdfUrl = cloudinaryResult.url;
       }
@@ -116,6 +124,10 @@ export default function EditSummaryPage() {
       setError("حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى.");
     } finally {
       setSaving(false);
+      setTimeout(() => {
+        setUploadProgress(null);
+        setUploadStage(null);
+      }, 500);
     }
   };
 
@@ -284,6 +296,20 @@ export default function EditSummaryPage() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               تحديث ملف PDF (اختياري)
             </label>
+            {uploadProgress !== null && (
+              <div className="mb-3">
+                <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
+                  <span>{uploadStage || "جاري رفع الملف..."}</span>
+                  <span>{Math.round(uploadProgress)}%</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-blue-600"
+                    style={{ width: `${Math.min(100, Math.max(0, uploadProgress))}%` }}
+                  />
+                </div>
+              </div>
+            )}
             {currentPdfUrl && !pdfFile && (
               <div className="mb-2 text-sm text-blue-600 dark:text-blue-400">
                 يوجد ملف PDF حالي. قم برفع ملف جديد لاستبداله.
@@ -349,5 +375,13 @@ export default function EditSummaryPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function EditSummaryPage() {
+  return (
+    <Suspense fallback={<div className="max-w-3xl mx-auto" />}>
+      <EditSummaryContent />
+    </Suspense>
   );
 }

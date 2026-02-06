@@ -1,33 +1,17 @@
 /*
-  # Create course-materials storage bucket
+  Migration: 20260118012150
 
-  ## Overview
-  Creates a secure storage bucket for course materials (files) uploaded by instructors.
-
-  ## New Storage Bucket
-
-  ### `course-materials`
-  - Private bucket for course files (PDFs, documents, presentations, etc.)
-  - Accessible only to enrolled students and course instructors
-  - Supports file uploads up to 50MB
-  - Accepts common educational file types
-
-  ## Security
-
-  ### Bucket Policies
-  - Instructors can upload files to their own courses
-  - Enrolled students can download files from courses they're enrolled in
-  - Admins have full access to all course materials
-  - Public access is denied
+  Create `course-materials` storage bucket with secure, idempotent setup
+  and strict Row Level Security policies.
 */
 
--- Create the course-materials storage bucket
+-- Upsert the bucket so the migration is idempotent.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
   'course-materials',
   'course-materials',
   false,
-  52428800, -- 50MB in bytes
+  52428800, -- 50MB
   ARRAY[
     'application/pdf',
     'application/msword',
@@ -45,12 +29,24 @@ VALUES (
     'image/gif',
     'image/webp'
   ]
-);
+)
+ON CONFLICT (id) DO UPDATE
+  SET name = EXCLUDED.name,
+      public = EXCLUDED.public,
+      file_size_limit = EXCLUDED.file_size_limit,
+      allowed_mime_types = EXCLUDED.allowed_mime_types;
 
--- Enable RLS on storage.objects for course-materials bucket
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Ensure RLS is enabled for storage.objects (table-level).
+ALTER TABLE IF EXISTS storage.objects ENABLE ROW LEVEL SECURITY;
 
--- Policy: Instructors can upload files to their courses
+-- Drop existing policies related to course-materials to avoid duplicates.
+DROP POLICY IF EXISTS "Instructors can upload course materials" ON storage.objects;
+DROP POLICY IF EXISTS "Instructors can manage their course materials" ON storage.objects;
+DROP POLICY IF EXISTS "Instructors can delete their course materials" ON storage.objects;
+DROP POLICY IF EXISTS "Enrolled students can download course materials" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can manage all course materials" ON storage.objects;
+
+-- Policy: Instructors can INSERT into the bucket for their courses.
 CREATE POLICY "Instructors can upload course materials"
   ON storage.objects
   FOR INSERT
@@ -58,13 +54,13 @@ CREATE POLICY "Instructors can upload course materials"
   WITH CHECK (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.id = (storage.foldername(name))[1]::uuid
-      AND courses.instructor_id = auth.uid()
+      SELECT 1 FROM public.courses
+      WHERE public.courses.id = (storage.foldername(name))[1]::uuid
+      AND public.courses.instructor_id = auth.uid()
     )
   );
 
--- Policy: Instructors can update/delete files from their courses
+-- Policy: Instructors can UPDATE their own course files (and must remain in same bucket/course).
 CREATE POLICY "Instructors can manage their course materials"
   ON storage.objects
   FOR UPDATE
@@ -72,20 +68,21 @@ CREATE POLICY "Instructors can manage their course materials"
   USING (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.id = (storage.foldername(name))[1]::uuid
-      AND courses.instructor_id = auth.uid()
+      SELECT 1 FROM public.courses
+      WHERE public.courses.id = (storage.foldername(name))[1]::uuid
+      AND public.courses.instructor_id = auth.uid()
     )
   )
   WITH CHECK (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.id = (storage.foldername(name))[1]::uuid
-      AND courses.instructor_id = auth.uid()
+      SELECT 1 FROM public.courses
+      WHERE public.courses.id = (storage.foldername(name))[1]::uuid
+      AND public.courses.instructor_id = auth.uid()
     )
   );
 
+-- Policy: Instructors can DELETE their own course files.
 CREATE POLICY "Instructors can delete their course materials"
   ON storage.objects
   FOR DELETE
@@ -93,13 +90,13 @@ CREATE POLICY "Instructors can delete their course materials"
   USING (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM courses
-      WHERE courses.id = (storage.foldername(name))[1]::uuid
-      AND courses.instructor_id = auth.uid()
+      SELECT 1 FROM public.courses
+      WHERE public.courses.id = (storage.foldername(name))[1]::uuid
+      AND public.courses.instructor_id = auth.uid()
     )
   );
 
--- Policy: Enrolled students can download course materials
+-- Policy: Enrolled students can SELECT (download) files for active enrollments.
 CREATE POLICY "Enrolled students can download course materials"
   ON storage.objects
   FOR SELECT
@@ -107,14 +104,14 @@ CREATE POLICY "Enrolled students can download course materials"
   USING (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM enrollments
-      WHERE enrollments.course_id = (storage.foldername(name))[1]::uuid
-      AND enrollments.student_id = auth.uid()
-      AND enrollments.status = 'active'
+      SELECT 1 FROM public.enrollments
+      WHERE public.enrollments.course_id = (storage.foldername(name))[1]::uuid
+      AND public.enrollments.student_id = auth.uid()
+      AND public.enrollments.status = 'active'
     )
   );
 
--- Policy: Admins can manage all course materials
+-- Policy: Admins (records in public.admins) can perform all actions on bucket objects.
 CREATE POLICY "Admins can manage all course materials"
   ON storage.objects
   FOR ALL
@@ -122,14 +119,21 @@ CREATE POLICY "Admins can manage all course materials"
   USING (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM admins
-      WHERE admins.user_id = auth.uid()
+      SELECT 1 FROM public.admins
+      WHERE public.admins.user_id = auth.uid()
     )
   )
   WITH CHECK (
     bucket_id = 'course-materials'
     AND EXISTS (
-      SELECT 1 FROM admins
-      WHERE admins.user_id = auth.uid()
+      SELECT 1 FROM public.admins
+      WHERE public.admins.user_id = auth.uid()
     )
   );
+
+-- Notes:
+-- - This migration is idempotent (upserts the bucket & drops/recreates policies).
+-- - It scopes every policy to bucket_id = 'course-materials' to avoid cross-bucket access.
+-- - storage.foldername(name) is used to extract course id from object path; ensure your client
+--   stores files under "<course_id>/..." inside the bucket.
+ 
