@@ -272,6 +272,19 @@ export class AiAssistant {
 
   // Check AI status
   getAIStatus() {
+    if (typeof window === 'undefined') {
+      return {
+        isAIWorking,
+        hasApiKey: true, // Edge Function handles API keys securely
+        hasCustomApiKey: false,
+        customApiKeyMasked: null,
+        hasModel: true, // Edge Function handles model initialization
+        lastQuotaError: null,
+        hoursUntilReset: 0,
+        status: 'secure_edge_function', // Indicate secure implementation
+      };
+    }
+
     const customApiKey = localStorage.getItem('user_gemini_api_key');
     const quotaErrorTimestamp = localStorage.getItem('gemini_quota_error');
 
@@ -291,7 +304,7 @@ export class AiAssistant {
       hasCustomApiKey: !!customApiKey,
       customApiKeyMasked: customApiKey ? `${customApiKey.substring(0, 8)}...${customApiKey.substring(customApiKey.length - 4)}` : null,
       hasModel: true, // Edge Function handles model initialization
-      lastQuotaError: localStorage.getItem('gemini_quota_error'),
+      lastQuotaError: quotaErrorTimestamp,
       hoursUntilReset,
       status: 'secure_edge_function', // Indicate secure implementation
     };

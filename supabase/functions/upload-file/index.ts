@@ -120,15 +120,11 @@ Deno.serve(async (req: Request) => {
 
         // Get Cloudinary credentials from environment
         const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME')
-        const apiKey = Deno.env.get('CLOUDINARY_API_KEY')
-        const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET')
         const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET')
 
-        if (!cloudName || !apiKey || !apiSecret || !uploadPreset) {
+        if (!cloudName || !uploadPreset) {
             console.error('❌ Missing Cloudinary credentials:', {
                 cloudName: !!cloudName,
-                apiKey: !!apiKey,
-                apiSecret: !!apiSecret,
                 uploadPreset: !!uploadPreset
             })
             return new Response(
@@ -137,8 +133,6 @@ Deno.serve(async (req: Request) => {
                     details: 'Please check that all Cloudinary environment variables are set in Supabase Edge Functions',
                     debug: {
                         cloudName: !!cloudName,
-                        apiKey: !!apiKey,
-                        apiSecret: !!apiSecret,
                         uploadPreset: !!uploadPreset
                     }
                 }),
