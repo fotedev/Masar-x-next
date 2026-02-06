@@ -14,21 +14,21 @@ CREATE TABLE IF NOT EXISTS system_logs (
 ALTER TABLE system_logs ENABLE ROW LEVEL SECURITY;
 
 -- Allow authenticated users to insert logs
-DROP POLICY IF EXISTS "Authenticated can insert logs";
+DROP POLICY IF EXISTS "Authenticated can insert logs" ON system_logs;
 CREATE POLICY "Authenticated can insert logs"
 ON system_logs
 FOR INSERT TO authenticated
 WITH CHECK (true);
 
 -- Allow only admins to select logs
-DROP POLICY IF EXISTS "Admins can view logs";
+DROP POLICY IF EXISTS "Admins can view logs" ON system_logs;
 CREATE POLICY "Admins can view logs"
 ON system_logs
 FOR SELECT TO authenticated
 USING (EXISTS (SELECT 1 FROM admins a WHERE a.user_id = auth.uid()));
 
 -- Allow service role full access
-DROP POLICY IF EXISTS "Service role full access";
+DROP POLICY IF EXISTS "Service role full access" ON system_logs;
 CREATE POLICY "Service role full access"
 ON system_logs
 FOR ALL TO service_role
