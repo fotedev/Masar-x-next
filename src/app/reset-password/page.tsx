@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
@@ -234,5 +234,13 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="max-w-md mx-auto" />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
