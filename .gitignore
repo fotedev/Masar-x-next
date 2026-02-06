@@ -169,4 +169,4 @@ notebooklm_extractor.js
 # Test scripts (contain sensitive testing logic)
 test-*.js
 check-*.js
-
+system_prmpt.txt

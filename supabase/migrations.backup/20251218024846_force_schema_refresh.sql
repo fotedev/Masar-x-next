@@ -1,0 +1,2 @@
+-- Force schema cache refresh
+-- This migration ensures all table schemas are properly cached

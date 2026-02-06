@@ -47,56 +47,82 @@ export const uploadToCloudinary = async (
   if (session) {
     console.log('✅ Session found for user:', session.user?.email)
   } else {
-    console.log('ℹ️ No active session found - proceeding as guest')
+    console.log('ℹ️ No active session found')
   }
 
-  // For guest uploads, use direct fetch to avoid automatic auth header injection
-  let uploadPromise: Promise<any>
+  // Allow guest uploads if no session/access token is present.
+  const accessToken = session?.access_token || null
 
-  if (session?.access_token) {
-    // Authenticated upload using Supabase client
-    uploadPromise = supabase.functions.invoke('upload-file', {
-      body: {
-        file: base64,
-        fileName: file.name,
-        contentType: file.type,
-        folder: options.folder || 'masarx-uploads',
-        resourceType: options.resourceType || 'auto',
-      }
-    })
-  } else {
-    // Guest upload using direct fetch
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    uploadPromise = fetch(`${supabaseUrl}/functions/v1/upload-file`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': anonKey!,
-      },
-      body: JSON.stringify({
-        file: base64,
-        fileName: file.name,
-        contentType: file.type,
-        folder: options.folder || 'masarx-uploads',
-        resourceType: options.resourceType || 'auto',
-      })
-    }).then(async (response) => {
-      const data = await response.json()
-      if (!response.ok) {
-        return { data: null, error: { message: data.error || 'Upload failed' } }
-      }
-      return { data, error: null }
-    })
+  if (!supabaseUrl || !anonKey) {
+    throw new Error('Missing Supabase environment variables')
   }
 
-  // Add timeout for large files (5 minutes)
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Upload timeout - file too large or slow connection')), 300000)
+  const body = {
+    file: base64,
+    fileName: file.name,
+    contentType: file.type,
+    folder: options.folder || 'masarx-uploads',
+    resourceType: options.resourceType || 'auto',
+  }
+
+  const { data, error } = await new Promise<{ data: any; error: any }>((resolve) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${supabaseUrl}/functions/v1/upload-file`)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.setRequestHeader('apikey', anonKey)
+    // If the user is authenticated, include Authorization header. Guests will rely on the anon key.
+    if (accessToken) {
+      xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
+    }
+    xhr.timeout = 300000
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) {
+        onProgress?.(50, 'جاري رفع الملف...')
+        return
+      }
+
+      const rawPct = (event.loaded / event.total) * 100
+      const overallPct = 30 + (rawPct * 0.7)
+      onProgress?.(Math.min(99, overallPct), 'جاري رفع الملف...')
+    }
+
+    xhr.onload = () => {
+      const text = xhr.responseText || ''
+      let parsed: any = null
+      try {
+        parsed = text ? JSON.parse(text) : null
+      } catch {
+        parsed = { error: text || 'Invalid JSON response' }
+      }
+
+      if (xhr.status < 200 || xhr.status >= 300) {
+        resolve({
+          data: null,
+          error: {
+            message: parsed?.message || parsed?.error || `Upload failed (${xhr.status})`,
+            details: parsed,
+          },
+        })
+        return
+      }
+
+      resolve({ data: parsed, error: null })
+    }
+
+    xhr.onerror = () => {
+      resolve({ data: null, error: { message: 'Upload failed: Network error' } })
+    }
+
+    xhr.ontimeout = () => {
+      resolve({ data: null, error: { message: 'Upload timeout - file too large or slow connection' } })
+    }
+
+    xhr.send(JSON.stringify(body))
   })
-
-  const { data, error } = await Promise.race([uploadPromise, timeoutPromise]) as any
 
   if (error) {
     throw new Error(`Upload failed: ${error.message}`)
