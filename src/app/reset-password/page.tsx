@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabase";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -59,24 +60,22 @@ function ResetPasswordContent() {
       }
 
       // Call the Edge Function to validate token and reset password
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/reset-password`,
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "reset-password",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+          body: {
             token: resetToken,
             newPassword: newPassword,
-          }),
+          },
         }
       );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "فشل في تحديث كلمة المرور");
+  
+      if (invokeError) {
+        throw new Error(invokeError.message || "فشل في تحديث كلمة المرور");
+      }
+  
+      if (data?.error) {
+        throw new Error(data.error || "فشل في تحديث كلمة المرور");
       }
 
       setSuccess(
