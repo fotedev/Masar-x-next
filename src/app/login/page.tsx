@@ -5,6 +5,7 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAnalytics } from "../../hooks/useAnalytics";
+import { supabase } from "../../lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -138,24 +139,21 @@ export default function LoginPage() {
     setError("");
     setResetMessage("");
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/request-password-reset`,
+      const { data, error: invokeError } = await supabase.functions.invoke(
+        "request-password-reset",
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({ email })
+          body: { email },
         }
       );
-      
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || "فشل في إرسال إيميل إعادة التعيين");
+  
+      if (invokeError) {
+        throw new Error(invokeError.message || "Request failed");
       }
-      
+  
+      if (data?.error) {
+        throw new Error(data.error || "Request failed");
+      }
+
       setSuccess("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.");
       trackEvent("password_reset_requested", { method: "brevo" });
     } catch (err) {

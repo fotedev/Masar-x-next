@@ -1,4 +1,5 @@
 # Complete Setup Instructions for Masar X
+*آخر تحديث: 06 فبراير 2026*
 
 This guide will walk you through setting up the "Masar X" comprehensive learning platform from scratch.
 
@@ -86,6 +87,24 @@ npx supabase db remote commit
 npx supabase db pull
 ```
 
+### Security & Ops updates (Feb 2026)
+- أُجريت تحديثات أمنيّة وتشغيلية هامة — تأكد من تطبيقها في بيئتك:
+  1. شغّل جميع الميجرِيشنز الجديدة (محلياً أو عن بُعد) للتأكد من وجود: قيد فريد على `rate_limits(identifier, endpoint)`, جدول `system_logs`, وعمود `token_hash` في `password_reset_tokens`.
+  2. تأكد أن سياسة رفع الملفات لـ`summaries-pdfs` لم تعد تسمح بالرفع المجهول (فقط المستخدمون المصادقون).
+  3. أعد نشر جميع Supabase Edge Functions بعد تطبيق الميجرِيشنز:
+     ```bash
+     npx supabase functions deploy gemini-chat
+     npx supabase functions deploy upload-avatar
+     npx supabase functions deploy delete-avatar
+     npx supabase functions deploy upload-file
+     npx supabase functions deploy delete-file
+     npx supabase functions deploy auth-hook-email
+     npx supabase functions deploy cloudinary-webhook
+     npx supabase functions deploy request-password-reset
+     npx supabase functions deploy reset-password
+     npx supabase functions deploy summarize-chat
+     ```
+  4. اختبر سير عمل إعادة تعيين كلمة المرور والتأكد من أن `token_hash` يُستخدم بشكل صحيح قبل إزالة أي تخزين نصي للـtoken.
 #### Database Schema Overview:
 - **Core Tables**: `profiles`, `admins`, `summaries`, `courses`, `enrollments`, `quizzes`
 - **Content Tables**: `course_summaries`, `course_videos`, `course_files`

@@ -12,6 +12,11 @@ const almarai = Almarai({ subsets: ["arabic"], weight: ['300', '400', '700', '80
 export const metadata: Metadata = {
   title: "Masar X - Study Summaries Platform",
   description: "Your path to academic excellence with study summaries and quizzes.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
