@@ -17,6 +17,13 @@ export function PWAInstallPrompt() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
+      // Don't show on reset-password page or if dismissed
+      if (
+        window.location.pathname.includes("reset-password") ||
+        localStorage.getItem("pwa-install-dismissed") === "true"
+      ) {
+        return;
+      }
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowPrompt(true);
