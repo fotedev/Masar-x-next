@@ -1,0 +1,11 @@
+# Supabase Edge Functions Configuration
+# See: https://supabase.com/docs/guides/functions/config
+
+# Disable JWT verification for password reset functions
+# These functions are called by unauthenticated users
+
+[functions.reset-password]
+verify_jwt = false
+
+[functions.request-password-reset]
+verify_jwt = false
