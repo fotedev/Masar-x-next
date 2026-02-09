@@ -1,15 +1,17 @@
 // Service Worker للتعامل مع الإشعارات وPWA
+// Updated for Next.js App Router
+
+const CACHE_NAME = 'masarx-v3';
 
 // تثبيت Service Worker
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing.');
   event.waitUntil(
-    caches.open('masarx-v2').then((cache) => {
+    caches.open(CACHE_NAME).then((cache) => {
       // Use addAll with only essential files that should exist
       // Handle failures gracefully - don't block SW installation
       const essentialFiles = [
         '/',
-        '/index.html',
         '/manifest.json',
         '/logo.png'
       ];
@@ -35,7 +37,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== 'masarx-v2') {
+          if (cacheName !== CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -78,10 +80,13 @@ self.addEventListener('fetch', (event) => {
             // Cache successful responses
             if (networkResponse && networkResponse.ok) {
               const responseClone = networkResponse.clone();
-              caches.open('masarx-v2').then((cache) => {
-                cache.put(event.request, responseClone).catch(() => {
-                  // Ignore cache put failures
-                });
+              caches.open(CACHE_NAME).then((cache) => {
+                // Don't cache if not http/https (e.g. chrome-extension)
+                if (url.protocol.startsWith('http')) {
+                  cache.put(event.request, responseClone).catch(() => {
+                    // Ignore cache put failures
+                  });
+                }
               }).catch(() => {
                 // Ignore cache open failures
               });
@@ -229,3 +234,4 @@ async function sendBackgroundNotification() {
     console.error('Background notification failed:', error);
   }
 }
+
