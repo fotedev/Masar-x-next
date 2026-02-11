@@ -6,8 +6,16 @@ type PlatformSettings = {
 };
 
 export function usePlatformSettings() {
+  const getInitialSemester = () => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('activeSemester');
+      return saved ? Number(saved) : 1;
+    }
+    return 1;
+  };
+
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<PlatformSettings>({ active_semester: 1 });
+  const [settings, setSettings] = useState<PlatformSettings>({ active_semester: getInitialSemester() });
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -26,9 +34,16 @@ export function usePlatformSettings() {
 
       if (data && data.value) {
         const v = data.value as any;
-        setSettings({ active_semester: Number(v.semester || 1) });
+        const newSemester = Number(v.semester || 1);
+        setSettings({ active_semester: newSemester });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('activeSemester', newSemester.toString());
+        }
       } else {
         setSettings({ active_semester: 1 });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('activeSemester', '1');
+        }
       }
     } catch (err) {
       console.error("Error fetching platform settings:", err);
@@ -47,6 +62,9 @@ export function usePlatformSettings() {
 
       if (error) throw error;
       setSettings({ active_semester: semester });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('activeSemester', semester.toString());
+      }
       return true;
     } catch (err) {
       console.error("Error updating active semester:", err);
