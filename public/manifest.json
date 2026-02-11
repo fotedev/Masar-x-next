@@ -30,9 +30,9 @@
   ],
   "shortcuts": [
     {
-      "name": "الملخصات الجديدة",
-      "short_name": "ملخصات",
-      "description": "عرض الملخصات الجديدة",
+      "name": "المسارات الجديدة",
+      "short_name": "مسارات",
+      "description": "عرض المسارات الجديدة",
       "url": "/?tab=summaries",
       "icons": [
         {

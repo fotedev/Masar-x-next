@@ -2,15 +2,18 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { Subject } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
+import { usePlatformSettings } from "./usePlatformSettings";
 
 export function useSubjects() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
+    const { activeSemester } = usePlatformSettings();
 
     const fetchSubjects = useCallback(async (skipCache = false) => {
         try {
             setLoading(true);
-            const cacheKey = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
+            const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
+            const cacheKey = `${cacheKeyBase}:sem:${activeSemester}`;
 
             // Check cache first
             if (!skipCache && queryCache.get) {
@@ -29,19 +32,27 @@ export function useSubjects() {
 
             if (error) throw error;
 
-            const subjectData = data || [];
-            setSubjects(subjectData);
+            const subjectData: any[] = data || [];
+
+            // Filter by semester if present on subjects or platform setting
+            const filtered = subjectData.filter((s) => {
+                // If subject has semester column, match it. If not present, include it.
+                if (s.semester === undefined || s.semester === null) return true;
+                return Number(s.semester) === Number(activeSemester || 1);
+            });
+
+            setSubjects(filtered);
 
             // Cache the result
             if (queryCache.set) {
-                queryCache.set(cacheKey, subjectData, cacheTTL.subjects || 3600);
+                queryCache.set(cacheKey, filtered, cacheTTL.subjects || 3600);
             }
         } catch (error) {
             console.error("Error fetching subjects:", error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeSemester]);
 
     const updateSubjectVisibility = async (id: string, showOnHome: boolean) => {
         try {
@@ -56,7 +67,8 @@ export function useSubjects() {
             setSubjects(prev => prev.map(s => s.id === id ? { ...s, show_on_home: showOnHome } : s));
 
             // Invalidate cache
-            const cacheKey = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
+            const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
+            const cacheKey = `${cacheKeyBase}:sem:${activeSemester}`;
             if (queryCache.delete) {
                 queryCache.delete(cacheKey);
             }
@@ -68,7 +80,7 @@ export function useSubjects() {
 
     useEffect(() => {
         fetchSubjects();
-    }, [fetchSubjects]);
+    }, [fetchSubjects, activeSemester]);
 
     return {
         subjects,

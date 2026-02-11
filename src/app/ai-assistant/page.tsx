@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -89,7 +89,7 @@ function AiAssistantChatPage() {
           (msg: { timestamp: string; [key: string]: unknown }) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
-          })
+          }),
         );
         setMessages(messagesWithDates);
       } catch (error: unknown) {
@@ -102,13 +102,13 @@ function AiAssistantChatPage() {
   useEffect(() => {
     const loadMessageCount = async () => {
       setLoadingMessageCount(true);
-      
+
       if (user) {
         // For registered users: count from database
         try {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
+
           const { count, error } = await supabase
             .from("assistant_messages")
             .select("*", { count: "exact", head: true })
@@ -139,7 +139,7 @@ function AiAssistantChatPage() {
           console.error("Error loading guest message count:", error);
         }
       }
-      
+
       setLoadingMessageCount(false);
     };
 
@@ -206,7 +206,13 @@ function AiAssistantChatPage() {
   }, [dataLoaded, stats.totalChunks]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || hasReachedLimit || loadingMessageCount) return;
+    if (
+      !inputMessage.trim() ||
+      isLoading ||
+      hasReachedLimit ||
+      loadingMessageCount
+    )
+      return;
 
     const startTime = Date.now();
 
@@ -220,23 +226,26 @@ function AiAssistantChatPage() {
     setMessages((prev: ChatMessage[]) => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
-    
+
     // Update daily message count (optimistic update)
     const newCount = dailyMessageCount + 1;
     setDailyMessageCount(newCount);
-    
+
     // For guests only: save to localStorage
     if (!user) {
       try {
-        localStorage.setItem(GUEST_COUNT_KEY, JSON.stringify({
-          count: newCount,
-          date: new Date().toDateString()
-        }));
+        localStorage.setItem(
+          GUEST_COUNT_KEY,
+          JSON.stringify({
+            count: newCount,
+            date: new Date().toDateString(),
+          }),
+        );
       } catch (error) {
         console.error("Error saving guest message count:", error);
       }
     }
-    
+
     trackEvent("ai_question_asked", { length: userMessage.content.length });
 
     try {
@@ -315,8 +324,14 @@ function AiAssistantChatPage() {
         // Parse JSON directly
         try {
           quizData = JSON.parse(quizTextInput);
-          if (!quizData.title || !quizData.questions || !Array.isArray(quizData.questions)) {
-            throw new Error("صيغة JSON غير صحيحة. يجب أن يحتوي على title و questions.");
+          if (
+            !quizData.title ||
+            !quizData.questions ||
+            !Array.isArray(quizData.questions)
+          ) {
+            throw new Error(
+              "صيغة JSON غير صحيحة. يجب أن يحتوي على title و questions.",
+            );
           }
         } catch (parseError) {
           alert("خطأ في صيغة JSON. تأكد من صحة البيانات.");
@@ -333,7 +348,8 @@ function AiAssistantChatPage() {
         .from("quizzes")
         .insert({
           title: quizData.title,
-          description: quizData.description || "اختبار مُولّد بالذكاء الاصطناعي",
+          description:
+            quizData.description || "اختبار مُولّد بالذكاء الاصطناعي",
           user_id: user?.id || null,
           source_type: "ai_generated",
           subject: "AI Generated",
@@ -347,14 +363,16 @@ function AiAssistantChatPage() {
 
       // Save quiz questions
       if (quizData.questions && quizData.questions.length > 0) {
-        const questionsToInsert = quizData.questions.map((q: any, index: number) => ({
-          quiz_id: quiz.id,
-          question: q.question,
-          options: q.options,
-          correct_answer: q.correctAnswer,
-          explanation: q.explanation || null,
-          order_index: index,
-        }));
+        const questionsToInsert = quizData.questions.map(
+          (q: any, index: number) => ({
+            quiz_id: quiz.id,
+            question: q.question,
+            options: q.options,
+            correct_answer: q.correctAnswer,
+            explanation: q.explanation || null,
+            order_index: index,
+          }),
+        );
 
         const { error: questionsError } = await supabase
           .from("quiz_questions")
@@ -388,7 +406,7 @@ function AiAssistantChatPage() {
     if (!apiKeyInput.trim()) return;
 
     try {
-      localStorage.setItem('user_gemini_api_key', apiKeyInput.trim());
+      localStorage.setItem("user_gemini_api_key", apiKeyInput.trim());
       setShowApiKeyModal(false);
       setApiKeyInput("");
       alert("تم حفظ مفتاح API بنجاح! سيتم استخدامه الآن للمحادثة.");
@@ -399,7 +417,7 @@ function AiAssistantChatPage() {
   };
 
   const handleRemoveApiKey = () => {
-    localStorage.removeItem('user_gemini_api_key');
+    localStorage.removeItem("user_gemini_api_key");
     alert("تم إزالة مفتاح API المخصص. سيتم العودة لاستخدام المفتاح الافتراضي.");
     trackEvent("ai_custom_api_key_removed");
   };
@@ -469,7 +487,7 @@ function AiAssistantChatPage() {
 
       {/* Chat Messages */}
       <div className="flex-1 modern-card mb-4 overflow-hidden flex flex-col">
-        <div 
+        <div
           ref={messagesContainerRef}
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar"
@@ -592,13 +610,13 @@ function AiAssistantChatPage() {
                     {user ? "انتهت رسائلك اليومية" : "انتهت رسائلك المجانية"}
                   </h4>
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    {user 
+                    {user
                       ? "لقد استخدمت جميع رسائلك الـ 5 لهذا اليوم. ستتجدد رسائلك غداً تلقائياً."
                       : "يمكنك إرسال رسالتين فقط كزائر. سجّل حساباً للحصول على 5 رسائل يومياً!"}
                   </p>
                   {!user && (
                     <button
-                      onClick={() => window.location.href = '/signup'}
+                      onClick={() => (window.location.href = "/signup")}
                       className="mt-2 text-sm font-bold text-brand-blue hover:underline"
                     >
                       إنشاء حساب مجاني →
@@ -613,11 +631,17 @@ function AiAssistantChatPage() {
           {!hasReachedLimit && (
             <div className="mb-2 flex justify-between items-center">
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                الرسائل المتبقية: <span className={`font-bold ${remainingMessages <= 1 ? 'text-amber-500' : 'text-brand-blue'}`}>{remainingMessages}</span> من {messageLimit}
+                الرسائل المتبقية:{" "}
+                <span
+                  className={`font-bold ${remainingMessages <= 1 ? "text-amber-500" : "text-brand-blue"}`}
+                >
+                  {remainingMessages}
+                </span>{" "}
+                من {messageLimit}
               </span>
               {!user && (
                 <button
-                  onClick={() => window.location.href = '/signup'}
+                  onClick={() => (window.location.href = "/signup")}
                   className="text-xs font-bold text-brand-blue hover:underline"
                 >
                   سجّل للحصول على المزيد
@@ -652,9 +676,13 @@ function AiAssistantChatPage() {
                   }
                 }}
                 placeholder={
-                  hasReachedLimit 
-                    ? (user ? "انتظر حتى الغد لإرسال رسائل جديدة" : "سجّل حساباً للحصول على رسائل إضافية")
-                    : hasChatData ? "اسألني أي شيء..." : "جاري تحميل البيانات..."
+                  hasReachedLimit
+                    ? user
+                      ? "انتظر حتى الغد لإرسال رسائل جديدة"
+                      : "سجّل حساباً للحصول على رسائل إضافية"
+                    : hasChatData
+                      ? "اسألني أي شيء..."
+                      : "جاري تحميل البيانات..."
                 }
                 disabled={!hasChatData || hasReachedLimit}
                 rows={1}
@@ -662,9 +690,17 @@ function AiAssistantChatPage() {
               />
               <button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading || !hasChatData || hasReachedLimit}
+                disabled={
+                  !inputMessage.trim() ||
+                  isLoading ||
+                  !hasChatData ||
+                  hasReachedLimit
+                }
                 className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${
-                  !inputMessage.trim() || isLoading || !hasChatData || hasReachedLimit
+                  !inputMessage.trim() ||
+                  isLoading ||
+                  !hasChatData ||
+                  hasReachedLimit
                     ? "text-slate-300"
                     : "text-brand-blue hover:bg-brand-blue/10"
                 }`}
@@ -722,12 +758,18 @@ function AiAssistantChatPage() {
             {/* Instructions */}
             <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm text-slate-600 dark:text-slate-400">
               {quizInputMode === "text" ? (
-                <p>أدخل النص الذي تريد إنشاء اختبار منه. سيقوم الذكاء الاصطناعي بتحليل النص وتوليد أسئلة تلقائياً.</p>
+                <p>
+                  أدخل النص الذي تريد إنشاء اختبار منه. سيقوم الذكاء الاصطناعي
+                  بتحليل النص وتوليد أسئلة تلقائياً.
+                </p>
               ) : (
                 <div>
                   <p className="mb-2">أدخل بيانات الاختبار بصيغة JSON. مثال:</p>
-                  <pre className="text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded overflow-x-auto" dir="ltr">
-{`{
+                  <pre
+                    className="text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded overflow-x-auto"
+                    dir="ltr"
+                  >
+                    {`{
   "title": "عنوان الاختبار",
   "questions": [
     {
@@ -747,7 +789,11 @@ function AiAssistantChatPage() {
             <textarea
               value={quizTextInput}
               onChange={(e) => setQuizTextInput(e.target.value)}
-              placeholder={quizInputMode === "text" ? "الصق النص هنا..." : "الصق JSON هنا..."}
+              placeholder={
+                quizInputMode === "text"
+                  ? "الصق النص هنا..."
+                  : "الصق JSON هنا..."
+              }
               rows={10}
               className="w-full p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all resize-none text-slate-900 dark:text-white custom-scrollbar mb-4"
               dir={quizInputMode === "json" ? "ltr" : "rtl"}
@@ -767,7 +813,11 @@ function AiAssistantChatPage() {
               ) : (
                 <>
                   <Brain className="w-5 h-5" />
-                  <span>{quizInputMode === "text" ? "توليد اختبار بالذكاء الاصطناعي" : "إنشاء اختبار من JSON"}</span>
+                  <span>
+                    {quizInputMode === "text"
+                      ? "توليد اختبار بالذكاء الاصطناعي"
+                      : "إنشاء اختبار من JSON"}
+                  </span>
                 </>
               )}
             </button>

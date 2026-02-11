@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -94,7 +94,7 @@ export default function AddSummaryPage() {
                   images: overallProgress,
                 }));
                 setUploadStage(
-                  `رفع الصورة ${i + 1}/${imageFiles.length}: ${stage}`
+                  `رفع الصورة ${i + 1}/${imageFiles.length}: ${stage}`,
                 );
               },
             });
@@ -116,7 +116,7 @@ export default function AddSummaryPage() {
         content:
           uploadedImageUrls.length > 0
             ? `${formData.content}\n\n[IMAGES:${JSON.stringify(
-                uploadedImageUrls
+                uploadedImageUrls,
               )}]`
             : formData.content,
         contributor_name: displayName || null,
@@ -142,7 +142,7 @@ export default function AddSummaryPage() {
         `تم إرسال ملخص "${formData.title}" بواسطة ${displayName || "مجهول"}`,
         "admin_submission",
         insertedData.id,
-        "summary"
+        "summary",
       );
 
       setSuccess(true);
@@ -463,7 +463,7 @@ export default function AddSummaryPage() {
 
                 if (validImages.length !== files.length) {
                   setError(
-                    "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)"
+                    "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)",
                   );
                 } else {
                   setError("");
@@ -533,8 +533,8 @@ export default function AddSummaryPage() {
                     {Math.round(
                       Object.values(uploadProgress).reduce(
                         (a, b) => Math.max(a, b),
-                        0
-                      )
+                        0,
+                      ),
                     )}
                     %
                   </span>
@@ -547,7 +547,7 @@ export default function AddSummaryPage() {
                     style={{
                       width: `${Object.values(uploadProgress).reduce(
                         (a, b) => Math.max(a, b),
-                        0
+                        0,
                       )}%`,
                     }}
                   ></div>

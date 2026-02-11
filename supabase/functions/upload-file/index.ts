@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
 
             const token = authHeader.replace('Bearer ', '')
             const { data: { user: authUser } } = await supabaseClient.auth.getUser(token)
-            
+
             if (authUser) {
                 user = authUser
                 userId = authUser.id
@@ -157,10 +157,6 @@ Deno.serve(async (req: Request) => {
         formData.append('file', blob, fileName)
         formData.append('upload_preset', uploadPreset)
         formData.append('folder', folder)
-        formData.append('resource_type', resourceType)
-        // Make files publicly accessible
-        formData.append('access_mode', 'public')
-        formData.append('type', 'upload')
         // Use a unique public_id to avoid collisions
         const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
         formData.append('public_id', `${userId}_${Date.now()}_${sanitizedFileName}`)

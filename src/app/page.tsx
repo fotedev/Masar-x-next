@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { FileText, Calendar, BookOpen, Star } from "lucide-react";
@@ -15,8 +15,11 @@ export default function HomePage() {
   const { summaries, editSummary, loading: summariesLoading } = useSummaries();
   const { subjects, loading: subjectsLoading } = useSubjects();
   const { trackSummaryClick } = useAnalytics();
-  const [displaySummaries, setDisplaySummaries] = useState<SummaryWithRatings[]>([]);
-  const [editingSummary, setEditingSummary] = useState<SummaryWithRatings | null>(null);
+  const [displaySummaries, setDisplaySummaries] = useState<
+    SummaryWithRatings[]
+  >([]);
+  const [editingSummary, setEditingSummary] =
+    useState<SummaryWithRatings | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const router = useRouter();
 
@@ -35,7 +38,7 @@ export default function HomePage() {
       .map((s) => s.name);
 
     const approvedSummaries = summaries.filter(
-      (s) => s.status === "approved" && visibleSubjectNames.includes(s.subject)
+      (s) => s.status === "approved" && visibleSubjectNames.includes(s.subject),
     );
     setDisplaySummaries(approvedSummaries);
   }, [summaries, subjects]);
@@ -63,7 +66,7 @@ export default function HomePage() {
             onClick={() => onNavigate("subjects")}
             className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
           >
-            عرض المواد 
+            عرض المواد
             <span className="text-lg">←</span>
           </button>
         </div>
@@ -72,7 +75,7 @@ export default function HomePage() {
           <div className="modern-card p-12 text-center loading-placeholder">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              جاري تحميل الملخصات...
+              جاري التحميل ...
             </p>
           </div>
         ) : displaySummaries.length === 0 ? (
