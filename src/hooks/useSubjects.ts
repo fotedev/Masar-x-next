@@ -7,7 +7,7 @@ import { usePlatformSettings } from "./usePlatformSettings";
 export function useSubjects() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
-    const { activeSemester } = usePlatformSettings();
+    const { activeSemester, loading: semesterLoading } = usePlatformSettings();
 
     const fetchSubjects = useCallback(async (skipCache = false) => {
         try {
@@ -79,8 +79,10 @@ export function useSubjects() {
     };
 
     useEffect(() => {
-        fetchSubjects();
-    }, [fetchSubjects, activeSemester]);
+        if (!semesterLoading) {
+            fetchSubjects();
+        }
+    }, [semesterLoading, fetchSubjects]);
 
     return {
         subjects,

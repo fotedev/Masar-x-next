@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   ReactNode,
   useCallback,
 } from "react";
@@ -34,9 +35,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Lazy-initialize isAdmin from localStorage for instant load on refresh
+  const [isAdmin, setIsAdmin] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('admin_status_'));
+      if (keys.length > 0) {
+        const cached = JSON.parse(localStorage.getItem(keys[0])!);
+        if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
+          return cached.isAdmin;
+        }
+      }
+    } catch { /* ignore */ }
+    return false;
+  });
   const [isAdminLoading, setIsAdminLoading] = useState(false);
-  const [adminRole, setAdminRole] = useState<"doctor" | "student" | null>(null);
+  // Lazy-initialize adminRole from localStorage
+  const [adminRole, setAdminRole] = useState<"doctor" | "student" | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('admin_status_'));
+      if (keys.length > 0) {
+        const cached = JSON.parse(localStorage.getItem(keys[0])!);
+        if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
+          return cached.role || null;
+        }
+      }
+    } catch { /* ignore */ }
+    return null;
+  });
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -50,10 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
     );
   }, []);
 
-  // Cache for admin status to avoid repeated checks
-  const [adminCache, setAdminCache] = useState<{ [userId: string]: { isAdmin: boolean, role: "doctor" | "student" | null } }>(
-    {}
-  );
+  // Cache for admin status using ref to avoid re-creating verifyAdminStatus on updates
+  const adminCacheRef = useRef<{ [userId: string]: { isAdmin: boolean, role: "doctor" | "student" | null } }>({});
 
   // Centralized function to verify admin status with caching
   const verifyAdminStatus = useCallback(
@@ -79,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       const isAdminInMetadata = checkRole(userMetadataRole) || checkRole(appMetadataRole);
 
       // Check memory cache first for instant response
-      if (!forceRefresh && adminCache[u.id] !== undefined) {
-        const cached = adminCache[u.id];
+      if (!forceRefresh && adminCacheRef.current[u.id] !== undefined) {
+        const cached = adminCacheRef.current[u.id];
         // If metadata says admin but cache says not, ignore cache and proceed to check
         if (isAdminInMetadata && !cached.isAdmin) {
           console.log("AuthContext: Metadata says admin but memory cache says no, proceeding to verify");
@@ -103,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
               if (isAdminInMetadata && !cachedIsAdmin) {
                 console.log("AuthContext: Metadata says admin but cache says no, forcing refresh");
               } else {
-                setAdminCache((prev) => ({ ...prev, [u.id]: { isAdmin: cachedIsAdmin, role: cachedRole } }));
+                adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: cachedIsAdmin, role: cachedRole } };
                 setIsAdmin(cachedIsAdmin);
                 setAdminRole(cachedRole);
                 setIsAdminLoading(false);
@@ -145,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         setAdminRole(role);
 
         // Cache the result
-        setAdminCache((prev) => ({ ...prev, [u.id]: { isAdmin: isDbAdmin, role } }));
+        adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: isDbAdmin, role } };
         localStorage.setItem(
           cacheKey,
           JSON.stringify({
@@ -164,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           setAdminRole(null);
         }
         // Cache false result for 5 minutes to avoid repeated failed requests
-        setAdminCache((prev) => ({ ...prev, [u.id]: { isAdmin: false, role: null } }));
+        adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: false, role: null } };
         localStorage.setItem(
           cacheKey,
           JSON.stringify({
@@ -178,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         setIsAdminLoading(false);
       }
     },
-    [adminCache]
+    [] // eslint-disable-line react-hooks/exhaustive-deps -- uses ref, stable reference
   );
 
   // Public function to force refresh admin status

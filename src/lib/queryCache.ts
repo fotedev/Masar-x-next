@@ -100,6 +100,8 @@ export const cacheKeys = {
     appeals: () => 'appeals_all',
     profile: (userId: string) => `profile_${userId}`,
     subjects: () => 'subjects_all',
+    videos: () => 'videos_all',
+    files: () => 'files_all',
 };
 
 // Default TTL values (in milliseconds)
@@ -110,4 +112,6 @@ export const cacheTTL = {
     appeals: 60 * 1000,        // 1 minute
     profile: 5 * 60 * 1000,    // 5 minutes
     subjects: 60 * 60 * 1000,  // 1 hour
+    videos: 60 * 1000,         // 1 minute
+    files: 60 * 1000,          // 1 minute
 };

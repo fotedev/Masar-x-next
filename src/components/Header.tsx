@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Plus,
   Shield,
   LogOut,
   Sun,
@@ -50,7 +49,7 @@ export const Header = React.memo(function Header() {
           {/* Logo/Brand */}
           <button
             onClick={() => handleNavigate("home")}
-            className="flex items-center text-slate-900 dark:text-white hover:opacity-80 transition-opacity min-w-0"
+            className="flex items-center text-slate-900 dark:text-white hover:opacity-80 transition-opacity flex-shrink-0"
           >
             <img
               src="/logo.png"
@@ -132,18 +131,6 @@ export const Header = React.memo(function Header() {
               >
                 <MessageSquare className="w-4 h-4" />
                 AI assistant
-              </button>
-
-              <button
-                onClick={() => handleNavigate("add-summary")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  currentPage === "add-summary"
-                    ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Plus className="w-4 h-4" />
-                إضافة ملخص
               </button>
 
               {user ? (
