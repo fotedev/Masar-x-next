@@ -1,6 +1,12 @@
 # Masar X - Comprehensive Learning Platform
 
-Last updated: 06 February 2026
+Last updated: 09 February 2026
+
+## Recent edits (09 Feb 2026)
+- Multiple UI pages under `src/app/` updated (subjects, courses, quizzes, admin dashboard, AI assistant)
+- Supabase migrations/backups added and security fixes applied
+- Public manifest and PWA config adjusted
+ 
 
 A modern, feature-rich educational platform for university students featuring study summaries, interactive courses, quizzes, AI-powered assistance, and comprehensive learning management tools.
 

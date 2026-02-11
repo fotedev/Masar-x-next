@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -116,7 +116,9 @@ export default function CourseDetailPage() {
 
   // Content management state
   const [showSummaryModal, setShowSummaryModal] = useState(false);
-  const [editingSummary, setEditingSummary] = useState<CourseSummary | null>(null);
+  const [editingSummary, setEditingSummary] = useState<CourseSummary | null>(
+    null,
+  );
   const [summaryTitle, setSummaryTitle] = useState("");
   const [summaryContent, setSummaryContent] = useState("");
 
@@ -161,7 +163,7 @@ export default function CourseDetailPage() {
           profiles:instructor_id (
             display_name
           )
-        `
+        `,
         )
         .eq("id", courseId);
 
@@ -209,7 +211,7 @@ export default function CourseDetailPage() {
             reviewsData.map((review) => ({
               ...review,
               student_name: review.full_name || review.username || "طالب",
-            }))
+            })),
           );
         }
 
@@ -337,7 +339,9 @@ export default function CourseDetailPage() {
         course_id: course.id,
         title: summaryTitle.trim(),
         content: summaryContent.trim(),
-        order_index: editingSummary ? editingSummary.order_index : summaries.length,
+        order_index: editingSummary
+          ? editingSummary.order_index
+          : summaries.length,
       };
 
       if (editingSummary) {
@@ -530,9 +534,7 @@ export default function CourseDetailPage() {
         if (error) throw error;
         toast.success("تم تحديث الملف بنجاح!");
       } else {
-        const { error } = await supabase
-          .from("course_files")
-          .insert(fileData);
+        const { error } = await supabase.from("course_files").insert(fileData);
 
         if (error) throw error;
         toast.success("تم إضافة الملف بنجاح!");
@@ -591,8 +593,6 @@ export default function CourseDetailPage() {
     if (!enrollment) return "not_enrolled";
     return enrollment.status;
   };
-
-
 
   const renderStatusBadge = () => {
     const status = getEnrollmentStatus();
@@ -776,156 +776,158 @@ export default function CourseDetailPage() {
 
       {/* Course Content Sections */}
       <React.Fragment>
-          {/* Summaries Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <FileText className="w-5 h-5 ml-2 text-blue-600" />
-                  ملخصات الكورس
-                </div>
-                {isInstructor() && (
-                  <Button
-                    size="sm"
-                    onClick={() => openSummaryModal()}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    إضافة ملخص
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {getEnrollmentStatus() !== "active" ? (
-                <div className="text-center py-8">
-                  <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    محتوى الملخصات متاح فقط للطلاب المسجلين في الكورس
-                  </p>
-                  {user ? (
-                    getEnrollmentStatus() === "pending" ? (
-                      <Badge className="bg-yellow-100 text-yellow-800">
-                        <Clock className="w-3 h-3 ml-1" />
-                        طلب التسجيل قيد المراجعة
-                      </Badge>
-                    ) : (
-                      <Button onClick={() => setShowSubscribeModal(true)}>
-                        التسجيل في الكورس
-                      </Button>
-                    )
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                    </p>
-                  )}
-                </div>
-              ) : summaries.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  لا توجد ملخصات متاحة لهذا الكورس بعد
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {summaries.map((summary) => (
-                    <div
-                      key={summary.id}
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {summary.title}
-                        </h4>
-                        {isInstructor() && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openSummaryModal(summary)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteSummary(summary.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <div
-                        className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: summary.content }}
-                      />
-                    </div>
-                  ))}
-                </div>
+        {/* Summaries Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <FileText className="w-5 h-5 ml-2 text-blue-600" />
+                ملخصات الكورس
+              </div>
+              {isInstructor() && (
+                <Button
+                  size="sm"
+                  onClick={() => openSummaryModal()}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  إضافة ملخص
+                </Button>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Videos Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Video className="w-5 h-5 ml-2 text-red-600" />
-                  فيدوهات الكورس
-                </div>
-                {isInstructor() && (
-                  <Button
-                    size="sm"
-                    onClick={() => openVideoModal()}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    إضافة فيديو
-                  </Button>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {getEnrollmentStatus() !== "active" ? (
-                <div className="text-center py-8">
-                  <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    محتوى الفيديوهات متاح فقط للطلاب المسجلين في الكورس
-                  </p>
-                  {user ? (
-                    getEnrollmentStatus() === "pending" ? (
-                      <Badge className="bg-yellow-100 text-yellow-800">
-                        <Clock className="w-3 h-3 ml-1" />
-                        طلب التسجيل قيد المراجعة
-                      </Badge>
-                    ) : (
-                      <Button onClick={() => setShowSubscribeModal(true)}>
-                        التسجيل في الكورس
-                      </Button>
-                    )
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                    </p>
-                  )}
-                </div>
-              ) : videos.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  لا توجد فيدوهات متاحة لهذا الكورس بعد
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {getEnrollmentStatus() !== "active" ? (
+              <div className="text-center py-8">
+                <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  محتوى الملخصات متاح فقط للطلاب المسجلين في الكورس
                 </p>
-              ) : (
-                <div className="space-y-6">
-                  {/* Arabic Videos */}
-                  {videos.filter(v => v.language === 'ar').length > 0 && (
-                    <div>
-                      <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm ml-2">
-                          عربي
-                        </span>
-                        الفيدوهات العربية
+                {user ? (
+                  getEnrollmentStatus() === "pending" ? (
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      <Clock className="w-3 h-3 ml-1" />
+                      طلب التسجيل قيد المراجعة
+                    </Badge>
+                  ) : (
+                    <Button onClick={() => setShowSubscribeModal(true)}>
+                      التسجيل في الكورس
+                    </Button>
+                  )
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
+                  </p>
+                )}
+              </div>
+            ) : summaries.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                لا توجد ملخصات متاحة لهذا الكورس بعد
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {summaries.map((summary) => (
+                  <div
+                    key={summary.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {summary.title}
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {videos.filter(v => v.language === 'ar').map((video) => (
+                      {isInstructor() && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openSummaryModal(summary)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteSummary(summary.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: summary.content }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Videos Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Video className="w-5 h-5 ml-2 text-red-600" />
+                فيدوهات الكورس
+              </div>
+              {isInstructor() && (
+                <Button
+                  size="sm"
+                  onClick={() => openVideoModal()}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  إضافة فيديو
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {getEnrollmentStatus() !== "active" ? (
+              <div className="text-center py-8">
+                <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  محتوى الفيديوهات متاح فقط للطلاب المسجلين في الكورس
+                </p>
+                {user ? (
+                  getEnrollmentStatus() === "pending" ? (
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      <Clock className="w-3 h-3 ml-1" />
+                      طلب التسجيل قيد المراجعة
+                    </Badge>
+                  ) : (
+                    <Button onClick={() => setShowSubscribeModal(true)}>
+                      التسجيل في الكورس
+                    </Button>
+                  )
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
+                  </p>
+                )}
+              </div>
+            ) : videos.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                لا توجد فيدوهات متاحة لهذا الكورس بعد
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {/* Arabic Videos */}
+                {videos.filter((v) => v.language === "ar").length > 0 && (
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm ml-2">
+                        عربي
+                      </span>
+                      الفيدوهات العربية
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {videos
+                        .filter((v) => v.language === "ar")
+                        .map((video) => (
                           <div
                             key={video.id}
                             className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -953,7 +955,9 @@ export default function CourseDetailPage() {
                                       <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() => handleDeleteVideo(video.id)}
+                                        onClick={() =>
+                                          handleDeleteVideo(video.id)
+                                        }
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
@@ -967,13 +971,18 @@ export default function CourseDetailPage() {
                                 )}
                                 {video.duration && (
                                   <p className="text-xs text-gray-400 mt-1">
-                                    المدة: {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                                    المدة: {Math.floor(video.duration / 60)}:
+                                    {(video.duration % 60)
+                                      .toString()
+                                      .padStart(2, "0")}
                                   </p>
                                 )}
                                 <Button
                                   size="sm"
                                   className="mt-2"
-                                  onClick={() => window.open(video.video_url, '_blank')}
+                                  onClick={() =>
+                                    window.open(video.video_url, "_blank")
+                                  }
                                 >
                                   <Play className="w-4 h-4 ml-1" />
                                   مشاهدة
@@ -982,21 +991,23 @@ export default function CourseDetailPage() {
                             </div>
                           </div>
                         ))}
-                      </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* English Videos */}
-                  {videos.filter(v => v.language === 'en').length > 0 && (
-                    <div>
-                      <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm ml-2">
-                          English
-                        </span>
-                        الفيدوهات الإنجليزية
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {videos.filter(v => v.language === 'en').map((video) => (
+                {/* English Videos */}
+                {videos.filter((v) => v.language === "en").length > 0 && (
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm ml-2">
+                        English
+                      </span>
+                      الفيدوهات الإنجليزية
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {videos
+                        .filter((v) => v.language === "en")
+                        .map((video) => (
                           <div
                             key={video.id}
                             className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -1024,7 +1035,9 @@ export default function CourseDetailPage() {
                                       <Button
                                         size="sm"
                                         variant="destructive"
-                                        onClick={() => handleDeleteVideo(video.id)}
+                                        onClick={() =>
+                                          handleDeleteVideo(video.id)
+                                        }
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
@@ -1038,13 +1051,18 @@ export default function CourseDetailPage() {
                                 )}
                                 {video.duration && (
                                   <p className="text-xs text-gray-400 mt-1">
-                                    Duration: {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                                    Duration: {Math.floor(video.duration / 60)}:
+                                    {(video.duration % 60)
+                                      .toString()
+                                      .padStart(2, "0")}
                                   </p>
                                 )}
                                 <Button
                                   size="sm"
                                   className="mt-2"
-                                  onClick={() => window.open(video.video_url, '_blank')}
+                                  onClick={() =>
+                                    window.open(video.video_url, "_blank")
+                                  }
                                 >
                                   <Play className="w-4 h-4 ml-1" />
                                   Watch
@@ -1053,557 +1071,589 @@ export default function CourseDetailPage() {
                             </div>
                           </div>
                         ))}
-                      </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Files Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Download className="w-5 h-5 ml-2 text-green-600" />
-                  ملفات الكورس
-                </div>
-                {isInstructor() && (
-                  <Button
-                    size="sm"
-                    onClick={() => openFileModal()}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    إضافة ملف
-                  </Button>
+                  </div>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {getEnrollmentStatus() !== "active" ? (
-                <div className="text-center py-8">
-                  <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    محتوى الملفات متاح فقط للطلاب المسجلين في الكورس
-                  </p>
-                  {user ? (
-                    getEnrollmentStatus() === "pending" ? (
-                      <Badge className="bg-yellow-100 text-yellow-800">
-                        <Clock className="w-3 h-3 ml-1" />
-                        طلب التسجيل قيد المراجعة
-                      </Badge>
-                    ) : (
-                      <Button onClick={() => setShowSubscribeModal(true)}>
-                        التسجيل في الكورس
-                      </Button>
-                    )
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                    </p>
-                  )}
-                </div>
-              ) : files.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  لا توجد ملفات متاحة لهذا الكورس بعد
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Files Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Download className="w-5 h-5 ml-2 text-green-600" />
+                ملفات الكورس
+              </div>
+              {isInstructor() && (
+                <Button
+                  size="sm"
+                  onClick={() => openFileModal()}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  إضافة ملف
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {getEnrollmentStatus() !== "active" ? (
+              <div className="text-center py-8">
+                <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  محتوى الملفات متاح فقط للطلاب المسجلين في الكورس
                 </p>
-              ) : (
-                <div className="space-y-3">
-                  {files.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                          </div>
+                {user ? (
+                  getEnrollmentStatus() === "pending" ? (
+                    <Badge className="bg-yellow-100 text-yellow-800">
+                      <Clock className="w-3 h-3 ml-1" />
+                      طلب التسجيل قيد المراجعة
+                    </Badge>
+                  ) : (
+                    <Button onClick={() => setShowSubscribeModal(true)}>
+                      التسجيل في الكورس
+                    </Button>
+                  )
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
+                  </p>
+                )}
+              </div>
+            ) : files.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                لا توجد ملفات متاحة لهذا الكورس بعد
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                {file.title}
-                              </h5>
-                              {file.description && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                  {file.description}
-                                </p>
-                              )}
-                              {file.file_size && (
-                                <p className="text-xs text-gray-400 mt-1">
-                                  حجم الملف: {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              )}
-                            </div>
-                            {isInstructor() && (
-                              <div className="flex gap-1 ml-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => openFileModal(file)}
-                                >
-                                  <Edit className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteFile(file.id)}
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {file.title}
+                            </h5>
+                            {file.description && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {file.description}
+                              </p>
+                            )}
+                            {file.file_size && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                حجم الملف:{" "}
+                                {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                              </p>
                             )}
                           </div>
+                          {isInstructor() && (
+                            <div className="flex gap-1 ml-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openFileModal(file)}
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteFile(file.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(file.file_url, '_blank')}
-                      >
-                        <Download className="w-4 h-4 ml-1" />
-                        تحميل
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-      {/* Reviews Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>تقييمات الطلاب</span>
-            {getEnrollmentStatus() === "active" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowReviewForm(true)}
-              >
-                <Star className="w-4 h-4 ml-1" />
-                أضف تقييم
-              </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(file.file_url, "_blank")}
+                    >
+                      <Download className="w-4 h-4 ml-1" />
+                      تحميل
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {reviews.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0"
+          </CardContent>
+        </Card>
+
+        {/* Reviews Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>تقييمات الطلاب</span>
+              {getEnrollmentStatus() === "active" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowReviewForm(true)}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
+                  <Star className="w-4 h-4 ml-1" />
+                  أضف تقييم
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {reviews.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating
+                                  ? "text-yellow-400 fill-current"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+                          {review.student_name}
+                        </span>
                       </div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                        {review.student_name}
+                      <span className="text-sm text-gray-500">
+                        {new Date(review.created_at).toLocaleDateString(
+                          "ar-EG",
+                        )}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(review.created_at).toLocaleDateString("ar-EG")}
-                    </span>
+                    {review.content && (
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {review.content}
+                      </p>
+                    )}
                   </div>
-                  {review.content && (
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {review.content}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Subscribe Modal */}
-      {showSubscribeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>التسجيل في الكورس</CardTitle>
-              <CardDescription>
-                يرجى رفع إثبات دفع للكورس ({course.price} جنيه مصري)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  إثبات الدفع (صورة أو لقطة شاشة)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setPaymentScreenshot(e.target.files?.[0] || null)
-                  }
-                  className="w-full p-2 border rounded-lg"
-                />
+                ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  طرق الدفع المتاحة:
-                </h4>
-                <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                  <p>
-                    <strong>InstaPay:</strong> <span className="text-brand-orange font-semibold">Doctor_payment@instapay</span>
-                  </p>
-                  <p>
-                    <strong>Vodafone Cash:</strong> <span className="text-brand-orange font-semibold">0101XXXXXXX</span>
-                  </p>
-                  <p>
-                    <strong>Another Number:</strong> <span className="text-brand-orange font-semibold">011XXXXXXXXX</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSubscribe}
-                  disabled={!paymentScreenshot || uploadingScreenshot}
-                  className="flex-1"
-                >
-                  {uploadingScreenshot ? "جاري الرفع..." : "إرسال الطلب"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSubscribeModal(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Summary Modal */}
-      {showSummaryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>
-                {editingSummary ? "تعديل الملخص" : "إضافة ملخص جديد"}
-              </CardTitle>
-              <CardDescription>
-                أدخل تفاصيل الملخص
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  عنوان الملخص *
-                </label>
-                <input
-                  type="text"
-                  value={summaryTitle}
-                  onChange={(e) => setSummaryTitle(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="أدخل عنوان الملخص"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  محتوى الملخص *
-                </label>
-                <Textarea
-                  value={summaryContent}
-                  onChange={(e) => setSummaryContent(e.target.value)}
-                  placeholder="أدخل محتوى الملخص (يمكن استخدام HTML للتنسيق)"
-                  rows={10}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSaveSummary}
-                  disabled={submitting || !summaryTitle.trim() || !summaryContent.trim()}
-                  className="flex-1"
-                >
-                  {submitting ? "جاري الحفظ..." : (editingSummary ? "تحديث" : "إضافة")}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSummaryModal(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Video Modal */}
-      {showVideoModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>
-                {editingVideo ? "تعديل الفيديو" : "إضافة فيديو جديد"}
-              </CardTitle>
-              <CardDescription>
-                أدخل تفاصيل الفيديو
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  عنوان الفيديو *
-                </label>
-                <input
-                  type="text"
-                  value={videoTitle}
-                  onChange={(e) => setVideoTitle(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="أدخل عنوان الفيديو"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  وصف الفيديو
-                </label>
-                <Textarea
-                  value={videoDescription}
-                  onChange={(e) => setVideoDescription(e.target.value)}
-                  placeholder="أدخل وصف الفيديو (اختياري)"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  رابط الفيديو *
-                </label>
-                <input
-                  type="url"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="أدخل رابط الفيديو (YouTube, Vimeo, إلخ)"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+        {/* Subscribe Modal */}
+        {showSubscribeModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>التسجيل في الكورس</CardTitle>
+                <CardDescription>
+                  يرجى رفع إثبات دفع للكورس ({course.price} جنيه مصري)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    اللغة *
-                  </label>
-                  <select
-                    value={videoLanguage}
-                    onChange={(e) => setVideoLanguage(e.target.value as "ar" | "en")}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="ar">عربي</option>
-                    <option value="en">إنجليزي</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    المدة (بالثواني)
-                  </label>
-                  <input
-                    type="number"
-                    value={videoDuration}
-                    onChange={(e) => setVideoDuration(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="مثال: 3600"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSaveVideo}
-                  disabled={submitting || !videoTitle.trim() || !videoUrl.trim()}
-                  className="flex-1"
-                >
-                  {submitting ? "جاري الحفظ..." : (editingVideo ? "تحديث" : "إضافة")}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowVideoModal(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* File Modal */}
-      {showFileModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl">
-            <CardHeader>
-              <CardTitle>
-                {editingFile ? "تعديل الملف" : "إضافة ملف جديد"}
-              </CardTitle>
-              <CardDescription>
-                أدخل تفاصيل الملف
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  عنوان الملف *
-                </label>
-                <input
-                  type="text"
-                  value={fileTitle}
-                  onChange={(e) => setFileTitle(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="أدخل عنوان الملف"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  وصف الملف
-                </label>
-                <Textarea
-                  value={fileDescription}
-                  onChange={(e) => setFileDescription(e.target.value)}
-                  placeholder="أدخل وصف الملف (اختياري)"
-                  rows={3}
-                />
-              </div>
-
-              {!editingFile && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    اختر الملف *
+                    إثبات الدفع (صورة أو لقطة شاشة)
                   </label>
                   <input
                     type="file"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    accept="image/*"
+                    onChange={(e) =>
+                      setPaymentScreenshot(e.target.files?.[0] || null)
+                    }
                     className="w-full p-2 border rounded-lg"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    الصيغ المدعومة: PDF, Word, PowerPoint, Excel, Text, ZIP
-                  </p>
                 </div>
-              )}
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSaveFile}
-                  disabled={submitting || !fileTitle.trim() || (!selectedFile && !editingFile)}
-                  className="flex-1"
-                >
-                  {submitting ? "جاري الحفظ..." : (editingFile ? "تحديث" : "إضافة")}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFileModal(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    طرق الدفع المتاحة:
+                  </h4>
+                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <p>
+                      <strong>InstaPay:</strong>{" "}
+                      <span className="text-brand-orange font-semibold">
+                        Doctor_payment@instapay
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Vodafone Cash:</strong>{" "}
+                      <span className="text-brand-orange font-semibold">
+                        0101XXXXXXX
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Another Number:</strong>{" "}
+                      <span className="text-brand-orange font-semibold">
+                        011XXXXXXXXX
+                      </span>
+                    </p>
+                  </div>
+                </div>
 
-      {/* Review Modal */}
-      {showReviewForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>تقييم الكورس</CardTitle>
-              <CardDescription>
-                شاركنا رأيك في الكورس لمساعدة الطلاب الآخرين
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  التقييم
-                </label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setReviewRating(star)}
-                      className="focus:outline-none"
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSubscribe}
+                    disabled={!paymentScreenshot || uploadingScreenshot}
+                    className="flex-1"
+                  >
+                    {uploadingScreenshot ? "جاري الرفع..." : "إرسال الطلب"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSubscribeModal(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Summary Modal */}
+        {showSummaryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-2xl">
+              <CardHeader>
+                <CardTitle>
+                  {editingSummary ? "تعديل الملخص" : "إضافة ملخص جديد"}
+                </CardTitle>
+                <CardDescription>أدخل تفاصيل الملخص</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    عنوان الملخص *
+                  </label>
+                  <input
+                    type="text"
+                    value={summaryTitle}
+                    onChange={(e) => setSummaryTitle(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="أدخل عنوان الملخص"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    محتوى الملخص *
+                  </label>
+                  <Textarea
+                    value={summaryContent}
+                    onChange={(e) => setSummaryContent(e.target.value)}
+                    placeholder="أدخل محتوى الملخص (يمكن استخدام HTML للتنسيق)"
+                    rows={10}
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSaveSummary}
+                    disabled={
+                      submitting ||
+                      !summaryTitle.trim() ||
+                      !summaryContent.trim()
+                    }
+                    className="flex-1"
+                  >
+                    {submitting
+                      ? "جاري الحفظ..."
+                      : editingSummary
+                        ? "تحديث"
+                        : "إضافة"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSummaryModal(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Video Modal */}
+        {showVideoModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-2xl">
+              <CardHeader>
+                <CardTitle>
+                  {editingVideo ? "تعديل الفيديو" : "إضافة فيديو جديد"}
+                </CardTitle>
+                <CardDescription>أدخل تفاصيل الفيديو</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    عنوان الفيديو *
+                  </label>
+                  <input
+                    type="text"
+                    value={videoTitle}
+                    onChange={(e) => setVideoTitle(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="أدخل عنوان الفيديو"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    وصف الفيديو
+                  </label>
+                  <Textarea
+                    value={videoDescription}
+                    onChange={(e) => setVideoDescription(e.target.value)}
+                    placeholder="أدخل وصف الفيديو (اختياري)"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    رابط الفيديو *
+                  </label>
+                  <input
+                    type="url"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="أدخل رابط الفيديو (YouTube, Vimeo, إلخ)"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      اللغة *
+                    </label>
+                    <select
+                      value={videoLanguage}
+                      onChange={(e) =>
+                        setVideoLanguage(e.target.value as "ar" | "en")
+                      }
+                      className="w-full p-2 border rounded-lg"
                     >
-                      <Star
-                        className={`w-8 h-8 ${
-                          star <= reviewRating
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    </button>
-                  ))}
+                      <option value="ar">عربي</option>
+                      <option value="en">إنجليزي</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      المدة (بالثواني)
+                    </label>
+                    <input
+                      type="number"
+                      value={videoDuration}
+                      onChange={(e) => setVideoDuration(e.target.value)}
+                      className="w-full p-2 border rounded-lg"
+                      placeholder="مثال: 3600"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  التعليق (اختياري)
-                </label>
-                <Textarea
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="شاركنا تجربتك مع الكورس..."
-                  rows={3}
-                />
-              </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSaveVideo}
+                    disabled={
+                      submitting || !videoTitle.trim() || !videoUrl.trim()
+                    }
+                    className="flex-1"
+                  >
+                    {submitting
+                      ? "جاري الحفظ..."
+                      : editingVideo
+                        ? "تحديث"
+                        : "إضافة"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowVideoModal(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSubmitReview}
-                  disabled={submitting}
-                  className="flex-1"
-                >
-                  {submitting ? "جاري الإرسال..." : "إرسال التقييم"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowReviewForm(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </React.Fragment>
-  </div>
-);
+        {/* File Modal */}
+        {showFileModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-2xl">
+              <CardHeader>
+                <CardTitle>
+                  {editingFile ? "تعديل الملف" : "إضافة ملف جديد"}
+                </CardTitle>
+                <CardDescription>أدخل تفاصيل الملف</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    عنوان الملف *
+                  </label>
+                  <input
+                    type="text"
+                    value={fileTitle}
+                    onChange={(e) => setFileTitle(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="أدخل عنوان الملف"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    وصف الملف
+                  </label>
+                  <Textarea
+                    value={fileDescription}
+                    onChange={(e) => setFileDescription(e.target.value)}
+                    placeholder="أدخل وصف الملف (اختياري)"
+                    rows={3}
+                  />
+                </div>
+
+                {!editingFile && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      اختر الملف *
+                    </label>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
+                      onChange={(e) =>
+                        setSelectedFile(e.target.files?.[0] || null)
+                      }
+                      className="w-full p-2 border rounded-lg"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      الصيغ المدعومة: PDF, Word, PowerPoint, Excel, Text, ZIP
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSaveFile}
+                    disabled={
+                      submitting ||
+                      !fileTitle.trim() ||
+                      (!selectedFile && !editingFile)
+                    }
+                    className="flex-1"
+                  >
+                    {submitting
+                      ? "جاري الحفظ..."
+                      : editingFile
+                        ? "تحديث"
+                        : "إضافة"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFileModal(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Review Modal */}
+        {showReviewForm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>تقييم الكورس</CardTitle>
+                <CardDescription>
+                  شاركنا رأيك في الكورس لمساعدة الطلاب الآخرين
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    التقييم
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setReviewRating(star)}
+                        className="focus:outline-none"
+                      >
+                        <Star
+                          className={`w-8 h-8 ${
+                            star <= reviewRating
+                              ? "text-yellow-400 fill-current"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    التعليق (اختياري)
+                  </label>
+                  <Textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="شاركنا تجربتك مع الكورس..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={submitting}
+                    className="flex-1"
+                  >
+                    {submitting ? "جاري الإرسال..." : "إرسال التقييم"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowReviewForm(false)}
+                    className="flex-1"
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </React.Fragment>
+    </div>
+  );
 }

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -17,13 +17,25 @@ import { quizService } from "../../lib/quiz";
 import { supabase } from "../../lib/supabase";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSubjects } from "../../hooks/useSubjects";
 import { aiAssistant } from "../../lib/gemini";
 import type { Quiz, Summary } from "../../types/database";
 import { LatexRenderer } from "../../components/LatexRenderer";
 
+interface QuizWithMeta {
+  quiz: Quiz;
+  meta: {
+    subject: string;
+    department: string;
+    year: string;
+    descriptionText: string;
+  };
+}
+
 function QuizDashboardPage() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
+  const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [attemptsLoading, setAttemptsLoading] = useState(false);
@@ -131,7 +143,7 @@ function QuizDashboardPage() {
   };
 
   const quizzesWithMeta = useMemo(() => {
-    return quizzes.map((quiz) => {
+    return quizzes.map((quiz: Quiz) => {
       let subject = (quiz as any).subject || "";
       let department = (quiz as any).department || "";
       let year = (quiz as any).year || "";
@@ -166,26 +178,34 @@ function QuizDashboardPage() {
     const departments = new Set<string>();
     const years = new Set<string>();
 
-    quizzesWithMeta.forEach(({ meta }) => {
+    quizzesWithMeta.forEach(({ meta }: QuizWithMeta) => {
       if (meta.subject) subjects.add(meta.subject);
       if (meta.department) departments.add(meta.department);
       if (meta.year) years.add(meta.year);
     });
 
+    // If subjects table is loaded, use those instead for subjects filter
+    const subjectList = subjectsLoading
+      ? Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar"))
+      : allSubjects.map((s) => s.name).sort((a, b) => a.localeCompare(b, "ar"));
+
     return {
-      subjects: Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar")),
-      departments: Array.from(departments).sort((a, b) => a.localeCompare(b, "ar")),
+      subjects: subjectList,
+      departments: Array.from(departments).sort((a, b) =>
+        a.localeCompare(b, "ar"),
+      ),
       years: Array.from(years).sort((a, b) => a.localeCompare(b, "ar")),
     };
-  }, [quizzesWithMeta]);
+  }, [quizzesWithMeta, allSubjects, subjectsLoading]);
 
   const filteredQuizzes = useMemo(() => {
     const s = filters.search.trim().toLowerCase();
 
     return quizzesWithMeta
-      .filter(({ quiz, meta }) => {
+      .filter(({ quiz, meta }: QuizWithMeta) => {
         if (filters.subject && meta.subject !== filters.subject) return false;
-        if (filters.department && meta.department !== filters.department) return false;
+        if (filters.department && meta.department !== filters.department)
+          return false;
         if (filters.year && meta.year !== filters.year) return false;
 
         if (!s) return true;
@@ -194,10 +214,18 @@ function QuizDashboardPage() {
         const rawDesc = (quiz.description || "").toLowerCase();
         const parsedDesc = (meta.descriptionText || "").toLowerCase();
 
-        return title.includes(s) || rawDesc.includes(s) || parsedDesc.includes(s);
+        return (
+          title.includes(s) || rawDesc.includes(s) || parsedDesc.includes(s)
+        );
       })
-      .map(({ quiz }) => quiz);
-  }, [filters.department, filters.search, filters.subject, filters.year, quizzesWithMeta]);
+      .map(({ quiz }: QuizWithMeta) => quiz);
+  }, [
+    filters.department,
+    filters.search,
+    filters.subject,
+    filters.year,
+    quizzesWithMeta,
+  ]);
 
   const handleSaveQuiz = async () => {
     try {
@@ -207,7 +235,9 @@ function QuizDashboardPage() {
         ? Number(formData.durationMinutes)
         : null;
       const durationSeconds =
-        typeof durationMinutesNum === "number" && !Number.isNaN(durationMinutesNum) && durationMinutesNum > 0
+        typeof durationMinutesNum === "number" &&
+        !Number.isNaN(durationMinutesNum) &&
+        durationMinutesNum > 0
           ? Math.round(durationMinutesNum * 60)
           : null;
 
@@ -337,7 +367,7 @@ function QuizDashboardPage() {
       console.error("Error saving quiz:", error);
       alert(
         "حدث خطأ أثناء حفظ الامتحان: " +
-          (error instanceof Error ? error.message : "خطأ غير معروف")
+          (error instanceof Error ? error.message : "خطأ غير معروف"),
       );
     }
   };
@@ -476,8 +506,8 @@ function QuizDashboardPage() {
   const handleImageUpload = async (index: number, file: File) => {
     try {
       const result = await uploadToCloudinary(file, {
-        folder: 'quiz-images',
-        resourceType: 'image'
+        folder: "quiz-images",
+        resourceType: "image",
       });
 
       updateQuestion(index, "imageUrl", result.url);
@@ -490,7 +520,7 @@ function QuizDashboardPage() {
   const updateOption = (
     questionIndex: number,
     optionIndex: number,
-    value: string
+    value: string,
   ) => {
     const updatedQuestions = [...formData.questions];
     updatedQuestions[questionIndex].options[optionIndex] = value;
@@ -514,12 +544,12 @@ function QuizDashboardPage() {
             q.options.length >= 2 && // Allow 2 or more options
             typeof q.correctAnswer === "number" &&
             q.correctAnswer >= 0 &&
-            q.correctAnswer < q.options.length
+            q.correctAnswer < q.options.length,
         );
 
         if (!isValid) {
           alert(
-            "تنسيق الأسئلة غير صحيح. تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة."
+            "تنسيق الأسئلة غير صحيح. تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة.",
           );
           return;
         }
@@ -606,14 +636,18 @@ function QuizDashboardPage() {
           <input
             type="text"
             value={filters.search}
-            onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, search: e.target.value }))
+            }
             placeholder="ابحث في العنوان أو الوصف..."
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           />
 
           <select
             value={filters.subject}
-            onChange={(e) => setFilters((p) => ({ ...p, subject: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, subject: e.target.value }))
+            }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
             <option value="">كل المواد</option>
@@ -626,7 +660,9 @@ function QuizDashboardPage() {
 
           <select
             value={filters.department}
-            onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, department: e.target.value }))
+            }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
             <option value="">كل الأقسام</option>
@@ -639,7 +675,9 @@ function QuizDashboardPage() {
 
           <select
             value={filters.year}
-            onChange={(e) => setFilters((p) => ({ ...p, year: e.target.value }))}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, year: e.target.value }))
+            }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
             <option value="">كل المستويات</option>
@@ -651,10 +689,20 @@ function QuizDashboardPage() {
           </select>
         </div>
 
-        {(filters.search || filters.subject || filters.department || filters.year) && (
+        {(filters.search ||
+          filters.subject ||
+          filters.department ||
+          filters.year) && (
           <div className="mt-3 flex justify-end">
             <button
-              onClick={() => setFilters({ search: "", subject: "", department: "", year: "" })}
+              onClick={() =>
+                setFilters({
+                  search: "",
+                  subject: "",
+                  department: "",
+                  year: "",
+                })
+              }
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
             >
               <X className="w-4 h-4" />
@@ -873,19 +921,11 @@ function QuizDashboardPage() {
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">اختر المادة</option>
-                  <option value="أساسيات تكنولوجيا المعلومات">
-                    أساسيات تكنولوجيا المعلومات
-                  </option>
-                  <option value="الرسم باليد">الرسم باليد</option>
-                  <option value="سلوكيات الهيئات">سلوكيات الهيئات</option>
-                  <option value="فيزياء 1">فيزياء 1</option>
-                  <option value="رياضيات 1">رياضيات 1</option>
-                  <option value="حقوق الإنسان">حقوق الإنسان</option>
-                  <option value="الكترونيات">الكترونيات</option>
-                  <option value="لغة انجليزية">لغة انجليزية</option>
-                  <option value="ثقافه اسلامية">ثقافه اسلامية</option>
-                  <option value="تفكير علمي">تفكير علمي</option>
-                  <option value="اساسيات الرياضيات">اساسيات الرياضيات</option>
+                  {allSubjects.map((subject) => (
+                    <option key={subject.id} value={subject.name}>
+                      {subject.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -958,7 +998,7 @@ function QuizDashboardPage() {
                             updateQuestion(
                               questionIndex,
                               "type",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -984,7 +1024,7 @@ function QuizDashboardPage() {
                         updateQuestion(
                           questionIndex,
                           "question",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white mb-2"
@@ -1073,7 +1113,7 @@ function QuizDashboardPage() {
                                 updateQuestion(
                                   questionIndex,
                                   "correctAnswer",
-                                  optionIndex
+                                  optionIndex,
                                 )
                               }
                               className="text-blue-600"
@@ -1098,7 +1138,7 @@ function QuizDashboardPage() {
                               updateQuestion(
                                 questionIndex,
                                 "correctAnswer",
-                                optionIndex
+                                optionIndex,
                               )
                             }
                             className="text-blue-600"
@@ -1110,7 +1150,7 @@ function QuizDashboardPage() {
                               updateOption(
                                 questionIndex,
                                 optionIndex,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -1132,7 +1172,7 @@ function QuizDashboardPage() {
                         updateQuestion(
                           questionIndex,
                           "explanation",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -1191,7 +1231,7 @@ function QuizDashboardPage() {
       )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredQuizzes.map((quiz) => (
+        {filteredQuizzes.map((quiz: Quiz) => (
           <div
             key={quiz.id}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
@@ -1296,7 +1336,9 @@ function QuizDashboardPage() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             لا توجد نتائج
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">جرّب تغيير الفلاتر أو مسحها</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            جرّب تغيير الفلاتر أو مسحها
+          </p>
         </div>
       )}
     </div>

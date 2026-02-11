@@ -48,7 +48,7 @@ export function AppealsTab({
             appeal.created_by
               .toLowerCase()
               .includes(searchTerm.toLowerCase())) ||
-          appeal.content_id.toLowerCase().includes(searchTerm.toLowerCase())
+          appeal.content_id.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -182,15 +182,15 @@ export function AppealsTab({
                         appeal.status === "pending"
                           ? "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300"
                           : appeal.status === "accepted"
-                          ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
-                          : "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
+                            ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
+                            : "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
                       }`}
                     >
                       {appeal.status === "pending"
                         ? "قيد المراجعة"
                         : appeal.status === "accepted"
-                        ? "مقبول"
-                        : "مرفوض"}
+                          ? "مقبول"
+                          : "مرفوض"}
                     </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 mb-3">
@@ -213,7 +213,7 @@ export function AppealsTab({
                         onAcceptAppeal(
                           appeal.id,
                           appeal.created_by || "",
-                          appeal.content_title || ""
+                          appeal.content_title || "",
                         )
                       }
                       className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
@@ -225,7 +225,7 @@ export function AppealsTab({
                         onRejectAppeal(
                           appeal.id,
                           appeal.created_by || "",
-                          appeal.content_title || ""
+                          appeal.content_title || "",
                         )
                       }
                       className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
