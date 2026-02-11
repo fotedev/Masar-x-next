@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   useState,
@@ -19,14 +19,14 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error(
-      "useNotifications must be used within a NotificationProvider"
+      "useNotifications must be used within a NotificationProvider",
     );
   }
   return context;
@@ -52,7 +52,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       // إذا كان الإذن default ولم يتم رفضه من قبل، أظهر المطالبة
       const hasDismissed = localStorage.getItem(
-        "notification-prompt-dismissed"
+        "notification-prompt-dismissed",
       );
       if (Notification.permission === "default" && !hasDismissed) {
         setShowPrompt(true);
@@ -60,16 +60,17 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج لتجنب مشاكل HMR)
       if (
-        "serviceWorker" in navigator &&
-        Notification.permission === "granted" &&
-        !process.env.NODE_ENV || process.env.NODE_ENV !== 'development'
+        ("serviceWorker" in navigator &&
+          Notification.permission === "granted" &&
+          !process.env.NODE_ENV) ||
+        process.env.NODE_ENV !== "development"
       ) {
         navigator.serviceWorker
           .register("/sw.js")
           .then((registration) => {
             console.log(
               "Service Worker registered for notifications:",
-              registration
+              registration,
             );
             // Force update service worker to avoid cached issues
             registration.update();
@@ -91,11 +92,14 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
       if (result === "granted") {
         // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
-        if ("serviceWorker" in navigator && (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development')) {
+        if (
+          "serviceWorker" in navigator &&
+          (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
+        ) {
           const registration = await navigator.serviceWorker.register("/sw.js");
           console.log(
             "Service Worker registered for notifications:",
-            registration
+            registration,
           );
         }
       }
@@ -109,7 +113,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const sendNotification = (
     title: string,
-    options: NotificationOptions = {}
+    options: NotificationOptions = {},
   ) => {
     if (!isSupported || permission !== "granted") return;
 
@@ -223,7 +227,7 @@ export function NotificationToggle() {
       "NotificationToggle clicked, permission:",
       permission,
       "isLoading:",
-      isLoading
+      isLoading,
     );
 
     if (isLoading) {
@@ -250,14 +254,16 @@ export function NotificationToggle() {
           console.log("Notifications granted, registering service worker...");
 
           // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
-          if ("serviceWorker" in navigator && (!process.env.NODE_ENV || process.env.NODE_ENV !== 'development')) {
+          if (
+            "serviceWorker" in navigator &&
+            (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
+          ) {
             try {
-              const registration = await navigator.serviceWorker.register(
-                "/sw.js"
-              );
+              const registration =
+                await navigator.serviceWorker.register("/sw.js");
               console.log(
                 "Service Worker registered for notifications:",
-                registration
+                registration,
               );
 
               // إخفاء المطالبة إذا كانت ظاهرة

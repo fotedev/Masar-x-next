@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   BookOpen,
@@ -43,6 +43,44 @@ const MemoizedCoursesTab = memo(CoursesTab);
 const MemoizedEnrollmentsTab = memo(EnrollmentsTab);
 
 function AdminDashboard() {
+  const router = useRouter();
+  const { user, isAdmin, isAdminLoading, loading: authLoading } = useAuth();
+
+  // Auth guard: redirect non-admin users
+  const isAuthChecking = authLoading || isAdminLoading;
+
+  useEffect(() => {
+    if (!isAuthChecking && (!user || !isAdmin)) {
+      router.replace("/");
+    }
+  }, [user, isAdmin, isAuthChecking, router]);
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">جاري التحقق من الصلاحيات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">غير مصرح</h2>
+          <p className="text-gray-600 dark:text-gray-400">ليس لديك صلاحية الوصول لهذه الصفحة</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboardContent />;
+}
+
+function AdminDashboardContent() {
   const router = useRouter();
   const { adminRole } = useAuth();
   const [activeTab, setActiveTab] = useState(adminRole === "doctor" ? "courses" : "summaries");

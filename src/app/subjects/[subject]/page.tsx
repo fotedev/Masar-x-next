@@ -1,8 +1,16 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { FileText, Calendar, User, Video, FolderOpen, ClipboardList, Play } from "lucide-react";
+import {
+  FileText,
+  Calendar,
+  User,
+  Video,
+  FolderOpen,
+  ClipboardList,
+  Play,
+} from "lucide-react";
 import { useSummaries } from "../../../hooks/useSummaries";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useAnalytics } from "../../../hooks/useAnalytics";
@@ -24,7 +32,9 @@ function SubjectSummariesContent() {
   const [filteredSummaries, setFilteredSummaries] = useState<Summary[]>([]);
   const [editingSummary, setEditingSummary] = useState<Summary | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<"summaries" | "videos" | "files" | "exams">("summaries");
+  const [activeTab, setActiveTab] = useState<
+    "summaries" | "videos" | "files" | "exams"
+  >("summaries");
   const [activeVideoLang, setActiveVideoLang] = useState<"ar" | "en">("ar");
   const [subjectQuizzes, setSubjectQuizzes] = useState<Quiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(false);
@@ -32,18 +42,22 @@ function SubjectSummariesContent() {
   // Decode subject name from URL
   const subjectName = subjectId ? decodeURIComponent(subjectId) : "";
 
-  const normalizedSubjectName = useMemo(() => subjectName.trim(), [subjectName]);
+  const normalizedSubjectName = useMemo(
+    () => subjectName.trim(),
+    [subjectName],
+  );
 
   useEffect(() => {
     // Filter summaries by subject
     const subjectSummaries = summariesHook.summaries
       .filter(
         (summary) =>
-          summary.status === "approved" && summary.subject === normalizedSubjectName
+          summary.status === "approved" &&
+          summary.subject === normalizedSubjectName,
       )
       .sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
     setFilteredSummaries(subjectSummaries);
@@ -69,14 +83,18 @@ function SubjectSummariesContent() {
 
         const quizzes = (data || []).filter((q) => {
           const directSubject = (q as any).subject as string | null | undefined;
-          if (directSubject && directSubject.trim() === normalizedSubjectName) return true;
+          if (directSubject && directSubject.trim() === normalizedSubjectName)
+            return true;
 
           const desc = (q as any).description as string | null | undefined;
           if (!desc || !desc.trim().startsWith("{")) return false;
 
           try {
             const parsed = JSON.parse(desc);
-            return typeof parsed?.subject === "string" && parsed.subject.trim() === normalizedSubjectName;
+            return (
+              typeof parsed?.subject === "string" &&
+              parsed.subject.trim() === normalizedSubjectName
+            );
           } catch {
             return false;
           }
@@ -94,14 +112,13 @@ function SubjectSummariesContent() {
     fetchSubjectQuizzes();
   }, [activeTab, isAdmin, normalizedSubjectName]);
 
-
-
   const headerContent = useMemo(() => {
     switch (activeTab) {
       case "videos":
         return {
           title: `فيدوهات مادة ${normalizedSubjectName}`,
-          description: "جميع الفيديوهات المتاحة لهذه المادة، مرتبة حسب اللغة لتسهيل المذاكرة",
+          description:
+            "جميع الفيديوهات المتاحة لهذه المادة، مرتبة حسب اللغة لتسهيل المذاكرة",
         };
       case "files":
         return {
@@ -124,11 +141,15 @@ function SubjectSummariesContent() {
   }, [activeTab, normalizedSubjectName]);
 
   const subjectFiles = useMemo(() => {
-    if (normalizedSubjectName === "اساسيات الرياضيات" || normalizedSubjectName === "أساسيات الرياضيات") {
+    if (
+      normalizedSubjectName === "اساسيات الرياضيات" ||
+      normalizedSubjectName === "أساسيات الرياضيات"
+    ) {
       return [
         {
           title: "كتاب أساسيات الرياضيات (Math 0)",
-          description: "الكتاب الأساسي للمادة - امتحان الفاينل يشمل محتواه بالكامل",
+          description:
+            "الكتاب الأساسي للمادة - امتحان الفاينل يشمل محتواه بالكامل",
           url: "https://drive.google.com/drive/folders/1Y6c5AholDxd1ZxY2gyEf6SCiaX9EIZuw",
         },
       ];
@@ -229,7 +250,8 @@ function SubjectSummariesContent() {
           ) : (
             <div className="summary-grid">
               {filteredSummaries.map((summary) => {
-                const canEdit = user && (isAdmin || summary.user_id === user.id);
+                const canEdit =
+                  user && (isAdmin || summary.user_id === user.id);
 
                 return (
                   <div
@@ -281,7 +303,9 @@ function SubjectSummariesContent() {
                       {summary.contributor_name && (
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400">
                           <User className="w-4 h-4 text-brand-blue" />
-                          <span className="truncate">{summary.contributor_name}</span>
+                          <span className="truncate">
+                            {summary.contributor_name}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -294,11 +318,14 @@ function SubjectSummariesContent() {
 
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xs font-medium text-slate-400">
-                        {new Date(summary.created_at).toLocaleDateString("ar-EG", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {new Date(summary.created_at).toLocaleDateString(
+                          "ar-EG",
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          },
+                        )}
                       </span>
                       <span className="text-brand-blue text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                         اقرأ المزيد ←
@@ -345,7 +372,8 @@ function SubjectSummariesContent() {
               لا توجد فيديوهات
             </h2>
             <p className="text-slate-500 dark:text-slate-400">
-              لا توجد فيديوهات {activeVideoLang === "ar" ? "عربية" : "إنجليزية"} لهذه المادة حالياً
+              لا توجد فيديوهات {activeVideoLang === "ar" ? "عربية" : "إنجليزية"}{" "}
+              لهذه المادة حالياً
             </p>
           </div>
         </div>
@@ -398,7 +426,9 @@ function SubjectSummariesContent() {
           {quizzesLoading ? (
             <div className="modern-card p-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-slate-600 dark:text-slate-400">جاري التحميل...</p>
+              <p className="mt-4 text-slate-600 dark:text-slate-400">
+                جاري التحميل...
+              </p>
             </div>
           ) : subjectQuizzes.length === 0 ? (
             <div className="modern-card p-12 text-center">
@@ -428,7 +458,9 @@ function SubjectSummariesContent() {
                       </p>
                     </div>
                     <button
-                      onClick={() => router.push(`/quiz-play?quizId=${quiz.id}`)}
+                      onClick={() =>
+                        router.push(`/quiz-play?quizId=${quiz.id}`)
+                      }
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200 flex-shrink-0"
                     >
                       <Play className="w-4 h-4" />
@@ -454,7 +486,13 @@ function SubjectSummariesContent() {
 
 export default function SubjectSummariesPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      }
+    >
       <SubjectSummariesContent />
     </Suspense>
   );

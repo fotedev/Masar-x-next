@@ -370,5 +370,11 @@ npx supabase db remote commit  # للإنتاج
 
 ---
 
-*آخر تحديث: 20 يناير 2026*
+*آخر تحديث: 09 فبراير 2026*
 *المطور: فريق تطوير Masar X*
+
+## Recent edits (09 Feb 2026)
+- Frontend pages and components updated across `src/app/`
+- New/backup Supabase migration SQL files added
+- Security updates to password reset flow and storage policies
+ 

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -107,7 +107,7 @@ export default function SummaryDetailPage() {
 
       // Extract images from content
       const { images, cleanContent } = extractImagesFromContent(
-        summaryData.content
+        summaryData.content,
       );
       setSummaryImages(images);
       setCleanContent(cleanContent);
@@ -265,7 +265,9 @@ export default function SummaryDetailPage() {
                 </div>
               </div>
               <button
-                onClick={() => router.push(`/quiz-play?quizId=${linkedQuiz.id}`)}
+                onClick={() =>
+                  router.push(`/quiz-play?quizId=${linkedQuiz.id}`)
+                }
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-600/25 transition-all duration-300"
               >
                 <Play className="w-5 h-5" />
@@ -340,7 +342,9 @@ export default function SummaryDetailPage() {
 
                 {(isAdmin || (user && user.id === summary.user_id)) && (
                   <button
-                    onClick={() => router.push(`/edit-summary?id=${summary.id}`)}
+                    onClick={() =>
+                      router.push(`/edit-summary?id=${summary.id}`)
+                    }
                     className="flex items-center gap-2 px-5 py-2.5 bg-brand-blue/10 text-brand-blue rounded-xl hover:bg-brand-blue/20 transition-all text-sm font-bold"
                   >
                     <Edit className="w-4 h-4" />

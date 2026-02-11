@@ -1,5 +1,12 @@
 # Complete Setup Instructions for Masar X
-*آخر تحديث: 06 فبراير 2026*
+*آخر تحديث: 09 فبراير 2026*
+
+## Recent edits (09 Feb 2026)
+- Updated project pages and components in `src/app/` (multiple pages)
+- Security & ops updates: DB migrations and Edge Functions (see "Security & Ops updates")
+- Backups added for some Supabase migration SQL files
+- Removed legacy Vite config and updated PWA/manifest files
+ 
 
 This guide will walk you through setting up the "Masar X" comprehensive learning platform from scratch.
 
