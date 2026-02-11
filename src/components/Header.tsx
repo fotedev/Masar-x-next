@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Plus,
@@ -27,7 +27,7 @@ export const Header = React.memo(function Header() {
   const pathname = usePathname();
 
   const currentPage =
-    pathname === "/" ? "home" : (pathname?.substring(1) || "home");
+    pathname === "/" ? "home" : pathname?.substring(1) || "home";
 
   const handleSignOut = async () => {
     try {
@@ -52,7 +52,11 @@ export const Header = React.memo(function Header() {
             onClick={() => handleNavigate("home")}
             className="flex items-center text-slate-900 dark:text-white hover:opacity-80 transition-opacity min-w-0"
           >
-            <img src="/logo.png" alt="Masar X Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
+            <img
+              src="/logo.png"
+              alt="Masar X Logo"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+            />
           </button>
 
           {/* Navigation Bar */}
@@ -96,7 +100,8 @@ export const Header = React.memo(function Header() {
               <button
                 onClick={() => handleNavigate("courses")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  currentPage === "courses" || currentPage.startsWith("courses/")
+                  currentPage === "courses" ||
+                  currentPage.startsWith("courses/")
                     ? "bg-green-500/10 text-green-600 dark:text-green-400"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
@@ -130,9 +135,9 @@ export const Header = React.memo(function Header() {
               </button>
 
               <button
-                onClick={() => handleNavigate("add")}
+                onClick={() => handleNavigate("add-summary")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  currentPage === "add"
+                  currentPage === "add-summary"
                     ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
@@ -331,9 +336,9 @@ export const Header = React.memo(function Header() {
                   </button>
 
                   <button
-                    onClick={() => handleNavigate("add")}
+                    onClick={() => handleNavigate("add-summary")}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all touch-manipulation ${
-                      currentPage === "add"
+                      currentPage === "add-summary"
                         ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                     }`}

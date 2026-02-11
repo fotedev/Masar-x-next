@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -12,7 +12,8 @@ import { FileDropzone } from "../../components/FileDropzone";
 function EditSummaryContent() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const summaryId = (params?.summaryId as string) || (searchParams?.get("id") as string);
+  const summaryId =
+    (params?.summaryId as string) || (searchParams?.get("id") as string);
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { sendNotification } = useBrowserNotifications();
@@ -305,7 +306,9 @@ function EditSummaryContent() {
                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-2 bg-blue-600"
-                    style={{ width: `${Math.min(100, Math.max(0, uploadProgress))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, uploadProgress))}%`,
+                    }}
                   />
                 </div>
               </div>

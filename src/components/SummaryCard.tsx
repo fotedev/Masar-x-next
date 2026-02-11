@@ -50,7 +50,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
           }
         });
       },
-      { threshold: 0.5 } // Track when 50% of the card is visible
+      { threshold: 0.5 }, // Track when 50% of the card is visible
     );
 
     const element = document.getElementById(`summary-card-${id}`);

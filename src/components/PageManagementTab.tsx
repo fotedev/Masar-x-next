@@ -1,6 +1,7 @@
 import { Layout, Eye, EyeOff, Search } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useSubjects } from "../hooks/useSubjects";
+import { SemesterSwitcher } from "./SemesterSwitcher";
 
 export function PageManagementTab() {
   const { subjects, loading, updateSubjectVisibility } = useSubjects();
@@ -32,6 +33,9 @@ export function PageManagementTab() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             تحكم في المواد التي تظهر للطلاب في الصفحة الرئيسية
           </p>
+        </div>
+        <div className="mt-3 sm:mt-0">
+          <SemesterSwitcher />
         </div>
       </div>
 
