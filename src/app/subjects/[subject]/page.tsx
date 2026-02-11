@@ -17,6 +17,8 @@ import { useAnalytics } from "../../../hooks/useAnalytics";
 import { EditSummaryModal } from "../../../components/EditSummaryModal";
 import { supabase } from "../../../lib/supabase";
 import { Quiz, Summary } from "../../../types/database";
+import { useVideos } from "../../../hooks/useVideos";
+import { useFiles } from "../../../hooks/useFiles";
 
 import { Suspense } from "react";
 // ... imports
@@ -46,6 +48,9 @@ function SubjectSummariesContent() {
     () => subjectName.trim(),
     [subjectName],
   );
+
+  const { videos, loading: videosLoading } = useVideos(normalizedSubjectName);
+  const { files, loading: filesLoading } = useFiles(normalizedSubjectName);
 
   useEffect(() => {
     // Filter summaries by subject
@@ -140,24 +145,6 @@ function SubjectSummariesContent() {
     }
   }, [activeTab, normalizedSubjectName]);
 
-  const subjectFiles = useMemo(() => {
-    if (
-      normalizedSubjectName === "اساسيات الرياضيات" ||
-      normalizedSubjectName === "أساسيات الرياضيات"
-    ) {
-      return [
-        {
-          title: "كتاب أساسيات الرياضيات (Math 0)",
-          description:
-            "الكتاب الأساسي للمادة - امتحان الفاينل يشمل محتواه بالكامل",
-          url: "https://drive.google.com/drive/folders/1Y6c5AholDxd1ZxY2gyEf6SCiaX9EIZuw",
-        },
-      ];
-    }
-
-    return [] as Array<{ title: string; description: string; url: string }>;
-  }, [normalizedSubjectName]);
-
   const handleEditSummary = (summary: Summary) => {
     setEditingSummary(summary);
     setShowEditModal(true);
@@ -243,9 +230,19 @@ function SubjectSummariesContent() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                 لا توجد ملخصات
               </h2>
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="text-slate-500 dark:text-slate-400 mb-6">
                 لا توجد ملخصات متاحة لهذه المادة حالياً، كن أول من يساهم!
               </p>
+              <button
+                onClick={() =>
+                  router.push(
+                    `/add-summary?subject=${encodeURIComponent(normalizedSubjectName)}`,
+                  )
+                }
+                className="px-6 py-3 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200"
+              >
+                أضف ملخص
+              </button>
             </div>
           ) : (
             <div className="summary-grid">
@@ -366,35 +363,110 @@ function SubjectSummariesContent() {
             </div>
           </div>
 
-          <div className="modern-card p-12 text-center">
-            <Video className="w-20 h-20 text-slate-200 dark:text-slate-800 mx-auto mb-6" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-              لا توجد فيديوهات
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400">
-              لا توجد فيديوهات {activeVideoLang === "ar" ? "عربية" : "إنجليزية"}{" "}
-              لهذه المادة حالياً
-            </p>
-          </div>
+          {videosLoading ? (
+            <div className="modern-card p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-slate-600 dark:text-slate-400">
+                جاري التحميل...
+              </p>
+            </div>
+          ) : (
+            (() => {
+              const filteredVideos = videos.filter(
+                (v) => v.language === activeVideoLang,
+              );
+              return filteredVideos.length === 0 ? (
+                <div className="modern-card p-12 text-center">
+                  <Video className="w-20 h-20 text-slate-200 dark:text-slate-800 mx-auto mb-6" />
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    لا توجد فيديوهات
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 mb-6">
+                    لا توجد فيديوهات{" "}
+                    {activeVideoLang === "ar" ? "عربية" : "إنجليزية"} لهذه
+                    المادة حالياً
+                  </p>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/add-video?subject=${encodeURIComponent(normalizedSubjectName)}`,
+                      )
+                    }
+                    className="px-6 py-3 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200"
+                  >
+                    أضف فيديو
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredVideos.map((video) => (
+                    <div key={video.id} className="modern-card p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1 line-clamp-2">
+                            {video.title}
+                          </h3>
+                          <p className="text-xs text-slate-400">
+                            {new Date(video.created_at).toLocaleDateString(
+                              "ar-EG",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => window.open(video.url, "_blank")}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200 flex-shrink-0"
+                        >
+                          <Play className="w-4 h-4" />
+                          مشاهدة
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()
+          )}
         </div>
       )}
 
       {activeTab === "files" && (
         <div className="space-y-4">
-          {subjectFiles.length === 0 ? (
+          {filesLoading ? (
+            <div className="modern-card p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-slate-600 dark:text-slate-400">
+                جاري التحميل...
+              </p>
+            </div>
+          ) : files.length === 0 ? (
             <div className="modern-card p-12 text-center">
               <FolderOpen className="w-20 h-20 text-slate-200 dark:text-slate-800 mx-auto mb-6" />
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                 لا توجد ملفات
               </h2>
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="text-slate-500 dark:text-slate-400 mb-6">
                 لا توجد ملفات متاحة لهذه المادة حالياً
               </p>
+              <button
+                onClick={() =>
+                  router.push(
+                    `/add-file?subject=${encodeURIComponent(normalizedSubjectName)}`,
+                  )
+                }
+                className="px-6 py-3 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200"
+              >
+                أضف ملف
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {subjectFiles.map((file) => (
-                <div key={file.title} className="modern-card p-6">
+              {files.map((file) => (
+                <div key={file.id} className="modern-card p-6">
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 bg-brand-blue/10 rounded-2xl flex items-center justify-center flex-shrink-0">
                       <FolderOpen className="w-6 h-6 text-brand-blue" />
@@ -403,14 +475,16 @@ function SubjectSummariesContent() {
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
                         {file.title}
                       </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        {file.description}
-                      </p>
+                      {file.description && (
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                          {file.description}
+                        </p>
+                      )}
                       <button
-                        onClick={() => window.open(file.url, "_blank")}
+                        onClick={() => window.open(file.file_url, "_blank")}
                         className="px-4 py-2 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200"
                       >
-                        فتح
+                        تحميل
                       </button>
                     </div>
                   </div>
@@ -436,9 +510,15 @@ function SubjectSummariesContent() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                 لا توجد امتحانات
               </h2>
-              <p className="text-slate-500 dark:text-slate-400">
+              <p className="text-slate-500 dark:text-slate-400 mb-6">
                 لا توجد امتحانات متاحة لهذه المادة حالياً
               </p>
+              <button
+                onClick={() => alert("إضافة الامتحانات قريباً")}
+                className="px-6 py-3 rounded-xl text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky transition-all duration-200"
+              >
+                كن أول من يساهم
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
