@@ -61,8 +61,8 @@ export function useNews() {
 
       // Cache the result
       queryCache.set(cacheKey, newsData, cacheTTL.news);
-    } catch (error) {
-      console.error("Error fetching news:", error);
+    } catch {
+      // ignore
     } finally {
       inflightRequest = null;
       setLoading(false);
@@ -77,7 +77,7 @@ export function useNews() {
     subject: string | null = null,
     department: string | null = null,
     year: string | null = null
-  ): Promise<News | null> => {
+  ): Promise<News | null | undefined> => {
     try {
       const newsToInsert = {
         ...newsData,
@@ -117,9 +117,9 @@ export function useNews() {
       queryCache.delete(cacheKeys.news());
 
       return data;
-    } catch (error) {
-      console.error("Error adding news:", error);
-      return null;
+    } catch {
+      // ignore
+      return undefined;
     }
   };
 
@@ -137,8 +137,8 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
-    } catch (error) {
-      console.error("Error toggling news status:", error);
+    } catch {
+      // ignore
     }
   };
 
@@ -156,8 +156,8 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
-    } catch (error) {
-      console.error("Error deleting news:", error);
+    } catch {
+      // ignore
     }
   };
 

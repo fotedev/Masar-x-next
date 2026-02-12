@@ -52,7 +52,6 @@ export class QuizService {
 
             return quiz.id;
         } catch (error) {
-            console.error('Error saving quiz:', error);
             throw error;
         }
     }
@@ -78,7 +77,6 @@ export class QuizService {
 
             return { quiz, questions };
         } catch (error) {
-            console.error('Error fetching quiz:', error);
             throw error;
         }
     }
@@ -124,7 +122,6 @@ export class QuizService {
 
             return { attempt: newAttempt, answers: [] };
         } catch (error) {
-            console.error('Error starting attempt:', error);
             throw error;
         }
     }
@@ -146,7 +143,6 @@ export class QuizService {
             if (answerError) throw answerError;
 
         } catch (error) {
-            console.error('Error saving answer:', error);
             throw error;
         }
     }
@@ -176,7 +172,6 @@ export class QuizService {
 
             if (error) throw error;
         } catch (error) {
-            console.error('Error finishing attempt:', error);
             throw error;
         }
     }
@@ -215,7 +210,6 @@ export class QuizService {
             const { error } = await supabase.from('quiz_attempts').insert(payloadFull);
             if (error) throw error;
         } catch (error) {
-            console.error('Error submitting attempt:', error);
             throw error;
         }
     }
@@ -232,7 +226,6 @@ export class QuizService {
             if (error) throw error;
             return data;
         } catch (error) {
-            console.error('Error fetching attempts:', error);
             throw error;
         }
     }

@@ -45,8 +45,8 @@ export function usePlatformSettings() {
           localStorage.setItem('activeSemester', '1');
         }
       }
-    } catch (err) {
-      console.error("Error fetching platform settings:", err);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -66,8 +66,7 @@ export function usePlatformSettings() {
         localStorage.setItem('activeSemester', semester.toString());
       }
       return true;
-    } catch (err) {
-      console.error("Error updating active semester:", err);
+    } catch {
       return false;
     } finally {
       setLoading(false);

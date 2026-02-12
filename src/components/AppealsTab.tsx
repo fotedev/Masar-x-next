@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Flag,
   Search,
@@ -74,7 +74,7 @@ export function AppealsTab({
   const currentAppeals = filteredAppeals.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
   if (appeals.length === 0) {

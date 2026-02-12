@@ -48,12 +48,10 @@ export function useOnlineUsers() {
 
           setOnlineUsers(onlineUsersList);
         })
-        .on('presence', { event: 'join' }, ({ key, newPresences }: { key: string; newPresences: unknown[] }) => {
-          console.log('User joined:', key, newPresences);
+        .on('presence', { event: 'join' }, () => {
           setOnlineCount(prev => prev + 1);
         })
-        .on('presence', { event: 'leave' }, ({ key, leftPresences }: { key: string; leftPresences: unknown[] }) => {
-          console.log('User left:', key, leftPresences);
+        .on('presence', { event: 'leave' }, () => {
           setOnlineCount(prev => Math.max(0, prev - 1));
         });
 

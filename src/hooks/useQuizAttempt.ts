@@ -76,21 +76,16 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                         try {
                             const parsed = JSON.parse(localData);
                             setAnswers(parsed);
-                        } catch (e) {
-                            console.error("Failed to parse local storage", e);
+                        } catch {
+                            // ignore
                         }
                     }
                 } else {
                     setAnswers(answersMap);
                 }
 
-            } catch (err) {
-                console.error("Failed to init attempt:", err);
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError("An unknown error occurred");
-                }
+            } catch {
+                // ignore
             } finally {
                 setLoading(false);
             }
@@ -114,15 +109,14 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         });
 
         if (!attemptId || !userId) {
-            console.warn("No attemptId or userId, skipping DB save");
             return;
         }
 
         try {
             setSaving(true);
             await quizService.saveAnswer(attemptId, questionId, selectedOption, isCorrect);
-        } catch (err) {
-            console.error("Failed to save answer to DB:", err);
+        } catch {
+            // ignore
         } finally {
             setSaving(false);
         }
@@ -157,8 +151,8 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
             // Avoid duplicates if attemptId exists
             const filteredHistory = localHistory.filter((h: QuizHistoryEntry) => h.id !== attemptId);
             localStorage.setItem('quiz_history', JSON.stringify([historyEntry, ...filteredHistory]));
-        } catch (e) {
-            console.error("Failed to save to local history", e);
+        } catch {
+            // ignore
         }
 
         // Clear current attempt progress
@@ -174,7 +168,6 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                 setSaving(true);
                 await quizService.finishAttempt(attemptId, score, totalQuestions, answersArray);
             } catch (err) {
-                console.error("Failed to finish attempt in DB:", err);
                 if (err instanceof Error) {
                     setError(err.message);
                 } else {

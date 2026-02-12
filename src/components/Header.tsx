@@ -33,8 +33,8 @@ export const Header = React.memo(function Header() {
     try {
       await signOut();
       router.push("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
+    } catch {
+      // ignore
     }
   };
 

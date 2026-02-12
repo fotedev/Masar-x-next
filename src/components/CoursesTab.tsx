@@ -88,12 +88,12 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
       // Combine the data
       const processedCourses = coursesData.map((course) => {
         const instructor = profilesData?.find(
-          (p) => p.id === course.instructor_id
+          (p) => p.id === course.instructor_id,
         );
         const courseEnrollments =
           enrollmentsData?.filter((e) => e.course_id === course.id) || [];
         const activeEnrollments = courseEnrollments.filter(
-          (e: any) => e.status === "active"
+          (e: any) => e.status === "active",
         );
 
         const priceNumber =
@@ -112,9 +112,8 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
       });
 
       setCourses(processedCourses);
-    } catch (err) {
-      console.error("Error loading courses:", err);
-      setError("فشل في تحميل الكورسات");
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -122,7 +121,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
 
   const handleTogglePublish = async (
     courseId: string,
-    currentStatus: boolean
+    currentStatus: boolean,
   ) => {
     try {
       const { error } = await supabase
@@ -136,11 +135,10 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
         prev.map((course) =>
           course.id === courseId
             ? { ...course, is_published: !currentStatus }
-            : course
-        )
+            : course,
+        ),
       );
-    } catch (err) {
-      console.error("Error toggling course publish status:", err);
+    } catch {
       alert("فشل في تغيير حالة النشر");
     }
   };
@@ -148,7 +146,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
   const handleDeleteCourse = async (courseId: string) => {
     if (
       !confirm(
-        "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء."
+        "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء.",
       )
     ) {
       return;
@@ -163,8 +161,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
       if (error) throw error;
 
       setCourses((prev) => prev.filter((course) => course.id !== courseId));
-    } catch (err) {
-      console.error("Error deleting course:", err);
+    } catch {
       alert("فشل في حذف الكورس");
     }
   };

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -56,7 +56,7 @@ export default function CoursesPage() {
           reviews (
             rating
           )
-        `
+        `,
         )
         .eq("is_published", true)
         .order("created_at", { ascending: false });
@@ -67,9 +67,10 @@ export default function CoursesPage() {
         const processedCourses = coursesData.map((course) => {
           const activeEnrollments =
             (course.enrollments as { status: string }[] | undefined)?.filter(
-              (e) => e.status === "active"
+              (e) => e.status === "active",
             ) || [];
-          const reviews = (course.reviews as { rating: number }[] | undefined) || [];
+          const reviews =
+            (course.reviews as { rating: number }[] | undefined) || [];
           const averageRating =
             reviews.length > 0
               ? reviews.reduce((sum: number, r) => sum + r.rating, 0) /
@@ -94,8 +95,8 @@ export default function CoursesPage() {
 
         setCourses(processedCourses);
       }
-    } catch (error) {
-      console.error("Error fetching courses:", error);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,8 @@ export default function CoursesPage() {
       course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.instructor_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const price = typeof course.price === "number" ? course.price : Number(course.price);
+    const price =
+      typeof course.price === "number" ? course.price : Number(course.price);
     const safePrice = Number.isFinite(price) ? price : 0;
 
     const matchesFilter =
@@ -254,7 +256,8 @@ export default function CoursesPage() {
                     {course.total_students} طالب
                   </div>
 
-                  {course.average_rating !== undefined && course.average_rating > 0 &&
+                  {course.average_rating !== undefined &&
+                    course.average_rating > 0 &&
                     renderStars(course.average_rating)}
 
                   <div className="flex items-center justify-between pt-2">

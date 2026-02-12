@@ -49,7 +49,7 @@ export function PWAInstallPrompt() {
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
-        handleBeforeInstallPrompt
+        handleBeforeInstallPrompt,
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
@@ -62,9 +62,9 @@ export function PWAInstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
+      // User accepted the install prompt
     } else {
-      console.log("User dismissed the install prompt");
+      // User dismissed the install prompt
     }
 
     setDeferredPrompt(null);

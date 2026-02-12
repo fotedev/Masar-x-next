@@ -22,7 +22,7 @@ export function AddVideoForm() {
 
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
-    setFormData(prev => ({ ...prev, subject }));
+    setFormData((prev) => ({ ...prev, subject }));
   }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
@@ -76,8 +76,7 @@ export function AddVideoForm() {
       setTimeout(() => {
         router.push(`/subjects/${encodeURIComponent(formData.subject)}`);
       }, 2000);
-    } catch (err) {
-      console.error("Error adding video:", err);
+    } catch {
       setError("حدث خطأ أثناء إضافة الفيديو. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);

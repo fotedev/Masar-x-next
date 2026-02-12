@@ -94,8 +94,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         })
       })
     }
-  } catch (error) {
-    console.error('Error fetching data for sitemap:', error)
+  } catch {
+    // ignore
   }
 
   return [...staticUrls, ...dynamicUrls]

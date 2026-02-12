@@ -26,36 +26,22 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) throw error;
             setReviews(data || []);
-        } catch (err) {
-            console.error("Error fetching reviews:", err);
+        } catch {
             setError("حدث خطأ أثناء تحميل المراجعات");
         } finally {
             setLoading(false);
         }
     }, [contentId, contentType]);
 
-    const addReview = async (content: string, userId: string, rating: number = 5) => {
+    const addReview = async (review: any) => {
         try {
-            const insertData: any = {
-                content,
-                user_id: userId,
-                rating,
-            };
-
-            if (contentType === "summary") {
-                insertData.summary_id = contentId;
-            } else if (contentType === "quiz") {
-                insertData.quiz_id = contentId;
-            } else {
-                insertData.course_id = contentId;
-            }
-
-            const { error } = await supabase.from("reviews").insert(insertData);
+            const { error } = await supabase
+                .from("reviews")
+                .insert(review);
 
             if (error) throw error;
             await fetchReviews();
         } catch (err) {
-            console.error("Error adding review:", err);
             throw err;
         }
     };
@@ -70,7 +56,6 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
             if (error) throw error;
             setReviews((prev) => prev.filter((r) => r.id !== reviewId));
         } catch (err) {
-            console.error("Error deleting review:", err);
             throw err;
         }
     };

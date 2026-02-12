@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import Image from "next/image";
 import {
   CheckCircle,
   XCircle,
@@ -92,8 +93,8 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       finishingRef.current = false;
 
       trackEvent("quiz_loaded", { quiz_id: quizId, title: quiz.title });
-    } catch (error) {
-      console.error("Error loading quiz:", error);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -123,8 +124,8 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       // Save attempt (handles both guest and registered)
       try {
         await saveFinishAttempt(score, takenSeconds);
-      } catch (error) {
-        console.error("Failed to finish quiz attempt:", error);
+      } catch {
+        // ignore
       }
 
       trackEvent("quiz_completed", {
@@ -542,11 +543,12 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
         </h3>
 
         {currentQuestion.image_url && (
-          <div className="mb-8 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50 shadow-lg">
-            <img
+          <div className="mb-8 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-700/50 shadow-lg relative h-[400px]">
+            <Image
               src={currentQuestion.image_url}
               alt="Question illustration"
-              className="w-full h-auto max-h-[400px] object-contain bg-white dark:bg-gray-900/50"
+              fill
+              className="object-contain bg-white dark:bg-gray-900/50"
             />
           </div>
         )}

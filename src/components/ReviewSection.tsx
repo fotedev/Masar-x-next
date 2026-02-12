@@ -1,14 +1,21 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Send, User, Trash2, MessageSquare, Star } from "lucide-react";
 import { useReviews } from "../hooks/useReviews";
 import { useAuth } from "../contexts/AuthContext";
 
 interface ReviewSectionProps {
   contentId: string;
-  contentType?: "summary" | "quiz";
+  contentType?: "summary" | "quiz" | "course";
 }
 
-const StarRatingInput = ({ rating, setRating }: { rating: number; setRating: (r: number) => void }) => {
+const StarRatingInput = ({
+  rating,
+  setRating,
+}: {
+  rating: number;
+  setRating: (r: number) => void;
+}) => {
   return (
     <div className="flex items-center gap-1 mb-4">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -20,7 +27,9 @@ const StarRatingInput = ({ rating, setRating }: { rating: number; setRating: (r:
         >
           <Star
             className={`w-6 h-6 ${
-              star <= rating ? "fill-brand-orange text-brand-orange" : "text-slate-300 dark:text-slate-700"
+              star <= rating
+                ? "fill-brand-orange text-brand-orange"
+                : "text-slate-300 dark:text-slate-700"
             }`}
           />
         </button>
@@ -32,14 +41,22 @@ const StarRatingInput = ({ rating, setRating }: { rating: number; setRating: (r:
   );
 };
 
-const StarDisplay = ({ rating, size = "w-4 h-4" }: { rating: number; size?: string }) => {
+const StarDisplay = ({
+  rating,
+  size = "w-4 h-4",
+}: {
+  rating: number;
+  size?: string;
+}) => {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={`${size} ${
-            star <= rating ? "fill-brand-orange text-brand-orange" : "text-slate-200 dark:text-slate-800"
+            star <= rating
+              ? "fill-brand-orange text-brand-orange"
+              : "text-slate-200 dark:text-slate-800"
           }`}
         />
       ))}
@@ -47,9 +64,15 @@ const StarDisplay = ({ rating, size = "w-4 h-4" }: { rating: number; size?: stri
   );
 };
 
-export function ReviewSection({ contentId, contentType = "summary" }: ReviewSectionProps) {
+export function ReviewSection({
+  contentId,
+  contentType = "summary",
+}: ReviewSectionProps) {
   const { user, isAdmin } = useAuth();
-  const { reviews, loading, stats, addReview, deleteReview } = useReviews(contentId, contentType);
+  const { reviews, loading, stats, addReview, deleteReview } = useReviews(
+    contentId,
+    contentType,
+  );
   const [newReview, setNewReview] = useState("");
   const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
@@ -60,11 +83,20 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
 
     try {
       setSubmitting(true);
-      await addReview(newReview.trim(), user.id, rating);
+      const reviewData = {
+        content: newReview.trim(),
+        user_id: user.id,
+        rating: rating,
+        summary_id: contentType === "summary" ? contentId : undefined,
+        quiz_id: contentType === "quiz" ? contentId : undefined,
+        course_id: contentType === "course" ? contentId : undefined,
+      };
+
+      await addReview(reviewData);
       setNewReview("");
       setRating(5);
-    } catch (err) {
-      console.error("Failed to add review:", err);
+    } catch {
+      // ignore
     } finally {
       setSubmitting(false);
     }
@@ -74,8 +106,8 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
     if (!window.confirm("هل أنت متأكد من حذف هذه المراجعة؟")) return;
     try {
       await deleteReview(reviewId);
-    } catch (err) {
-      console.error("Failed to delete review:", err);
+    } catch {
+      // ignore
     }
   };
 
@@ -98,7 +130,10 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
                 {stats.average}
               </div>
               <div className="flex justify-center mb-2">
-                <StarDisplay rating={Math.round(stats.average)} size="w-5 h-5" />
+                <StarDisplay
+                  rating={Math.round(stats.average)}
+                  size="w-5 h-5"
+                />
               </div>
               <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
                 بناءً على {stats.total} تقييم
@@ -110,7 +145,9 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
               {stats.distribution.map((data) => (
                 <div key={data.rating} className="flex items-center gap-4">
                   <div className="flex items-center gap-1 w-12">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{data.rating}</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      {data.rating}
+                    </span>
                     <Star className="w-3 h-3 fill-slate-400 text-slate-400" />
                   </div>
                   <div className="flex-grow h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -120,7 +157,9 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
                     />
                   </div>
                   <div className="w-12 text-left">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{data.percentage}%</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                      {data.percentage}%
+                    </span>
                   </div>
                 </div>
               ))}
@@ -131,8 +170,13 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
 
       {/* Add Review Form */}
       {user ? (
-        <form onSubmit={handleSubmit} className="mb-12 modern-card p-6 bg-brand-blue/5 dark:bg-brand-blue/10 border-brand-blue/10">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">أضف مراجعتك</h3>
+        <form
+          onSubmit={handleSubmit}
+          className="mb-12 modern-card p-6 bg-brand-blue/5 dark:bg-brand-blue/10 border-brand-blue/10"
+        >
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+            أضف مراجعتك
+          </h3>
           <StarRatingInput rating={rating} setRating={setRating} />
           <div className="relative">
             <textarea
@@ -173,11 +217,14 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
             >
               <div className="flex-shrink-0">
                 {review.avatar_url ? (
-                  <img
-                    src={review.avatar_url}
-                    alt={review.full_name || "User"}
-                    className="w-12 h-12 rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-sm"
-                  />
+                  <div className="w-12 h-12 relative">
+                    <Image
+                      src={review.avatar_url}
+                      alt={review.full_name || "User"}
+                      fill
+                      className="rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-sm"
+                    />
+                  </div>
                 ) : (
                   <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center">
                     <User className="w-6 h-6 text-brand-blue" />
@@ -193,11 +240,15 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
                     <div className="flex items-center gap-3 mt-1">
                       <StarDisplay rating={review.rating || 5} size="w-3 h-3" />
                       <span className="text-[11px] text-slate-400 font-bold">
-                        {review.created_at && new Date(review.created_at).toLocaleDateString("ar-EG", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {review.created_at &&
+                          new Date(review.created_at).toLocaleDateString(
+                            "ar-EG",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )}
                       </span>
                     </div>
                   </div>
@@ -220,13 +271,15 @@ export function ReviewSection({ contentId, contentType = "summary" }: ReviewSect
         ) : (
           <div className="text-center py-16 modern-card border-dashed">
             <MessageSquare className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 font-bold text-lg">لا توجد مراجعات بعد.</p>
-            <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">كن أول من يقيم هذا المحتوى!</p>
+            <p className="text-slate-500 dark:text-slate-400 font-bold text-lg">
+              لا توجد مراجعات بعد.
+            </p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
+              كن أول من يقيم هذا المحتوى!
+            </p>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-

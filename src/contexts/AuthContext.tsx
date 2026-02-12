@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -32,38 +32,52 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   // Lazy-initialize isAdmin from localStorage for instant load on refresh
   const [isAdmin, setIsAdmin] = useState(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === "undefined") return false;
     try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('admin_status_'));
+      const keys = Object.keys(localStorage).filter((k) =>
+        k.startsWith("admin_status_"),
+      );
       if (keys.length > 0) {
         const cached = JSON.parse(localStorage.getItem(keys[0])!);
         if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
           return cached.isAdmin;
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return false;
   });
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   // Lazy-initialize adminRole from localStorage
-  const [adminRole, setAdminRole] = useState<"doctor" | "student" | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('admin_status_'));
-      if (keys.length > 0) {
-        const cached = JSON.parse(localStorage.getItem(keys[0])!);
-        if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
-          return cached.role || null;
+  const [adminRole, setAdminRole] = useState<"doctor" | "student" | null>(
+    () => {
+      if (typeof window === "undefined") return null;
+      try {
+        const keys = Object.keys(localStorage).filter((k) =>
+          k.startsWith("admin_status_"),
+        );
+        if (keys.length > 0) {
+          const cached = JSON.parse(localStorage.getItem(keys[0])!);
+          if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
+            return cached.role || null;
+          }
         }
+      } catch {
+        /* ignore */
       }
-    } catch { /* ignore */ }
-    return null;
-  });
+      return null;
+    },
+  );
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -78,11 +92,13 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, []);
 
   // Cache for admin status using ref to avoid re-creating verifyAdminStatus on updates
-  const adminCacheRef = useRef<{ [userId: string]: { isAdmin: boolean, role: "doctor" | "student" | null } }>({});
+  const adminCacheRef = useRef<{
+    [userId: string]: { isAdmin: boolean; role: "doctor" | "student" | null };
+  }>({});
 
   // Centralized function to verify admin status with caching
   const verifyAdminStatus = useCallback(
-    async (u: User | null, forceRefresh = false) => {
+    async (u: User | null, forceRefresh = false): Promise<boolean> => {
       if (!u) {
         setIsAdmin(false);
         setIsAdminLoading(false);
@@ -95,21 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       // 1. Immediate check from metadata (Fastest)
       const userMetadataRole = u.user_metadata?.role;
       const appMetadataRole = u.app_metadata?.role;
-      
+
       const checkRole = (role: string | string[] | null | undefined) => {
         if (Array.isArray(role)) return role.includes("admin");
         return role === "admin";
       };
 
-      const isAdminInMetadata = checkRole(userMetadataRole) || checkRole(appMetadataRole);
+      const isAdminInMetadata =
+        checkRole(userMetadataRole) || checkRole(appMetadataRole);
 
       // Check memory cache first for instant response
       if (!forceRefresh && adminCacheRef.current[u.id] !== undefined) {
         const cached = adminCacheRef.current[u.id];
-        // If metadata says admin but cache says not, ignore cache and proceed to check
-        if (isAdminInMetadata && !cached.isAdmin) {
-          console.log("AuthContext: Metadata says admin but memory cache says no, proceeding to verify");
-        } else {
+        if (!(isAdminInMetadata && !cached.isAdmin)) {
           setIsAdmin(cached.isAdmin);
           setAdminRole(cached.role);
           setIsAdminLoading(false);
@@ -122,13 +136,17 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         try {
           const cached = localStorage.getItem(cacheKey);
           if (cached) {
-            const { isAdmin: cachedIsAdmin, role: cachedRole, timestamp } = JSON.parse(cached);
+            const {
+              isAdmin: cachedIsAdmin,
+              role: cachedRole,
+              timestamp,
+            } = JSON.parse(cached);
             if (Date.now() - timestamp < cacheExpiry) {
-              // If metadata says admin but cache says not, force a refresh
-              if (isAdminInMetadata && !cachedIsAdmin) {
-                console.log("AuthContext: Metadata says admin but cache says no, forcing refresh");
-              } else {
-                adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: cachedIsAdmin, role: cachedRole } };
+              if (!(isAdminInMetadata && !cachedIsAdmin)) {
+                adminCacheRef.current = {
+                  ...adminCacheRef.current,
+                  [u.id]: { isAdmin: cachedIsAdmin, role: cachedRole },
+                };
                 setIsAdmin(cachedIsAdmin);
                 setAdminRole(cachedRole);
                 setIsAdminLoading(false);
@@ -136,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
               }
             }
           }
-        } catch (e) {
+        } catch {
           // Ignore cache errors
         }
       }
@@ -144,7 +162,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       if (isAdminInMetadata) {
         setIsAdmin(true);
         // If metadata also specifies doctor/student, use it as temporary role
-        const roles = Array.isArray(userMetadataRole) ? userMetadataRole : [userMetadataRole];
+        const roles = Array.isArray(userMetadataRole)
+          ? userMetadataRole
+          : [userMetadataRole];
         if (roles.includes("doctor")) setAdminRole("doctor");
         else if (roles.includes("student")) setAdminRole("student");
       }
@@ -159,51 +179,59 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
             .eq("user_id", u.id)
             .maybeSingle(),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Admin check timeout")), 5000)
+            setTimeout(() => reject(new Error("Admin check timeout")), 5000),
           ),
-        ])) as { data: { role: "doctor" | "student" | null } | null; error: any };
+        ])) as {
+          data: { role: "doctor" | "student" | null } | null;
+          error: any;
+        };
 
         const isDbAdmin = !!data && !error;
         const role = data?.role || null;
-        
+
         setIsAdmin(isDbAdmin);
         setAdminRole(role);
 
         // Cache the result
-        adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: isDbAdmin, role } };
+        adminCacheRef.current = {
+          ...adminCacheRef.current,
+          [u.id]: { isAdmin: isDbAdmin, role },
+        };
         localStorage.setItem(
           cacheKey,
           JSON.stringify({
             isAdmin: isDbAdmin,
             role,
             timestamp: Date.now(),
-          })
+          }),
         );
 
         return isDbAdmin;
-      } catch (err) {
-        console.error("AuthContext: Admin check failed", err);
+      } catch {
         // Preserve metadata admin status if it was already set
         if (!isAdminInMetadata) {
           setIsAdmin(false);
           setAdminRole(null);
         }
         // Cache false result for 5 minutes to avoid repeated failed requests
-        adminCacheRef.current = { ...adminCacheRef.current, [u.id]: { isAdmin: false, role: null } };
+        adminCacheRef.current = {
+          ...adminCacheRef.current,
+          [u.id]: { isAdmin: false, role: null },
+        };
         localStorage.setItem(
           cacheKey,
           JSON.stringify({
             isAdmin: false,
             role: null,
             timestamp: Date.now(),
-          })
+          }),
         );
-        return false;
+        return isAdminInMetadata;
       } finally {
         setIsAdminLoading(false);
       }
     },
-    [] // eslint-disable-line react-hooks/exhaustive-deps -- uses ref, stable reference
+    [], // eslint-disable-line react-hooks/exhaustive-deps -- uses ref, stable reference
   );
 
   // Public function to force refresh admin status
@@ -234,8 +262,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         if (currentUser) {
           verifyAdminStatus(currentUser);
         }
-      } catch (err) {
-        console.error("AuthContext: Initialization failed", err);
+      } catch {
+        // ignore
       } finally {
         if (mounted) setLoading(false);
       }
@@ -279,9 +307,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
                   setAvatarUrl(profileData.avatar_url);
                 }
               },
-              (err: unknown) => {
-                console.warn("Failed to load avatar from database:", err);
-              }
+              () => {
+                // ignore
+              },
             );
         } else {
           setAvatarUrl(null);
@@ -313,9 +341,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
                 provider: currentUser.app_metadata?.provider || "email",
               },
             })
-            .catch(console.error);
+            .catch(() => {});
         }
-      }
+      },
     );
 
     return () => {
@@ -362,7 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         throw new Error("Upload failed");
       }
     } catch (error) {
-      console.error("Error updating avatar:", error);
+      // ignore
       throw error;
     }
   };
@@ -398,7 +426,9 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/` },
+      options: {
+        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/`,
+      },
     });
     if (error) throw error;
   };
@@ -411,7 +441,7 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
           actionType: "user_logout",
           contentType: "user_logout",
         })
-        .catch(console.error);
+        .catch(() => {});
     }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

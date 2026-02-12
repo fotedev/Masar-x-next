@@ -67,8 +67,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
           };
           setAnalytics(placeholderSummary);
         }
-      } catch (err) {
-        console.error("Error loading analytics:", err);
+      } catch {
         setError("حدث خطأ في تحميل الإحصائيات");
       } finally {
         setLoading(false);

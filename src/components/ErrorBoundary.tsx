@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -30,14 +30,14 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  componentDidCatch(_error: Error, errorInfo: ErrorInfo): void {
     this.setState({ errorInfo });
-    
+
     // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (process.env.NODE_ENV === "development") {
+      // ignore
     }
-    
+
     // TODO: In production, send to error reporting service like Sentry
     // Example: Sentry.captureException(error, { extra: errorInfo });
   }
@@ -47,7 +47,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   handleGoHome = (): void => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   handleRetry = (): void => {
@@ -63,7 +63,10 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4" dir="rtl">
+        <div
+          className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4"
+          dir="rtl"
+        >
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
             {/* Error Icon */}
             <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
@@ -75,11 +78,12 @@ class ErrorBoundary extends Component<Props, State> {
               عذراً، حدث خطأ غير متوقع
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى أو العودة للصفحة الرئيسية.
+              نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى أو العودة للصفحة
+              الرئيسية.
             </p>
 
             {/* Error Details (Development only) */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-right overflow-auto max-h-40">
                 <p className="text-sm font-mono text-red-600 dark:text-red-400 break-all">
                   {this.state.error.toString()}
