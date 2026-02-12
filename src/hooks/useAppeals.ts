@@ -56,8 +56,8 @@ export function useAppeals() {
 
       // Cache the result
       queryCache.set(cacheKey, appealsData, cacheTTL.appeals);
-    } catch (error) {
-      console.error("Error fetching appeals:", error);
+    } catch {
+      // ignore
     } finally {
       inflightRequest = null;
       setLoading(false);
@@ -72,9 +72,9 @@ export function useAppeals() {
       if (error) throw error;
 
       setAppeals((prev) => prev.filter((appeal) => appeal.id !== id));
-    } catch (error) {
-      console.error("Error deleting appeal:", error);
-      alert("حدث خطأ أثناء حذف الطعن.");
+    } catch {
+      // ignore
+    } finally {
     }
   }, []);
 
@@ -102,9 +102,8 @@ export function useAppeals() {
         id,
         "appeal"
       );
-    } catch (error) {
-      console.error("Error accepting appeal:", error);
-      alert("حدث خطأ أثناء قبول الطعن.");
+    } catch {
+      // ignore
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -132,9 +131,8 @@ export function useAppeals() {
         id,
         "appeal"
       );
-    } catch (error) {
-      console.error("Error rejecting appeal:", error);
-      alert("حدث خطأ أثناء رفض الطعن.");
+    } catch {
+      // ignore
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

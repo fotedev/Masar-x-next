@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import type { Notification, NotificationInsert } from '../types/database';
 import { queryCache, cacheKeys, cacheTTL } from '../lib/queryCache';
 
@@ -61,8 +60,8 @@ export function useNotifications() {
 
       // Cache the result
       queryCache.set(cacheKey, notificationData, cacheTTL.notifications);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
+      // ignore
     } finally {
       // Clear inflight request when done
       const { data: { user } } = await supabase.auth.getUser();
@@ -87,8 +86,8 @@ export function useNotifications() {
         )
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
+    } catch {
+      // ignore
     }
   };
 
@@ -108,8 +107,8 @@ export function useNotifications() {
 
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+    } catch {
+      // ignore
     }
   };
 
@@ -129,8 +128,8 @@ export function useNotifications() {
       if (deletedNotification && !deletedNotification.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-    } catch (error) {
-      console.error('Error deleting notification:', error);
+    } catch {
+      // ignore
     }
   };
 
@@ -156,7 +155,6 @@ export function useNotifications() {
 
       return data;
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw error;
     }
   }, []);
@@ -181,8 +179,8 @@ export function useNotifications() {
         read: false,
       };
       await createNotification(notification);
-    } catch (error) {
-      console.error('Error notifying user:', error);
+    } catch {
+      // ignore
     }
   }, [createNotification]);
 
@@ -203,12 +201,11 @@ export function useNotifications() {
       if (error) throw error;
 
       if (!admins || admins.length === 0) {
-        console.warn('No admins found to notify');
         return;
       }
 
       // إنشاء إشعارات لجميع المدراء
-      const notifications = admins.map((admin: { user_id: string }) => ({
+      const notificationsToInsert = admins.map((admin: { user_id: string }) => ({
         user_id: admin.user_id,
         title,
         message,
@@ -218,58 +215,52 @@ export function useNotifications() {
         read: false
       }));
 
-      const { error: insertError } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (insertError) throw insertError;
-
-      console.log(`Notifications sent to ${admins.length} admins`);
-    } catch (error) {
-      console.error('Error notifying admins:', error);
+      await supabase.from('notifications').insert(notificationsToInsert);
+    } catch {
+      // ignore
     }
   }, []);
 
-  // إرسال إشعار لجميع المستخدمين (مؤقتاً: إرسال للمدراء فقط)
-  const notifyAllUsers = useCallback(async (
-    title: string,
-    message: string,
-    type: 'content_published' | 'system',
-    relatedId?: string,
-    relatedType?: 'summary' | 'news'
-  ) => {
+  const notifyAllUsers = async (title: string, message: string, type: string, relatedId?: string, relatedType?: string) => {
     try {
       // مؤقتاً: إرسال إشعار للمدراء فقط (حتى نضيف جدول المستخدمين)
-      await notifyAdmins(title, message, type as any, relatedId, relatedType);
-      console.log('Notification sent to admins (all users notification temporarily disabled)');
-    } catch (error) {
-      console.error('Error notifying all users:', error);
+      await notifyAdmins(title, message, type as any, relatedId, relatedType as any);
+    } catch {
+      // ignore
     }
-  }, [notifyAdmins]);
+  };
 
-  // الاشتراك في التحديثات التلقائية
+  // Real-time subscription for notifications
   useEffect(() => {
-    fetchNotifications();
+    const setupRealtime = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    // الاشتراك في التحديثات التلقائية للإشعارات
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all events: INSERT, UPDATE, DELETE
-          schema: 'public',
-          table: 'notifications',
-        },
-        (payload: RealtimePostgresChangesPayload<Notification>) => {
-          console.log('Notification change received:', payload);
-          fetchNotifications(); // إعادة جلب الإشعارات
-        }
-      )
-      .subscribe();
+      const channel = supabase
+        .channel(`notifications:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchNotifications(true); // إعادة جلب الإشعارات وتجاوز الكاش
+          }
+        )
+        .subscribe();
+
+      return channel;
+    };
+
+    const channelPromise = setupRealtime();
 
     return () => {
-      supabase.removeChannel(channel);
+      channelPromise.then(channel => {
+        if (channel) supabase.removeChannel(channel);
+      });
     };
   }, []);
 

@@ -242,8 +242,7 @@ export default function CourseDetailPage() {
           setFiles(filesData);
         }
       }
-    } catch (error) {
-      console.error("Error fetching course data:", error);
+    } catch {
       toast.error("حدث خطأ في تحميل بيانات الكورس");
     } finally {
       setLoading(false);
@@ -290,8 +289,7 @@ export default function CourseDetailPage() {
 
       // Refresh enrollment status
       fetchCourseData();
-    } catch (error) {
-      console.error("Error subscribing to course:", error);
+    } catch {
       toast.error("حدث خطأ في إرسال طلب التسجيل");
     } finally {
       setUploadingScreenshot(false);
@@ -320,8 +318,7 @@ export default function CourseDetailPage() {
 
       // Refresh reviews
       fetchCourseData();
-    } catch (error) {
-      console.error("Error submitting review:", error);
+    } catch {
       toast.error("حدث خطأ في إرسال التقييم");
     } finally {
       setSubmitting(false);
@@ -366,8 +363,7 @@ export default function CourseDetailPage() {
       setSummaryTitle("");
       setSummaryContent("");
       fetchCourseData();
-    } catch (error) {
-      console.error("Error saving summary:", error);
+    } catch {
       toast.error("حدث خطأ في حفظ الملخص");
     } finally {
       setSubmitting(false);
@@ -387,8 +383,7 @@ export default function CourseDetailPage() {
 
       toast.success("تم حذف الملخص بنجاح!");
       fetchCourseData();
-    } catch (error) {
-      console.error("Error deleting summary:", error);
+    } catch {
       toast.error("حدث خطأ في حذف الملخص");
     }
   };
@@ -448,8 +443,7 @@ export default function CourseDetailPage() {
       setVideoLanguage("ar");
       setVideoDuration("");
       fetchCourseData();
-    } catch (error) {
-      console.error("Error saving video:", error);
+    } catch {
       toast.error("حدث خطأ في حفظ الفيديو");
     } finally {
       setSubmitting(false);
@@ -469,8 +463,7 @@ export default function CourseDetailPage() {
 
       toast.success("تم حذف الفيديو بنجاح!");
       fetchCourseData();
-    } catch (error) {
-      console.error("Error deleting video:", error);
+    } catch {
       toast.error("حدث خطأ في حذف الفيديو");
     }
   };
@@ -546,8 +539,7 @@ export default function CourseDetailPage() {
       setFileDescription("");
       setSelectedFile(null);
       fetchCourseData();
-    } catch (error) {
-      console.error("Error saving file:", error);
+    } catch {
       toast.error("حدث خطأ في حفظ الملف");
     } finally {
       setSubmitting(false);
@@ -567,8 +559,7 @@ export default function CourseDetailPage() {
 
       toast.success("تم حذف الملف بنجاح!");
       fetchCourseData();
-    } catch (error) {
-      console.error("Error deleting file:", error);
+    } catch {
       toast.error("حدث خطأ في حذف الملف");
     }
   };

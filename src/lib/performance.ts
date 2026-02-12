@@ -17,7 +17,6 @@ class PerformanceMonitor {
     try {
       // Check if PerformanceObserver is supported
       if (typeof window === 'undefined' || !('PerformanceObserver' in window)) {
-        console.warn('PerformanceObserver is not supported in this browser');
         return;
       }
 
@@ -33,8 +32,8 @@ class PerformanceMonitor {
 
       // Monitor resource loading
       this.observeResourceTiming();
-    } catch (error) {
-      console.error('Failed to initialize performance monitoring:', error);
+    } catch {
+      // ignore
     }
   }
 
@@ -43,13 +42,11 @@ class PerformanceMonitor {
       if (!('PerformanceObserver' in window)) return;
 
       let clsValue = 0;
-      let sessionEntries: PerformanceEntry[] = [];
 
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (!(entry as any).hadRecentInput) {
             clsValue += (entry as any).value;
-            sessionEntries.push(entry);
           }
         }
       });
@@ -60,7 +57,6 @@ class PerformanceMonitor {
       const reportCLS = () => {
         if (clsValue > 0) {
           this.recordMetric('CLS', clsValue);
-          console.log(`CLS: ${clsValue}`);
         }
       };
 
@@ -70,8 +66,8 @@ class PerformanceMonitor {
           reportCLS();
         }
       });
-    } catch (e) {
-      console.warn('CLS observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -83,13 +79,12 @@ class PerformanceMonitor {
         for (const entry of list.getEntries()) {
           const eventEntry = entry as PerformanceEventTiming;
           this.recordMetric('FID', eventEntry.processingStart - eventEntry.startTime);
-          console.log(`FID: ${eventEntry.processingStart - eventEntry.startTime}ms`);
         }
       });
 
       observer.observe({ entryTypes: ['first-input'] });
-    } catch (e) {
-      console.warn('FID observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -102,12 +97,11 @@ class PerformanceMonitor {
         if (entries.length === 0) return;
         const lastEntry = entries[entries.length - 1];
         this.recordMetric('LCP', lastEntry.startTime);
-        console.log(`LCP: ${lastEntry.startTime}ms`);
       });
 
       observer.observe({ entryTypes: ['largest-contentful-paint'] });
-    } catch (e) {
-      console.warn('LCP observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -120,12 +114,11 @@ class PerformanceMonitor {
         if (entries.length === 0) return;
         const lastEntry = entries[entries.length - 1];
         this.recordMetric('FCP', lastEntry.startTime);
-        console.log(`FCP: ${lastEntry.startTime}ms`);
       });
 
       observer.observe({ entryTypes: ['paint'] });
-    } catch (e) {
-      console.warn('FCP observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -137,13 +130,12 @@ class PerformanceMonitor {
         for (const entry of list.getEntries()) {
           const navEntry = entry as PerformanceNavigationTiming;
           this.recordMetric('TTFB', navEntry.responseStart);
-          console.log(`TTFB: ${navEntry.responseStart}ms`);
         }
       });
 
       observer.observe({ entryTypes: ['navigation'] });
-    } catch (e) {
-      console.warn('TTFB observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -156,13 +148,12 @@ class PerformanceMonitor {
             if (navigation) {
               this.recordMetric('DOM Content Loaded', navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart);
               this.recordMetric('Load Complete', navigation.loadEventEnd - navigation.loadEventStart);
-              console.log(`Page Load Time: ${navigation.loadEventEnd - navigation.loadEventStart}ms`);
             }
           }
         }, 0);
       });
-    } catch (e) {
-      console.warn('Navigation timing observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -174,30 +165,24 @@ class PerformanceMonitor {
         for (const entry of list.getEntries()) {
           const resourceEntry = entry as PerformanceResourceTiming;
           if (resourceEntry.duration > 1000) { // Log slow resources (>1s)
-            console.log(`Slow resource: ${resourceEntry.name} (${resourceEntry.duration}ms)`);
+            this.recordMetric('Slow Resource', resourceEntry.duration);
           }
         }
       });
 
       observer.observe({ entryTypes: ['resource'] });
-    } catch (e) {
-      console.warn('Resource timing observation failed:', e);
+    } catch {
+      // ignore
     }
   }
 
   private recordMetric(name: string, value: number) {
     try {
-      const navigationEntry = typeof performance !== 'undefined' && performance.getEntriesByType
-        ? (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)
-        : null;
-
       const metric: PerformanceMetric = {
         name,
-        value: Math.round(value * 100) / 100,
+        value,
         timestamp: Date.now(),
-        navigationType: navigationEntry?.type
       };
-
       this.metrics.push(metric);
 
       // Send to analytics if available
@@ -209,8 +194,8 @@ class PerformanceMonitor {
           non_interaction: true,
         });
       }
-    } catch (e) {
-      // Silently fail for metric recording
+    } catch {
+      // ignore
     }
   }
 

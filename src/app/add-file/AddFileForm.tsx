@@ -23,7 +23,7 @@ export function AddFileForm() {
 
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
-    setFormData(prev => ({ ...prev, subject }));
+    setFormData((prev) => ({ ...prev, subject }));
   }, [searchParams]);
 
   const [file, setFile] = useState<File | null>(null);
@@ -64,8 +64,6 @@ export function AddFileForm() {
         },
       });
 
-      console.log("File uploaded to Cloudinary:", cloudinaryResult.public_id);
-
       // Insert into files table
       const fileData = {
         title: formData.title,
@@ -92,8 +90,7 @@ export function AddFileForm() {
       setTimeout(() => {
         router.push(`/subjects/${encodeURIComponent(formData.subject)}`);
       }, 2000);
-    } catch (err) {
-      console.error("Error adding file:", err);
+    } catch {
       setError("حدث خطأ أثناء إضافة الملف. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);

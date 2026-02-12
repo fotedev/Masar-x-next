@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Newspaper,
   Search,
@@ -40,14 +40,14 @@ export function NewsTab({
         (item) =>
           item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.type.toLowerCase().includes(searchTerm.toLowerCase())
+          item.type.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((item) =>
-        statusFilter === "active" ? item.is_active : !item.is_active
+        statusFilter === "active" ? item.is_active : !item.is_active,
       );
     }
 
@@ -68,7 +68,7 @@ export function NewsTab({
   const currentNews = filteredNews.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
   if (news.length === 0) {

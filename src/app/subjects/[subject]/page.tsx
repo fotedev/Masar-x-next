@@ -106,9 +106,8 @@ function SubjectSummariesContent() {
         });
 
         setSubjectQuizzes(quizzes as Quiz[]);
-      } catch (error) {
-        console.error("Error fetching subject quizzes:", error);
-        setSubjectQuizzes([]);
+      } catch {
+        // ignore
       } finally {
         setQuizzesLoading(false);
       }

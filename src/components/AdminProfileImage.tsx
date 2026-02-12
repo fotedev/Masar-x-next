@@ -1,6 +1,7 @@
 import { User, Camera } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useState } from "react";
+import Image from "next/image";
 import { FileDropzone } from "./FileDropzone";
 
 interface AdminProfileImageProps {
@@ -19,9 +20,8 @@ export function AdminProfileImage({
   const { isAdmin, avatarUrl, updateAvatar } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
-
   const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -41,15 +41,12 @@ export function AdminProfileImage({
     setIsUploading(true);
     try {
       await updateAvatar(file);
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
+    } catch {
       alert("حدث خطأ في رفع الصورة. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsUploading(false);
     }
   };
-
-
 
   const sizeClasses = {
     sm: "w-8 h-8",
@@ -91,10 +88,12 @@ export function AdminProfileImage({
           }`}
         >
           {avatarUrl ? (
-            <img
+            <Image
               src={avatarUrl}
               alt="Profile"
-              className="w-full h-full object-cover rounded-full"
+              fill
+              className="object-cover rounded-full"
+              unoptimized
             />
           ) : (
             showIcon && (

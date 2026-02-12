@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -14,13 +14,7 @@ import {
   TabsTrigger,
 } from "../../components/ui";
 import { EnrollmentsTab } from "../../components/EnrollmentsTab";
-import {
-  Users,
-  Star,
-  Clock,
-  TrendingUp,
-  BookOpen,
-} from "lucide-react";
+import { Users, Star, Clock, TrendingUp, BookOpen } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 // Enrollment interface is now handled by EnrollmentsTab component
@@ -66,7 +60,7 @@ export default function InstructorDashboard() {
           reviews (
             rating
           )
-        `
+        `,
         )
         .eq("instructor_id", user.id)
         .eq("is_published", true);
@@ -99,8 +93,7 @@ export default function InstructorDashboard() {
 
         setStats(statsData);
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch {
       toast.error("حدث خطأ في تحميل بيانات لوحة التحكم");
     } finally {
       setLoading(false);
@@ -181,7 +174,7 @@ export default function InstructorDashboard() {
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.reduce(
                     (sum, course) => sum + course.active_students,
-                    0
+                    0,
                   )}
                 </p>
               </div>
@@ -202,7 +195,7 @@ export default function InstructorDashboard() {
                     ? (
                         stats.reduce(
                           (sum, course) => sum + course.average_rating,
-                          0
+                          0,
                         ) / stats.length
                       ).toFixed(1)
                     : "0.0"}

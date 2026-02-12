@@ -65,19 +65,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
           !process.env.NODE_ENV) ||
         process.env.NODE_ENV !== "development"
       ) {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((registration) => {
-            console.log(
-              "Service Worker registered for notifications:",
-              registration,
-            );
-            // Force update service worker to avoid cached issues
-            registration.update();
-          })
-          .catch((error) => {
-            console.error("Service Worker registration failed:", error);
-          });
+        navigator.serviceWorker.register("/sw.js").then(() => {
+          // Service Worker registered
+        });
       }
     }
   }, [isSupported]);
@@ -93,20 +83,20 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       if (result === "granted") {
         // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
         if (
+          typeof window !== "undefined" &&
           "serviceWorker" in navigator &&
           (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
         ) {
-          const registration = await navigator.serviceWorker.register("/sw.js");
-          console.log(
-            "Service Worker registered for notifications:",
-            registration,
-          );
+          try {
+            await navigator.serviceWorker.register("/sw.js");
+          } catch {
+            // Registration failed
+          }
         }
       }
 
       return result;
-    } catch (error) {
-      console.error("Error requesting notification permission:", error);
+    } catch {
       return "denied";
     }
   };
@@ -215,7 +205,7 @@ export function NotificationPrompt() {
 
 // مكون زر الإشعارات في الهيدر أو الإعدادات
 export function NotificationToggle() {
-  const { permission, requestPermission, sendNotification, dismissPrompt } =
+  const { permission, requestPermission, sendNotification } =
     useNotifications();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -223,58 +213,35 @@ export function NotificationToggle() {
     event.preventDefault();
     event.stopPropagation();
 
-    console.log(
-      "NotificationToggle clicked, permission:",
-      permission,
-      "isLoading:",
-      isLoading,
-    );
-
     if (isLoading) {
-      console.log("Already loading, ignoring click");
       return; // Prevent multiple clicks
     }
 
     setIsLoading(true);
     try {
       if (permission === "default" || permission === "denied") {
-        console.log("Requesting notification permission directly...");
-
         // طلب الإذن مباشرة من المتصفح
         if (!("Notification" in window)) {
-          console.error("This browser does not support notifications");
           alert("متصفحك لا يدعم الإشعارات");
           return;
         }
 
         const result = await requestPermission();
-        console.log("Permission request result:", result);
 
         if (result === "granted") {
-          console.log("Notifications granted, registering service worker...");
-
           // تسجيل Service Worker إذا لم يكن مسجل (فقط في الإنتاج)
           if (
+            typeof window !== "undefined" &&
             "serviceWorker" in navigator &&
             (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
           ) {
             try {
-              const registration =
-                await navigator.serviceWorker.register("/sw.js");
-              console.log(
-                "Service Worker registered for notifications:",
-                registration,
-              );
-
-              // إخفاء المطالبة إذا كانت ظاهرة
-              dismissPrompt();
-            } catch (swError) {
-              console.error("Service Worker registration failed:", swError);
+              await navigator.serviceWorker.register("/sw.js");
+            } catch {
+              // Registration failed
             }
           }
         } else if (result === "denied") {
-          console.log("Notifications denied by user");
-
           // إظهار رسالة تفصيلية للمستخدم
           const message = `تم رفض إذن الإشعارات.
 
@@ -286,20 +253,16 @@ export function NotificationToggle() {
 أو يمكنك النقر على أيقونة الجرس مرة أخرى للمحاولة.`;
 
           alert(message);
-        } else {
-          console.log("Notification permission:", result);
         }
       } else if (permission === "granted") {
-        console.log("Sending test notification...");
         // اختبار الإشعارات
         sendNotification("اختبار الإشعارات", {
           body: "هذا إشعار تجريبي من Masar X",
           tag: "test-notification",
         });
-        console.log("Test notification sent");
       }
-    } catch (error) {
-      console.error("Error in handleToggle:", error);
+    } catch {
+      // ignore
     } finally {
       setIsLoading(false);
     }

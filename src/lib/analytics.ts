@@ -55,23 +55,23 @@ class AnalyticsService {
                     break;
             }
 
-            const { error } = await supabase.from('analytics').insert({
-                user_id: user.id,
-                action_type: actionType,
-                content_type: contentType,
-                content_id: contentId,
-                metadata: {
-                    ...metadata,
-                    page: page,
-                    session_id: getSessionId()
-                },
-            });
-
-            if (error) {
-                console.error('Failed to track event:', error);
+            try {
+                await supabase.from('analytics').insert({
+                    user_id: user.id,
+                    action_type: actionType,
+                    content_type: contentType,
+                    content_id: contentId,
+                    metadata: {
+                        ...metadata,
+                        page: page,
+                        session_id: getSessionId()
+                    },
+                });
+            } catch {
+                // ignore
             }
-        } catch (err) {
-            console.error('Error tracking event:', err);
+        } catch {
+            // ignore
         }
     }
 
@@ -88,20 +88,20 @@ class AnalyticsService {
      */
     async log(log: SystemLog) {
         try {
-            const { error } = await supabase.from('system_logs').insert({
-                level: log.level,
-                message: log.message,
-                status_code: log.statusCode,
-                request_id: log.requestId,
-                endpoint: log.endpoint,
-                metadata: log.metadata,
-            });
-
-            if (error) {
-                console.error('Failed to send log:', error);
+            try {
+                await supabase.from('system_logs').insert({
+                    level: log.level,
+                    message: log.message,
+                    status_code: log.statusCode,
+                    request_id: log.requestId,
+                    endpoint: log.endpoint,
+                    metadata: log.metadata,
+                });
+            } catch {
+                // ignore
             }
-        } catch (err) {
-            console.error('Error sending log:', err);
+        } catch {
+            // ignore
         }
     }
 

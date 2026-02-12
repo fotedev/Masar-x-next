@@ -47,8 +47,8 @@ export function useSubjects() {
             if (queryCache.set) {
                 queryCache.set(cacheKey, filtered, cacheTTL.subjects || 3600);
             }
-        } catch (error) {
-            console.error("Error fetching subjects:", error);
+        } catch {
+            // ignore
         } finally {
             setLoading(false);
         }
@@ -73,7 +73,6 @@ export function useSubjects() {
                 queryCache.delete(cacheKey);
             }
         } catch (error) {
-            console.error("Error updating subject visibility:", error);
             throw error;
         }
     };

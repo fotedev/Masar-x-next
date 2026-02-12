@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Trash } from "lucide-react";
 import {
@@ -20,8 +20,6 @@ import { AddNewsModal } from "../../components/AddNewsModal";
 
 // استخدام نوع News من قاعدة البيانات
 type NewsItem = News & { summary?: string };
-
-
 
 function NewsPage() {
   const router = useRouter();
@@ -63,11 +61,7 @@ function NewsPage() {
     },
   ];
 
-  useEffect(() => {
-    filterNews();
-  }, [news, selectedCategory, searchTerm]);
-
-  const filterNews = () => {
+  const filterNews = useCallback(() => {
     let filtered = news;
 
     if (selectedCategory !== "all") {
@@ -78,12 +72,16 @@ function NewsPage() {
       filtered = filtered.filter(
         (item) =>
           item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.content.toLowerCase().includes(searchTerm.toLowerCase())
+          item.content.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     setFilteredNews(filtered);
-  };
+  }, [news, selectedCategory, searchTerm]);
+
+  useEffect(() => {
+    filterNews();
+  }, [filterNews]);
 
   const getCategoryColor = (category: string) => {
     const categoryConfig = categories.find((cat) => cat.id === category);
@@ -94,15 +92,19 @@ function NewsPage() {
     newsData: Database["public"]["Tables"]["news"]["Insert"],
     fileUrl: string | null,
     imageUrls: string[] | null,
-    customCategory: string | null
+    customCategory: string | null,
   ) => {
     if (!newsData.title.trim() || !newsData.content.trim()) {
-      console.warn("يرجى ملء جميع الحقول المطلوبة");
       return;
     }
 
     try {
-      const addedNews = await addNews(newsData, fileUrl, imageUrls, customCategory);
+      const addedNews = await addNews(
+        newsData,
+        fileUrl,
+        imageUrls,
+        customCategory,
+      );
 
       if (addedNews) {
         notifyAdmins(
@@ -111,12 +113,12 @@ function NewsPage() {
             newsData.type === "announcement"
               ? "إعلان"
               : newsData.type === "update"
-              ? "تحديث"
-              : "مهم جداً"
+                ? "تحديث"
+                : "مهم جداً"
           }`,
           "admin_submission",
           addedNews.id,
-          "news"
+          "news",
         );
 
         notifyAllUsers(
@@ -124,15 +126,13 @@ function NewsPage() {
           `تم نشر خبر جديد: "${newsData.title}"`,
           "content_published",
           addedNews.id,
-          "news"
+          "news",
         );
 
         setShowAddNews(false);
-        console.log("✅ تم إضافة الخبر بنجاح!");
       }
-    } catch (error) {
-      console.error("Error adding news:", error);
-    } finally {
+    } catch {
+      // ignore
     }
   };
 
@@ -253,16 +253,16 @@ function NewsPage() {
               {/* Category Badge */}
               <div
                 className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-4 bg-${getCategoryColor(
-                  item.type
+                  item.type,
                 )}-100 dark:bg-${getCategoryColor(
-                  item.type
+                  item.type,
                 )}-900/30 text-${getCategoryColor(
-                  item.type
+                  item.type,
                 )}-800 dark:text-${getCategoryColor(item.type)}-300`}
               >
                 {(() => {
                   const category = categories.find(
-                    (cat) => cat.id === item.type
+                    (cat) => cat.id === item.type,
                   );
                   const IconComponent = category?.icon;
                   return IconComponent && <IconComponent className="w-3 h-3" />;
