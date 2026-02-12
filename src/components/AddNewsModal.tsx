@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Upload } from "lucide-react";
+import Image from "next/image";
 import { Database } from "../types/database";
 import { uploadToCloudinary } from "../lib/cloudinary";
 import { FileDropzone } from "./FileDropzone";
@@ -15,7 +16,7 @@ interface AddNewsModalProps {
     news: Database["public"]["Tables"]["news"]["Insert"],
     fileUrl: string | null,
     imageUrls: string[] | null,
-    customCategory: string | null
+    customCategory: string | null,
   ) => void;
 }
 
@@ -26,14 +27,14 @@ export function AddNewsModal({
   onSetNewNews,
   onAddNews,
 }: AddNewsModalProps) {
-  if (!showAddNews) return null;
-
   const { user } = useAuth();
   const [fileFile, setFileFile] = useState<File | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [customCategory, setCustomCategory] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  if (!showAddNews) return null;
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
@@ -300,7 +301,7 @@ export function AddNewsModal({
 
                   if (validImages.length !== files.length) {
                     setError(
-                      "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)"
+                      "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)",
                     );
                   } else {
                     setError("");
@@ -331,11 +332,15 @@ export function AddNewsModal({
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {imageFiles.map((file, index) => (
                     <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                      />
+                      <div className="w-full h-24 relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+                        <Image
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() => removeImage(index)}

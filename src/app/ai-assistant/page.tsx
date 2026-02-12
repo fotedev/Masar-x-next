@@ -86,7 +86,12 @@ function AiAssistantChatPage() {
         const parsedMessages = JSON.parse(savedMessages);
         // Convert timestamp strings back to Date objects
         const messagesWithDates = parsedMessages.map(
-          (msg: { timestamp: string; [key: string]: unknown }) => ({
+          (msg: {
+            timestamp: string;
+            id: string;
+            type: "user" | "assistant";
+            content: string;
+          }) => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
           }),
@@ -278,9 +283,11 @@ function AiAssistantChatPage() {
       } catch (dbError) {
         console.error("Failed to save assistant message:", dbError);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error generating AI response:", error);
-      logError(error as Error, { metadata: { context: "ai_chat_response" } });
+      if (error instanceof Error) {
+        logError(error, { metadata: { context: "ai_chat_response" } });
+      }
 
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
@@ -343,6 +350,8 @@ function AiAssistantChatPage() {
         quizData = await aiAssistant.generateQuiz(quizTextInput);
       }
 
+      const questions = quizData.questions || [];
+
       // Save quiz to database
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
@@ -362,9 +371,17 @@ function AiAssistantChatPage() {
       if (quizError) throw quizError;
 
       // Save quiz questions
-      if (quizData.questions && quizData.questions.length > 0) {
-        const questionsToInsert = quizData.questions.map(
-          (q: any, index: number) => ({
+      if (questions.length > 0) {
+        const questionsToInsert = questions.map(
+          (
+            q: {
+              question: string;
+              options: string[];
+              correctAnswer: number;
+              explanation?: string;
+            },
+            index: number,
+          ) => ({
             quiz_id: quiz.id,
             question: q.question,
             options: q.options,
@@ -393,9 +410,11 @@ function AiAssistantChatPage() {
         timestamp: new Date(),
       };
       setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error generating quiz:", error);
-      logError(error as Error, { metadata: { context: "ai_quiz_generation" } });
+      if (error instanceof Error) {
+        logError(error, { metadata: { context: "ai_quiz_generation" } });
+      }
       alert("عذراً، فشل إنشاء الاختبار. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsGeneratingQuiz(false);
