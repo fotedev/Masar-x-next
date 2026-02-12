@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import { supabase } from "../../../lib/supabase";
@@ -142,20 +142,14 @@ export default function CourseDetailPage() {
     return user.id === course.instructor_id || adminRole === "doctor";
   };
 
-  useEffect(() => {
-    if (courseId) {
-      fetchCourseData();
-    }
-  }, [courseId, user]);
-
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
     if (!courseId) return;
 
     try {
       setLoading(true);
 
       // Fetch course with instructor name
-      let query = supabase
+      const query = supabase
         .from("courses")
         .select(
           `
@@ -254,7 +248,13 @@ export default function CourseDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [courseId, user, adminRole]);
+
+  useEffect(() => {
+    if (courseId) {
+      fetchCourseData();
+    }
+  }, [courseId, fetchCourseData]);
 
   const handleSubscribe = async () => {
     if (!user || !course || !paymentScreenshot) return;

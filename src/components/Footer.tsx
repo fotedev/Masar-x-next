@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   BookOpen,
   Newspaper,
@@ -23,10 +24,12 @@ export function Footer() {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img
+              <Image
                 src="/logo.png"
                 alt="Masar X Logo"
-                className="w-10 h-10 object-contain"
+                width={40}
+                height={40}
+                className="object-contain"
               />
               <span className="text-lg font-bold text-slate-900 dark:text-white">
                 Masar X

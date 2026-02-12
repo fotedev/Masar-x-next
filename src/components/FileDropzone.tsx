@@ -20,13 +20,16 @@ export function FileDropzone({
 }: FileDropzoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
 
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragActive(true);
-    }
-  }, [disabled]);
+  const handleDragEnter = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) {
+        setIsDragActive(true);
+      }
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -34,13 +37,32 @@ export function FileDropzone({
     setIsDragActive(false);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragActive(true);
-    }
-  }, [disabled]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) {
+        setIsDragActive(true);
+      }
+    },
+    [disabled],
+  );
+
+  const validateAndPassFiles = useCallback(
+    (files: File[]) => {
+      if (!accept) {
+        onFileSelect(files);
+        return;
+      }
+
+      // Basic client-side validation for accept attribute if needed
+      // For now, we rely on the input's accept attribute and manual checks in parent
+      // but we could implement mime-type checking here if desired.
+      // The parent component is usually responsible for strict validation (size, type).
+      onFileSelect(files);
+    },
+    [accept, onFileSelect],
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -55,7 +77,7 @@ export function FileDropzone({
         validateAndPassFiles(files);
       }
     },
-    [disabled, onFileSelect] // Added onFileSelect to dependencies
+    [disabled, validateAndPassFiles],
   );
 
   const handleFileInput = useCallback(
@@ -67,21 +89,8 @@ export function FileDropzone({
       // Reset input value to allow selecting the same file again
       e.target.value = "";
     },
-    [onFileSelect] // Added onFileSelect to dependencies
+    [validateAndPassFiles],
   );
-
-  const validateAndPassFiles = (files: File[]) => {
-    if (!accept) {
-      onFileSelect(files);
-      return;
-    }
-
-    // Basic client-side validation for accept attribute if needed
-    // For now, we rely on the input's accept attribute and manual checks in parent
-    // but we could implement mime-type checking here if desired.
-    // The parent component is usually responsible for strict validation (size, type).
-    onFileSelect(files);
-  };
 
   return (
     <div
@@ -116,7 +125,7 @@ export function FileDropzone({
             </p>
           </div>
         )}
-        
+
         {/* Overlay for drag active state if children are provided */}
         {isDragActive && children && (
           <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 border-2 border-blue-500 dark:border-blue-400 rounded-lg pointer-events-none flex items-center justify-center">

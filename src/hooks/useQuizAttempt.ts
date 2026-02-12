@@ -14,6 +14,28 @@ interface UseQuizAttemptProps {
     quizTitle?: string;
 }
 
+interface DatabaseAnswer {
+    question_id: string;
+    selected_option: number;
+    is_correct: boolean;
+}
+
+interface QuizHistoryEntry {
+    id: string;
+    quiz_id: string;
+    user_id: string;
+    score: number;
+    total_questions: number;
+    answers: Answer[];
+    started_at: string;
+    finished_at: string;
+    created_at: string;
+    time_taken_seconds?: number;
+    status: string;
+    is_local: boolean;
+    quizzes: { title: string };
+}
+
 export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: UseQuizAttemptProps) {
     const [attemptId, setAttemptId] = useState<string | null>(null);
     const [answers, setAnswers] = useState<Record<string, Answer>>({}); // Map questionId -> Answer
@@ -39,7 +61,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
 
                 // Hydrate answers
                 const answersMap: Record<string, Answer> = {};
-                existingAnswers.forEach((ans: any) => {
+                existingAnswers.forEach((ans: DatabaseAnswer) => {
                     answersMap[ans.question_id] = {
                         question_id: ans.question_id,
                         selected_option: ans.selected_option,
@@ -62,9 +84,13 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                     setAnswers(answersMap);
                 }
 
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Failed to init attempt:", err);
-                setError(err.message);
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError("An unknown error occurred");
+                }
             } finally {
                 setLoading(false);
             }
@@ -108,7 +134,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         const answersArray = Object.values(answers);
 
         // Prepare local history entry
-        const historyEntry = {
+        const historyEntry: QuizHistoryEntry = {
             id: attemptId || `local_${Date.now()}`,
             quiz_id: quizId,
             user_id: userId || 'guest',
@@ -126,9 +152,10 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
 
         // Always save to local history first
         try {
-            const localHistory = JSON.parse(localStorage.getItem('quiz_history') || '[]');
+            const localHistoryStr = localStorage.getItem('quiz_history');
+            const localHistory: QuizHistoryEntry[] = localHistoryStr ? JSON.parse(localHistoryStr) : [];
             // Avoid duplicates if attemptId exists
-            const filteredHistory = localHistory.filter((h: any) => h.id !== attemptId);
+            const filteredHistory = localHistory.filter((h: QuizHistoryEntry) => h.id !== attemptId);
             localStorage.setItem('quiz_history', JSON.stringify([historyEntry, ...filteredHistory]));
         } catch (e) {
             console.error("Failed to save to local history", e);
@@ -146,15 +173,19 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
             try {
                 setSaving(true);
                 await quizService.finishAttempt(attemptId, score, totalQuestions, answersArray);
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Failed to finish attempt in DB:", err);
-                setError(err.message);
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError("An unknown error occurred");
+                }
                 throw err;
             } finally {
                 setSaving(false);
             }
         }
-    }, [attemptId, answers, totalQuestions, quizId, userId, startTime]);
+    }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle]);
 
     return {
         attemptId,
