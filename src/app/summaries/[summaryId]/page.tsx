@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   BookOpen,
@@ -89,8 +90,7 @@ export default function SummaryDetailPage() {
             .eq("id", summaryData.user_id)
             .maybeSingle();
           profileData = pData;
-        } catch (profileError) {
-          console.warn("Profiles table not available:", profileError);
+        } catch {
           profileData = null;
         }
       }
@@ -128,8 +128,7 @@ export default function SummaryDetailPage() {
       if (quizData) {
         setLinkedQuiz(quizData);
       }
-    } catch (err) {
-      console.error("Error fetching summary:", err);
+    } catch {
       setError("حدث خطأ أثناء تحميل الملخص");
     } finally {
       setLoading(false);
@@ -206,11 +205,15 @@ export default function SummaryDetailPage() {
               {summary.contributor_name && (
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/10">
                   {summary.profiles?.avatar_url ? (
-                    <img
-                      src={summary.profiles.avatar_url}
-                      alt="Contributor Avatar"
-                      className="w-8 h-8 rounded-full object-cover border border-white/20"
-                    />
+                    <div className="w-8 h-8 relative">
+                      <Image
+                        src={summary.profiles.avatar_url}
+                        alt="Contributor Avatar"
+                        fill
+                        className="rounded-full object-cover border border-white/20"
+                        unoptimized
+                      />
+                    </div>
                   ) : (
                     <User className="w-5 h-5 text-brand-sky" />
                   )}
@@ -295,13 +298,15 @@ export default function SummaryDetailPage() {
                   {summaryImages.map((imageUrl, index) => (
                     <div
                       key={index}
-                      className="relative group overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300"
+                      className="relative group overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 h-64"
                     >
-                      <img
+                      <Image
                         src={imageUrl}
                         alt={`صورة ${index + 1}`}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
                         onClick={() => window.open(imageUrl, "_blank")}
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button

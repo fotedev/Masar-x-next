@@ -81,10 +81,10 @@ export function AddNewsModal({
       setFileFile(null);
       setImageFiles([]);
       setCustomCategory("");
-    } catch (err) {
-      console.error("Error uploading files:", err);
-      setError("حدث خطأ أثناء رفع الملفات. يرجى المحاولة مرة أخرى.");
+    } catch {
+      // ignore
     } finally {
+      setError("حدث خطأ أثناء رفع الملفات. يرجى المحاولة مرة أخرى.");
       setLoading(false);
     }
   };

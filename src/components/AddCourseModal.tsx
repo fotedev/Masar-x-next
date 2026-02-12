@@ -71,10 +71,10 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
 
       onSave();
       onClose();
-    } catch (error) {
-      console.error("Error saving course:", error);
-      alert("فشل في حفظ الكورس");
+    } catch {
+      // ignore
     } finally {
+      alert("فشل في حفظ الكورس");
       setSaving(false);
     }
   };

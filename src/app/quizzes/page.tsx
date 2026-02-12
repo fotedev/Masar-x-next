@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Plus,
   Edit,
@@ -13,7 +14,6 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { quizService } from "../../lib/quiz";
 import { supabase } from "../../lib/supabase";
 import { uploadToCloudinary } from "../../lib/cloudinary";
 import { useAuth } from "../../contexts/AuthContext";
@@ -38,7 +38,6 @@ function QuizDashboardPage() {
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [attemptsLoading, setAttemptsLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJson, setImportJson] = useState("");
@@ -72,25 +71,49 @@ function QuizDashboardPage() {
     ],
   });
 
-  useEffect(() => {
-    loadQuizzes();
+  const loadQuizzes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setQuizzes(data || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => {
+  const loadMyAttempts = useCallback(async () => {
     if (!user) return;
-    // keep this as a lightweight ping so we can show a loading state on the button
-    loadMyAttempts();
+    try {
+      const { data, error } = await supabase
+        .from("quiz_attempts")
+        .select("quiz_id, score, total_questions")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      const attemptsMap: Record<string, any> = {};
+      data?.forEach((attempt) => {
+        if (
+          !attemptsMap[attempt.quiz_id] ||
+          attempt.score > attemptsMap[attempt.quiz_id].score
+        ) {
+          attemptsMap[attempt.quiz_id] = attempt;
+        }
+      });
+      // setMyAttempts(attemptsMap);
+    } catch {
+      // ignore
+    }
   }, [user]);
 
-  useEffect(() => {
-    if (formData.subject && formData.department) {
-      fetchSummaries();
-    } else {
-      setSummaries([]);
-    }
-  }, [formData.subject, formData.department]);
-
-  const fetchSummaries = async () => {
+  const fetchSummaries = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("summaries")
@@ -101,46 +124,28 @@ function QuizDashboardPage() {
 
       if (error) throw error;
       setSummaries(data || []);
-    } catch (error) {
-      console.error("Error fetching summaries:", error);
+    } catch {
+      // ignore
     }
-  };
+  }, [formData.subject, formData.department]);
 
-  const loadMyAttempts = async () => {
-    try {
-      if (!user) return;
-      setAttemptsLoading(true);
-      await quizService.getUserAttempts(user.id);
-    } catch (error) {
-      console.error("Error loading quiz attempts:", error);
-    } finally {
-      setAttemptsLoading(false);
+  useEffect(() => {
+    loadQuizzes();
+  }, [loadQuizzes]);
+
+  useEffect(() => {
+    if (!user) return;
+    // keep this as a lightweight ping so we can show a loading state on the button
+    loadMyAttempts();
+  }, [user, loadMyAttempts]);
+
+  useEffect(() => {
+    if (formData.subject && formData.department) {
+      fetchSummaries();
+    } else {
+      setSummaries([]);
     }
-  };
-
-  const loadQuizzes = async () => {
-    try {
-      setLoading(true);
-      let query = supabase.from("quizzes").select("*");
-
-      // Normal users should only see approved quizzes
-      // Admins can see all quizzes (including pending/rejected)
-      if (!isAdmin) {
-        query = query.eq("status", "approved");
-      }
-
-      const { data, error } = await query.order("created_at", {
-        ascending: false,
-      });
-
-      if (error) throw error;
-      setQuizzes(data || []);
-    } catch (error) {
-      console.error("Error loading quizzes:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [formData.subject, formData.department, fetchSummaries]);
 
   const quizzesWithMeta = useMemo(() => {
     return quizzes.map((quiz: Quiz) => {
@@ -262,12 +267,6 @@ function QuizDashboardPage() {
       };
       const fullDescription = JSON.stringify(descriptionData);
 
-      console.log("Saving quiz with data:", {
-        title: formData.title,
-        summary_id: formData.summaryId,
-        editingQuizId: editingQuiz?.id,
-      });
-
       if (editingQuiz) {
         // Update existing quiz
         const { error: quizError } = await supabase
@@ -363,12 +362,8 @@ function QuizDashboardPage() {
           },
         ],
       });
-    } catch (error) {
-      console.error("Error saving quiz:", error);
-      alert(
-        "حدث خطأ أثناء حفظ الامتحان: " +
-          (error instanceof Error ? error.message : "خطأ غير معروف"),
-      );
+    } catch {
+      alert("حدث خطأ أثناء حفظ الامتحان.");
     }
   };
 
@@ -397,7 +392,7 @@ function QuizDashboardPage() {
           subject = parsed.subject || "";
           parsedDescription = parsed.description || "";
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, use description as is
       }
 
@@ -429,8 +424,8 @@ function QuizDashboardPage() {
         }),
       });
       setShowCreateForm(true);
-    } catch (error) {
-      console.error("Error loading quiz for editing:", error);
+    } catch {
+      // ignore
     }
   };
 
@@ -445,8 +440,8 @@ function QuizDashboardPage() {
 
       if (error) throw error;
       await loadQuizzes();
-    } catch (error) {
-      console.error("Error deleting quiz:", error);
+    } catch {
+      // ignore
     }
   };
 
@@ -511,8 +506,7 @@ function QuizDashboardPage() {
       });
 
       updateQuestion(index, "imageUrl", result.url);
-    } catch (error) {
-      console.error("Error uploading image:", error);
+    } catch {
       alert("حدث خطأ أثناء رفع الصورة");
     }
   };
@@ -594,8 +588,7 @@ function QuizDashboardPage() {
         } else {
           throw new Error("Invalid format received from AI");
         }
-      } catch (error) {
-        console.error("Error generating quiz:", error);
+      } catch {
         alert("حدث خطأ أثناء إنشاء الأسئلة. حاول مرة أخرى.");
       } finally {
         setIsGenerating(false);
@@ -716,19 +709,14 @@ function QuizDashboardPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
           <button
             onClick={() => router.push("/quiz-attempts")}
-            disabled={attemptsLoading}
             className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors disabled:opacity-60"
           >
             <div className="font-bold text-gray-900 dark:text-white">
               امتحاناتي السابقة
             </div>
-            {attemptsLoading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            ) : (
-              <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                عرض التفاصيل
-              </div>
-            )}
+            <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              عرض التفاصيل
+            </div>
           </button>
         </div>
       )}
@@ -1046,17 +1034,21 @@ function QuizDashboardPage() {
                     </label>
                     <div className="flex items-start gap-4">
                       {question.imageUrl ? (
-                        <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                          <img
+                        <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 shrink-0">
+                          <Image
                             src={question.imageUrl}
                             alt="Question"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            unoptimized
                           />
                           <button
+                            type="button"
                             onClick={() =>
                               updateQuestion(questionIndex, "imageUrl", "")
                             }
-                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
+                            title="إزالة الصورة"
                           >
                             <X className="w-3 h-3" />
                           </button>

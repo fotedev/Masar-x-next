@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,32 +14,34 @@ export default function QuizAttemptsPage() {
   const [loading, setLoading] = useState(true);
   const [attempts, setAttempts] = useState<any[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [expandedQuizQuestions, setExpandedQuizQuestions] = useState<any[] | null>(null);
+  const [expandedQuizQuestions, setExpandedQuizQuestions] = useState<
+    any[] | null
+  >(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        
+
         // 1. Load from DB if user is logged in
         let dbAttempts: any[] = [];
         if (user) {
           try {
             dbAttempts = await quizService.getUserAttempts(user.id);
-          } catch (e) {
-            console.error("Failed to load DB attempts", e);
+          } catch {
+            // ignore
           }
         }
 
         // 2. Load from localStorage
         let localAttempts: any[] = [];
         try {
-          const localData = localStorage.getItem('quiz_history');
+          const localData = localStorage.getItem("quiz_history");
           if (localData) {
             localAttempts = JSON.parse(localData);
           }
-        } catch (e) {
-          console.error("Failed to load local history", e);
+        } catch {
+          // ignore
         }
 
         // 3. Merge and deduplicate
@@ -47,9 +49,9 @@ export default function QuizAttemptsPage() {
         // But local version might have more details if sync failed.
         // For now, let's just combine them and filter by ID.
         const combined = [...dbAttempts];
-        
-        localAttempts.forEach(local => {
-          const exists = combined.some(db => db.id === local.id);
+
+        localAttempts.forEach((local) => {
+          const exists = combined.some((db) => db.id === local.id);
           if (!exists) {
             combined.push(local);
           }
@@ -63,8 +65,8 @@ export default function QuizAttemptsPage() {
         });
 
         setAttempts(combined);
-      } catch (error) {
-        console.error("Error loading quiz attempts:", error);
+      } catch {
+        // ignore
       } finally {
         setLoading(false);
       }
@@ -76,19 +78,19 @@ export default function QuizAttemptsPage() {
   useEffect(() => {
     const fetchQuizQuestions = async () => {
       if (expandedId) {
-        const expandedAttempt = attempts.find(a => a.id === expandedId);
+        const expandedAttempt = attempts.find((a) => a.id === expandedId);
         if (expandedAttempt && expandedAttempt.quiz_id) {
           try {
-            const { questions } = await quizService.getQuiz(expandedAttempt.quiz_id);
+            const { questions } = await quizService.getQuiz(
+              expandedAttempt.quiz_id,
+            );
             setExpandedQuizQuestions(questions);
-          } catch (error) {
-            console.error("Error fetching quiz questions:", error);
+          } catch {
             setExpandedQuizQuestions(null);
           }
+        } else {
+          setExpandedQuizQuestions(null);
         }
- else {
-            setExpandedQuizQuestions(null);
-          }
       } else {
         setExpandedQuizQuestions(null);
       }
@@ -101,10 +103,10 @@ export default function QuizAttemptsPage() {
     return attempts.map((a) => {
       const startedAt = a.started_at ? new Date(a.started_at) : null;
       const finishedAt = a.finished_at ? new Date(a.finished_at) : null;
-      
+
       const answersWithQuestions = a.answers?.map((answer: any) => {
         const question = expandedQuizQuestions?.find(
-          (q) => q.id === answer.question_id
+          (q) => q.id === answer.question_id,
         );
         return { ...answer, question };
       });
@@ -134,7 +136,7 @@ export default function QuizAttemptsPage() {
           <button
             onClick={() => {
               if (confirm("هل أنت متأكد من مسح سجل الامتحانات المحلي؟")) {
-                localStorage.removeItem('quiz_history');
+                localStorage.removeItem("quiz_history");
                 window.location.reload();
               }
             }}
@@ -219,13 +221,17 @@ export default function QuizAttemptsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">الدرجات</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          الدرجات
+                        </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {a.score}/{a.total_questions}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">النتيجة</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          النتيجة
+                        </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {a.total_questions > 0
                             ? `${((a.score / a.total_questions) * 100).toFixed(0)}%`
@@ -235,23 +241,29 @@ export default function QuizAttemptsPage() {
                       <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg p-4">
                         <div className="text-xs">الأسئلة الصحيحة</div>
                         <div className="text-xl font-bold mt-1">
-                          {a.answers?.filter((ans: any) => ans.is_correct).length ?? 0}
+                          {a.answers?.filter((ans: any) => ans.is_correct)
+                            .length ?? 0}
                         </div>
                       </div>
                       <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg p-4">
                         <div className="text-xs">الأسئلة الخاطئة</div>
                         <div className="text-xl font-bold mt-1">
-                          {a.answers?.filter((ans: any) => !ans.is_correct).length ?? 0}
+                          {a.answers?.filter((ans: any) => !ans.is_correct)
+                            .length ?? 0}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">الأسئلة المحلولة</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          الأسئلة المحلولة
+                        </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {a.answers?.length ?? 0}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">الأسئلة الغير محلولة</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          الأسئلة الغير محلولة
+                        </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {(a.total_questions ?? 0) - (a.answers?.length ?? 0)}
                         </div>
@@ -260,13 +272,19 @@ export default function QuizAttemptsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-6">
                       <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">بدأ في</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          بدأ في
+                        </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
-                          {a._startedAt ? a._startedAt.toLocaleString("ar-EG") : "-"}
+                          {a._startedAt
+                            ? a._startedAt.toLocaleString("ar-EG")
+                            : "-"}
                         </div>
                       </div>
                       <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">المدة المستغرقة</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          المدة المستغرقة
+                        </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {typeof a.time_taken_seconds === "number"
                             ? `${Math.floor(a.time_taken_seconds / 60)} دقيقة و ${
@@ -276,65 +294,73 @@ export default function QuizAttemptsPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4">
                       <div className="text-sm font-bold text-gray-900 dark:text-white mb-2">
                         الإجابات
                       </div>
                       <div className="space-y-4">
-                        {a._answersWithQuestions?.map((answer: any, index: number) => (
-                          <div
-                            key={index}
-                            className={`p-4 rounded-lg border ${
-                              answer.is_correct
-                                ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-700"
-                                : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-700"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                              {answer.is_correct ? (
-                                <span className="text-green-600 dark:text-green-400">
-                                  &#10004;
+                        {a._answersWithQuestions?.map(
+                          (answer: any, index: number) => (
+                            <div
+                              key={index}
+                              className={`p-4 rounded-lg border ${
+                                answer.is_correct
+                                  ? "bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-700"
+                                  : "bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-700"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                                {answer.is_correct ? (
+                                  <span className="text-green-600 dark:text-green-400">
+                                    &#10004;
+                                  </span>
+                                ) : (
+                                  <span className="text-red-600 dark:text-red-400">
+                                    &#10006;
+                                  </span>
+                                )}
+                                <span className="text-gray-900 dark:text-white">
+                                  السؤال {index + 1}
                                 </span>
-                              ) : (
-                                <span className="text-red-600 dark:text-red-400">
-                                  &#10006;
-                                </span>
-                              )}
-                              <span className="text-gray-900 dark:text-white">
-                                السؤال {index + 1}
-                              </span>
-                            </div>
-
-                            {answer.question && (
-                              <MathDisplay latex={answer.question.question} />
-                            )}
-
-                            {answer.question?.options?.map(
-                              (option: string, optionIndex: number) => (
-                                <div
-                                  key={optionIndex}
-                                  className={`p-2 rounded-md mb-1 text-sm ${optionIndex === answer.selected_option
-                                      ? answer.is_correct
-                                        ? "bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 font-semibold"
-                                        : "bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100 font-semibold"
-                                      : optionIndex === answer.question?.correct_answer
-                                        ? "bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100"
-                                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                                    }`}
-                                >
-                                  {String.fromCharCode(65 + optionIndex)}. <MathDisplay latex={option} />
-                                </div>
-                              )
-                            )}
-
-                            {answer.question?.explanation && (
-                              <div className="mt-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
-                                <span className="font-bold">شرح:</span> <MathDisplay latex={answer.question.explanation} />
                               </div>
-                            )}
-                          </div>
-                        ))}
+
+                              {answer.question && (
+                                <MathDisplay latex={answer.question.question} />
+                              )}
+
+                              {answer.question?.options?.map(
+                                (option: string, optionIndex: number) => (
+                                  <div
+                                    key={optionIndex}
+                                    className={`p-2 rounded-md mb-1 text-sm ${
+                                      optionIndex === answer.selected_option
+                                        ? answer.is_correct
+                                          ? "bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 font-semibold"
+                                          : "bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100 font-semibold"
+                                        : optionIndex ===
+                                            answer.question?.correct_answer
+                                          ? "bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100"
+                                          : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                                    }`}
+                                  >
+                                    {String.fromCharCode(65 + optionIndex)}.{" "}
+                                    <MathDisplay latex={option} />
+                                  </div>
+                                ),
+                              )}
+
+                              {answer.question?.explanation && (
+                                <div className="mt-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
+                                  <span className="font-bold">شرح:</span>{" "}
+                                  <MathDisplay
+                                    latex={answer.question.explanation}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ),
+                        )}
                       </div>
                     </div>
                   </div>

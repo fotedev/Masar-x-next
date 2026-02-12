@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { Suspense, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
@@ -67,19 +67,19 @@ function ResetPasswordContent() {
             token: resetToken,
             newPassword: newPassword,
           },
-        }
+        },
       );
-  
+
       if (invokeError) {
         throw new Error(invokeError.message || "فشل في تحديث كلمة المرور");
       }
-  
+
       if (data?.error) {
         throw new Error(data.error || "فشل في تحديث كلمة المرور");
       }
 
       setSuccess(
-        "تم تحديث كلمة المرور بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول..."
+        "تم تحديث كلمة المرور بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...",
       );
 
       // Redirect after successful password reset
@@ -87,11 +87,10 @@ function ResetPasswordContent() {
         onNavigate("login");
       }, 3000);
     } catch (err) {
-      console.error("Error updating password:", err);
       setError(
         err instanceof Error
           ? err.message
-          : "حدث خطأ أثناء تحديث كلمة المرور. يرجى المحاولة مرة أخرى."
+          : "حدث خطأ أثناء تحديث كلمة المرور. يرجى المحاولة مرة أخرى.",
       );
     } finally {
       setLoading(false);

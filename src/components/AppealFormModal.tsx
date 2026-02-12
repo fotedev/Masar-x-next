@@ -38,7 +38,6 @@ export function AppealFormModal({
     e.preventDefault();
 
     if (!reason.trim()) {
-      console.warn("يرجى اختيار سبب الطعن");
       return;
     }
 
@@ -50,7 +49,6 @@ export function AppealFormModal({
       } = await supabase.auth.getUser();
 
       if (!user) {
-        console.warn("يجب تسجيل الدخول لإرسال طعن");
         return;
       }
 
@@ -82,18 +80,14 @@ export function AppealFormModal({
         } "${contentTitle}" لسبب: ${appealReasonsMap[reason] || reason}`,
         "admin_submission",
         contentId,
-        contentType
+        contentType,
       );
 
-      console.log(
-        "✅ تم إرسال الطعن بنجاح - شكراً لك على مساهمتك في تحسين المحتوى"
-      );
       onClose();
       setReason("");
       setDescription("");
-    } catch (error) {
-      console.error("Error submitting appeal:", error);
-      console.error("حدث خطأ أثناء إرسال الطعن - يرجى المحاولة مرة أخرى");
+    } catch {
+      // ignore
     } finally {
       setIsSubmitting(false);
     }

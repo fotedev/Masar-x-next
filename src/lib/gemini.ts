@@ -8,23 +8,17 @@ let isAIWorking = true;
 // No longer need client-side initialization for security reasons
 
 // Lazy initialization will happen when first needed
-console.log('⏸️ Skipping Gemini initialization during module load - will initialize lazily when needed');
-console.log('🧪 API will be tested on first actual usage');
 
 // Set initial status based on saved status
 if (typeof window !== 'undefined') {
   const savedStatus = localStorage.getItem('gemini_api_status');
   if (savedStatus === 'working') {
-    console.log('📊 Using saved status: working');
     isAIWorking = true;
   } else if (savedStatus === 'quota_exceeded') {
-    console.log('📊 Using saved status: quota exceeded (fallback mode)');
     isAIWorking = false;
   } else if (savedStatus === 'error') {
-    console.log('📊 Using saved status: error (fallback mode)');
     isAIWorking = false;
   } else {
-    console.log('📊 No saved status, assuming working');
     isAIWorking = true;
   }
 }
@@ -112,7 +106,6 @@ export class AiAssistant {
     }
 
     this.chatChunks = chunks;
-    console.log(`📊 Parsed into ${chunks.length} chunks`);
     return chunks;
   }
 
@@ -186,11 +179,7 @@ export class AiAssistant {
 
   // Generate AI response using secure Supabase Edge Function
   async generateResponse(query: string, courseId?: string): Promise<string> {
-    console.log('🤖 Starting generateResponse for query:', query, 'courseId:', courseId);
-    console.log('📊 Total chat chunks available:', this.chatChunks.length);
-
     const relevantChunks = this.searchRelevantChunks(query, 8);
-    console.log('🔍 Found relevant chunks:', relevantChunks.length);
 
     if (relevantChunks.length === 0) {
       const totalMessages = this.getStats().totalMessages;
@@ -204,8 +193,6 @@ export class AiAssistant {
       // Call Supabase Edge Function instead of direct API
       const { supabase } = await import('./supabase');
 
-      console.log('🚀 Calling Supabase Edge Function...');
-
       const { data, error } = await supabase.functions.invoke('gemini-chat', {
         body: {
           query,
@@ -216,19 +203,13 @@ export class AiAssistant {
       });
 
       if (error) {
-        console.error('❌ Edge Function error:', error);
         throw error;
       }
 
-      console.log('✅ Edge Function response received');
       return data.response;
 
     } catch (error: unknown) {
-      console.error('❌ Error calling Edge Function:', error);
-
       // Fallback to showing relevant chunks
-      console.log('📋 Using fallback - showing relevant chunks');
-
       const context = relevantChunks
         .slice(0, 3)
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
@@ -313,8 +294,6 @@ export class AiAssistant {
   // Force re-enable AI (useful after quota reset)
   async forceReEnableAI(): Promise<boolean> {
     try {
-      console.log('🔄 Force re-enabling AI...');
-
       // Test the Edge Function instead of direct API
       const { supabase } = await import('./supabase');
 
@@ -327,7 +306,6 @@ export class AiAssistant {
       });
 
       if (error) {
-        console.log('❌ Edge Function test failed:', error);
         localStorage.setItem('gemini_api_status', 'error');
         return false;
       }
@@ -336,11 +314,9 @@ export class AiAssistant {
       localStorage.setItem('gemini_api_status', 'working');
       localStorage.removeItem('gemini_quota_error');
       localStorage.setItem('gemini_last_test', Date.now().toString());
-      console.log('✅ AI re-enabled successfully via Edge Function');
       return true;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log('❌ Failed to re-enable AI:', errorMessage);
 
       if (errorMessage.includes('429') || errorMessage.includes('quota')) {
         localStorage.setItem('gemini_quota_error', new Date().toISOString());
@@ -354,8 +330,6 @@ export class AiAssistant {
   }
 
   async loadAllData(): Promise<void> {
-    console.log('🔄 Loading AI Assistant data from GitHub...');
-
     const filesToLoad = [
       'https://raw.githubusercontent.com/kali-upper/whatsapp-group/refs/heads/main/data.txt'
     ];
@@ -364,58 +338,40 @@ export class AiAssistant {
 
     for (const fileUrl of filesToLoad) {
       try {
-        console.log(`📂 Loading: ${fileUrl}`);
         const response = await fetch(fileUrl);
 
         if (!response.ok) {
-          console.warn(`⚠️ Failed to load ${fileUrl}: ${response.status}`);
           continue; // Skip this file and try next
         }
 
         const text = await response.text();
         const chunks = this.parseChatExport(text);
         totalLoaded += chunks.length;
-
-        console.log(`✅ Loaded ${fileUrl}: ${chunks.length} messages`);
-      } catch (error) {
-        console.error(`❌ Error loading ${fileUrl}:`, error);
+      } catch {
+        // ignore
       }
     }
 
     // Also try to load local data.txt if available (for development)
     try {
-      console.log('📂 Checking for local data.txt...');
       const localResponse = await fetch('/data.txt');
       if (localResponse.ok) {
         const localText = await localResponse.text();
         const localChunks = this.parseChatExport(localText);
-        console.log(`✅ Loaded local data.txt: ${localChunks.length} messages`);
         totalLoaded += localChunks.length;
       }
     } catch {
-      console.log('ℹ️ Local data.txt not available (this is normal in production)');
+      // ignore
     }
 
-    const stats = this.getStats();
-    console.log('🎉 Data loading complete:', stats);
-
     if (totalLoaded < 10) {
-      console.warn('⚠️ Very limited data loaded. Consider adding more chat files for better AI responses.');
+      // Removed console warning
     }
   }
 
   // Load data from a local file (for manual upload)
   async loadFromText(text: string): Promise<void> {
-    console.log('🔄 Loading data from text...');
-    const chunks = this.parseChatExport(text);
-    console.log(`✅ Loaded from text: ${chunks.length} messages`);
-
-    const stats = this.getStats();
-    console.log('📊 Current stats:', stats);
-
-    if (chunks.length < 10) {
-      console.warn('⚠️ Limited data loaded. More data = better AI responses!');
-    }
+    this.parseChatExport(text);
   }
 
   // Legacy function for backward compatibility
@@ -425,8 +381,6 @@ export class AiAssistant {
 
   // Method to reinitialize Gemini API status (for Edge Function system)
   async reinitializeGemini(): Promise<void> {
-    console.log('🔄 Reinitializing Gemini API status...');
-
     try {
       // Clear any cached API key status
       localStorage.removeItem('gemini_api_status');
@@ -436,16 +390,13 @@ export class AiAssistant {
       // Reset to default state
       isAIWorking = true;
       localStorage.setItem('gemini_api_status', 'working');
-      console.log('✅ Gemini API status reinitialized successfully');
-    } catch (error: unknown) {
-      console.error('❌ Error reinitializing Gemini API status:', error);
+    } catch {
       isAIWorking = false;
     }
   }
+
   // Generate Quiz from text
   async generateQuiz(text: string): Promise<any> {
-    console.log('🧠 Generating quiz from text...');
-
     // Construct the prompt
     const prompt = `
       Create a quiz with exactly 5 questions based on the following text.
@@ -459,35 +410,28 @@ export class AiAssistant {
           {
             "question": "Question text",
             "options": ["Option 1", "Option 2", "Option 3", "Option 4"], // For true-false, use ["صح", "خطأ"]
-            "correctAnswer": 0, // Index of correct option (0-3)
-            "explanation": "Explanation of why this answer is correct",
+            "correctAnswer": 0, // Index of the correct option
+            "explanation": "Why this answer is correct",
             "type": "multiple-choice" // or "true-false"
           }
         ]
       }
-      Do not include any markdown formatting (like \`\`\`json), just the raw JSON string.
-      
-      Text to generate quiz from:
-      ${text.substring(0, 15000)}
+
+      Text to analyze:
+      ${text}
     `;
 
     try {
       const { supabase } = await import('./supabase');
-
-      // Reuse the existing gemini-chat function but with our specific prompt
-      // We pass the text as a "chunk" to ensure it's in the context
       const { data, error } = await supabase.functions.invoke('gemini-chat', {
         body: {
-          query: "Generate a quiz based on the context provided.",
-          relevantChunks: [{ content: prompt, author: 'System' }],
-          userId: null
+          query: prompt,
+          userId: null,
+          isQuizGeneration: true
         }
       });
 
       if (error) throw error;
-
-      console.log('✅ Quiz generated successfully');
-      console.log('📄 Raw response:', data.response);
 
       // Parse the response
       let jsonStr = data.response;
@@ -505,9 +449,7 @@ export class AiAssistant {
 
       try {
         return JSON.parse(jsonStr);
-      } catch (parseError) {
-        console.warn('⚠️ JSON Parse Error, attempting to repair:', parseError);
-
+      } catch {
         // Attempt to repair truncated JSON
         try {
           // Find the last complete question object (ending with "},")
@@ -515,18 +457,15 @@ export class AiAssistant {
           if (lastQuestionEnd !== -1) {
             // Construct a valid JSON by closing the array and object
             const repairedJsonStr = jsonStr.substring(0, lastQuestionEnd + 1) + ']}';
-            console.log('🔧 Repaired JSON string:', repairedJsonStr);
             return JSON.parse(repairedJsonStr);
           }
-        } catch (repairError) {
-          console.error('❌ Repair failed:', repairError);
+        } catch {
+          // Repair failed
         }
 
-        console.error('📄 Problematic JSON string:', jsonStr);
         throw new Error("Failed to parse AI response. Please try again with a shorter text.");
       }
     } catch (error) {
-      console.error('❌ Error generating quiz:', error);
       throw error;
     }
   }

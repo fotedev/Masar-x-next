@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useMemo, memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -30,7 +30,7 @@ import { EnrollmentsTab } from "../../components/EnrollmentsTab";
 import { AddCourseModal } from "../../components/AddCourseModal";
 import { ACADEMIC_LEVELS, DEPARTMENTS } from "../../constants/academic";
 import { useAuth } from "../../contexts/AuthContext";
-import type { SummaryWithRatings } from "../../types/database";
+import type { SummaryWithRatings, Course } from "../../types/database";
 
 // Memoized tab components to prevent unnecessary re-renders
 const MemoizedSummariesTab = memo(SummariesTab);
@@ -60,7 +60,9 @@ function AdminDashboard() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">جاري التحقق من الصلاحيات...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            جاري التحقق من الصلاحيات...
+          </p>
         </div>
       </div>
     );
@@ -70,8 +72,12 @@ function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">غير مصرح</h2>
-          <p className="text-gray-600 dark:text-gray-400">ليس لديك صلاحية الوصول لهذه الصفحة</p>
+          <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
+            غير مصرح
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            ليس لديك صلاحية الوصول لهذه الصفحة
+          </p>
         </div>
       </div>
     );
@@ -83,14 +89,16 @@ function AdminDashboard() {
 function AdminDashboardContent() {
   const router = useRouter();
   const { adminRole } = useAuth();
-  const [activeTab, setActiveTab] = useState(adminRole === "doctor" ? "courses" : "summaries");
+  const [activeTab, setActiveTab] = useState(
+    adminRole === "doctor" ? "courses" : "summaries",
+  );
   const [globalFilters, setGlobalFilters] = useState({
     subject: "",
     department: "",
     year: "",
   });
   const [showAddCourse, setShowAddCourse] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   const summariesHook = useSummaries();
   const newsHook = useNews();
@@ -133,11 +141,23 @@ function AdminDashboardContent() {
 
   const filteredAppeals = useMemo(() => {
     return appealsHook.appeals.filter((a) => {
-      let content: any = null;
+      let content: {
+        subject?: string | null;
+        department?: string | null;
+        year?: string | null;
+      } | null = null;
       if (a.content_type === "summary") {
-        content = summariesHook.summaries.find((s) => s.id === a.content_id);
+        content =
+          summariesHook.summaries.find((s) => s.id === a.content_id) || null;
       } else if (a.content_type === "news") {
-        content = newsHook.news.find((n) => n.id === a.content_id);
+        const foundNews = newsHook.news.find((n) => n.id === a.content_id);
+        content = foundNews
+          ? {
+              subject: foundNews.subject,
+              department: foundNews.department,
+              year: foundNews.year,
+            }
+          : null;
       }
 
       if (content) {
@@ -175,12 +195,12 @@ function AdminDashboardContent() {
       newsHook.loading,
       appealsHook.loading,
       quizzesHook.loading,
-    ]
+    ],
   );
 
   const handleUpdateSummaryStatus = async (
     id: string,
-    status: "approved" | "rejected"
+    status: "approved" | "rejected",
   ) => {
     const oldSummary = summariesHook.summaries.find((s) => s.id === id);
     await summariesHook.updateStatus(id, status);
@@ -195,7 +215,7 @@ function AdminDashboardContent() {
     setShowAddCourse(true);
   };
 
-  const handleEditCourse = (course: any) => {
+  const handleEditCourse = (course: Course) => {
     setEditingCourse(course);
     setShowAddCourse(true);
   };
@@ -212,7 +232,7 @@ function AdminDashboardContent() {
         return adminRole === "doctor" ? (
           <MemoizedCoursesTab
             onCreateCourse={handleCreateCourse}
-            onEditCourse={handleEditCourse}
+            onEditCourse={(course: any) => handleEditCourse(course as Course)}
           />
         ) : (
           <div className="p-8 text-center text-gray-500">
@@ -266,7 +286,9 @@ function AdminDashboardContent() {
       case "analytics":
         return (
           <MemoizedAdminAnalyticsPage
-            onNavigate={(page) => router.push(page === "home" ? "/" : `/${page}`)}
+            onNavigate={(page) =>
+              router.push(page === "home" ? "/" : `/${page}`)
+            }
           />
         );
       case "page_management":
@@ -291,7 +313,10 @@ function AdminDashboardContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveSummary = async (id: string, updates: any) => {
+  const handleSaveSummary = async (
+    id: string,
+    updates: Partial<SummaryWithRatings>,
+  ) => {
     await summariesHook.editSummary(id, updates);
     setShowEditModal(false);
     setEditingSummary(null);
@@ -508,7 +533,7 @@ function AdminDashboardContent() {
             customCategory,
             globalFilters.subject || null,
             globalFilters.department || null,
-            globalFilters.year || null
+            globalFilters.year || null,
           )
         }
       />

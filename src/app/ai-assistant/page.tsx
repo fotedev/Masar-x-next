@@ -27,13 +27,26 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface QuizQuestionInput {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation?: string;
+}
+
+interface QuizDataInput {
+  title: string;
+  description?: string;
+  questions: QuizQuestionInput[];
+}
+
 // Message limits
 const GUEST_MESSAGE_LIMIT = 2;
 const REGISTERED_MESSAGE_LIMIT = 5;
 
 function AiAssistantChatPage() {
   const { user } = useAuth();
-  const { trackEvent, logError } = useAnalytics();
+  const { trackEvent } = useAnalytics();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -97,8 +110,8 @@ function AiAssistantChatPage() {
           }),
         );
         setMessages(messagesWithDates);
-      } catch (error: unknown) {
-        console.error("Error loading chat messages from localStorage:", error);
+      } catch {
+        // Error loading chat messages from localStorage
       }
     }
   }, []);
@@ -122,8 +135,7 @@ function AiAssistantChatPage() {
 
           if (error) throw error;
           setDailyMessageCount(count || 0);
-        } catch (error) {
-          console.error("Error loading message count from server:", error);
+        } catch {
           setDailyMessageCount(0);
         }
       } else {
@@ -140,8 +152,8 @@ function AiAssistantChatPage() {
               setDailyMessageCount(0);
             }
           }
-        } catch (error) {
-          console.error("Error loading guest message count:", error);
+        } catch {
+          // Error loading guest message count
         }
       }
 
@@ -165,8 +177,8 @@ function AiAssistantChatPage() {
     persistTimerRef.current = window.setTimeout(() => {
       try {
         localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(msgs));
-      } catch (error: unknown) {
-        console.error("Error saving chat messages to localStorage:", error);
+      } catch {
+        // Error saving chat messages to localStorage
       }
     }, 500);
   }, []);
@@ -190,7 +202,7 @@ function AiAssistantChatPage() {
     return () => {
       if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     };
-  }, [messages.length, schedulePersist]);
+  }, [messages, schedulePersist]);
 
   // Auto-reload data if no data is available
   useEffect(() => {
@@ -200,7 +212,7 @@ function AiAssistantChatPage() {
           await aiAssistant.loadAllData();
           setDataLoaded(true);
         } catch (error: unknown) {
-          console.error("❌ فشل في تحميل البيانات تلقائياً:", error);
+          // فشل في تحميل البيانات تلقائياً
         }
       } else if (stats.totalChunks > 0) {
         setDataLoaded(true);
@@ -246,8 +258,8 @@ function AiAssistantChatPage() {
             date: new Date().toDateString(),
           }),
         );
-      } catch (error) {
-        console.error("Error saving guest message count:", error);
+      } catch {
+        // Error saving guest message count
       }
     }
 
@@ -280,15 +292,10 @@ function AiAssistantChatPage() {
             has_custom_api_key: aiStatus.hasCustomApiKey,
           },
         });
-      } catch (dbError) {
-        console.error("Failed to save assistant message:", dbError);
+      } catch {
+        // Failed to save assistant message
       }
-    } catch (error) {
-      console.error("Error generating AI response:", error);
-      if (error instanceof Error) {
-        logError(error, { metadata: { context: "ai_chat_response" } });
-      }
-
+    } catch {
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         type: "assistant",
@@ -325,7 +332,7 @@ function AiAssistantChatPage() {
     trackEvent("ai_quiz_generation_started");
 
     try {
-      let quizData;
+      let quizData: QuizDataInput;
 
       if (quizInputMode === "json") {
         // Parse JSON directly
@@ -340,14 +347,15 @@ function AiAssistantChatPage() {
               "صيغة JSON غير صحيحة. يجب أن يحتوي على title و questions.",
             );
           }
-        } catch (parseError) {
+        } catch {
           alert("خطأ في صيغة JSON. تأكد من صحة البيانات.");
           setIsGeneratingQuiz(false);
           return;
         }
       } else {
         // Generate quiz from text using AI
-        quizData = await aiAssistant.generateQuiz(quizTextInput);
+        const response = await aiAssistant.generateQuiz(quizTextInput);
+        quizData = response as QuizDataInput;
       }
 
       const questions = quizData.questions || [];
@@ -373,15 +381,7 @@ function AiAssistantChatPage() {
       // Save quiz questions
       if (questions.length > 0) {
         const questionsToInsert = questions.map(
-          (
-            q: {
-              question: string;
-              options: string[];
-              correctAnswer: number;
-              explanation?: string;
-            },
-            index: number,
-          ) => ({
+          (q: QuizQuestionInput, index: number) => ({
             quiz_id: quiz.id,
             question: q.question,
             options: q.options,
@@ -410,11 +410,7 @@ function AiAssistantChatPage() {
         timestamp: new Date(),
       };
       setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error generating quiz:", error);
-      if (error instanceof Error) {
-        logError(error, { metadata: { context: "ai_quiz_generation" } });
-      }
+    } catch {
       alert("عذراً، فشل إنشاء الاختبار. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsGeneratingQuiz(false);
@@ -862,8 +858,7 @@ function AiAssistantChatPage() {
             <div className="flex-1 overflow-y-auto">
               <QuizPlayer
                 quizId={activeQuizId}
-                onComplete={(score) => {
-                  console.log("Quiz completed with score:", score);
+                onComplete={() => {
                   // Optional: track score
                 }}
                 onClose={() => setActiveQuizId(null)}

@@ -62,8 +62,8 @@ export default function LoginPage() {
           localStorage.removeItem("login_attempts");
         }
       }
-    } catch (error) {
-      console.warn("Error loading login attempts:", error);
+    } catch {
+      // ignore
     }
   }, []);
 
@@ -93,7 +93,6 @@ export default function LoginPage() {
       localStorage.removeItem("login_attempts");
       trackEvent("login_success", { method: "email" });
     } catch (err) {
-      console.error("Error signing in:", err);
       logError(err instanceof Error ? err : String(err), {
         message: "Login failed",
         metadata: { method: "email" },
@@ -126,7 +125,6 @@ export default function LoginPage() {
       await signInWithGoogle();
       trackEvent("login_success", { method: "google" });
     } catch (err) {
-      console.error("Error signing in with Google:", err);
       logError(err instanceof Error ? err : String(err), {
         message: "Google login failed",
         metadata: { method: "google" },
@@ -165,7 +163,6 @@ export default function LoginPage() {
       setSuccess("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.");
       trackEvent("password_reset_requested", { method: "brevo" });
     } catch (err) {
-      console.error("Error sending reset password email:", err);
       logError(err instanceof Error ? err : String(err), {
         message: "Password reset failed",
         metadata: { method: "brevo" },

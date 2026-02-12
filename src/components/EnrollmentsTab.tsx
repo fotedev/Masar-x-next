@@ -1,19 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { supabase } from "../lib/supabase";
-import {
-  Card,
-  CardContent,
-  Button,
-  Badge,
-} from "./ui";
-import {
-  Users,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Eye,
-  Search,
-} from "lucide-react";
+import { Card, CardContent, Button, Badge } from "./ui";
+import { Users, CheckCircle, XCircle, Clock, Eye, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface Enrollment {
@@ -43,9 +32,7 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
     try {
       setLoading(true);
 
-      let query = supabase
-        .from("enrollments")
-        .select(`
+      let query = supabase.from("enrollments").select(`
           *,
           courses!inner (
             title,
@@ -60,7 +47,9 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
         query = query.eq("courses.instructor_id", instructorId);
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
 
@@ -80,7 +69,7 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
             display_name: string;
           };
         }
-        
+
         const formattedData = (data as RawEnrollment[]).map((e) => ({
           ...e,
           course_title: e.courses?.title || "كورس غير محدد",
@@ -89,10 +78,10 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
         }));
         setEnrollments(formattedData);
       }
-    } catch (error) {
-      console.error("Error fetching enrollments:", error);
-      toast.error("حدث خطأ في تحميل طلبات التسجيل");
+    } catch {
+      // ignore
     } finally {
+      toast.error("حدث خطأ في تحميل طلبات التسجيل");
       setLoading(false);
     }
   }, [instructorId]);
@@ -111,13 +100,15 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
       if (data?.signedUrl) {
         setSelectedImage(data.signedUrl);
       }
-    } catch (error) {
-      console.error("Error generating signed URL:", error);
+    } catch {
       toast.error("حدث خطأ في عرض الصورة");
     }
   };
 
-  const handleAction = async (enrollmentId: string, action: "approve" | "reject") => {
+  const handleAction = async (
+    enrollmentId: string,
+    action: "approve" | "reject",
+  ) => {
     try {
       setProcessing(enrollmentId);
       const newStatus = action === "approve" ? "active" : "rejected";
@@ -132,10 +123,11 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
 
       if (error) throw error;
 
-      toast.success(action === "approve" ? "تم قبول الطلب بنجاح" : "تم رفض الطلب");
+      toast.success(
+        action === "approve" ? "تم قبول الطلب بنجاح" : "تم رفض الطلب",
+      );
       fetchEnrollments();
-    } catch (error) {
-      console.error("Error processing enrollment:", error);
+    } catch {
       toast.error("حدث خطأ في معالجة الطلب");
     } finally {
       setProcessing(null);
@@ -171,12 +163,12 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
   };
 
   const filteredEnrollments = enrollments.filter((e) => {
-    const matchesSearch = 
+    const matchesSearch =
       e.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.course_title.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesFilter = activeFilter === "all" || e.status === activeFilter;
-    
+
     return matchesSearch && matchesFilter;
   });
 
@@ -184,7 +176,9 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-400">جاري تحميل الطلبات...</p>
+        <p className="text-gray-600 dark:text-gray-400">
+          جاري تحميل الطلبات...
+        </p>
       </div>
     );
   }
@@ -211,9 +205,13 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
               onClick={() => setActiveFilter(filter)}
               className="whitespace-nowrap"
             >
-              {filter === "all" ? "الكل" : 
-               filter === "pending" ? "في الانتظار" : 
-               filter === "active" ? "نشط" : "مرفوض"}
+              {filter === "all"
+                ? "الكل"
+                : filter === "pending"
+                  ? "في الانتظار"
+                  : filter === "active"
+                    ? "نشط"
+                    : "مرفوض"}
             </Button>
           ))}
         </div>
@@ -224,7 +222,9 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">لا توجد طلبات تسجيل مطابقة</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                لا توجد طلبات تسجيل مطابقة
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -246,7 +246,11 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
                         {enrollment.course_title}
                       </span>
                       <span>•</span>
-                      <span>{new Date(enrollment.created_at).toLocaleDateString("ar-EG")}</span>
+                      <span>
+                        {new Date(enrollment.created_at).toLocaleDateString(
+                          "ar-EG",
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -255,13 +259,15 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewImage(enrollment.payment_screenshot_url!)}
+                        onClick={() =>
+                          handleViewImage(enrollment.payment_screenshot_url!)
+                        }
                       >
                         <Eye className="w-4 h-4 ml-1" />
                         عرض الإثبات
                       </Button>
                     )}
-                    
+
                     {enrollment.status === "pending" && (
                       <>
                         <Button
@@ -295,12 +301,20 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50" onClick={() => setSelectedImage(null)}>
-          <div className="max-w-4xl max-h-full relative" onClick={e => e.stopPropagation()}>
-            <img
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div
+            className="max-w-4xl w-full h-[90vh] relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
               src={selectedImage}
               alt="إثبات الدفع"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              fill
+              className="object-contain rounded-lg shadow-2xl"
+              unoptimized
             />
             <button
               onClick={() => setSelectedImage(null)}

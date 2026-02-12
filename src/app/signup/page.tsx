@@ -46,8 +46,8 @@ export default function SignUpPage() {
           localStorage.removeItem("signup_attempts");
         }
       }
-    } catch (error) {
-      console.warn("Error loading signup attempts:", error);
+    } catch {
+      // ignore
     }
   }, []);
 
@@ -99,9 +99,7 @@ export default function SignUpPage() {
       setAttempts(0);
       setLockoutTime(0);
       localStorage.removeItem("signup_attempts");
-    } catch (err: unknown) {
-      console.error("Error signing up:", err);
-
+    } catch (err: any) {
       // Increment attempts and set lockout
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -124,10 +122,7 @@ export default function SignUpPage() {
           )} ثانية`,
         );
       } else {
-        if (
-          err instanceof Error &&
-          err.message?.includes("already registered")
-        ) {
+        if (err && err.message?.includes("already registered")) {
           setError(
             "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك.",
           );
@@ -146,9 +141,9 @@ export default function SignUpPage() {
 
     try {
       await signInWithGoogle();
-    } catch (err) {
-      console.error("Error signing up with Google:", err);
-      setError("حدث خطأ أثناء التسجيل بـ Google. يرجى المحاولة مرة أخرى.");
+    } catch {
+      setError("حدث خطأ ما أثناء إنشاء الحساب");
+    } finally {
       setGoogleLoading(false);
     }
   };

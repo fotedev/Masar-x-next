@@ -63,8 +63,7 @@ function EditSummaryContent() {
           content: data.content,
         });
         setCurrentPdfUrl(data.pdf_url);
-      } catch (err) {
-        console.error("Error fetching summary:", err);
+      } catch {
         setError("حدث خطأ أثناء تحميل بيانات الملخص");
       } finally {
         setLoading(false);
@@ -120,8 +119,7 @@ function EditSummaryContent() {
       setTimeout(() => {
         router.push(`/summaries/${summaryId}`);
       }, 2000);
-    } catch (err) {
-      console.error("Error updating summary:", err);
+    } catch {
       setError("حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى.");
     } finally {
       setSaving(false);

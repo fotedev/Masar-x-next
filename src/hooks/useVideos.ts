@@ -53,8 +53,7 @@ export function useVideos(subject?: string) {
       if (queryCache.set) {
         queryCache.set(cacheKey, videoData, cacheTTL.summaries || 3600);
       }
-    } catch (error) {
-      console.error("Error fetching videos:", error);
+    } catch {
       setVideos([]);
     } finally {
       setLoading(false);

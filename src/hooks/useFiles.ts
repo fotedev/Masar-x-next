@@ -53,8 +53,7 @@ export function useFiles(subject?: string) {
       if (queryCache.set) {
         queryCache.set(cacheKey, fileData, cacheTTL.summaries || 3600);
       }
-    } catch (error) {
-      console.error("Error fetching files:", error);
+    } catch {
       setFiles([]);
     } finally {
       setLoading(false);

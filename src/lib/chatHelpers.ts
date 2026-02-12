@@ -12,19 +12,15 @@ export const chatHelpers = {
         metadata?: Record<string, any>;
     }) {
         try {
-            const { error } = await supabase.from('analytics').insert({
+            await supabase.from('analytics').insert({
                 user_id: params.userId,
                 action_type: params.actionType,
                 content_type: params.contentType,
                 content_id: params.contentId,
                 metadata: params.metadata || {},
             });
-
-            if (error) {
-                console.error('Failed to record analytics:', error);
-            }
-        } catch (err) {
-            console.error('Error recording analytics:', err);
+        } catch {
+            // ignore
         }
     },
 
@@ -36,13 +32,11 @@ export const chatHelpers = {
             const { data, error } = await supabase.rpc('get_admin_analytics_summary');
 
             if (error) {
-                console.error('Failed to fetch admin analytics summary:', error);
                 return null;
             }
 
             return data;
-        } catch (err) {
-            console.error('Error fetching admin analytics summary:', err);
+        } catch {
             return null;
         }
     }
