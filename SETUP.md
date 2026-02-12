@@ -1,11 +1,12 @@
 # Complete Setup Instructions for Masar X
-*آخر تحديث: 09 فبراير 2026*
+*آخر تحديث: 12 فبراير 2026*
 
-## Recent edits (09 Feb 2026)
+## Recent edits (12 Feb 2026)
 - Updated project pages and components in `src/app/` (multiple pages)
 - Security & ops updates: DB migrations and Edge Functions (see "Security & Ops updates")
 - Backups added for some Supabase migration SQL files
-- Removed legacy Vite config and updated PWA/manifest files
+- Template enhancement: Made subjects configurable for easy college customization
+- Added `setup-subjects.js` script for automated subject population
  
 
 This guide will walk you through setting up the "Masar X" comprehensive learning platform from scratch.
@@ -78,7 +79,57 @@ CLOUDINARY_API_SECRET=your_cloudinary_secret
 CLOUDINARY_URL=your_cloudinary_url
 ```
 
-### 4. Database Setup
+### 4. Subject Customization (For Template Users)
+
+**Masar X is designed as a template** that can be easily customized for different colleges. To customize the subjects for your college:
+
+#### Step 1: Edit Subject Configuration
+Open `src/config/subjects.config.ts` and customize:
+
+```typescript
+// Change college name
+export const COLLEGE_CONFIG = {
+    name: "جامعة [اسم جامعتك]", // Change to your college name
+    logo: "/logo.png"
+};
+
+// Customize Semester 1 subjects
+export const SEMESTER_1_SUBJECTS: Subject[] = [
+    { id: "1", name: "[اسم المادة الأولى]", semester: 1 },
+    { id: "2", name: "[اسم المادة الثانية]", semester: 1 },
+    // Add your semester 1 subjects...
+];
+
+// Customize Semester 2 subjects  
+export const SEMESTER_2_SUBJECTS: Subject[] = [
+    { id: "12", name: "[اسم المادة الأولى]", semester: 2 },
+    { id: "13", name: "[اسم المادة الثانية]", semester: 2 },
+    // Add your semester 2 subjects...
+];
+```
+
+#### Step 2: Run Subject Setup Script
+After customizing the subjects, run:
+
+```bash
+npm run setup-subjects
+```
+
+This script will:
+- Clear existing subjects from the database
+- Insert your custom subjects with proper semester assignment
+- Set default active semester to Semester 1
+- Provide confirmation of successful setup
+
+#### Step 3: Verify Setup
+1. Start the development server: `npm run dev`
+2. Visit `/subjects` to see your custom subjects
+3. Check that semester switching works correctly
+4. Access admin panel to manage subjects further if needed
+
+**Note:** You can re-run `npm run setup-subjects` anytime to update subjects. The script is safe to run multiple times.
+
+### 5. Database Setup
 
 The platform uses a comprehensive PostgreSQL database with 20+ tables managed through Supabase.
 
