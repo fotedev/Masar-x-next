@@ -98,7 +98,7 @@ export default function AddSummaryPage() {
               },
             });
             uploadedImageUrls.push(imageResult.url);
-          } catch (imgError) {
+          } catch {
             // Continue with other images even if one fails
           }
         }
@@ -172,7 +172,7 @@ export default function AddSummaryPage() {
       setTimeout(() => {
         router.push("/");
       }, 2000);
-    } catch (err) {
+    } catch {
       setError("حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);

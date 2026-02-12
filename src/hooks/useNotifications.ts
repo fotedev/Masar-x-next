@@ -249,8 +249,14 @@ export function useNotifications() {
           () => {
             fetchNotifications(true); // إعادة جلب الإشعارات وتجاوز الكاش
           }
-        )
-        .subscribe();
+        );
+
+      channel.subscribe((status) => {
+        if (status === 'CLOSED') {
+          // Attempt to re-subscribe if closed unexpectedly
+          setTimeout(() => channel.subscribe(), 5000);
+        }
+      });
 
       return channel;
     };

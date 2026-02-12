@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { RealtimeChannel, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
@@ -13,11 +13,11 @@ export function useOnlineUsers() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<RealtimeChannel | null>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
 
   // Track user presence
   const trackPresence = useCallback(async () => {
-    if (!subscription) {
+    if (!subscriptionRef.current) {
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || 'anonymous';
 
@@ -56,19 +56,20 @@ export function useOnlineUsers() {
         });
 
       // Subscribe first, then track presence
-      await channel.subscribe();
+      channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && user) {
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          });
+        } else if (status === 'CLOSED') {
+          setTimeout(() => channel.subscribe(), 5000);
+        }
+      });
 
-      // Track current user only after subscription
-      if (user) {
-        await channel.track({
-          user_id: user.id,
-          online_at: new Date().toISOString(),
-        });
-      }
-
-      setSubscription(channel);
+      subscriptionRef.current = channel;
     }
-  }, [subscription]);
+  }, []);
 
   // Initialize presence tracking
   useEffect(() => {
@@ -77,12 +78,11 @@ export function useOnlineUsers() {
 
     // Cleanup subscription on unmount
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-        setSubscription(null);
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackPresence]);
 
   // Handle auth state changes
@@ -91,8 +91,8 @@ export function useOnlineUsers() {
       async (event: AuthChangeEvent, session: Session | null) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Re-track presence when user signs in - only if subscription exists and is subscribed
-          if (subscription && subscription.state === 'joined') {
-            await subscription.track({
+          if (subscriptionRef.current && subscriptionRef.current.state === 'joined') {
+            await subscriptionRef.current.track({
               user_id: session.user.id,
               online_at: new Date().toISOString(),
             });
@@ -102,9 +102,9 @@ export function useOnlineUsers() {
           }
         } else if (event === 'SIGNED_OUT') {
           // Clean up presence when user signs out
-          if (subscription) {
-            subscription.unsubscribe();
-            setSubscription(null);
+          if (subscriptionRef.current) {
+            subscriptionRef.current.unsubscribe();
+            subscriptionRef.current = null;
             setOnlineCount(0);
             setOnlineUsers([]);
           }

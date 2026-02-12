@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
@@ -17,9 +17,12 @@ function ResetPasswordContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
 
-  const onNavigate = (page: string) => {
-    router.push(`/${page}`);
-  };
+  const onNavigate = useCallback(
+    (page: string) => {
+      router.push(`/${page}`);
+    },
+    [router],
+  );
 
   // Check for valid reset token from URL parameters
   useEffect(() => {
@@ -33,7 +36,7 @@ function ResetPasswordContent() {
 
     // Token exists, assume valid for now (will be validated on submit)
     setIsValidSession(true);
-  }, [searchParams]);
+  }, [searchParams, onNavigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

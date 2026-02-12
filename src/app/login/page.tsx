@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -25,27 +25,22 @@ export default function LoginPage() {
   const [resetLoading, setResetLoading] = useState(false);
   const [showForgotPasswordForm, setShowForgotPasswordForm] = useState(false);
 
-  const onNavigate = (page: string) => {
-    if (page === "home") {
-      router.push("/");
-    } else {
-      router.push(`/${page}`);
-    }
-  };
+  const onNavigate = useCallback(
+    (page: string) => {
+      if (page === "home") {
+        router.push("/");
+      } else {
+        router.push(`/${page}`);
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     if (user) {
-      const timer = setTimeout(() => {
-        const role = user.user_metadata?.role;
-        if (role === "admin") {
-          onNavigate("admin-dashboard");
-        } else {
-          onNavigate("home");
-        }
-      }, 500);
-      return () => clearTimeout(timer);
+      onNavigate("home");
     }
-  }, [user]);
+  }, [user, onNavigate]);
 
   useEffect(() => {
     try {
@@ -188,7 +183,7 @@ export default function LoginPage() {
               alt="Masar X Logo"
               width={56}
               height={56}
-              className="object-contain"
+              className="w-14 h-auto object-contain"
             />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
