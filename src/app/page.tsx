@@ -82,7 +82,7 @@ export default function HomePage() {
           <div className="modern-card p-12 text-center">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              لا توجد ملخصات معتمدة للمواد المفعلة حالياً
+              اذهب للمواد
             </p>
           </div>
         ) : (

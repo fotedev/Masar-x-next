@@ -93,8 +93,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
           recentActivity: summary.recentActivity || [],
         });
       }
-    } catch (err) {
-      console.error("Error reloading analytics:", err);
+    } catch {
       setError("حدث خطأ في تحميل الإحصائيات");
     } finally {
       setLoading(false);
