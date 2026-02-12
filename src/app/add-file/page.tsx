@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Send, CheckCircle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -97,38 +97,43 @@ export default function AddFilePage() {
 
   if (isAdminLoading) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">
-            جاري التحقق من الصلاحيات...
-          </p>
+      <Suspense fallback={<div>Loading...</div>}>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-slate-600 dark:text-slate-400">
+              جاري التحقق من الصلاحيات...
+            </p>
+          </div>
         </div>
-      </div>
+      </Suspense>
     );
   }
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
-          <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            تم إضافة الملف بنجاح!
-          </h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
-            الملف متاح الآن للطلاب
-          </p>
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-            سيتم تحويلك إلى صفحة المادة...
-          </p>
+      <Suspense fallback={<div>Loading...</div>}>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
+            <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              تم إضافة الملف بنجاح!
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+              الملف متاح الآن للطلاب
+            </p>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
+              سيتم تحويلك إلى صفحة المادة...
+            </p>
+          </div>
         </div>
-      </div>
+      </Suspense>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <Suspense fallback={<div className="max-w-2xl mx-auto"><div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div><p className="mt-4 text-slate-600 dark:text-slate-400">جاري التحميل...</p></div></div>}>
+      <div className="max-w-3xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           إضافة ملف جديد
