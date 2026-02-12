@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function SignUpPage() {
@@ -68,7 +69,7 @@ export default function SignUpPage() {
     // Check if user is locked out
     if (lockoutTime > 0) {
       setError(
-        `تم تعليق المحاولات. انتظر ${Math.ceil(lockoutTime / 1000)} ثانية`
+        `تم تعليق المحاولات. انتظر ${Math.ceil(lockoutTime / 1000)} ثانية`,
       );
       return;
     }
@@ -88,7 +89,7 @@ export default function SignUpPage() {
     try {
       await signUp(email, password);
       setSuccess(
-        "تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك الإلكتروني."
+        "تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك الإلكتروني.",
       );
       setEmail("");
       setPassword("");
@@ -112,15 +113,15 @@ export default function SignUpPage() {
         JSON.stringify({
           count: newAttempts,
           timestamp: Date.now(),
-        })
+        }),
       );
 
       if (newAttempts >= 20) {
         setLockoutTime(lockoutDuration);
         setError(
           `تم تعليق المحاولات بسبب محاولات فاشلة متكررة. انتظر ${Math.ceil(
-            lockoutDuration / 1000
-          )} ثانية`
+            lockoutDuration / 1000,
+          )} ثانية`,
         );
       } else {
         if (
@@ -128,7 +129,7 @@ export default function SignUpPage() {
           err.message?.includes("already registered")
         ) {
           setError(
-            "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك."
+            "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك.",
           );
         } else {
           setError("حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.");
@@ -157,13 +158,19 @@ export default function SignUpPage() {
       <div className="modern-card p-8 sm:p-10">
         <div className="text-center mb-10">
           <div className="bg-brand-blue/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-blue/5">
-            <img src="/logo.png" alt="Masar X Logo" className="w-14 h-14 object-contain" />
+            <Image
+              src="/logo.png"
+              alt="Masar X Logo"
+              width={56}
+              height={56}
+              className="object-contain"
+            />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
             إنشاء حساب جديد
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            انضم إلى المجتمع  للنشر 
+            انضم إلى المجتمع للنشر
           </p>
         </div>
 

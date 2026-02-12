@@ -32,23 +32,58 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadAnalytics();
-  }, []);
+    const loadAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check if user is admin
+        if (!isAdmin) {
+          setError("غير مصرح لك بالوصول إلى هذه الصفحة");
+          return;
+        }
+
+        // Fetch real analytics data from the stored procedure
+        const summary = await chatHelpers.getAdminAnalyticsSummary();
+
+        if (summary) {
+          setAnalytics({
+            totalUsers: summary.totalUsers || 0,
+            totalMessages: summary.totalMessages || 0,
+            totalViews: summary.totalViews || 0,
+            totalClicks: summary.totalClicks || 0,
+            topContentTypes: summary.topContentTypes || [],
+            recentActivity: summary.recentActivity || [],
+          });
+        } else {
+          // Fallback to placeholder data if procedure returns null
+          const placeholderSummary = {
+            totalUsers: 0,
+            totalMessages: 0,
+            totalViews: 0,
+            totalClicks: 0,
+            topContentTypes: [],
+            recentActivity: [],
+          };
+          setAnalytics(placeholderSummary);
+        }
+      } catch (err) {
+        console.error("Error loading analytics:", err);
+        setError("حدث خطأ في تحميل الإحصائيات");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAnalyticsData();
+  }, [isAdmin]);
 
   const loadAnalytics = async () => {
+    // Keep this function for the retry button
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      // Check if user is admin
-      if (!isAdmin) {
-        setError("غير مصرح لك بالوصول إلى هذه الصفحة");
-        return;
-      }
-
-      // Fetch real analytics data from the stored procedure
       const summary = await chatHelpers.getAdminAnalyticsSummary();
-
       if (summary) {
         setAnalytics({
           totalUsers: summary.totalUsers || 0,
@@ -58,20 +93,9 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
           topContentTypes: summary.topContentTypes || [],
           recentActivity: summary.recentActivity || [],
         });
-      } else {
-        // Fallback to placeholder data if procedure returns null
-        const placeholderSummary = {
-          totalUsers: 0,
-          totalMessages: 0,
-          totalViews: 0,
-          totalClicks: 0,
-          topContentTypes: [],
-          recentActivity: [],
-        };
-        setAnalytics(placeholderSummary);
       }
     } catch (err) {
-      console.error("Error loading analytics:", err);
+      console.error("Error reloading analytics:", err);
       setError("حدث خطأ في تحميل الإحصائيات");
     } finally {
       setLoading(false);

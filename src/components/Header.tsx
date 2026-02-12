@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import React, { useState } from "react";
+import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { useRouter, usePathname } from "next/navigation";
@@ -51,10 +52,13 @@ export const Header = React.memo(function Header() {
             onClick={() => handleNavigate("home")}
             className="flex items-center text-slate-900 dark:text-white hover:opacity-80 transition-opacity flex-shrink-0"
           >
-            <img
+            <Image
               src="/logo.png"
               alt="Masar X Logo"
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+              width={48}
+              height={48}
+              className="object-contain"
+              priority
             />
           </button>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   CheckCircle,
   XCircle,
@@ -10,7 +10,7 @@ import {
   Target,
   Cloud,
   AlertCircle,
-  Play
+  Play,
 } from "lucide-react";
 import { quizService } from "../lib/quiz";
 import { useAuth } from "../contexts/AuthContext";
@@ -24,32 +24,48 @@ interface QuizPlayerProps {
   onClose?: () => void;
 }
 
+interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  duration_seconds?: number;
+}
+
+interface Question {
+  id: string;
+  question: string;
+  options: string[];
+  correct_answer: number;
+  explanation?: string;
+  image_url?: string;
+}
+
 export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
 
   const [loading, setLoading] = useState(true);
-  const [quiz, setQuiz] = useState<any>(null);
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  
+
   // Hook state
-  const { 
-    answers: savedAnswers, 
-    saving, 
-    saveAnswer, 
+  const {
+    answers: savedAnswers,
+    saving,
+    saveAnswer,
     finishAttempt: saveFinishAttempt,
     startTime: attemptStartTime,
-    isGuest
+    isGuest,
   } = useQuizAttempt({
     quizId,
     userId: user?.id,
     totalQuestions: questions.length,
-    quizTitle: quiz?.title
+    quizTitle: quiz?.title,
   });
 
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
@@ -59,9 +75,76 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
   const finishingRef = useRef(false);
 
   // Memoized derived state to avoid recomputation on every render
-  const score = useMemo(() => 
-    Object.values(savedAnswers).filter(a => a.is_correct).length,
-    [savedAnswers]
+  const score = useMemo(
+    () => Object.values(savedAnswers).filter((a) => a.is_correct).length,
+    [savedAnswers],
+  );
+
+  const loadQuiz = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { quiz, questions } = await quizService.getQuiz(quizId);
+      setQuiz(quiz);
+      setQuestions(questions);
+
+      setTimeTakenSeconds(null);
+      setEndedByTimeout(false);
+      finishingRef.current = false;
+
+      trackEvent("quiz_loaded", { quiz_id: quizId, title: quiz.title });
+    } catch (error) {
+      console.error("Error loading quiz:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [quizId, trackEvent]);
+
+  useEffect(() => {
+    loadQuiz();
+  }, [loadQuiz]);
+
+  const finishQuiz = useCallback(
+    async (timeout = false) => {
+      if (finishingRef.current) return;
+      finishingRef.current = true;
+
+      if (timeout) setEndedByTimeout(true);
+
+      const finishedAtMs = Date.now();
+      const startedAtMs = attemptStartTime || finishedAtMs;
+      const takenSeconds = Math.max(
+        0,
+        Math.round((finishedAtMs - startedAtMs) / 1000),
+      );
+
+      setTimeTakenSeconds(takenSeconds);
+      setShowResults(true);
+
+      // Save attempt (handles both guest and registered)
+      try {
+        await saveFinishAttempt(score, takenSeconds);
+      } catch (error) {
+        console.error("Failed to finish quiz attempt:", error);
+      }
+
+      trackEvent("quiz_completed", {
+        quiz_id: quizId,
+        score: score,
+        total: questions.length,
+        ended_by_timeout: timeout,
+      });
+
+      if (onComplete) onComplete(score);
+    },
+    [
+      attemptStartTime,
+      questions.length,
+      quizId,
+      saveFinishAttempt,
+      score,
+      trackEvent,
+      onComplete,
+    ],
   );
 
   // Sync current question state with saved answers
@@ -69,7 +152,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     if (questions.length > 0) {
       const currentQ = questions[currentQuestionIndex];
       const savedAnswer = savedAnswers[currentQ.id];
-      
+
       if (savedAnswer) {
         setSelectedOption(savedAnswer.selected_option);
         setIsAnswered(true);
@@ -85,11 +168,11 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasStarted && !showResults && questions.length > 0) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [showResults, questions.length, hasStarted]);
 
   const formatTime = (totalSeconds: number) => {
@@ -99,33 +182,11 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     return `${m}:${String(r).padStart(2, "0")}`;
   };
 
-  useEffect(() => {
-    loadQuiz();
-  }, [quizId]);
-
-  const loadQuiz = async () => {
-    try {
-      setLoading(true);
-      const { quiz, questions } = await quizService.getQuiz(quizId);
-      setQuiz(quiz);
-      setQuestions(questions);
-      
-      setTimeTakenSeconds(null);
-      setEndedByTimeout(false);
-      finishingRef.current = false;
-
-      trackEvent("quiz_loaded", { quiz_id: quizId, title: quiz.title });
-    } catch (error) {
-      console.error("Error loading quiz:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const startQuiz = () => {
     const now = Date.now();
-    const durationSeconds = typeof quiz?.duration_seconds === "number" ? quiz.duration_seconds : null;
-    
+    const durationSeconds =
+      typeof quiz?.duration_seconds === "number" ? quiz.duration_seconds : null;
+
     if (durationSeconds && durationSeconds > 0) {
       endTimeMsRef.current = now + durationSeconds * 1000;
       setTimeLeftSeconds(durationSeconds);
@@ -146,7 +207,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       if (!endTimeMsRef.current) return;
       const remaining = Math.max(
         0,
-        Math.ceil((endTimeMsRef.current - Date.now()) / 1000)
+        Math.ceil((endTimeMsRef.current - Date.now()) / 1000),
       );
       setTimeLeftSeconds(remaining);
       if (remaining === 0) {
@@ -158,7 +219,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     return () => {
       window.clearInterval(interval);
     };
-  }, [hasStarted, showResults, quizId]);
+  }, [hasStarted, showResults, finishQuiz]);
 
   const handleOptionSelect = (index: number) => {
     if (isAnswered) return;
@@ -170,10 +231,11 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
 
     const currentQuestion = questions[currentQuestionIndex];
     // Use Number() to ensure type safety in comparison
-    const isCorrect = Number(selectedOption) === Number(currentQuestion.correct_answer);
+    const isCorrect =
+      Number(selectedOption) === Number(currentQuestion.correct_answer);
 
     setIsAnswered(true);
-    
+
     // Save answer via hook
     saveAnswer(currentQuestion.id, selectedOption, isCorrect);
 
@@ -183,10 +245,10 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       is_correct: isCorrect,
     });
   };
-  
+
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      setCurrentQuestionIndex((prev) => prev + 1);
     } else {
       finishQuiz();
     }
@@ -194,38 +256,8 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      setCurrentQuestionIndex((prev) => prev - 1);
     }
-  };
-
-  const finishQuiz = async (timeout = false) => {
-    if (finishingRef.current) return;
-    finishingRef.current = true;
-
-    if (timeout) setEndedByTimeout(true);
-
-    const finishedAtMs = Date.now();
-    const startedAtMs = attemptStartTime || finishedAtMs;
-    const takenSeconds = Math.max(0, Math.round((finishedAtMs - startedAtMs) / 1000));
-
-    setTimeTakenSeconds(takenSeconds);
-    setShowResults(true);
-
-    // Save attempt (handles both guest and registered)
-    try {
-      await saveFinishAttempt(score, takenSeconds);
-    } catch (error: any) {
-      console.error("Failed to finish quiz attempt:", error);
-    }
-
-    trackEvent("quiz_completed", {
-      quiz_id: quizId,
-      score: score,
-      total: questions.length,
-      ended_by_timeout: timeout,
-    });
-
-    if (onComplete) onComplete(score);
   };
 
   if (loading) {
@@ -264,11 +296,12 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
 
   if (showResults) {
     const percentage = Math.round((score / questions.length) * 100);
-    const timeTaken = typeof timeTakenSeconds === "number"
-      ? timeTakenSeconds
-      : attemptStartTime
-        ? Math.round((Date.now() - (attemptStartTime || 0)) / 1000)
-        : 0;
+    const timeTaken =
+      typeof timeTakenSeconds === "number"
+        ? timeTakenSeconds
+        : attemptStartTime
+          ? Math.round((Date.now() - (attemptStartTime || 0)) / 1000)
+          : 0;
 
     let colorClass = "text-blue-600 dark:text-blue-400";
     let bgClass = "bg-blue-50 dark:bg-blue-900/20";
@@ -339,9 +372,12 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
           <div className="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl flex items-start gap-3 text-start">
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300">وضع الضيف</p>
+              <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300">
+                وضع الضيف
+              </p>
               <p className="text-xs text-yellow-700 dark:text-yellow-400/80 mt-1">
-                تم حفظ نتيجتك محلياً على هذا الجهاز فقط. لتتمكن من رؤية نتائجك من أي مكان، يرجى تسجيل الدخول.
+                تم حفظ نتيجتك محلياً على هذا الجهاز فقط. لتتمكن من رؤية نتائجك
+                من أي مكان، يرجى تسجيل الدخول.
               </p>
             </div>
           </div>
@@ -369,8 +405,10 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
   }
 
   if (!hasStarted) {
-    const durationMinutes = quiz?.duration_seconds ? Math.round(quiz.duration_seconds / 60) : null;
-    
+    const durationMinutes = quiz?.duration_seconds
+      ? Math.round(quiz.duration_seconds / 60)
+      : null;
+
     return (
       <div className="backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 rounded-3xl p-8 text-center border border-white/20 dark:border-gray-700/30 shadow-2xl animate-in fade-in zoom-in duration-500">
         <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -380,7 +418,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
         <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-4">
           {quiz.title}
         </h2>
-        
+
         {quiz.description && (
           <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
             {(() => {
@@ -400,9 +438,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             <div className="text-xl font-bold text-gray-900 dark:text-white">
               {questions.length}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              سؤال
-            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">سؤال</div>
           </div>
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/30">
             <Timer className="w-5 h-5 text-purple-500 mx-auto mb-2" />
@@ -423,7 +459,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             <span>ابدأ الآن</span>
             <ArrowRight className="w-6 h-6 group-hover:translate-x-[-4px] transition-transform" />
           </button>
-          
+
           <button
             onClick={onClose}
             className="px-8 py-4 text-gray-500 dark:text-gray-400 font-bold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -470,32 +506,32 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               من {questions.length} أسئلة
             </span>
           </div>
-            <div className="flex items-center gap-3">
-              {/* Saving Indicator */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400">
-                {saving ? (
-                  <>
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>جاري الحفظ...</span>
-                  </>
-                ) : (
-                  <>
-                    <Cloud className="w-3 h-3 text-green-500" />
-                    <span>تم الحفظ</span>
-                  </>
-                )}
-              </div>
-
-              {typeof timeLeftSeconds === "number" && (
-                <div className="px-4 py-1.5 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-sm font-black border border-purple-100 dark:border-purple-900/30 flex items-center gap-2">
-                  <Timer className="w-4 h-4" />
-                  {formatTime(timeLeftSeconds)}
-                </div>
+          <div className="flex items-center gap-3">
+            {/* Saving Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400">
+              {saving ? (
+                <>
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>جاري الحفظ...</span>
+                </>
+              ) : (
+                <>
+                  <Cloud className="w-3 h-3 text-green-500" />
+                  <span>تم الحفظ</span>
+                </>
               )}
-              <div className="px-4 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-black border border-green-100 dark:border-green-900/30">
-                {score} نقاط
-              </div>
             </div>
+
+            {typeof timeLeftSeconds === "number" && (
+              <div className="px-4 py-1.5 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-sm font-black border border-purple-100 dark:border-purple-900/30 flex items-center gap-2">
+                <Timer className="w-4 h-4" />
+                {formatTime(timeLeftSeconds)}
+              </div>
+            )}
+            <div className="px-4 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-black border border-green-100 dark:border-green-900/30">
+              {score} نقاط
+            </div>
+          </div>
         </div>
 
         <h3
