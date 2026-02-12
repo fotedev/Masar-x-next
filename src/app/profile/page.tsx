@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +9,15 @@ import { AdminProfileImage } from "../../components/AdminProfileImage";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, displayName, isAdmin, isAdminLoading, adminRole, updateDisplayName, refreshAdminStatus } = useAuth();
+  const {
+    user,
+    displayName,
+    isAdmin,
+    isAdminLoading,
+    adminRole,
+    updateDisplayName,
+    refreshAdminStatus,
+  } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState(displayName || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -26,8 +34,7 @@ export default function ProfilePage() {
     try {
       await updateDisplayName(newDisplayName.trim());
       setIsEditing(false);
-    } catch (error) {
-      console.error("Error updating display name:", error);
+    } catch {
       alert("حدث خطأ في تحديث اسم المستخدم ");
     } finally {
       setIsSaving(false);
@@ -74,7 +81,9 @@ export default function ProfilePage() {
               editable={true}
             />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{displayName}</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                {displayName}
+              </h1>
               <div className="flex items-center gap-3 mt-1">
                 <p className="text-brand-sky font-semibold flex items-center gap-2">
                   {isAdmin ? (
@@ -90,13 +99,15 @@ export default function ProfilePage() {
                         : "ادمن"
                     : "مستخدم"}
                 </p>
-                <button 
+                <button
                   onClick={() => refreshAdminStatus()}
                   disabled={isAdminLoading}
                   className="p-1.5 hover:bg-white/20 rounded-full transition-all active:rotate-180 duration-500 disabled:opacity-60 disabled:cursor-not-allowed"
                   title="تحديث رتبة الحساب"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 text-brand-sky ${isAdminLoading ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 text-brand-sky ${isAdminLoading ? "animate-spin" : ""}`}
+                  />
                 </button>
               </div>
             </div>
@@ -206,7 +217,9 @@ export default function ProfilePage() {
                     </p>
                     {isAdmin && (
                       <span className="px-3 py-1 bg-brand-orange text-white text-xs font-bold rounded-full shadow-lg shadow-brand-orange/20">
-                        {adminRole === "doctor" ? "صلاحيات كاملة" : "صلاحيات محدودة"}
+                        {adminRole === "doctor"
+                          ? "صلاحيات كاملة"
+                          : "صلاحيات محدودة"}
                       </span>
                     )}
                   </div>
@@ -264,7 +277,7 @@ export default function ProfilePage() {
                           day: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
-                        }
+                        },
                       )
                     : "غير محدد"}
                 </p>

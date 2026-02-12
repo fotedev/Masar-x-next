@@ -105,8 +105,7 @@ export function EditSummaryModal({
       });
 
       onClose();
-    } catch (err) {
-      console.error("Error updating summary:", err);
+    } catch {
       setError("حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);

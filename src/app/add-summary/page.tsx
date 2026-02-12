@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { uploadToCloudinary } from "../../lib/cloudinary";
@@ -74,8 +75,6 @@ export default function AddSummaryPage() {
             setUploadStage(stage);
           },
         });
-
-        console.log("File uploaded to Cloudinary:", cloudinaryResult.public_id);
       }
 
       // رفع الصور إلى Cloudinary
@@ -99,9 +98,7 @@ export default function AddSummaryPage() {
               },
             });
             uploadedImageUrls.push(imageResult.url);
-            console.log("Image uploaded to Cloudinary:", imageResult.public_id);
           } catch (imgError) {
-            console.error("Error uploading image:", imgError);
             // Continue with other images even if one fails
           }
         }
@@ -176,7 +173,6 @@ export default function AddSummaryPage() {
         router.push("/");
       }, 2000);
     } catch (err) {
-      console.error("Error submitting summary:", err);
       setError("حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
@@ -494,11 +490,15 @@ export default function AddSummaryPage() {
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {imageFiles.map((file, index) => (
                   <div key={index} className="relative group">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                    />
+                    <div className="w-full h-24 relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+                      <Image
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeImage(index)}

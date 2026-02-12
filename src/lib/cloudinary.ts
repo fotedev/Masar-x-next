@@ -44,12 +44,6 @@ export const uploadToCloudinary = async (
   // Get current session - make it optional for guest uploads
   const { data: { session } } = await supabase.auth.getSession()
 
-  if (session) {
-    console.log('✅ Session found for user:', session.user?.email)
-  } else {
-    console.log('ℹ️ No active session found')
-  }
-
   // Allow guest uploads if no session/access token is present.
   const accessToken = session?.access_token || null
 
@@ -175,16 +169,12 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
   if (sessionError) {
-    console.error('Session error:', sessionError)
     throw new Error('فشل في التحقق من حالة تسجيل الدخول')
   }
 
   if (!session || !session.access_token) {
-    console.warn('No active session found')
     throw new Error('يجب تسجيل الدخول أولاً لحذف الملفات')
   }
-
-  console.log('✅ Session found for user:', session.user?.email)
 
   // Call Edge Function for secure deletion
   const { error } = await supabase.functions.invoke('delete-file', {

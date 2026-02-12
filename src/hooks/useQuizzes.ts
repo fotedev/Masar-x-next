@@ -50,8 +50,8 @@ export function useQuizzes() {
 
             // Cache the result
             queryCache.set(cacheKey, quizData, cacheTTL.summaries); // Reuse summaries TTL
-        } catch (error) {
-            console.error("Error fetching quizzes:", error);
+        } catch {
+            // ignore
         } finally {
             inflightRequest = null;
             setLoading(false);
@@ -74,9 +74,8 @@ export function useQuizzes() {
 
             // Invalidate cache
             queryCache.delete("admin_quizzes_v2");
-        } catch (error) {
-            console.error("Error deleting quiz:", error);
-            alert("حدث خطأ أثناء حذف الامتحان.");
+        } catch {
+            // ignore
         }
     };
 
@@ -94,9 +93,8 @@ export function useQuizzes() {
             
             // Refetch quizzes to get fresh data from database
             await fetchQuizzes(true);
-        } catch (error) {
-            console.error("Error updating quiz status:", error);
-            alert("حدث خطأ أثناء تحديث حالة الامتحان.");
+        } catch {
+            // ignore
         }
     };
 

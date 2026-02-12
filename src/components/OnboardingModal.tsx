@@ -50,8 +50,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
       if (error) throw error;
 
       onComplete();
-    } catch (err) {
-      console.error("Error updating profile:", err);
+    } catch {
       setError("حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
