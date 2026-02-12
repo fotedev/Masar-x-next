@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -51,20 +51,14 @@ export default function SummaryDetailPage() {
         const images = JSON.parse(imagesMatch[1]);
         const cleanContent = content.replace(/\[IMAGES:(\[.*?\])\]/, "").trim();
         return { images, cleanContent };
-      } catch (e) {
+      } catch {
         return { images: [], cleanContent: content };
       }
     }
     return { images: [], cleanContent: content };
   };
 
-  useEffect(() => {
-    if (summaryId) {
-      fetchSummary();
-    }
-  }, [summaryId]);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const { data: summaryData, error: summaryError } = await supabase
         .from("summaries")
@@ -133,7 +127,13 @@ export default function SummaryDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [summaryId, isAdmin, trackSummaryView]);
+
+  useEffect(() => {
+    if (summaryId) {
+      fetchSummary();
+    }
+  }, [summaryId, fetchSummary]);
 
   if (loading) {
     return (

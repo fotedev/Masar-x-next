@@ -39,7 +39,6 @@ export function AuthProvider({
 }): JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // Lazy-initialize isAdmin from localStorage for instant load on refresh
   const [isAdmin, setIsAdmin] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -58,7 +57,6 @@ export function AuthProvider({
     return false;
   });
   const [isAdminLoading, setIsAdminLoading] = useState(false);
-  // Lazy-initialize adminRole from localStorage
   const [adminRole, setAdminRole] = useState<"doctor" | "student" | null>(
     () => {
       if (typeof window === "undefined") return null;
@@ -81,7 +79,6 @@ export function AuthProvider({
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Helper to extract display name from user metadata or email
   const getDisplayName = useCallback((u: User) => {
     return (
       u.user_metadata?.display_name ||
@@ -91,12 +88,10 @@ export function AuthProvider({
     );
   }, []);
 
-  // Cache for admin status using ref to avoid re-creating verifyAdminStatus on updates
   const adminCacheRef = useRef<{
     [userId: string]: { isAdmin: boolean; role: "doctor" | "student" | null };
   }>({});
 
-  // Centralized function to verify admin status with caching
   const verifyAdminStatus = useCallback(
     async (u: User | null, forceRefresh = false): Promise<boolean> => {
       if (!u) {
@@ -106,9 +101,8 @@ export function AuthProvider({
       }
 
       const cacheKey = `admin_status_${u.id}`;
-      const cacheExpiry = 1000 * 60 * 50; // 50 minutes
+      const cacheExpiry = 1000 * 60 * 50;
 
-      // 1. Immediate check from metadata (Fastest)
       const userMetadataRole = u.user_metadata?.role;
       const appMetadataRole = u.app_metadata?.role;
 
@@ -120,7 +114,6 @@ export function AuthProvider({
       const isAdminInMetadata =
         checkRole(userMetadataRole) || checkRole(appMetadataRole);
 
-      // Check memory cache first for instant response
       if (!forceRefresh && adminCacheRef.current[u.id] !== undefined) {
         const cached = adminCacheRef.current[u.id];
         if (!(isAdminInMetadata && !cached.isAdmin)) {
@@ -131,7 +124,6 @@ export function AuthProvider({
         }
       }
 
-      // Check localStorage cache
       if (!forceRefresh) {
         try {
           const cached = localStorage.getItem(cacheKey);
@@ -155,13 +147,12 @@ export function AuthProvider({
             }
           }
         } catch {
-          // Ignore cache errors
+          /* ignore */
         }
       }
 
       if (isAdminInMetadata) {
         setIsAdmin(true);
-        // If metadata also specifies doctor/student, use it as temporary role
         const roles = Array.isArray(userMetadataRole)
           ? userMetadataRole
           : [userMetadataRole];
@@ -169,7 +160,6 @@ export function AuthProvider({
         else if (roles.includes("student")) setAdminRole("student");
       }
 
-      // 2. Background check from database (Reliable)
       setIsAdminLoading(true);
       try {
         const { data, error } = (await Promise.race([
@@ -183,7 +173,7 @@ export function AuthProvider({
           ),
         ])) as {
           data: { role: "doctor" | "student" | null } | null;
-          error: any;
+          error: unknown;
         };
 
         const isDbAdmin = !!data && !error;
@@ -192,7 +182,6 @@ export function AuthProvider({
         setIsAdmin(isDbAdmin);
         setAdminRole(role);
 
-        // Cache the result
         adminCacheRef.current = {
           ...adminCacheRef.current,
           [u.id]: { isAdmin: isDbAdmin, role },
@@ -208,12 +197,10 @@ export function AuthProvider({
 
         return isDbAdmin;
       } catch {
-        // Preserve metadata admin status if it was already set
         if (!isAdminInMetadata) {
           setIsAdmin(false);
           setAdminRole(null);
         }
-        // Cache false result for 5 minutes to avoid repeated failed requests
         adminCacheRef.current = {
           ...adminCacheRef.current,
           [u.id]: { isAdmin: false, role: null },
@@ -231,19 +218,17 @@ export function AuthProvider({
         setIsAdminLoading(false);
       }
     },
-    [], // eslint-disable-line react-hooks/exhaustive-deps -- uses ref, stable reference
+    [],
   );
 
-  // Public function to force refresh admin status
   const refreshAdminStatus = async () => {
     const {
       data: { user: freshUser },
     } = await supabase.auth.getUser();
     if (freshUser) setUser(freshUser);
-    return await verifyAdminStatus(freshUser, true); // Force refresh
+    return await verifyAdminStatus(freshUser, true);
   };
 
-  // Initialize and listen to auth changes
   useEffect(() => {
     let mounted = true;
 
@@ -258,12 +243,11 @@ export function AuthProvider({
         setUser(currentUser);
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
 
-        // Start admin check but don't block initial loading
         if (currentUser) {
           verifyAdminStatus(currentUser);
         }
       } catch {
-        // ignore
+        /* ignore */
       } finally {
         if (mounted) setLoading(false);
       }
@@ -280,48 +264,32 @@ export function AuthProvider({
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
-
-        // Set loading to false immediately - don't block on avatar loading
         setLoading(false);
 
-        // Load avatar URL in background (non-blocking)
         if (currentUser) {
-          // Set initial avatar from metadata first (instant)
           setAvatarUrl(currentUser.user_metadata?.avatar_url ?? null);
 
-          // Then try to get from database in background
           supabase
             .from("profiles")
             .select("avatar_url")
             .eq("id", currentUser.id)
             .maybeSingle()
             .then(
-              ({
-                data: profileData,
-                error,
-              }: {
-                data: { avatar_url: string | null } | null;
-                error: unknown;
-              }) => {
+              ({ data: profileData, error }) => {
                 if (!error && profileData?.avatar_url) {
                   setAvatarUrl(profileData.avatar_url);
                 }
               },
               () => {
-                // ignore
+                /* ignore */
               },
             );
-        } else {
-          setAvatarUrl(null);
-        }
 
-        if (currentUser) {
-          // Only verify admin status on actual sign in/out events, not focus changes
           if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
             verifyAdminStatus(currentUser);
           }
         } else {
-          // Clear admin cache on sign out
+          setAvatarUrl(null);
           setIsAdmin(false);
           setIsAdminLoading(false);
           setAdminRole(null);
@@ -330,7 +298,6 @@ export function AuthProvider({
           }
         }
 
-        // Analytics for sign in
         if (event === "SIGNED_IN" && currentUser) {
           chatHelpers
             .recordAnalytics({
@@ -350,7 +317,7 @@ export function AuthProvider({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [getDisplayName, verifyAdminStatus]);
+  }, [getDisplayName, verifyAdminStatus, user]);
 
   const updateDisplayName = async (name: string) => {
     if (!user) throw new Error("No user logged in");
@@ -365,10 +332,7 @@ export function AuthProvider({
     if (!user) throw new Error("No user logged in");
 
     try {
-      // Convert file to base64
       const base64 = await fileToBase64(file);
-
-      // Call upload-avatar Edge Function which updates both Cloudinary and database
       const { data, error } = await supabase.functions.invoke("upload-avatar", {
         body: {
           file: base64,
@@ -384,25 +348,21 @@ export function AuthProvider({
       }
 
       if (data.success && data.url) {
-        // Update local state - the Edge Function already updated the database
         setAvatarUrl(data.url);
       } else {
         throw new Error("Upload failed");
       }
     } catch (error) {
-      // ignore
       throw error;
     }
   };
 
-  // Helper function to convert file to base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64 = reader.result as string;
-        // Remove the data URL prefix
         const base64Data = base64.split(",")[1];
         resolve(base64Data);
       };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import {
@@ -15,7 +15,6 @@ import {
 } from "../../components/ui";
 import { EnrollmentsTab } from "../../components/EnrollmentsTab";
 import { Users, Star, Clock, TrendingUp, BookOpen } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 // Enrollment interface is now handled by EnrollmentsTab component
 
@@ -28,18 +27,27 @@ interface CourseStats {
   total_reviews: number;
 }
 
+interface CourseEnrollment {
+  status: string;
+}
+
+interface CourseReview {
+  rating: number;
+}
+
+interface CourseRow {
+  id: string;
+  title: string;
+  enrollments?: CourseEnrollment[] | null;
+  reviews?: CourseReview[] | null;
+}
+
 export default function InstructorDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<CourseStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -68,17 +76,15 @@ export default function InstructorDashboard() {
       if (coursesError) throw coursesError;
 
       if (coursesData) {
-        const statsData = coursesData.map((course) => {
+        const statsData = (coursesData as CourseRow[]).map((course) => {
           const activeEnrollments =
-            course.enrollments?.filter((e: any) => e.status === "active") || [];
+            course.enrollments?.filter((e) => e.status === "active") || [];
           const pendingEnrollments =
-            course.enrollments?.filter((e: any) => e.status === "pending") ||
-            [];
+            course.enrollments?.filter((e) => e.status === "pending") || [];
           const reviews = course.reviews || [];
           const averageRating =
             reviews.length > 0
-              ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
-                reviews.length
+              ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
               : 0;
 
           return {
@@ -94,11 +100,17 @@ export default function InstructorDashboard() {
         setStats(statsData);
       }
     } catch {
-      toast.error("حدث خطأ في تحميل بيانات لوحة التحكم");
+      // ignore
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user, fetchDashboardData]);
 
   // Enrollment actions are now handled by EnrollmentsTab component
 
