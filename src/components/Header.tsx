@@ -57,7 +57,7 @@ export const Header = React.memo(function Header() {
               alt="Masar X Logo"
               width={48}
               height={48}
-              className="object-contain"
+              className="w-12 h-auto object-contain"
               priority
             />
           </button>
