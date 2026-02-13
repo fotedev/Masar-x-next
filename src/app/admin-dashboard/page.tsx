@@ -232,7 +232,9 @@ function AdminDashboardContent() {
         return adminRole === "doctor" ? (
           <MemoizedCoursesTab
             onCreateCourse={handleCreateCourse}
-            onEditCourse={(course: any) => handleEditCourse(course as Course)}
+            onEditCourse={(course: unknown) =>
+              handleEditCourse(course as Course)
+            }
           />
         ) : (
           <div className="p-8 text-center text-gray-500">

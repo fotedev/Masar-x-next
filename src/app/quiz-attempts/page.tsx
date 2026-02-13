@@ -7,15 +7,43 @@ import { useAuth } from "../../contexts/AuthContext";
 import { quizService } from "../../lib/quiz";
 import MathDisplay from "../../components/MathDisplay";
 
+type AttemptAnswer = {
+  question_id?: string;
+  is_correct?: boolean;
+  selected_option?: number;
+} & Record<string, unknown>;
+
+type AttemptRecord = {
+  id?: string;
+  quiz_id?: string;
+  created_at?: string;
+  started_at?: string;
+  finished_at?: string;
+  score?: number;
+  total_questions?: number;
+  time_taken_seconds?: number;
+  is_local?: boolean;
+  answers?: AttemptAnswer[];
+  quizzes?: { title?: string } | null;
+} & Record<string, unknown>;
+
+type QuizQuestionRecord = {
+  id?: string;
+  question?: string;
+  options?: string[];
+  correct_answer?: number;
+  explanation?: string;
+} & Record<string, unknown>;
+
 export default function QuizAttemptsPage() {
   const { user } = useAuth();
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [attempts, setAttempts] = useState<any[]>([]);
+  const [attempts, setAttempts] = useState<AttemptRecord[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedQuizQuestions, setExpandedQuizQuestions] = useState<
-    any[] | null
+    QuizQuestionRecord[] | null
   >(null);
 
   useEffect(() => {
@@ -24,21 +52,23 @@ export default function QuizAttemptsPage() {
         setLoading(true);
 
         // 1. Load from DB if user is logged in
-        let dbAttempts: any[] = [];
+        let dbAttempts: AttemptRecord[] = [];
         if (user) {
           try {
-            dbAttempts = await quizService.getUserAttempts(user.id);
+            dbAttempts = (await quizService.getUserAttempts(
+              user.id,
+            )) as AttemptRecord[];
           } catch {
             // ignore
           }
         }
 
         // 2. Load from localStorage
-        let localAttempts: any[] = [];
+        let localAttempts: AttemptRecord[] = [];
         try {
           const localData = localStorage.getItem("quiz_history");
           if (localData) {
-            localAttempts = JSON.parse(localData);
+            localAttempts = JSON.parse(localData) as AttemptRecord[];
           }
         } catch {
           // ignore
@@ -59,8 +89,8 @@ export default function QuizAttemptsPage() {
 
         // Sort by date descending
         combined.sort((a, b) => {
-          const dateA = new Date(a.created_at || 0).getTime();
-          const dateB = new Date(b.created_at || 0).getTime();
+          const dateA = new Date(String(a.created_at || 0)).getTime();
+          const dateB = new Date(String(b.created_at || 0)).getTime();
           return dateB - dateA;
         });
 
@@ -79,12 +109,16 @@ export default function QuizAttemptsPage() {
     const fetchQuizQuestions = async () => {
       if (expandedId) {
         const expandedAttempt = attempts.find((a) => a.id === expandedId);
-        if (expandedAttempt && expandedAttempt.quiz_id) {
+        if (
+          expandedAttempt &&
+          typeof expandedAttempt.quiz_id === "string" &&
+          expandedAttempt.quiz_id
+        ) {
           try {
             const { questions } = await quizService.getQuiz(
               expandedAttempt.quiz_id,
             );
-            setExpandedQuizQuestions(questions);
+            setExpandedQuizQuestions(questions as QuizQuestionRecord[]);
           } catch {
             setExpandedQuizQuestions(null);
           }
@@ -101,14 +135,18 @@ export default function QuizAttemptsPage() {
 
   const attemptsWithDerived = useMemo(() => {
     return attempts.map((a) => {
-      const startedAt = a.started_at ? new Date(a.started_at) : null;
-      const finishedAt = a.finished_at ? new Date(a.finished_at) : null;
+      const startedAt = a.started_at ? new Date(String(a.started_at)) : null;
+      const finishedAt = a.finished_at ? new Date(String(a.finished_at)) : null;
 
-      const answersWithQuestions = a.answers?.map((answer: any) => {
-        const question = expandedQuizQuestions?.find(
-          (q) => q.id === answer.question_id,
+      const answersWithQuestions = a.answers?.map((answer) => {
+        const question = expandedQuizQuestions?.find((q) =>
+          typeof q.id === "string" && typeof answer.question_id === "string"
+            ? q.id === answer.question_id
+            : false,
         );
-        return { ...answer, question };
+        return { ...answer, question } as AttemptAnswer & {
+          question?: QuizQuestionRecord;
+        };
       });
 
       return {
@@ -171,12 +209,14 @@ export default function QuizAttemptsPage() {
             const title = a.quizzes?.title || "امتحان";
             return (
               <div
-                key={a.id}
+                key={a.id || String(a.created_at || "")}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden"
               >
                 <button
                   onClick={() =>
-                    setExpandedId((prev) => (prev === a.id ? null : a.id))
+                    setExpandedId((prev) =>
+                      prev === a.id ? null : (a.id ?? null),
+                    )
                   }
                   className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
                 >
@@ -200,7 +240,7 @@ export default function QuizAttemptsPage() {
 
                   <div className="flex items-center gap-3">
                     <div className="text-md font-bold text-gray-800 dark:text-gray-100">
-                      {a.score}/{a.total_questions}
+                      {a.score ?? 0}/{a.total_questions ?? 0}
                       {typeof a.time_taken_seconds === "number"
                         ? ` - ${Math.floor(a.time_taken_seconds / 60)}د ${a.time_taken_seconds % 60}ث`
                         : ""}
@@ -225,7 +265,7 @@ export default function QuizAttemptsPage() {
                           الدرجات
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
-                          {a.score}/{a.total_questions}
+                          {a.score ?? 0}/{a.total_questions ?? 0}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
@@ -233,23 +273,23 @@ export default function QuizAttemptsPage() {
                           النتيجة
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
-                          {a.total_questions > 0
-                            ? `${((a.score / a.total_questions) * 100).toFixed(0)}%`
+                          {(a.total_questions ?? 0) > 0
+                            ? `${(((a.score ?? 0) / (a.total_questions ?? 1)) * 100).toFixed(0)}%`
                             : "0%"}
                         </div>
                       </div>
                       <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg p-4">
                         <div className="text-xs">الأسئلة الصحيحة</div>
                         <div className="text-xl font-bold mt-1">
-                          {a.answers?.filter((ans: any) => ans.is_correct)
-                            .length ?? 0}
+                          {a.answers?.filter((ans) => ans.is_correct).length ??
+                            0}
                         </div>
                       </div>
                       <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg p-4">
                         <div className="text-xs">الأسئلة الخاطئة</div>
                         <div className="text-xl font-bold mt-1">
-                          {a.answers?.filter((ans: any) => !ans.is_correct)
-                            .length ?? 0}
+                          {a.answers?.filter((ans) => !ans.is_correct).length ??
+                            0}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">

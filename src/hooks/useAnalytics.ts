@@ -10,7 +10,7 @@ export const useAnalytics = () => {
     analytics.trackPageView();
   }, [pathname]);
 
-  const trackEvent = useCallback((eventName: string, metadata?: Record<string, any>) => {
+  const trackEvent = useCallback((eventName: string, metadata?: Record<string, unknown>) => {
     analytics.trackEvent(eventName, metadata);
   }, []);
 
@@ -22,7 +22,7 @@ export const useAnalytics = () => {
     analytics.log(logData);
   }, []);
 
-  const trackSummaryView = useCallback((id: string, examInfo?: any) => {
+  const trackSummaryView = useCallback((id: string, examInfo?: Record<string, unknown>) => {
     trackEvent('summary_view', { id, ...examInfo });
   }, [trackEvent]);
 
@@ -30,7 +30,7 @@ export const useAnalytics = () => {
     trackEvent('summary_click', { id, action });
   }, [trackEvent]);
 
-  const trackClick = useCallback((contentType: string, contentId?: string, metadata?: any) => {
+  const trackClick = useCallback((contentType: string, contentId?: string, metadata?: Record<string, unknown>) => {
     trackEvent('click', { contentType, contentId, ...metadata });
   }, [trackEvent]);
 

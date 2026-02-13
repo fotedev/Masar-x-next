@@ -211,7 +211,7 @@ function AiAssistantChatPage() {
         try {
           await aiAssistant.loadAllData();
           setDataLoaded(true);
-        } catch (error: unknown) {
+        } catch {
           // فشل في تحميل البيانات تلقائياً
         }
       } else if (stats.totalChunks > 0) {
@@ -426,7 +426,7 @@ function AiAssistantChatPage() {
       setApiKeyInput("");
       alert("تم حفظ مفتاح API بنجاح! سيتم استخدامه الآن للمحادثة.");
       trackEvent("ai_custom_api_key_saved");
-    } catch (error: unknown) {
+    } catch {
       alert("مفتاح API غير صالح.");
     }
   };

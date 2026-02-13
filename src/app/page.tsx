@@ -48,7 +48,10 @@ export default function HomePage() {
     setShowEditModal(true);
   };
 
-  const handleSaveSummary = async (id: string, updates: any) => {
+  const handleSaveSummary = async (
+    id: string,
+    updates: Record<string, unknown>,
+  ) => {
     await editSummary(id, updates);
     setShowEditModal(false);
     setEditingSummary(null);
