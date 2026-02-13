@@ -824,7 +824,7 @@ export type MessageWithSender = Message & {
   sender: {
     id: string;
     email: string;
-    raw_user_meta_data: any;
+    raw_user_meta_data: unknown;
   } | null;
 };
 

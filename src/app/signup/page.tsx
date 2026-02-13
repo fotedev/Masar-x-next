@@ -99,7 +99,7 @@ export default function SignUpPage() {
       setAttempts(0);
       setLockoutTime(0);
       localStorage.removeItem("signup_attempts");
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Increment attempts and set lockout
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -122,7 +122,8 @@ export default function SignUpPage() {
           )} ثانية`,
         );
       } else {
-        if (err && err.message?.includes("already registered")) {
+        const message = err instanceof Error ? err.message : "";
+        if (message.includes("already registered")) {
           setError(
             "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك.",
           );
@@ -158,7 +159,7 @@ export default function SignUpPage() {
               alt="Masar X Logo"
               width={56}
               height={56}
-              className="w-14 h-auto object-contain"
+              className="object-contain w-14 h-14"
             />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">

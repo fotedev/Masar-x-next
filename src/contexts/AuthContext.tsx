@@ -293,8 +293,14 @@ export function AuthProvider({
           setIsAdmin(false);
           setIsAdminLoading(false);
           setAdminRole(null);
-          if (user) {
-            localStorage.removeItem(`admin_status_${user.id}`);
+          if (typeof window !== "undefined") {
+            try {
+              Object.keys(localStorage)
+                .filter((k) => k.startsWith("admin_status_"))
+                .forEach((k) => localStorage.removeItem(k));
+            } catch {
+              /* ignore */
+            }
           }
         }
 
@@ -317,7 +323,7 @@ export function AuthProvider({
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [getDisplayName, verifyAdminStatus, user]);
+  }, [getDisplayName, verifyAdminStatus]);
 
   const updateDisplayName = async (name: string) => {
     if (!user) throw new Error("No user logged in");
