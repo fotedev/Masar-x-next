@@ -98,13 +98,28 @@ function QuizDashboardPage() {
 
       if (error) throw error;
 
-      const attemptsMap: Record<string, any> = {};
-      data?.forEach((attempt) => {
-        if (
-          !attemptsMap[attempt.quiz_id] ||
-          attempt.score > attemptsMap[attempt.quiz_id].score
-        ) {
-          attemptsMap[attempt.quiz_id] = attempt;
+      const attemptsMap: Record<
+        string,
+        { quiz_id: string; score: number; total_questions: number }
+      > = {};
+
+      (data || []).forEach((attempt) => {
+        const quizId =
+          typeof attempt.quiz_id === "string" ? attempt.quiz_id : "";
+        const score = typeof attempt.score === "number" ? attempt.score : 0;
+        const totalQuestions =
+          typeof attempt.total_questions === "number"
+            ? attempt.total_questions
+            : 0;
+
+        if (!quizId) return;
+
+        if (!attemptsMap[quizId] || score > attemptsMap[quizId].score) {
+          attemptsMap[quizId] = {
+            quiz_id: quizId,
+            score,
+            total_questions: totalQuestions,
+          };
         }
       });
       // setMyAttempts(attemptsMap);
@@ -149,20 +164,27 @@ function QuizDashboardPage() {
 
   const quizzesWithMeta = useMemo(() => {
     return quizzes.map((quiz: Quiz) => {
-      let subject = (quiz as any).subject || "";
-      let department = (quiz as any).department || "";
-      let year = (quiz as any).year || "";
+      const quizRecord = quiz as unknown as Record<string, unknown>;
+      let subject =
+        typeof quizRecord.subject === "string" ? quizRecord.subject : "";
+      let department =
+        typeof quizRecord.department === "string" ? quizRecord.department : "";
+      let year = typeof quizRecord.year === "string" ? quizRecord.year : "";
       let parsedDescription = "";
 
       try {
         const parsed = JSON.parse(quiz.description || "{}");
         if (typeof parsed === "object" && parsed !== null) {
-          if (!subject && parsed.subject) subject = parsed.subject;
-          if (!department && parsed.department) department = parsed.department;
-          if (!year && parsed.year) year = parsed.year;
-          if (parsed.description) parsedDescription = parsed.description;
+          const obj = parsed as Record<string, unknown>;
+          if (!subject && typeof obj.subject === "string")
+            subject = obj.subject;
+          if (!department && typeof obj.department === "string")
+            department = obj.department;
+          if (!year && typeof obj.year === "string") year = obj.year;
+          if (typeof obj.description === "string")
+            parsedDescription = obj.description;
         }
-      } catch (e) {
+      } catch {
         // ignore
       }
 
@@ -397,9 +419,13 @@ function QuizDashboardPage() {
       }
 
       setEditingQuiz(quiz);
-      const durationMinutes = (quiz as any).duration_seconds
-        ? String(Math.round(Number((quiz as any).duration_seconds) / 60))
-        : "";
+      const quizRecord = quiz as unknown as Record<string, unknown>;
+      const durationSecondsRaw = quizRecord.duration_seconds;
+      const durationMinutes =
+        typeof durationSecondsRaw === "number"
+          ? String(Math.round(durationSecondsRaw / 60))
+          : "";
+
       setFormData({
         title: quiz.title,
         description: parsedDescription,
@@ -408,8 +434,9 @@ function QuizDashboardPage() {
         year,
         subject,
         summaryId: quiz.summary_id || "",
-        questions: questions.map((q: any) => {
+        questions: (questions || []).map((q) => {
           const isTrueFalse =
+            Array.isArray(q.options) &&
             q.options.length === 2 &&
             q.options.includes("صح") &&
             q.options.includes("خطأ");
@@ -471,7 +498,7 @@ function QuizDashboardPage() {
     setFormData({ ...formData, questions: updatedQuestions });
   };
 
-  const updateQuestion = (index: number, field: string, value: any) => {
+  const updateQuestion = (index: number, field: string, value: unknown) => {
     const updatedQuestions = [...formData.questions];
 
     if (field === "type") {
@@ -552,17 +579,44 @@ function QuizDashboardPage() {
           ...prevFormData,
           questions: [
             ...prevFormData.questions,
-            ...questions.map((q: any) => ({
-              ...q,
-              type: q.type || "multiple-choice", // Default to multiple-choice
-              imageUrl: q.imageUrl || "",
-            })),
+            ...questions.map((q) => {
+              const qObj =
+                typeof q === "object" && q !== null
+                  ? (q as Record<string, unknown>)
+                  : ({} as Record<string, unknown>);
+              const questionText =
+                typeof qObj.question === "string" ? qObj.question : "";
+              const options = Array.isArray(qObj.options)
+                ? (qObj.options.filter(
+                    (o) => typeof o === "string",
+                  ) as string[])
+                : [];
+              const correctAnswer =
+                typeof qObj.correctAnswer === "number" ? qObj.correctAnswer : 0;
+              const explanation =
+                typeof qObj.explanation === "string" ? qObj.explanation : "";
+
+              const typeRaw = typeof qObj.type === "string" ? qObj.type : "";
+              const type: "multiple-choice" | "true-false" =
+                typeRaw === "true-false" ? "true-false" : "multiple-choice";
+
+              const imageUrl =
+                typeof qObj.imageUrl === "string" ? qObj.imageUrl : "";
+              return {
+                question: questionText,
+                options,
+                correctAnswer,
+                explanation,
+                type,
+                imageUrl,
+              };
+            }),
           ],
         }));
         setShowImportModal(false);
         setImportJson("");
         alert("تم استيراد الأسئلة بنجاح!");
-      } catch (e) {
+      } catch {
         alert("حدث خطأ أثناء تحليل JSON. تأكد من صحة التنسيق.");
       }
     } else if (mode === "text") {
