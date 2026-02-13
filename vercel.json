@@ -38,5 +38,29 @@
                 }
             ]
         }
+    ],
+    "redirects": [
+        {
+            "source": "/(.*)",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "masarx.vercel.app"
+                }
+            ],
+            "destination": "https://masar-x.vercel.app/$1",
+            "permanent": true
+        },
+        {
+            "source": "/(.*)",
+            "has": [
+                {
+                    "type": "host",
+                    "value": "molkhas.vercel.app"
+                }
+            ],
+            "destination": "https://masar-x.vercel.app/$1",
+            "permanent": true
+        }
     ]
 }
