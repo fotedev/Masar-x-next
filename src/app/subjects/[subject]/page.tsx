@@ -250,7 +250,10 @@ function SubjectSummariesContent() {
     setShowEditModal(true);
   };
 
-  const handleSaveSummary = async (id: string, updates: any) => {
+  const handleSaveSummary = async (
+    id: string,
+    updates: Record<string, unknown>,
+  ) => {
     await summariesHook.editSummary(id, updates);
     setShowEditModal(false);
     setEditingSummary(null);
