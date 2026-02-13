@@ -158,7 +158,7 @@ export default function SignUpPage() {
               alt="Masar X Logo"
               width={56}
               height={56}
-              className="w-14 h-auto object-contain"
+              className="object-contain w-14 h-14"
             />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">

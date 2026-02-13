@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Notification, NotificationInsert } from '../types/database';
 import { queryCache, cacheKeys, cacheTTL } from '../lib/queryCache';
@@ -10,9 +10,11 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const realtimeResubscribeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // جلب الإشعارات مع caching
-  const fetchNotifications = async (skipCache = false) => {
+  const fetchNotifications = useCallback(async (skipCache = false) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -68,7 +70,7 @@ export function useNotifications() {
       if (user) inflightRequests.delete(user.id);
       setLoading(false);
     }
-  };
+  }, []);
 
   // تحديث حالة القراءة
   const markAsRead = async (notificationId: string) => {
@@ -236,6 +238,10 @@ export function useNotifications() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      if (realtimeChannelRef.current) {
+        return realtimeChannelRef.current;
+      }
+
       const channel = supabase
         .channel(`notifications:${user.id}`)
         .on(
@@ -251,12 +257,8 @@ export function useNotifications() {
           }
         );
 
-      channel.subscribe((status) => {
-        if (status === 'CLOSED') {
-          // Attempt to re-subscribe if closed unexpectedly
-          setTimeout(() => channel.subscribe(), 5000);
-        }
-      });
+      realtimeChannelRef.current = channel;
+      channel.subscribe();
 
       return channel;
     };
@@ -264,11 +266,21 @@ export function useNotifications() {
     const channelPromise = setupRealtime();
 
     return () => {
+      if (realtimeResubscribeTimeoutRef.current) {
+        clearTimeout(realtimeResubscribeTimeoutRef.current);
+        realtimeResubscribeTimeoutRef.current = null;
+      }
       channelPromise.then(channel => {
-        if (channel) supabase.removeChannel(channel);
+        if (!channel) return;
+        if (realtimeChannelRef.current === channel) {
+          realtimeChannelRef.current = null;
+        }
+        channel.unsubscribe().catch(() => {
+          // ignore
+        });
       });
     };
-  }, []);
+  }, [fetchNotifications]);
 
   return {
     notifications,
