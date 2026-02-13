@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Trash } from "lucide-react";
 import {
   Newspaper,
@@ -10,6 +11,9 @@ import {
   Sparkles,
   Search,
   Flag,
+  X as CloseIcon,
+  Download,
+  FileText as FileIcon,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../hooks/useNotifications";
@@ -43,6 +47,8 @@ function NewsPage() {
     contentId: string;
     contentTitle: string;
   }>({ isOpen: false, contentId: "", contentTitle: "" });
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const categories = [
     { id: "all", label: "الكل", icon: Newspaper, color: "blue" },
@@ -281,6 +287,84 @@ function NewsPage() {
                 {item.content}
               </p>
 
+              {/* Images Display */}
+              {item.image_urls && item.image_urls.length > 0 && (
+                <div
+                  className={`grid gap-2 mb-4 ${
+                    item.image_urls.length === 1
+                      ? "grid-cols-1"
+                      : item.image_urls.length === 2
+                        ? "grid-cols-2"
+                        : "grid-cols-2 sm:grid-cols-3"
+                  }`}
+                >
+                  {item.image_urls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-video rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700 cursor-pointer bg-gray-50 dark:bg-gray-900"
+                    >
+                      <Image
+                        src={url}
+                        alt={`${item.title} - صورة ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-contain hover:scale-105 transition-transform duration-300"
+                        onClick={() => setSelectedImage(url)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* File Attachment Display */}
+              {item.file_url && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-red-500/10 p-2 rounded-lg">
+                        <FileIcon className="w-5 h-5 text-red-500" />
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          ملف مرفق
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          يمكنك عرض أو تحميل الملف
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={item.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-400 hover:text-brand-blue transition-colors"
+                        title="معاينة الملف"
+                      >
+                        <Search className="w-5 h-5" />
+                      </a>
+                      <a
+                        href={
+                          item.file_url.includes("/upload/")
+                            ? item.file_url.replace(
+                                "/upload/",
+                                "/upload/fl_attachment/",
+                              )
+                            : item.file_url
+                        }
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-400 hover:text-brand-blue transition-colors"
+                        title="تنزيل الملف"
+                      >
+                        <Download className="w-5 h-5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* AI Summary */}
               {item.summary && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4 border-l-4 border-blue-400">
@@ -345,6 +429,45 @@ function NewsPage() {
         contentType="news"
         contentTitle={appealModal.contentTitle}
       />
+
+      {/* Image Modal (Lightbox) */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+          >
+            <CloseIcon className="w-6 h-6" />
+          </button>
+
+          <div
+            className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={selectedImage}
+              alt="News Full Preview"
+              fill
+              className="object-contain animate-in zoom-in-95 duration-300"
+              sizes="100vw"
+              priority
+            />
+          </div>
+
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+            <button
+              onClick={() => window.open(selectedImage, "_blank")}
+              className="flex items-center gap-2 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-white/10 backdrop-blur-md"
+            >
+              <Download className="w-4 h-4" />
+              <span>تحميل الصورة</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

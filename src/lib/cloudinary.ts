@@ -56,7 +56,7 @@ export const uploadToCloudinary = async (
 
   const body = {
     file: base64,
-    fileName: file.name,
+    fileName: file.name.replace(/[^a-zA-Z0-9._-]/g, '_'),
     contentType: file.type,
     folder: options.folder || 'masarx-uploads',
     resourceType: options.resourceType || 'auto',
