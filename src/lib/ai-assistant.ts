@@ -381,9 +381,14 @@ ${context}
       };
     }
 
+    const explicitSignedIn =
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem('puter_signed_in') === '1';
+
     return {
       isAIWorking,
-      isSignedIn: cachedPuterClient?.auth?.isSignedIn?.() || false,
+      isSignedIn:
+        explicitSignedIn && (cachedPuterClient?.auth?.isSignedIn?.() || false),
       status: 'puter_js',
     };
   }
