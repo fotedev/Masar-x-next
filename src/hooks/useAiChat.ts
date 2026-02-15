@@ -43,6 +43,7 @@ export function useAiChat(user: any, trackEvent: any) {
 
   const messageLimit = user ? REGISTERED_MESSAGE_LIMIT : GUEST_MESSAGE_LIMIT;
 
+
   // If signed in to Puter, user has unlimited messages (subject to Puter's own limits)
   const hasReachedLimit = isPuterSignedIn ? false : dailyMessageCount >= messageLimit;
   const remainingMessages = isPuterSignedIn ? 999 : Math.max(0, messageLimit - dailyMessageCount);
