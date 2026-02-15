@@ -59,7 +59,7 @@ interface LocalGeneratedQuiz {
 import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { trackEvent } = useAnalytics();
   const {
     messages,
@@ -743,7 +743,7 @@ function AiAssistantChatPage() {
         {/* Input Area */}
         <div className="p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
           {/* Limit reached message */}
-          {hasReachedLimit && (
+          {!loading && hasReachedLimit && (
             <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center shrink-0">
@@ -773,14 +773,6 @@ function AiAssistantChatPage() {
                         تسجيل الدخول عبر Puter →
                       </button>
                     )}
-                    {!user && (
-                      <button
-                        onClick={() => (window.location.href = "/signup")}
-                        className="text-sm font-bold text-brand-blue hover:underline"
-                      >
-                        إنشاء حساب مجاني →
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -800,14 +792,6 @@ function AiAssistantChatPage() {
                     : `${remainingMessages} من ${messageLimit}`}
                 </span>
               </span>
-              {!user && !isPuterSignedIn && (
-                <button
-                  onClick={() => (window.location.href = "/signup")}
-                  className="text-xs font-bold text-brand-blue hover:underline"
-                >
-                  إنشاء حساب مجاني →
-                </button>
-              )}
             </div>
           )}
 
@@ -1068,10 +1052,13 @@ function AiAssistantChatPage() {
                           const showCorrectness = localAnswered;
 
                           let cls =
-                            "p-3 rounded-xl border transition-all bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700";
+                            "w-full text-start p-5 rounded-2xl border-2 transition-all duration-300 relative group bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700";
                           if (isSelected) {
                             cls +=
-                              " ring-2 ring-brand-blue/20 border-brand-blue";
+                              " border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 shadow-lg shadow-indigo-500/10 ring-4 ring-indigo-500/10";
+                          } else {
+                            cls +=
+                              " hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-slate-50 dark:hover:bg-slate-700/30 hover:translate-x-[-4px]";
                           }
                           if (showCorrectness && isCorrect) {
                             cls +=
