@@ -20,6 +20,8 @@ type PuterClient = {
 
 let puter: PuterClient = Puter as unknown as PuterClient;
 
+const PUTER_SIGNED_IN_KEY = "puter_signed_in";
+
 // Ensure puter object exists even if load failed or on server
 if (!puter) {
   puter = {
@@ -48,9 +50,10 @@ export const getPuterStatus = () => {
   if (typeof window === 'undefined') {
     return { isReady: false, isSignedIn: false };
   }
+  const explicitSignedIn = localStorage.getItem(PUTER_SIGNED_IN_KEY) === "1";
   return {
     isReady: isPuterReady,
-    isSignedIn: puter.auth?.isSignedIn?.() || false,
+    isSignedIn: explicitSignedIn && (puter.auth?.isSignedIn?.() || false),
   };
 };
 
@@ -58,9 +61,19 @@ export const signInToPuter = async () => {
   if (typeof window === 'undefined') return false;
   try {
     await puter.auth?.signIn?.();
+    try {
+      localStorage.setItem(PUTER_SIGNED_IN_KEY, "1");
+    } catch {
+      // ignore
+    }
     return true;
   } catch (error) {
     void error;
+    try {
+      localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+    } catch {
+      // ignore
+    }
     return false;
   }
 };
@@ -69,6 +82,11 @@ export const signOutFromPuter = () => {
   if (typeof window === 'undefined') return;
   try {
     puter.auth.signOut();
+    try {
+      localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+    } catch {
+      // ignore
+    }
   } catch (error) {
     void error;
   }
