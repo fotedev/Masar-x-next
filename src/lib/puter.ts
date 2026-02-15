@@ -51,9 +51,13 @@ export const getPuterStatus = () => {
     return { isReady: false, isSignedIn: false };
   }
   const explicitSignedIn = localStorage.getItem(PUTER_SIGNED_IN_KEY) === "1";
+
+  // If localStorage says signed in but Puter SDK says no (token expired),
+  // still treat as signed in — the actual AI call will re-trigger auth if needed.
+  // This prevents the limit message from flashing for Puter users with expired tokens.
   return {
     isReady: isPuterReady,
-    isSignedIn: explicitSignedIn && (puter.auth?.isSignedIn?.() || false),
+    isSignedIn: explicitSignedIn,
   };
 };
 

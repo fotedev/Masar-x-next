@@ -387,8 +387,7 @@ ${context}
 
     return {
       isAIWorking,
-      isSignedIn:
-        explicitSignedIn && (cachedPuterClient?.auth?.isSignedIn?.() || false),
+      isSignedIn: explicitSignedIn,
       status: 'puter_js',
     };
   }
