@@ -636,10 +636,17 @@ function QuizDashboardInternal() {
           setFormData({
             ...formData,
             title: result.title || formData.title,
-            questions: result.questions.map((q: any) => ({
-              ...q,
-              imageUrl: q.imageUrl || "",
-            })),
+            questions: result.questions.map((q) => {
+              const qObj =
+                typeof q === "object" && q !== null
+                  ? (q as Record<string, unknown>)
+                  : ({} as Record<string, unknown>);
+              return {
+                ...qObj,
+                imageUrl:
+                  typeof qObj.imageUrl === "string" ? qObj.imageUrl : "",
+              };
+            }) as unknown as typeof formData.questions,
           });
           setShowImportModal(false);
           setImportJson("");
@@ -1349,7 +1356,7 @@ function QuizDashboardInternal() {
                       const parsed = JSON.parse(quiz.description || "{}");
                       const dept = parsed.department || quiz.department;
                       const year = parsed.year || quiz.year;
-                      
+
                       return (
                         <>
                           {dept && (
