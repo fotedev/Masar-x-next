@@ -20,6 +20,22 @@ export interface CloudinaryUploadResult {
   message: string
 }
 
+type UploadError = {
+  message: string
+  details?: unknown
+}
+
+const isUploadResult = (value: unknown): value is CloudinaryUploadResult => {
+  if (!value || typeof value !== 'object') return false
+  const v = value as Record<string, unknown>
+  return (
+    typeof v.success === 'boolean' &&
+    typeof v.url === 'string' &&
+    typeof v.public_id === 'string' &&
+    typeof v.message === 'string'
+  )
+}
+
 /**
  * Upload a file to Cloudinary via Supabase Edge Function
  * Supports both authenticated users and guests
@@ -62,7 +78,7 @@ export const uploadToCloudinary = async (
     resourceType: options.resourceType || 'auto',
   }
 
-  const { data, error } = await new Promise<{ data: any; error: any }>((resolve) => {
+  const { data, error } = await new Promise<{ data: unknown; error: UploadError | null }>((resolve) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', `${supabaseUrl}/functions/v1/upload-file`)
     xhr.setRequestHeader('Content-Type', 'application/json')
@@ -86,7 +102,7 @@ export const uploadToCloudinary = async (
 
     xhr.onload = () => {
       const text = xhr.responseText || ''
-      let parsed: any = null
+      let parsed: unknown = null
       try {
         parsed = text ? JSON.parse(text) : null
       } catch {
@@ -97,7 +113,10 @@ export const uploadToCloudinary = async (
         resolve({
           data: null,
           error: {
-            message: parsed?.message || parsed?.error || `Upload failed (${xhr.status})`,
+            message:
+              typeof parsed === 'object' && parsed !== null
+                ? String((parsed as Record<string, unknown>).message || (parsed as Record<string, unknown>).error || `Upload failed (${xhr.status})`)
+                : `Upload failed (${xhr.status})`,
             details: parsed,
           },
         })
@@ -122,8 +141,12 @@ export const uploadToCloudinary = async (
     throw new Error(`Upload failed: ${error.message}`)
   }
 
-  if (!data.success) {
-    throw new Error(`Upload failed: ${data.error || 'Unknown error'}`)
+  if (!isUploadResult(data)) {
+    const errMsg =
+      typeof data === 'object' && data !== null && 'error' in data
+        ? String((data as Record<string, unknown>).error)
+        : 'Unknown error'
+    throw new Error(`Upload failed: ${errMsg}`)
   }
 
   // Update progress: Complete
@@ -191,7 +214,7 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
  */
 export const getCloudinaryUrl = (
   publicId: string,
-  transformations: Record<string, any> = {}
+  transformations: Record<string, string | number> = {}
 ): string => {
   const cloudName = 'de3emq8l3'
   const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`

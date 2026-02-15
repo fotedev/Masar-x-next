@@ -11,7 +11,7 @@ import {
 } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { chatHelpers } from "../lib/supabase";
+import { chatHelpers } from "../lib/chatHelpers";
 
 interface AuthContextType {
   user: User | null;

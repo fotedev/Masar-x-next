@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Force cache invalidation: 2026-02-14T04:30:00
     reactStrictMode: true,
     swcMinify: true,
     images: {
@@ -11,6 +12,10 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'lh3.googleusercontent.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'jcufigozkhxazjbwhjjm.supabase.co',
             },
         ],
     },

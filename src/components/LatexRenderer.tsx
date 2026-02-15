@@ -1,6 +1,9 @@
-import React, { useMemo } from "react";
-import katex from "katex";
+"use client";
+
+import React from "react";
+// import "katex/dist/katex.min.css";
 import "katex/dist/katex.min.css";
+import { InlineMath, BlockMath } from "react-katex";
 
 interface LatexRendererProps {
   text: string;
@@ -11,61 +14,64 @@ export const LatexRenderer: React.FC<LatexRendererProps> = ({
   text,
   className = "",
 }) => {
-  const renderedContent = useMemo(() => {
-    if (!text) return null;
+  const parts: Array<
+    | { type: "text"; value: string }
+    | { type: "inline"; value: string }
+    | { type: "block"; value: string }
+  > = [];
 
-    // Support $, \( \), and \[ \] delimiters
-    // Regex matches:
-    // 1. $...$ (inline)
-    // 2. \(...\) (inline)
-    // 3. \[...\] (block)
-    const regex = /(\$[^$]+\$|\\\(.*?\\\)|\\\[.*?\\\])/g;
-    const parts = text.split(regex);
+  const input = String(text ?? "");
+  const blockRegex = /\$\$([\s\S]+?)\$\$/g;
+  let lastIndex = 0;
 
-    return parts.map((part, index) => {
-      if (!part) return null;
+  for (const match of input.matchAll(blockRegex)) {
+    const start = match.index ?? 0;
+    const end = start + match[0].length;
+    const before = input.slice(lastIndex, start);
+    if (before) parts.push({ type: "text", value: before });
+    parts.push({ type: "block", value: match[1] ?? "" });
+    lastIndex = end;
+  }
 
-      const isInlineMath =
-        (part.startsWith("$") && part.endsWith("$")) ||
-        (part.startsWith("\\(") && part.endsWith("\\)"));
-      const isBlockMath = part.startsWith("\\[") && part.endsWith("\\]");
+  const remaining = input.slice(lastIndex);
+  if (remaining) parts.push({ type: "text", value: remaining });
 
-      if (isInlineMath || isBlockMath) {
-        // Extract content between delimiters
-        let math = "";
-        if (part.startsWith("$")) math = part.slice(1, -1);
-        else if (part.startsWith("\\(")) math = part.slice(2, -2);
-        else if (part.startsWith("\\[")) math = part.slice(2, -2);
+  const renderInline = (value: string) => {
+    const inlineParts: Array<
+      { type: "text"; value: string } | { type: "inline"; value: string }
+    > = [];
 
-        try {
-          const html = katex.renderToString(math, {
-            throwOnError: false,
-            displayMode: isBlockMath,
-          });
-          return (
-            <span
-              key={index}
-              dangerouslySetInnerHTML={{ __html: html }}
-              className={
-                isBlockMath ? "block my-4 overflow-x-auto" : "inline-block mx-1"
-              }
-            />
-          );
-        } catch {
-          return (
-            <span key={index} className="text-red-500">
-              {part}
-            </span>
-          );
-        }
+    const inlineRegex = /\$([^$\n]+?)\$/g;
+    let iLast = 0;
+    for (const m of value.matchAll(inlineRegex)) {
+      const s = m.index ?? 0;
+      const e = s + m[0].length;
+      const b = value.slice(iLast, s);
+      if (b) inlineParts.push({ type: "text", value: b });
+      inlineParts.push({ type: "inline", value: m[1] ?? "" });
+      iLast = e;
+    }
+    const rem = value.slice(iLast);
+    if (rem) inlineParts.push({ type: "text", value: rem });
+
+    return inlineParts.map((p, idx) => {
+      if (p.type === "inline") {
+        return <InlineMath key={idx} math={p.value} />;
       }
-      return <span key={index}>{part}</span>;
+      return <React.Fragment key={idx}>{p.value}</React.Fragment>;
     });
-  }, [text]);
+  };
 
   return (
-    <span dir="auto" className={`latex-content ${className}`}>
-      {renderedContent}
+    <span className={className}>
+      {parts.map((p, idx) => {
+        if (p.type === "block") {
+          return <BlockMath key={idx} math={p.value} />;
+        }
+        return (
+          <React.Fragment key={idx}>{renderInline(p.value)}</React.Fragment>
+        );
+      })}
     </span>
   );
 };

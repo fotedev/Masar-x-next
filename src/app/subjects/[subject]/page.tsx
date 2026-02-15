@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   FileText,
@@ -12,6 +12,7 @@ import {
   Plus,
   Play,
   X,
+  Sparkles,
 } from "lucide-react";
 import { useSummaries } from "../../../hooks/useSummaries";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -21,6 +22,7 @@ import { supabase } from "../../../lib/supabase";
 import { Quiz, Summary } from "../../../types/database";
 import { useVideos } from "../../../hooks/useVideos";
 import { useFiles } from "../../../hooks/useFiles";
+import { LatexRenderer } from "../../../components/LatexRenderer";
 
 import { Suspense } from "react";
 // ... imports
@@ -104,12 +106,14 @@ function SubjectSummariesContent() {
 
       if (error) throw error;
 
-      const quizzes = (data || []).filter((q) => {
-        const directSubject = (q as any).subject as string | null | undefined;
+      const rows = (data || []) as Quiz[];
+
+      const quizzes = rows.filter((q) => {
+        const directSubject = q.subject;
         if (directSubject && directSubject.trim() === normalizedSubjectName)
           return true;
 
-        const desc = (q as any).description as string | null | undefined;
+        const desc = q.description;
         if (!desc || !desc.trim().startsWith("{")) return false;
 
         try {
@@ -831,31 +835,53 @@ function SubjectSummariesContent() {
                             placeholder="نص السؤال"
                           />
 
+                          {q.question && (
+                            <div className="text-sm text-slate-500 dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/30 mb-3">
+                              <div className="font-bold mb-2 flex items-center gap-2">
+                                <Sparkles className="w-3 h-3 text-blue-500" />
+                                <span>معاينة السؤال:</span>
+                              </div>
+                              <LatexRenderer
+                                text={q.question}
+                                className="text-base text-slate-800 dark:text-slate-200"
+                              />
+                            </div>
+                          )}
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                             {q.options.map((opt, optIdx) => (
-                              <input
-                                key={optIdx}
-                                value={opt}
-                                onChange={(e) =>
-                                  setExamFormData((p) => ({
-                                    ...p,
-                                    questions: p.questions.map((it, i) =>
-                                      i === idx
-                                        ? {
-                                            ...it,
-                                            options: it.options.map((o, oi) =>
-                                              oi === optIdx
-                                                ? e.target.value
-                                                : o,
-                                            ),
-                                          }
-                                        : it,
-                                    ),
-                                  }))
-                                }
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                                placeholder={`اختيار ${optIdx + 1}`}
-                              />
+                              <React.Fragment key={optIdx}>
+                                <div className="space-y-1">
+                                  <input
+                                    value={opt}
+                                    onChange={(e) =>
+                                      setExamFormData((p) => ({
+                                        ...p,
+                                        questions: p.questions.map((it, i) =>
+                                          i === idx
+                                            ? {
+                                                ...it,
+                                                options: it.options.map(
+                                                  (o, oi) =>
+                                                    oi === optIdx
+                                                      ? e.target.value
+                                                      : o,
+                                                ),
+                                              }
+                                            : it,
+                                        ),
+                                      }))
+                                    }
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                                    placeholder={`اختيار ${optIdx + 1}`}
+                                  />
+                                  {opt && (
+                                    <div className="text-xs p-2 bg-blue-50/30 dark:bg-blue-900/10 rounded-lg border border-blue-100/20 dark:border-blue-800/20">
+                                      <LatexRenderer text={opt} />
+                                    </div>
+                                  )}
+                                </div>
+                              </React.Fragment>
                             ))}
                           </div>
 
@@ -909,6 +935,11 @@ function SubjectSummariesContent() {
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                                 placeholder="شرح الإجابة"
                               />
+                              {q.explanation && (
+                                <div className="mt-2 text-xs p-2 bg-green-50/30 dark:bg-green-900/10 rounded-lg border border-green-100/20 dark:border-green-800/20">
+                                  <LatexRenderer text={q.explanation} />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

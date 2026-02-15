@@ -4,6 +4,10 @@ import { Subject } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { usePlatformSettings } from "./usePlatformSettings";
 
+type SubjectWithSemester = Subject & {
+    semester?: string | number | null;
+};
+
 export function useSubjects() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
@@ -32,7 +36,7 @@ export function useSubjects() {
 
             if (error) throw error;
 
-            const subjectData: any[] = data || [];
+            const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
 
             // Filter by semester if present on subjects or platform setting
             const filtered = subjectData.filter((s) => {
@@ -41,7 +45,7 @@ export function useSubjects() {
                 return Number(s.semester) === Number(activeSemester || 1);
             });
 
-            setSubjects(filtered);
+            setSubjects(filtered as Subject[]);
 
             // Cache the result
             if (queryCache.set) {

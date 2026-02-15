@@ -43,10 +43,16 @@ class PerformanceMonitor {
 
       let clsValue = 0;
 
+      type LayoutShiftEntry = PerformanceEntry & {
+        value: number;
+        hadRecentInput: boolean;
+      };
+
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
+          const layoutShiftEntry = entry as LayoutShiftEntry;
+          if (!layoutShiftEntry.hadRecentInput) {
+            clsValue += layoutShiftEntry.value;
           }
         }
       });
@@ -186,8 +192,10 @@ class PerformanceMonitor {
       this.metrics.push(metric);
 
       // Send to analytics if available
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'web_vitals', {
+      type GtagFn = (...args: unknown[]) => void;
+      const w = window as unknown as { gtag?: GtagFn };
+      if (typeof window !== 'undefined' && w.gtag) {
+        w.gtag('event', 'web_vitals', {
           event_category: 'Web Vitals',
           event_label: name,
           value: Math.round(value),
@@ -213,6 +221,6 @@ export const performanceMonitor = new PerformanceMonitor();
 
 // Export for debugging
 if (typeof window !== 'undefined') {
-  (window as any).performanceMonitor = performanceMonitor;
+  (window as unknown as { performanceMonitor?: PerformanceMonitor }).performanceMonitor = performanceMonitor;
 }
 

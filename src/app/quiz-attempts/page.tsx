@@ -35,6 +35,10 @@ type QuizQuestionRecord = {
   explanation?: string;
 } & Record<string, unknown>;
 
+type AttemptAnswerWithQuestion = AttemptAnswer & {
+  question?: QuizQuestionRecord;
+};
+
 export default function QuizAttemptsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -341,7 +345,10 @@ export default function QuizAttemptsPage() {
                       </div>
                       <div className="space-y-4">
                         {a._answersWithQuestions?.map(
-                          (answer: any, index: number) => (
+                          (
+                            answer: AttemptAnswerWithQuestion,
+                            index: number,
+                          ) => (
                             <div
                               key={index}
                               className={`p-4 rounded-lg border ${
@@ -365,7 +372,7 @@ export default function QuizAttemptsPage() {
                                 </span>
                               </div>
 
-                              {answer.question && (
+                              {answer.question?.question && (
                                 <MathDisplay latex={answer.question.question} />
                               )}
 
