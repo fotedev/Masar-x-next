@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { quizService } from '../lib/quiz';
+import type { Json } from '@/types/database';
 
 interface Answer {
     question_id: string;
@@ -166,7 +167,12 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         if (attemptId && userId) {
             try {
                 setSaving(true);
-                await quizService.finishAttempt(attemptId, score, totalQuestions, answersArray);
+                const answersJson: Json[] = answersArray.map((a) => ({
+                    question_id: a.question_id,
+                    selected_option: a.selected_option,
+                    is_correct: a.is_correct,
+                }));
+                await quizService.finishAttempt(attemptId, score, totalQuestions, answersJson);
             } catch (err) {
                 if (err instanceof Error) {
                     setError(err.message);

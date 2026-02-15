@@ -223,10 +223,16 @@ export function useNotifications() {
     }
   }, []);
 
-  const notifyAllUsers = async (title: string, message: string, type: string, relatedId?: string, relatedType?: string) => {
+  const notifyAllUsers = async (
+    title: string,
+    message: string,
+    type: 'admin_submission' | 'content_published' | 'system',
+    relatedId?: string,
+    relatedType?: 'summary' | 'news' | 'appeal'
+  ) => {
     try {
       // مؤقتاً: إرسال إشعار للمدراء فقط (حتى نضيف جدول المستخدمين)
-      await notifyAdmins(title, message, type as any, relatedId, relatedType as any);
+      await notifyAdmins(title, message, type, relatedId, relatedType);
     } catch {
       // ignore
     }

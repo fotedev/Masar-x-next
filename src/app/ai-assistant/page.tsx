@@ -5,20 +5,30 @@ import {
   Send,
   MessageSquare,
   Bot,
-  User,
   Trash2,
   X,
   Brain,
-  Eye,
-  EyeOff,
   Lock as LockIcon,
+  FileText,
 } from "lucide-react";
-import { aiAssistant } from "../../lib/gemini";
-import { useAnalytics } from "../../hooks/useAnalytics";
-import { QuizPlayer } from "../../components/QuizPlayer";
-import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
-import { getSessionId } from "../../lib/session";
+import { aiAssistant } from "@/lib/ai-assistant";
+import { ChatMessageItem } from "@/components/ai/ChatMessageItem";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { QuizPlayer } from "@/components/QuizPlayer";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import type { AiAssistantMode } from "@/lib/ai-assistant";
+import { ACADEMIC_LEVELS, DEPARTMENTS } from "@/constants/academic";
+import { ALL_SUBJECTS } from "@/constants/subjects";
+import dynamic from "next/dynamic";
+
+const PuterSettingsModal = dynamic(
+  () =>
+    import("@/components/ai/PuterSettingsModal").then(
+      (mod) => mod.PuterSettingsModal,
+    ),
+  { ssr: false },
+);
 
 interface ChatMessage {
   id: string;
@@ -40,289 +50,298 @@ interface QuizDataInput {
   questions: QuizQuestionInput[];
 }
 
-// Message limits
-const GUEST_MESSAGE_LIMIT = 2;
-const REGISTERED_MESSAGE_LIMIT = 5;
+interface LocalGeneratedQuiz {
+  localId: string;
+  createdAt: string;
+  data: QuizDataInput;
+}
+
+import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const {
+    messages,
+    isLoading,
+    remainingMessages,
+    hasReachedLimit,
+    sendMessage,
+    clearChat,
+    setMessages,
+    messageLimit,
+    isPuterSignedIn,
+    mode,
+    setMode,
+  } = useAiChat(user, trackEvent);
+
   const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [quizTextInput, setQuizTextInput] = useState("");
   const [quizInputMode, setQuizInputMode] = useState<"text" | "json">("text");
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [generatedQuiz, setGeneratedQuiz] = useState<LocalGeneratedQuiz | null>(
+    null,
+  );
+  const [localGeneratedQuizzes, setLocalGeneratedQuizzes] = useState<
+    LocalGeneratedQuiz[]
+  >([]);
+  const [showLocalQuizModal, setShowLocalQuizModal] = useState(false);
+  const [localQuizIndex, setLocalQuizIndex] = useState(0);
+  const [localSelectedOption, setLocalSelectedOption] = useState<number | null>(
+    null,
+  );
+  const [localAnswered, setLocalAnswered] = useState(false);
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
+  const [showPuterModal, setShowPuterModal] = useState(false);
+  const [showSubmitForReviewModal, setShowSubmitForReviewModal] =
+    useState(false);
+  const [submitAcademicLevel, setSubmitAcademicLevel] = useState<string>("");
+  const [submitDepartment, setSubmitDepartment] = useState<string>("");
+  const [submitSubject, setSubmitSubject] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const shouldAutoScrollRef = useRef(true);
-  const persistTimerRef = useRef<number | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [dailyMessageCount, setDailyMessageCount] = useState(0);
-  const [loadingMessageCount, setLoadingMessageCount] = useState(true);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryResult, setSummaryResult] = useState<any>(null);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
-  const stats = aiAssistant.getStats();
-  const aiStatus = aiAssistant.getAIStatus();
+  const toggleMode = useCallback(() => {
+    setMode((prev: AiAssistantMode) =>
+      prev === "group_rag" ? "cs_assistant" : "group_rag",
+    );
+  }, [setMode]);
+
+  // Constants for reusability and cleaner code
+  const SUGGESTIONS = [
+    "اشرح لي مفهوم التشفير",
+    "لخص لي أهم نقاط مادة الشبكات",
+    "أنشئ لي اختباراً قصيراً",
+    "كيف أذاكر بفعالية؟",
+  ];
+
+  // Helper function to scroll to bottom
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+    }
+  }, []);
+
+  // Access stats via useEffect/state to prevent hydration mismatch if methods use window
+  const [stats, setStats] = useState({ totalChunks: 0, totalMessages: 0 });
+
+  useEffect(() => {
+    // Initial stats load
+    setStats(aiAssistant.getStats());
+  }, []);
+
+  // We use isPuterSignedIn from the hook instead of direct access
+  // const aiStatus = aiAssistant.getPuterStatus(); // Caused hydration mismatch
   const hasChatData = stats.totalChunks > 0;
-
-  // Message limits based on user type
-  const messageLimit = user ? REGISTERED_MESSAGE_LIMIT : GUEST_MESSAGE_LIMIT;
-  const remainingMessages = messageLimit - dailyMessageCount;
-  const hasReachedLimit = dailyMessageCount >= messageLimit;
-
-  // Local storage keys
-  const CHAT_STORAGE_KEY = "ai_assistant_chat_messages";
-  const OLD_CHAT_STORAGE_KEY = "whatsapp_chat_messages";
-  const GUEST_COUNT_KEY = "ai_daily_count_guest";
-
-  // Load messages from localStorage on component mount
-  useEffect(() => {
-    let savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
-
-    // Fallback to old key if new one doesn't exist
-    if (!savedMessages) {
-      savedMessages = localStorage.getItem(OLD_CHAT_STORAGE_KEY);
-      if (savedMessages) {
-        localStorage.setItem(CHAT_STORAGE_KEY, savedMessages);
-        // Optional: localStorage.removeItem(OLD_CHAT_STORAGE_KEY);
-      }
-    }
-
-    if (savedMessages) {
-      try {
-        const parsedMessages = JSON.parse(savedMessages);
-        // Convert timestamp strings back to Date objects
-        const messagesWithDates = parsedMessages.map(
-          (msg: {
-            timestamp: string;
-            id: string;
-            type: "user" | "assistant";
-            content: string;
-          }) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-          }),
-        );
-        setMessages(messagesWithDates);
-      } catch {
-        // Error loading chat messages from localStorage
-      }
-    }
-  }, []);
-
-  // Load daily message count from server (for registered users) or localStorage (for guests)
-  useEffect(() => {
-    const loadMessageCount = async () => {
-      setLoadingMessageCount(true);
-
-      if (user) {
-        // For registered users: count from database
-        try {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          const { count, error } = await supabase
-            .from("assistant_messages")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .gte("created_at", today.toISOString());
-
-          if (error) throw error;
-          setDailyMessageCount(count || 0);
-        } catch {
-          setDailyMessageCount(0);
-        }
-      } else {
-        // For guests: use localStorage with session_id
-        try {
-          const stored = localStorage.getItem(GUEST_COUNT_KEY);
-          if (stored) {
-            const { count, date } = JSON.parse(stored);
-            const today = new Date().toDateString();
-            if (date === today) {
-              setDailyMessageCount(count);
-            } else {
-              localStorage.removeItem(GUEST_COUNT_KEY);
-              setDailyMessageCount(0);
-            }
-          }
-        } catch {
-          // Error loading guest message count
-        }
-      }
-
-      setLoadingMessageCount(false);
-    };
-
-    loadMessageCount();
-  }, [user]);
-
-  // Handle scroll to detect if user is near bottom
-  const handleScroll = useCallback(() => {
-    const el = messagesContainerRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    shouldAutoScrollRef.current = distanceFromBottom < 100;
-  }, []);
-
-  // Debounced save to localStorage
-  const schedulePersist = useCallback((msgs: ChatMessage[]) => {
-    if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
-    persistTimerRef.current = window.setTimeout(() => {
-      try {
-        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(msgs));
-      } catch {
-        // Error saving chat messages to localStorage
-      }
-    }, 500);
-  }, []);
-
-  // Save messages with debounce + auto-scroll using requestAnimationFrame
-  useEffect(() => {
-    if (messages.length > 0) {
-      schedulePersist(messages);
-    }
-
-    // Auto-scroll only if user is near bottom
-    if (shouldAutoScrollRef.current) {
-      const el = messagesContainerRef.current;
-      if (el) {
-        requestAnimationFrame(() => {
-          el.scrollTop = el.scrollHeight;
-        });
-      }
-    }
-
-    return () => {
-      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
-    };
-  }, [messages, schedulePersist]);
 
   // Auto-reload data if no data is available
   useEffect(() => {
     const autoReloadData = async () => {
-      if (!dataLoaded && stats.totalChunks === 0) {
+      // Refresh stats
+      const currentStats = aiAssistant.getStats();
+      setStats(currentStats);
+
+      if (!dataLoaded && currentStats.totalChunks === 0) {
         try {
           await aiAssistant.loadAllData();
           setDataLoaded(true);
+          setStats(aiAssistant.getStats());
         } catch {
           // فشل في تحميل البيانات تلقائياً
         }
-      } else if (stats.totalChunks > 0) {
+      } else if (currentStats.totalChunks > 0) {
         setDataLoaded(true);
       }
     };
 
     autoReloadData();
-  }, [dataLoaded, stats.totalChunks]);
+  }, [dataLoaded]);
+
+  // Handle auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async () => {
-    if (
-      !inputMessage.trim() ||
-      isLoading ||
-      hasReachedLimit ||
-      loadingMessageCount
-    )
-      return;
-
-    const startTime = Date.now();
-
-    const userMessage: ChatMessage = {
-      id: `user_${Date.now()}`,
-      type: "user",
-      content: inputMessage.trim(),
-      timestamp: new Date(),
-    };
-
-    setMessages((prev: ChatMessage[]) => [...prev, userMessage]);
+    if (!inputMessage.trim() || isLoading) return;
+    await sendMessage(inputMessage);
     setInputMessage("");
-    setIsLoading(true);
-
-    // Update daily message count (optimistic update)
-    const newCount = dailyMessageCount + 1;
-    setDailyMessageCount(newCount);
-
-    // For guests only: save to localStorage
-    if (!user) {
-      try {
-        localStorage.setItem(
-          GUEST_COUNT_KEY,
-          JSON.stringify({
-            count: newCount,
-            date: new Date().toDateString(),
-          }),
-        );
-      } catch {
-        // Error saving guest message count
-      }
-    }
-
-    trackEvent("ai_question_asked", { length: userMessage.content.length });
-
-    try {
-      const response = await aiAssistant.generateResponse(userMessage.content);
-
-      const assistantMessage: ChatMessage = {
-        id: `assistant_${Date.now()}`,
-        type: "assistant",
-        content: response,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
-      trackEvent("ai_response_received", { length: response.length });
-
-      // Save to assistant_messages table for analytics
-      try {
-        await supabase.from("assistant_messages").insert({
-          user_id: user?.id,
-          session_id: getSessionId(),
-          user_message: userMessage.content,
-          assistant_response: response,
-          response_time_ms: Date.now() - startTime,
-          ai_model_used: "gemini", // Using Gemini model
-          metadata: {
-            message_length: response.length,
-            has_custom_api_key: aiStatus.hasCustomApiKey,
-          },
-        });
-      } catch {
-        // Failed to save assistant message
-      }
-    } catch {
-      const errorMessage: ChatMessage = {
-        id: `error_${Date.now()}`,
-        type: "assistant",
-        content: "عذراً، حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.",
-        timestamp: new Date(),
-      };
-      setMessages((prev: ChatMessage[]) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleClearChat = () => {
     if (window.confirm("هل أنت متأكد من رغبتك في مسح سجل المحادثة؟")) {
-      setMessages([]);
-      localStorage.removeItem(CHAT_STORAGE_KEY);
-      localStorage.removeItem(OLD_CHAT_STORAGE_KEY);
+      clearChat();
       trackEvent("ai_chat_cleared");
     }
   };
 
-  // Open quiz modal
+  const handleSummarizeChat = async () => {
+    if (isSummarizing) return;
+
+    setIsSummarizing(true);
+    trackEvent("ai_chat_summary_started");
+
+    try {
+      const result = await aiAssistant.summarizeLoadedData();
+      setSummaryResult(result);
+      setShowSummaryModal(true);
+      trackEvent("ai_chat_summary_success");
+    } catch (error) {
+      console.error(error);
+      alert("فشل في إنشاء ملخص. تأكد من تحميل بيانات المحادثة أولاً.");
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
   const handleOpenQuizModal = () => {
     setShowQuizModal(true);
     setQuizTextInput("");
     setQuizInputMode("text");
   };
+
+  const LOCAL_AI_QUIZZES_KEY = "local_ai_generated_quizzes";
+
+  const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem(LOCAL_AI_QUIZZES_KEY);
+      const arr: LocalGeneratedQuiz[] = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const persistLocalQuiz = useCallback((quiz: LocalGeneratedQuiz) => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(LOCAL_AI_QUIZZES_KEY);
+      const arr: LocalGeneratedQuiz[] = raw ? JSON.parse(raw) : [];
+      const next = [quiz, ...arr].slice(0, 20);
+      localStorage.setItem(LOCAL_AI_QUIZZES_KEY, JSON.stringify(next));
+      setLocalGeneratedQuizzes(next);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    const arr = readLocalQuizzes();
+    setLocalGeneratedQuizzes(arr);
+    setGeneratedQuiz((prev) => prev || arr[0] || null);
+  }, [readLocalQuizzes]);
+
+  const resetLocalQuizPlayer = useCallback(() => {
+    setLocalQuizIndex(0);
+    setLocalSelectedOption(null);
+    setLocalAnswered(false);
+  }, []);
+
+  const handleOpenLocalQuiz = useCallback(() => {
+    if (!generatedQuiz) return;
+    resetLocalQuizPlayer();
+    setShowLocalQuizModal(true);
+  }, [generatedQuiz, resetLocalQuizPlayer]);
+
+  const handleSubmitQuizForReview = useCallback(async () => {
+    if (!user || !generatedQuiz || isSubmittingQuiz) return;
+    if (!submitAcademicLevel || !submitDepartment || !submitSubject) {
+      alert("من فضلك اختر الصف/المستوى والقسم والمادة قبل الإرسال.");
+      return;
+    }
+
+    setIsSubmittingQuiz(true);
+    trackEvent("ai_quiz_submit_for_review_started");
+
+    try {
+      const quizData = generatedQuiz.data;
+
+      const submitterName =
+        (user.user_metadata as any)?.display_name ||
+        (user.user_metadata as any)?.name ||
+        user.email?.split("@")[0] ||
+        "مستخدم";
+
+      const descriptionJson = {
+        description: quizData.description || "اختبار مُولّد بالذكاء الاصطناعي",
+        submitted_by: user.email,
+        submitted_by_name: submitterName,
+        submitted_at: new Date().toISOString(),
+        source: "ai_assistant",
+        academic_level: submitAcademicLevel,
+        department: submitDepartment,
+        subject: submitSubject,
+      };
+
+      const { data: quiz, error: quizError } = await supabase
+        .from("quizzes")
+        .insert({
+          title: quizData.title,
+          description: JSON.stringify(descriptionJson),
+          user_id: user.id,
+          source_type: "ai_generated",
+          subject: submitSubject,
+          department: submitDepartment,
+          year: submitAcademicLevel,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (quizError) throw quizError;
+
+      const questions = quizData.questions || [];
+      if (questions.length > 0) {
+        const questionsToInsert = questions.map(
+          (q: QuizQuestionInput, index: number) => ({
+            quiz_id: quiz.id,
+            question: q.question,
+            options: q.options,
+            correct_answer: q.correctAnswer,
+            explanation: q.explanation || null,
+            order_index: index,
+          }),
+        );
+
+        const { error: questionsError } = await supabase
+          .from("quiz_questions")
+          .insert(questionsToInsert);
+
+        if (questionsError) throw questionsError;
+      }
+
+      setActiveQuizId(quiz.id);
+
+      const assistantMessage: ChatMessage = {
+        id: `assistant_submit_${Date.now()}`,
+        type: "assistant",
+        content:
+          "تم إرسال الامتحان للمراجعة بنجاح. سيتم نشره للعامة بعد اعتماده من الأدمن.",
+        timestamp: new Date(),
+      };
+      setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
+
+      setShowSubmitForReviewModal(false);
+
+      trackEvent("ai_quiz_submit_for_review_success", { quiz_id: quiz.id });
+    } catch (e) {
+      console.error(e);
+      trackEvent("ai_quiz_submit_for_review_failed");
+      alert("عذراً، فشل إرسال الامتحان للمراجعة. حاول مرة أخرى.");
+    } finally {
+      setIsSubmittingQuiz(false);
+    }
+  }, [generatedQuiz, isSubmittingQuiz, setMessages, trackEvent, user]);
 
   // Generate quiz from user input
   const handleGenerateQuiz = async () => {
@@ -360,53 +379,27 @@ function AiAssistantChatPage() {
 
       const questions = quizData.questions || [];
 
-      // Save quiz to database
-      const { data: quiz, error: quizError } = await supabase
-        .from("quizzes")
-        .insert({
+      const localQuiz: LocalGeneratedQuiz = {
+        localId: `local_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        data: {
           title: quizData.title,
-          description:
-            quizData.description || "اختبار مُولّد بالذكاء الاصطناعي",
-          user_id: user?.id || null,
-          source_type: "ai_generated",
-          subject: "AI Generated",
-          department: "General",
-          year: new Date().getFullYear().toString(),
-        })
-        .select()
-        .single();
+          description: quizData.description,
+          questions,
+        },
+      };
 
-      if (quizError) throw quizError;
+      setGeneratedQuiz(localQuiz);
+      persistLocalQuiz(localQuiz);
 
-      // Save quiz questions
-      if (questions.length > 0) {
-        const questionsToInsert = questions.map(
-          (q: QuizQuestionInput, index: number) => ({
-            quiz_id: quiz.id,
-            question: q.question,
-            options: q.options,
-            correct_answer: q.correctAnswer,
-            explanation: q.explanation || null,
-            order_index: index,
-          }),
-        );
-
-        const { error: questionsError } = await supabase
-          .from("quiz_questions")
-          .insert(questionsToInsert);
-
-        if (questionsError) throw questionsError;
-      }
-
-      setActiveQuizId(quiz.id);
       setShowQuizModal(false);
       setQuizTextInput("");
-      trackEvent("ai_quiz_generation_success", { quiz_id: quiz.id });
+      trackEvent("ai_quiz_generation_success", { local_id: localQuiz.localId });
 
       const assistantMessage: ChatMessage = {
         id: `assistant_quiz_${Date.now()}`,
         type: "assistant",
-        content: `لقد قمت بإنشاء اختبار لك بعنوان: ${quizData.title}. يمكنك البدء في حله الآن!`,
+        content: `لقد قمت بإنشاء اختبار لك بعنوان: ${quizData.title}. يمكنك فتحه وحله محلياً الآن.${user ? " ويمكنك أيضاً إرساله للمراجعة والنشر." : ""}`,
         timestamp: new Date(),
       };
       setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
@@ -417,42 +410,29 @@ function AiAssistantChatPage() {
     }
   };
 
-  const handleSaveApiKey = () => {
-    if (!apiKeyInput.trim()) return;
-
-    try {
-      localStorage.setItem("user_gemini_api_key", apiKeyInput.trim());
-      setShowApiKeyModal(false);
-      setApiKeyInput("");
-      alert("تم حفظ مفتاح API بنجاح! سيتم استخدامه الآن للمحادثة.");
-      trackEvent("ai_custom_api_key_saved");
-    } catch {
-      alert("مفتاح API غير صالح.");
-    }
-  };
-
-  const handleRemoveApiKey = () => {
-    localStorage.removeItem("user_gemini_api_key");
-    alert("تم إزالة مفتاح API المخصص. سيتم العودة لاستخدام المفتاح الافتراضي.");
-    trackEvent("ai_custom_api_key_removed");
-  };
-
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] max-w-5xl mx-auto">
+    <div
+      dir="rtl"
+      className="flex flex-col h-[calc(100dvh-88px)] sm:h-[calc(100vh-120px)] max-w-5xl mx-auto"
+    >
       {/* Header */}
-      <div className="modern-card p-4 mb-4 flex items-center justify-between shrink-0">
+      <div className="modern-card p-3 sm:p-4 mb-2 sm:mb-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
-            <Bot className="w-6 h-6 text-brand-blue" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
+            <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-brand-blue" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900 dark:text-white">
-              مساعد مسار X
+              {mode === "group_rag"
+                ? "مساعد مسار X"
+                : "مساعد برمجي (حاسبات ومعلومات)"}
             </h1>
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                متصل وجاهز للمساعدة
+                {mode === "group_rag"
+                  ? "وضع محادثات المجموعة (إجابات من البيانات)"
+                  : "وضع المساعد البرمجي (إجابات عامة + أمثلة وكود)"}
               </span>
             </div>
           </div>
@@ -460,11 +440,41 @@ function AiAssistantChatPage() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowApiKeyModal(true)}
+            onClick={toggleMode}
+            className="px-3 py-2 text-xs font-bold rounded-lg transition-all border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue"
+            title={
+              mode === "group_rag"
+                ? "التبديل إلى المساعد البرمجي"
+                : "التبديل إلى محادثات المجموعة"
+            }
+          >
+            <span className="sm:hidden">تبديل الوضع</span>
+            <span className="hidden sm:inline">
+              {mode === "group_rag" ? "مساعد برمجي" : "محادثات المجموعة"}
+            </span>
+          </button>
+          <button
+            onClick={() => setShowPuterModal(true)}
             className="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-lg transition-all"
-            title="إعدادات API"
+            title="إعدادات Puter"
           >
             <LockIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleSummarizeChat}
+            disabled={isSummarizing || !hasChatData}
+            className={`p-2 rounded-lg transition-all ${
+              isSummarizing || !hasChatData
+                ? "text-slate-300"
+                : "text-slate-400 hover:text-purple-600 hover:bg-purple-50"
+            }`}
+            title="تلخيص المحادثة (آخر 100 رسالة)"
+          >
+            {isSummarizing ? (
+              <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <FileText className="w-5 h-5" />
+            )}
           </button>
           <button
             onClick={handleClearChat}
@@ -476,36 +486,203 @@ function AiAssistantChatPage() {
         </div>
       </div>
 
+      {generatedQuiz && (
+        <div className="modern-card p-3 sm:p-4 mb-2 sm:mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white">
+              آخر اختبار مولّد: {generatedQuiz.data.title}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {user
+                ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
+                : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
+            </div>
+            {localGeneratedQuizzes.length > 1 && (
+              <div className="mt-3">
+                <select
+                  value={generatedQuiz.localId}
+                  onChange={(e) => {
+                    const next = localGeneratedQuizzes.find(
+                      (q) => q.localId === e.target.value,
+                    );
+                    if (!next) return;
+                    setGeneratedQuiz(next);
+                    resetLocalQuizPlayer();
+                  }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  {localGeneratedQuizzes.map((q) => (
+                    <option key={q.localId} value={q.localId}>
+                      {q.data.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleOpenLocalQuiz}
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-sm font-semibold"
+            >
+              فتح الاختبار
+            </button>
+            {user && (
+              <button
+                onClick={() => {
+                  setShowSubmitForReviewModal(true);
+                  setSubmitAcademicLevel((prev) => prev || ACADEMIC_LEVELS[0]);
+                  setSubmitDepartment((prev) => prev || DEPARTMENTS[0]);
+                  setSubmitSubject(
+                    (prev) => prev || ALL_SUBJECTS[0]?.name || "",
+                  );
+                }}
+                disabled={isSubmittingQuiz}
+                className="px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
+                title="سيتم إرسال الامتحان للمراجعة. سيتم ربطه بهويتك (user_id)"
+              >
+                {isSubmittingQuiz ? "جاري الإرسال..." : "إرسال للمراجعة والنشر"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Submit For Review Modal */}
+      {showSubmitForReviewModal && generatedQuiz && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-lg modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                إرسال الامتحان للمراجعة
+              </h3>
+              <button
+                onClick={() => setShowSubmitForReviewModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                اختر بيانات الامتحان قبل الإرسال (ستظهر للإدارة مع الامتحان).
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  الصف / المستوى
+                </label>
+                <select
+                  value={submitAcademicLevel}
+                  onChange={(e) => setSubmitAcademicLevel(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value="" disabled>
+                    اختر المستوى...
+                  </option>
+                  {ACADEMIC_LEVELS.map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {lvl}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  القسم
+                </label>
+                <select
+                  value={submitDepartment}
+                  onChange={(e) => setSubmitDepartment(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value="" disabled>
+                    اختر القسم...
+                  </option>
+                  {DEPARTMENTS.map((dep) => (
+                    <option key={dep} value={dep}>
+                      {dep}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  المادة
+                </label>
+                <select
+                  value={submitSubject}
+                  onChange={(e) => setSubmitSubject(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                >
+                  <option value="" disabled>
+                    اختر المادة...
+                  </option>
+                  {ALL_SUBJECTS.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-2">
+              <button
+                onClick={() => setShowSubmitForReviewModal(false)}
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-semibold"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleSubmitQuizForReview}
+                disabled={
+                  isSubmittingQuiz ||
+                  !submitAcademicLevel ||
+                  !submitDepartment ||
+                  !submitSubject
+                }
+                className="flex-1 px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
+              >
+                {isSubmittingQuiz ? "جاري الإرسال..." : "تأكيد الإرسال"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats Bar */}
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2 shrink-0 scrollbar-hide">
-        <div className="modern-card py-2 px-4 flex items-center gap-2 whitespace-nowrap">
+      <div className="flex gap-2 mb-2 sm:mb-4 overflow-x-auto pb-2 shrink-0 scrollbar-hide">
+        <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap">
           <Brain className="w-4 h-4 text-brand-blue" />
           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             البيانات: {stats.totalChunks} فقرة
           </span>
         </div>
-        <div className="modern-card py-2 px-4 flex items-center gap-2 whitespace-nowrap">
+        <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap">
           <MessageSquare className="w-4 h-4 text-brand-orange" />
           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
             المواضيع: {stats.totalMessages} رسائل
           </span>
         </div>
-        {aiStatus.hasCustomApiKey && (
-          <div className="modern-card py-2 px-4 flex items-center gap-2 whitespace-nowrap border-green-200 bg-green-50 dark:bg-green-900/10">
+        {isPuterSignedIn && (
+          <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap border-green-200 bg-green-50 dark:bg-green-900/10">
             <div className="w-2 h-2 rounded-full bg-green-500"></div>
             <span className="text-xs font-medium text-green-600 dark:text-green-400">
-              مفتاح API مخصص نشط
+              متصل بـ Puter
             </span>
           </div>
         )}
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 modern-card mb-4 overflow-hidden flex flex-col">
+      <div className="flex-1 modern-card mb-2 sm:mb-4 overflow-hidden flex flex-col">
         <div
           ref={messagesContainerRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar"
+          className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 sm:space-y-6 custom-scrollbar"
         >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
@@ -521,16 +698,12 @@ function AiAssistantChatPage() {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-md">
-                {[
-                  "اشرح لي مفهوم التشفير",
-                  "لخص لي أهم نقاط مادة الشبكات",
-                  "أنشئ لي اختباراً قصيراً",
-                  "كيف أذاكر بفعالية؟",
-                ].map((suggestion) => (
+                {SUGGESTIONS.map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputMessage(suggestion)}
                     className="p-3 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-brand-blue/5 hover:text-brand-blue rounded-xl border border-slate-100 dark:border-slate-800 transition-all text-right"
+                    dir="auto"
                   >
                     {suggestion}
                   </button>
@@ -539,51 +712,7 @@ function AiAssistantChatPage() {
             </div>
           ) : (
             messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${
-                  msg.type === "user" ? "justify-start" : "justify-end"
-                }`}
-              >
-                <div
-                  className={`flex gap-3 max-w-[85%] ${
-                    msg.type === "user" ? "flex-row" : "flex-row-reverse"
-                  }`}
-                >
-                  <div
-                    className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                      msg.type === "user"
-                        ? "bg-brand-blue text-white"
-                        : "bg-brand-orange text-white"
-                    }`}
-                  >
-                    {msg.type === "user" ? (
-                      <User className="w-5 h-5" />
-                    ) : (
-                      <Bot className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                      msg.type === "user"
-                        ? "bg-brand-blue text-white rounded-tr-none"
-                        : "bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-100 dark:border-slate-700"
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                    <div
-                      className={`text-[10px] mt-2 opacity-50 ${
-                        msg.type === "user" ? "text-white" : "text-slate-500"
-                      }`}
-                    >
-                      {msg.timestamp.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ChatMessageItem key={msg.id} message={msg} />
             ))
           )}
           {isLoading && (
@@ -612,7 +741,7 @@ function AiAssistantChatPage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
           {/* Limit reached message */}
           {hasReachedLimit && (
             <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
@@ -648,13 +777,14 @@ function AiAssistantChatPage() {
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 الرسائل المتبقية:{" "}
                 <span
-                  className={`font-bold ${remainingMessages <= 1 ? "text-amber-500" : "text-brand-blue"}`}
+                  className={`font-bold ${!isPuterSignedIn && remainingMessages <= 1 ? "text-amber-500" : "text-brand-blue"}`}
                 >
-                  {remainingMessages}
-                </span>{" "}
-                من {messageLimit}
+                  {isPuterSignedIn
+                    ? "غير محدود (Puter)"
+                    : `${remainingMessages} من ${messageLimit}`}
+                </span>
               </span>
-              {!user && (
+              {!user && !isPuterSignedIn && (
                 <button
                   onClick={() => (window.location.href = "/signup")}
                   className="text-xs font-bold text-brand-blue hover:underline"
@@ -695,27 +825,18 @@ function AiAssistantChatPage() {
                     ? user
                       ? "انتظر حتى الغد لإرسال رسائل جديدة"
                       : "سجّل حساباً للحصول على رسائل إضافية"
-                    : hasChatData
-                      ? "اسألني أي شيء..."
-                      : "جاري تحميل البيانات..."
+                    : "اسألني أي شيء..."
                 }
-                disabled={!hasChatData || hasReachedLimit}
+                disabled={hasReachedLimit}
                 rows={1}
                 className="w-full p-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all resize-none text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50"
+                dir="auto"
               />
               <button
                 onClick={handleSendMessage}
-                disabled={
-                  !inputMessage.trim() ||
-                  isLoading ||
-                  !hasChatData ||
-                  hasReachedLimit
-                }
+                disabled={!inputMessage.trim() || isLoading || hasReachedLimit}
                 className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${
-                  !inputMessage.trim() ||
-                  isLoading ||
-                  !hasChatData ||
-                  hasReachedLimit
+                  !inputMessage.trim() || isLoading || hasReachedLimit
                     ? "text-slate-300"
                     : "text-brand-blue hover:bg-brand-blue/10"
                 }`}
@@ -724,7 +845,7 @@ function AiAssistantChatPage() {
               </button>
             </div>
           </div>
-          <p className="text-[10px] text-center text-slate-400 mt-2">
+          <p className="text-[10px] text-center text-slate-400 mt-2 hidden sm:block">
             قد يرتكب الذكاء الاصطناعي أخطاء، يرجى التحقق من المعلومات المهمة.
           </p>
         </div>
@@ -868,80 +989,262 @@ function AiAssistantChatPage() {
         </div>
       )}
 
-      {/* API Key Modal */}
-      {showApiKeyModal && (
+      {/* Local Quiz Modal */}
+      {showLocalQuizModal && generatedQuiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="w-full max-w-md modern-card p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                إعدادات مفتاح API
-              </h3>
+          <div className="w-full max-w-3xl h-[90vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white">
+                  {generatedQuiz.data.title}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  وضع محلي
+                </p>
+              </div>
               <button
-                onClick={() => setShowApiKeyModal(false)}
+                onClick={() => setShowLocalQuizModal(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
               >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
 
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-              يمكنك استخدام مفتاح API الخاص بك من Google AI Studio (Gemini)
-              للحصول على أداء أسرع وحدود استخدام أعلى.
-            </p>
+            <div className="flex-1 overflow-y-auto p-4">
+              {generatedQuiz.data.questions.length === 0 ? (
+                <div className="text-center text-slate-500 dark:text-slate-400 p-8">
+                  لا توجد أسئلة في هذا الاختبار.
+                </div>
+              ) : (
+                (() => {
+                  const q = generatedQuiz.data.questions[localQuizIndex];
+                  const correct = q.correctAnswer;
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                        <span>
+                          سؤال {localQuizIndex + 1} من{" "}
+                          {generatedQuiz.data.questions.length}
+                        </span>
+                        <button
+                          onClick={() => {
+                            resetLocalQuizPlayer();
+                          }}
+                          className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                        >
+                          إعادة من البداية
+                        </button>
+                      </div>
 
-            <div className="space-y-4">
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="أدخل مفتاح Gemini API هنا..."
-                  className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
+                      <div className="modern-card p-4">
+                        <div
+                          dir="auto"
+                          className="text-lg font-bold text-slate-900 dark:text-white leading-relaxed text-start"
+                        >
+                          {q.question}
+                        </div>
+                      </div>
 
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleSaveApiKey}
-                  disabled={!apiKeyInput.trim()}
-                  className="brand-button py-3 disabled:opacity-50"
-                >
-                  حفظ المفتاح
-                </button>
+                      <div className="grid grid-cols-1 gap-2">
+                        {q.options.map((opt, idx) => {
+                          const isSelected = localSelectedOption === idx;
+                          const isCorrect = idx === correct;
+                          const showCorrectness = localAnswered;
 
-                {aiStatus.hasCustomApiKey && (
-                  <button
-                    onClick={handleRemoveApiKey}
-                    className="py-3 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    إزالة المفتاح المخصص
-                  </button>
-                )}
-              </div>
+                          let cls =
+                            "p-3 rounded-xl border transition-all bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700";
+                          if (isSelected) {
+                            cls +=
+                              " ring-2 ring-brand-blue/20 border-brand-blue";
+                          }
+                          if (showCorrectness && isCorrect) {
+                            cls +=
+                              " border-green-400 bg-green-50 dark:bg-green-900/10";
+                          }
+                          if (showCorrectness && isSelected && !isCorrect) {
+                            cls +=
+                              " border-red-400 bg-red-50 dark:bg-red-900/10";
+                          }
 
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-center text-xs text-brand-blue hover:underline"
-              >
-                كيف أحصل على مفتاح API؟
-              </a>
+                          return (
+                            <button
+                              key={idx}
+                              disabled={localAnswered}
+                              onClick={() => {
+                                setLocalSelectedOption(idx);
+                              }}
+                              className={cls}
+                              dir="auto"
+                            >
+                              <div className="text-sm text-slate-800 dark:text-slate-200 text-start">
+                                {opt}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => {
+                            if (localQuizIndex === 0) return;
+                            setLocalQuizIndex((prev) => Math.max(0, prev - 1));
+                            setLocalSelectedOption(null);
+                            setLocalAnswered(false);
+                          }}
+                          disabled={localQuizIndex === 0}
+                          className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm font-semibold disabled:opacity-50"
+                        >
+                          السابق
+                        </button>
+
+                        {!localAnswered ? (
+                          <button
+                            onClick={() => {
+                              if (localSelectedOption === null) return;
+                              setLocalAnswered(true);
+                            }}
+                            disabled={localSelectedOption === null}
+                            className="px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
+                          >
+                            تحقق
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (
+                                localQuizIndex >=
+                                generatedQuiz.data.questions.length - 1
+                              )
+                                return;
+                              setLocalQuizIndex((prev) =>
+                                Math.min(
+                                  generatedQuiz.data.questions.length - 1,
+                                  prev + 1,
+                                ),
+                              );
+                              setLocalSelectedOption(null);
+                              setLocalAnswered(false);
+                            }}
+                            disabled={
+                              localQuizIndex >=
+                              generatedQuiz.data.questions.length - 1
+                            }
+                            className="px-4 py-2 rounded-xl bg-brand-orange text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
+                          >
+                            التالي
+                          </button>
+                        )}
+                      </div>
+
+                      {localAnswered && (
+                        <div className="modern-card p-4 border border-slate-200 dark:border-slate-700">
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">
+                            {localSelectedOption === correct
+                              ? "إجابة صحيحة"
+                              : "إجابة خاطئة"}
+                          </div>
+                          {q.explanation && (
+                            <div
+                              dir="auto"
+                              className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-start"
+                            >
+                              {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Summary Modal */}
+      {showSummaryModal && summaryResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-3xl modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  ملخص المحادثة
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+              >
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h4 className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-brand-blue" />
+                  الملخص العام
+                </h4>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-lg">
+                  {summaryResult.summary}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-brand-orange" />
+                  النقاط والرسائل المهمة
+                </h4>
+                <div className="space-y-3">
+                  {summaryResult.important_messages?.map(
+                    (msg: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold text-sm text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded-md">
+                            {msg.sender_name}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 dark:text-slate-200 font-medium mb-2">
+                          {msg.content}
+                        </p>
+                        {msg.context && (
+                          <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                            <span className="font-semibold">السياق:</span>{" "}
+                            {msg.context}
+                          </p>
+                        )}
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-medium"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Puter Settings Modal */}
+      <PuterSettingsModal
+        isOpen={showPuterModal}
+        onClose={() => setShowPuterModal(false)}
+      />
     </div>
   );
 }

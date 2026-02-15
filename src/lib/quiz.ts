@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { Json } from '@/types/database';
 
 
 export interface QuizData {
@@ -91,7 +92,8 @@ export class QuizService {
                 .eq('quiz_id', quizId)
                 .eq('user_id', userId)
                 .is('finished_at', null)
-                .single();
+                .limit(1)
+                .maybeSingle();
 
             if (existingAttempt) {
                 // Fetch existing answers for this attempt
@@ -152,7 +154,7 @@ export class QuizService {
         attemptId: string,
         score: number,
         totalQuestions: number,
-        answers: any[] // Kept for backward compatibility if needed, but we rely on quiz_answers table now
+        answers: Json[] // Kept for backward compatibility if needed, but we rely on quiz_answers table now
     ) {
         try {
             const finishedAt = new Date().toISOString();
@@ -182,7 +184,7 @@ export class QuizService {
         userId: string | null,
         score: number,
         totalQuestions: number,
-        answers: any[],
+        answers: Json[],
         startedAt?: string,
         finishedAt?: string,
         timeTakenSeconds?: number

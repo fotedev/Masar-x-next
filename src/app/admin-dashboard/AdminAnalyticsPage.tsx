@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { chatHelpers } from "../../lib/supabase";
+import { chatHelpers } from "../../lib/chatHelpers";
 
 interface AdminAnalyticsPageProps {
   onNavigate: (page: string) => void;

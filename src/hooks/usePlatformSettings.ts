@@ -33,8 +33,12 @@ export function usePlatformSettings() {
       }
 
       if (data && data.value) {
-        const v = data.value as any;
-        const newSemester = Number(v.semester || 1);
+        const v = data.value as unknown;
+        const semesterValue =
+          typeof v === 'object' && v !== null && 'semester' in v
+            ? (v as { semester?: unknown }).semester
+            : undefined;
+        const newSemester = Number(semesterValue ?? 1);
         setSettings({ active_semester: newSemester });
         if (typeof window !== 'undefined') {
           localStorage.setItem('activeSemester', newSemester.toString());

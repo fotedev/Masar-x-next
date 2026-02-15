@@ -5,7 +5,7 @@ import { getSessionId } from './session';
 export interface AnalyticsEvent {
     name: string;
     page?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface SystemLog {
@@ -14,15 +14,21 @@ export interface SystemLog {
     statusCode?: number;
     requestId?: string;
     endpoint?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
+
+type AnalyticsMetadata = Record<string, unknown> & {
+    contentType?: string;
+    id?: string;
+    contentId?: string;
+};
 
 class AnalyticsService {
     /**
      * Tracks a generic event (e.g., "summary_view", "summary_click").
      * Uses user_id for admin analytics and does NOT track personal user info.
      */
-    async trackEvent(eventName: string, metadata: Record<string, any> = {}) {
+    async trackEvent(eventName: string, metadata: AnalyticsMetadata = {}) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return; // Don't track for non-authenticated users
@@ -30,7 +36,7 @@ class AnalyticsService {
             const page = window.location.pathname;
             let actionType = eventName;
             let contentType = metadata.contentType || 'unknown';
-            let contentId = metadata.id || metadata.contentId;
+            const contentId = metadata.id || metadata.contentId;
 
             // Map event names to analytics action types
             switch (eventName) {

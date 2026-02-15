@@ -8,5 +8,5 @@ export const supabase = createBrowserClient(
   supabaseAnonKey!
 )
 
-// Re-export chatHelpers from the new location
-export { chatHelpers } from './chatHelpers'
+// Remove re-export to avoid circular dependency
+// export { chatHelpers } from './chatHelpers'
