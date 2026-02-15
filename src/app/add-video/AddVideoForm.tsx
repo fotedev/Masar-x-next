@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Send, CheckCircle } from "lucide-react";
+import { Send, CheckCircle, X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
@@ -12,6 +12,15 @@ export function AddVideoForm() {
   const searchParams = useSearchParams();
   const { user, isAdmin, isAdminLoading } = useAuth();
   const { sendNotification } = useBrowserNotifications();
+
+  const handleClose = () => {
+    const subject = searchParams.get("subject") || "";
+    if (subject) {
+      router.push(`/subjects/${encodeURIComponent(subject)}`);
+      return;
+    }
+    router.back();
+  };
 
   const [formData, setFormData] = useState({
     title: "",
@@ -29,12 +38,30 @@ export function AddVideoForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!isAdminLoading && !isAdmin) {
-      router.push("/");
-      return;
-    }
-  }, [isAdmin, isAdminLoading, router]);
+  if (!isAdminLoading && !isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 transition-colors">
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+              غير مسموح
+            </h1>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
+              aria-label="إغلاق"
+            >
+              <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            </button>
+          </div>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            هذه الصفحة متاحة للمشرفين فقط.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,9 +145,19 @@ export function AddVideoForm() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          إضافة فيديو جديد
-        </h1>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+            إضافة فيديو جديد
+          </h1>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
+            aria-label="إغلاق"
+          >
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+          </button>
+        </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
           أضف فيديو تعليمي للمادة
         </p>

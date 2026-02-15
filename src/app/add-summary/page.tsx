@@ -207,9 +207,19 @@ export default function AddSummaryPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          إضافة ملخص جديد
-        </h1>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+            إضافة ملخص جديد
+          </h1>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
+            aria-label="إغلاق"
+          >
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+          </button>
+        </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
           شارك ملخصك مع زملائك الطلاب
         </p>

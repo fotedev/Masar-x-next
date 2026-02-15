@@ -751,28 +751,44 @@ function AiAssistantChatPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-amber-800 dark:text-amber-300 mb-1">
-                    {user ? "انتهت رسائلك اليومية" : "انتهت رسائلك المجانية"}
+                    {isPuterSignedIn
+                      ? "غير محدود (Puter)"
+                      : user
+                        ? "انتهت رسائلك اليومية"
+                        : "انتهت رسائلك المجانية"}
                   </h4>
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    {user
-                      ? "لقد استخدمت جميع رسائلك الـ 5 لهذا اليوم. ستتجدد رسائلك غداً تلقائياً."
-                      : "يمكنك إرسال رسالتين فقط كزائر. سجّل حساباً للحصول على 5 رسائل يومياً!"}
+                    {isPuterSignedIn
+                      ? "يمكنك المتابعة باستخدام رصيد Puter الخاص بك."
+                      : user
+                        ? "لقد استخدمت جميع رسائلك الـ 5 لهذا اليوم. سجّل الدخول عبر Puter للمتابعة باستخدام رصيدك."
+                        : "يمكنك إرسال رسالتين فقط كزائر. سجّل حساباً أو استخدم Puter للمتابعة."}
                   </p>
-                  {!user && (
-                    <button
-                      onClick={() => (window.location.href = "/signup")}
-                      className="mt-2 text-sm font-bold text-brand-blue hover:underline"
-                    >
-                      إنشاء حساب مجاني →
-                    </button>
-                  )}
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    {!isPuterSignedIn && (
+                      <button
+                        onClick={() => setShowPuterModal(true)}
+                        className="text-sm font-bold text-brand-blue hover:underline"
+                      >
+                        تسجيل الدخول عبر Puter →
+                      </button>
+                    )}
+                    {!user && (
+                      <button
+                        onClick={() => (window.location.href = "/signup")}
+                        className="text-sm font-bold text-brand-blue hover:underline"
+                      >
+                        إنشاء حساب مجاني →
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Remaining messages indicator */}
-          {!hasReachedLimit && (
+          {!hasReachedLimit && !user && (
             <div className="mb-2 flex justify-between items-center">
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 الرسائل المتبقية:{" "}
@@ -789,7 +805,7 @@ function AiAssistantChatPage() {
                   onClick={() => (window.location.href = "/signup")}
                   className="text-xs font-bold text-brand-blue hover:underline"
                 >
-                  سجّل للحصول على المزيد
+                  إنشاء حساب مجاني →
                 </button>
               )}
             </div>
@@ -809,7 +825,7 @@ function AiAssistantChatPage() {
               <Brain className="w-6 h-6" />
             </button>
 
-            <div className="relative flex-1">
+            <div className="flex-1 flex items-center gap-2">
               <textarea
                 ref={inputRef}
                 value={inputMessage}
@@ -829,16 +845,16 @@ function AiAssistantChatPage() {
                 }
                 disabled={hasReachedLimit}
                 rows={1}
-                className="w-full p-3 pr-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all resize-none text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50"
+                className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all resize-none text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50 min-h-[48px] leading-6"
                 dir="auto"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading || hasReachedLimit}
-                className={`absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${
+                className={`h-12 w-12 grid place-items-center rounded-xl transition-all shrink-0 border ${
                   !inputMessage.trim() || isLoading || hasReachedLimit
-                    ? "text-slate-300"
-                    : "text-brand-blue hover:bg-brand-blue/10"
+                    ? "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-300 cursor-not-allowed"
+                    : "bg-slate-950 text-cyan-300 border-cyan-400/40 shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_24px_rgba(34,211,238,0.35)] hover:shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_34px_rgba(34,211,238,0.55)] hover:border-cyan-300/70 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
                 }`}
               >
                 <Send className="w-5 h-5" />
