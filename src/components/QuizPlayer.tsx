@@ -426,7 +426,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               try {
                 const parsed = JSON.parse(quiz.description);
                 return parsed.description || quiz.description;
-              } catch (e) {
+              } catch {
                 return quiz.description;
               }
             })()}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Eye,
   Trash2,
@@ -38,13 +38,15 @@ export function QuizzesTab({
       filtered = filtered.filter(
         (quiz) =>
           quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (quiz.description && quiz.description.toLowerCase().includes(searchTerm.toLowerCase()))
+          (quiz.description &&
+            quiz.description.toLowerCase().includes(searchTerm.toLowerCase())),
       );
     }
 
     // Sort
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortBy) {
         case "title":
@@ -75,7 +77,7 @@ export function QuizzesTab({
   const currentQuizzes = filteredQuizzes.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortBy, sortOrder]);
 
@@ -124,7 +126,7 @@ export function QuizzesTab({
           <div className="w-full lg:w-48">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "date" | "title")}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             >
               <option value="date">ترتيب بالتاريخ</option>
@@ -171,14 +173,16 @@ export function QuizzesTab({
                   </h3>
                   {quiz.description && (
                     <p className="text-gray-600 dark:text-gray-400 mb-3 text-sm">
-                      {quiz.description.startsWith('{') ? (() => {
-                        try {
-                          const parsed = JSON.parse(quiz.description);
-                          return parsed.description || quiz.description;
-                        } catch (e) {
-                          return quiz.description;
-                        }
-                      })() : quiz.description}
+                      {quiz.description.startsWith("{")
+                        ? (() => {
+                            try {
+                              const parsed = JSON.parse(quiz.description);
+                              return parsed.description || quiz.description;
+                            } catch {
+                              return quiz.description;
+                            }
+                          })()
+                        : quiz.description}
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -198,7 +202,8 @@ export function QuizzesTab({
                       </span>
                     )}
                     <span>
-                      المصدر: {quiz.source_type === 'manual' ? 'يدوي' : 'ذكاء اصطناعي'}
+                      المصدر:{" "}
+                      {quiz.source_type === "manual" ? "يدوي" : "ذكاء اصطناعي"}
                     </span>
                     {quiz.avg_rating > 0 && (
                       <span className="flex items-center gap-1 text-brand-orange">
@@ -244,15 +249,15 @@ export function QuizzesTab({
                     quiz.status === "approved"
                       ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                       : quiz.status === "rejected"
-                      ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                   }`}
                 >
                   {quiz.status === "approved"
                     ? "معتمد"
                     : quiz.status === "rejected"
-                    ? "مرفوض"
-                    : "قيد المراجعة"}
+                      ? "مرفوض"
+                      : "قيد المراجعة"}
                 </span>
               </div>
             </div>

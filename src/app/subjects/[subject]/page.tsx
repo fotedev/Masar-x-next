@@ -106,12 +106,14 @@ function SubjectSummariesContent() {
 
       if (error) throw error;
 
-      const quizzes = (data || []).filter((q) => {
-        const directSubject = (q as any).subject as string | null | undefined;
+      const rows = (data || []) as Quiz[];
+
+      const quizzes = rows.filter((q) => {
+        const directSubject = q.subject;
         if (directSubject && directSubject.trim() === normalizedSubjectName)
           return true;
 
-        const desc = (q as any).description as string | null | undefined;
+        const desc = q.description;
         if (!desc || !desc.trim().startsWith("{")) return false;
 
         try {
