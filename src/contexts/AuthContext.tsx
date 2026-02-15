@@ -222,11 +222,29 @@ export function AuthProvider({
   );
 
   const refreshAdminStatus = async () => {
-    const {
-      data: { user: freshUser },
-    } = await supabase.auth.getUser();
-    if (freshUser) setUser(freshUser);
-    return await verifyAdminStatus(freshUser, true);
+    try {
+      const {
+        data: { user: freshUser },
+      } = await supabase.auth.getUser();
+      if (freshUser) setUser(freshUser);
+      return await verifyAdminStatus(freshUser, true);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (message.toLowerCase().includes("invalid refresh token")) {
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          /* ignore */
+        }
+        setUser(null);
+        setDisplayName(null);
+        setAvatarUrl(null);
+        setIsAdmin(false);
+        setAdminRole(null);
+        return false;
+      }
+      throw e;
+    }
   };
 
   useEffect(() => {
@@ -246,8 +264,21 @@ export function AuthProvider({
         if (currentUser) {
           verifyAdminStatus(currentUser);
         }
-      } catch {
-        /* ignore */
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        if (message.toLowerCase().includes("invalid refresh token")) {
+          try {
+            await supabase.auth.signOut();
+          } catch {
+            /* ignore */
+          }
+          if (!mounted) return;
+          setUser(null);
+          setDisplayName(null);
+          setAvatarUrl(null);
+          setIsAdmin(false);
+          setAdminRole(null);
+        }
       } finally {
         if (mounted) setLoading(false);
       }

@@ -30,7 +30,20 @@ export async function updateSession(request: NextRequest) {
     )
 
     // refreshing the auth token
-    await supabase.auth.getUser()
+    try {
+        await supabase.auth.getUser()
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e)
+        if (message.toLowerCase().includes('invalid refresh token')) {
+            try {
+                await supabase.auth.signOut()
+            } catch {
+                // ignore
+            }
+        } else {
+            throw e
+        }
+    }
 
     return supabaseResponse
 }
