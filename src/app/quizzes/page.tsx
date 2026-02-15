@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import dynamic from "next/dynamic";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -14,13 +15,13 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { uploadToCloudinary } from "../../lib/cloudinary";
-import { useAuth } from "../../contexts/AuthContext";
-import { useSubjects } from "../../hooks/useSubjects";
-import { aiAssistant } from "../../lib/gemini";
-import type { Quiz, Summary } from "../../types/database";
-import { LatexRenderer } from "../../components/LatexRenderer";
+import { supabase } from "@/lib/supabase";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubjects } from "@/hooks/useSubjects";
+import { aiAssistant } from "@/lib/ai-assistant";
+import type { Quiz, Summary } from "@/types/database";
+import { LatexRenderer } from "@/components/LatexRenderer";
 
 interface QuizWithMeta {
   quiz: Quiz;
@@ -32,7 +33,21 @@ interface QuizWithMeta {
   };
 }
 
-function QuizDashboardPage() {
+// Use dynamic import with ssr: false for the main component to prevent hydration mismatches
+const QuizDashboard = dynamic(() => Promise.resolve(QuizDashboardInternal), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  ),
+});
+
+export default function QuizDashboardPage() {
+  return <QuizDashboard />;
+}
+
+function QuizDashboardInternal() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
@@ -150,7 +165,6 @@ function QuizDashboardPage() {
 
   useEffect(() => {
     if (!user) return;
-    // keep this as a lightweight ping so we can show a loading state on the button
     loadMyAttempts();
   }, [user, loadMyAttempts]);
 
@@ -211,7 +225,6 @@ function QuizDashboardPage() {
       if (meta.year) years.add(meta.year);
     });
 
-    // If subjects table is loaded, use those instead for subjects filter
     const subjectList = subjectsLoading
       ? Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar"))
       : allSubjects.map((s) => s.name).sort((a, b) => a.localeCompare(b, "ar"));
@@ -276,11 +289,11 @@ function QuizDashboardPage() {
           options: q.options,
           correctAnswer: q.correctAnswer,
           explanation: q.explanation,
+          type: q.type,
           imageUrl: q.imageUrl,
         })),
       };
 
-      // Prepare description with additional fields
       const descriptionData = {
         description: formData.description,
         department: formData.department,
@@ -290,7 +303,6 @@ function QuizDashboardPage() {
       const fullDescription = JSON.stringify(descriptionData);
 
       if (editingQuiz) {
-        // Update existing quiz
         const { error: quizError } = await supabase
           .from("quizzes")
           .update({
@@ -303,7 +315,6 @@ function QuizDashboardPage() {
 
         if (quizError) throw quizError;
 
-        // Delete existing questions and add new ones
         const { error: deleteError } = await supabase
           .from("quiz_questions")
           .delete()
@@ -311,7 +322,6 @@ function QuizDashboardPage() {
 
         if (deleteError) throw deleteError;
 
-        // Add new questions
         const questionsToInsert = formData.questions.map((q, index) => ({
           quiz_id: editingQuiz.id,
           question: q.question,
@@ -328,7 +338,6 @@ function QuizDashboardPage() {
 
         if (questionsError) throw questionsError;
       } else {
-        // Create new quiz
         const { data: quiz, error: quizError } = await supabase
           .from("quizzes")
           .insert({
@@ -391,7 +400,6 @@ function QuizDashboardPage() {
 
   const handleEditQuiz = async (quiz: Quiz) => {
     try {
-      // Load quiz questions
       const { data: questions, error } = await supabase
         .from("quiz_questions")
         .select("*")
@@ -400,7 +408,6 @@ function QuizDashboardPage() {
 
       if (error) throw error;
 
-      // Parse additional fields from description if available
       let parsedDescription = quiz.description || "";
       let department = "";
       let year = "";
@@ -415,7 +422,7 @@ function QuizDashboardPage() {
           parsedDescription = parsed.description || "";
         }
       } catch {
-        // If parsing fails, use description as is
+        // ignore
       }
 
       setEditingQuiz(quiz);
@@ -502,13 +509,12 @@ function QuizDashboardPage() {
     const updatedQuestions = [...formData.questions];
 
     if (field === "type") {
-      // Handle type switching
       if (value === "true-false") {
         updatedQuestions[index] = {
           ...updatedQuestions[index],
           type: "true-false",
           options: ["صح", "خطأ"],
-          correctAnswer: 0, // Default to "True"
+          correctAnswer: 0,
         };
       } else {
         updatedQuestions[index] = {
@@ -557,12 +563,11 @@ function QuizDashboardPage() {
           return;
         }
 
-        // Validate structure
         const isValid = questions.every(
           (q) =>
             q.question &&
             Array.isArray(q.options) &&
-            q.options.length >= 2 && // Allow 2 or more options
+            q.options.length >= 2 &&
             typeof q.correctAnswer === "number" &&
             q.correctAnswer >= 0 &&
             q.correctAnswer < q.options.length,
@@ -615,7 +620,8 @@ function QuizDashboardPage() {
         }));
         setShowImportModal(false);
         setImportJson("");
-        alert("تم استيراد الأسئلة بنجاح!");
+        setImportMode("json");
+        alert("تم إنشاء الأسئلة بنجاح!");
       } catch {
         alert("حدث خطأ أثناء تحليل JSON. تأكد من صحة التنسيق.");
       }
@@ -637,7 +643,7 @@ function QuizDashboardPage() {
           });
           setShowImportModal(false);
           setImportJson("");
-          setImportMode("json"); // Reset mode
+          setImportMode("json");
           alert("تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!");
         } else {
           throw new Error("Invalid format received from AI");
@@ -1051,6 +1057,26 @@ function QuizDashboardPage() {
                           <option value="true-false">صح / خطأ</option>
                         </select>
                         <button
+                          onClick={() => {
+                            const currentQuestion =
+                              formData.questions[questionIndex];
+                            const optionsText = currentQuestion.options
+                              .map(
+                                (o, i) =>
+                                  `${String.fromCharCode(65 + i)}: ${o}`,
+                              )
+                              .join("\n");
+                            const fullText = `السؤال: ${currentQuestion.question}\nالخيارات:\n${optionsText}\nالشرح: ${currentQuestion.explanation}`;
+                            alert(
+                              `معاينة المعادلات الرياضية:\n\n${fullText}\n\n(استخدم $ للمتغيرات و \\[ \\] للمعادلات المنفصلة)`,
+                            );
+                          }}
+                          className="text-blue-600 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          title="معاينة سريعة"
+                        >
+                          <Play className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => deleteQuestion(questionIndex)}
                           className="text-red-600 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="حذف السؤال"
@@ -1074,9 +1100,15 @@ function QuizDashboardPage() {
                     />
                     {/* Preview for LaTeX */}
                     {question.question && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <span className="font-bold ml-2">معاينة:</span>
-                        <LatexRenderer text={question.question} />
+                      <div className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600/30">
+                        <div className="font-bold mb-2 flex items-center gap-2">
+                          <Sparkles className="w-3 h-3 text-blue-500" />
+                          <span>معاينة السؤال:</span>
+                        </div>
+                        <LatexRenderer
+                          text={question.question}
+                          className="text-base text-gray-800 dark:text-gray-200"
+                        />
                       </div>
                     )}
                   </div>
@@ -1171,39 +1203,45 @@ function QuizDashboardPage() {
                         ))}
                       </div>
                     ) : (
-                      question.options.map((option, optionIndex) => (
-                        <div
-                          key={optionIndex}
-                          className="flex items-center gap-2 mb-2"
-                        >
-                          <input
-                            type="radio"
-                            name={`correct-${questionIndex}`}
-                            checked={question.correctAnswer === optionIndex}
-                            onChange={() =>
-                              updateQuestion(
-                                questionIndex,
-                                "correctAnswer",
-                                optionIndex,
-                              )
-                            }
-                            className="text-blue-600"
-                          />
-                          <input
-                            type="text"
-                            value={option}
-                            onChange={(e) =>
-                              updateOption(
-                                questionIndex,
-                                optionIndex,
-                                e.target.value,
-                              )
-                            }
-                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                            placeholder={`الخيار ${optionIndex + 1}`}
-                          />
-                        </div>
-                      ))
+                      <React.Fragment>
+                        {question.options.map((option, optionIndex) => (
+                          <React.Fragment key={optionIndex}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <input
+                                type="radio"
+                                name={`correct-${questionIndex}`}
+                                checked={question.correctAnswer === optionIndex}
+                                onChange={() =>
+                                  updateQuestion(
+                                    questionIndex,
+                                    "correctAnswer",
+                                    optionIndex,
+                                  )
+                                }
+                                className="text-blue-600"
+                              />
+                              <input
+                                type="text"
+                                value={option}
+                                onChange={(e) =>
+                                  updateOption(
+                                    questionIndex,
+                                    optionIndex,
+                                    e.target.value,
+                                  )
+                                }
+                                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                placeholder={`الخيار ${optionIndex + 1}`}
+                              />
+                            </div>
+                            {option && (
+                              <div className="mr-8 mb-3 text-sm p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100/30 dark:border-blue-800/30">
+                                <LatexRenderer text={option} />
+                              </div>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </React.Fragment>
                     )}
                   </div>
 
@@ -1224,6 +1262,11 @@ function QuizDashboardPage() {
                       className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       placeholder="شرح لماذا هذه الإجابة صحيحة..."
                     />
+                    {question.explanation && (
+                      <div className="mt-2 text-sm p-2 bg-green-50/50 dark:bg-green-900/10 rounded-lg border border-green-100/30 dark:border-green-800/30">
+                        <LatexRenderer text={question.explanation} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1280,63 +1323,83 @@ function QuizDashboardPage() {
         {filteredQuizzes.map((quiz: Quiz) => (
           <div
             key={quiz.id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex flex-col h-full border-2 border-purple-500"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <div className="flex-1">
+              <div className="flex items-start justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2">
                   {quiz.title}
                 </h3>
-                {(() => {
-                  try {
-                    const parsed = JSON.parse(quiz.description || "{}");
-                    if (typeof parsed === "object" && parsed !== null) {
+                <span className="shrink-0 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold rounded-lg border border-blue-200 dark:border-blue-800">
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(quiz.description || "{}");
+                      return parsed.subject || quiz.subject || "عام";
+                    } catch {
+                      return quiz.subject || "عام";
+                    }
+                  })()}
+                </span>
+              </div>
+
+              <div className="space-y-2 mb-6">
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(quiz.description || "{}");
+                      const dept = parsed.department || quiz.department;
+                      const year = parsed.year || quiz.year;
+                      
                       return (
-                        <div className="space-y-1 mb-3">
-                          <div className="flex flex-wrap gap-2">
-                            {parsed.subject && (
-                              <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs rounded-full font-medium">
-                                {parsed.subject}
-                              </span>
-                            )}
-                            {parsed.department && (
-                              <span className="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 text-xs rounded-full font-medium">
-                                {parsed.department}
-                              </span>
-                            )}
-                            {quiz.summary_id && (
-                              <span className="px-2 py-0.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs rounded-full font-medium flex items-center gap-1">
-                                <BookOpen className="w-3 h-3" />
-                                مرتبط بملخص
-                              </span>
-                            )}
-                          </div>
-                          {parsed.description && (
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">
-                              {parsed.description}
-                            </p>
+                        <>
+                          {dept && (
+                            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-md">
+                              {dept}
+                            </span>
                           )}
-                        </div>
+                          {year && (
+                            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-md">
+                              {year}
+                            </span>
+                          )}
+                        </>
+                      );
+                    } catch {
+                      return (
+                        <>
+                          {quiz.department && (
+                            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-md">
+                              {quiz.department}
+                            </span>
+                          )}
+                          {quiz.year && (
+                            <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 rounded-md">
+                              {quiz.year}
+                            </span>
+                          )}
+                        </>
                       );
                     }
-                  } catch (e) {}
-                  return quiz.description ? (
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                      {quiz.description}
-                    </p>
-                  ) : null;
-                })()}
-                <p className="text-gray-500 dark:text-gray-500 text-xs">
-                  تم الإنشاء:{" "}
-                  {new Date(quiz.created_at).toLocaleDateString("ar-EG")}
+                  })()}
+                </div>
+
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(quiz.description || "{}");
+                      return parsed.description || "لا يوجد وصف";
+                    } catch {
+                      return quiz.description || "لا يوجد وصف";
+                    }
+                  })()}
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2 pt-4 border-t border-gray-100 dark:border-gray-700/50 mt-auto">
               <button
                 onClick={() => router.push(`/quiz-play/${quiz.id}`)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-bold shadow-lg shadow-green-500/20"
               >
                 <Play className="w-4 h-4" />
                 ابدأ
@@ -1345,17 +1408,17 @@ function QuizDashboardPage() {
                 <>
                   <button
                     onClick={() => handleEditQuiz(quiz)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                    title="تعديل"
                   >
                     <Edit className="w-4 h-4" />
-                    تعديل
                   </button>
                   <button
                     onClick={() => handleDeleteQuiz(quiz.id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                    className="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                    title="حذف"
                   >
                     <Trash2 className="w-4 h-4" />
-                    حذف
                   </button>
                 </>
               )}
@@ -1390,5 +1453,3 @@ function QuizDashboardPage() {
     </div>
   );
 }
-
-export default QuizDashboardPage;

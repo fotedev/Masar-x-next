@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { Json } from '@/types/database';
 
 export const chatHelpers = {
     /**
@@ -9,7 +10,7 @@ export const chatHelpers = {
         actionType: string;
         contentType: string;
         contentId?: string;
-        metadata?: Record<string, any>;
+        metadata?: Json;
     }) {
         try {
             await supabase.from('analytics').insert({

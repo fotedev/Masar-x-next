@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabase";
-import { ReviewDetails } from "../types/database";
+import { ReviewDetails, ReviewInsert } from "../types/database";
 
 export function useReviews(contentId: string, contentType: "summary" | "quiz" | "course" = "summary") {
     const [reviews, setReviews] = useState<ReviewDetails[]>([]);
@@ -33,7 +33,7 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
         }
     }, [contentId, contentType]);
 
-    const addReview = async (review: any) => {
+    const addReview = async (review: ReviewInsert) => {
         try {
             const { error } = await supabase
                 .from("reviews")
@@ -41,8 +41,8 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) throw error;
             await fetchReviews();
-        } catch (err) {
-            throw err;
+        } catch (error) {
+            throw error;
         }
     };
 
@@ -55,8 +55,8 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) throw error;
             setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-        } catch (err) {
-            throw err;
+        } catch (error) {
+            throw error;
         }
     };
 
