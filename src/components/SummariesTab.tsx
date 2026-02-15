@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Eye,
   Trash2,
@@ -63,7 +63,8 @@ export function SummariesTab({
 
     // Sort
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortBy) {
         case "title":
@@ -98,7 +99,7 @@ export function SummariesTab({
   const currentSummaries = filteredSummaries.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, sortBy, sortOrder]);
   if (summaries.length === 0) {
@@ -164,7 +165,11 @@ export function SummariesTab({
               id="summaries-status-filter"
               name="summariesStatusFilter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value as "all" | "pending" | "approved" | "rejected",
+                )
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             >
               <option value="all">جميع الحالات</option>
@@ -183,7 +188,9 @@ export function SummariesTab({
               id="summaries-sort-by"
               name="summariesSortBy"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) =>
+                setSortBy(e.target.value as "date" | "title" | "subject")
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             >
               <option value="date">ترتيب بالتاريخ</option>
