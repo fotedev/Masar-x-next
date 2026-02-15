@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Upload, Save } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useSubjects } from "../hooks/useSubjects";
 import type { Summary, SummaryWithRatings } from "../types/database";
 import { FileDropzone } from "./FileDropzone";
 import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
@@ -20,6 +21,7 @@ export function EditSummaryModal({
   onSave,
 }: EditSummaryModalProps) {
   const { user } = useAuth();
+  const { subjects } = useSubjects();
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -199,15 +201,21 @@ export function EditSummaryModal({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               اسم المادة <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
               required
               value={formData.subject}
               onChange={(e) =>
                 setFormData({ ...formData, subject: e.target.value })
               }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            />
+            >
+              <option value="">اختر المادة</option>
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.name}>
+                  {subject.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
