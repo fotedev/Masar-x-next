@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
@@ -12,7 +12,7 @@ import { useNotifications as useDbNotifications } from "../../hooks/useNotificat
 import { useSubjects } from "../../hooks/useSubjects";
 import type { SummaryInsert } from "../../types/database";
 import { FileDropzone } from "../../components/FileDropzone";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../../constants/academic";
+import { useAcademicOptions } from "../../hooks/useAcademicOptions";
 
 export default function AddSummaryPage() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function AddSummaryPage() {
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
   const { subjects } = useSubjects();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -40,6 +41,29 @@ export default function AddSummaryPage() {
   const [attachmentType, setAttachmentType] = useState<"file" | "link">("file");
   const [driveLink, setDriveLink] = useState<string>("");
 
+  const availableDepartments = useMemo(() => {
+    if (!formData.year) return [];
+    return getDepartmentsForLevelName(formData.year);
+  }, [formData.year, getDepartmentsForLevelName]);
+
+  useEffect(() => {
+    if (!formData.year) {
+      if (formData.department) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+      return;
+    }
+
+    if (formData.department) {
+      const exists = availableDepartments.some(
+        (d) => d.name === formData.department,
+      );
+      if (!exists) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+    }
+  }, [availableDepartments, formData.department, formData.year]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -48,6 +72,12 @@ export default function AddSummaryPage() {
     setUploadStage("");
 
     try {
+      if (!user?.id) {
+        setError("يجب تسجيل الدخول لإرسال الملخص");
+        setLoading(false);
+        return;
+      }
+
       // Validate attachment data
       if (attachmentType === "link" && driveLink.trim()) {
         // Basic URL validation
@@ -124,7 +154,7 @@ export default function AddSummaryPage() {
             ? cloudinaryResult?.url || null
             : driveLink || null,
         status: "pending",
-        user_id: user?.id || "",
+        user_id: user?.id ?? null,
       };
 
       const { data: insertedData, error: insertError } = await supabase
@@ -174,8 +204,15 @@ export default function AddSummaryPage() {
       setTimeout(() => {
         router.push("/");
       }, 2000);
-    } catch {
-      setError("حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مرة أخرى.");
+    } catch (err) {
+      const message =
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        typeof (err as { message?: unknown }).message === "string"
+          ? (err as { message: string }).message
+          : "حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مرة أخرى.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -270,12 +307,13 @@ export default function AddSummaryPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, department: e.target.value })
                 }
+                disabled={!formData.year || availableDepartments.length === 0}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر التخصص</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {availableDepartments.map((dept) => (
+                  <option key={dept.id} value={dept.name}>
+                    {dept.name}
                   </option>
                 ))}
               </select>
@@ -295,14 +333,18 @@ export default function AddSummaryPage() {
                 autoComplete="off"
                 value={formData.year}
                 onChange={(e) =>
-                  setFormData({ ...formData, year: e.target.value })
+                  setFormData({
+                    ...formData,
+                    year: e.target.value,
+                    department: "",
+                  })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر المستوي</option>
-                {ACADEMIC_LEVELS.map((level) => (
-                  <option key={level} value={level}>
-                    {level}
+                {levels.map((lvl) => (
+                  <option key={lvl.id} value={lvl.name}>
+                    {lvl.name}
                   </option>
                 ))}
               </select>

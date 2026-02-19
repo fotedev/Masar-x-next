@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Upload, Save } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useSubjects } from "../hooks/useSubjects";
 import type { Summary, SummaryWithRatings } from "../types/database";
 import { FileDropzone } from "./FileDropzone";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
+import { useAcademicOptions } from "../hooks/useAcademicOptions";
 
 interface EditSummaryModalProps {
   summary: Summary | SummaryWithRatings | null;
@@ -22,6 +22,7 @@ export function EditSummaryModal({
 }: EditSummaryModalProps) {
   const { user } = useAuth();
   const { subjects } = useSubjects();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -50,6 +51,29 @@ export function EditSummaryModal({
       setError("");
     }
   }, [summary, isOpen]);
+
+  const availableDepartments = useMemo(() => {
+    if (!formData.year) return [];
+    return getDepartmentsForLevelName(formData.year);
+  }, [formData.year, getDepartmentsForLevelName]);
+
+  useEffect(() => {
+    if (!formData.year) {
+      if (formData.department) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+      return;
+    }
+
+    if (formData.department) {
+      const exists = availableDepartments.some(
+        (d) => d.name === formData.department,
+      );
+      if (!exists) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+    }
+  }, [formData.year, formData.department, availableDepartments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,12 +188,13 @@ export function EditSummaryModal({
                 onChange={(e) =>
                   setFormData({ ...formData, department: e.target.value })
                 }
+                disabled={!formData.year || availableDepartments.length === 0}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر التخصص</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {availableDepartments.map((dept) => (
+                  <option key={dept.id} value={dept.name}>
+                    {dept.name}
                   </option>
                 ))}
               </select>
@@ -183,14 +208,18 @@ export function EditSummaryModal({
                 required
                 value={formData.year}
                 onChange={(e) =>
-                  setFormData({ ...formData, year: e.target.value })
+                  setFormData({
+                    ...formData,
+                    year: e.target.value,
+                    department: "",
+                  })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر المستوى</option>
-                {ACADEMIC_LEVELS.map((level) => (
-                  <option key={level} value={level}>
-                    {level}
+                {levels.map((level) => (
+                  <option key={level.id} value={level.name}>
+                    {level.name}
                   </option>
                 ))}
               </select>
