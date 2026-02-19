@@ -21,8 +21,8 @@ export function EditSummaryModal({
   onSave,
 }: EditSummaryModalProps) {
   const { user } = useAuth();
-  const { subjects } = useSubjects();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const [semester, setSemester] = useState<number>(1);
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -45,12 +45,24 @@ export function EditSummaryModal({
         department: summary.department,
         content: summary.content,
       });
+      setSemester(1);
       setPdfFile(null);
       setAttachmentType("file");
       setDriveLink("");
       setError("");
     }
   }, [summary, isOpen]);
+
+  const selectedLevelNumber = useMemo(() => {
+    if (!formData.year) return null;
+    const found = levels.find((l) => l.name === formData.year);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [formData.year, levels]);
+
+  const { subjects } = useSubjects({
+    level: selectedLevelNumber,
+    semester: typeof semester === "number" ? semester : null,
+  });
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
@@ -180,6 +192,56 @@ export function EditSummaryModal({
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                المستوى الدراسي <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={formData.year}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    year: e.target.value,
+                    department: "",
+                    subject: "",
+                  })
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">اختر المستوى</option>
+                {levels.map((level) => (
+                  <option key={level.id} value={level.name}>
+                    {level.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                الترم <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={semester}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  setSemester(next);
+                  setFormData((prev) => ({
+                    ...prev,
+                    department: "",
+                    subject: "",
+                  }));
+                }}
+                disabled={!formData.year}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+              >
+                <option value={1}>ترم 1</option>
+                <option value={2}>ترم 2</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 التخصص <span className="text-red-500">*</span>
               </label>
               <select
@@ -195,31 +257,6 @@ export function EditSummaryModal({
                 {availableDepartments.map((dept) => (
                   <option key={dept.id} value={dept.name}>
                     {dept.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                المستوى الدراسي <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.year}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    year: e.target.value,
-                    department: "",
-                  })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">اختر المستوى</option>
-                {levels.map((level) => (
-                  <option key={level.id} value={level.name}>
-                    {level.name}
                   </option>
                 ))}
               </select>

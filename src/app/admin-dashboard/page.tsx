@@ -478,7 +478,7 @@ function AdminDashboardContent() {
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
               <option value="">كل المواد</option>
-              {[...new Set(summariesHook.summaries.map((s) => s.subject))]
+              {[...new Set(subjectsHook.subjects.map((s) => s.name))]
                 .sort()
                 .map((subject) => (
                   <option key={subject} value={subject}>

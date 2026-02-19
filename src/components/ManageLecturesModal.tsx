@@ -23,6 +23,12 @@ export function ManageLecturesModal({
   const [lectures, setLectures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLecture, setEditLecture] = useState({
+    id: "" as string,
+    label: "" as string,
+    key: "" as string,
+    orderIndex: "" as string,
+  });
   const [newLecture, setNewLecture] = useState({ title: "", orderIndex: "" });
 
   useEffect(() => {
@@ -193,48 +199,73 @@ export function ManageLecturesModal({
                   className="group flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-transparent hover:border-blue-500/30 transition-all"
                 >
                   {editingId === lec.id ? (
-                    <div className="flex-1 flex gap-3">
-                      <input
-                        type="text"
-                        defaultValue={lec.lecture_label}
-                        id={`edit-label-${lec.id}`}
-                        className="flex-1 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
-                      />
-                      <input
-                        type="number"
-                        defaultValue={lec.order_index}
-                        id={`edit-order-${lec.id}`}
-                        className="w-16 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
-                      />
-                      <button
-                        onClick={() => {
-                          const label = (
-                            document.getElementById(
-                              `edit-label-${lec.id}`,
-                            ) as HTMLInputElement
-                          ).value;
-                          const order = parseInt(
-                            (
-                              document.getElementById(
-                                `edit-order-${lec.id}`,
-                              ) as HTMLInputElement
-                            ).value,
-                          );
-                          handleUpdate(lec.id, {
-                            lecture_label: label,
-                            order_index: order,
-                          });
-                        }}
-                        className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-all"
-                      >
-                        <Save className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div className="flex-1 flex flex-col gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="text"
+                          value={editLecture.label}
+                          onChange={(e) =>
+                            setEditLecture((p) => ({
+                              ...p,
+                              label: e.target.value,
+                            }))
+                          }
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={editLecture.key}
+                          onChange={(e) =>
+                            setEditLecture((p) => ({
+                              ...p,
+                              key: e.target.value,
+                            }))
+                          }
+                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                        />
+                        <input
+                          type="number"
+                          value={editLecture.orderIndex}
+                          onChange={(e) =>
+                            setEditLecture((p) => ({
+                              ...p,
+                              orderIndex: e.target.value,
+                            }))
+                          }
+                          className="w-24 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            const label = (editLecture.label || "").trim();
+                            const key = (editLecture.key || "").trim();
+                            const orderNum = Number(editLecture.orderIndex);
+
+                            if (!label) return;
+                            if (!key) return;
+
+                            handleUpdate(lec.id, {
+                              lecture_label: label,
+                              lecture_key: key,
+                              order_index: Number.isFinite(orderNum)
+                                ? Math.floor(orderNum)
+                                : 999999,
+                              updated_at: new Date().toISOString(),
+                            });
+                          }}
+                          className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-all"
+                        >
+                          <Save className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -248,7 +279,19 @@ export function ManageLecturesModal({
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => setEditingId(lec.id)}
+                          onClick={() => {
+                            setEditingId(lec.id);
+                            setEditLecture({
+                              id: lec.id,
+                              label: lec.lecture_label || "",
+                              key: lec.lecture_key || "",
+                              orderIndex:
+                                lec.order_index === null ||
+                                lec.order_index === undefined
+                                  ? ""
+                                  : String(lec.order_index),
+                            });
+                          }}
                           className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all"
                         >
                           <EditIcon className="w-4 h-4" />
