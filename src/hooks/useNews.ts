@@ -5,8 +5,14 @@ import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
 // Keep track of the inflight request to deduplicate simultaneous calls
 let inflightRequest: Promise<News[]> | null = null;
+let inflightActiveOnlyRequest: Promise<News[]> | null = null;
 
-export function useNews() {
+type UseNewsOptions = {
+  includeInactive?: boolean;
+};
+
+export function useNews(options: UseNewsOptions = {}) {
+  const { includeInactive = false } = options;
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddNews, setShowAddNews] = useState(false);
@@ -24,7 +30,7 @@ export function useNews() {
     try {
       setLoading(true);
 
-      const cacheKey = cacheKeys.news();
+      const cacheKey = includeInactive ? cacheKeys.news() : "news_active";
 
       // Check cache first
       if (!skipCache) {
@@ -36,27 +42,42 @@ export function useNews() {
         }
       }
 
+      const activeOnly = !includeInactive;
+      const currentInflight = activeOnly
+        ? inflightActiveOnlyRequest
+        : inflightRequest;
+
       // If there's an inflight request, wait for it instead of starting a new one
-      if (inflightRequest) {
-        const data = await inflightRequest;
+      if (currentInflight) {
+        const data = await currentInflight;
         setNews(data);
         setLoading(false);
         return;
       }
 
       // Start a new request
-      inflightRequest = (async () => {
-        const { data, error } = await supabase
+      const request = (async () => {
+        const query = supabase
           .from("news")
           .select("*")
           .order("created_at", { ascending: false })
           .limit(30);
 
+        const { data, error } = activeOnly
+          ? await query.eq("is_active", true)
+          : await query;
+
         if (error) throw error;
         return data || [];
       })();
 
-      const newsData = await inflightRequest;
+      if (activeOnly) {
+        inflightActiveOnlyRequest = request;
+      } else {
+        inflightRequest = request;
+      }
+
+      const newsData = await request;
       setNews(newsData);
 
       // Cache the result
@@ -65,9 +86,10 @@ export function useNews() {
       // ignore
     } finally {
       inflightRequest = null;
+      inflightActiveOnlyRequest = null;
       setLoading(false);
     }
-  }, []);
+  }, [includeInactive]);
 
   const addNews = async (
     newsData: Database["public"]["Tables"]["news"]["Insert"],
@@ -115,6 +137,7 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
+      queryCache.delete("news_active");
 
       return data;
     } catch {
@@ -137,6 +160,7 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
+      queryCache.delete("news_active");
     } catch {
       // ignore
     }
@@ -156,6 +180,7 @@ export function useNews() {
 
       // Invalidate cache
       queryCache.delete(cacheKeys.news());
+      queryCache.delete("news_active");
     } catch {
       // ignore
     }

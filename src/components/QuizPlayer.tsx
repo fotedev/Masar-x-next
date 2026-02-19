@@ -18,6 +18,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { LatexRenderer } from "./LatexRenderer";
 import { useQuizAttempt } from "../hooks/useQuizAttempt";
+import { ReviewSection } from "./ReviewSection";
 
 interface QuizPlayerProps {
   quizId: string;
@@ -400,6 +401,10 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
           >
             العودة للرئيسية
           </button>
+        </div>
+
+        <div className="mt-10 text-start">
+          <ReviewSection contentId={quizId} contentType="quiz" />
         </div>
       </div>
     );

@@ -85,6 +85,17 @@ export function Footer() {
               </li>
               <li>
                 <Link
+                  href="/faq"
+                  className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
+                >
+                  <span className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    ❓
+                  </span>
+                  <span>الأسئلة الشائعة</span>
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/privacy"
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
@@ -147,7 +158,7 @@ export function Footer() {
                     Aboalayoun
                   </h4>
                   <p className="text-slate-500 dark:text-slate-500 text-xs">
-                    Frontend Developer
+                    AI student
                   </p>
                 </div>
               </div>

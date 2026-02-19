@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Send,
   MessageSquare,
@@ -18,7 +24,8 @@ import { QuizPlayer } from "@/components/QuizPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "@/constants/academic";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import type { DepartmentOption } from "@/hooks/useAcademicOptions";
 import { ALL_SUBJECTS } from "@/constants/subjects";
 import dynamic from "next/dynamic";
 
@@ -60,6 +67,9 @@ import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
   const { user, loading } = useAuth();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions({
+    includeInactive: true,
+  });
   const { trackEvent } = useAnalytics();
   const {
     messages,
@@ -100,6 +110,11 @@ function AiAssistantChatPage() {
   const [submitAcademicLevel, setSubmitAcademicLevel] = useState<string>("");
   const [submitDepartment, setSubmitDepartment] = useState<string>("");
   const [submitSubject, setSubmitSubject] = useState<string>("");
+
+  const availableSubmitDepartments = useMemo<DepartmentOption[]>(() => {
+    if (!submitAcademicLevel) return [];
+    return getDepartmentsForLevelName(submitAcademicLevel);
+  }, [getDepartmentsForLevelName, submitAcademicLevel]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -531,8 +546,10 @@ function AiAssistantChatPage() {
               <button
                 onClick={() => {
                   setShowSubmitForReviewModal(true);
-                  setSubmitAcademicLevel((prev) => prev || ACADEMIC_LEVELS[0]);
-                  setSubmitDepartment((prev) => prev || DEPARTMENTS[0]);
+                  setSubmitAcademicLevel(
+                    (prev) => prev || levels[0]?.name || "",
+                  );
+                  setSubmitDepartment((prev) => prev || "");
                   setSubmitSubject(
                     (prev) => prev || ALL_SUBJECTS[0]?.name || "",
                   );
@@ -575,15 +592,22 @@ function AiAssistantChatPage() {
                 </label>
                 <select
                   value={submitAcademicLevel}
-                  onChange={(e) => setSubmitAcademicLevel(e.target.value)}
+                  onChange={(e) => {
+                    setSubmitAcademicLevel(e.target.value);
+                    setSubmitDepartment("");
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                 >
                   <option value="" disabled>
                     اختر المستوى...
                   </option>
-                  {ACADEMIC_LEVELS.map((lvl) => (
-                    <option key={lvl} value={lvl}>
-                      {lvl}
+                  {levels.map((lvl) => (
+                    <option
+                      key={lvl.id}
+                      value={lvl.name}
+                      disabled={!lvl.is_active}
+                    >
+                      {lvl.name}
                     </option>
                   ))}
                 </select>
@@ -596,14 +620,22 @@ function AiAssistantChatPage() {
                 <select
                   value={submitDepartment}
                   onChange={(e) => setSubmitDepartment(e.target.value)}
+                  disabled={
+                    !submitAcademicLevel ||
+                    availableSubmitDepartments.length === 0
+                  }
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                 >
                   <option value="" disabled>
                     اختر القسم...
                   </option>
-                  {DEPARTMENTS.map((dep) => (
-                    <option key={dep} value={dep}>
-                      {dep}
+                  {availableSubmitDepartments.map((dep) => (
+                    <option
+                      key={dep.id}
+                      value={dep.name}
+                      disabled={!dep.is_active}
+                    >
+                      {dep.name}
                     </option>
                   ))}
                 </select>
