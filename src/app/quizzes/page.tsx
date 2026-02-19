@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubjects } from "@/hooks/useSubjects";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { Quiz, Summary } from "@/types/database";
 import { LatexRenderer } from "@/components/LatexRenderer";
@@ -51,6 +52,8 @@ function QuizDashboardInternal() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
+  const { levels: academicLevels, getDepartmentsForLevelName } =
+    useAcademicOptions();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -89,10 +92,14 @@ function QuizDashboardInternal() {
   const loadQuizzes = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("quizzes")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("quizzes").select("*");
+      if (!isAdmin) {
+        query = query.eq("status", "approved");
+      }
+
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
       setQuizzes(data || []);
@@ -101,7 +108,7 @@ function QuizDashboardInternal() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   const loadMyAttempts = useCallback(async () => {
     if (!user) return;
@@ -229,20 +236,55 @@ function QuizDashboardInternal() {
       ? Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar"))
       : allSubjects.map((s) => s.name).sort((a, b) => a.localeCompare(b, "ar"));
 
+    const derivedYears = Array.from(years)
+      .map((v) => (v || "").trim())
+      .filter(Boolean)
+      .filter((v) => !/^\d+$/.test(v))
+      .sort((a, b) => a.localeCompare(b, "ar"));
+
+    const academicLevelNames = academicLevels
+      .map((l) => (l.name || "").trim())
+      .filter(Boolean);
+
+    const yearOptions =
+      academicLevelNames.length > 0 ? academicLevelNames : derivedYears;
+    const departmentsForSelectedYear = filters.year
+      ? getDepartmentsForLevelName(filters.year).map((d) => d.name)
+      : [];
+
+    const deptOptions = filters.year ? departmentsForSelectedYear : [];
+
     return {
       subjects: subjectList,
-      departments: Array.from(departments).sort((a, b) =>
-        a.localeCompare(b, "ar"),
-      ),
-      years: Array.from(years).sort((a, b) => a.localeCompare(b, "ar")),
+      departments: filters.year ? deptOptions : [], // Return empty departments list when filters.year is empty
+      years: yearOptions,
     };
-  }, [quizzesWithMeta, allSubjects, subjectsLoading]);
+  }, [
+    quizzesWithMeta,
+    allSubjects,
+    subjectsLoading,
+    academicLevels,
+    filters.year,
+    getDepartmentsForLevelName,
+  ]);
 
   const filteredQuizzes = useMemo(() => {
     const s = filters.search.trim().toLowerCase();
+    const allowedSubjects = user
+      ? null
+      : new Set(
+          allSubjects.map((sub) => (sub.name || "").trim()).filter(Boolean),
+        );
 
     return quizzesWithMeta
       .filter(({ quiz, meta }: QuizWithMeta) => {
+        if (
+          allowedSubjects &&
+          meta.subject &&
+          !allowedSubjects.has(meta.subject.trim())
+        )
+          return false;
+
         if (filters.subject && meta.subject !== filters.subject) return false;
         if (filters.department && meta.department !== filters.department)
           return false;
@@ -260,11 +302,13 @@ function QuizDashboardInternal() {
       })
       .map(({ quiz }: QuizWithMeta) => quiz);
   }, [
+    allSubjects,
     filters.department,
     filters.search,
     filters.subject,
     filters.year,
     quizzesWithMeta,
+    user,
   ]);
 
   const handleSaveQuiz = async () => {
@@ -723,6 +767,7 @@ function QuizDashboardInternal() {
             onChange={(e) =>
               setFilters((p) => ({ ...p, department: e.target.value }))
             }
+            disabled={!filters.year || filterOptions.departments.length === 0}
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
             <option value="">كل الأقسام</option>
@@ -736,7 +781,11 @@ function QuizDashboardInternal() {
           <select
             value={filters.year}
             onChange={(e) =>
-              setFilters((p) => ({ ...p, year: e.target.value }))
+              setFilters((p) => ({
+                ...p,
+                year: e.target.value,
+                department: "",
+              }))
             }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
@@ -935,14 +984,18 @@ function QuizDashboardInternal() {
                   onChange={(e) =>
                     setFormData({ ...formData, department: e.target.value })
                   }
+                  disabled={
+                    !formData.year ||
+                    getDepartmentsForLevelName(formData.year).length === 0
+                  }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">اختر التخصص</option>
-                  <option value="ذكاء اصطناعي">ذكاء اصطناعي ☝</option>
-                  <option value="هندسة برمجيات">هندسة برمجيات</option>
-                  <option value="علوم الحاسب ونظم المعلومات">
-                    علوم الحاسب ونظم المعلومات
-                  </option>
+                  {getDepartmentsForLevelName(formData.year).map((dep) => (
+                    <option key={dep.id} value={dep.name}>
+                      {dep.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -954,12 +1007,20 @@ function QuizDashboardInternal() {
                   required
                   value={formData.year}
                   onChange={(e) =>
-                    setFormData({ ...formData, year: e.target.value })
+                    setFormData({
+                      ...formData,
+                      year: e.target.value,
+                      department: "",
+                    })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">اختر المستوي</option>
-                  <option value="المستوى الأول">المستوى الأول</option>
+                  {academicLevels.map((lvl) => (
+                    <option key={lvl.id} value={lvl.name}>
+                      {lvl.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
