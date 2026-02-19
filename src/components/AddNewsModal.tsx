@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X, Upload } from "lucide-react";
 import Image from "next/image";
 import { Database } from "../types/database";
 import { uploadToCloudinary } from "../lib/cloudinary";
 import { FileDropzone } from "./FileDropzone";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
+import { useAcademicOptions } from "../hooks/useAcademicOptions";
 import { useAuth } from "../contexts/AuthContext";
+import { useSubjects } from "../hooks/useSubjects";
 
 interface AddNewsModalProps {
   showAddNews: boolean;
@@ -28,11 +29,20 @@ export function AddNewsModal({
   onAddNews,
 }: AddNewsModalProps) {
   const { user } = useAuth();
+  const { subjects, loading: subjectsLoading } = useSubjects();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions({
+    includeInactive: true,
+  });
   const [fileFile, setFileFile] = useState<File | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [customCategory, setCustomCategory] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const availableDepartments = useMemo(() => {
+    if (!newNews.year) return [];
+    return getDepartmentsForLevelName(newNews.year);
+  }, [newNews.year, getDepartmentsForLevelName]);
 
   if (!showAddNews) return null;
 
@@ -177,14 +187,18 @@ export function AddNewsModal({
                 <select
                   value={newNews.year || ""}
                   onChange={(e) =>
-                    onSetNewNews({ ...newNews, year: e.target.value || null })
+                    onSetNewNews({
+                      ...newNews,
+                      year: e.target.value || null,
+                      department: null,
+                    })
                   }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">كل المستويات</option>
-                  {ACADEMIC_LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
+                  {levels.map((level) => (
+                    <option key={level.id} value={level.name}>
+                      {level.name}
                     </option>
                   ))}
                 </select>
@@ -202,12 +216,13 @@ export function AddNewsModal({
                       department: e.target.value || null,
                     })
                   }
+                  disabled={!newNews.year || availableDepartments.length === 0}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">كل الأقسام</option>
-                  {DEPARTMENTS.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
+                  {availableDepartments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
                     </option>
                   ))}
                 </select>
@@ -217,8 +232,7 @@ export function AddNewsModal({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   المادة (اختياري)
                 </label>
-                <input
-                  type="text"
+                <select
                   value={newNews.subject || ""}
                   onChange={(e) =>
                     onSetNewNews({
@@ -226,9 +240,18 @@ export function AddNewsModal({
                       subject: e.target.value || null,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="اسم المادة"
-                />
+                  disabled={subjectsLoading}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
+                >
+                  <option value="">
+                    {subjectsLoading ? "جاري تحميل المواد..." : "كل المواد"}
+                  </option>
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

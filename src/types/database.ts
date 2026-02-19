@@ -52,6 +52,8 @@ export type Database = {
           full_name: string | null
           avatar_url: string | null
           website: string | null
+          level?: number | null
+          semester?: number | null
         }
         Insert: {
           id: string
@@ -60,6 +62,8 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           website?: string | null
+          level?: number | null
+          semester?: number | null
         }
         Update: {
           id?: string
@@ -68,6 +72,8 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           website?: string | null
+          level?: number | null
+          semester?: number | null
         }
       }
       summaries: {
@@ -611,18 +617,39 @@ export type Database = {
           id: string
           name: string
           show_on_home: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status: "pending" | "approved" | "rejected"
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           show_on_home?: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: "pending" | "approved" | "rejected"
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           show_on_home?: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: "pending" | "approved" | "rejected"
           created_at?: string
         }
       }
