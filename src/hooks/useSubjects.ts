@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { Subject } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
-import { usePlatformSettings } from "./usePlatformSettings";
+import { useUserAcademic } from "@/hooks/useUserAcademic";
+import { useAuth } from "../contexts/AuthContext";
 
 type SubjectWithSemester = Subject & {
     semester?: string | number | null;
@@ -11,13 +12,17 @@ type SubjectWithSemester = Subject & {
 export function useSubjects() {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
-    const { activeSemester, loading: semesterLoading } = usePlatformSettings();
+    const { academic, loading: academicLoading } = useUserAcademic();
+    const { user } = useAuth();
 
     const fetchSubjects = useCallback(async (skipCache = false) => {
         try {
             setLoading(true);
+            const isAnonymous = !user;
+            const effectiveLevel = academic.level ?? 1;
+            const effectiveSemester = academic.semester ?? (isAnonymous ? 2 : 1);
             const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
-            const cacheKey = `${cacheKeyBase}:sem:${activeSemester}`;
+            const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}`;
 
             // Check cache first
             if (!skipCache && queryCache.get) {
@@ -38,11 +43,22 @@ export function useSubjects() {
 
             const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
 
-            // Filter by semester if present on subjects or platform setting
+            // Filter by semester/level if present on subjects. If the column is not present or null, include it.
             const filtered = subjectData.filter((s) => {
-                // If subject has semester column, match it. If not present, include it.
-                if (s.semester === undefined || s.semester === null) return true;
-                return Number(s.semester) === Number(activeSemester || 1);
+                const semesterMatch = (() => {
+                    if (s.semester === undefined || s.semester === null) return true;
+                    return Number(s.semester) === Number(effectiveSemester);
+                })();
+
+                const levelMatch = (() => {
+                    const anyS = s as unknown as { level?: number | null };
+                    if (anyS.level === undefined || anyS.level === null) return true;
+                    return Number(anyS.level) === Number(effectiveLevel);
+                })();
+
+                const visibilityMatch = isAnonymous ? Boolean(s.show_on_home) : true;
+
+                return semesterMatch && levelMatch && visibilityMatch;
             });
 
             setSubjects(filtered as Subject[]);
@@ -56,7 +72,7 @@ export function useSubjects() {
         } finally {
             setLoading(false);
         }
-    }, [activeSemester]);
+    }, [academic.level, academic.semester, user]);
 
     const updateSubjectVisibility = async (id: string, showOnHome: boolean) => {
         try {
@@ -72,7 +88,7 @@ export function useSubjects() {
 
             // Invalidate cache
             const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
-            const cacheKey = `${cacheKeyBase}:sem:${activeSemester}`;
+            const cacheKey = `${cacheKeyBase}:lvl:${academic.level ?? 1}:sem:${academic.semester ?? 1}`;
             if (queryCache.delete) {
                 queryCache.delete(cacheKey);
             }
@@ -82,10 +98,10 @@ export function useSubjects() {
     };
 
     useEffect(() => {
-        if (!semesterLoading) {
+        if (!academicLoading) {
             fetchSubjects();
         }
-    }, [semesterLoading, fetchSubjects]);
+    }, [academicLoading, fetchSubjects]);
 
     return {
         subjects,

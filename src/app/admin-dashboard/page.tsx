@@ -12,8 +12,10 @@ import {
   Layout,
   GraduationCap,
   CreditCard,
+  School,
 } from "lucide-react";
 import { useSummaries } from "../../hooks/useSummaries";
+import { useSubjects } from "../../hooks/useSubjects";
 import { useNews } from "../../hooks/useNews";
 import { useAppeals } from "../../hooks/useAppeals";
 import { useQuizzes } from "../../hooks/useQuizzes";
@@ -28,8 +30,13 @@ import { PageManagementTab } from "../../components/PageManagementTab";
 import { CoursesTab } from "../../components/CoursesTab";
 import { EnrollmentsTab } from "../../components/EnrollmentsTab";
 import { AddCourseModal } from "../../components/AddCourseModal";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../../constants/academic";
+import { SubjectsTab } from "../../components/SubjectsTab";
+import { AddSubjectModal } from "../../components/AddSubjectModal";
+import { ManageLecturesModal } from "../../components/ManageLecturesModal";
 import { useAuth } from "../../contexts/AuthContext";
+import { usePlatformSettings } from "../../hooks/usePlatformSettings";
+import { useAcademicOptions } from "../../hooks/useAcademicOptions";
+import { supabase } from "../../lib/supabase";
 import type { SummaryWithRatings, Course } from "../../types/database";
 
 // Memoized tab components to prevent unnecessary re-renders
@@ -41,6 +48,7 @@ const MemoizedPageManagementTab = memo(PageManagementTab);
 const MemoizedAdminAnalyticsPage = memo(AdminAnalyticsPage);
 const MemoizedCoursesTab = memo(CoursesTab);
 const MemoizedEnrollmentsTab = memo(EnrollmentsTab);
+const MemoizedSubjectsTab = memo(SubjectsTab);
 
 function AdminDashboard() {
   const router = useRouter();
@@ -89,6 +97,8 @@ function AdminDashboard() {
 function AdminDashboardContent() {
   const router = useRouter();
   const { adminRole } = useAuth();
+  const { activeSemester } = usePlatformSettings();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [activeTab, setActiveTab] = useState(
     adminRole === "doctor" ? "courses" : "summaries",
   );
@@ -97,13 +107,33 @@ function AdminDashboardContent() {
     department: "",
     year: "",
   });
+
+  const availableDepartments = useMemo(() => {
+    if (!globalFilters.year) return [];
+    return getDepartmentsForLevelName(globalFilters.year);
+  }, [getDepartmentsForLevelName, globalFilters.year]);
+  const newsHook = useNews({ includeInactive: true });
   const [showAddCourse, setShowAddCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<any | null>(null);
+  const [showManageLectures, setShowManageLectures] = useState(false);
+  const [selectedSubjectForLectures, setSelectedSubjectForLectures] =
+    useState<string>("");
 
   const summariesHook = useSummaries();
-  const newsHook = useNews();
+  const subjectsHook = useSubjects();
   const appealsHook = useAppeals();
   const quizzesHook = useQuizzes();
+
+  useEffect(() => {
+    if (globalFilters.year || !activeSemester) return;
+    const idx = activeSemester - 1;
+    const defaultLevel = levels[idx]?.name;
+    if (defaultLevel) {
+      setGlobalFilters((prev) => ({ ...prev, year: defaultLevel }));
+    }
+  }, [activeSemester, globalFilters.year, levels]);
 
   // Apply global filters to all data
   const filteredSummaries = useMemo(() => {
@@ -226,6 +256,42 @@ function AdminDashboardContent() {
     setEditingCourse(null);
   };
 
+  const handleCreateSubject = () => {
+    setEditingSubject(null);
+    setShowAddSubject(true);
+  };
+
+  const handleEditSubject = (subject: any) => {
+    setEditingSubject(subject);
+    setShowAddSubject(true);
+  };
+
+  const handleManageLectures = (subject: any) => {
+    setSelectedSubjectForLectures(subject.name);
+    setShowManageLectures(true);
+  };
+
+  const handleSaveSubject = async (subjectData: any) => {
+    try {
+      if (editingSubject) {
+        const { error } = await supabase
+          .from("subjects")
+          .update(subjectData)
+          .eq("id", editingSubject.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("subjects").insert([subjectData]);
+        if (error) throw error;
+      }
+      subjectsHook.fetchSubjects(true);
+      setShowAddSubject(false);
+      setEditingSubject(null);
+    } catch (error) {
+      console.error("Error saving subject:", error);
+      throw error;
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "courses":
@@ -240,6 +306,16 @@ function AdminDashboardContent() {
           <div className="p-8 text-center text-gray-500">
             ليس لديك صلاحية الوصول لإدارة الكورسات
           </div>
+        );
+      case "subjects":
+        return (
+          <MemoizedSubjectsTab
+            subjects={subjectsHook.subjects}
+            onRefresh={() => subjectsHook.fetchSubjects(true)}
+            onEdit={handleEditSubject}
+            onAdd={handleCreateSubject}
+            onManageLectures={handleManageLectures}
+          />
         );
       case "summaries":
         return (
@@ -354,14 +430,18 @@ function AdminDashboardContent() {
             <select
               value={globalFilters.year}
               onChange={(e) =>
-                setGlobalFilters((prev) => ({ ...prev, year: e.target.value }))
+                setGlobalFilters((prev) => ({
+                  ...prev,
+                  year: e.target.value,
+                  department: "",
+                }))
               }
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
               <option value="">كل المستويات</option>
-              {ACADEMIC_LEVELS.map((level) => (
-                <option key={level} value={level}>
-                  {level}
+              {levels.map((level) => (
+                <option key={level.id} value={level.name}>
+                  {level.name}
                 </option>
               ))}
             </select>
@@ -374,12 +454,15 @@ function AdminDashboardContent() {
                   department: e.target.value,
                 }))
               }
+              disabled={
+                !globalFilters.year || availableDepartments.length === 0
+              }
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
               <option value="">كل الأقسام</option>
-              {DEPARTMENTS.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
+              {availableDepartments.map((dept) => (
+                <option key={dept.id} value={dept.name}>
+                  {dept.name}
                 </option>
               ))}
             </select>
@@ -436,6 +519,17 @@ function AdminDashboardContent() {
               الكورسات
             </button>
           )}
+          <button
+            onClick={() => setActiveTab("subjects")}
+            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
+              activeTab === "subjects"
+                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            }`}
+          >
+            <School className="w-4 h-4" />
+            المواد
+          </button>
           {adminRole === "doctor" && (
             <button
               onClick={() => setActiveTab("enrollments")}
@@ -555,6 +649,25 @@ function AdminDashboardContent() {
           setEditingCourse(null);
         }}
         onSave={handleSaveCourse}
+      />
+
+      <AddSubjectModal
+        show={showAddSubject}
+        editingSubject={editingSubject}
+        onClose={() => {
+          setShowAddSubject(false);
+          setEditingSubject(null);
+        }}
+        onSave={handleSaveSubject}
+      />
+
+      <ManageLecturesModal
+        show={showManageLectures}
+        subjectName={selectedSubjectForLectures}
+        onClose={() => {
+          setShowManageLectures(false);
+          setSelectedSubjectForLectures("");
+        }}
       />
     </div>
   );
