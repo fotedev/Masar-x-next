@@ -67,7 +67,7 @@ Masar X هو منصة تعليمية شاملة مبنية بـ React/TypeScript
 - `/page.tsx`: الصفحة الرئيسية مع التنقل الذكي
 - `/news/page.tsx`: الأخبار والإعلانات
 - `/subjects/page.tsx`: تصفح المواد الدراسية
-- `/subjects/[id]/page.tsx`: تلخيصات المادة المحددة
+- `/subjects/[subject]/page.tsx`: صفحة المادة (محاضرات/محتوى المادة)
 
 **نظام المصادقة:**
 - `/login/page.tsx`: تسجيل الدخول
@@ -346,6 +346,7 @@ npx supabase db remote commit  # للإنتاج
 - تحكم إداري محسن في المواد الدراسية
 - تدفق إعادة تعيين كلمة المرور المحسن
 - فلترة والبحث المتقدم في الدورات
+- تحديث صفحة المادة لتصبح Lecture-first: قائمة محاضرات طولية مع زر "عرض"، وعند اختيار محاضرة يتم عرض تبويبات (ملخصات/فيديوهات/ملفات/امتحانات) مفلترة حسب المحاضرة. حاليًا تحديد المحاضرة يتم باستنتاجها من عناوين المحتوى (`title`) لعدم وجود جدول/عمود lectures في قاعدة البيانات.
 
 ### أعمال الأمان والتشغيل (فبراير 2026)
 - أضفنا قيد فريد على `rate_limits(identifier, endpoint)` لدعم عمليات `ON CONFLICT` الآمنة.
@@ -377,4 +378,7 @@ npx supabase db remote commit  # للإنتاج
 - Frontend pages and components updated across `src/app/`
 - New/backup Supabase migration SQL files added
 - Security updates to password reset flow and storage policies
+
+## Recent edits (16 Feb 2026)
+- Refactor subject detail page to lecture-first view with lecture sidebar and per-lecture filtered tabs in `src/app/subjects/[subject]/page.tsx`.
  

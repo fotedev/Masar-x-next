@@ -32,7 +32,18 @@ export function AddFileForm() {
 
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
-    setFormData((prev) => ({ ...prev, subject }));
+    const lectureKey = searchParams.get("lecture") || "";
+    
+    setFormData((prev) => {
+      let title = prev.title;
+      // Only pre-fill title if it's empty and we have a lecture key in format "lec-N"
+      if (!title && lectureKey && lectureKey.startsWith("lec-")) {
+        const lectureNum = lectureKey.replace("lec-", "");
+        title = `محاضرة ${lectureNum}: `;
+      }
+      
+      return { ...prev, subject, title: title || prev.title };
+    });
   }, [searchParams]);
 
   const [file, setFile] = useState<File | null>(null);

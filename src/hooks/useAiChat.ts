@@ -24,7 +24,7 @@ export function useAiChat(user: any, trackEvent: any) {
   const [dailyMessageCount, setDailyMessageCount] = useState(0);
   const [loadingMessageCount, setLoadingMessageCount] = useState(true);
   const [isPuterSignedIn, setIsPuterSignedIn] = useState(false);
-  const [mode, setMode] = useState<AiAssistantMode>('group_rag');
+  const [mode, setMode] = useState<AiAssistantMode>('cs_assistant');
 
   const chatStorageKey = `${CHAT_STORAGE_KEY_PREFIX}_${mode}`;
 
