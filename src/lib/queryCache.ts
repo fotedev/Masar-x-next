@@ -27,11 +27,35 @@ class QueryCache {
      */
     get<T>(key: string): T | null {
         const entry = this.cache.get(key) as CacheEntry<T> | undefined;
+        
+        // Try local storage if not in memory
+        if (!entry && typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem(`cache_${key}`);
+                if (stored) {
+                    const parsed = JSON.parse(stored) as CacheEntry<T>;
+                    const now = Date.now();
+                    if (now - parsed.timestamp < parsed.ttl) {
+                        // Restore to memory cache
+                        this.cache.set(key, parsed);
+                        return parsed.data;
+                    } else {
+                        localStorage.removeItem(`cache_${key}`);
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }
+
         if (!entry) return null;
 
         const now = Date.now();
         if (now - entry.timestamp > entry.ttl) {
             this.cache.delete(key);
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem(`cache_${key}`);
+            }
             return null;
         }
 
@@ -42,11 +66,21 @@ class QueryCache {
      * Set data in cache with a TTL (in milliseconds)
      */
     set<T>(key: string, data: T, ttlMs: number): void {
-        this.cache.set(key, {
+        const entry: CacheEntry<T> = {
             data,
             timestamp: Date.now(),
             ttl: ttlMs,
-        });
+        };
+        this.cache.set(key, entry);
+        
+        // Also persist to local storage for important keys
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem(`cache_${key}`, JSON.stringify(entry));
+            } catch {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -54,6 +88,9 @@ class QueryCache {
      */
     invalidate(key: string): void {
         this.cache.delete(key);
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem(`cache_${key}`);
+        }
     }
 
     /**
@@ -69,7 +106,21 @@ class QueryCache {
     invalidatePrefix(prefix: string): void {
         for (const key of this.cache.keys()) {
             if (key.startsWith(prefix)) {
-                this.cache.delete(key);
+                this.invalidate(key);
+            }
+        }
+        
+        // Also check localStorage
+        if (typeof window !== 'undefined') {
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith(`cache_${prefix}`)) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            } catch {
+                // ignore
             }
         }
     }
@@ -79,6 +130,18 @@ class QueryCache {
      */
     invalidateAll(): void {
         this.cache.clear();
+        if (typeof window !== 'undefined') {
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('cache_')) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -102,16 +165,21 @@ export const cacheKeys = {
     subjects: () => 'subjects_all',
     videos: () => 'videos_all',
     files: () => 'files_all',
+    subjectLectures: (subject: string) => `lectures_${subject}`,
+    subjectDetails: (subject: string) => `subject_details_${subject}`,
 };
 
 // Default TTL values (in milliseconds)
 export const cacheTTL = {
-    notifications: 30 * 1000,  // 30 seconds
-    summaries: 60 * 1000,      // 1 minute
-    news: 60 * 1000,           // 1 minute
-    appeals: 60 * 1000,        // 1 minute
-    profile: 5 * 60 * 1000,    // 5 minutes
-    subjects: 60 * 60 * 1000,  // 1 hour
-    videos: 60 * 1000,         // 1 minute
-    files: 60 * 1000,          // 1 minute
+    notifications: 5 * 60 * 1000,   // 5 minutes (was 30s)
+    summaries: 60 * 60 * 1000,      // 1 hour (was 1m)
+    news: 60 * 60 * 1000,           // 1 hour (was 1m)
+    appeals: 30 * 60 * 1000,        // 30 minutes (was 1m)
+    profile: 2 * 60 * 60 * 1000,    // 2 hours (was 5m)
+    subjects: 48 * 60 * 60 * 1000,  // 48 hours (was 1h)
+    videos: 60 * 60 * 1000,         // 1 hour (was 5m)
+    files: 60 * 60 * 1000,          // 1 hour (was 5m)
+    lectures: 2 * 60 * 60 * 1000,   // 2 hours (was 10m)
+    subjectDetails: 48 * 60 * 60 * 1000, // 48 hours
+    quizzes: 60 * 60 * 1000,        // 1 hour
 };

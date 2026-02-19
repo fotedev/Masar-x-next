@@ -19,9 +19,12 @@ import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubjects } from "@/hooks/useSubjects";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { Quiz, Summary } from "@/types/database";
 import { LatexRenderer } from "@/components/LatexRenderer";
+import { toast } from "sonner";
+import { queryCache, cacheTTL } from "@/lib/queryCache";
 
 interface QuizWithMeta {
   quiz: Quiz;
@@ -29,6 +32,7 @@ interface QuizWithMeta {
     subject: string;
     department: string;
     year: string;
+    semester: string;
     descriptionText: string;
   };
 }
@@ -51,6 +55,8 @@ function QuizDashboardInternal() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
+  const { levels: academicLevels, getDepartmentsForLevelName } =
+    useAcademicOptions();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -65,6 +71,7 @@ function QuizDashboardInternal() {
     subject: "",
     department: "",
     year: "",
+    semester: "",
   });
   const [formData, setFormData] = useState({
     title: "",
@@ -72,6 +79,7 @@ function QuizDashboardInternal() {
     durationMinutes: "",
     department: "",
     year: "",
+    semester: "",
     subject: "",
     summaryId: "",
     questions: [
@@ -86,22 +94,59 @@ function QuizDashboardInternal() {
     ],
   });
 
-  const loadQuizzes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("quizzes")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const selectedFormLevelNumber = useMemo(() => {
+    if (!formData.year) return null;
+    const found = academicLevels.find((l) => l.name === formData.year);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [academicLevels, formData.year]);
 
-      if (error) throw error;
-      setQuizzes(data || []);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const selectedFormSemesterNumber = useMemo(() => {
+    if (!formData.year) return undefined;
+    if (!formData.semester) return null;
+    const n = Number(formData.semester);
+    return Number.isFinite(n) ? n : null;
+  }, [formData.semester, formData.year]);
+
+  const { subjects: filteredSubjectsForForm } = useSubjects({
+    level: formData.year ? selectedFormLevelNumber : undefined,
+    semester: selectedFormSemesterNumber,
+  });
+
+  const loadQuizzes = useCallback(
+    async (skipCache = false) => {
+      const cacheKey = `quizzes_all_admin_${isAdmin}`;
+      if (!skipCache) {
+        const cached = queryCache.get<Quiz[]>(cacheKey);
+        if (cached) {
+          setQuizzes(cached);
+          setLoading(false);
+          return;
+        }
+      }
+
+      try {
+        setLoading(true);
+        let query = supabase.from("quizzes").select("*");
+        if (!isAdmin) {
+          query = query.eq("status", "approved");
+        }
+
+        const { data, error } = await query.order("created_at", {
+          ascending: false,
+        });
+
+        if (error) throw error;
+        const dataRows = data || [];
+        setQuizzes(dataRows);
+        queryCache.set(cacheKey, dataRows, cacheTTL.quizzes || 1800000);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isAdmin],
+  );
 
   const loadMyAttempts = useCallback(async () => {
     if (!user) return;
@@ -184,6 +229,7 @@ function QuizDashboardInternal() {
       let department =
         typeof quizRecord.department === "string" ? quizRecord.department : "";
       let year = typeof quizRecord.year === "string" ? quizRecord.year : "";
+      let semester = "";
       let parsedDescription = "";
 
       try {
@@ -195,6 +241,15 @@ function QuizDashboardInternal() {
           if (!department && typeof obj.department === "string")
             department = obj.department;
           if (!year && typeof obj.year === "string") year = obj.year;
+          if (semester === "") {
+            const sem = obj.semester;
+            if (typeof sem === "number" || typeof sem === "string") {
+              const n = Number(sem);
+              if (Number.isFinite(n) && (n === 1 || n === 2)) {
+                semester = String(n);
+              }
+            }
+          }
           if (typeof obj.description === "string")
             parsedDescription = obj.description;
         }
@@ -208,45 +263,114 @@ function QuizDashboardInternal() {
           subject: (subject || "").toString(),
           department: (department || "").toString(),
           year: (year || "").toString(),
+          semester: (semester || "").toString(),
           descriptionText: (parsedDescription || "").toString(),
         },
       };
     });
   }, [quizzes]);
 
+  const selectedLevelNumber = useMemo(() => {
+    if (!filters.year) return null;
+    const found = academicLevels.find((l) => l.name === filters.year);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [academicLevels, filters.year]);
+
+  const selectedSemesterNumber = useMemo(() => {
+    if (!filters.year) return undefined;
+    if (!filters.semester) return null;
+    const n = Number(filters.semester);
+    return Number.isFinite(n) ? n : null;
+  }, [filters.semester, filters.year]);
+
+  const { subjects: filteredSubjectsForFilters } = useSubjects({
+    level: filters.year ? selectedLevelNumber : undefined,
+    semester: selectedSemesterNumber,
+  });
+
   const filterOptions = useMemo(() => {
     const subjects = new Set<string>();
     const departments = new Set<string>();
     const years = new Set<string>();
+    const semesters = new Set<string>();
 
     quizzesWithMeta.forEach(({ meta }: QuizWithMeta) => {
       if (meta.subject) subjects.add(meta.subject);
       if (meta.department) departments.add(meta.department);
       if (meta.year) years.add(meta.year);
+      if (meta.semester) semesters.add(meta.semester);
     });
 
     const subjectList = subjectsLoading
       ? Array.from(subjects).sort((a, b) => a.localeCompare(b, "ar"))
-      : allSubjects.map((s) => s.name).sort((a, b) => a.localeCompare(b, "ar"));
+      : (filters.year ? filteredSubjectsForFilters : allSubjects)
+          .map((s) => s.name)
+          .sort((a, b) => a.localeCompare(b, "ar"));
+
+    const derivedYears = Array.from(years)
+      .map((v) => (v || "").trim())
+      .filter(Boolean)
+      .filter((v) => !/^\d+$/.test(v))
+      .sort((a, b) => a.localeCompare(b, "ar"));
+
+    const academicLevelNames = academicLevels
+      .map((l) => (l.name || "").trim())
+      .filter(Boolean);
+
+    const yearOptions =
+      academicLevelNames.length > 0 ? academicLevelNames : derivedYears;
+    const departmentsForSelectedYear = filters.year
+      ? getDepartmentsForLevelName(filters.year).map((d) => d.name)
+      : [];
+
+    const deptOptions = filters.year ? departmentsForSelectedYear : [];
+
+    const semesterOptions = ["1", "2"].filter((v) => {
+      if (!filters.year) return true;
+      if (semesters.size === 0) return true;
+      return semesters.has(v);
+    });
 
     return {
       subjects: subjectList,
-      departments: Array.from(departments).sort((a, b) =>
-        a.localeCompare(b, "ar"),
-      ),
-      years: Array.from(years).sort((a, b) => a.localeCompare(b, "ar")),
+      departments: filters.year ? deptOptions : [], // Return empty departments list when filters.year is empty
+      years: yearOptions,
+      semesters: semesterOptions,
     };
-  }, [quizzesWithMeta, allSubjects, subjectsLoading]);
+  }, [
+    quizzesWithMeta,
+    allSubjects,
+    filteredSubjectsForFilters,
+    subjectsLoading,
+    academicLevels,
+    filters.semester,
+    filters.year,
+    getDepartmentsForLevelName,
+  ]);
 
   const filteredQuizzes = useMemo(() => {
     const s = filters.search.trim().toLowerCase();
+    const allowedSubjects = user
+      ? null
+      : new Set(
+          allSubjects.map((sub) => (sub.name || "").trim()).filter(Boolean),
+        );
 
     return quizzesWithMeta
       .filter(({ quiz, meta }: QuizWithMeta) => {
+        if (
+          allowedSubjects &&
+          meta.subject &&
+          !allowedSubjects.has(meta.subject.trim())
+        )
+          return false;
+
         if (filters.subject && meta.subject !== filters.subject) return false;
         if (filters.department && meta.department !== filters.department)
           return false;
         if (filters.year && meta.year !== filters.year) return false;
+        if (filters.semester && meta.semester !== filters.semester)
+          return false;
 
         if (!s) return true;
 
@@ -260,11 +384,14 @@ function QuizDashboardInternal() {
       })
       .map(({ quiz }: QuizWithMeta) => quiz);
   }, [
+    allSubjects,
     filters.department,
     filters.search,
+    filters.semester,
     filters.subject,
     filters.year,
     quizzesWithMeta,
+    user,
   ]);
 
   const handleSaveQuiz = async () => {
@@ -370,8 +497,12 @@ function QuizDashboardInternal() {
         if (questionsError) throw questionsError;
       }
 
-      await loadQuizzes();
-      alert("تم حفظ الامتحان بنجاح");
+      await loadQuizzes(true);
+      toast.success("تم حفظ الامتحان بنجاح", {
+        description: editingQuiz
+          ? "تم تحديث بيانات الامتحان بنجاح."
+          : "تمت إضافة الامتحان الجديد إلى المنصة.",
+      });
       setShowCreateForm(false);
       setEditingQuiz(null);
       setFormData({
@@ -380,6 +511,7 @@ function QuizDashboardInternal() {
         durationMinutes: "",
         department: "",
         year: "",
+        semester: "",
         subject: "",
         summaryId: "",
         questions: [
@@ -393,8 +525,12 @@ function QuizDashboardInternal() {
           },
         ],
       });
-    } catch {
-      alert("حدث خطأ أثناء حفظ الامتحان.");
+    } catch (error: any) {
+      console.error("Error saving exam:", error);
+      toast.error("فشل حفظ الامتحان", {
+        description:
+          error.message || "حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.",
+      });
     }
   };
 
@@ -411,6 +547,7 @@ function QuizDashboardInternal() {
       let parsedDescription = quiz.description || "";
       let department = "";
       let year = "";
+      let semester = "";
       let subject = "";
 
       try {
@@ -418,6 +555,7 @@ function QuizDashboardInternal() {
         if (typeof parsed === "object" && parsed !== null) {
           department = parsed.department || "";
           year = parsed.year || "";
+          semester = parsed.semester ? String(parsed.semester) : "";
           subject = parsed.subject || "";
           parsedDescription = parsed.description || "";
         }
@@ -439,6 +577,7 @@ function QuizDashboardInternal() {
         durationMinutes,
         department,
         year,
+        semester,
         subject,
         summaryId: quiz.summary_id || "",
         questions: (questions || []).map((q) => {
@@ -676,23 +815,27 @@ function QuizDashboardInternal() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            إدارة الامتحانات
+            {isAdmin ? "إدارة الامتحانات" : "الامتحانات"}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            إنشاء وإدارة امتحانات المواد
+            {isAdmin
+              ? "إنشاء وإدارة امتحانات المواد"
+              : "تصفح الامتحانات المتاحة حسب المستوى والترم"}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          امتحان جديد
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            امتحان جديد
+          </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             type="text"
             value={filters.search}
@@ -704,39 +847,15 @@ function QuizDashboardInternal() {
           />
 
           <select
-            value={filters.subject}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, subject: e.target.value }))
-            }
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
-          >
-            <option value="">كل المواد</option>
-            {filterOptions.subjects.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.department}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, department: e.target.value }))
-            }
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
-          >
-            <option value="">كل الأقسام</option>
-            {filterOptions.departments.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-
-          <select
             value={filters.year}
             onChange={(e) =>
-              setFilters((p) => ({ ...p, year: e.target.value }))
+              setFilters((p) => ({
+                ...p,
+                year: e.target.value,
+                semester: "",
+                department: "",
+                subject: "",
+              }))
             }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
@@ -747,12 +866,74 @@ function QuizDashboardInternal() {
               </option>
             ))}
           </select>
+
+          <select
+            value={filters.semester}
+            onChange={(e) =>
+              setFilters((p) => ({
+                ...p,
+                semester: e.target.value,
+                department: "",
+                subject: "",
+              }))
+            }
+            disabled={!filters.year}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+          >
+            <option value="">كل الترمات</option>
+            {filterOptions.semesters.map((v) => (
+              <option key={v} value={v}>
+                ترم {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.department}
+            onChange={(e) =>
+              setFilters((p) => ({
+                ...p,
+                department: e.target.value,
+                subject: "",
+              }))
+            }
+            disabled={
+              !filters.year ||
+              !filters.semester ||
+              filterOptions.departments.length === 0
+            }
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+          >
+            <option value="">كل الأقسام</option>
+            {filterOptions.departments.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.subject}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, subject: e.target.value }))
+            }
+            disabled={!filters.year || !filters.semester || !filters.department}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+          >
+            <option value="">كل المواد</option>
+            {filterOptions.subjects.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
         </div>
 
         {(filters.search ||
           filters.subject ||
           filters.department ||
-          filters.year) && (
+          filters.year ||
+          filters.semester) && (
           <div className="mt-3 flex justify-end">
             <button
               onClick={() =>
@@ -761,6 +942,7 @@ function QuizDashboardInternal() {
                   subject: "",
                   department: "",
                   year: "",
+                  semester: "",
                 })
               }
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
@@ -924,28 +1106,7 @@ function QuizDashboardInternal() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  التخصص <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">اختر التخصص</option>
-                  <option value="ذكاء اصطناعي">ذكاء اصطناعي ☝</option>
-                  <option value="هندسة برمجيات">هندسة برمجيات</option>
-                  <option value="علوم الحاسب ونظم المعلومات">
-                    علوم الحاسب ونظم المعلومات
-                  </option>
-                </select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   المستوى الدراسي <span className="text-red-500">*</span>
@@ -954,12 +1115,79 @@ function QuizDashboardInternal() {
                   required
                   value={formData.year}
                   onChange={(e) =>
-                    setFormData({ ...formData, year: e.target.value })
+                    setFormData({
+                      ...formData,
+                      year: e.target.value,
+                      department: "",
+                      semester: "",
+                      subject: "",
+                      summaryId: "",
+                    })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">اختر المستوي</option>
-                  <option value="المستوى الأول">المستوى الأول</option>
+                  {academicLevels.map((lvl) => (
+                    <option key={lvl.id} value={lvl.name}>
+                      {lvl.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  الترم <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.semester}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      semester: e.target.value,
+                      department: "",
+                      subject: "",
+                      summaryId: "",
+                    })
+                  }
+                  disabled={!formData.year}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+                >
+                  <option value="">اختر الترم</option>
+                  <option value="1">ترم 1</option>
+                  <option value="2">ترم 2</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  التخصص <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.department}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      department: e.target.value,
+                      subject: "",
+                      summaryId: "",
+                    })
+                  }
+                  disabled={
+                    !formData.year ||
+                    !formData.semester ||
+                    getDepartmentsForLevelName(formData.year).length === 0
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+                >
+                  <option value="">اختر التخصص</option>
+                  {getDepartmentsForLevelName(formData.year).map((dep) => (
+                    <option key={dep.id} value={dep.name}>
+                      {dep.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -971,16 +1199,25 @@ function QuizDashboardInternal() {
                   required
                   value={formData.subject}
                   onChange={(e) =>
-                    setFormData({ ...formData, subject: e.target.value })
+                    setFormData({
+                      ...formData,
+                      subject: e.target.value,
+                      summaryId: "",
+                    })
+                  }
+                  disabled={
+                    !formData.year || !formData.semester || !formData.department
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">اختر المادة</option>
-                  {allSubjects.map((subject) => (
-                    <option key={subject.id} value={subject.name}>
-                      {subject.name}
-                    </option>
-                  ))}
+                  {(formData.year ? filteredSubjectsForForm : allSubjects).map(
+                    (subject) => (
+                      <option key={subject.id} value={subject.name}>
+                        {subject.name}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
 
@@ -1290,6 +1527,7 @@ function QuizDashboardInternal() {
                     durationMinutes: "",
                     department: "",
                     year: "",
+                    semester: "",
                     subject: "",
                     summaryId: "",
                     questions: [

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
 import { NotificationHeader } from "./NotificationHeader";
@@ -77,15 +77,25 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
     await deleteNotification(notificationId);
   };
 
-  const toggleDropdown = () => {
+  const toggleDropdown = useCallback(() => {
+    if (!isOpen) {
+      const audio = new Audio("/notif.mp3");
+      audio
+        .play()
+        .catch((e) => console.error("Error playing notification sound:", e));
+    }
     setIsOpen(!isOpen);
-  };
+  }, [isOpen]);
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="relative p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+        className={`relative p-2.5 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-offset-gray-900 group ${
+          isOpen
+            ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40"
+            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+        }`}
         title={NOTIFICATION_ACCESSIBILITY.bellButton}
         aria-label={`${NOTIFICATION_ACCESSIBILITY.bellButton}${
           unreadCount > 0 ? ` (${unreadCount} جديد)` : ""
@@ -93,10 +103,12 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
-        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        <Bell
+          className={`w-5.5 h-5.5 transition-transform duration-500 ${isOpen ? "scale-110" : "group-hover:rotate-12"}`}
+        />
         {unreadCount > 0 && (
           <span
-            className={NOTIFICATION_STYLES.badge}
+            className={`${NOTIFICATION_STYLES.badge} ${isOpen ? "border-blue-600" : ""}`}
             aria-label={`${unreadCount} ${NOTIFICATION_ACCESSIBILITY.unreadBadge}`}
           >
             {unreadCount > NOTIFICATION_LIMITS.UNREAD_BADGE_MAX
@@ -130,9 +142,9 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
             <div className={NOTIFICATION_STYLES.footer}>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-full py-2 text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded"
+                className="w-full py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 bg-gray-100/50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl active:scale-[0.98]"
               >
-                إغلاق
+                إغلاق النافذة
               </button>
             </div>
           )}

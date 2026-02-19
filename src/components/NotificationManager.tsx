@@ -170,7 +170,7 @@ export function NotificationPrompt() {
 
   return (
     <div className="fixed bottom-20 left-3 right-3 sm:left-4 sm:right-4 z-40 md:left-auto md:right-4 md:w-96">
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg shadow-lg p-3 sm:p-4">
+      <div className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-lg shadow-lg p-3 sm:p-4">
         <div className="flex items-start space-x-3 rtl:space-x-reverse">
           <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
             <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />

@@ -12,6 +12,8 @@ interface AddCourseModalProps {
   onSave: () => void;
 }
 
+import { toast } from "sonner";
+
 export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   showAddCourse,
   editingCourse,
@@ -22,6 +24,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [isAcademic, setIsAcademic] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,16 +32,20 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
       setTitle(editingCourse.title || "");
       setDescription(editingCourse.description || "");
       setPrice(editingCourse.price?.toString() || "");
+      setIsAcademic(editingCourse.is_academic ?? true);
     } else {
       setTitle("");
       setDescription("");
       setPrice("");
+      setIsAcademic(true);
     }
   }, [editingCourse, showAddCourse]);
 
   const handleSave = async () => {
     if (!title.trim() || !description.trim()) {
-      alert("يرجى ملء جميع الحقول المطلوبة");
+      toast.error("بيانات ناقصة", {
+        description: "يرجى ملء جميع الحقول المطلوبة",
+      });
       return;
     }
 
@@ -49,6 +56,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
         title: title.trim(),
         description: description.trim(),
         price: price ? parseFloat(price) : 0,
+        is_academic: isAcademic,
         is_published: false, // New courses start as unpublished
       };
 
@@ -71,10 +79,16 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
 
       onSave();
       onClose();
+      toast.success("تم الحفظ بنجاح", {
+        description: editingCourse
+          ? "تم تحديث الكورس بنجاح"
+          : "تم إنشاء الكورس بنجاح",
+      });
     } catch {
-      // ignore
+      toast.error("خطأ في الحفظ", {
+        description: "فشل في حفظ الكورس، يرجى المحاولة مرة أخرى",
+      });
     } finally {
-      alert("فشل في حفظ الكورس");
       setSaving(false);
     }
   };
@@ -142,6 +156,22 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 اتركه فارغاً أو 0 لجعل الكورس مجاني
               </p>
+            </div>
+
+            <div className="flex items-center gap-2 py-2">
+              <input
+                type="checkbox"
+                id="is_academic_course"
+                checked={isAcademic}
+                onChange={(e) => setIsAcademic(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="is_academic_course"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                كورس أكاديمي (مرتبط بالمواد الدراسية)
+              </label>
             </div>
           </div>
 

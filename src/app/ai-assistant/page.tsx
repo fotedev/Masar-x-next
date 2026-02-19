@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Send,
   MessageSquare,
@@ -18,15 +24,14 @@ import { QuizPlayer } from "@/components/QuizPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "@/constants/academic";
-import { ALL_SUBJECTS } from "@/constants/subjects";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import type { DepartmentOption } from "@/hooks/useAcademicOptions";
 import dynamic from "next/dynamic";
 
+import { useSubjects } from "@/hooks/useSubjects";
+
 const PuterSettingsModal = dynamic(
-  () =>
-    import("@/components/ai/PuterSettingsModal").then(
-      (mod) => mod.PuterSettingsModal,
-    ),
+  () => import("@/components/ai/PuterSettingsModal"),
   { ssr: false },
 );
 
@@ -60,6 +65,9 @@ import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
   const { user, loading } = useAuth();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions({
+    includeInactive: true,
+  });
   const { trackEvent } = useAnalytics();
   const {
     messages,
@@ -98,8 +106,24 @@ function AiAssistantChatPage() {
   const [showSubmitForReviewModal, setShowSubmitForReviewModal] =
     useState(false);
   const [submitAcademicLevel, setSubmitAcademicLevel] = useState<string>("");
+  const [submitSemester, setSubmitSemester] = useState<number>(1);
   const [submitDepartment, setSubmitDepartment] = useState<string>("");
   const [submitSubject, setSubmitSubject] = useState<string>("");
+
+  const selectedSubmitLevelNumber = useMemo(() => {
+    if (!submitAcademicLevel) return null;
+    const found = levels.find((l) => l.name === submitAcademicLevel);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [levels, submitAcademicLevel]);
+
+  const { subjects: submitSubjects } = useSubjects({
+    level: selectedSubmitLevelNumber,
+    semester: typeof submitSemester === "number" ? submitSemester : null,
+  });
+  const availableSubmitDepartments = useMemo<DepartmentOption[]>(() => {
+    if (!submitAcademicLevel) return [];
+    return getDepartmentsForLevelName(submitAcademicLevel);
+  }, [getDepartmentsForLevelName, submitAcademicLevel]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -279,6 +303,7 @@ function AiAssistantChatPage() {
         submitted_at: new Date().toISOString(),
         source: "ai_assistant",
         academic_level: submitAcademicLevel,
+        semester: submitSemester,
         department: submitDepartment,
         subject: submitSubject,
       };
@@ -531,11 +556,12 @@ function AiAssistantChatPage() {
               <button
                 onClick={() => {
                   setShowSubmitForReviewModal(true);
-                  setSubmitAcademicLevel((prev) => prev || ACADEMIC_LEVELS[0]);
-                  setSubmitDepartment((prev) => prev || DEPARTMENTS[0]);
-                  setSubmitSubject(
-                    (prev) => prev || ALL_SUBJECTS[0]?.name || "",
+                  setSubmitAcademicLevel(
+                    (prev) => prev || levels[0]?.name || "",
                   );
+                  setSubmitSemester(1);
+                  setSubmitDepartment((prev) => prev || "");
+                  setSubmitSubject((prev) => prev || "");
                 }}
                 disabled={isSubmittingQuiz}
                 className="px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
@@ -575,17 +601,45 @@ function AiAssistantChatPage() {
                 </label>
                 <select
                   value={submitAcademicLevel}
-                  onChange={(e) => setSubmitAcademicLevel(e.target.value)}
+                  onChange={(e) => {
+                    setSubmitAcademicLevel(e.target.value);
+                    setSubmitSemester(1);
+                    setSubmitDepartment("");
+                    setSubmitSubject("");
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                 >
                   <option value="" disabled>
                     اختر المستوى...
                   </option>
-                  {ACADEMIC_LEVELS.map((lvl) => (
-                    <option key={lvl} value={lvl}>
-                      {lvl}
+                  {levels.map((lvl) => (
+                    <option
+                      key={lvl.id}
+                      value={lvl.name}
+                      disabled={!lvl.is_active}
+                    >
+                      {lvl.name}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  الترم
+                </label>
+                <select
+                  value={submitSemester}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    setSubmitSemester(next);
+                    setSubmitSubject("");
+                  }}
+                  disabled={!submitAcademicLevel}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm disabled:opacity-60"
+                >
+                  <option value={1}>ترم 1</option>
+                  <option value={2}>ترم 2</option>
                 </select>
               </div>
 
@@ -596,14 +650,22 @@ function AiAssistantChatPage() {
                 <select
                   value={submitDepartment}
                   onChange={(e) => setSubmitDepartment(e.target.value)}
+                  disabled={
+                    !submitAcademicLevel ||
+                    availableSubmitDepartments.length === 0
+                  }
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                 >
                   <option value="" disabled>
                     اختر القسم...
                   </option>
-                  {DEPARTMENTS.map((dep) => (
-                    <option key={dep} value={dep}>
-                      {dep}
+                  {availableSubmitDepartments.map((dep) => (
+                    <option
+                      key={dep.id}
+                      value={dep.name}
+                      disabled={!dep.is_active}
+                    >
+                      {dep.name}
                     </option>
                   ))}
                 </select>
@@ -621,7 +683,7 @@ function AiAssistantChatPage() {
                   <option value="" disabled>
                     اختر المادة...
                   </option>
-                  {ALL_SUBJECTS.map((s) => (
+                  {submitSubjects.map((s) => (
                     <option key={s.id} value={s.name}>
                       {s.name}
                     </option>

@@ -52,6 +52,9 @@ export type Database = {
           full_name: string | null
           avatar_url: string | null
           website: string | null
+          level?: number | null
+          semester?: number | null
+          department_id?: string | null
         }
         Insert: {
           id: string
@@ -60,6 +63,9 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           website?: string | null
+          level?: number | null
+          semester?: number | null
+          department_id?: string | null
         }
         Update: {
           id?: string
@@ -68,6 +74,9 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           website?: string | null
+          level?: number | null
+          semester?: number | null
+          department_id?: string | null
         }
       }
       summaries: {
@@ -611,18 +620,42 @@ export type Database = {
           id: string
           name: string
           show_on_home: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status: "pending" | "approved" | "rejected"
+          is_academic: boolean
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           show_on_home?: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: "pending" | "approved" | "rejected"
+          is_academic?: boolean
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           show_on_home?: boolean
+          semester?: number | null
+          level?: number | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: "pending" | "approved" | "rejected"
+          is_academic?: boolean
           created_at?: string
         }
       }
@@ -634,6 +667,7 @@ export type Database = {
           instructor_id: string
           price: number | null
           is_published: boolean
+          is_academic: boolean
           created_at: string
           updated_at: string
         }
@@ -644,6 +678,7 @@ export type Database = {
           instructor_id: string
           price?: number | null
           is_published?: boolean
+          is_academic?: boolean
           created_at?: string
           updated_at?: string
         }

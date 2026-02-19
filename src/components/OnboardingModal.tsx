@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
+import { useAcademicOptions } from "../hooks/useAcademicOptions";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -10,12 +10,18 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
   const { user } = useAuth();
+  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [formData, setFormData] = useState({
     academic_level: "",
     department: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const availableDepartments = useMemo(() => {
+    if (!formData.academic_level) return [];
+    return getDepartmentsForLevelName(formData.academic_level);
+  }, [formData.academic_level, getDepartmentsForLevelName]);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -31,6 +37,24 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
       }
     }
   }, [isOpen, user]);
+
+  useEffect(() => {
+    if (!formData.academic_level) {
+      if (formData.department) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+      return;
+    }
+
+    if (formData.department) {
+      const exists = availableDepartments.some(
+        (d) => d.name === formData.department,
+      );
+      if (!exists) {
+        setFormData((prev) => ({ ...prev, department: "" }));
+      }
+    }
+  }, [formData.academic_level, formData.department, availableDepartments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,18 +111,22 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
                 required
                 value={formData.academic_level}
                 onChange={(e) =>
-                  setFormData({ ...formData, academic_level: e.target.value })
+                  setFormData({
+                    ...formData,
+                    academic_level: e.target.value,
+                    department: "",
+                  })
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر المستوى الدراسي</option>
-                {ACADEMIC_LEVELS.map((level) => (
+                {levels.map((level) => (
                   <option
-                    key={level}
-                    value={level}
-                    disabled={level !== "المستوى الأول"}
+                    key={level.id}
+                    value={level.name}
+                    disabled={!level.is_active}
                   >
-                    {level} {level !== "المستوى الأول" && "(قريباً)"}
+                    {level.name} {!level.is_active && "(قريباً)"}
                   </option>
                 ))}
               </select>
@@ -117,12 +145,19 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
                 onChange={(e) =>
                   setFormData({ ...formData, department: e.target.value })
                 }
+                disabled={
+                  !formData.academic_level || availableDepartments.length === 0
+                }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="">اختر التخصص</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                {availableDepartments.map((dept) => (
+                  <option
+                    key={dept.id}
+                    value={dept.name}
+                    disabled={!dept.is_active}
+                  >
+                    {dept.name}
                   </option>
                 ))}
               </select>

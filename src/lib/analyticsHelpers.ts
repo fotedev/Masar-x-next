@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type { Json } from '@/types/database';
 
-export const chatHelpers = {
+export const analyticsHelpers = {
     /**
      * Records an analytics event to the database.
      */

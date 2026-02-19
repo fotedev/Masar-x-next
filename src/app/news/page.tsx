@@ -452,7 +452,7 @@ function NewsPage() {
               alt="News Full Preview"
               fill
               className="object-contain animate-in zoom-in-95 duration-300"
-              sizes="100vw"
+              sizes="(max-width: 1024px) 100vw, 1024px"
               priority
             />
           </div>

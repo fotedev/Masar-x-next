@@ -18,32 +18,34 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function generateSitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://masar-x.vercel.app/';
+  const baseUrl = 'https://masarx.vercel.app/';
 
   // Static URLs
   const staticUrls = [
     '',
-    '/add',
-    '/add-summary',
-    '/admin-dashboard',
-    '/ai-assistant',
-    '/courses',
-    '/edit-summary',
-    '/instructor-dashboard',
-    '/login',
-    '/news',
-    '/privacy',
-    '/privacy-details',
-    '/privacy-policy',
-    '/profile',
-    '/quiz-attempts',
-    '/quiz-play',
-    '/quizzes',
-    '/reset-password',
-    '/signup',
-    '/subjects',
-    '/summaries',
-    '/test-route',
+    'add',
+    'add-file',
+    'add-summary',
+    'add-video',
+    'admin-dashboard',
+    'ai-assistant',
+    'courses',
+    'edit-summary',
+    'faq',
+    'instructor-dashboard',
+    'login',
+    'news',
+    'privacy',
+    'privacy-details',
+    'privacy-policy',
+    'profile',
+    'quiz-attempts',
+    'quiz-play',
+    'quizzes',
+    'reset-password',
+    'signup',
+    'subjects',
+    'summaries',
   ];
 
   // Dynamic URLs
@@ -52,13 +54,12 @@ async function generateSitemap() {
   try {
     // Fetch subjects
     const { data: subjects } = await supabase
-      .from('subjects')
-      .select('name')
-      .eq('show_on_home', true);
+    .from('subjects')
+    .select('name');
 
     if (subjects) {
       subjects.forEach(subject => {
-        dynamicUrls.push(`${baseUrl}/subjects/${encodeURIComponent(subject.name)}`);
+        dynamicUrls.push(`${baseUrl}subjects/${encodeURIComponent(subject.name)}`);
       });
     }
 
@@ -69,7 +70,7 @@ async function generateSitemap() {
 
     if (courses) {
       courses.forEach(course => {
-        dynamicUrls.push(`${baseUrl}/courses/${course.id}`);
+        dynamicUrls.push(`${baseUrl}courses/${course.id}`);
       });
     }
 
@@ -80,7 +81,7 @@ async function generateSitemap() {
 
     if (quizzes) {
       quizzes.forEach(quiz => {
-        dynamicUrls.push(`${baseUrl}/quiz-play/${quiz.id}`);
+        dynamicUrls.push(`${baseUrl}quiz-play/${quiz.id}`);
       });
     }
 
@@ -92,7 +93,7 @@ async function generateSitemap() {
 
     if (summaries) {
       summaries.forEach(summary => {
-        dynamicUrls.push(`${baseUrl}/summaries/${summary.id}`);
+        dynamicUrls.push(`${baseUrl}summaries/${summary.id}`);
       });
     }
   } catch (error) {
@@ -101,10 +102,12 @@ async function generateSitemap() {
 
   // Generate XML
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+  xml += '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n';
+  xml += '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n';
 
   [...staticUrls.map(route => `${baseUrl}${route}`), ...dynamicUrls].forEach(url => {
-    xml += `  <url>\n    <loc>${url}</loc>\n    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>\n  </url>\n`;
+    xml += `  <url>\n    <loc>${url}</loc>\n    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>${url === baseUrl ? '1.0' : '0.8'}</priority>\n  </url>\n`;
   });
 
   xml += '</urlset>\n';

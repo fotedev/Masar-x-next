@@ -15,8 +15,10 @@ export function AddVideoForm() {
 
   const handleClose = () => {
     const subject = searchParams.get("subject") || "";
+    const lecture = searchParams.get("lecture") || "";
     if (subject) {
-      router.push(`/subjects/${encodeURIComponent(subject)}`);
+      const url = `/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+      router.push(url);
       return;
     }
     router.back();
@@ -31,7 +33,23 @@ export function AddVideoForm() {
 
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
-    setFormData((prev) => ({ ...prev, subject }));
+    const lectureKey = searchParams.get("lecture") || "";
+
+    setFormData((prev) => {
+      let title = prev.title;
+      // Pre-fill title if it's empty and we have a lecture title from query
+      if (!title && lectureKey) {
+        if (lectureKey.startsWith("lec-")) {
+          const lectureNum = lectureKey.replace("lec-", "");
+          title = `محاضرة ${lectureNum}: `;
+        } else {
+          // If it's a custom key/label like "Partial fractions"
+          title = `${lectureKey}: `;
+        }
+      }
+
+      return { ...prev, subject, title: title || prev.title };
+    });
   }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
@@ -72,6 +90,8 @@ export function AddVideoForm() {
       // Validate URL
       try {
         new URL(formData.url);
+        // Additional check for YouTube shorts to allow specific formats if needed
+        // but basic URL validation is enough for now.
       } catch {
         setError("يرجى إدخال رابط صحيح");
         setLoading(false);
@@ -101,7 +121,9 @@ export function AddVideoForm() {
       });
 
       setTimeout(() => {
-        router.push(`/subjects/${encodeURIComponent(formData.subject)}`);
+        const lecture = searchParams.get("lecture") || "";
+        const url = `/subjects/${encodeURIComponent(formData.subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+        router.push(url);
       }, 2000);
     } catch {
       setError("حدث خطأ أثناء إضافة الفيديو. يرجى المحاولة مرة أخرى.");

@@ -11,7 +11,7 @@ import {
 } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import { chatHelpers } from "../lib/chatHelpers";
+import { analyticsHelpers } from "../lib/analyticsHelpers";
 
 interface AuthContextType {
   user: User | null;
@@ -47,7 +47,7 @@ export function AuthProvider({
       );
       if (keys.length > 0) {
         const cached = JSON.parse(localStorage.getItem(keys[0])!);
-        if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
+        if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) {
           return cached.isAdmin;
         }
       }
@@ -66,7 +66,7 @@ export function AuthProvider({
         );
         if (keys.length > 0) {
           const cached = JSON.parse(localStorage.getItem(keys[0])!);
-          if (cached && Date.now() - cached.timestamp < 50 * 60 * 1000) {
+          if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) {
             return cached.role || null;
           }
         }
@@ -101,7 +101,7 @@ export function AuthProvider({
       }
 
       const cacheKey = `admin_status_${u.id}`;
-      const cacheExpiry = 1000 * 60 * 50;
+      const cacheExpiry = 1000 * 60 * 30;
 
       const userMetadataRole = u.user_metadata?.role;
       const appMetadataRole = u.app_metadata?.role;
@@ -336,11 +336,11 @@ export function AuthProvider({
         }
 
         if (event === "SIGNED_IN" && currentUser) {
-          chatHelpers
+          analyticsHelpers
             .recordAnalytics({
               userId: currentUser.id,
-              actionType: "ai_interaction",
-              contentType: "user_login",
+              actionType: "user_login",
+              contentType: "login",
               metadata: {
                 provider: currentUser.app_metadata?.provider || "email",
               },
@@ -432,11 +432,11 @@ export function AuthProvider({
 
   const signOut = async () => {
     if (user) {
-      chatHelpers
+      analyticsHelpers
         .recordAnalytics({
           userId: user.id,
           actionType: "user_logout",
-          contentType: "user_logout",
+          contentType: "logout",
         })
         .catch(() => {});
     }
