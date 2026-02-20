@@ -23,6 +23,7 @@ import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { Quiz, Summary } from "@/types/database";
 import { LatexRenderer } from "@/components/LatexRenderer";
+import { toast } from "sonner";
 
 interface QuizWithMeta {
   quiz: Quiz;
@@ -481,7 +482,11 @@ function QuizDashboardInternal() {
       }
 
       await loadQuizzes();
-      alert("تم حفظ الامتحان بنجاح");
+      toast.success("تم حفظ الامتحان بنجاح", {
+        description: editingQuiz
+          ? "تم تحديث بيانات الامتحان بنجاح."
+          : "تمت إضافة الامتحان الجديد إلى المنصة.",
+      });
       setShowCreateForm(false);
       setEditingQuiz(null);
       setFormData({
@@ -504,8 +509,12 @@ function QuizDashboardInternal() {
           },
         ],
       });
-    } catch {
-      alert("حدث خطأ أثناء حفظ الامتحان.");
+    } catch (error: any) {
+      console.error("Error saving exam:", error);
+      toast.error("فشل حفظ الامتحان", {
+        description:
+          error.message || "حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.",
+      });
     }
   };
 
@@ -822,7 +831,6 @@ function QuizDashboardInternal() {
           />
 
           <select
-
             value={filters.year}
             onChange={(e) =>
               setFilters((p) => ({
@@ -1164,7 +1172,6 @@ function QuizDashboardInternal() {
                       {dep.name}
                     </option>
                   ))}
-
                 </select>
               </div>
 

@@ -61,10 +61,12 @@ export function SubjectsGrid({
         <div className="text-center py-12">
           <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            لا توجد مواد
+            {is_academic ? "لا توجد مواد" : "لا يوجد محتوى"}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            سيتم إضافة المواد الدراسية قريباً
+            {is_academic
+              ? "سيتم إضافة المواد الدراسية قريباً"
+              : "سيتم إضافة محتوى جديد قريباً"}
           </p>
         </div>
       )}

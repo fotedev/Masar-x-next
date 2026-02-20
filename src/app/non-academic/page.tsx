@@ -19,18 +19,15 @@ export default function NonAcademicPage() {
           <BookOpen className="w-8 h-8 text-brand-blue" />
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-          الأقسام العامة
+          TRW
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg">
-          استكشف المهارات والكورسات العامة خارج النطاق الأكاديمي التقليدي
+          Welcome to the Real World
         </p>
       </div>
 
       <div className="modern-card p-6 sm:p-8">
-        <SubjectsGrid 
-          onSubjectClick={handleSubjectClick} 
-          is_academic={false} 
-        />
+        <SubjectsGrid onSubjectClick={handleSubjectClick} is_academic={false} />
       </div>
     </div>
   );

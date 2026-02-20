@@ -68,7 +68,7 @@ function SubjectDetailsContent() {
           className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
         >
           <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
-          العودة للأقسام العامة
+          العودة لـ TRW
         </button>
       </div>
 
@@ -78,6 +78,9 @@ function SubjectDetailsContent() {
             <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
               {normalizedSubjectName}
             </h1>
+            <p className="text-xl text-brand-blue font-bold tracking-widest uppercase">
+              Welcome to the Real World
+            </p>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
               {subjectDetails?.description ||
                 "قسم مهارات عامة وكورسات تطويرية."}

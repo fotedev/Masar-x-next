@@ -38,7 +38,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             const effectiveSemester =
                 typeof params.semester === "number"
                     ? params.semester
-                    : (academic.semester ?? (isAnonymous ? 2 : 1));
+                    : (academic.semester ?? 2);
             const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
             const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}:acad:${isAcademicParam}`;
 
@@ -55,22 +55,28 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             let query = supabase
                 .from("subjects")
                 .select("*")
-                .eq("is_academic", isAcademicParam)
                 .order("name", { ascending: true });
 
+            // Fetch all subjects and filter in memory to avoid PostgREST syntax errors
+            // and ensure all academic subjects (including those with NULL is_academic) are caught.
             const { data, error } = await query;
 
             if (error) throw error;
 
             const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
 
-            // Filter by semester/level if academic. If non-academic, we show all.
+            // Filter by is_academic and then by semester/level
             const filtered = subjectData.filter((s) => {
+                const subjectIsAcademic = s.is_academic !== false; // Treat true and NULL as academic
+
+                if (isAcademicParam !== subjectIsAcademic) return false;
+
                 if (!isAcademicParam) {
                     const visibilityMatch = isAnonymous ? Boolean(s.show_on_home) : true;
                     return visibilityMatch;
                 }
 
+                // For academic subjects, we check if they belong to the current level/semester
                 const semesterMatch = (() => {
                     if (s.semester === undefined || s.semester === null) return true;
                     return Number(s.semester) === Number(effectiveSemester);

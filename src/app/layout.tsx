@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NotificationProvider } from "@/components/NotificationManager";
 import { Layout } from "@/components/Layout";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 const almarai = Almarai({
@@ -94,6 +95,7 @@ export default function RootLayout({
           <ThemeProvider>
             <NotificationProvider>
               <Layout>{children}</Layout>
+              <Toaster position="top-center" dir="rtl" richColors />
             </NotificationProvider>
           </ThemeProvider>
         </AuthProvider>

@@ -12,6 +12,8 @@ interface AddSubjectModalProps {
   editingSubject?: Database["public"]["Tables"]["subjects"]["Row"] | null;
 }
 
+import { toast } from "sonner";
+
 export function AddSubjectModal({
   show,
   onClose,
@@ -78,8 +80,17 @@ export function AddSubjectModal({
       setError(null);
       await onSave(formData);
       onClose();
+      toast.success("تم حفظ المادة بنجاح", {
+        description: editingSubject
+          ? "تم تحديث بيانات المادة."
+          : "تمت إضافة المادة الجديدة إلى النظام.",
+      });
     } catch (err: any) {
       setError(err.message || "حدث خطأ أثناء حفظ المادة");
+      toast.error("خطأ في الحفظ", {
+        description:
+          err.message || "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى.",
+      });
     } finally {
       setLoading(false);
     }
