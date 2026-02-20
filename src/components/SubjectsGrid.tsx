@@ -5,23 +5,25 @@ import { useSubjects } from "../hooks/useSubjects";
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
   showOnlyOnHome?: boolean;
+  is_academic?: boolean;
 }
 
-export function SubjectsGrid({ onSubjectClick, showOnlyOnHome = false }: SubjectsGridProps) {
-  const { subjects, loading } = useSubjects();
+export function SubjectsGrid({
+  onSubjectClick,
+  showOnlyOnHome = false,
+  is_academic = true,
+}: SubjectsGridProps) {
+  const { subjects, loading } = useSubjects({ is_academic });
 
-  const filteredSubjects = showOnlyOnHome 
-    ? subjects.filter(s => s.show_on_home)
+  const filteredSubjects = showOnlyOnHome
+    ? subjects.filter((s) => s.show_on_home)
     : subjects;
 
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div
-            key={index}
-            className="modern-card p-6 animate-pulse"
-          >
+          <div key={index} className="modern-card p-6 animate-pulse">
             <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-2xl mx-auto mb-4"></div>
             <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto w-3/4"></div>
           </div>

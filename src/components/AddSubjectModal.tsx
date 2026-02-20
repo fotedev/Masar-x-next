@@ -27,6 +27,7 @@ export function AddSubjectModal({
     location: "",
     level: 1,
     semester: 1,
+    is_academic: true,
     show_on_home: true,
     status: "pending",
   });
@@ -43,6 +44,7 @@ export function AddSubjectModal({
         location: editingSubject.location || "",
         level: editingSubject.level || 1,
         semester: editingSubject.semester || 1,
+        is_academic: editingSubject.is_academic ?? true,
         show_on_home: editingSubject.show_on_home,
         status: editingSubject.status,
       });
@@ -55,6 +57,7 @@ export function AddSubjectModal({
         location: "",
         level: 1,
         semester: 1,
+        is_academic: true,
         show_on_home: true,
         status: "pending",
       });
@@ -227,6 +230,24 @@ export function AddSubjectModal({
                 <option value={2}>الترم الثاني</option>
               </select>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 py-2">
+            <input
+              type="checkbox"
+              id="is_academic"
+              checked={formData.is_academic}
+              onChange={(e) =>
+                setFormData({ ...formData, is_academic: e.target.checked })
+              }
+              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+            />
+            <label
+              htmlFor="is_academic"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              مادة أكاديمية (مرتبطة بمستوى وترم)
+            </label>
           </div>
 
           <div className="flex items-center gap-2 py-2">
