@@ -45,7 +45,7 @@
             "has": [
                 {
                     "type": "host",
-                    "value": "(masar-x.vercel.app|molkhas.vercel.app)"
+                    "value": "masar-x.vercel.app"
                 }
             ],
             "destination": "https://masarx.vercel.app/$1",
