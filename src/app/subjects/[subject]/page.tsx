@@ -575,45 +575,58 @@ function SubjectSummariesContent() {
     );
   }, [selectedLectureKey, subjectQuizzes]);
 
-  const fetchSubjectQuizzes = useCallback(async () => {
-    if (!normalizedSubjectName) return;
+  const fetchSubjectQuizzes = useCallback(
+    async (skipCache = false) => {
+      if (!normalizedSubjectName) return;
 
-    try {
-      let query = supabase.from("quizzes").select("*");
-      if (!isAdmin) query = query.eq("status", "approved");
-
-      const { data, error } = await query
-        .order("created_at", { ascending: false })
-        .limit(300);
-
-      if (error) throw error;
-
-      const rows = (data || []) as Quiz[];
-
-      const quizzes = rows.filter((q) => {
-        const directSubject = q.subject;
-        if (directSubject && directSubject.trim() === normalizedSubjectName)
-          return true;
-
-        const desc = q.description;
-        if (!desc || !desc.trim().startsWith("{")) return false;
-
-        try {
-          const parsed = JSON.parse(desc);
-          return (
-            typeof parsed?.subject === "string" &&
-            parsed.subject.trim() === normalizedSubjectName
-          );
-        } catch {
-          return false;
+      const cacheKey = `quizzes_${normalizedSubjectName}_admin_${isAdmin}`;
+      if (!skipCache) {
+        const cached = queryCache.get<Quiz[]>(cacheKey);
+        if (cached) {
+          setSubjectQuizzes(cached);
+          return;
         }
-      });
+      }
 
-      setSubjectQuizzes(quizzes as Quiz[]);
-    } catch {
-      // ignore
-    }
-  }, [isAdmin, normalizedSubjectName]);
+      try {
+        let query = supabase.from("quizzes").select("*");
+        if (!isAdmin) query = query.eq("status", "approved");
+
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .limit(300);
+
+        if (error) throw error;
+
+        const rows = (data || []) as Quiz[];
+
+        const filteredQuizzes = rows.filter((q) => {
+          const directSubject = q.subject;
+          if (directSubject && directSubject.trim() === normalizedSubjectName)
+            return true;
+
+          const desc = q.description;
+          if (!desc || !desc.trim().startsWith("{")) return false;
+
+          try {
+            const parsed = JSON.parse(desc);
+            return (
+              typeof parsed?.subject === "string" &&
+              parsed.subject.trim() === normalizedSubjectName
+            );
+          } catch {
+            return false;
+          }
+        });
+
+        setSubjectQuizzes(filteredQuizzes as Quiz[]);
+        queryCache.set(cacheKey, filteredQuizzes, cacheTTL.quizzes || 1800000);
+      } catch {
+        // ignore
+      }
+    },
+    [isAdmin, normalizedSubjectName],
+  );
 
   useEffect(() => {
     fetchSubjectQuizzes();
@@ -643,12 +656,17 @@ function SubjectSummariesContent() {
         department: examFormData.department,
         year: examFormData.year,
         subject: normalizedSubjectName,
+        lecture_key: selectedLectureKey || null,
       };
+
+      const quizTitle = selectedLecture
+        ? `[${selectedLecture.label}] ${examFormData.title.trim()}`
+        : examFormData.title.trim();
 
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
-          title: examFormData.title.trim(),
+          title: quizTitle,
           description: JSON.stringify(descriptionData),
           summary_id: null,
           user_id: user.id,
@@ -676,7 +694,7 @@ function SubjectSummariesContent() {
 
       if (questionsError) throw questionsError;
 
-      await fetchSubjectQuizzes();
+      await fetchSubjectQuizzes(true);
       toast.success("تم حفظ الامتحان بنجاح", {
         description: "تمت إضافة الامتحان وتحديث قائمة الامتحانات للمادة.",
       });
