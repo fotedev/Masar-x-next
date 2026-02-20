@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { cacheTTL, queryCache } from "../lib/queryCache";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
+// Removed hardcoded imports as per user request to rely solely on DB tables
 
 export type AcademicLevelOption = {
   id: string;
@@ -44,24 +44,7 @@ const isValidAcademicLevel = (lvl: AcademicLevelOption) => {
   return name.includes("المستوى") || /^\d+$/.test(name);
 };
 
-const buildFallback = (): Options => {
-  return {
-    levels: (ACADEMIC_LEVELS as readonly string[]).map((name, idx) => ({
-      id: String(idx + 1),
-      name,
-      level_number: idx + 1,
-      is_active: true,
-      sort_order: idx + 1,
-    })),
-    departments: (DEPARTMENTS as readonly string[]).map((name, idx) => ({
-      id: String(idx + 1),
-      academic_level_id: null,
-      name,
-      is_active: true,
-      sort_order: idx + 1,
-    })),
-  };
-};
+
 
 export function useAcademicOptions(params: Params = {}) {
   const { includeInactive = false } = params;
@@ -116,16 +99,8 @@ export function useAcademicOptions(params: Params = {}) {
 
       if (levelsRes.error || departmentsRes.error) {
         console.error("Error fetching academic options:", levelsRes.error || departmentsRes.error);
-        const fallback = buildFallback();
-        const nextLevels = includeInactive
-          ? fallback.levels
-          : fallback.levels.filter((l) => l.is_active);
-        const nextDepartments = includeInactive
-          ? fallback.departments
-          : fallback.departments.filter((d) => d.is_active);
-
-        setLevels(nextLevels);
-        setDepartments(nextDepartments);
+        setLevels([]);
+        setDepartments([]);
         return;
       }
 

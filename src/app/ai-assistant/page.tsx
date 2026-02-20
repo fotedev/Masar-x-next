@@ -26,10 +26,6 @@ import { supabase } from "@/lib/supabase";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import type { DepartmentOption } from "@/hooks/useAcademicOptions";
-<<<<<<< HEAD
-=======
-import { ALL_SUBJECTS } from "@/constants/subjects";
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
 import dynamic from "next/dynamic";
 
 import { useSubjects } from "@/hooks/useSubjects";
@@ -114,7 +110,6 @@ function AiAssistantChatPage() {
   const [submitDepartment, setSubmitDepartment] = useState<string>("");
   const [submitSubject, setSubmitSubject] = useState<string>("");
 
-<<<<<<< HEAD
   const selectedSubmitLevelNumber = useMemo(() => {
     if (!submitAcademicLevel) return null;
     const found = levels.find((l) => l.name === submitAcademicLevel);
@@ -125,9 +120,6 @@ function AiAssistantChatPage() {
     level: selectedSubmitLevelNumber,
     semester: typeof submitSemester === "number" ? submitSemester : null,
   });
-
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
   const availableSubmitDepartments = useMemo<DepartmentOption[]>(() => {
     if (!submitAcademicLevel) return [];
     return getDepartmentsForLevelName(submitAcademicLevel);
@@ -566,13 +558,6 @@ function AiAssistantChatPage() {
                   setShowSubmitForReviewModal(true);
                   setSubmitAcademicLevel(
                     (prev) => prev || levels[0]?.name || "",
-<<<<<<< HEAD
-=======
-                  );
-                  setSubmitDepartment((prev) => prev || "");
-                  setSubmitSubject(
-                    (prev) => prev || ALL_SUBJECTS[0]?.name || "",
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
                   );
                   setSubmitSemester(1);
                   setSubmitDepartment((prev) => prev || "");
@@ -618,13 +603,9 @@ function AiAssistantChatPage() {
                   value={submitAcademicLevel}
                   onChange={(e) => {
                     setSubmitAcademicLevel(e.target.value);
-<<<<<<< HEAD
                     setSubmitSemester(1);
                     setSubmitDepartment("");
                     setSubmitSubject("");
-=======
-                    setSubmitDepartment("");
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
                   }}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                 >

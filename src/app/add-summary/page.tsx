@@ -19,13 +19,8 @@ export default function AddSummaryPage() {
   const { user, displayName } = useAuth();
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
-<<<<<<< HEAD
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
-=======
-  const { subjects } = useSubjects();
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
 
   const [formData, setFormData] = useState({
     title: "",
@@ -397,44 +392,11 @@ export default function AddSummaryPage() {
                 {availableDepartments.map((dept) => (
                   <option key={dept.id} value={dept.name}>
                     {dept.name}
-<<<<<<< HEAD
-=======
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label
-                htmlFor="summary-year"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                المستوى الدراسي <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="summary-year"
-                name="summaryYear"
-                required
-                autoComplete="off"
-                value={formData.year}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    year: e.target.value,
-                    department: "",
-                  })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">اختر المستوي</option>
-                {levels.map((lvl) => (
-                  <option key={lvl.id} value={lvl.name}>
-                    {lvl.name}
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <div>
