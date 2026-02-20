@@ -253,15 +253,14 @@ function SubjectSummariesContent() {
       setIsSavingLecture(true);
 
       const inferred = getLectureInfoFromTitle(rawTitle);
-      const manualKey = (lectureFormData.key || "").trim();
-      const key = (manualKey || inferred.key || "other")
+      const key = (inferred.key || "other")
         .trim()
         .toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-_]/g, "");
 
       if (!key) {
-        alert("اكتب كود المحاضرة");
+        alert("فشل إنشاء كود المحاضرة تلقائياً");
         return;
       }
 
@@ -1277,10 +1276,10 @@ function SubjectSummariesContent() {
                 <label className="block text-sm font-bold text-slate-500 mb-2">
                   عنوان المحاضرة
                 </label>
-                  <input
-                    type="text"
-                    value={lectureFormData.title}
-                    onChange={(e) =>
+                <input
+                  type="text"
+                  value={lectureFormData.title}
+                  onChange={(e) =>
                     setLectureFormData((p) => ({
                       ...p,
                       title: e.target.value,
@@ -1289,11 +1288,11 @@ function SubjectSummariesContent() {
                         ? {}
                         : { key: getLectureInfoFromTitle(e.target.value).key }),
                     }))
-                    }
-                    placeholder="مثال: محاضرة 1"
+                  }
+                  placeholder="مثال: محاضرة 1"
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  />
-                  </div>
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-500 mb-2">
@@ -1307,23 +1306,6 @@ function SubjectSummariesContent() {
                   }
                   placeholder={
                     getLectureInfoFromTitle(lectureFormData.title).label
-                  }
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-                </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  كود المحاضرة
-                </label>
-                <input
-                  type="text"
-                  value={lectureFormData.key}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({ ...p, key: e.target.value }))
-                  }
-                  placeholder={
-                    getLectureInfoFromTitle(lectureFormData.title).key
                   }
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                 />
