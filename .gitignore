@@ -82,7 +82,7 @@ check-*.js
 # Temporary and Local Files
 tmp/
 temp/
-# sandbox/
+sandbox/
 *.tgz
 test.html
 exam_resaults*.html

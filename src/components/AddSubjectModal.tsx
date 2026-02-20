@@ -117,13 +117,13 @@ export function AddSubjectModal({
                 setFormData({ ...formData, name: e.target.value })
               }
               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="مثال: رياضيات 1"
+              placeholder="مثال: رياضيات 2"
             />
           </div>
 
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-              اسم الدكتور
+              اسم المحاضر
             </label>
             <input
               type="text"
@@ -132,13 +132,13 @@ export function AddSubjectModal({
                 setFormData({ ...formData, professor: e.target.value })
               }
               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="مثال: د. أحمد..."
+              placeholder="مثال: د. أحمد"
             />
           </div>
 
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-              الموعد (الجدول)
+              الجدول الدراسي
             </label>
             <input
               type="text"
@@ -147,13 +147,13 @@ export function AddSubjectModal({
                 setFormData({ ...formData, schedule: e.target.value })
               }
               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="مثال: الأحد، الثلاثاء 10:00 صباحاً"
+              placeholder="مثال: الاثنين 08:00 ص - 10:00 ص"
             />
           </div>
 
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-              المكان (القاعة)
+              موقع المحاضرة
             </label>
             <input
               type="text"
@@ -162,13 +162,13 @@ export function AddSubjectModal({
                 setFormData({ ...formData, location: e.target.value })
               }
               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="مثال: القاعة A101"
+              placeholder="مثال: مدرج 3 - الدور الثاني"
             />
           </div>
 
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-              وصف المادة
+              نبذة عن المادة
             </label>
             <textarea
               value={formData.description || ""}
@@ -176,7 +176,7 @@ export function AddSubjectModal({
                 setFormData({ ...formData, description: e.target.value })
               }
               className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all min-h-[100px]"
-              placeholder="وصف مختصر للمادة ومحتواها..."
+              placeholder="اكتب وصفاً موجزاً لأهداف المادة ومواضيعها الأساسية..."
             />
           </div>
 

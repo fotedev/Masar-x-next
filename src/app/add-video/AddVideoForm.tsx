@@ -32,15 +32,20 @@ export function AddVideoForm() {
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
     const lectureKey = searchParams.get("lecture") || "";
-    
+
     setFormData((prev) => {
       let title = prev.title;
-      // Only pre-fill title if it's empty and we have a lecture key in format "lec-N"
-      if (!title && lectureKey && lectureKey.startsWith("lec-")) {
-        const lectureNum = lectureKey.replace("lec-", "");
-        title = `محاضرة ${lectureNum}: `;
+      // Pre-fill title if it's empty and we have a lecture title from query
+      if (!title && lectureKey) {
+        if (lectureKey.startsWith("lec-")) {
+          const lectureNum = lectureKey.replace("lec-", "");
+          title = `محاضرة ${lectureNum}: `;
+        } else {
+          // If it's a custom key/label like "Partial fractions"
+          title = `${lectureKey}: `;
+        }
       }
-      
+
       return { ...prev, subject, title: title || prev.title };
     });
   }, [searchParams]);

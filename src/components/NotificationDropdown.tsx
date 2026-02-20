@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "../hooks/useNotifications";
 import { NotificationHeader } from "./NotificationHeader";
@@ -77,9 +77,15 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
     await deleteNotification(notificationId);
   };
 
-  const toggleDropdown = () => {
+  const toggleDropdown = useCallback(() => {
+    if (!isOpen) {
+      const audio = new Audio("/notif.mp3");
+      audio
+        .play()
+        .catch((e) => console.error("Error playing notification sound:", e));
+    }
     setIsOpen(!isOpen);
-  };
+  }, [isOpen]);
 
   return (
     <div className="relative" ref={dropdownRef}>
