@@ -307,7 +307,7 @@ export default function ProfilePage() {
                         المسار الأكاديمي الحالي
                       </p>
                       <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
-                        {academicLoading
+                        {academicLoading && !academic.level
                           ? "جاري التحميل..."
                           : `${levels.find((l) => l.level_number === academic.level)?.name || "مستوى غير محدد"} • ترم ${academic.semester ?? "؟"}`}
                       </p>
@@ -395,7 +395,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
             </div>
           </section>
 

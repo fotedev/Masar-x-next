@@ -128,3 +128,5 @@ vite.config.ts.timestamp-*.mjs
 /markdown
 /scripts/vizvibe.mmd
 /scripts/setup-subjects.js
+/scripts/generate-sitemap.js
+/scripts/test-request-password-reset.sh
