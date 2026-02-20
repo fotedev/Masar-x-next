@@ -1,0 +1,28 @@
+# تقارير الاختبارات
+test_results_*.json
+bulk_test_report_*.json
+timer_test_*.json
+navigation_test_*.json
+
+# ملفات البيانات المؤقتة
+temp_*.json
+cache_*.json
+
+# سجلات التشغيل
+logs/
+*.log
+
+# ملفات Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ملفات النظام
+.DS_Store
+Thumbs.db
+
+# ملفات الإعدادات الشخصية
+.env
+.env.local
+.env.*.local

@@ -21,6 +21,8 @@ export default function ProfilePage() {
   } = useAuth();
   const {
     academic,
+    levels,
+    departments,
     loading: academicLoading,
     setUserAcademic,
   } = useUserAcademic();
@@ -30,6 +32,9 @@ export default function ProfilePage() {
   const [isSavingAcademic, setIsSavingAcademic] = useState(false);
   const [level, setLevel] = useState<number>(academic.level ?? 1);
   const [semester, setSemester] = useState<number>(academic.semester ?? 1);
+  const [departmentId, setDepartmentId] = useState<string>(
+    academic.department_id || "",
+  );
 
   useEffect(() => {
     if (academic.level != null) setLevel(academic.level);
@@ -38,6 +43,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (academic.semester != null) setSemester(academic.semester);
   }, [academic.semester]);
+
+  useEffect(() => {
+    if (academic.department_id != null) setDepartmentId(academic.department_id);
+  }, [academic.department_id]);
 
   // Note: Admin status is now cached and doesn't need refresh on every visit
 
@@ -65,17 +74,19 @@ export default function ProfilePage() {
 
   const handleSaveAcademic = async () => {
     if (!user) return;
-    if (![1, 2, 3, 4].includes(level)) return;
-    if (![1, 2].includes(semester)) return;
 
     setIsSavingAcademic(true);
     try {
-      const ok = await setUserAcademic({ level, semester });
+      const ok = await setUserAcademic({
+        level,
+        semester,
+        department_id: departmentId || null,
+      });
       if (!ok) {
-        alert("حدث خطأ أثناء حفظ المستوى/الترم");
+        alert("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
       }
     } catch {
-      alert("حدث خطأ أثناء حفظ المستوى/الترم");
+      alert("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
     } finally {
       setIsSavingAcademic(false);
     }
@@ -104,44 +115,51 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="modern-card overflow-hidden">
+    <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8">
+      <div className="modern-card overflow-hidden sm:rounded-3xl border-0 sm:border">
         {/* Header */}
-        <div className="bg-gradient-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-10 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-          <div className="relative z-10 flex items-center gap-6">
-            <AdminProfileImage
-              size="xl"
-              className="bg-white/10 backdrop-blur-md border-2 border-white/20"
-              editable={true}
-            />
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        <div className="bg-gradient-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-12 sm:py-16 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-sky/10 rounded-full -ml-24 -mb-24 blur-2xl" />
+
+          <div className="relative z-10 flex flex-col sm:flex-row items-center text-center sm:text-right gap-6 sm:gap-8">
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-white/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+              <AdminProfileImage
+                size="xl"
+                className="bg-white/10 backdrop-blur-md border-4 border-white/20 shadow-2xl relative"
+                editable={true}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-sm">
                 {displayName}
               </h1>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-brand-sky font-semibold flex items-center gap-2">
+              <div className="flex items-center justify-center sm:justify-start gap-3">
+                <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center gap-2">
                   {isAdmin ? (
-                    <Shield className="w-4 h-4" />
+                    <Shield className="w-4 h-4 text-brand-sky" />
                   ) : (
-                    <User className="w-4 h-4" />
+                    <User className="w-4 h-4 text-brand-sky" />
                   )}
-                  {isAdmin
-                    ? adminRole === "doctor"
-                      ? "ادمن دكتور"
-                      : adminRole === "student"
-                        ? "ادمن طالب"
-                        : "ادمن"
-                    : "مستخدم"}
-                </p>
+                  <span className="text-sm font-bold tracking-wide">
+                    {isAdmin
+                      ? adminRole === "doctor"
+                        ? "ادمن دكتور"
+                        : adminRole === "student"
+                          ? "ادمن طالب"
+                          : "ادمن"
+                      : "مستخدم"}
+                  </span>
+                </div>
                 <button
                   onClick={() => refreshAdminStatus()}
                   disabled={isAdminLoading}
-                  className="p-1.5 hover:bg-white/20 rounded-full transition-all active:rotate-180 duration-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="p-2 hover:bg-white/20 rounded-xl transition-all active:scale-90 duration-300 disabled:opacity-60 bg-white/5 border border-white/10 shadow-sm"
                   title="تحديث رتبة الحساب"
                 >
                   <RefreshCw
-                    className={`w-3.5 h-3.5 text-brand-sky ${isAdminLoading ? "animate-spin" : ""}`}
+                    className={`w-4 h-4 text-white ${isAdminLoading ? "animate-spin" : ""}`}
                   />
                 </button>
               </div>
@@ -150,204 +168,261 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Content */}
-        <div className="p-6 sm:p-10 space-y-10">
+        <div className="p-5 sm:p-10 space-y-10 bg-white dark:bg-brand-navy/30">
           {/* Personal Information */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-              <span className="w-1.5 h-6 bg-brand-blue rounded-full" />
-              المعلومات الشخصية
-            </h2>
-            <div className="grid gap-4">
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
+                المعلومات الشخصية
+              </h2>
+            </div>
+            <div className="grid gap-5">
               {/* Display Name */}
-              <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-4">
-                  <div className="bg-brand-blue/10 p-2.5 rounded-xl">
-                    <User className="w-5 h-5 text-brand-blue" />
+              <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:shadow-xl hover:shadow-brand-blue/5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                      <User className="w-7 h-7 text-brand-blue" />
+                    </div>
+                    <div className="flex-1">
+                      <label
+                        htmlFor="profile-display-name"
+                        className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1 block"
+                      >
+                        اسم المستخدم
+                      </label>
+                      {isEditing ? (
+                        <div className="relative mt-2">
+                          <input
+                            id="profile-display-name"
+                            name="displayName"
+                            type="text"
+                            autoComplete="name"
+                            value={newDisplayName}
+                            onChange={(e) => setNewDisplayName(e.target.value)}
+                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg"
+                            placeholder="أدخل اسم المستخدم"
+                            maxLength={50}
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
+                          {displayName || "غير محدد"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2 sm:pt-0">
+                    {isEditing ? (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleSaveDisplayName}
+                          disabled={isSaving}
+                          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-500/25 active:scale-95 disabled:opacity-50"
+                        >
+                          <Save className="w-5 h-5" />
+                          <span>حفظ</span>
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center gap-2 px-6 py-3 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-2xl font-bold transition-all active:scale-95"
+                        >
+                          <X className="w-5 h-5" />
+                          <span>إلغاء</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 px-6 py-3 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue rounded-2xl font-bold hover:bg-brand-blue hover:text-white transition-all duration-300 group/btn"
+                      >
+                        <Edit3 className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                        <span>تعديل الاسم</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Email & Account Type Grid */}
+              <div className="grid sm:grid-cols-2 gap-5">
+                {/* Email */}
+                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 group">
+                  <div className="w-14 h-14 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-2xl flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                    <Mail className="w-7 h-7 text-brand-orange" />
                   </div>
                   <div>
-                    <label
-                      htmlFor="profile-display-name"
-                      className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
-                    >
-                      اسم المستخدم
-                    </label>
-                    {isEditing ? (
-                      <input
-                        id="profile-display-name"
-                        name="displayName"
-                        type="text"
-                        autoComplete="name"
-                        value={newDisplayName}
-                        onChange={(e) => setNewDisplayName(e.target.value)}
-                        className="mt-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
-                        placeholder="أدخل اسم المستخدم"
-                        maxLength={50}
-                      />
-                    ) : (
-                      <p className="font-bold text-slate-900 dark:text-white text-lg">
-                        {displayName || "غير محدد"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {isEditing ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveDisplayName}
-                      disabled={isSaving}
-                      className="p-2.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all disabled:opacity-50"
-                    >
-                      <Save className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="p-2.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="p-2.5 text-brand-blue hover:bg-brand-blue/5 rounded-xl transition-all"
-                  >
-                    <Edit3 className="w-6 h-6" />
-                  </button>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="flex items-center gap-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="bg-brand-orange/10 p-2.5 rounded-xl">
-                  <Mail className="w-5 h-5 text-brand-orange" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    البريد الإلكتروني
-                  </p>
-                  <p className="font-bold text-slate-900 dark:text-white text-lg">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-
-              {/* Account Type */}
-              <div className="flex items-center gap-4 p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="bg-brand-blue/10 p-2.5 rounded-xl">
-                  <Shield className="w-5 h-5 text-brand-blue" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    نوع الحساب
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <p className="font-bold text-slate-900 dark:text-white text-lg">
-                      {isAdmin
-                        ? adminRole === "doctor"
-                          ? "ادمن دكتور"
-                          : adminRole === "student"
-                            ? "ادمن طالب"
-                            : "ادمن"
-                        : "مستخدم"}
+                    <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
+                      البريد الإلكتروني
                     </p>
-                    {isAdmin && (
-                      <span className="px-3 py-1 bg-brand-orange text-white text-xs font-bold rounded-full shadow-lg shadow-brand-orange/20">
-                        {adminRole === "doctor"
-                          ? "صلاحيات كاملة"
-                          : "صلاحيات محدودة"}
-                      </span>
-                    )}
+                    <p className="font-bold text-slate-900 dark:text-white text-lg break-all">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Account Type */}
+                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 group">
+                  <div className="w-14 h-14 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-2xl flex items-center justify-center shadow-inner group-hover:-rotate-12 transition-transform duration-500">
+                    <Shield className="w-7 h-7 text-brand-blue" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
+                      نوع الحساب
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold text-slate-900 dark:text-white text-lg">
+                        {isAdmin
+                          ? adminRole === "doctor"
+                            ? "ادمن دكتور"
+                            : adminRole === "student"
+                              ? "ادمن طالب"
+                              : "ادمن"
+                          : "مستخدم"}
+                      </p>
+                      {isAdmin && (
+                        <span className="px-3 py-1 bg-gradient-to-r from-brand-orange to-orange-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-brand-orange/20 uppercase tracking-tighter">
+                          {adminRole === "doctor"
+                            ? "صلاحيات كاملة"
+                            : "صلاحيات محدودة"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Academic */}
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      المستوى والترم
-                    </p>
-                    <p className="font-bold text-slate-900 dark:text-white text-lg">
-                      {academicLoading
-                        ? "جاري التحميل..."
-                        : `المستوى ${academic.level ?? "غير محدد"} - ترم ${academic.semester ?? "غير محدد"}`}
-                    </p>
+              <div className="bg-slate-50 dark:bg-white/[0.02] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 group relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-blue/20 group-hover:bg-brand-blue transition-colors duration-500" />
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                      🎓
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
+                        المسار الأكاديمي الحالي
+                      </p>
+                      <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
+                        {academicLoading
+                          ? "جاري التحميل..."
+                          : `${levels.find((l) => l.level_number === academic.level)?.name || "مستوى غير محدد"} • ترم ${academic.semester ?? "؟"}`}
+                      </p>
+                      {academic.department_id && (
+                        <p className="text-sm font-bold text-brand-blue mt-1">
+                          {
+                            departments.find(
+                              (d) => d.id === academic.department_id,
+                            )?.name
+                          }
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="profile-academic-level" className="sr-only">
-                      المستوى
-                    </label>
-                    <select
-                      id="profile-academic-level"
-                      name="academicLevel"
-                      value={level}
-                      onChange={(e) => setLevel(Number(e.target.value))}
-                      disabled={academicLoading || isSavingAcademic}
-                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
-                    >
-                      <option value={1}>المستوى الأول</option>
-                      <option value={2}>المستوى الثاني</option>
-                      <option value={3}>المستوى الثالث</option>
-                      <option value={4}>المستوى الرابع</option>
-                    </select>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div className="grid grid-cols-1 sm:flex gap-3">
+                      <select
+                        id="profile-academic-level"
+                        name="academicLevel"
+                        value={level}
+                        onChange={(e) => setLevel(Number(e.target.value))}
+                        disabled={academicLoading || isSavingAcademic}
+                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                      >
+                        <option value="">اختر المستوى</option>
+                        {levels.map((l) => (
+                          <option key={l.id} value={l.level_number ?? 0}>
+                            {l.name}
+                          </option>
+                        ))}
+                      </select>
 
-                    <label
-                      htmlFor="profile-academic-semester"
-                      className="sr-only"
-                    >
-                      الترم
-                    </label>
-                    <select
-                      id="profile-academic-semester"
-                      name="academicSemester"
-                      value={semester}
-                      onChange={(e) => setSemester(Number(e.target.value))}
-                      disabled={academicLoading || isSavingAcademic}
-                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
-                    >
-                      <option value={1}>ترم 1</option>
-                      <option value={2}>ترم 2</option>
-                    </select>
+                      <select
+                        id="profile-academic-department"
+                        name="academicDepartment"
+                        value={departmentId}
+                        onChange={(e) => setDepartmentId(e.target.value)}
+                        disabled={academicLoading || isSavingAcademic || !level}
+                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                      >
+                        <option value="">اختر القسم</option>
+                        {departments
+                          .filter((d) => {
+                            const selectedLevel = levels.find(
+                              (l) => l.level_number === level,
+                            );
+                            return (
+                              !d.academic_level_id ||
+                              d.academic_level_id === selectedLevel?.id
+                            );
+                          })
+                          .map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                      </select>
+
+                      <select
+                        id="profile-academic-semester"
+                        name="academicSemester"
+                        value={semester}
+                        onChange={(e) => setSemester(Number(e.target.value))}
+                        disabled={academicLoading || isSavingAcademic}
+                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                      >
+                        <option value={1}>ترم 1</option>
+                        <option value={2}>ترم 2</option>
+                      </select>
+                    </div>
 
                     <button
                       onClick={handleSaveAcademic}
                       disabled={academicLoading || isSavingAcademic}
-                      className="px-5 py-2 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-10 py-3 bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {isSavingAcademic ? "جاري الحفظ..." : "حفظ"}
+                      {isSavingAcademic && (
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                      )}
+                      <span>
+                        {isSavingAcademic ? "جاري الحفظ..." : "حفظ التغييرات"}
+                      </span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Notification Settings */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-              <span className="w-1.5 h-6 bg-brand-orange rounded-full" />
-              إعدادات الإشعارات
+          <section>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+              <span className="w-2 h-8 bg-brand-orange rounded-full shadow-[0_0_15px_rgba(var(--brand-orange),0.5)]" />
+              تنبيهات المنصة
             </h2>
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-800">
+            <div className="bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm">
               <NotificationSettings />
             </div>
-          </div>
+          </section>
 
           {/* Account Information */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-              <span className="w-1.5 h-6 bg-brand-blue rounded-full" />
-              معلومات الحساب
+          <section>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+              <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
+              سجل النشاط
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-5">
               {/* Registration Date */}
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  تاريخ التسجيل
+              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-navy/40 transition-all duration-300">
+                <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
+                  تاريخ الانضمام
                 </p>
-                <p className="font-bold text-slate-900 dark:text-white">
+                <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.created_at
                     ? new Date(user.created_at).toLocaleDateString("ar-EG", {
                         year: "numeric",
@@ -359,11 +434,11 @@ export default function ProfilePage() {
               </div>
 
               {/* Last Sign In */}
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
-                  آخر دخول
+              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-navy/40 transition-all duration-300">
+                <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
+                  آخر نشاط مسجل
                 </p>
-                <p className="font-bold text-slate-900 dark:text-white">
+                <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.last_sign_in_at
                     ? new Date(user.last_sign_in_at).toLocaleDateString(
                         "ar-EG",
@@ -379,15 +454,21 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Actions */}
-          <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+          <div className="pt-10 flex flex-col sm:flex-row gap-4 border-t border-slate-100 dark:border-white/5">
             <button
               onClick={() => router.push("/")}
-              className="w-full sm:w-auto px-10 py-3 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/25 transition-all duration-300"
+              className="w-full sm:w-auto px-12 py-4 bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/25 transition-all duration-300 active:scale-95 text-center"
             >
               العودة للرئيسية
+            </button>
+            <button
+              onClick={() => window.history.back()}
+              className="w-full sm:w-auto px-12 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all duration-300 active:scale-95 text-center"
+            >
+              رجوع
             </button>
           </div>
         </div>

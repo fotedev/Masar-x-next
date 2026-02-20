@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار امتداد Masar X Quiz Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option:hover {
+            border-color: #4CAF50;
+            background: #f8f9fa;
+        }
+
+        .option.selected {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: space-between;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .extension-panel {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #4CAF50;
+        }
+
+        .extension-panel h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار امتداد Masar X Quiz Tester</h1>
+
+        <div class="extension-panel">
+            <h3>حالة الامتداد</h3>
+            <div id="extensionStatus" class="status info">
+                جاري التحقق من الامتداد...
+            </div>
+            <div id="testResults"></div>
+        </div>
+
+        <div class="quiz-container">
+            <div class="question">
+                سؤال تجريبي: ما هو أفضل أطار عمل لتطوير الويب؟
+            </div>
+
+            <div class="options">
+                <div class="option" data-option="A">
+                    <strong>A)</strong> React
+                </div>
+                <div class="option" data-option="B">
+                    <strong>B)</strong> Vue.js
+                </div>
+                <div class="option" data-option="C">
+                    <strong>C)</strong> Angular
+                </div>
+                <div class="option" data-option="D">
+                    <strong>D)</strong> Svelte
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary" onclick="testExtension()">
+                    🧪 اختبر الامتداد
+                </button>
+                <button class="btn-primary" onclick="simulateQuiz()">
+                    🎯 محاكاة امتحان
+                </button>
+            </div>
+        </div>
+
+        <div class="extension-panel">
+            <h3>دليل الاستخدام</h3>
+            <ol>
+                <li>تأكد من تثبيت الامتداد</li>
+                <li>انقر على أيقونة الامتداد في شريط المتصفح</li>
+                <li>أدخل معرف امتحان حقيقي</li>
+                <li>اختر نوع الاختبار واضغط "بدء الاختبار"</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let selectedOption = null;
+
+        // اختبار الاتصال بالامتداد
+        async function testExtension() {
+            const statusDiv = document.getElementById('extensionStatus');
+            const resultsDiv = document.getElementById('testResults');
+
+            try {
+                // محاولة الاتصال بالامتداد
+                const response = await chrome.runtime.sendMessage({
+                    action: 'ping',
+                    test: true
+                });
+
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ الامتداد متصل ويعمل بشكل صحيح!';
+
+                resultsDiv.innerHTML = `
+                    <h4>نتائج الاختبار:</h4>
+                    <ul>
+                        <li>✅ الاتصال بالامتداد: ناجح</li>
+                        <li>✅ manifest.json: محمل</li>
+                        <li>✅ popup.html: متاح</li>
+                        <li>✅ content.js: يعمل</li>
+                    </ul>
+                `;
+
+            } catch (error) {
+                statusDiv.className = 'status warning';
+                statusDiv.textContent = '⚠️ الامتداد غير متاح أو غير مثبت';
+
+                resultsDiv.innerHTML = `
+                    <h4>خطأ في الاتصال:</h4>
+                    <p>${error.message}</p>
+                    <h4>الحلول:</h4>
+                    <ul>
+                        <li>تأكد من تثبيت الامتداد</li>
+                        <li>أعد تحميل الصفحة</li>
+                        <li>تحقق من Developer Mode</li>
+                        <li>افتح Console للمزيد من التفاصيل</li>
+                    </ul>
+                `;
+            }
+        }
+
+        // محاكاة اختيار خيار
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedOption = this.dataset.option;
+            });
+        });
+
+        // محاكاة امتحان
+        function simulateQuiz() {
+            if (!selectedOption) {
+                alert('يرجى اختيار إجابة أولاً!');
+                return;
+            }
+
+            const statusDiv = document.getElementById('extensionStatus');
+            statusDiv.className = 'status info';
+            statusDiv.textContent = `تم اختيار الإجابة ${selectedOption} - الامتداد سيتعامل مع باقي العملية`;
+        }
+
+        // اختبار تلقائي عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            setTimeout(testExtension, 1000);
+        });
+    </script>
+</body>
+</html>

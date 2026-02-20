@@ -1,0 +1,33 @@
+# Masar X
+
+> Masar X is an Arabic-first (RTL) university learning platform built with Next.js + Supabase, providing study summaries, quizzes, courses, and AI-assisted study tools.
+
+Key notes for LLMs/agents:
+
+- The frontend is a Next.js 14 App Router project (TypeScript + TailwindCSS) under `src/app` and shared UI under `src/components`.
+- The backend is Supabase (Postgres + Auth + Storage + Edge Functions). Client code uses the Supabase JS client; privileged operations are handled via Edge Functions.
+- Users may be redirected to academic onboarding (level/semester selection) if missing profile academic data.
+
+## Project docs
+
+- [README](./README.md): Overview, features, tech stack.
+- [Setup guide](./SETUP.md): Full local setup, env vars, Supabase migrations, deployment notes.
+
+## Key app routes
+
+- [Home](/): Main landing/dashboard.
+- [Subjects](/subjects): Subject list (semester-based).
+- [Courses](/courses): Course catalog and enrollment.
+- [Quizzes](/quizzes): Quiz browsing and attempts.
+- [AI assistant](/ai-assistant): Gemini-powered assistant UI.
+- [Academic onboarding](/onboarding/academic): Level/semester selection (shown when required).
+
+## Supabase (backend)
+
+- [Edge functions (source)](/supabase/functions): Deno-based functions (e.g. chat, uploads, password reset). Not all deployments expose these paths publicly; treat as repo paths.
+- [DB migrations (source)](/supabase/migrations): SQL migrations defining schema and RLS policies.
+
+## Optional
+
+- [Sitemap](/sitemap.xml): If present, lists indexable pages for crawling.
+- [Robots](/robots.txt): Crawling rules if present.

@@ -30,6 +30,7 @@ import { Quiz, Summary } from "../../../types/database";
 import { useVideos } from "../../../hooks/useVideos";
 import { useFiles } from "../../../hooks/useFiles";
 import { Suspense } from "react";
+import { useAcademicOptions } from "../../../hooks/useAcademicOptions";
 
 function SubjectSummariesContent() {
   const params = useParams();
@@ -38,6 +39,12 @@ function SubjectSummariesContent() {
   const lectureFromQuery = searchParams?.get("lecture");
   const router = useRouter();
   const { user, isAdmin } = useAuth();
+
+  const {
+    levels,
+    getDepartmentsForLevelName,
+    loading: academicOptionsLoading,
+  } = useAcademicOptions({ includeInactive: true });
   const summariesHook = useSummaries();
   const { trackSummaryClick } = useAnalytics();
   const [filteredSummaries, setFilteredSummaries] = useState<Summary[]>([]);
@@ -62,9 +69,6 @@ function SubjectSummariesContent() {
   const [isSavingLecture, setIsSavingLecture] = useState(false);
   const [lectureFormData, setLectureFormData] = useState({
     title: "",
-    label: "",
-    key: "",
-    orderIndex: "",
   });
 
   const [showEditSubjectModal, setShowEditSubjectModal] = useState(false);
@@ -89,6 +93,11 @@ function SubjectSummariesContent() {
   });
 
   const [isClient, setIsClient] = useState(false);
+
+  const availableExamDepartments = useMemo(() => {
+    if (!examFormData.year) return [];
+    return getDepartmentsForLevelName(examFormData.year);
+  }, [examFormData.year, getDepartmentsForLevelName]);
 
   useEffect(() => {
     setIsClient(true);
@@ -242,30 +251,9 @@ function SubjectSummariesContent() {
       setIsSavingLecture(true);
 
       const inferred = getLectureInfoFromTitle(rawTitle);
-      const manualKey = (lectureFormData.key || "").trim();
-      const key = (manualKey || inferred.key || "other")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-_]/g, "");
-
-      if (!key) {
-        alert("اكتب كود المحاضرة");
-        return;
-      }
-
-      const manualLabel = (lectureFormData.label || "").trim();
-      const label = manualLabel || inferred.label || rawTitle;
-
-      const orderIndexNum = lectureFormData.orderIndex
-        ? Number(lectureFormData.orderIndex)
-        : inferred.order;
-      const orderIndex =
-        typeof orderIndexNum === "number" &&
-        Number.isFinite(orderIndexNum) &&
-        orderIndexNum >= 0
-          ? Math.floor(orderIndexNum)
-          : 999999;
+      const key = inferred.key || "other";
+      const label = inferred.label || rawTitle;
+      const orderIndex = inferred.order;
 
       const standardizedSubject = decodeURIComponent(normalizedSubjectName)
         .trim()
@@ -286,7 +274,7 @@ function SubjectSummariesContent() {
 
       await fetchSubjectLectures();
       setShowAddLectureForm(false);
-      setLectureFormData({ title: "", label: "", key: "", orderIndex: "" });
+      setLectureFormData({ title: "" });
 
       setSelectedLectureKey(key);
     } catch {
@@ -955,19 +943,28 @@ function SubjectSummariesContent() {
         dir="rtl"
       >
         <div className="flex flex-col gap-8">
-          <button
-            onClick={() => {
-              const next = new URLSearchParams(
-                searchParams ? searchParams.toString() : "",
-              );
-              next.delete("lecture");
-              router.push(`?${next.toString()}`);
-            }}
-            className="group self-start flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
-          >
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            العودة للوحة التحكم
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/subjects")}
+              className="group flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-all"
+              title="العودة للمواد"
+            >
+              <ArrowRight className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => {
+                const next = new URLSearchParams(
+                  searchParams ? searchParams.toString() : "",
+                );
+                next.delete("lecture");
+                router.push(`?${next.toString()}`);
+              }}
+              className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
+            >
+              <LayoutGrid className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+              العودة للوحة التحكم
+            </button>
+          </div>
 
           <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-white shadow-2xl">
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
@@ -1191,7 +1188,14 @@ function SubjectSummariesContent() {
 
                 {isAdmin && (
                   <button
-                    onClick={() => setShowAddExamForm(true)}
+                    onClick={() => {
+                      setShowAddExamForm(true);
+                      setExamFormData((p) => ({
+                        ...p,
+                        year: p.year || levels[0]?.name || "",
+                        department: p.department || "",
+                      }));
+                    }}
                     className="w-full flex items-center justify-center gap-2 p-6 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:border-brand-blue hover:text-brand-blue transition-all font-black"
                   >
                     <Plus className="w-5 h-5" />
@@ -1245,86 +1249,51 @@ function SubjectSummariesContent() {
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
               إضافة محاضرة جديدة
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  عنوان المحاضرة
+                <label className="block text-sm font-black text-slate-500 mb-3 mr-1">
+                  اسم المحاضرة
                 </label>
-                <input
-                  type="text"
-                  value={lectureFormData.title}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({
-                      ...p,
-                      title: e.target.value,
-                      ...(p.label.trim() ? {} : { label: e.target.value }),
-                      ...(p.key.trim()
-                        ? {}
-                        : { key: getLectureInfoFromTitle(e.target.value).key }),
-                    }))
-                  }
-                  placeholder="مثال: محاضرة 1"
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={lectureFormData.title}
+                    onChange={(e) =>
+                      setLectureFormData({ title: e.target.value })
+                    }
+                    placeholder="مثال: محاضرة 1"
+                    className="w-full px-6 py-5 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-brand-blue focus:bg-white dark:focus:bg-slate-800 outline-none transition-all font-bold text-lg placeholder:text-slate-400 shadow-inner"
+                    autoFocus
+                  />
+                  <div className="absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
+                    <Sparkles className="w-5 h-5 text-brand-blue animate-pulse" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 px-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-blue/40" />
+                  <p className="text-[11px] font-bold text-slate-400">
+                    سيتم توليد الكود والترتيب تلقائياً وبشكل ذكي بناءً على
+                    العنوان
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  اسم المحاضرة (للعرض)
-                </label>
-                <input
-                  type="text"
-                  value={lectureFormData.label}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({ ...p, label: e.target.value }))
-                  }
-                  placeholder={
-                    getLectureInfoFromTitle(lectureFormData.title).label
-                  }
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  كود المحاضرة
-                </label>
-                <input
-                  type="text"
-                  value={lectureFormData.key}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({ ...p, key: e.target.value }))
-                  }
-                  placeholder={
-                    getLectureInfoFromTitle(lectureFormData.title).key
-                  }
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  الترتيب (اختياري)
-                </label>
-                <input
-                  type="number"
-                  value={lectureFormData.orderIndex}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({
-                      ...p,
-                      orderIndex: e.target.value,
-                    }))
-                  }
-                  placeholder="تلقائي"
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
               <button
                 onClick={handleSaveLecture}
                 disabled={isSavingLecture || !lectureFormData.title.trim()}
-                className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-4"
+                className="w-full py-5 rounded-[1.5rem] bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/40 disabled:opacity-40 disabled:hover:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
               >
-                {isSavingLecture ? "جاري الحفظ..." : "حفظ المحاضرة"}
+                {isSavingLecture ? (
+                  <>
+                    <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>جاري الحفظ...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-6 h-6" />
+                    <span>حفظ المحاضرة</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -1383,7 +1352,7 @@ function SubjectSummariesContent() {
                   <label className="block text-sm font-bold text-slate-500 mb-2">
                     القسم
                   </label>
-                  <input
+                  <select
                     value={examFormData.department}
                     onChange={(e) =>
                       setExamFormData((p) => ({
@@ -1391,20 +1360,56 @@ function SubjectSummariesContent() {
                         department: e.target.value,
                       }))
                     }
+                    disabled={
+                      academicOptionsLoading ||
+                      !examFormData.year ||
+                      availableExamDepartments.length === 0
+                    }
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  />
+                  >
+                    <option value="" disabled>
+                      اختر القسم...
+                    </option>
+                    {availableExamDepartments.map((dep) => (
+                      <option
+                        key={dep.id}
+                        value={dep.name}
+                        disabled={!dep.is_active}
+                      >
+                        {dep.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-500 mb-2">
                     السنة
                   </label>
-                  <input
+                  <select
                     value={examFormData.year}
                     onChange={(e) =>
-                      setExamFormData((p) => ({ ...p, year: e.target.value }))
+                      setExamFormData((p) => ({
+                        ...p,
+                        year: e.target.value,
+                        department: "",
+                      }))
                     }
+                    disabled={academicOptionsLoading || levels.length === 0}
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  />
+                  >
+                    <option value="" disabled>
+                      اختر المستوى...
+                    </option>
+                    {levels.map((lvl) => (
+                      <option
+                        key={lvl.id}
+                        value={lvl.name}
+                        disabled={!lvl.is_active}
+                      >
+                        {lvl.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1531,7 +1536,12 @@ function SubjectSummariesContent() {
 
               <button
                 onClick={handleSaveExam}
-                disabled={isSavingExam || !examFormData.title.trim()}
+                disabled={
+                  isSavingExam ||
+                  !examFormData.title.trim() ||
+                  !examFormData.year.trim() ||
+                  !examFormData.department.trim()
+                }
                 className="w-full py-5 rounded-[1.5rem] bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-8"
               >
                 {isSavingExam ? "جاري الحفظ..." : "حفظ الامتحان بالكامل"}

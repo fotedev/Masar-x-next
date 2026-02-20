@@ -5,11 +5,16 @@ import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
 
+ type UseSubjectsParams = {
+     level?: number | null;
+     semester?: number | null;
+ };
+
 type SubjectWithSemester = Subject & {
     semester?: string | number | null;
 };
 
-export function useSubjects() {
+export function useSubjects(params: UseSubjectsParams = {}) {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [loading, setLoading] = useState(true);
     const { academic, loading: academicLoading } = useUserAcademic();
@@ -18,9 +23,17 @@ export function useSubjects() {
     const fetchSubjects = useCallback(async (skipCache = false) => {
         try {
             setLoading(true);
+            if (params.level === null || params.semester === null) {
+                setSubjects([]);
+                return;
+            }
             const isAnonymous = !user;
-            const effectiveLevel = academic.level ?? 1;
-            const effectiveSemester = academic.semester ?? (isAnonymous ? 2 : 1);
+            const effectiveLevel =
+                typeof params.level === "number" ? params.level : (academic.level ?? 1);
+            const effectiveSemester =
+                typeof params.semester === "number"
+                    ? params.semester
+                    : (academic.semester ?? (isAnonymous ? 2 : 1));
             const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
             const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}`;
 
@@ -72,7 +85,7 @@ export function useSubjects() {
         } finally {
             setLoading(false);
         }
-    }, [academic.level, academic.semester, user]);
+    }, [academic.level, academic.semester, params.level, params.semester, user]);
 
     const updateSubjectVisibility = async (id: string, showOnHome: boolean) => {
         try {

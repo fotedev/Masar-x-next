@@ -54,6 +54,7 @@ export type Database = {
           website: string | null
           level?: number | null
           semester?: number | null
+          department_id?: string | null
         }
         Insert: {
           id: string
@@ -64,6 +65,7 @@ export type Database = {
           website?: string | null
           level?: number | null
           semester?: number | null
+          department_id?: string | null
         }
         Update: {
           id?: string
@@ -74,6 +76,7 @@ export type Database = {
           website?: string | null
           level?: number | null
           semester?: number | null
+          department_id?: string | null
         }
       }
       summaries: {

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Masar X Quiz Tester",
+  "version": "1.0",
+  "description": "أداة اختبار نظام الامتحانات في Masar X للمطورين",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://masarx.vercel.app/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Masar X Quiz Tester",
+    "default_icon": "icons/icon.svg"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "https://masarx.vercel.app/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon.svg",
+    "48": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": [
+        "http://localhost:3000/*",
+        "https://masarx.vercel.app/*"
+      ]
+    }
+  ]
+}
