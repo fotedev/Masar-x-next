@@ -2,35 +2,33 @@ import { MetadataRoute } from 'next'
 import { supabase } from '../lib/supabase'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://masar-x.vercel.app/'
+  const baseUrl = 'https://masarx.vercel.app'
 
   // Static URLs
   const staticUrls = [
     '',
     '/add',
     '/add-summary',
-    '/admin-dashboard',
+    '/add-video',
+    '/add-file',
     '/ai-assistant',
     '/courses',
-    '/edit-summary',
-    '/instructor-dashboard',
+    '/faq',
     '/login',
     '/news',
     '/privacy',
     '/privacy-details',
     '/privacy-policy',
-    '/profile',
-    '/quiz-attempts',
-    '/quiz-play',
     '/quizzes',
     '/reset-password',
     '/signup',
     '/subjects',
     '/summaries',
-    '/test-route',
   ].map(route => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: route === '' ? 1 : 0.8,
   }))
 
   // Dynamic URLs
@@ -41,13 +39,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { data: subjects } = await supabase
       .from('subjects')
       .select('name')
-      .eq('show_on_home', true)
 
     if (subjects) {
       subjects.forEach(subject => {
         dynamicUrls.push({
-          url: `${baseUrl}/subjects/${encodeURIComponent(subject.name)}`,
+          url: `${baseUrl}/subjects/${encodeURIComponent(subject.name).replace(/%20/g, '+')}`,
           lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
         })
       })
     }
@@ -62,6 +61,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         dynamicUrls.push({
           url: `${baseUrl}/courses/${course.id}`,
           lastModified: new Date(course.updated_at),
+          changeFrequency: 'weekly',
+          priority: 0.7,
         })
       })
     }
@@ -76,6 +77,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         dynamicUrls.push({
           url: `${baseUrl}/quiz-play/${quiz.id}`,
           lastModified: new Date(quiz.updated_at),
+          changeFrequency: 'weekly',
+          priority: 0.6,
         })
       })
     }
@@ -91,11 +94,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         dynamicUrls.push({
           url: `${baseUrl}/summaries/${summary.id}`,
           lastModified: new Date(summary.updated_at),
+          changeFrequency: 'weekly',
+          priority: 0.6,
         })
       })
     }
   } catch {
-    // ignore
+    // ignore - return static urls only if DB fails
   }
 
   return [...staticUrls, ...dynamicUrls]
