@@ -171,13 +171,15 @@ export const cacheKeys = {
 
 // Default TTL values (in milliseconds)
 export const cacheTTL = {
-    notifications: 30 * 1000,  // 30 seconds
-    summaries: 60 * 1000,      // 1 minute
-    news: 60 * 1000,           // 1 minute
-    appeals: 60 * 1000,        // 1 minute
-    profile: 5 * 60 * 1000,    // 5 minutes
-    subjects: 60 * 60 * 1000,  // 1 hour
-    videos: 5 * 60 * 1000,     // 5 minutes
-    files: 5 * 60 * 1000,      // 5 minutes
-    lectures: 10 * 60 * 1000,  // 10 minutes
+    notifications: 5 * 60 * 1000,   // 5 minutes (was 30s)
+    summaries: 60 * 60 * 1000,      // 1 hour (was 1m)
+    news: 60 * 60 * 1000,           // 1 hour (was 1m)
+    appeals: 30 * 60 * 1000,        // 30 minutes (was 1m)
+    profile: 2 * 60 * 60 * 1000,    // 2 hours (was 5m)
+    subjects: 48 * 60 * 60 * 1000,  // 48 hours (was 1h)
+    videos: 60 * 60 * 1000,         // 1 hour (was 5m)
+    files: 60 * 60 * 1000,          // 1 hour (was 5m)
+    lectures: 2 * 60 * 60 * 1000,   // 2 hours (was 10m)
+    subjectDetails: 48 * 60 * 60 * 1000, // 48 hours
+    quizzes: 60 * 60 * 1000,        // 1 hour
 };
