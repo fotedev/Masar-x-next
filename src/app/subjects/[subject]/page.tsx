@@ -69,6 +69,9 @@ function SubjectSummariesContent() {
   const [isSavingLecture, setIsSavingLecture] = useState(false);
   const [lectureFormData, setLectureFormData] = useState({
     title: "",
+    label: "",
+    key: "",
+    orderIndex: "",
   });
 
   const [showEditSubjectModal, setShowEditSubjectModal] = useState(false);
@@ -98,7 +101,6 @@ function SubjectSummariesContent() {
     if (!examFormData.year) return [];
     return getDepartmentsForLevelName(examFormData.year);
   }, [examFormData.year, getDepartmentsForLevelName]);
-
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -251,9 +253,30 @@ function SubjectSummariesContent() {
       setIsSavingLecture(true);
 
       const inferred = getLectureInfoFromTitle(rawTitle);
-      const key = inferred.key || "other";
-      const label = inferred.label || rawTitle;
-      const orderIndex = inferred.order;
+      const manualKey = (lectureFormData.key || "").trim();
+      const key = (manualKey || inferred.key || "other")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-_]/g, "");
+
+      if (!key) {
+        alert("اكتب كود المحاضرة");
+        return;
+      }
+
+      const manualLabel = (lectureFormData.label || "").trim();
+      const label = manualLabel || inferred.label || rawTitle;
+
+      const orderIndexNum = lectureFormData.orderIndex
+        ? Number(lectureFormData.orderIndex)
+        : inferred.order;
+      const orderIndex =
+        typeof orderIndexNum === "number" &&
+        Number.isFinite(orderIndexNum) &&
+        orderIndexNum >= 0
+          ? Math.floor(orderIndexNum)
+          : 999999;
 
       const standardizedSubject = decodeURIComponent(normalizedSubjectName)
         .trim()
@@ -274,7 +297,7 @@ function SubjectSummariesContent() {
 
       await fetchSubjectLectures();
       setShowAddLectureForm(false);
-      setLectureFormData({ title: "" });
+      setLectureFormData({ title: "", label: "", key: "", orderIndex: "" });
 
       setSelectedLectureKey(key);
     } catch {
@@ -1249,51 +1272,86 @@ function SubjectSummariesContent() {
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
               إضافة محاضرة جديدة
             </h3>
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-black text-slate-500 mb-3 mr-1">
-                  اسم المحاضرة
+                <label className="block text-sm font-bold text-slate-500 mb-2">
+                  عنوان المحاضرة
                 </label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    value={lectureFormData.title}
-                    onChange={(e) =>
-                      setLectureFormData({ title: e.target.value })
-                    }
-                    placeholder="مثال: محاضرة 1"
-                    className="w-full px-6 py-5 rounded-[1.5rem] bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent focus:border-brand-blue focus:bg-white dark:focus:bg-slate-800 outline-none transition-all font-bold text-lg placeholder:text-slate-400 shadow-inner"
-                    autoFocus
-                  />
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity">
-                    <Sparkles className="w-5 h-5 text-brand-blue animate-pulse" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center gap-2 px-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-blue/40" />
-                  <p className="text-[11px] font-bold text-slate-400">
-                    سيتم توليد الكود والترتيب تلقائياً وبشكل ذكي بناءً على
-                    العنوان
-                  </p>
-                </div>
+                <input
+                  type="text"
+                  value={lectureFormData.title}
+                  onChange={(e) =>
+                    setLectureFormData((p) => ({
+                      ...p,
+                      title: e.target.value,
+                      ...(p.label.trim() ? {} : { label: e.target.value }),
+                      ...(p.key.trim()
+                        ? {}
+                        : { key: getLectureInfoFromTitle(e.target.value).key }),
+                    }))
+                  }
+                  placeholder="مثال: محاضرة 1"
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
+                />
               </div>
 
+              <div>
+                <label className="block text-sm font-bold text-slate-500 mb-2">
+                  اسم المحاضرة (للعرض)
+                </label>
+                <input
+                  type="text"
+                  value={lectureFormData.label}
+                  onChange={(e) =>
+                    setLectureFormData((p) => ({ ...p, label: e.target.value }))
+                  }
+                  placeholder={
+                    getLectureInfoFromTitle(lectureFormData.title).label
+                  }
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-500 mb-2">
+                  كود المحاضرة
+                </label>
+                <input
+                  type="text"
+                  value={lectureFormData.key}
+                  onChange={(e) =>
+                    setLectureFormData((p) => ({ ...p, key: e.target.value }))
+                  }
+                  placeholder={
+                    getLectureInfoFromTitle(lectureFormData.title).key
+                  }
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-500 mb-2">
+                  الترتيب (اختياري)
+                </label>
+                <input
+                  type="number"
+                  value={lectureFormData.orderIndex}
+                  onChange={(e) =>
+                    setLectureFormData((p) => ({
+                      ...p,
+                      orderIndex: e.target.value,
+                    }))
+                  }
+                  placeholder="تلقائي"
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
+                />
+              </div>
               <button
                 onClick={handleSaveLecture}
                 disabled={isSavingLecture || !lectureFormData.title.trim()}
-                className="w-full py-5 rounded-[1.5rem] bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/40 disabled:opacity-40 disabled:hover:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3 mt-4"
+                className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-4"
               >
-                {isSavingLecture ? (
-                  <>
-                    <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>جاري الحفظ...</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-6 h-6" />
-                    <span>حفظ المحاضرة</span>
-                  </>
-                )}
+                {isSavingLecture ? "جاري الحفظ..." : "حفظ المحاضرة"}
               </button>
             </div>
           </div>
@@ -1539,12 +1597,11 @@ function SubjectSummariesContent() {
                 disabled={
                   isSavingExam ||
                   !examFormData.title.trim() ||
-                  !examFormData.year.trim() ||
-                  !examFormData.department.trim()
+                  !examFormData.year
                 }
-                className="w-full py-5 rounded-[1.5rem] bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-8"
+                className="w-full py-5 rounded-3xl bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/40 disabled:opacity-50 transition-all"
               >
-                {isSavingExam ? "جاري الحفظ..." : "حفظ الامتحان بالكامل"}
+                {isSavingExam ? "جاري الحفظ..." : "حفظ الامتحان"}
               </button>
             </div>
           </div>
