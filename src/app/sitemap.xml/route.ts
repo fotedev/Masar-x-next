@@ -42,8 +42,8 @@ export async function GET() {
 
     if (subjects) {
       subjects.forEach((subject) => {
-        // Ensure subject name is properly encoded and contains no spaces
-        const encodedName = encodeURIComponent(subject.name.trim()).replace(/%20/g, "+");
+        // Standard URL encoding for Arabic characters
+        const encodedName = encodeURIComponent(subject.name.trim());
         dynamicUrls += `
   <url>
     <loc>${baseUrl}/subjects/${encodedName}</loc>

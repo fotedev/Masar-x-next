@@ -24,6 +24,7 @@ import { aiAssistant } from "@/lib/ai-assistant";
 import type { Quiz, Summary } from "@/types/database";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { toast } from "sonner";
+import { queryCache, cacheTTL } from "@/lib/queryCache";
 
 interface QuizWithMeta {
   quiz: Quiz;
@@ -111,26 +112,41 @@ function QuizDashboardInternal() {
     semester: selectedFormSemesterNumber,
   });
 
-  const loadQuizzes = useCallback(async () => {
-    try {
-      setLoading(true);
-      let query = supabase.from("quizzes").select("*");
-      if (!isAdmin) {
-        query = query.eq("status", "approved");
+  const loadQuizzes = useCallback(
+    async (skipCache = false) => {
+      const cacheKey = `quizzes_all_admin_${isAdmin}`;
+      if (!skipCache) {
+        const cached = queryCache.get<Quiz[]>(cacheKey);
+        if (cached) {
+          setQuizzes(cached);
+          setLoading(false);
+          return;
+        }
       }
 
-      const { data, error } = await query.order("created_at", {
-        ascending: false,
-      });
+      try {
+        setLoading(true);
+        let query = supabase.from("quizzes").select("*");
+        if (!isAdmin) {
+          query = query.eq("status", "approved");
+        }
 
-      if (error) throw error;
-      setQuizzes(data || []);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, [isAdmin]);
+        const { data, error } = await query.order("created_at", {
+          ascending: false,
+        });
+
+        if (error) throw error;
+        const dataRows = data || [];
+        setQuizzes(dataRows);
+        queryCache.set(cacheKey, dataRows, cacheTTL.quizzes || 1800000);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isAdmin],
+  );
 
   const loadMyAttempts = useCallback(async () => {
     if (!user) return;
@@ -481,7 +497,7 @@ function QuizDashboardInternal() {
         if (questionsError) throw questionsError;
       }
 
-      await loadQuizzes();
+      await loadQuizzes(true);
       toast.success("تم حفظ الامتحان بنجاح", {
         description: editingQuiz
           ? "تم تحديث بيانات الامتحان بنجاح."
