@@ -627,6 +627,7 @@ export type Database = {
           schedule?: string | null
           location?: string | null
           status: "pending" | "approved" | "rejected"
+          is_academic: boolean
           created_at: string
         }
         Insert: {
@@ -664,6 +665,7 @@ export type Database = {
           instructor_id: string
           price: number | null
           is_published: boolean
+          is_academic: boolean
           created_at: string
           updated_at: string
         }
@@ -674,6 +676,7 @@ export type Database = {
           instructor_id: string
           price?: number | null
           is_published?: boolean
+          is_academic?: boolean
           created_at?: string
           updated_at?: string
         }
