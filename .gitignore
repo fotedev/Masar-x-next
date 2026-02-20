@@ -82,6 +82,7 @@ check-*.js
 # Temporary and Local Files
 tmp/
 temp/
+# sandbox/
 *.tgz
 test.html
 exam_resaults*.html
@@ -125,3 +126,5 @@ vite.config.ts.timestamp-*.mjs
 /supabase/migrations.backup
 /test_quiz
 /markdown
+/scripts/vizvibe.mmd
+/scripts/setup-subjects.js

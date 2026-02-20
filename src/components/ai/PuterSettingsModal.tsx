@@ -9,7 +9,7 @@ interface PuterSettingsModalProps {
   onClose: () => void;
 }
 
-export const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
+const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
   isOpen,
   onClose,
 }) => {
@@ -109,3 +109,5 @@ export const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
     </div>
   );
 };
+
+export default PuterSettingsModal;

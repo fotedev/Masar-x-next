@@ -19,8 +19,8 @@ function EditSummaryContent() {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { sendNotification } = useBrowserNotifications();
-  const { subjects } = useSubjects();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const [semester, setSemester] = useState<number>(1);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -28,6 +28,17 @@ function EditSummaryContent() {
     year: "",
     department: "",
     content: "",
+  });
+
+  const selectedLevelNumber = useMemo(() => {
+    if (!formData.year) return null;
+    const found = levels.find((l) => l.name === formData.year);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [formData.year, levels]);
+
+  const { subjects } = useSubjects({
+    level: selectedLevelNumber,
+    semester: typeof semester === "number" ? semester : null,
   });
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -89,6 +100,7 @@ function EditSummaryContent() {
           department: data.department,
           content: data.content,
         });
+        setSemester(1);
         setCurrentPdfUrl(data.pdf_url);
       } catch {
         setError("حدث خطأ أثناء تحميل بيانات الملخص");
@@ -227,6 +239,68 @@ function EditSummaryContent() {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label
+                htmlFor="summary-year"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                المستوى الدراسي <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="summary-year"
+                name="summaryYear"
+                required
+                autoComplete="off"
+                value={formData.year}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    year: e.target.value,
+                    department: "",
+                    subject: "",
+                  })
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">اختر المستوي</option>
+                {levels.map((lvl) => (
+                  <option key={lvl.id} value={lvl.name}>
+                    {lvl.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="summary-semester"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                الترم <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="summary-semester"
+                name="summarySemester"
+                required
+                autoComplete="off"
+                value={semester}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  setSemester(next);
+                  setFormData((prev) => ({
+                    ...prev,
+                    department: "",
+                    subject: "",
+                  }));
+                }}
+                disabled={!formData.year}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+              >
+                <option value={1}>ترم 1</option>
+                <option value={2}>ترم 2</option>
+              </select>
+            </div>
+
+            <div>
+              <label
                 htmlFor="summary-department"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
@@ -248,37 +322,6 @@ function EditSummaryContent() {
                 {availableDepartments.map((dep) => (
                   <option key={dep.id} value={dep.name}>
                     {dep.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="summary-year"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                المستوى الدراسي <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="summary-year"
-                name="summaryYear"
-                required
-                autoComplete="off"
-                value={formData.year}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    year: e.target.value,
-                    department: "",
-                  })
-                }
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="">اختر المستوي</option>
-                {levels.map((lvl) => (
-                  <option key={lvl.id} value={lvl.name}>
-                    {lvl.name}
                   </option>
                 ))}
               </select>

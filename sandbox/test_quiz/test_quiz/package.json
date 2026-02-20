@@ -1,0 +1,39 @@
+{
+  "name": "masarx-quiz-tester-extension",
+  "version": "1.0.0",
+  "description": "امتداد متصفح لاختبار نظام الامتحانات في Masar X",
+  "main": "manifest.json",
+  "scripts": {
+    "test:answers": "node test-quiz-answers.js",
+    "test:navigation": "node test-quiz-navigation.js",
+    "test:timer": "node test-quiz-timer.js",
+    "test:bulk": "node test-quiz-bulk.js",
+    "test:all": "npm run test:answers && npm run test:navigation && npm run test:timer && npm run test:bulk",
+    "create-icons": "node create_icons.js",
+    "build": "npm run create-icons",
+    "package": "zip -r masarx-quiz-tester.zip . -x node_modules/* .git/*",
+    "analyze": "node quick_test.js",
+    "dev": "echo 'Run: npm run dev in parent directory, then load extension'"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "keywords": [
+    "browser-extension",
+    "chrome-extension",
+    "quiz-testing",
+    "automation",
+    "masarx",
+    "education"
+  ],
+  "author": "Masar X Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aboalayoun/masar-x-next"
+  },
+  "bugs": {
+    "url": "https://github.com/Aboalayoun/masar-x-next/issues"
+  },
+  "homepage": "https://github.com/Aboalayoun/masar-x-next#readme"
+}
