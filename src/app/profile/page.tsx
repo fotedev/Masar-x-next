@@ -21,8 +21,11 @@ export default function ProfilePage() {
   } = useAuth();
   const {
     academic,
+<<<<<<< HEAD
     levels,
     departments,
+=======
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
     loading: academicLoading,
 
     setUserAcademic,
@@ -33,9 +36,12 @@ export default function ProfilePage() {
   const [isSavingAcademic, setIsSavingAcademic] = useState(false);
   const [level, setLevel] = useState<number>(academic.level ?? 1);
   const [semester, setSemester] = useState<number>(academic.semester ?? 1);
+<<<<<<< HEAD
   const [departmentId, setDepartmentId] = useState<string>(
     academic.department_id || "",
   );
+=======
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
 
   useEffect(() => {
     if (academic.level != null) setLevel(academic.level);
@@ -44,9 +50,12 @@ export default function ProfilePage() {
   useEffect(() => {
     if (academic.semester != null) setSemester(academic.semester);
   }, [academic.semester]);
+<<<<<<< HEAD
   useEffect(() => {
     if (academic.department_id != null) setDepartmentId(academic.department_id);
   }, [academic.department_id]);
+=======
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
 
   // Note: Admin status is now cached and doesn't need refresh on every visit
 
@@ -74,6 +83,7 @@ export default function ProfilePage() {
 
   const handleSaveAcademic = async () => {
     if (!user) return;
+<<<<<<< HEAD
     setIsSavingAcademic(true);
     try {
       const ok = await setUserAcademic({
@@ -86,6 +96,19 @@ export default function ProfilePage() {
       }
     } catch {
       alert("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
+=======
+    if (![1, 2, 3, 4].includes(level)) return;
+    if (![1, 2].includes(semester)) return;
+
+    setIsSavingAcademic(true);
+    try {
+      const ok = await setUserAcademic({ level, semester });
+      if (!ok) {
+        alert("حدث خطأ أثناء حفظ المستوى/الترم");
+      }
+    } catch {
+      alert("حدث خطأ أثناء حفظ المستوى/الترم");
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
     } finally {
       setIsSavingAcademic(false);
     }
@@ -391,6 +414,67 @@ export default function ProfilePage() {
                       <span>
                         {isSavingAcademic ? "جاري الحفظ..." : "حفظ التغييرات"}
                       </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic */}
+              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      المستوى والترم
+                    </p>
+                    <p className="font-bold text-slate-900 dark:text-white text-lg">
+                      {academicLoading
+                        ? "جاري التحميل..."
+                        : `المستوى ${academic.level ?? "غير محدد"} - ترم ${academic.semester ?? "غير محدد"}`}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label htmlFor="profile-academic-level" className="sr-only">
+                      المستوى
+                    </label>
+                    <select
+                      id="profile-academic-level"
+                      name="academicLevel"
+                      value={level}
+                      onChange={(e) => setLevel(Number(e.target.value))}
+                      disabled={academicLoading || isSavingAcademic}
+                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
+                    >
+                      <option value={1}>المستوى الأول</option>
+                      <option value={2}>المستوى الثاني</option>
+                      <option value={3}>المستوى الثالث</option>
+                      <option value={4}>المستوى الرابع</option>
+                    </select>
+
+                    <label
+                      htmlFor="profile-academic-semester"
+                      className="sr-only"
+                    >
+                      الترم
+                    </label>
+                    <select
+                      id="profile-academic-semester"
+                      name="academicSemester"
+                      value={semester}
+                      onChange={(e) => setSemester(Number(e.target.value))}
+                      disabled={academicLoading || isSavingAcademic}
+                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-all"
+                    >
+                      <option value={1}>ترم 1</option>
+                      <option value={2}>ترم 2</option>
+                    </select>
+
+                    <button
+                      onClick={handleSaveAcademic}
+                      disabled={academicLoading || isSavingAcademic}
+                      className="px-5 py-2 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSavingAcademic ? "جاري الحفظ..." : "حفظ"}
                     </button>
                   </div>
                 </div>
