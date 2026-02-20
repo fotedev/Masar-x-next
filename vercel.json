@@ -45,18 +45,7 @@
             "has": [
                 {
                     "type": "host",
-                    "value": "masarx.vercel.app"
-                }
-            ],
-            "destination": "https://masarx.vercel.app/$1",
-            "permanent": true
-        },
-        {
-            "source": "/(.*)",
-            "has": [
-                {
-                    "type": "host",
-                    "value": "molkhas.vercel.app"
+                    "value": "(masar-x.vercel.app|molkhas.vercel.app)"
                 }
             ],
             "destination": "https://masarx.vercel.app/$1",
