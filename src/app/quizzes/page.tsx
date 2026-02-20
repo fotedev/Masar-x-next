@@ -314,63 +314,19 @@ function QuizDashboardInternal() {
       return semesters.has(v);
     });
 
-    const derivedYears = Array.from(years)
-      .map((v) => (v || "").trim())
-      .filter(Boolean)
-      .filter((v) => !/^\d+$/.test(v))
-      .sort((a, b) => a.localeCompare(b, "ar"));
-
-    const academicLevelNames = academicLevels
-      .map((l) => (l.name || "").trim())
-      .filter(Boolean);
-
-    const yearOptions =
-      academicLevelNames.length > 0 ? academicLevelNames : derivedYears;
-    const departmentsForSelectedYear = filters.year
-      ? getDepartmentsForLevelName(filters.year).map((d) => d.name)
-      : [];
-
-    const deptOptions = filters.year ? departmentsForSelectedYear : [];
-
-    const derivedYears = Array.from(years)
-      .map((v) => (v || "").trim())
-      .filter(Boolean)
-      .filter((v) => !/^\d+$/.test(v))
-      .sort((a, b) => a.localeCompare(b, "ar"));
-
-    const academicLevelNames = academicLevels
-      .map((l) => (l.name || "").trim())
-      .filter(Boolean);
-
-    const yearOptions =
-      academicLevelNames.length > 0 ? academicLevelNames : derivedYears;
-    const departmentsForSelectedYear = filters.year
-      ? getDepartmentsForLevelName(filters.year).map((d) => d.name)
-      : [];
-
-    const deptOptions = filters.year ? departmentsForSelectedYear : [];
-
     return {
       subjects: subjectList,
       departments: filters.year ? deptOptions : [], // Return empty departments list when filters.year is empty
       years: yearOptions,
-<<<<<<< HEAD
       semesters: semesterOptions,
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
     };
   }, [
     quizzesWithMeta,
     allSubjects,
-<<<<<<< HEAD
     filteredSubjectsForFilters,
     subjectsLoading,
     academicLevels,
     filters.semester,
-=======
-    subjectsLoading,
-    academicLevels,
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
     filters.year,
     getDepartmentsForLevelName,
   ]);
@@ -866,52 +822,15 @@ function QuizDashboardInternal() {
           />
 
           <select
-<<<<<<< HEAD
-=======
-            value={filters.subject}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, subject: e.target.value }))
-            }
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
-          >
-            <option value="">كل المواد</option>
-            {filterOptions.subjects.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
 
-          <select
-            value={filters.department}
-            onChange={(e) =>
-              setFilters((p) => ({ ...p, department: e.target.value }))
-            }
-            disabled={!filters.year || filterOptions.departments.length === 0}
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
-          >
-            <option value="">كل الأقسام</option>
-            {filterOptions.departments.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-
-          <select
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
             value={filters.year}
             onChange={(e) =>
               setFilters((p) => ({
                 ...p,
                 year: e.target.value,
-<<<<<<< HEAD
                 semester: "",
                 department: "",
                 subject: "",
-=======
-                department: "",
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
               }))
             }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
@@ -1163,55 +1082,7 @@ function QuizDashboardInternal() {
               />
             </div>
 
-<<<<<<< HEAD
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-=======
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  التخصص <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                  disabled={
-                    !formData.year ||
-                    getDepartmentsForLevelName(formData.year).length === 0
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">اختر التخصص</option>
-                  {getDepartmentsForLevelName(formData.year).map((dep) => (
-                    <option key={dep.id} value={dep.name}>
-                      {dep.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  }
-                  disabled={
-                    !formData.year ||
-                    getDepartmentsForLevelName(formData.year).length === 0
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">اختر التخصص</option>
-                  {getDepartmentsForLevelName(formData.year).map((dep) => (
-                    <option key={dep.id} value={dep.name}>
-                      {dep.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   المستوى الدراسي <span className="text-red-500">*</span>
@@ -1224,15 +1095,9 @@ function QuizDashboardInternal() {
                       ...formData,
                       year: e.target.value,
                       department: "",
-<<<<<<< HEAD
-<<<<<<< HEAD
                       semester: "",
                       subject: "",
                       summaryId: "",
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
                     })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -1243,8 +1108,6 @@ function QuizDashboardInternal() {
                       {lvl.name}
                     </option>
                   ))}
-<<<<<<< HEAD
-<<<<<<< HEAD
                 </select>
               </div>
 
@@ -1301,10 +1164,7 @@ function QuizDashboardInternal() {
                       {dep.name}
                     </option>
                   ))}
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
-=======
->>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
+
                 </select>
               </div>
 
