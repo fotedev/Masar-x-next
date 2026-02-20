@@ -86,7 +86,7 @@ export const Header = React.memo(function Header() {
           {/* Navigation Bar */}
           <nav className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
             {/* Desktop Navigation - Hidden on mobile, shown on tablet/desktop */}
-            <div className="hidden lg:flex items-center gap-1 xl:gap-2">
+            <div className="hidden lg:flex items-center gap-1 xl:gap-2 mr-6">
               <button
                 onClick={() => handleNavigate("home")}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
@@ -118,7 +118,7 @@ export const Header = React.memo(function Header() {
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
-                الأقسام العامة
+                TRW
               </button>
 
               <button
@@ -334,7 +334,7 @@ export const Header = React.memo(function Header() {
                   }`}
                 >
                   <span className="text-xl">🌟</span>
-                  <span>الأقسام العامة</span>
+                  <span>TRW</span>
                 </button>
 
                 <button

@@ -42,9 +42,11 @@ export async function GET() {
 
     if (subjects) {
       subjects.forEach((subject) => {
+        // Ensure subject name is properly encoded and contains no spaces
+        const encodedName = encodeURIComponent(subject.name.trim()).replace(/%20/g, "+");
         dynamicUrls += `
   <url>
-    <loc>${baseUrl}/subjects/${encodeURIComponent(subject.name).replace(/%20/g, "+")}</loc>
+    <loc>${baseUrl}/subjects/${encodedName}</loc>
     <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
