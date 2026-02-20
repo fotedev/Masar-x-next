@@ -54,10 +54,22 @@ class AnalyticsService {
                     break;
                 case 'ai_interaction':
                     actionType = 'ai_interaction';
-                    contentType = 'ai_response';
+                    contentType = 'ai_assistant';
+                    break;
+                case 'click':
+                    actionType = 'click';
+                    contentType = metadata.contentType || 'unknown';
+                    break;
+                case 'user_login':
+                    actionType = 'user_login';
+                    contentType = 'login';
+                    break;
+                case 'user_logout':
+                    actionType = 'user_logout';
+                    contentType = 'logout';
                     break;
                 default:
-                    actionType = 'other';
+                    actionType = eventName;
                     break;
             }
 

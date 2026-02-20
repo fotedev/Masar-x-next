@@ -48,7 +48,7 @@
                     "value": "masarx.vercel.app"
                 }
             ],
-            "destination": "https://masar-x.vercel.app/$1",
+            "destination": "https://masarx.vercel.app/$1",
             "permanent": true
         },
         {
@@ -59,7 +59,7 @@
                     "value": "molkhas.vercel.app"
                 }
             ],
-            "destination": "https://masar-x.vercel.app/$1",
+            "destination": "https://masarx.vercel.app/$1",
             "permanent": true
         }
     ]

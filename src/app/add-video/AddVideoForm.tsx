@@ -15,8 +15,10 @@ export function AddVideoForm() {
 
   const handleClose = () => {
     const subject = searchParams.get("subject") || "";
+    const lecture = searchParams.get("lecture") || "";
     if (subject) {
-      router.push(`/subjects/${encodeURIComponent(subject)}`);
+      const url = `/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+      router.push(url);
       return;
     }
     router.back();
@@ -88,6 +90,8 @@ export function AddVideoForm() {
       // Validate URL
       try {
         new URL(formData.url);
+        // Additional check for YouTube shorts to allow specific formats if needed
+        // but basic URL validation is enough for now.
       } catch {
         setError("يرجى إدخال رابط صحيح");
         setLoading(false);
@@ -117,7 +121,9 @@ export function AddVideoForm() {
       });
 
       setTimeout(() => {
-        router.push(`/subjects/${encodeURIComponent(formData.subject)}`);
+        const lecture = searchParams.get("lecture") || "";
+        const url = `/subjects/${encodeURIComponent(formData.subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+        router.push(url);
       }, 2000);
     } catch {
       setError("حدث خطأ أثناء إضافة الفيديو. يرجى المحاولة مرة أخرى.");
