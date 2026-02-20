@@ -31,6 +31,7 @@ import { Quiz, Summary } from "../../../types/database";
 import { useVideos } from "../../../hooks/useVideos";
 import { useFiles } from "../../../hooks/useFiles";
 import { Suspense } from "react";
+import { toast } from "sonner";
 import { useAcademicOptions } from "../../../hooks/useAcademicOptions";
 import { queryCache, cacheKeys, cacheTTL } from "../../../lib/queryCache";
 
@@ -676,7 +677,9 @@ function SubjectSummariesContent() {
       if (questionsError) throw questionsError;
 
       await fetchSubjectQuizzes();
-      alert("تم حفظ الامتحان بنجاح");
+      toast.success("تم حفظ الامتحان بنجاح", {
+        description: "تمت إضافة الامتحان وتحديث قائمة الامتحانات للمادة.",
+      });
       setShowAddExamForm(false);
       setExamFormData({
         title: "",
@@ -693,8 +696,11 @@ function SubjectSummariesContent() {
           },
         ],
       });
-    } catch {
-      alert("حدث خطأ أثناء حفظ الامتحان.");
+    } catch (error: any) {
+      console.error("Error saving exam:", error);
+      toast.error("حدث خطأ أثناء حفظ الامتحان", {
+        description: error.message || "يرجى المحاولة مرة أخرى لاحقاً.",
+      });
     } finally {
       setIsSavingExam(false);
     }
@@ -727,10 +733,14 @@ function SubjectSummariesContent() {
       queryCache.invalidate(cacheKeys.subjectDetails(normalizedSubjectName));
 
       setShowEditSubjectModal(false);
-      alert("تم تحديث بيانات المادة بنجاح");
-    } catch (error) {
+      toast.success("تم تحديث البيانات بنجاح", {
+        description: "تم تحديث بيانات المادة وحفظ التغييرات.",
+      });
+    } catch (error: any) {
       console.error("Error updating subject:", error);
-      alert("حدث خطأ أثناء تحديث المادة");
+      toast.error("فشل التحديث", {
+        description: error.message || "حدث خطأ أثناء تحديث المادة.",
+      });
     }
   };
 

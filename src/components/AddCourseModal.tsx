@@ -12,6 +12,8 @@ interface AddCourseModalProps {
   onSave: () => void;
 }
 
+import { toast } from "sonner";
+
 export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   showAddCourse,
   editingCourse,
@@ -41,7 +43,9 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
 
   const handleSave = async () => {
     if (!title.trim() || !description.trim()) {
-      alert("يرجى ملء جميع الحقول المطلوبة");
+      toast.error("بيانات ناقصة", {
+        description: "يرجى ملء جميع الحقول المطلوبة",
+      });
       return;
     }
 
@@ -75,10 +79,16 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
 
       onSave();
       onClose();
+      toast.success("تم الحفظ بنجاح", {
+        description: editingCourse
+          ? "تم تحديث الكورس بنجاح"
+          : "تم إنشاء الكورس بنجاح",
+      });
     } catch {
-      // ignore
+      toast.error("خطأ في الحفظ", {
+        description: "فشل في حفظ الكورس، يرجى المحاولة مرة أخرى",
+      });
     } finally {
-      alert("فشل في حفظ الكورس");
       setSaving(false);
     }
   };
