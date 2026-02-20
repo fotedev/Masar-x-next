@@ -4,10 +4,12 @@ import { Subject } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
- type UseSubjectsParams = {
-     level?: number | null;
-     semester?: number | null;
- };
+
+type UseSubjectsParams = {
+    level?: number | null;
+    semester?: number | null;
+    is_academic?: boolean;
+};
 
 type SubjectWithSemester = Subject & {
     semester?: string | number | null;
@@ -22,7 +24,10 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     const fetchSubjects = useCallback(async (skipCache = false) => {
         try {
             setLoading(true);
-            if (params.level === null || params.semester === null) {
+            
+            const isAcademicParam = params.is_academic !== undefined ? params.is_academic : true;
+
+            if (isAcademicParam && (params.level === null || params.semester === null)) {
                 setSubjects([]);
                 setLoading(false);
                 return;
@@ -35,7 +40,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
                     ? params.semester
                     : (academic.semester ?? (isAnonymous ? 2 : 1));
             const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
-            const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}`;
+            const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}:acad:${isAcademicParam}`;
 
             // Check cache first
             if (!skipCache && queryCache.get) {
@@ -47,17 +52,25 @@ export function useSubjects(params: UseSubjectsParams = {}) {
                 }
             }
 
-            const { data, error } = await supabase
+            let query = supabase
                 .from("subjects")
                 .select("*")
+                .eq("is_academic", isAcademicParam)
                 .order("name", { ascending: true });
+
+            const { data, error } = await query;
 
             if (error) throw error;
 
             const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
 
-            // Filter by semester/level if present on subjects. If the column is not present or null, include it.
+            // Filter by semester/level if academic. If non-academic, we show all.
             const filtered = subjectData.filter((s) => {
+                if (!isAcademicParam) {
+                    const visibilityMatch = isAnonymous ? Boolean(s.show_on_home) : true;
+                    return visibilityMatch;
+                }
+
                 const semesterMatch = (() => {
                     if (s.semester === undefined || s.semester === null) return true;
                     return Number(s.semester) === Number(effectiveSemester);
