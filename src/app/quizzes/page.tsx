@@ -314,6 +314,24 @@ function QuizDashboardInternal() {
       return semesters.has(v);
     });
 
+    const derivedYears = Array.from(years)
+      .map((v) => (v || "").trim())
+      .filter(Boolean)
+      .filter((v) => !/^\d+$/.test(v))
+      .sort((a, b) => a.localeCompare(b, "ar"));
+
+    const academicLevelNames = academicLevels
+      .map((l) => (l.name || "").trim())
+      .filter(Boolean);
+
+    const yearOptions =
+      academicLevelNames.length > 0 ? academicLevelNames : derivedYears;
+    const departmentsForSelectedYear = filters.year
+      ? getDepartmentsForLevelName(filters.year).map((d) => d.name)
+      : [];
+
+    const deptOptions = filters.year ? departmentsForSelectedYear : [];
+
     return {
       subjects: subjectList,
       departments: filters.year ? deptOptions : [], // Return empty departments list when filters.year is empty
@@ -1084,6 +1102,25 @@ function QuizDashboardInternal() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  }
+                  disabled={
+                    !formData.year ||
+                    getDepartmentsForLevelName(formData.year).length === 0
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">اختر التخصص</option>
+                  {getDepartmentsForLevelName(formData.year).map((dep) => (
+                    <option key={dep.id} value={dep.name}>
+                      {dep.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   المستوى الدراسي <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -1094,9 +1131,12 @@ function QuizDashboardInternal() {
                       ...formData,
                       year: e.target.value,
                       department: "",
+<<<<<<< HEAD
                       semester: "",
                       subject: "",
                       summaryId: "",
+=======
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
                     })
                   }
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -1107,6 +1147,7 @@ function QuizDashboardInternal() {
                       {lvl.name}
                     </option>
                   ))}
+<<<<<<< HEAD
                 </select>
               </div>
 
@@ -1163,6 +1204,8 @@ function QuizDashboardInternal() {
                       {dep.name}
                     </option>
                   ))}
+=======
+>>>>>>> 52706b8f2e312bc1afeefd5fb8c797d3e7a4e337
                 </select>
               </div>
 

@@ -27,6 +27,7 @@ import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import type { DepartmentOption } from "@/hooks/useAcademicOptions";
 import dynamic from "next/dynamic";
+
 import { useSubjects } from "@/hooks/useSubjects";
 
 const PuterSettingsModal = dynamic(

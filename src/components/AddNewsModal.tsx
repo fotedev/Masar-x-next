@@ -46,6 +46,7 @@ export function AddNewsModal({
     level: selectedLevelNumber,
     semester: newNews.year ? semester : undefined,
   });
+
   const [fileFile, setFileFile] = useState<File | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [customCategory, setCustomCategory] = useState<string>("");

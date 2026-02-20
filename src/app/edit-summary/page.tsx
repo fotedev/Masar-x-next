@@ -22,6 +22,7 @@ function EditSummaryContent() {
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
 
+
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
@@ -321,28 +322,6 @@ function EditSummaryContent() {
                 <option value="">اختر التخصص</option>
                 {availableDepartments.map((dep) => (
                   <option key={dep.id} value={dep.name}>
-                    {dep.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="summary-subject"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              اسم المادة <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="summary-subject"
-              name="summarySubject"
-              required
-              autoComplete="off"
-              value={formData.subject}
-              onChange={(e) =>
-                setFormData({ ...formData, subject: e.target.value })
               }
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >

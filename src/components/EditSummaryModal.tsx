@@ -23,12 +23,24 @@ export function EditSummaryModal({
   const { user } = useAuth();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
+
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
     year: "",
     department: "",
     content: "",
+  });
+
+  const selectedLevelNumber = useMemo(() => {
+    if (!formData.year) return null;
+    const found = levels.find((l) => l.name === formData.year);
+    return typeof found?.level_number === "number" ? found.level_number : null;
+  }, [formData.year, levels]);
+
+  const { subjects } = useSubjects({
+    level: selectedLevelNumber,
+    semester: typeof semester === "number" ? semester : null,
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -52,17 +64,6 @@ export function EditSummaryModal({
       setError("");
     }
   }, [summary, isOpen]);
-
-  const selectedLevelNumber = useMemo(() => {
-    if (!formData.year) return null;
-    const found = levels.find((l) => l.name === formData.year);
-    return typeof found?.level_number === "number" ? found.level_number : null;
-  }, [formData.year, levels]);
-
-  const { subjects } = useSubjects({
-    level: selectedLevelNumber,
-    semester: typeof semester === "number" ? semester : null,
-  });
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
