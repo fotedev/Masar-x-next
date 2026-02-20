@@ -28,20 +28,28 @@ export function AddFileForm() {
     title: "",
     subject: "",
     description: "",
+    externalUrl: "",
   });
+
+  const [uploadType, setUploadType] = useState<"file" | "link">("link");
 
   useEffect(() => {
     const subject = searchParams.get("subject") || "";
     const lectureKey = searchParams.get("lecture") || "";
-    
+
     setFormData((prev) => {
       let title = prev.title;
-      // Only pre-fill title if it's empty and we have a lecture key in format "lec-N"
-      if (!title && lectureKey && lectureKey.startsWith("lec-")) {
-        const lectureNum = lectureKey.replace("lec-", "");
-        title = `محاضرة ${lectureNum}: `;
+      // Pre-fill title if it's empty and we have a lecture title from query
+      if (!title && lectureKey) {
+        if (lectureKey.startsWith("lec-")) {
+          const lectureNum = lectureKey.replace("lec-", "");
+          title = `محاضرة ${lectureNum}: `;
+        } else {
+          // If it's a custom key/label like "Partial fractions"
+          title = `${lectureKey}: `;
+        }
       }
-      
+
       return { ...prev, subject, title: title || prev.title };
     });
   }, [searchParams]);
@@ -68,27 +76,38 @@ export function AddFileForm() {
     setUploadStage("");
 
     try {
-      if (!file) {
+      if (uploadType === "file" && !file) {
         setError("يرجى اختيار ملف");
         setLoading(false);
         return;
       }
 
-      // Upload file to Cloudinary
-      setUploadStage("جاري رفع الملف...");
-      const cloudinaryResult = await uploadToCloudinary(file, {
-        folder: "masarx-files",
-        onProgress: (progress, stage) => {
-          setUploadProgress(progress);
-          setUploadStage(stage);
-        },
-      });
+      if (uploadType === "link" && !formData.externalUrl) {
+        setError("يرجى إدخال رابط جوجل درايف");
+        setLoading(false);
+        return;
+      }
+
+      let finalFileUrl = formData.externalUrl;
+
+      if (uploadType === "file" && file) {
+        // Upload file to Cloudinary
+        setUploadStage("جاري رفع الملف...");
+        const cloudinaryResult = await uploadToCloudinary(file, {
+          folder: "masarx-files",
+          onProgress: (progress, stage) => {
+            setUploadProgress(progress);
+            setUploadStage(stage);
+          },
+        });
+        finalFileUrl = cloudinaryResult.url;
+      }
 
       // Insert into files table
       const fileData = {
         title: formData.title,
         subject: formData.subject,
-        file_url: cloudinaryResult.url,
+        file_url: finalFileUrl,
         description: formData.description,
         user_id: user?.id,
       };
@@ -240,41 +259,93 @@ export function AddFileForm() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              رفع الملف <span className="text-red-500">*</span>
+              طريقة الإضافة <span className="text-red-500">*</span>
             </label>
-            <FileDropzone
-              onFileSelect={(files) => {
-                if (files.length > 0) {
-                  setFile(files[0]);
-                  setError("");
-                }
-              }}
-              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
-              className="w-full h-32"
-            >
-              <div className="flex flex-col items-center justify-center w-full h-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
-                  {file ? (
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      {file.name}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold">
-                          اضغط أو اسحب لرفع الملف
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
-                        PDF, DOC, PPT, TXT, ZIP (حتى 50MB)
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </FileDropzone>
+            <div className="flex gap-4 mb-4">
+              <button
+                type="button"
+                onClick={() => setUploadType("link")}
+                className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+                  uploadType === "link"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                }`}
+              >
+                رابط خارجي (Drive)
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadType("file")}
+                className={`flex-1 py-3 rounded-xl font-bold transition-all ${
+                  uploadType === "file"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                }`}
+              >
+                رفع ملف
+              </button>
+            </div>
           </div>
+
+          {uploadType === "file" ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                رفع الملف <span className="text-red-500">*</span>
+              </label>
+              <FileDropzone
+                onFileSelect={(files) => {
+                  if (files.length > 0) {
+                    setFile(files[0]);
+                    setError("");
+                  }
+                }}
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
+                className="w-full h-32"
+              >
+                <div className="flex flex-col items-center justify-center w-full h-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
+                    {file ? (
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {file.name}
+                      </p>
+                    ) : (
+                      <>
+                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">
+                            اضغط أو اسحب لرفع الملف
+                          </span>
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          PDF, DOC, PPT, TXT, ZIP (حتى 50MB)
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </FileDropzone>
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="external-url"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                رابط جوجل درايف <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="external-url"
+                type="url"
+                required
+                value={formData.externalUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, externalUrl: e.target.value })
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                placeholder="https://drive.google.com/..."
+              />
+            </div>
+          )}
 
           {loading && uploadStage && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">

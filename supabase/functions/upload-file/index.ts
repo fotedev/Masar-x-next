@@ -95,7 +95,19 @@ Deno.serve(async (req: Request) => {
             )
         }
 
-        const allowedContentTypes = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/webp'])
+        const allowedContentTypes = new Set([
+            'application/pdf',
+            'image/png',
+            'image/jpeg',
+            'image/webp',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'application/zip',
+            'application/x-zip-compressed'
+        ])
         if (!allowedContentTypes.has(contentType)) {
             return new Response(
                 JSON.stringify({ error: 'Unsupported file type' }),
@@ -108,9 +120,9 @@ Deno.serve(async (req: Request) => {
 
         // Validate file size (base64 is ~33% larger than original)
         const estimatedFileSize = (file.length * 0.75) // Rough estimation
-        if (estimatedFileSize > 10 * 1024 * 1024) { // 10MB limit
+        if (estimatedFileSize > 50 * 1024 * 1024) { // 50MB limit
             return new Response(
-                JSON.stringify({ error: 'File too large. Maximum size is 10MB.' }),
+                JSON.stringify({ error: 'File too large. Maximum size is 50MB.' }),
                 {
                     status: 400,
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' }

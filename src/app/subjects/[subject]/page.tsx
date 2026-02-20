@@ -95,7 +95,16 @@ function SubjectSummariesContent() {
     ],
   });
 
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+
+  const getYouTubeId = (url: string) => {
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
 
   const availableExamDepartments = useMemo(() => {
     if (!examFormData.year) return [];
@@ -313,6 +322,32 @@ function SubjectSummariesContent() {
         key: "other",
         label: "غير مصنف",
         order: 999999,
+      };
+    }
+
+    // 1. Check if the title matches a saved lecture exactly (label or key)
+    const exactMatch = savedLectures.find(
+      (l) =>
+        l.lecture_label.trim().toLowerCase() === t.toLowerCase() ||
+        l.lecture_key.trim().toLowerCase() === t.toLowerCase(),
+    );
+    if (exactMatch) {
+      return {
+        key: exactMatch.lecture_key,
+        label: exactMatch.lecture_label,
+        order: exactMatch.order_index,
+      };
+    }
+
+    // 2. Check if the title starts with a saved lecture's label (e.g., "Partial fractions: Video")
+    const prefixMatch = savedLectures.find((l) =>
+      t.toLowerCase().startsWith(l.lecture_label.trim().toLowerCase()),
+    );
+    if (prefixMatch) {
+      return {
+        key: prefixMatch.lecture_key,
+        label: prefixMatch.lecture_label,
+        order: prefixMatch.order_index,
       };
     }
 
@@ -904,7 +939,7 @@ function SubjectSummariesContent() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lectureIndex.map((lec, idx) => (
                 <button
                   key={lec.key}
@@ -915,35 +950,54 @@ function SubjectSummariesContent() {
                     next.set("lecture", lec.key);
                     router.push(`?${next.toString()}`);
                   }}
-                  className="group relative flex items-center gap-4 p-2 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 hover:shadow-xl hover:shadow-brand-blue/5"
+                  className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 hover:shadow-2xl hover:shadow-brand-blue/10 text-right"
                 >
-                  <div className="flex-shrink-0 w-16 h-16 rounded-[1.25rem] bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-all duration-500">
-                    <span className="text-xl font-black text-slate-300 dark:text-slate-600 group-hover:text-white/40 transition-colors">
-                      {(idx + 1).toString().padStart(2, "0")}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 text-right py-2 pr-1">
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors mb-1">
-                      {lec.label}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800 text-[9px] font-black text-slate-500">
-                        <FileText className="w-2.5 h-2.5" />
-                        {lec.counts.summaries +
-                          lec.counts.videos +
-                          lec.counts.files}{" "}
-                        مصادر
-                      </div>
-                      <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800 text-[9px] font-black text-slate-500">
-                        <ClipboardList className="w-2.5 h-2.5" />
-                        {lec.counts.exams} اختبارات
-                      </div>
+                  <div className="flex justify-between items-start mb-6 w-full">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-all duration-500 shadow-sm">
+                      <span className="text-xl font-black text-slate-400 dark:text-slate-500 group-hover:text-white transition-colors">
+                        {(idx + 1).toString().padStart(2, "0")}
+                      </span>
+                    </div>
+                    <div className="w-10 h-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center group-hover:border-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0">
+                      <ChevronLeft className="w-5 h-5" />
                     </div>
                   </div>
 
-                  <div className="w-10 h-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center mr-2 group-hover:border-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100">
-                    <ChevronLeft className="w-5 h-5" />
+                  <div className="flex-1 space-y-3">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2 leading-tight">
+                      {lec.label}
+                    </h3>
+
+                    <div className="flex flex-wrap gap-2">
+                      {lec.counts.summaries > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[10px] font-black text-blue-600 dark:text-blue-400">
+                          <FileText className="w-3 h-3" />
+                          {lec.counts.summaries} ملخص
+                        </div>
+                      )}
+                      {lec.counts.videos > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-50 dark:bg-red-900/20 text-[10px] font-black text-red-600 dark:text-red-400">
+                          <Video className="w-3 h-3" />
+                          {lec.counts.videos} فيديو
+                        </div>
+                      )}
+                      {lec.counts.exams > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-50 dark:bg-green-900/20 text-[10px] font-black text-green-600 dark:text-green-400">
+                          <Trophy className="w-3 h-3" />
+                          {lec.counts.exams} اختبار
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      تم التحديث مؤخراً
+                    </span>
+                    <span className="group-hover:text-brand-blue transition-colors">
+                      عرض التفاصيل
+                    </span>
                   </div>
                 </button>
               ))}
@@ -1010,6 +1064,54 @@ function SubjectSummariesContent() {
               </div>
             </div>
           </div>
+
+          {activeVideoUrl && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
+                      <Video className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                        {activeVideoTitle}
+                      </h3>
+                      <p className="text-xs font-bold text-slate-400">
+                        مشغل الفيديو
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveVideoUrl(null);
+                      setActiveVideoTitle(null);
+                    }}
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6 text-slate-400" />
+                  </button>
+                </div>
+                <div className="aspect-video bg-black">
+                  {getYouTubeId(activeVideoUrl) ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${getYouTubeId(activeVideoUrl)}?autoplay=1`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  ) : (
+                    <video
+                      src={activeVideoUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full"
+                    ></video>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -1077,12 +1179,31 @@ function SubjectSummariesContent() {
                         )}
                       </div>
                       <div className="flex-1 text-right">
-                        <h4 className="text-lg font-black text-slate-900 dark:text-white mb-1">
-                          {item.title}
-                        </h4>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                          {item.type === "video" ? "فيديو تدريبي" : "ملف دراسي"}
-                        </span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                            {item.title}
+                          </h4>
+                          {item.type === "video" && (
+                            <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black">
+                              LIVE
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            {item.type === "video"
+                              ? "فيديو تدريبي"
+                              : item.type === "summary"
+                                ? "ملخص دراسي"
+                                : "ملف دراسي"}
+                          </span>
+                          <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
+                          <span className="text-xs font-bold text-slate-400">
+                            {new Date(
+                              item.created_at || Date.now(),
+                            ).toLocaleDateString("ar-EG")}
+                          </span>
+                        </div>
                       </div>
                       <button
                         onClick={() => {
@@ -1090,7 +1211,10 @@ function SubjectSummariesContent() {
                             trackSummaryClick(item.id, "view");
                             router.push(`/summaries/${item.id}`);
                           } else if (item.type === "video") {
-                            router.push(`/video-view/${item.id}`);
+                            setActiveVideoUrl(item.url);
+                            setActiveVideoTitle(item.title);
+                            // Scroll to top of video player
+                            window.scrollTo({ top: 0, behavior: "smooth" });
                           } else if (item.file_url) {
                             window.open(item.file_url, "_blank");
                           }
