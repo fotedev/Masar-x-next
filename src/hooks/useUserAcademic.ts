@@ -23,7 +23,11 @@ export type UserAcademic = {
 const DEFAULT_ACADEMIC: UserAcademic = { level: null, semester: null, department_id: null };
 
 const CACHE_KEY = "masarx_academic_options_cache";
+const ACADEMIC_FETCH_KEY = "masarx_academic_fetch_timestamp";
+const ACADEMIC_UPDATE_KEY = "masarx_academic_update_timestamp";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes cooldown for fetching
+const UPDATE_COOLDOWN = 60 * 1000; // 1 minute cooldown for updating profile
 
 type AcademicCache = {
   levels: AcademicLevel[];
@@ -101,6 +105,12 @@ export function useUserAcademic() {
     }
 
     try {
+      // Rate limiting: check last fetch time
+      const lastFetch = localStorage.getItem(ACADEMIC_FETCH_KEY);
+      if (lastFetch && Date.now() - Number(lastFetch) < FETCH_COOLDOWN && academic.level !== null) {
+        return;
+      }
+
       setLoading(true);
       const { data, error } = await supabase
         .from("profiles")
@@ -115,6 +125,9 @@ export function useUserAcademic() {
         semester: typeof data?.semester === "number" ? data.semester : null,
         department_id: data?.department_id || null,
       });
+
+      // Update last fetch timestamp
+      localStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString());
     } catch {
       setAcademic(DEFAULT_ACADEMIC);
     } finally {
@@ -125,6 +138,13 @@ export function useUserAcademic() {
   const setUserAcademic = useCallback(
     async (next: UserAcademic): Promise<boolean> => {
       if (!user) return false;
+
+      // Rate limiting: prevent abuse by checking last update time
+      const lastUpdate = localStorage.getItem(ACADEMIC_UPDATE_KEY);
+      if (lastUpdate && Date.now() - Number(lastUpdate) < UPDATE_COOLDOWN) {
+        alert("يرجى الانتظار دقيقة واحدة قبل تحديث بياناتك مرة أخرى لمنع إساءة الاستخدام.");
+        return false;
+      }
 
       try {
         setLoading(true);
@@ -141,6 +161,9 @@ export function useUserAcademic() {
 
         if (error) throw error;
         setAcademic(next);
+        
+        // Update last update timestamp
+        localStorage.setItem(ACADEMIC_UPDATE_KEY, Date.now().toString());
         return true;
       } catch {
         return false;
@@ -152,13 +175,24 @@ export function useUserAcademic() {
   );
 
   useEffect(() => {
-    fetchOptions();
-  }, [fetchOptions]);
+    // Only fetch if we don't have levels yet to avoid repeated loading on focus
+    if (levels.length === 0) {
+      fetchOptions();
+    }
+  }, [fetchOptions, levels.length]);
 
   useEffect(() => {
-    if (authLoading) return;
-    fetchAcademic();
-  }, [authLoading, fetchAcademic]);
+    if (authLoading || !user) return;
+    
+    // Only fetch if we haven't loaded academic data yet
+    // This prevents the "loading" state from flashing when returning to the tab
+    if (academic.level === null && loading) {
+      fetchAcademic();
+    } else if (!loading) {
+      // If we already have data, we can silently revalidate if needed, 
+      // but let's keep it simple for now to solve the UI flickering.
+    }
+  }, [authLoading, fetchAcademic, user, academic.level, loading]);
 
   return {
     academic,
