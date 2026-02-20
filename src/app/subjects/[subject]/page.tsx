@@ -13,11 +13,12 @@ import {
   ArrowRight,
   GraduationCap,
   LayoutGrid,
-  Sparkles,
   Layers,
   ArrowLeft,
   ChevronLeft,
   ClipboardList,
+  CheckCircle,
+  Monitor,
   Settings, // Added Settings icon
 } from "lucide-react";
 import { useSummaries } from "../../../hooks/useSummaries";
@@ -31,6 +32,7 @@ import { useVideos } from "../../../hooks/useVideos";
 import { useFiles } from "../../../hooks/useFiles";
 import { Suspense } from "react";
 import { useAcademicOptions } from "../../../hooks/useAcademicOptions";
+import { queryCache, cacheKeys, cacheTTL } from "../../../lib/queryCache";
 
 function SubjectSummariesContent() {
   const params = useParams();
@@ -97,11 +99,13 @@ function SubjectSummariesContent() {
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string | null>(null);
+  const [isTheatreMode, setIsTheatreMode] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   const getYouTubeId = (url: string) => {
+    // Standard YouTube and Shorts regex
     const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : null;
   };
@@ -132,14 +136,28 @@ function SubjectSummariesContent() {
   useEffect(() => {
     async function fetchSubjectDetails() {
       if (!normalizedSubjectName) return;
+
+      // Check cache first
+      const cacheKey = cacheKeys.subjectDetails(normalizedSubjectName);
+      const cached = queryCache.get<any>(cacheKey);
+      if (cached) {
+        setSubjectDetails(cached);
+        return;
+      }
+
       try {
         const { data } = await supabase
           .from("subjects")
-          .select("*")
+          .select(
+            "id, name, professor, description, schedule, location, level, semester, status, show_on_home, created_at",
+          )
           .eq("name", normalizedSubjectName)
           .maybeSingle();
 
-        if (data) setSubjectDetails(data);
+        if (data) {
+          setSubjectDetails(data);
+          queryCache.set(cacheKey, data, cacheTTL.subjects);
+        }
       } catch (error) {
         console.error("Error fetching subject details:", error);
       }
@@ -207,6 +225,14 @@ function SubjectSummariesContent() {
       return;
     }
 
+    // Check cache first
+    const cacheKey = cacheKeys.subjectLectures(normalizedSubjectName);
+    const cached = queryCache.get<any[]>(cacheKey);
+    if (cached) {
+      setSavedLectures(cached);
+      return;
+    }
+
     try {
       const decodedName = decodeURIComponent(normalizedSubjectName).trim();
       const normalizedQuery = decodedName.replace(/\s+/g, " ");
@@ -221,17 +247,19 @@ function SubjectSummariesContent() {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setSavedLectures(
-        (data || []) as Array<{
-          id: string;
-          subject: string;
-          lecture_key: string;
-          lecture_label: string;
-          order_index: number;
-          created_at: string;
-          updated_at: string;
-        }>,
-      );
+
+      const lectures = (data || []) as Array<{
+        id: string;
+        subject: string;
+        lecture_key: string;
+        lecture_label: string;
+        order_index: number;
+        created_at: string;
+        updated_at: string;
+      }>;
+
+      setSavedLectures(lectures);
+      queryCache.set(cacheKey, lectures, cacheTTL.lectures);
     } catch {
       setSavedLectures([]);
     }
@@ -302,6 +330,9 @@ function SubjectSummariesContent() {
       );
 
       if (error) throw error;
+
+      // Invalidate cache
+      queryCache.invalidate(cacheKeys.subjectLectures(normalizedSubjectName));
 
       await fetchSubjectLectures();
       setShowAddLectureForm(false);
@@ -691,11 +722,49 @@ function SubjectSummariesContent() {
 
       // Update local state immediately
       setSubjectDetails({ ...subjectDetails, ...updatedData });
+
+      // Invalidate cache
+      queryCache.invalidate(cacheKeys.subjectDetails(normalizedSubjectName));
+
       setShowEditSubjectModal(false);
       alert("تم تحديث بيانات المادة بنجاح");
     } catch (error) {
       console.error("Error updating subject:", error);
       alert("حدث خطأ أثناء تحديث المادة");
+    }
+  };
+
+  const toggleProgress = async (contentId: string) => {
+    if (!user) return;
+
+    const isCompleted = completedContent.has(contentId);
+    try {
+      if (isCompleted) {
+        await supabase
+          .from("user_progress")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("content_id", contentId);
+
+        setCompletedContent((prev) => {
+          const next = new Set(prev);
+          next.delete(contentId);
+          return next;
+        });
+      } else {
+        await supabase.from("user_progress").insert({
+          user_id: user.id,
+          content_id: contentId,
+        });
+
+        setCompletedContent((prev) => {
+          const next = new Set(prev);
+          next.add(contentId);
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Error updating progress:", error);
     }
   };
 
@@ -727,6 +796,16 @@ function SubjectSummariesContent() {
         className="space-y-12 animate-in fade-in duration-700 pb-12 text-right"
         dir="rtl"
       >
+        <div className="flex justify-start">
+          <button
+            onClick={() => router.push("/subjects")}
+            className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
+          >
+            <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
+            العودة للمواد
+          </button>
+        </div>
+
         {/* Modern Glassmorphism Hero Section */}
         <div className="relative group overflow-hidden rounded-[3rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl transition-all duration-500 hover:shadow-brand-blue/10">
           <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-transparent to-brand-orange/5 opacity-50" />
@@ -741,10 +820,6 @@ function SubjectSummariesContent() {
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 dark:text-brand-blue-light text-xs font-black shadow-sm ring-1 ring-brand-blue/20">
                     <GraduationCap className="w-4 h-4" />
                     {dashboardData.professor}
-                  </div>
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange text-xs font-black shadow-sm ring-1 ring-brand-orange/20">
-                    <Sparkles className="w-4 h-4" />
-                    المحتوى المعتمد
                   </div>
                 </div>
 
@@ -769,22 +844,22 @@ function SubjectSummariesContent() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap justify-start gap-4 pt-2">
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <div className="flex flex-wrap justify-start gap-6 pt-4">
+                  <div className="flex flex-col items-start gap-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
                       الجدول الزمني
                     </span>
-                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-sm">
-                      <Clock className="w-4 h-4 text-brand-blue" />
+                    <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                      <Clock className="w-6 h-6 text-brand-blue animate-pulse" />
                       {dashboardData.schedule}
                     </div>
                   </div>
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <div className="flex flex-col items-start gap-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
                       القاعة / المكان
                     </span>
-                    <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-sm">
-                      <MapPin className="w-4 h-4 text-brand-orange" />
+                    <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                      <MapPin className="w-6 h-6 text-brand-orange" />
                       {dashboardData.nextLecture}
                     </div>
                   </div>
@@ -899,7 +974,7 @@ function SubjectSummariesContent() {
                   {totalPossibleItems}
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  إجمالي المصادر
+                  المحاضرات
                 </span>
               </div>
             </div>
@@ -1015,66 +1090,78 @@ function SubjectSummariesContent() {
 
     return (
       <div
-        className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 text-right"
+        className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 text-right ${
+          isTheatreMode && activeVideoUrl ? "max-w-[100vw]" : ""
+        }`}
         dir="rtl"
       >
-        <div className="flex flex-col gap-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push("/subjects")}
-              className="group flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-all"
-              title="العودة للمواد"
-            >
-              <ArrowRight className="w-6 h-6" />
-            </button>
-            <button
-              onClick={() => {
-                const next = new URLSearchParams(
-                  searchParams ? searchParams.toString() : "",
-                );
-                next.delete("lecture");
-                router.push(`?${next.toString()}`);
-              }}
-              className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
-            >
-              <LayoutGrid className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-              العودة للوحة التحكم
-            </button>
-          </div>
+        <div
+          className={`flex flex-col gap-8 ${isTheatreMode && activeVideoUrl ? "mx-auto" : ""}`}
+        >
+          {!isTheatreMode && (
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push("/subjects")}
+                className="group flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-all"
+                title="العودة للمواد"
+              >
+                <ArrowRight className="w-6 h-6" />
+              </button>
+              <button
+                onClick={() => {
+                  const next = new URLSearchParams(
+                    searchParams ? searchParams.toString() : "",
+                  );
+                  next.delete("lecture");
+                  router.push(`?${next.toString()}`);
+                }}
+                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
+              >
+                <LayoutGrid className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+                العودة للمحاضرات
+              </button>
+            </div>
+          )}
 
-          <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-white shadow-2xl">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
-            <div className="relative z-10 space-y-4">
-              <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
-                محتوى المحاضرة
-              </div>
-              <h1 className="text-5xl sm:text-6xl font-black leading-tight">
-                {lectureTitle}
-              </h1>
-              <div className="flex flex-wrap justify-start gap-4 mt-6">
-                <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                  {explanationItems.length} شرح
+          {!isTheatreMode && (
+            <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-white shadow-2xl">
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
+              <div className="relative z-10 space-y-4">
+                <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
+                  محتوى المحاضرة
                 </div>
-                <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                  {homeworkItems.length} واجب
-                </div>
-                <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                  {examItems.length} اختبار
+                <h1 className="text-5xl sm:text-6xl font-black leading-tight">
+                  {lectureTitle}
+                </h1>
+                <div className="flex flex-wrap justify-start gap-4 mt-6">
+                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                    {explanationItems.length} شرح
+                  </div>
+                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                    {homeworkItems.length} واجب
+                  </div>
+                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                    {examItems.length} اختبار
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {activeVideoUrl && (
-            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+            <div
+              className={`animate-in fade-in slide-in-from-top-4 duration-500 ${isTheatreMode ? "fixed inset-0 z-[100] bg-black flex flex-col h-[100dvh] w-screen overflow-hidden" : ""}`}
+            >
+              <div
+                className={`bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col ${isTheatreMode ? "flex-1 border-none rounded-none" : "rounded-[2.5rem]"}`}
+              >
+                <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
                       <Video className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight line-clamp-1">
                         {activeVideoTitle}
                       </h3>
                       <p className="text-xs font-bold text-slate-400">
@@ -1082,21 +1169,35 @@ function SubjectSummariesContent() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setActiveVideoUrl(null);
-                      setActiveVideoTitle(null);
-                    }}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                  >
-                    <X className="w-6 h-6 text-slate-400" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsTheatreMode(!isTheatreMode)}
+                      className={`p-2 rounded-xl transition-colors ${isTheatreMode ? "bg-brand-blue text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"}`}
+                      title={
+                        isTheatreMode ? "الخروج من وضع المسرح" : "وضع المسرح"
+                      }
+                    >
+                      <Monitor className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveVideoUrl(null);
+                        setActiveVideoTitle(null);
+                        setIsTheatreMode(false);
+                      }}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                    >
+                      <X className="w-6 h-6 text-slate-400" />
+                    </button>
+                  </div>
                 </div>
-                <div className="aspect-video bg-black">
+                <div
+                  className={`relative bg-black ${isTheatreMode ? "flex-1" : "aspect-video"}`}
+                >
                   {getYouTubeId(activeVideoUrl) ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${getYouTubeId(activeVideoUrl)}?autoplay=1`}
-                      className="w-full h-full"
+                      className="absolute inset-0 w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     ></iframe>
@@ -1105,7 +1206,7 @@ function SubjectSummariesContent() {
                       src={activeVideoUrl}
                       controls
                       autoPlay
-                      className="w-full h-full"
+                      className="absolute inset-0 w-full h-full"
                     ></video>
                   )}
                 </div>
@@ -1205,24 +1306,51 @@ function SubjectSummariesContent() {
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (item.type === "summary") {
-                            trackSummaryClick(item.id, "view");
-                            router.push(`/summaries/${item.id}`);
-                          } else if (item.type === "video") {
-                            setActiveVideoUrl(item.url);
-                            setActiveVideoTitle(item.title);
-                            // Scroll to top of video player
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          } else if (item.file_url) {
-                            window.open(item.file_url, "_blank");
-                          }
-                        }}
-                        className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
-                      >
-                        عرض المحتوى
-                      </button>
+                      {user && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleProgress(
+                                item.id || item.url || item.file_url,
+                              );
+                            }}
+                            className={`p-2 rounded-xl transition-all ${
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "bg-green-100 text-green-600 dark:bg-green-900/30"
+                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-green-50 hover:text-green-500"
+                            }`}
+                            title={
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "إلغاء التحديد"
+                                : "تحديد كمكتمل"
+                            }
+                          >
+                            <CheckCircle className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (item.type === "summary") {
+                                trackSummaryClick(item.id, "view");
+                                router.push(`/summaries/${item.id}`);
+                              } else if (item.type === "video") {
+                                setActiveVideoUrl(item.url);
+                                setActiveVideoTitle(item.title);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              } else if (item.file_url) {
+                                window.open(item.file_url, "_blank");
+                              }
+                            }}
+                            className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
+                          >
+                            عرض المحتوى
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -1245,7 +1373,35 @@ function SubjectSummariesContent() {
                       key={idx}
                       className="p-8 rounded-[2.5rem] bg-gradient-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group hover:scale-[1.02] transition-transform duration-500 text-right"
                     >
-                      <FileText className="w-10 h-10 mb-6 opacity-40 mr-auto ml-0" />
+                      <div className="flex justify-between items-start mb-6">
+                        <FileText className="w-10 h-10 opacity-40" />
+                        {user && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleProgress(
+                                item.id || item.url || item.file_url,
+                              );
+                            }}
+                            className={`p-2 rounded-xl transition-all ${
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "bg-white/30 text-white"
+                                : "bg-white/10 text-white/60 hover:bg-white/20"
+                            }`}
+                            title={
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "إلغاء التحديد"
+                                : "تحديد كمكتمل"
+                            }
+                          >
+                            <CheckCircle className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
                       <h4 className="text-xl font-black mb-4">{item.title}</h4>
                       <button
                         onClick={() => {
@@ -1316,9 +1472,31 @@ function SubjectSummariesContent() {
                       key={idx}
                       className="group p-6 rounded-[2rem] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500"
                     >
-                      <h4 className="font-black text-slate-900 dark:text-white mb-4 leading-tight">
-                        {item.title}
-                      </h4>
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="font-black text-slate-900 dark:text-white leading-tight">
+                          {item.title}
+                        </h4>
+                        {user && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleProgress(item.id);
+                            }}
+                            className={`p-2 rounded-xl transition-all ${
+                              completedContent.has(item.id)
+                                ? "bg-green-100 text-green-600 dark:bg-green-900/30"
+                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-green-50 hover:text-green-500"
+                            }`}
+                            title={
+                              completedContent.has(item.id)
+                                ? "إلغاء التحديد"
+                                : "تحديد كمكتمل"
+                            }
+                          >
+                            <CheckCircle className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
                       <button
                         onClick={() =>
                           router.push(`/quiz-play?quizId=${item.id}`)
@@ -1407,7 +1585,6 @@ function SubjectSummariesContent() {
                     setLectureFormData((p) => ({
                       ...p,
                       title: e.target.value,
-                      ...(p.label.trim() ? {} : { label: e.target.value }),
                       ...(p.key.trim()
                         ? {}
                         : { key: getLectureInfoFromTitle(e.target.value).key }),

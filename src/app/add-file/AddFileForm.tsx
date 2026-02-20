@@ -17,8 +17,10 @@ export function AddFileForm() {
 
   const handleClose = () => {
     const subject = searchParams.get("subject") || "";
+    const lecture = searchParams.get("lecture") || "";
     if (subject) {
-      router.push(`/subjects/${encodeURIComponent(subject)}`);
+      const url = `/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+      router.push(url);
       return;
     }
     router.back();
@@ -127,7 +129,9 @@ export function AddFileForm() {
       });
 
       setTimeout(() => {
-        router.push(`/subjects/${encodeURIComponent(formData.subject)}`);
+        const lecture = searchParams.get("lecture") || "";
+        const url = `/subjects/${encodeURIComponent(formData.subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+        router.push(url);
       }, 2000);
     } catch {
       setError("حدث خطأ أثناء إضافة الملف. يرجى المحاولة مرة أخرى.");

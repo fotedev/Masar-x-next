@@ -273,14 +273,17 @@ function AdminDashboardContent() {
 
   const handleSaveSubject = async (subjectData: any) => {
     try {
+      // Clean up the data before sending to Supabase
+      const { id, created_at, ...cleanData } = subjectData;
+
       if (editingSubject) {
         const { error } = await supabase
           .from("subjects")
-          .update(subjectData)
+          .update(cleanData)
           .eq("id", editingSubject.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("subjects").insert([subjectData]);
+        const { error } = await supabase.from("subjects").insert([cleanData]);
         if (error) throw error;
       }
       subjectsHook.fetchSubjects(true);
