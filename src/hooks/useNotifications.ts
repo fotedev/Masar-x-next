@@ -238,6 +238,10 @@ export function useNotifications() {
     }
   };
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
   // Real-time subscription for notifications
   useEffect(() => {
     const setupRealtime = async () => {

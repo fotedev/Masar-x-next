@@ -16,10 +16,21 @@ interface NotificationListProps {
 function LoadingState() {
   return (
     <div className={NOTIFICATION_STYLES.emptyState}>
-      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-      <p className="text-lg font-medium text-gray-600 dark:text-gray-400 mt-2">
-        {NOTIFICATION_ACCESSIBILITY.loading}
-      </p>
+      <div className="relative flex items-center justify-center">
+        <div className="absolute inset-0 bg-blue-500/15 blur-2xl rounded-full animate-pulse" />
+        <div className="relative w-12 h-12">
+          <div className="absolute inset-0 border-4 border-blue-600/10 rounded-full" />
+          <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+      <div className="space-y-1 relative z-10">
+        <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+          {NOTIFICATION_ACCESSIBILITY.loading}
+        </p>
+        <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium animate-pulse">
+          نحن نقوم بجلب آخر التنبيهات لك...
+        </p>
+      </div>
     </div>
   );
 }
@@ -27,15 +38,17 @@ function LoadingState() {
 function EmptyState() {
   return (
     <div className={NOTIFICATION_STYLES.emptyState}>
-      <div className="relative">
-        <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full" />
-        <Bell className="w-16 h-16 text-gray-300 dark:text-gray-600 relative z-10 animate-bounce duration-[3000ms]" />
+      <div className="relative group">
+        <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full group-hover:bg-blue-500/30 transition-colors duration-500" />
+        <div className="relative z-10 w-24 h-24 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/[0.02] rounded-3xl flex items-center justify-center shadow-xl border border-white dark:border-white/5 transform group-hover:scale-110 transition-transform duration-500">
+          <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 animate-wiggle" />
+        </div>
       </div>
-      <div className="space-y-2 relative z-10">
-        <p className="text-xl font-bold text-gray-900 dark:text-white">
+      <div className="space-y-3 relative z-10">
+        <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
           {NOTIFICATION_ACCESSIBILITY.empty}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-[200px] mx-auto">
+        <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-[240px] mx-auto leading-relaxed font-medium">
           لا توجد تنبيهات جديدة في الوقت الحالي. سنخبرك فور وصول شيء جديد!
         </p>
       </div>

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { cacheTTL, queryCache } from "../lib/queryCache";
-import { ACADEMIC_LEVELS, DEPARTMENTS } from "../constants/academic";
 
 export type AcademicLevelOption = {
   id: string;
@@ -31,8 +30,8 @@ type Params = {
 const isValidAcademicLevel = (lvl: AcademicLevelOption) => {
   const name = (lvl.name || "").trim();
   if (!name) return false;
-  if (/^\d+$/.test(name)) return false;
-
+  
+  // If we have a level number, it should be valid
   const n = lvl.level_number;
   if (typeof n === "number") {
     if (!Number.isFinite(n)) return false;
@@ -40,26 +39,8 @@ const isValidAcademicLevel = (lvl: AcademicLevelOption) => {
     return true;
   }
 
-  return name.includes("المستوى");
-};
-
-const buildFallback = (): Options => {
-  return {
-    levels: (ACADEMIC_LEVELS as readonly string[]).map((name, idx) => ({
-      id: String(idx + 1),
-      name,
-      level_number: idx + 1,
-      is_active: name === "المستوى الأول",
-      sort_order: idx + 1,
-    })),
-    departments: (DEPARTMENTS as readonly string[]).map((name, idx) => ({
-      id: String(idx + 1),
-      academic_level_id: null,
-      name,
-      is_active: true,
-      sort_order: idx + 1,
-    })),
-  };
+  // Fallback for names if no level_number is present
+  return name.includes("المستوى") || /^\d+$/.test(name);
 };
 
 export function useAcademicOptions(params: Params = {}) {
@@ -86,7 +67,7 @@ export function useAcademicOptions(params: Params = {}) {
   );
 
   const cacheKey = useMemo(() => {
-    return `academic_options_v1:inactive:${includeInactive ? 1 : 0}`;
+    return `academic_options_v2:inactive:${includeInactive ? 1 : 0}`;
   }, [includeInactive]);
 
   const fetchOptions = useCallback(async (skipCache = false) => {
@@ -114,16 +95,9 @@ export function useAcademicOptions(params: Params = {}) {
       ]);
 
       if (levelsRes.error || departmentsRes.error) {
-        const fallback = buildFallback();
-        const nextLevels = includeInactive
-          ? fallback.levels
-          : fallback.levels.filter((l) => l.is_active);
-        const nextDepartments = includeInactive
-          ? fallback.departments
-          : fallback.departments.filter((d) => d.is_active);
-
-        setLevels(nextLevels);
-        setDepartments(nextDepartments);
+        console.error("Error fetching academic options:", levelsRes.error || departmentsRes.error);
+        setLevels([]);
+        setDepartments([]);
         return;
       }
 
@@ -147,6 +121,10 @@ export function useAcademicOptions(params: Params = {}) {
         { levels: nextLevels, departments: nextDepartments },
         cacheTTL.subjects,
       );
+    } catch (err) {
+      console.error("Unexpected error fetching academic options:", err);
+      setLevels([]);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
