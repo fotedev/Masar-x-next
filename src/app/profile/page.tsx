@@ -14,6 +14,7 @@ export default function ProfilePage() {
     user,
     displayName,
     isAdmin,
+    loading: authLoading,
     isAdminLoading,
     adminRole,
     updateDisplayName,
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const [newDisplayName, setNewDisplayName] = useState(displayName || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingAcademic, setIsSavingAcademic] = useState(false);
+  const [academicError, setAcademicError] = useState<string | null>(null);
   const [level, setLevel] = useState<number>(academic.level ?? 1);
   const [semester, setSemester] = useState<number>(academic.semester ?? 1);
   const [departmentId, setDepartmentId] = useState<string>(
@@ -75,21 +77,40 @@ export default function ProfilePage() {
   const handleSaveAcademic = async () => {
     if (!user) return;
     setIsSavingAcademic(true);
+    setAcademicError(null);
     try {
-      const ok = await setUserAcademic({
+      const result = await setUserAcademic({
         level,
         semester,
         department_id: departmentId || null,
       });
-      if (!ok) {
-        alert("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
+      if (!result.success) {
+        setAcademicError(
+          result.message || "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
+        );
+        // Clear error after 5 seconds
+        setTimeout(() => setAcademicError(null), 5000);
       }
     } catch {
-      alert("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
+      setAcademicError("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
+      setTimeout(() => setAcademicError(null), 5000);
     } finally {
       setIsSavingAcademic(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-brand-navy flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin" />
+          <p className="text-slate-500 dark:text-slate-400 font-bold animate-pulse">
+            جاري التحميل...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -297,9 +318,9 @@ export default function ProfilePage() {
               {/* Academic */}
               <div className="bg-slate-50 dark:bg-white/[0.02] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 group relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-blue/20 group-hover:bg-brand-blue transition-colors duration-500" />
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                <div className="flex flex-col gap-8">
                   <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                    <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500">
                       🎓
                     </div>
                     <div>
@@ -323,15 +344,18 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                    <div className="grid grid-cols-1 sm:flex gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_0.8fr_1fr] gap-4 items-end">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
+                        المستوى
+                      </label>
                       <select
                         id="profile-academic-level"
                         name="academicLevel"
                         value={level}
                         onChange={(e) => setLevel(Number(e.target.value))}
                         disabled={academicLoading || isSavingAcademic}
-                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
                       >
                         <option value="">اختر المستوى</option>
                         {levels.map((l) => (
@@ -340,14 +364,19 @@ export default function ProfilePage() {
                           </option>
                         ))}
                       </select>
+                    </div>
 
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
+                        القسم
+                      </label>
                       <select
                         id="profile-academic-department"
                         name="academicDepartment"
                         value={departmentId}
                         onChange={(e) => setDepartmentId(e.target.value)}
                         disabled={academicLoading || isSavingAcademic || !level}
-                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
                       >
                         <option value="">اختر القسم</option>
                         {departments
@@ -366,14 +395,19 @@ export default function ProfilePage() {
                             </option>
                           ))}
                       </select>
+                    </div>
 
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
+                        الترم
+                      </label>
                       <select
                         id="profile-academic-semester"
                         name="academicSemester"
                         value={semester}
                         onChange={(e) => setSemester(Number(e.target.value))}
                         disabled={academicLoading || isSavingAcademic}
-                        className="px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
+                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
                       >
                         <option value={1}>ترم 1</option>
                         <option value={2}>ترم 2</option>
@@ -383,16 +417,25 @@ export default function ProfilePage() {
                     <button
                       onClick={handleSaveAcademic}
                       disabled={academicLoading || isSavingAcademic}
-                      className="px-10 py-3 bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="h-[52px] w-full bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 px-4"
                     >
-                      {isSavingAcademic && (
+                      {isSavingAcademic ? (
                         <RefreshCw className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Save className="w-5 h-5" />
                       )}
-                      <span>
-                        {isSavingAcademic ? "جاري الحفظ..." : "حفظ التغييرات"}
-                      </span>
+                      <span>{isSavingAcademic ? "جاري..." : "حفظ"}</span>
                     </button>
                   </div>
+
+                  {academicError && (
+                    <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="w-8 h-8 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center shrink-0">
+                        <X className="w-4 h-4" />
+                      </div>
+                      <p className="text-sm font-bold">{academicError}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

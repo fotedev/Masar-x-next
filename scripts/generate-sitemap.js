@@ -18,17 +18,20 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function generateSitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://masar-x.vercel.app';
+  const baseUrl = 'https://masarx.vercel.app';
 
   // Static URLs
   const staticUrls = [
     '',
     '/add',
+    '/add-file',
     '/add-summary',
+    '/add-video',
     '/admin-dashboard',
     '/ai-assistant',
     '/courses',
     '/edit-summary',
+    '/faq',
     '/instructor-dashboard',
     '/login',
     '/news',
@@ -43,7 +46,6 @@ async function generateSitemap() {
     '/signup',
     '/subjects',
     '/summaries',
-    '/test-route',
   ];
 
   // Dynamic URLs
@@ -52,9 +54,8 @@ async function generateSitemap() {
   try {
     // Fetch subjects
     const { data: subjects } = await supabase
-      .from('subjects')
-      .select('name')
-      .eq('show_on_home', true);
+    .from('subjects')
+    .select('name');
 
     if (subjects) {
       subjects.forEach(subject => {

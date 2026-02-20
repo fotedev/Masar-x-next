@@ -25,8 +25,9 @@ const DEFAULT_ACADEMIC: UserAcademic = { level: null, semester: null, department
 const CACHE_KEY = "masarx_academic_options_cache";
 const ACADEMIC_FETCH_KEY = "masarx_academic_fetch_timestamp";
 const ACADEMIC_UPDATE_KEY = "masarx_academic_update_timestamp";
+const USER_ACADEMIC_CACHE_KEY = "masarx_user_academic_cache";
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes cooldown for fetching
+const FETCH_COOLDOWN = 5 * 60 * 1000; // 5 minutes cooldown for fetching profile data
 const UPDATE_COOLDOWN = 60 * 1000; // 1 minute cooldown for updating profile
 
 type AcademicCache = {
@@ -37,10 +38,38 @@ type AcademicCache = {
 
 export function useUserAcademic() {
   const { user, loading: authLoading } = useAuth();
-  const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
+  const [academic, setAcademic] = useState<UserAcademic>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < CACHE_TTL) {
+            return parsed.data;
+          }
+        } catch (e) {
+          console.error("Failed to parse academic cache", e);
+        }
+      }
+    }
+    return DEFAULT_ACADEMIC;
+  });
   const [levels, setLevels] = useState<AcademicLevel[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < CACHE_TTL) {
+            return false;
+          }
+        } catch {}
+      }
+    }
+    return true;
+  });
   const [optionsLoading, setOptionsLoading] = useState(true);
 
   const fetchOptions = useCallback(async () => {
@@ -120,11 +149,22 @@ export function useUserAcademic() {
 
       if (error) throw error;
 
-      setAcademic({
+      const academicData = {
         level: typeof data?.level === "number" ? data.level : null,
         semester: typeof data?.semester === "number" ? data.semester : null,
         department_id: data?.department_id || null,
-      });
+      };
+
+      setAcademic(academicData);
+
+      // Update persistent cache for user academic data
+      localStorage.setItem(
+        USER_ACADEMIC_CACHE_KEY,
+        JSON.stringify({
+          data: academicData,
+          timestamp: Date.now(),
+        }),
+      );
 
       // Update last fetch timestamp
       localStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString());
@@ -136,14 +176,14 @@ export function useUserAcademic() {
   }, [user]);
 
   const setUserAcademic = useCallback(
-    async (next: UserAcademic): Promise<boolean> => {
-      if (!user) return false;
+    async (next: UserAcademic): Promise<{ success: boolean; message?: string }> => {
+      if (!user) return { success: false };
 
       // Rate limiting: prevent abuse by checking last update time
       const lastUpdate = localStorage.getItem(ACADEMIC_UPDATE_KEY);
       if (lastUpdate && Date.now() - Number(lastUpdate) < UPDATE_COOLDOWN) {
-        alert("يرجى الانتظار دقيقة واحدة قبل تحديث بياناتك مرة أخرى لمنع إساءة الاستخدام.");
-        return false;
+        const remainingTime = Math.ceil((UPDATE_COOLDOWN - (Date.now() - Number(lastUpdate))) / 1000);
+        return { success: false, message: `يرجى الانتظار ${remainingTime} ثانية قبل تحديث بياناتك مرة أخرى.` };
       }
 
       try {
@@ -161,12 +201,21 @@ export function useUserAcademic() {
 
         if (error) throw error;
         setAcademic(next);
+
+        // Update persistent cache
+        localStorage.setItem(
+          USER_ACADEMIC_CACHE_KEY,
+          JSON.stringify({
+            data: next,
+            timestamp: Date.now(),
+          }),
+        );
         
         // Update last update timestamp
         localStorage.setItem(ACADEMIC_UPDATE_KEY, Date.now().toString());
-        return true;
+        return { success: true };
       } catch {
-        return false;
+        return { success: false, message: "حدث خطأ أثناء حفظ المعلومات الأكاديمية" };
       } finally {
         setLoading(false);
       }

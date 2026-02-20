@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { chatHelpers } from "../../lib/chatHelpers";
+import { analyticsHelpers } from "../../lib/analyticsHelpers";
 
 interface AdminAnalyticsPageProps {
   onNavigate: (page: string) => void;
@@ -50,10 +50,13 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
 
   const getActionLabel = (action: string) => {
     const a = (action || "").toLowerCase();
-    if (a === "page_view") return "زيارة";
+    if (a === "page_view") return "زيارة صفحة";
     if (a === "click") return "نقرة";
     if (a === "ai_interaction") return "تفاعل مع الذكاء الاصطناعي";
     if (a === "user_login") return "تسجيل دخول";
+    if (a === "user_logout") return "تسجيل خروج";
+    if (a === "content_view") return "عرض محتوى";
+    if (a === "summary_click") return "نقر على ملخص";
     return action || "حدث";
   };
 
@@ -63,8 +66,11 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
     if (t === "course") return "مقرر";
     if (t === "quiz") return "اختبار";
     if (t === "page") return "صفحة";
+    if (t === "login") return "تسجيل دخول";
+    if (t === "logout") return "تسجيل خروج";
+    if (t === "ai_assistant") return "المساعد الذكي";
     if (t === "unknown") return "غير معروف";
-    return contentType || "غير محدد";
+    return contentType || "غير مححدد";
   };
 
   const actionBadgeClass = (action: string) => {
@@ -77,6 +83,8 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
       return "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200";
     if (a === "user_login")
       return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200";
+    if (a === "user_logout")
+      return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200";
     return "bg-gray-50 text-gray-700 dark:bg-gray-900/40 dark:text-gray-200";
   };
 
@@ -86,14 +94,14 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
         setLoading(true);
         setError(null);
 
-        // Check if user is admin
-        if (!isAdmin) {
+        // Check if user is admin (using the already loaded isAdmin state from useAuth)
+        if (!isAdminLoading && !isAdmin) {
           setError("غير مصرح لك بالوصول إلى هذه الصفحة");
           return;
         }
 
         // Fetch real analytics data from the stored procedure
-        const summary = await chatHelpers.getAdminAnalyticsSummary();
+        const summary = await analyticsHelpers.getAdminAnalyticsSummary();
 
         if (summary) {
           setAnalytics({
@@ -131,7 +139,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const summary = await chatHelpers.getAdminAnalyticsSummary();
+      const summary = await analyticsHelpers.getAdminAnalyticsSummary();
       if (summary) {
         setAnalytics({
           totalUsers: summary.totalUsers || 0,

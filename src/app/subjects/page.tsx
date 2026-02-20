@@ -17,7 +17,7 @@ function SubjectsPage() {
           المواد الدراسية
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg">
-          اختر المادة التي تريد الاطلاع على ملخصاتها
+          اختر المادة التي تريد الاطلاع على محاضراتها
         </p>
       </div>
 
