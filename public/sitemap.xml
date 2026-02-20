@@ -1,171 +1,149 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://masarx.vercel.app</loc>
+    <loc>https://masarx.vercel.app/</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/add</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/add-file</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/add-summary</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/add-video</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/admin-dashboard</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/ai-assistant</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/courses</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/edit-summary</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/faq</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/instructor-dashboard</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/login</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/news</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/privacy</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/privacy-details</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/privacy-policy</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/profile</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/quiz-attempts</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/quiz-play</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/quizzes</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/reset-password</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/signup</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/subjects</loc>
     <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://masarx.vercel.app/summaries</loc>
     <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A3%D8%B3%D8%A7%D8%B3%D9%8A%D8%A7%D8%AA%20%D8%AA%D9%83%D9%86%D9%88%D9%84%D9%88%D8%AC%D9%8A%D8%A7%20%D8%A7%D9%84%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D9%84%D8%B1%D8%B3%D9%85%20%D8%A8%D8%A7%D9%84%D9%8A%D8%AF</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D9%81%D9%8A%D8%B2%D9%8A%D8%A7%D8%A1%201</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%B1%D9%8A%D8%A7%D8%B6%D9%8A%D8%A7%D8%AA%201</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%AD%D9%82%D9%88%D9%82%20%D8%A7%D9%84%D8%A5%D9%86%D8%B3%D8%A7%D9%86</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D9%84%D9%83%D8%AA%D8%B1%D9%88%D9%86%D9%8A%D8%A7%D8%AA</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%AA%D9%81%D9%83%D9%8A%D8%B1%20%D8%B9%D9%84%D9%85%D9%8A</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D8%B3%D8%A7%D8%B3%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6%D9%8A%D8%A7%D8%AA</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%AB%D9%82%D8%A7%D9%81%D9%87%20%D8%A7%D8%B3%D9%84%D8%A7%D9%85%D9%8A%D8%A9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D9%84%D8%BA%D8%A9%20%D8%A7%D9%86%D8%AC%D9%84%D9%8A%D8%B2%D9%8A%D8%A9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D9%84%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D8%A7%D9%84%D8%AA%D9%82%D9%86%D9%8A%D8%A9%20%D9%84%D9%84%D8%AD%D9%88%D8%B3%D8%A8%D8%A9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A3%D8%B3%D8%A7%D8%B3%D9%8A%D8%A7%D8%AA%20%D9%86%D8%B8%D9%85%20%D8%A7%D9%84%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%B3%D9%84%D9%88%D9%83%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D9%87%D9%8A%D8%A6%D8%A7%D8%AA</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%AF%D9%88%D8%A7%D8%A6%D8%B1%20%D8%B1%D9%82%D9%85%D9%8A%D8%A9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D9%84%D8%AD%D8%A7%D8%B3%D8%A8%D8%A7%D8%AA%20%D9%88%D8%A7%D9%84%D9%85%D8%AC%D8%AA%D9%85%D8%B9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D8%A7%D9%84%D8%B4%D8%AE%D8%B5%D9%8A</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%A3%D8%B3%D8%A7%D8%B3%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D8%A8%D8%B1%D9%85%D8%AC%D8%A9</loc>
-    <lastmod>2026-02-20</lastmod>
-  </url>
-  <url>
-    <loc>https://masarx.vercel.app/subjects/%D8%B1%D9%8A%D8%A7%D8%B6%D9%8A%D8%A7%D8%AA%202</loc>
-    <lastmod>2026-02-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

@@ -641,6 +641,7 @@ export type Database = {
           schedule?: string | null
           location?: string | null
           status?: "pending" | "approved" | "rejected"
+          is_academic?: boolean
           created_at?: string
         }
         Update: {
@@ -654,6 +655,7 @@ export type Database = {
           schedule?: string | null
           location?: string | null
           status?: "pending" | "approved" | "rejected"
+          is_academic?: boolean
           created_at?: string
         }
       }

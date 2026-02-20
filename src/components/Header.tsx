@@ -110,6 +110,18 @@ export const Header = React.memo(function Header() {
               </button>
 
               <button
+                onClick={() => handleNavigate("non-academic")}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  currentPage === "non-academic" ||
+                  currentPage.startsWith("non-academic/")
+                    ? "bg-brand-blue/10 text-brand-blue"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                الأقسام العامة
+              </button>
+
+              <button
                 onClick={() => handleNavigate("subjects")}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
                   currentPage === "subjects"
@@ -310,6 +322,19 @@ export const Header = React.memo(function Header() {
                 >
                   <span className="text-xl">📰</span>
                   <span>الأخبار</span>
+                </button>
+
+                <button
+                  onClick={() => handleNavigate("non-academic")}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all touch-manipulation ${
+                    currentPage === "non-academic" ||
+                    currentPage.startsWith("non-academic/")
+                      ? "bg-brand-blue/10 text-brand-blue"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  }`}
+                >
+                  <span className="text-xl">🌟</span>
+                  <span>الأقسام العامة</span>
                 </button>
 
                 <button
