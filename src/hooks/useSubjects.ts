@@ -4,7 +4,6 @@ import { Subject } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
-
  type UseSubjectsParams = {
      level?: number | null;
      semester?: number | null;
@@ -25,6 +24,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             setLoading(true);
             if (params.level === null || params.semester === null) {
                 setSubjects([]);
+                setLoading(false);
                 return;
             }
             const isAnonymous = !user;
