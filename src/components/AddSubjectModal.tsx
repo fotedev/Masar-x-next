@@ -20,7 +20,9 @@ export function AddSubjectModal({
   onSave,
   editingSubject,
 }: AddSubjectModalProps) {
-  const { levels } = useAcademicOptions({ includeInactive: true });
+  const { levels, optionsLoading } = useAcademicOptions({
+    includeInactive: true,
+  });
   const [formData, setFormData] = useState<SubjectInsert>({
     name: "",
     professor: "",
@@ -204,23 +206,28 @@ export function AddSubjectModal({
                 onChange={(e) =>
                   setFormData({ ...formData, level: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
+                disabled={optionsLoading}
+                className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50"
               >
-                {levels.map((lvl, i) => (
-                  <option
-                    key={lvl.id}
-                    value={
-                      typeof lvl.level_number === "number"
+                {optionsLoading ? (
+                  <option>جاري التحميل...</option>
+                ) : (
+                  levels.map((lvl, i) => (
+                    <option
+                      key={lvl.id}
+                      value={
+                        typeof lvl.level_number === "number"
+                          ? lvl.level_number
+                          : i + 1
+                      }
+                    >
+                      المستوى{" "}
+                      {typeof lvl.level_number === "number"
                         ? lvl.level_number
-                        : i + 1
-                    }
-                  >
-                    المستوى{" "}
-                    {typeof lvl.level_number === "number"
-                      ? lvl.level_number
-                      : i + 1}
-                  </option>
-                ))}
+                        : i + 1}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
             <div>
@@ -247,7 +254,7 @@ export function AddSubjectModal({
             <input
               type="checkbox"
               id="is_academic"
-              checked={formData.is_academic}
+              checked={formData.is_academic ?? true}
               onChange={(e) =>
                 setFormData({ ...formData, is_academic: e.target.checked })
               }
@@ -265,7 +272,7 @@ export function AddSubjectModal({
             <input
               type="checkbox"
               id="show_on_home"
-              checked={formData.show_on_home}
+              checked={formData.show_on_home ?? true}
               onChange={(e) =>
                 setFormData({ ...formData, show_on_home: e.target.checked })
               }

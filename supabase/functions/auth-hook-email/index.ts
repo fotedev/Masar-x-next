@@ -1,13 +1,12 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
 const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const BREVO_SENDER_EMAIL = Deno.env.get('BREVO_SENDER_EMAIL') || 'masarx.eg@gmail.com';
+const BREVO_SENDER_NAME = Deno.env.get('BREVO_SENDER_NAME') || 'مسار X - منصة طلاب';
 
 serve(async (req) => {
   // Handle CORS
@@ -16,6 +15,13 @@ serve(async (req) => {
   }
 
   try {
+    if (!BREVO_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Missing BREVO_API_KEY' }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const payload = await req.json();
     const { user, email_data } = payload;
     const { token, token_hash, redirect_to, email_action_type } = email_data;
@@ -35,42 +41,50 @@ serve(async (req) => {
     // Standard Supabase confirmation link: {{ .SiteURL }}/auth/v1/verify?token={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (!supabaseUrl) {
+      return new Response(JSON.stringify({ error: 'Missing SUPABASE_URL' }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const safeRedirectTo = redirect_to || Deno.env.get('FRONTEND_URL') || 'https://masarx.vercel.app';
 
     switch (email_action_type) {
       case 'signup':
-        subject = 'تأكيد التسجيل - مسار X';
-        title = 'تأكيد حسابك';
-        bodyText = 'شكراً لانضمامك إلى منصة مسار X! يرجى النقر على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك.';
-        buttonText = 'تأكيد الحساب';
-        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=signup&redirect_to=${redirect_to}`;
+        subject = 'تفعيل حسابك - مسار X';
+        title = 'مرحباً بك في مسار X';
+        bodyText = 'شكراً لتسجيلك في مسار X. لتفعيل حسابك وتأكيد بريدك الإلكتروني، اضغط على الزر أدناه.';
+        buttonText = 'تفعيل الحساب';
+        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=signup&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
       case 'recovery':
         subject = 'إعادة تعيين كلمة المرور - مسار X';
         title = 'إعادة تعيين كلمة المرور';
         bodyText = 'تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك. يرجى النقر على الزر أدناه للمتابعة.';
         buttonText = 'إعادة تعيين كلمة المرور';
-        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=recovery&redirect_to=${redirect_to}`;
+        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=recovery&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
       case 'magiclink':
         subject = 'رابط تسجيل الدخول - مسار X';
         title = 'تسجيل الدخول السريع';
         bodyText = 'انقر على الزر أدناه لتسجيل الدخول إلى حسابك مباشرة.';
         buttonText = 'تسجيل الدخول';
-        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=magiclink&redirect_to=${redirect_to}`;
+        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=magiclink&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
       case 'email_change':
         subject = 'تغيير البريد الإلكتروني - مسار X';
         title = 'تأكيد تغيير البريد الإلكتروني';
         bodyText = 'لقد طلبت تغيير بريدك الإلكتروني. يرجى النقر على الزر أدناه لتأكيد البريد الجديد.';
         buttonText = 'تأكيد التغيير';
-        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=email_change&redirect_to=${redirect_to}`;
+        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=email_change&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
       default:
         subject = 'إشعار من مسار X';
         title = 'إشعار جديد';
         bodyText = 'لديك إشعار جديد بخصوص حسابك.';
         buttonText = 'انقر هنا';
-        actionUrl = redirect_to;
+        actionUrl = safeRedirectTo;
     }
 
     const htmlContent = `
@@ -117,13 +131,13 @@ serve(async (req) => {
               </div>
 
               <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
-                إذا لم تطلب هذا الإجراء، يمكنك تجاهل هذا الإيميل.
+                إذا لم تقم بإنشاء حساب على مسار X، يمكنك تجاهل هذه الرسالة بأمان.
               </p>
 
               <div style="border-top: 1px solid #e5e7eb; margin: 32px 0 24px 0;"></div>
 
               <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; text-align: center; margin: 0;">
-                إذا كنت تواجه مشكلة في النقر على الزر، انسخ الرابط التالي والصقه في متصفحك:<br>
+                إذا لم يعمل الزر، انسخ الرابط التالي والصقه في متصفحك:<br>
                 <a href="${actionUrl}" style="color: #3b82f6; text-decoration: none; word-break: break-all;">${actionUrl}</a>
               </p>
             </div>
@@ -148,8 +162,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         sender: {
-          name: 'مسار X - منصة الملخصات',
-          email: 'masarx.eg@gmail.com'
+          name: BREVO_SENDER_NAME,
+          email: BREVO_SENDER_EMAIL
         },
         to: [{ email: user.email }],
         subject: subject,

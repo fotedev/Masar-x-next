@@ -205,10 +205,10 @@ export function QuizzesTab({
                       المصدر:{" "}
                       {quiz.source_type === "manual" ? "يدوي" : "ذكاء اصطناعي"}
                     </span>
-                    {quiz.avg_rating > 0 && (
+                    {(quiz.avg_rating ?? 0) > 0 && (
                       <span className="flex items-center gap-1 text-brand-orange">
                         <Star className="w-3 h-3 fill-brand-orange" />
-                        {quiz.avg_rating} ({quiz.reviews_count})
+                        {quiz.avg_rating ?? 0} ({quiz.reviews_count})
                       </span>
                     )}
                   </div>

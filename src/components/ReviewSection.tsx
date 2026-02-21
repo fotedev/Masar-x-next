@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Send, User, Trash2, MessageSquare, Star } from "lucide-react";
 import { useReviews } from "../hooks/useReviews";
 import { useAuth } from "../contexts/AuthContext";
+import { confirmToast } from "../lib/confirmToast";
 
 interface ReviewSectionProps {
   contentId: string;
@@ -103,7 +104,11 @@ export function ReviewSection({
   };
 
   const handleDelete = async (reviewId: string) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذه المراجعة؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذه المراجعة؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
     try {
       await deleteReview(reviewId);
     } catch {
@@ -216,11 +221,11 @@ export function ReviewSection({
               className="group flex gap-4 p-6 rounded-3xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/50 hover:border-brand-blue/30 transition-all hover:shadow-xl hover:shadow-brand-blue/5"
             >
               <div className="flex-shrink-0">
-                {review.avatar_url ? (
+                {review.reviewer_avatar ? (
                   <div className="w-12 h-12 relative">
                     <Image
-                      src={review.avatar_url}
-                      alt={review.full_name || "User"}
+                      src={review.reviewer_avatar}
+                      alt={review.reviewer_name || "User"}
                       fill
                       className="rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-sm"
                     />
@@ -235,7 +240,7 @@ export function ReviewSection({
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <h4 className="font-bold text-slate-900 dark:text-white text-base">
-                      {review.full_name || review.username || "مستخدم"}
+                      {review.reviewer_name || "مستخدم"}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
                       <StarDisplay rating={review.rating || 5} size="w-3 h-3" />
@@ -263,7 +268,7 @@ export function ReviewSection({
                   )}
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                  {review.content}
+                  {review.comment || ""}
                 </p>
               </div>
             </div>

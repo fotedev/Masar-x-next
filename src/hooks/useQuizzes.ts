@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { QuizWithRatings } from "../types/database";
 import { queryCache, cacheTTL } from "../lib/queryCache";
+import { confirmToast } from "../lib/confirmToast";
 
 // Keep track of the inflight request to deduplicate simultaneous calls
 let inflightRequest: Promise<QuizWithRatings[]> | null = null;
@@ -49,7 +50,7 @@ export function useQuizzes() {
             setQuizzes(quizData);
 
             // Cache the result
-            queryCache.set(cacheKey, quizData, cacheTTL.summaries); // Reuse summaries TTL
+            queryCache.set(cacheKey, quizData, cacheTTL.quizzes); // Use quizzes TTL
         } catch {
             // ignore
         } finally {
@@ -60,7 +61,11 @@ export function useQuizzes() {
 
     const deleteQuiz = async (id: string) => {
         try {
-            if (!confirm("هل أنت متأكد أنك تريد حذف هذا الامتحان؟")) return;
+            const confirmed = await confirmToast("هل أنت متأكد أنك تريد حذف هذا الامتحان؟", {
+                confirmLabel: "حذف",
+                cancelLabel: "إلغاء",
+            });
+            if (!confirmed) return;
 
             const { error } = await supabase
                 .from("quizzes")

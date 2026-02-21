@@ -51,6 +51,7 @@ export function useAcademicOptions(params: Params = {}) {
   const [levels, setLevels] = useState<AcademicLevelOption[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [optionsLoading, setOptionsLoading] = useState(true);
 
   const levelIdByName = useMemo(() => {
     const map = new Map<string, string>();
@@ -76,12 +77,15 @@ export function useAcademicOptions(params: Params = {}) {
   const fetchOptions = useCallback(async (skipCache = false) => {
     try {
       setLoading(true);
+      setOptionsLoading(true);
 
       if (!skipCache) {
         const cached = queryCache.get<Options>(cacheKey);
         if (cached) {
           setLevels(cached.levels);
           setDepartments(cached.departments);
+          setLoading(false);
+          setOptionsLoading(false);
           return;
         }
       }
@@ -122,7 +126,7 @@ export function useAcademicOptions(params: Params = {}) {
       queryCache.set(
         cacheKey,
         { levels: nextLevels, departments: nextDepartments },
-        cacheTTL.subjects,
+        cacheTTL.levels,
       );
     } catch (err) {
       console.error("Unexpected error fetching academic options:", err);
@@ -130,6 +134,7 @@ export function useAcademicOptions(params: Params = {}) {
       setDepartments([]);
     } finally {
       setLoading(false);
+      setOptionsLoading(false);
     }
   }, [cacheKey, includeInactive]);
 
@@ -143,6 +148,7 @@ export function useAcademicOptions(params: Params = {}) {
     levelIdByName,
     getDepartmentsForLevelName,
     loading,
+    optionsLoading,
     refetch: (skipCache = true) => fetchOptions(skipCache),
   };
 }

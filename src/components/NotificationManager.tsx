@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { Bell, BellOff } from "lucide-react";
+import { toast } from "sonner";
 
 interface NotificationContextType {
   permission: NotificationPermission;
@@ -222,7 +223,7 @@ export function NotificationToggle() {
       if (permission === "default" || permission === "denied") {
         // طلب الإذن مباشرة من المتصفح
         if (!("Notification" in window)) {
-          alert("متصفحك لا يدعم الإشعارات");
+          toast.error("متصفحك لا يدعم الإشعارات");
           return;
         }
 
@@ -252,7 +253,10 @@ export function NotificationToggle() {
 
 أو يمكنك النقر على أيقونة الجرس مرة أخرى للمحاولة.`;
 
-          alert(message);
+          toast.error("تم رفض إذن الإشعارات", {
+            description: message,
+            duration: 8000,
+          });
         }
       } else if (permission === "granted") {
         // اختبار الإشعارات

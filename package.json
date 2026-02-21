@@ -13,8 +13,9 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@heyputer/puter.js": "^2.2.10",
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.57.4",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.97.0",
     "@types/katex": "^0.16.8",
     "katex": "^0.16.27",
     "lucide-react": "^0.344.0",

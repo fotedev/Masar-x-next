@@ -229,6 +229,10 @@ export function AuthProvider({
       if (freshUser) setUser(freshUser);
       return await verifyAdminStatus(freshUser, true);
     } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        console.debug("Admin status refresh aborted");
+        return false;
+      }
       const message = e instanceof Error ? e.message : String(e);
       if (message.toLowerCase().includes("invalid refresh token")) {
         try {
@@ -262,9 +266,22 @@ export function AuthProvider({
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
 
         if (currentUser) {
+          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          if (metadataAvatar) {
+            setAvatarUrl(metadataAvatar);
+          }
+        } else {
+          setAvatarUrl(null);
+        }
+
+        if (currentUser) {
           verifyAdminStatus(currentUser);
         }
       } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") {
+          console.debug("Auth initialization aborted");
+          return;
+        }
         const message = e instanceof Error ? e.message : String(e);
         if (message.toLowerCase().includes("invalid refresh token")) {
           try {
@@ -297,8 +314,36 @@ export function AuthProvider({
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
         setLoading(false);
 
+        // Handle deleted user or invalid session
+        if (
+          currentUser &&
+          (event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED" ||
+            event === "INITIAL_SESSION")
+        ) {
+          const {
+            data: { user: freshUser },
+            error,
+          } = await supabase.auth.getUser();
+          if (error || !freshUser) {
+            console.warn(
+              "User session invalid or user deleted, signing out...",
+            );
+            await supabase.auth.signOut();
+            setUser(null);
+            setDisplayName(null);
+            setAvatarUrl(null);
+            setIsAdmin(false);
+            setAdminRole(null);
+            return;
+          }
+        }
+
         if (currentUser) {
-          setAvatarUrl(currentUser.user_metadata?.avatar_url ?? null);
+          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          if (metadataAvatar) {
+            setAvatarUrl(metadataAvatar);
+          }
 
           supabase
             .from("profiles")
@@ -424,7 +469,11 @@ export function AuthProvider({
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/`,
+        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) throw error;

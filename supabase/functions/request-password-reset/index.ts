@@ -2,18 +2,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { nanoid } from "https://esm.sh/nanoid@3";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 // =====================
 // Brevo configuration
 // =====================
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+const BREVO_SENDER_EMAIL = Deno.env.get('BREVO_SENDER_EMAIL') || 'masarx.eg@gmail.com';
+const BREVO_SENDER_NAME = Deno.env.get('BREVO_SENDER_NAME') || 'مسار X - منصة طلاب';
 
 // =====================
 // Helpers
@@ -34,7 +32,7 @@ async function sha256(input: string): Promise<string> {
 // Email sender
 // =====================
 async function sendPasswordResetEmail(email: string, resetToken: string) {
-  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://masar-x.vercel.app";
+  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://masarx.vercel.app";
   const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
   if (!BREVO_API_KEY) {
@@ -49,7 +47,7 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "مسار X", email: "masarx.eg@gmail.com" },
+      sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
       to: [{ email }],
       subject: "إعادة تعيين كلمة المرور - مسار X",
       htmlContent: `تم طلب إعادة تعيين كلمة المرور.<br><a href="${resetUrl}">إعادة التعيين</a>`,
@@ -61,6 +59,16 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
     const err = await response.json();
     throw new Error(`Brevo error: ${err?.message || response.statusText}`);
   }
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const cfIp = req.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+  return 'unknown';
 }
 
 // =====================
@@ -96,6 +104,27 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // =====================
+    // Rate limit by IP (basic abuse protection)
+    // =====================
+    try {
+      const ip = getClientIp(req);
+      const { data: allowed } = await supabase.rpc('check_rate_limit', {
+        p_identifier: ip,
+        p_endpoint: 'request-password-reset:ip',
+        p_max_requests: 20,
+        p_window_minutes: 1,
+      });
+      if (allowed === false) {
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
+      // allow on error
+    }
 
     // =====================
     // Rate limit by email (max 3 per 24h)
@@ -134,14 +163,7 @@ serve(async (req) => {
       }
     }
 
-    // Fallback if getUserByEmail is missing or failed
-    if (!user) {
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-      if (listError) {
-        throw new Error(`Auth error: ${listError.message}`);
-      }
-      user = users.find(u => u.email === email);
-    }
+    // Avoid listUsers fallback: it's expensive and can be abused to exhaust quotas.
 
     if (!user) {
       // Security: do NOT reveal existence

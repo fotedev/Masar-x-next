@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { quizService } from "../../lib/quiz";
 import MathDisplay from "../../components/MathDisplay";
+import { confirmToast } from "@/lib/confirmToast";
 
 type AttemptAnswer = {
   question_id?: string;
@@ -177,10 +178,14 @@ export default function QuizAttemptsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              if (confirm("هل أنت متأكد من مسح سجل الامتحانات المحلي؟")) {
+              confirmToast("هل أنت متأكد من مسح سجل الامتحانات المحلي؟", {
+                confirmLabel: "مسح",
+                cancelLabel: "إلغاء",
+              }).then((confirmed) => {
+                if (!confirmed) return;
                 localStorage.removeItem("quiz_history");
                 window.location.reload();
-              }
+              });
             }}
             className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
           >

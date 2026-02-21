@@ -167,19 +167,24 @@ export const cacheKeys = {
     files: () => 'files_all',
     subjectLectures: (subject: string) => `lectures_${subject}`,
     subjectDetails: (subject: string) => `subject_details_${subject}`,
+    settings: () => 'platform_settings',
+    enrollments: (instructorId?: string) => instructorId ? `enrollments_inst_${instructorId}` : 'enrollments_all',
 };
 
 // Default TTL values (in milliseconds)
 export const cacheTTL = {
     notifications: 5 * 60 * 1000,   // 5 minutes (was 30s)
     summaries: 60 * 60 * 1000,      // 1 hour (was 1m)
-    news: 60 * 60 * 1000,           // 1 hour (was 1m)
+    news: 20 * 60 * 1000,           // 20 minutes (was 1h)
     appeals: 30 * 60 * 1000,        // 30 minutes (was 1m)
     profile: 2 * 60 * 60 * 1000,    // 2 hours (was 5m)
-    subjects: 48 * 60 * 60 * 1000,  // 48 hours (was 1h)
+    subjects: 60 * 60 * 1000,       // 1 hour (was 48h)
+    levels: 60 * 60 * 1000,         // 1 hour (new)
     videos: 60 * 60 * 1000,         // 1 hour (was 5m)
     files: 60 * 60 * 1000,          // 1 hour (was 5m)
-    lectures: 2 * 60 * 60 * 1000,   // 2 hours (was 10m)
+    lectures: 20 * 60 * 1000,   // 20 minutes (was 2h)
     subjectDetails: 48 * 60 * 60 * 1000, // 48 hours
     quizzes: 60 * 60 * 1000,        // 1 hour
+    settings: 24 * 60 * 60 * 1000,  // 24 hours (Platform settings change rarely)
+    enrollments: 10 * 60 * 1000,    // 10 minutes
 };

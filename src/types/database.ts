@@ -6,44 +6,9 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      reviews: {
-        Row: {
-          id: string
-          content: string
-          user_id: string | null
-          summary_id: string | null
-          quiz_id: string | null
-          course_id: string | null
-          rating: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          content: string
-          user_id?: string | null
-          summary_id?: string | null
-          quiz_id?: string | null
-          course_id?: string | null
-          rating?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          content?: string
-          user_id?: string | null
-          summary_id?: string | null
-          quiz_id?: string | null
-          course_id?: string | null
-          rating?: number
-          created_at?: string
-          updated_at?: string
-        }
-      }
       profiles: {
         Row: {
           id: string
@@ -52,9 +17,11 @@ export type Database = {
           full_name: string | null
           avatar_url: string | null
           website: string | null
-          level?: number | null
-          semester?: number | null
-          department_id?: string | null
+          level: number | null
+          semester: number | null
+          department_id: string | null
+          show_extra_assets: boolean | null
+          show_extra_assets_updated_at: string | null
         }
         Insert: {
           id: string
@@ -66,6 +33,8 @@ export type Database = {
           level?: number | null
           semester?: number | null
           department_id?: string | null
+          show_extra_assets?: boolean | null
+          show_extra_assets_updated_at?: string | null
         }
         Update: {
           id?: string
@@ -77,316 +46,8 @@ export type Database = {
           level?: number | null
           semester?: number | null
           department_id?: string | null
-        }
-      }
-      summaries: {
-        Row: {
-          id: string
-          title: string
-          subject: string
-          year: string
-          department: string
-          content: string
-          pdf_url: string | null
-          contributor_name: string | null
-          status: string
-          user_id: string | null
-          created_at: string
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          subject: string
-          year: string
-          department: string
-          content: string
-          pdf_url?: string | null
-          contributor_name?: string | null
-          status?: string
-          user_id?: string | null
-          created_at?: string
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          subject?: string
-          year?: string
-          department?: string
-          content?: string
-          pdf_url?: string | null
-          contributor_name?: string | null
-          status?: string
-          user_id?: string | null
-          created_at?: string
-          updated_at?: string | null
-        }
-      }
-      news: {
-        Row: {
-          id: string
-          title: string
-          content: string
-          type: string
-          is_active: boolean
-          priority: number
-          created_by: string | null
-          created_at: string | null
-          updated_at: string | null
-          subject: string | null
-          department: string | null
-          year: string | null
-          custom_category: string | null
-          file_url: string | null
-          image_urls: string[] | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          content: string
-          type: string
-          is_active?: boolean
-          priority: number
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          subject?: string | null
-          department?: string | null
-          year?: string | null
-          custom_category?: string | null
-          file_url?: string | null
-          image_urls?: string[] | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          content?: string
-          type?: string
-          is_active?: boolean
-          priority?: number
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          subject?: string | null
-          department?: string | null
-          year?: string | null
-          custom_category?: string | null
-          file_url?: string | null
-          image_urls?: string[] | null
-        }
-      }
-      appeals: {
-        Row: {
-          id: string
-          content_id: string
-          content_type: string
-          reason: string
-          description: string | null
-          status: string | null
-          created_by: string | null
-          created_at: string | null
-          updated_at: string | null
-          content_title: string | null
-          reviewed_by: string | null
-        }
-        Insert: {
-          id?: string
-          content_id: string
-          content_type: string
-          reason: string
-          description?: string | null
-          status?: string | null
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          content_title?: string | null
-          reviewed_by?: string | null
-        }
-        Update: {
-          id?: string
-          content_id?: string
-          content_type?: string
-          reason?: string
-          description?: string | null
-          status?: string | null
-          created_by?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-          content_title?: string | null
-          reviewed_by?: string | null
-        }
-      }
-      quizzes: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          user_id: string | null
-          source_type: string
-          summary_id: string | null
-          created_at: string
-          subject: string | null
-          department: string | null
-          year: string | null
-          status: string
-          duration_seconds: number | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          user_id?: string | null
-          source_type?: string
-          summary_id?: string | null
-          created_at?: string
-          subject?: string | null
-          department?: string | null
-          year?: string | null
-          status?: string
-          duration_seconds?: number | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          user_id?: string | null
-          source_type?: string
-          summary_id?: string | null
-          created_at?: string
-          subject?: string | null
-          department?: string | null
-          year?: string | null
-          status?: string
-          duration_seconds?: number | null
-        }
-      }
-      quiz_questions: {
-        Row: {
-          id: string
-          quiz_id: string | null
-          question: string
-          options: Json
-          correct_answer: number
-          explanation: string | null
-          order_index: number | null
-        }
-        Insert: {
-          id?: string
-          quiz_id?: string | null
-          question: string
-          options: Json
-          correct_answer: number
-          explanation?: string | null
-          order_index?: number | null
-        }
-        Update: {
-          id?: string
-          quiz_id?: string | null
-          question?: string
-          options?: Json
-          correct_answer?: number
-          explanation?: string | null
-          order_index?: number | null
-        }
-      }
-      quiz_attempts: {
-        Row: {
-          id: string
-          user_id: string | null
-          quiz_id: string | null
-          score: number
-          total_questions: number
-          answers: Json | null
-          started_at: string | null
-          finished_at: string | null
-          time_taken_seconds: number | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          quiz_id?: string | null
-          score: number
-          total_questions: number
-          answers?: Json | null
-          started_at?: string | null
-          finished_at?: string | null
-          time_taken_seconds?: number | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          quiz_id?: string | null
-          score?: number
-          total_questions?: number
-          answers?: Json | null
-          started_at?: string | null
-          finished_at?: string | null
-          time_taken_seconds?: number | null
-          created_at?: string | null
-        }
-      }
-      system_logs: {
-        Row: {
-          id: string
-          level: string
-          message: string
-          status_code: number | null
-          request_id: string | null
-          endpoint: string | null
-          metadata: Json | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          level: string
-          message: string
-          status_code?: number | null
-          request_id?: string | null
-          endpoint?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          level?: string
-          message?: string
-          status_code?: number | null
-          request_id?: string | null
-          endpoint?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-        }
-      }
-      analytics: {
-        Row: {
-          id: string
-          user_id: string | null
-          action_type: string
-          content_type: string
-          content_id: string | null
-          metadata: Json | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          action_type: string
-          content_type: string
-          content_id?: string | null
-          metadata?: Json | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          action_type?: string
-          content_type?: string
-          content_id?: string | null
-          metadata?: Json | null
-          created_at?: string | null
+          show_extra_assets?: boolean | null
+          show_extra_assets_updated_at?: string | null
         }
       }
       admins: {
@@ -409,6 +70,258 @@ export type Database = {
           created_at?: string | null
         }
       }
+      system_access_codes: {
+        Row: {
+          id: string
+          access_key: string
+          expires_at: string
+          created_at: string
+          max_uses: number
+          used_count: number
+        }
+        Insert: {
+          id?: string
+          access_key: string
+          expires_at: string
+          created_at?: string
+          max_uses?: number
+          used_count?: number
+        }
+        Update: {
+          id?: string
+          access_key?: string
+          expires_at?: string
+          created_at?: string
+          max_uses?: number
+          used_count?: number
+        }
+      }
+      summaries: {
+        Row: {
+          id: string
+          title: string
+          subject: string
+          year: string
+          department: string
+          content: string
+          created_at: string
+          user_id: string
+          contributor_name: string | null
+          pdf_url: string | null
+          status: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subject: string
+          year: string
+          department: string
+          content: string
+          created_at?: string
+          user_id: string | null
+          contributor_name?: string | null
+          pdf_url?: string | null
+          status?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subject?: string
+          year?: string
+          department?: string
+          content?: string
+          created_at?: string
+          user_id?: string
+          contributor_name?: string | null
+          pdf_url?: string | null
+          status?: string
+        }
+      }
+      quizzes: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          subject: string
+          level: number
+          semester: number
+          department_id: string | null
+          created_at: string
+          created_by: string
+          status: string
+          summary_id?: string | null
+          department?: string | null
+          year?: string | null
+          source_type?: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          subject: string
+          level: number
+          semester: number
+          department_id?: string | null
+          created_at?: string
+          created_by: string
+          status?: string
+          summary_id?: string | null
+          department?: string | null
+          year?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          subject?: string
+          level?: number
+          semester?: number
+          department_id?: string | null
+          created_at?: string
+          created_by?: string
+          status?: string
+          summary_id?: string | null
+          department?: string | null
+          year?: string | null
+          source_type?: string | null
+        }
+      }
+      news: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          type: string
+          priority: number
+          created_by: string | null
+          created_at: string
+          file_url: string | null
+          image_urls: string[] | null
+          custom_category: string | null
+          subject: string | null
+          department: string | null
+          year: string | null
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          type: string
+          priority?: number
+          created_by?: string | null
+          created_at?: string
+          file_url?: string | null
+          image_urls?: string[] | null
+          custom_category?: string | null
+          subject?: string | null
+          department?: string | null
+          year?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          type?: string
+          priority?: number
+          created_by?: string | null
+          created_at?: string
+          file_url?: string | null
+          image_urls?: string[] | null
+          custom_category?: string | null
+          subject?: string | null
+          department?: string | null
+          year?: string | null
+          is_active?: boolean
+        }
+      }
+      subjects: {
+        Row: {
+          id: string
+          name: string
+          is_academic: boolean | null
+          semester: number | null
+          level: number | null
+          show_on_home: boolean | null
+          created_at: string | null
+          professor: string | null
+          description: string | null
+          schedule: string | null
+          location: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          is_academic?: boolean | null
+          semester?: number | null
+          level?: number | null
+          show_on_home?: boolean | null
+          created_at?: string | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          is_academic?: boolean | null
+          semester?: number | null
+          level?: number | null
+          show_on_home?: boolean | null
+          created_at?: string | null
+          professor?: string | null
+          description?: string | null
+          schedule?: string | null
+          location?: string | null
+          status?: string | null
+        }
+      }
+      appeals: {
+        Row: {
+          id: string
+          user_id: string
+          content_type: string | null
+          content_id: string | null
+          reason: string | null
+          status: string
+          reviewed_by: string | null
+          created_at: string
+          description: string | null
+          created_by: string | null
+          content_title: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string
+          content_type?: string | null
+          content_id?: string | null
+          reason?: string | null
+          status?: string
+          reviewed_by?: string | null
+          created_at?: string
+          description?: string | null
+          created_by?: string | null
+          content_title?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          content_type?: string | null
+          content_id?: string | null
+          reason?: string | null
+          status?: string
+          reviewed_by?: string | null
+          created_at?: string
+          description?: string | null
+          created_by?: string | null
+          content_title?: string | null
+        }
+      }
       notifications: {
         Row: {
           id: string
@@ -416,11 +329,10 @@ export type Database = {
           title: string
           message: string
           type: string
-          read: boolean
           related_id: string | null
           related_type: string | null
-          created_at: string | null
-          updated_at: string | null
+          read: boolean
+          created_at: string
         }
         Insert: {
           id?: string
@@ -428,11 +340,10 @@ export type Database = {
           title: string
           message: string
           type: string
-          read?: boolean
           related_id?: string | null
           related_type?: string | null
-          created_at?: string | null
-          updated_at?: string | null
+          read?: boolean
+          created_at?: string
         }
         Update: {
           id?: string
@@ -440,222 +351,90 @@ export type Database = {
           title?: string
           message?: string
           type?: string
-          read?: boolean
           related_id?: string | null
           related_type?: string | null
-          created_at?: string | null
-          updated_at?: string | null
+          read?: boolean
+          created_at?: string
         }
       }
-      chats: {
+      reviews: {
         Row: {
           id: string
-          name: string | null
-          type: string
-          created_by: string | null
+          rating: number
+          comment: string | null
+          user_id: string
+          summary_id: string | null
+          quiz_id: string | null
+          course_id: string | null
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          name?: string | null
-          type: string
-          created_by?: string | null
+          rating: number
+          comment?: string | null
+          user_id: string
+          summary_id?: string | null
+          quiz_id?: string | null
+          course_id?: string | null
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          name?: string | null
-          type?: string
-          created_by?: string | null
+          rating?: number
+          comment?: string | null
+          user_id?: string
+          summary_id?: string | null
+          quiz_id?: string | null
+          course_id?: string | null
           created_at?: string
-          updated_at?: string
         }
       }
       messages: {
         Row: {
           id: string
-          chat_id: string
-          sender_id: string | null
           content: string
+          sender_id: string
+          chat_id: string
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          chat_id: string
-          sender_id?: string | null
           content: string
+          sender_id: string
+          chat_id: string
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          chat_id?: string
-          sender_id?: string | null
           content?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      chat_participants: {
-        Row: {
-          chat_id: string
-          user_id: string
-          joined_at: string
-        }
-        Insert: {
-          chat_id: string
-          user_id: string
-          joined_at?: string
-        }
-        Update: {
+          sender_id?: string
           chat_id?: string
-          user_id?: string
-          joined_at?: string
+          created_at?: string
         }
       }
       ai_summaries: {
         Row: {
           id: string
-          chat_id: string | null
-          summary_content: string | null
+          chat_id: string
+          summary_content: string
           important_messages: Json | null
           last_message_id: string | null
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          chat_id?: string | null
-          summary_content?: string | null
+          chat_id: string
+          summary_content: string
           important_messages?: Json | null
           last_message_id?: string | null
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          chat_id?: string | null
-          summary_content?: string | null
+          chat_id?: string
+          summary_content?: string
           important_messages?: Json | null
           last_message_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      assistant_messages: {
-        Row: {
-          id: string
-          user_id: string | null
-          session_id: string | null
-          user_message: string
-          assistant_response: string
-          response_time_ms: number | null
-          ai_model_used: string | null
-          metadata: Json | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          session_id?: string | null
-          user_message: string
-          assistant_response: string
-          response_time_ms?: number | null
-          ai_model_used?: string | null
-          metadata?: Json | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          session_id?: string | null
-          user_message?: string
-          assistant_response?: string
-          response_time_ms?: number | null
-          ai_model_used?: string | null
-          metadata?: Json | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      password_reset_tokens: {
-        Row: {
-          id: string
-          user_id: string | null
-          email: string
-          token: string
-          expires_at: string
-          used_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          email: string
-          token: string
-          expires_at: string
-          used_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          email?: string
-          token?: string
-          expires_at?: string
-          used_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      subjects: {
-        Row: {
-          id: string
-          name: string
-          show_on_home: boolean
-          semester?: number | null
-          level?: number | null
-          professor?: string | null
-          description?: string | null
-          schedule?: string | null
-          location?: string | null
-          status: "pending" | "approved" | "rejected"
-          is_academic: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          show_on_home?: boolean
-          semester?: number | null
-          level?: number | null
-          professor?: string | null
-          description?: string | null
-          schedule?: string | null
-          location?: string | null
-          status?: "pending" | "approved" | "rejected"
-          is_academic?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          show_on_home?: boolean
-          semester?: number | null
-          level?: number | null
-          professor?: string | null
-          description?: string | null
-          schedule?: string | null
-          location?: string | null
-          status?: "pending" | "approved" | "rejected"
-          is_academic?: boolean
           created_at?: string
         }
       }
@@ -663,104 +442,69 @@ export type Database = {
         Row: {
           id: string
           title: string
-          description: string | null
+          description: string
           instructor_id: string
-          price: number | null
+          price: number
           is_published: boolean
-          is_academic: boolean
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
           title: string
-          description?: string | null
+          description: string
           instructor_id: string
-          price?: number | null
+          price?: number
           is_published?: boolean
-          is_academic?: boolean
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
           title?: string
-          description?: string | null
+          description?: string
           instructor_id?: string
-          price?: number | null
+          price?: number
           is_published?: boolean
           created_at?: string
-          updated_at?: string
-        }
-      }
-      enrollments: {
-        Row: {
-          id: string
-          student_id: string
-          course_id: string
-          status: 'pending' | 'active' | 'expired'
-          payment_screenshot_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          student_id: string
-          course_id: string
-          status?: 'pending' | 'active' | 'expired'
-          payment_screenshot_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          student_id?: string
-          course_id?: string
-          status?: 'pending' | 'active' | 'expired'
-          payment_screenshot_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      audit_logs: {
-        Row: {
-          id: string
-          operation_name: string
-          user_id: string
-          timestamp: string
-          changed_data: Json
-        }
-        Insert: {
-          id?: string
-          operation_name: string
-          user_id: string
-          timestamp?: string
-          changed_data: Json
-        }
-        Update: {
-          id?: string
-          operation_name?: string
-          user_id?: string
-          timestamp?: string
-          changed_data?: Json
         }
       }
     }
     Views: {
       review_details: {
         Row: {
-          id: string | null
-          content: string | null
-          rating: number | null
-          user_id: string | null
+          id: string
+          rating: number
+          comment: string | null
+          user_id: string
           summary_id: string | null
           quiz_id: string | null
           course_id: string | null
-          created_at: string | null
-          updated_at: string | null
-          full_name: string | null
-          avatar_url: string | null
-          username: string | null
+          created_at: string
+          reviewer_name: string | null
+          reviewer_avatar: string | null
+        }
+        Insert: {
+          id?: string
+          rating: number
+          comment?: string | null
+          user_id: string
+          summary_id?: string | null
+          quiz_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          reviewer_name?: string | null
+          reviewer_avatar?: string | null
+        }
+        Update: {
+          id?: string
+          rating?: number
+          comment?: string | null
+          user_id?: string
+          summary_id?: string | null
+          quiz_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          reviewer_name?: string | null
+          reviewer_avatar?: string | null
         }
       }
       summaries_with_ratings: {
@@ -771,41 +515,43 @@ export type Database = {
           year: string
           department: string
           content: string
-          pdf_url: string | null
+          created_at: string
+          user_id: string
           contributor_name: string | null
+          pdf_url: string | null
           status: string
-          user_id: string | null
-          created_at: string
-          updated_at: string
-          avg_rating: number
-          reviews_count: number
+          avg_rating: number | null
+          reviews_count: number | null
         }
-      }
-      quizzes_with_ratings: {
-        Row: {
-          id: string
+        Insert: {
+          id?: string
           title: string
-          description: string | null
-          user_id: string | null
-          source_type: string
-          summary_id: string | null
-          created_at: string
           subject: string
-          department: string
           year: string
-          status: string
-          avg_rating: number
-          reviews_count: number
+          department: string
+          content: string
+          created_at?: string
+          user_id: string
+          contributor_name?: string | null
+          pdf_url?: string | null
+          status?: string
+          avg_rating?: number | null
+          reviews_count?: number | null
         }
-      }
-      content_analytics: {
-        Row: {
-          content_id: string | null
-          content_type: string | null
-          views_count: number | null
-          clicks_count: number | null
-          unique_views_count: number | null
-          last_updated: string | null
+        Update: {
+          id?: string
+          title?: string
+          subject?: string
+          year?: string
+          department?: string
+          content?: string
+          created_at?: string
+          user_id?: string
+          contributor_name?: string | null
+          pdf_url?: string | null
+          status?: string
+          avg_rating?: number | null
+          reviews_count?: number | null
         }
       }
     }
@@ -818,66 +564,72 @@ export type Database = {
   }
 }
 
-export type Summary = Database['public']['Tables']['summaries']['Row'];
-export type SummaryWithRatings = Database['public']['Views']['summaries_with_ratings']['Row'];
-export type SummaryInsert = Database['public']['Tables']['summaries']['Insert'];
-export type SummaryUpdate = Database['public']['Tables']['summaries']['Update'];
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
 
-export type Quiz = Database['public']['Tables']['quizzes']['Row'];
-export type QuizWithRatings = Database['public']['Views']['quizzes_with_ratings']['Row'];
-export type QuizInsert = Database['public']['Tables']['quizzes']['Insert'];
-export type QuizUpdate = Database['public']['Tables']['quizzes']['Update'];
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
+export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
-export type Review = Database['public']['Tables']['reviews']['Row'];
-export type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
-export type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
+export type Admin = Database['public']['Tables']['admins']['Row']
+export type SystemAccessCode = Database['public']['Tables']['system_access_codes']['Row']
+export type Summary = Database['public']['Tables']['summaries']['Row']
+export type SummaryInsert = Database['public']['Tables']['summaries']['Insert']
+export type Quiz = Database['public']['Tables']['quizzes']['Row']
+export type QuizInsert = Database['public']['Tables']['quizzes']['Insert']
 
-export type ReviewDetails = Database['public']['Views']['review_details']['Row'];
+export interface QuizWithRatings extends Quiz {
+  avg_rating?: number | null;
+  total_ratings?: number | null;
+  reviews_count?: number | null;
+  source_type?: string | null;
+}
 
-export type News = Database['public']['Tables']['news']['Row'];
-export type NewsInsert = Database['public']['Tables']['news']['Insert'];
-export type NewsUpdate = Database['public']['Tables']['news']['Update'];
+// News types
+export type News = Database['public']['Tables']['news']['Row']
+export type NewsInsert = Database['public']['Tables']['news']['Insert']
 
-export type Appeal = Database['public']['Tables']['appeals']['Row'];
-export type AppealInsert = Database['public']['Tables']['appeals']['Insert'];
-export type AppealUpdate = Database['public']['Tables']['appeals']['Update'];
+// Subject types
+export type Subject = Database['public']['Tables']['subjects']['Row']
+export type SubjectInsert = Database['public']['Tables']['subjects']['Insert']
 
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
+// Appeal types
+export type Appeal = Database['public']['Tables']['appeals']['Row']
+export type AppealInsert = Database['public']['Tables']['appeals']['Insert']
 
-export type Admin = Database['public']['Tables']['admins']['Row'];
-export type Notification = Database['public']['Tables']['notifications']['Row'];
-export type NotificationInsert = Database['public']['Tables']['notifications']['Insert'];
-export type NotificationUpdate = Database['public']['Tables']['notifications']['Update'];
+// Notification types
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
 
-export type Chat = Database['public']['Tables']['chats']['Row'];
-export type Message = Database['public']['Tables']['messages']['Row'];
-export type AISummary = Database['public']['Tables']['ai_summaries']['Row'];
+// Review types
+export type Review = Database['public']['Tables']['reviews']['Row']
+export type ReviewInsert = Database['public']['Tables']['reviews']['Insert']
+export type ReviewDetails = Database['public']['Views']['review_details']['Row']
 
-export type MessageWithSender = Message & {
+// Message types
+export type Message = Database['public']['Tables']['messages']['Row']
+
+export interface MessageWithSender extends Message {
   sender: {
-    id: string;
-    email: string;
-    raw_user_meta_data: unknown;
-  } | null;
-};
+    id: string
+    email?: string
+    raw_user_meta_data?: {
+      display_name?: string
+      name?: string
+    } | null
+  } | null
+}
 
-export type ChatWithDetails = Chat & {
-  chat_participants?: { user_id: string }[];
-  messages?: { id: string; created_at: string }[];
-  ai_summaries?: { id: string; created_at: string; summary_content: string }[];
-};
-export type Subject = Database['public']['Tables']['subjects']['Row'];
-export type SubjectInsert = Database['public']['Tables']['subjects']['Insert'];
-export type SubjectUpdate = Database['public']['Tables']['subjects']['Update'];
+// Summary with ratings (view)
+export type SummaryWithRatings = Database['public']['Views']['summaries_with_ratings']['Row']
+export type SummaryUpdate = Database['public']['Tables']['summaries']['Update']
 
-export type Course = Database['public']['Tables']['courses']['Row'];
-export type CourseInsert = Database['public']['Tables']['courses']['Insert'];
-export type CourseUpdate = Database['public']['Tables']['courses']['Update'];
+// Course types
+export type Course = Database['public']['Tables']['courses']['Row']
+export type CourseInsert = Database['public']['Tables']['courses']['Insert']
 
-export type Enrollment = Database['public']['Tables']['enrollments']['Row'];
-export type EnrollmentInsert = Database['public']['Tables']['enrollments']['Insert'];
-export type EnrollmentUpdate = Database['public']['Tables']['enrollments']['Update'];
-
-export type AuditLog = Database['public']['Tables']['audit_logs']['Row'];
+// Course extended type with instructor name
+export interface CourseWithInstructor extends Course {
+  instructor_name?: string | null
+  enrollments_count?: number | null
+}
