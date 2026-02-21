@@ -60,16 +60,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip development resources
-  if (
-    url.pathname.includes('node_modules') ||
-    url.pathname.startsWith('/src/') ||
-    url.pathname.startsWith('/@') ||
-    url.pathname.includes('hot-update') ||
-    url.search.includes('t=') // Timestamp for HMR
-  ) {
+  // Network-first for navigation requests to prevent stale page loops
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Optional: match existing v3 logic by caching successful navigation
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((resp) => resp || caches.match('/'));
+        })
+    );
     return;
   }
+
+  // Skip development resources
 
   // Stale-while-revalidate strategy للصفحات والأصول الثابتة
   event.respondWith(

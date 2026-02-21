@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
@@ -20,6 +20,7 @@ export default function AcademicOnboardingPage() {
   const [semester, setSemester] = useState<number>(initialSemester);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -29,14 +30,17 @@ export default function AcademicOnboardingPage() {
   useEffect(() => {
     if (loading || authLoading) return;
     if (!user) return;
-    if (saving) return;
+    if (saving) return; // DON'T redirect if we are currently saving
+    if (hasRedirected.current) return;
 
     if (isAdmin) {
+      hasRedirected.current = true;
       router.replace("/");
       return;
     }
 
     if (academic.level != null && academic.semester != null) {
+      hasRedirected.current = true;
       router.replace("/");
     }
   }, [
