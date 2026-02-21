@@ -39,12 +39,14 @@ type AcademicCache = {
 export function useUserAcademic() {
   const { user, loading: authLoading } = useAuth();
   const [academic, setAcademic] = useState<UserAcademic>(() => {
+    // Check for cached data only if user is logged in
     if (typeof window !== "undefined") {
       const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
-      if (cached) {
+      if (cached && user) {
         try {
           const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL) {
+          // Only use cache if it belongs to the current user
+          if (parsed.userId === user.id && Date.now() - parsed.timestamp < CACHE_TTL) {
             return parsed.data;
           }
         } catch (e) {
@@ -59,10 +61,10 @@ export function useUserAcademic() {
   const [loading, setLoading] = useState(() => {
     if (typeof window !== "undefined") {
       const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
-      if (cached) {
+      if (cached && user) {
         try {
           const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < CACHE_TTL) {
+          if (parsed.userId === user.id && Date.now() - parsed.timestamp < CACHE_TTL) {
             return false;
           }
         } catch {}
@@ -157,12 +159,13 @@ export function useUserAcademic() {
 
       setAcademic(academicData);
 
-      // Update persistent cache for user academic data
+      // Update persistent cache for user academic data with userId
       localStorage.setItem(
         USER_ACADEMIC_CACHE_KEY,
         JSON.stringify({
           data: academicData,
           timestamp: Date.now(),
+          userId: user.id,
         }),
       );
 
@@ -202,12 +205,13 @@ export function useUserAcademic() {
         if (error) throw error;
         setAcademic(next);
 
-        // Update persistent cache
+        // Update persistent cache with userId
         localStorage.setItem(
           USER_ACADEMIC_CACHE_KEY,
           JSON.stringify({
             data: next,
             timestamp: Date.now(),
+            userId: user.id,
           }),
         );
         
