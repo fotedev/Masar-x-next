@@ -16,6 +16,55 @@ export interface QuizData {
 }
 
 export class QuizService {
+    async saveAiGeneratedDraft(userId: string, quizData: QuizData) {
+        try {
+            const draftPayload = {
+                is_draft: true,
+                draft_type: 'ai_generated',
+                data: quizData,
+            };
+
+            const { data: quiz, error: quizError } = await supabase
+                .from('quizzes')
+                .insert({
+                    title: quizData.title,
+                    description: JSON.stringify(draftPayload),
+                    summary_id: quizData.summary_id ?? null,
+                    created_by: userId,
+                    subject: 'AI Assistant',
+                    level: 0,
+                    semester: 1,
+                    status: 'draft',
+                    source_type: 'ai_generated_draft',
+                } as any)
+                .select('id')
+                .single();
+
+            if (quizError) throw quizError;
+            return quiz.id as string;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async getAiGeneratedDraftsForUser(userId: string, limit = 20) {
+        try {
+            const { data, error } = await supabase
+                .from('quizzes')
+                .select('id, title, description, created_at')
+                .eq('created_by', userId)
+                .eq('status', 'draft')
+                .eq('source_type', 'ai_generated_draft')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            throw error;
+        }
+    }
+
     // Save a generated quiz to the database
     async saveQuiz(userId: string, quizData: QuizData, sourceType: string = 'ai_generated') {
         try {

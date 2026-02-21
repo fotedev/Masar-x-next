@@ -112,6 +112,7 @@ ${staticUrls}${dynamicUrls}
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
   });
 }

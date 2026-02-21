@@ -29,6 +29,7 @@ import type { DepartmentOption } from "@/hooks/useAcademicOptions";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirmToast";
+import { quizService } from "@/lib/quiz";
 
 import { useSubjects } from "@/hooks/useSubjects";
 
@@ -62,6 +63,13 @@ interface LocalGeneratedQuiz {
   createdAt: string;
   data: QuizDataInput;
 }
+
+type SupabaseDraftRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+};
 
 import { useAiChat } from "@/hooks/useAiChat";
 
@@ -107,6 +115,7 @@ function AiAssistantChatPage() {
   const [showPuterModal, setShowPuterModal] = useState(false);
   const [showSubmitForReviewModal, setShowSubmitForReviewModal] =
     useState(false);
+  const [showGeneratedQuizModal, setShowGeneratedQuizModal] = useState(false);
   const [submitAcademicLevel, setSubmitAcademicLevel] = useState<string>("");
   const [submitSemester, setSubmitSemester] = useState<number>(1);
   const [submitDepartment, setSubmitDepartment] = useState<string>("");
@@ -244,6 +253,46 @@ function AiAssistantChatPage() {
 
   const LOCAL_AI_QUIZZES_KEY = "local_ai_generated_quizzes";
 
+  const parseSupabaseDraftRow = useCallback(
+    (row: SupabaseDraftRow): LocalGeneratedQuiz | null => {
+      try {
+        const rawDesc = row.description || "";
+        const parsed = rawDesc ? JSON.parse(rawDesc) : null;
+        const data = parsed?.data;
+        if (!data || typeof data !== "object") return null;
+        if (typeof data.title !== "string" || !Array.isArray(data.questions))
+          return null;
+        return {
+          localId: row.id,
+          createdAt: row.created_at,
+          data: data as QuizDataInput,
+        };
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const loadSupabaseDrafts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const rows = (await quizService.getAiGeneratedDraftsForUser(
+        user.id,
+        20,
+      )) as unknown as SupabaseDraftRow[];
+
+      const parsed = rows
+        .map((r) => parseSupabaseDraftRow(r))
+        .filter(Boolean) as LocalGeneratedQuiz[];
+
+      setLocalGeneratedQuizzes(parsed);
+      setGeneratedQuiz((prev) => prev || parsed[0] || null);
+    } catch {
+      // ignore
+    }
+  }, [parseSupabaseDraftRow, user]);
+
   const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
     if (typeof window === "undefined") return [];
     try {
@@ -269,10 +318,15 @@ function AiAssistantChatPage() {
   }, []);
 
   useEffect(() => {
+    if (user) {
+      loadSupabaseDrafts();
+      return;
+    }
+
     const arr = readLocalQuizzes();
     setLocalGeneratedQuizzes(arr);
     setGeneratedQuiz((prev) => prev || arr[0] || null);
-  }, [readLocalQuizzes]);
+  }, [loadSupabaseDrafts, readLocalQuizzes, user]);
 
   const resetLocalQuizPlayer = useCallback(() => {
     setLocalQuizIndex(0);
@@ -324,7 +378,7 @@ function AiAssistantChatPage() {
         .insert({
           title: quizData.title,
           description: JSON.stringify(descriptionJson),
-          user_id: user.id,
+          created_by: user.id,
           source_type: "ai_generated",
           subject: submitSubject,
           department: submitDepartment,
@@ -429,8 +483,22 @@ function AiAssistantChatPage() {
         },
       };
 
-      setGeneratedQuiz(localQuiz);
-      persistLocalQuiz(localQuiz);
+      if (user) {
+        await quizService.saveAiGeneratedDraft(user.id, {
+          title: localQuiz.data.title,
+          description: localQuiz.data.description,
+          questions: localQuiz.data.questions.map((q) => ({
+            question: q.question,
+            options: q.options,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+          })),
+        });
+        await loadSupabaseDrafts();
+      } else {
+        setGeneratedQuiz(localQuiz);
+        persistLocalQuiz(localQuiz);
+      }
 
       setShowQuizModal(false);
       setQuizTextInput("");
@@ -458,135 +526,185 @@ function AiAssistantChatPage() {
       className="flex flex-col h-[calc(100dvh-88px)] sm:h-[calc(100vh-120px)] max-w-5xl mx-auto"
     >
       {/* Header */}
-      <div className="modern-card p-3 sm:p-4 mb-2 sm:mb-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
-            <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-brand-blue" />
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-3xl p-4 sm:p-5 mb-4 border border-slate-200/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between shrink-0 z-10 sticky top-0">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white">
-              {mode === "group_rag"
-                ? "مساعد مسار X"
-                : "مساعد برمجي (حاسبات ومعلومات)"}
+          <div className="flex flex-col">
+            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {mode === "group_rag" ? "مساعد مسار X" : "المساعد الذكي"}
             </h1>
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {mode === "group_rag"
-                  ? "وضع محادثات المجموعة (إجابات من البيانات)"
-                  : "وضع المساعد البرمجي (إجابات عامة + أمثلة وكود)"}
+                  ? "محادثات المجموعة"
+                  : "المساعد البرمجي العام"}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-700/50">
           <button
             onClick={toggleMode}
-            className="px-3 py-2 text-xs font-bold rounded-lg transition-all border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue"
+            className="px-3 py-1.5 text-xs font-bold rounded-xl transition-all text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 hover:shadow-sm"
             title={
               mode === "group_rag"
                 ? "التبديل إلى المساعد البرمجي"
                 : "التبديل إلى محادثات المجموعة"
             }
           >
-            <span className="sm:hidden">تبديل الوضع</span>
+            <span className="sm:hidden flex items-center justify-center">
+              <Brain className="w-4 h-4" />
+            </span>
             <span className="hidden sm:inline">
-              {mode === "group_rag" ? "مساعد برمجي" : "محادثات المجموعة"}
+              تبديل: {mode === "group_rag" ? "مساعد برمجي" : "محادثات المجموعة"}
             </span>
           </button>
+
+          <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+
           <button
             onClick={() => setShowPuterModal(true)}
-            className="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-lg transition-all"
+            className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all"
             title="إعدادات Puter"
           >
-            <LockIcon className="w-5 h-5" />
+            <LockIcon className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             onClick={handleSummarizeChat}
             disabled={isSummarizing || !hasChatData}
-            className={`p-2 rounded-lg transition-all ${
+            className={`p-2 rounded-xl transition-all ${
               isSummarizing || !hasChatData
                 ? "text-slate-300"
-                : "text-slate-400 hover:text-purple-600 hover:bg-purple-50"
+                : "text-slate-400 hover:text-purple-600 hover:bg-white dark:hover:bg-slate-700"
             }`}
             title="تلخيص المحادثة (آخر 100 رسالة)"
           >
             {isSummarizing ? (
-              <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              <FileText className="w-5 h-5" />
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
           </button>
           <button
             onClick={handleClearChat}
-            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all"
             title="مسح المحادثة"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
+
+          {generatedQuiz && (
+            <>
+              <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+              <button
+                onClick={() => setShowGeneratedQuizModal(true)}
+                className="px-3 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-all text-sm font-bold"
+                title={`آخر اختبار مولّد: ${generatedQuiz.data.title}`}
+              >
+                آخر اختبار
+                {localGeneratedQuizzes.length > 1
+                  ? ` (${localGeneratedQuizzes.length})`
+                  : ""}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {generatedQuiz && (
-        <div className="modern-card p-3 sm:p-4 mb-2 sm:mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-bold text-slate-900 dark:text-white">
-              آخر اختبار مولّد: {generatedQuiz.data.title}
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
-              {user
-                ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
-                : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
-            </div>
-            {localGeneratedQuizzes.length > 1 && (
-              <div className="mt-3">
-                <select
-                  value={generatedQuiz.localId}
-                  onChange={(e) => {
-                    const next = localGeneratedQuizzes.find(
-                      (q) => q.localId === e.target.value,
-                    );
-                    if (!next) return;
-                    setGeneratedQuiz(next);
-                    resetLocalQuizPlayer();
-                  }}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
-                >
-                  {localGeneratedQuizzes.map((q) => (
-                    <option key={q.localId} value={q.localId}>
-                      {q.data.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleOpenLocalQuiz}
-              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-sm font-semibold"
-            >
-              فتح الاختبار
-            </button>
-            {user && (
+      {showGeneratedQuizModal && generatedQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                آخر اختبار مولّد
+              </h3>
               <button
-                onClick={() => {
-                  setShowSubmitForReviewModal(true);
-                  setSubmitAcademicLevel(
-                    (prev) => prev || levels[0]?.name || "",
-                  );
-                  setSubmitSemester(1);
-                  setSubmitDepartment((prev) => prev || "");
-                  setSubmitSubject((prev) => prev || "");
-                }}
-                disabled={isSubmittingQuiz}
-                className="px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
-                title="سيتم إرسال الامتحان للمراجعة. سيتم ربطه بهويتك (user_id)"
+                onClick={() => setShowGeneratedQuizModal(false)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+                aria-label="إغلاق"
               >
-                {isSubmittingQuiz ? "جاري الإرسال..." : "إرسال للمراجعة والنشر"}
+                <X className="w-5 h-5 text-slate-500" />
               </button>
-            )}
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-bold text-slate-900 dark:text-white">
+                  {generatedQuiz.data.title}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {user
+                    ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
+                    : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
+                </div>
+              </div>
+
+              {localGeneratedQuizzes.length > 1 && (
+                <div>
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
+                    اختر اختباراً
+                  </div>
+                  <select
+                    value={generatedQuiz.localId}
+                    onChange={(e) => {
+                      const next = localGeneratedQuizzes.find(
+                        (q) => q.localId === e.target.value,
+                      );
+                      if (!next) return;
+                      setGeneratedQuiz(next);
+                      resetLocalQuizPlayer();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                  >
+                    {localGeneratedQuizzes.map((q) => (
+                      <option key={q.localId} value={q.localId}>
+                        {q.data.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
+                <button
+                  onClick={() => {
+                    setShowGeneratedQuizModal(false);
+                    handleOpenLocalQuiz();
+                  }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all text-sm font-semibold"
+                >
+                  فتح الاختبار
+                </button>
+                {user && (
+                  <button
+                    onClick={() => {
+                      setShowGeneratedQuizModal(false);
+                      setShowSubmitForReviewModal(true);
+                      setSubmitAcademicLevel(
+                        (prev) => prev || levels[0]?.name || "",
+                      );
+                      setSubmitSemester(1);
+                      setSubmitDepartment((prev) => prev || "");
+                      setSubmitSubject((prev) => prev || "");
+                    }}
+                    disabled={isSubmittingQuiz}
+                    className="px-4 py-2 rounded-xl bg-brand-blue text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
+                    title="سيتم إرسال الامتحان للمراجعة. سيتم ربطه بهويتك (created_by)"
+                  >
+                    {isSubmittingQuiz
+                      ? "جاري الإرسال..."
+                      : "إرسال للمراجعة والنشر"}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -734,57 +852,66 @@ function AiAssistantChatPage() {
       )}
 
       {/* Stats Bar */}
-      <div className="flex gap-2 mb-2 sm:mb-4 overflow-x-auto pb-2 shrink-0 scrollbar-hide">
-        <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap">
-          <Brain className="w-4 h-4 text-brand-blue" />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            البيانات: {stats.totalChunks} فقرة
+      <div className="flex gap-3 mb-4 overflow-x-auto pb-2 shrink-0 scrollbar-hide px-1">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+          <Brain className="w-3.5 h-3.5 text-indigo-500" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            البيانات:{" "}
+            <span className="text-indigo-600 dark:text-indigo-400">
+              {stats.totalChunks}
+            </span>{" "}
+            فقرة
           </span>
         </div>
-        <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap">
-          <MessageSquare className="w-4 h-4 text-brand-orange" />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            المواضيع: {stats.totalMessages} رسائل
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+          <MessageSquare className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            المواضيع:{" "}
+            <span className="text-amber-600 dark:text-amber-400">
+              {stats.totalMessages}
+            </span>{" "}
+            رسائل
           </span>
         </div>
         {isPuterSignedIn && (
-          <div className="modern-card py-1.5 sm:py-2 px-3 sm:px-4 flex items-center gap-2 whitespace-nowrap border-green-200 bg-green-50 dark:bg-green-900/10">
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-xs font-medium text-green-600 dark:text-green-400">
-              متصل بـ Puter
+          <div className="bg-green-50/80 dark:bg-green-900/20 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-green-200/50 dark:border-green-800/50 shadow-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-xs font-semibold text-green-700 dark:text-green-400">
+              مفعل وضع (Puter)
             </span>
           </div>
         )}
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 modern-card mb-2 sm:mb-4 overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 rounded-3xl mb-4 overflow-hidden flex flex-col shadow-sm">
         <div
           ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 sm:space-y-6 custom-scrollbar"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar scroll-smooth"
         >
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-8">
-              <div className="w-20 h-20 bg-brand-blue/5 rounded-full flex items-center justify-center mb-6">
-                <Bot className="w-10 h-10 text-brand-blue/30" />
+            <div className="h-full flex flex-col items-center justify-center text-center p-4">
+              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-full flex items-center justify-center mb-8 animate-in zoom-in duration-500 shrink-0">
+                <Bot className="w-12 h-12 text-indigo-500" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+              <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3">
                 كيف يمكنني مساعدتك اليوم؟
               </h3>
-              <p className="text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed text-[15px]">
                 يمكنك سؤالي عن أي شيء يخص المواد الدراسية، الملخصات، أو حتى طلب
                 إنشاء اختبار تجريبي لك.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 w-full max-w-md">
-                {SUGGESTIONS.map((suggestion) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-10 w-full max-w-lg">
+                {SUGGESTIONS.map((suggestion, i) => (
                   <button
                     key={suggestion}
                     onClick={() => setInputMessage(suggestion)}
-                    className="p-3 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:bg-brand-blue/5 hover:text-brand-blue rounded-xl border border-slate-100 dark:border-slate-800 transition-all text-right"
+                    className="p-4 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 hover:border-indigo-300/50 dark:hover:border-indigo-500/50 hover:shadow-md hover:-translate-y-0.5 transition-all text-right"
+                    style={{ animationDelay: `${i * 100}ms` }}
                     dir="auto"
                   >
-                    {suggestion}
+                    <span>{suggestion}</span>
                   </button>
                 ))}
               </div>
@@ -820,12 +947,12 @@ function AiAssistantChatPage() {
         </div>
 
         {/* Input Area */}
-        <div className="p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="relative p-3 sm:p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 shrink-0">
           {/* Limit reached message */}
           {!loading && hasReachedLimit && (
-            <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+            <div className="mb-4 p-4 bg-amber-50/90 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-800/60 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center shrink-0">
                   <LockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
@@ -836,7 +963,7 @@ function AiAssistantChatPage() {
                         ? "انتهت رسائلك اليومية"
                         : "انتهت رسائلك المجانية"}
                   </h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                  <p className="text-sm text-amber-700 dark:text-amber-400/80">
                     {isPuterSignedIn
                       ? "يمكنك المتابعة باستخدام رصيد Puter الخاص بك."
                       : user
@@ -847,7 +974,7 @@ function AiAssistantChatPage() {
                     {!isPuterSignedIn && (
                       <button
                         onClick={() => setShowPuterModal(true)}
-                        className="text-sm font-bold text-brand-blue hover:underline"
+                        className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline transition-all"
                       >
                         تسجيل الدخول عبر Puter →
                       </button>
@@ -860,35 +987,33 @@ function AiAssistantChatPage() {
 
           {/* Remaining messages indicator */}
           {!hasReachedLimit && !user && (
-            <div className="mb-2 flex justify-between items-center">
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                الرسائل المتبقية:{" "}
-                <span
-                  className={`font-bold ${!isPuterSignedIn && remainingMessages <= 1 ? "text-amber-500" : "text-brand-blue"}`}
-                >
-                  {isPuterSignedIn
-                    ? "غير محدود (Puter)"
-                    : `${remainingMessages} من ${messageLimit}`}
-                </span>
+            <div className="absolute -top-7 left-6 px-3 py-1 bg-white dark:bg-slate-800 border-x border-t border-slate-200/80 dark:border-slate-700/80 rounded-t-lg text-[11px] font-bold text-slate-500 shadow-sm z-10 transition-all opacity-80 hover:opacity-100">
+              الرسائل المتبقية:{" "}
+              <span
+                className={`font-black ${!isPuterSignedIn && remainingMessages <= 1 ? "text-amber-500" : "text-indigo-600 dark:text-indigo-400"}`}
+              >
+                {isPuterSignedIn
+                  ? "غير محدود (Puter)"
+                  : `${remainingMessages} من ${messageLimit}`}
               </span>
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 sm:gap-3 items-end bg-slate-50/80 dark:bg-slate-900/80 p-2 sm:p-2.5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400/50 transition-all z-20 relative">
             <button
               onClick={handleOpenQuizModal}
               disabled={hasReachedLimit}
-              className={`p-3 rounded-xl border transition-all flex items-center justify-center shrink-0 ${
+              className={`h-[46px] w-[46px] shrink-0 rounded-[18px] flex items-center justify-center transition-all ${
                 hasReachedLimit
-                  ? "bg-slate-100 border-slate-200 text-slate-400"
-                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-brand-orange hover:border-brand-orange/50 hover:bg-brand-orange/5"
+                  ? "bg-slate-100 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed"
+                  : "bg-white dark:bg-slate-800 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-sm"
               }`}
               title="إنشاء اختبار من نص"
             >
-              <Brain className="w-6 h-6" />
+              <Brain className="w-5 h-5" />
             </button>
 
-            <div className="flex-1 flex items-center gap-2">
+            <div className="flex-1 min-w-0 flex items-center">
               <textarea
                 ref={inputRef}
                 value={inputMessage}
@@ -904,28 +1029,30 @@ function AiAssistantChatPage() {
                     ? user
                       ? "انتظر حتى الغد لإرسال رسائل جديدة"
                       : "سجّل حساباً للحصول على رسائل إضافية"
-                    : "اسألني أي شيء..."
+                    : "اكتب سؤالك هنا (Enter للإرسال)..."
                 }
                 disabled={hasReachedLimit}
                 rows={1}
-                className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all resize-none text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50 min-h-[48px] leading-6"
+                className="w-full bg-transparent px-3 py-3 focus:outline-none resize-none text-[15px] text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50 min-h-[46px] max-h-[150px] leading-relaxed block placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 dir="auto"
+                style={{ height: "46px" }}
               />
-              <button
-                onClick={handleSendMessage}
-                disabled={!inputMessage.trim() || isLoading || hasReachedLimit}
-                className={`h-12 w-12 grid place-items-center rounded-xl transition-all shrink-0 border ${
-                  !inputMessage.trim() || isLoading || hasReachedLimit
-                    ? "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-300 cursor-not-allowed"
-                    : "bg-slate-950 text-cyan-300 border-cyan-400/40 shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_24px_rgba(34,211,238,0.35)] hover:shadow-[0_0_0_1px_rgba(34,211,238,0.35),0_0_34px_rgba(34,211,238,0.55)] hover:border-cyan-300/70 hover:text-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
-                }`}
-              >
-                <Send className="w-5 h-5" />
-              </button>
             </div>
+
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isLoading || hasReachedLimit}
+              className={`h-[46px] w-[46px] shrink-0 rounded-[18px] flex items-center justify-center transition-all ${
+                !inputMessage.trim() || isLoading || hasReachedLimit
+                  ? "bg-slate-200/80 dark:bg-slate-800/80 text-slate-400 cursor-not-allowed"
+                  : "bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:from-indigo-600 hover:to-blue-700 hover:scale-[1.03] active:scale-[0.97]"
+              }`}
+            >
+              <Send className="w-5 h-5 -ml-1" />
+            </button>
           </div>
-          <p className="text-[10px] text-center text-slate-400 mt-2 hidden sm:block">
-            قد يرتكب الذكاء الاصطناعي أخطاء، يرجى التحقق من المعلومات المهمة.
+          <p className="text-[11px] font-medium text-center text-slate-400/80 dark:text-slate-500 mt-2.5 hidden sm:block">
+            قد يرتكب المساعد الذكي أخطاء، يرجى التحقق من المعلومات المهمة.
           </p>
         </div>
       </div>
