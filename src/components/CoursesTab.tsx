@@ -18,6 +18,8 @@ import {
   CardTitle,
 } from "./ui/Card";
 import { Badge } from "./ui/Badge";
+import { toast } from "sonner";
+import { confirmToast } from "../lib/confirmToast";
 
 interface Course {
   id: string;
@@ -139,18 +141,19 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
         ),
       );
     } catch {
-      alert("فشل في تغيير حالة النشر");
+      toast.error("فشل في تغيير حالة النشر");
     }
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (
-      !confirm(
-        "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء.",
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmToast(
+      "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء.",
+      {
+        confirmLabel: "حذف",
+        cancelLabel: "إلغاء",
+      },
+    );
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -162,7 +165,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
 
       setCourses((prev) => prev.filter((course) => course.id !== courseId));
     } catch {
-      alert("فشل في حذف الكورس");
+      toast.error("فشل في حذف الكورس");
     }
   };
 

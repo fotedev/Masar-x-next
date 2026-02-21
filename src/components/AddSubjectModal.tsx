@@ -247,7 +247,7 @@ export function AddSubjectModal({
             <input
               type="checkbox"
               id="is_academic"
-              checked={formData.is_academic}
+              checked={formData.is_academic ?? true}
               onChange={(e) =>
                 setFormData({ ...formData, is_academic: e.target.checked })
               }
@@ -265,7 +265,7 @@ export function AddSubjectModal({
             <input
               type="checkbox"
               id="show_on_home"
-              checked={formData.show_on_home}
+              checked={formData.show_on_home ?? true}
               onChange={(e) =>
                 setFormData({ ...formData, show_on_home: e.target.checked })
               }

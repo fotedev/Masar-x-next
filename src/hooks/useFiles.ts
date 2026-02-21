@@ -51,7 +51,7 @@ export function useFiles(subject?: string) {
 
       // Cache the result
       if (queryCache.set) {
-        queryCache.set(cacheKey, fileData, cacheTTL.summaries || 3600);
+        queryCache.set(cacheKey, fileData, cacheTTL.files);
       }
     } catch {
       setFiles([]);

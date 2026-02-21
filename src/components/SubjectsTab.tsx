@@ -12,6 +12,8 @@ import {
 import { Subject } from "../types/database";
 import { supabase } from "../lib/supabase";
 import { SUBJECT_ICONS } from "../constants/subjects";
+import { toast } from "sonner";
+import { confirmToast } from "../lib/confirmToast";
 
 interface SubjectsTabProps {
   subjects: Subject[];
@@ -56,19 +58,23 @@ export function SubjectsTab({
       onRefresh();
     } catch (error) {
       console.error("Error updating subject status:", error);
-      alert("حدث خطأ أثناء تحديث حالة المادة");
+      toast.error("حدث خطأ أثناء تحديث حالة المادة");
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذه المادة؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذه المادة؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
     try {
       const { error } = await supabase.from("subjects").delete().eq("id", id);
       if (error) throw error;
       onRefresh();
     } catch (error) {
       console.error("Error deleting subject:", error);
-      alert("حدث خطأ أثناء حذف المادة");
+      toast.error("حدث خطأ أثناء حذف المادة");
     }
   };
 

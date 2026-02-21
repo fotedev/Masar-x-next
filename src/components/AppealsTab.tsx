@@ -40,15 +40,15 @@ export function AppealsTab({
     if (searchTerm) {
       filtered = filtered.filter(
         (appeal) =>
-          appeal.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          appeal.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           appeal.content_type
-            .toLowerCase()
+            ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           (appeal.created_by &&
             appeal.created_by
               .toLowerCase()
               .includes(searchTerm.toLowerCase())) ||
-          appeal.content_id.toLowerCase().includes(searchTerm.toLowerCase()),
+          appeal.content_id?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
