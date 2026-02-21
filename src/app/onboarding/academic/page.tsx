@@ -74,11 +74,14 @@ export default function AcademicOnboardingPage() {
 
     setSaving(true);
     try {
-      const result = await setUserAcademic({
-        level,
-        semester,
-        department_id: null,
-      }, { isProfileUpdate: false });
+      const result = await setUserAcademic(
+        {
+          level,
+          semester,
+          department_id: null,
+        },
+        { isProfileUpdate: false },
+      );
       if (!result.success) {
         setError(result.message || "حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
         return;

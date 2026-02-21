@@ -51,8 +51,8 @@ export function useUserAcademic() {
   const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
   const [levels, setLevels] = useState<AcademicLevel[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [optionsLoading, setOptionsLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(false);
 
   // Use refs to prevent redundant fetches
   const hasInitialized = useRef(false);
@@ -296,7 +296,8 @@ export function useUserAcademic() {
     userDepartmentId: academic.department_id,
     levels,
     departments,
-    loading: loading || optionsLoading,
+    loading,
+    optionsLoading,
     fetchAcademic,
     setUserAcademic,
   };

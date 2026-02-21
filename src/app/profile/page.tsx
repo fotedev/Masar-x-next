@@ -38,6 +38,7 @@ export default function ProfilePage() {
     levels,
     departments,
     loading: academicLoading,
+    optionsLoading,
     setUserAcademic,
   } = useUserAcademic();
 
@@ -197,11 +198,14 @@ export default function ProfilePage() {
     setIsSavingAcademic(true);
     setAcademicError(null);
     try {
-      const result = await setUserAcademic({
-        level,
-        semester,
-        department_id: departmentId || null,
-      }, { isProfileUpdate: true });
+      const result = await setUserAcademic(
+        {
+          level,
+          semester,
+          department_id: departmentId || null,
+        },
+        { isProfileUpdate: true },
+      );
       if (!result.success) {
         setAcademicError(
           result.message || "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
@@ -439,7 +443,7 @@ export default function ProfilePage() {
                       المسار الحالي
                     </p>
                     <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
-                      {academicLoading && !academic.level
+                      {academicLoading
                         ? "جاري التحميل..."
                         : `${
                             levels.find((l) => l.level_number === level)
@@ -456,13 +460,18 @@ export default function ProfilePage() {
                     <select
                       value={level}
                       onChange={(e) => setLevel(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none disabled:opacity-50"
+                      disabled={optionsLoading}
                     >
-                      {levels.map((l) => (
-                        <option key={l.id} value={l.level_number ?? 0}>
-                          {l.name}
-                        </option>
-                      ))}
+                      {optionsLoading ? (
+                        <option>جاري تحميل المستويات...</option>
+                      ) : (
+                        levels.map((l) => (
+                          <option key={l.id} value={l.level_number ?? 0}>
+                            {l.name}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div className="space-y-2">
@@ -472,24 +481,28 @@ export default function ProfilePage() {
                     <select
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none disabled:opacity-50"
+                      disabled={optionsLoading}
                     >
-                      <option value="">اختر القسم</option>
-                      {departments
-                        .filter((d) => {
-                          const selectedLevel = levels.find(
-                            (l) => l.level_number === level,
-                          );
-                          return (
-                            !d.academic_level_id ||
-                            d.academic_level_id === selectedLevel?.id
-                          );
-                        })
-                        .map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.name}
-                          </option>
-                        ))}
+                      <option value="">
+                        {optionsLoading ? "جاري التحميل..." : "اختر القسم"}
+                      </option>
+                      {!optionsLoading &&
+                        departments
+                          .filter((d) => {
+                            const selectedLevel = levels.find(
+                              (l) => l.level_number === level,
+                            );
+                            return (
+                              !d.academic_level_id ||
+                              d.academic_level_id === selectedLevel?.id
+                            );
+                          })
+                          .map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
                     </select>
                   </div>
                   <div className="space-y-2">
