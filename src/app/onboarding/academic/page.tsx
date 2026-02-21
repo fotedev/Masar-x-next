@@ -29,6 +29,7 @@ export default function AcademicOnboardingPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) return;
+    if (saving) return;
     if (isAdmin) {
       router.push("/");
       return;
@@ -37,7 +38,15 @@ export default function AcademicOnboardingPage() {
     if (academic.level != null && academic.semester != null) {
       router.push("/");
     }
-  }, [academic.level, academic.semester, isAdmin, loading, router, user]);
+  }, [
+    academic.level,
+    academic.semester,
+    isAdmin,
+    loading,
+    router,
+    saving,
+    user,
+  ]);
 
   useEffect(() => {
     setLevel(initialLevel);
@@ -65,12 +74,16 @@ export default function AcademicOnboardingPage() {
 
     setSaving(true);
     try {
-      const ok = await setUserAcademic({ level, semester });
-      if (!ok) {
-        setError("حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
+      const result = await setUserAcademic({
+        level,
+        semester,
+        department_id: null,
+      });
+      if (!result.success) {
+        setError(result.message || "حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
         return;
       }
-      router.push("/");
+      router.replace("/");
     } finally {
       setSaving(false);
     }
