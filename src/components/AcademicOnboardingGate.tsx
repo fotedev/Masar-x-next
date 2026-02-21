@@ -18,9 +18,12 @@ export function AcademicOnboardingGate() {
 
     if (pathname?.startsWith("/onboarding")) return;
 
-    const missing = academic.level == null || academic.semester == null;
-    if (missing) {
-      router.push("/onboarding/academic");
+    // IMPORTANT: Wait for academic data to be fully loaded (not just from initial empty state)
+    // If loading is false, it means we either have data from cache or from a fresh fetch.
+    const hasAcademic = academic.level != null && academic.semester != null;
+
+    if (!hasAcademic) {
+      router.replace("/onboarding/academic");
     }
   }, [
     academic.level,

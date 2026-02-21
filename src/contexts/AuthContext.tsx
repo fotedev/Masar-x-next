@@ -314,6 +314,31 @@ export function AuthProvider({
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
         setLoading(false);
 
+        // Handle deleted user or invalid session
+        if (
+          currentUser &&
+          (event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED" ||
+            event === "INITIAL_SESSION")
+        ) {
+          const {
+            data: { user: freshUser },
+            error,
+          } = await supabase.auth.getUser();
+          if (error || !freshUser) {
+            console.warn(
+              "User session invalid or user deleted, signing out...",
+            );
+            await supabase.auth.signOut();
+            setUser(null);
+            setDisplayName(null);
+            setAvatarUrl(null);
+            setIsAdmin(false);
+            setAdminRole(null);
+            return;
+          }
+        }
+
         if (currentUser) {
           const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
           if (metadataAvatar) {
