@@ -75,9 +75,10 @@ import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
   const { user, loading } = useAuth();
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions({
-    includeInactive: true,
-  });
+  const { levels, getDepartmentsForLevelName, optionsLoading } =
+    useAcademicOptions({
+      includeInactive: true,
+    });
   const { trackEvent } = useAnalytics();
   const {
     messages,
@@ -783,20 +784,22 @@ function AiAssistantChatPage() {
                     setSubmitDepartment("");
                     setSubmitSubject("");
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                  disabled={optionsLoading}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm disabled:opacity-50"
                 >
                   <option value="" disabled>
-                    اختر المستوى...
+                    {optionsLoading ? "جاري التحميل..." : "اختر المستوى..."}
                   </option>
-                  {levels.map((lvl) => (
-                    <option
-                      key={lvl.id}
-                      value={lvl.name}
-                      disabled={!lvl.is_active}
-                    >
-                      {lvl.name}
-                    </option>
-                  ))}
+                  {!optionsLoading &&
+                    levels.map((lvl) => (
+                      <option
+                        key={lvl.id}
+                        value={lvl.name}
+                        disabled={!lvl.is_active}
+                      >
+                        {lvl.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -827,23 +830,25 @@ function AiAssistantChatPage() {
                   value={submitDepartment}
                   onChange={(e) => setSubmitDepartment(e.target.value)}
                   disabled={
+                    optionsLoading ||
                     !submitAcademicLevel ||
                     availableSubmitDepartments.length === 0
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm disabled:opacity-50"
                 >
                   <option value="" disabled>
-                    اختر القسم...
+                    {optionsLoading ? "جاري التحميل..." : "اختر القسم..."}
                   </option>
-                  {availableSubmitDepartments.map((dep) => (
-                    <option
-                      key={dep.id}
-                      value={dep.name}
-                      disabled={!dep.is_active}
-                    >
-                      {dep.name}
-                    </option>
-                  ))}
+                  {!optionsLoading &&
+                    availableSubmitDepartments.map((dep) => (
+                      <option
+                        key={dep.id}
+                        value={dep.name}
+                        disabled={!dep.is_active}
+                      >
+                        {dep.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 
