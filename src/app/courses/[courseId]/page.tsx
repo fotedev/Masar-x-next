@@ -32,6 +32,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { confirmToast } from "@/lib/confirmToast";
 
 interface Course {
   id: string;
@@ -371,7 +372,11 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteSummary = async (summaryId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الملخص؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملخص؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -451,7 +456,11 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الفيديو؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase
@@ -547,7 +556,11 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الملف؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
 
     try {
       const { error } = await supabase

@@ -122,7 +122,7 @@ export function useAcademicOptions(params: Params = {}) {
       queryCache.set(
         cacheKey,
         { levels: nextLevels, departments: nextDepartments },
-        cacheTTL.subjects,
+        cacheTTL.levels,
       );
     } catch (err) {
       console.error("Unexpected error fetching academic options:", err);

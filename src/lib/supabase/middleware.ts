@@ -30,18 +30,27 @@ export async function updateSession(request: NextRequest) {
     )
 
     // refreshing the auth token
-    try {
-        await supabase.auth.getUser()
-    } catch (e) {
-        const message = e instanceof Error ? e.message : String(e)
-        if (message.toLowerCase().includes('invalid refresh token')) {
-            try {
-                await supabase.auth.signOut()
-            } catch {
-                // ignore
-            }
-        } else {
-            throw e
+    await supabase.auth.getUser();
+
+    // Protect TRW (non-academic) routes
+    if (request.nextUrl.pathname.startsWith('/non-academic')) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // 1. If no session, redirect to login
+        if (!session) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
+
+        // 2. Check if user has show_extra_assets flag in profiles
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('show_extra_assets')
+            .eq('id', session.user.id)
+            .single();
+
+        if (!profile?.show_extra_assets) {
+            // If not authorized, redirect to home
+            return NextResponse.redirect(new URL('/', request.url));
         }
     }
 

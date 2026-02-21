@@ -8,6 +8,7 @@ import {
   Edit as EditIcon,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { confirmToast } from "../lib/confirmToast";
 
 interface ManageLecturesModalProps {
   show: boolean;
@@ -94,7 +95,11 @@ export function ManageLecturesModal({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذه المحاضرة؟")) return;
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذه المحاضرة؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
     try {
       const { error } = await supabase
         .from("subject_lectures")

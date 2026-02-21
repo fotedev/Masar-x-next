@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
 type PlatformSettings = {
   active_semester?: number;
@@ -17,9 +18,21 @@ export function usePlatformSettings() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>({ active_semester: getInitialSemester() });
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = useCallback(async (skipCache = false) => {
     try {
       setLoading(true);
+      
+      const cacheKey = cacheKeys.settings();
+      
+      if (!skipCache) {
+        const cached = queryCache.get<PlatformSettings>(cacheKey);
+        if (cached) {
+          setSettings(cached);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from("platform_settings")
         .select("key, value")
@@ -28,26 +41,27 @@ export function usePlatformSettings() {
         .single();
 
       if (error && error.code !== "PGRST116" && error.code !== "PGRST205") {
-        // PGRST116 = no rows, PGRST205 = table not found — ignore both
         throw error;
       }
 
+      let newSemester = 1;
       if (data && data.value) {
         const v = data.value as unknown;
         const semesterValue =
           typeof v === 'object' && v !== null && 'semester' in v
             ? (v as { semester?: unknown }).semester
             : undefined;
-        const newSemester = Number(semesterValue ?? 1);
-        setSettings({ active_semester: newSemester });
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('activeSemester', newSemester.toString());
-        }
-      } else {
-        setSettings({ active_semester: 1 });
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('activeSemester', '1');
-        }
+        newSemester = Number(semesterValue ?? 1);
+      }
+
+      const updatedSettings = { active_semester: newSemester };
+      setSettings(updatedSettings);
+      
+      // Cache the result
+      queryCache.set(cacheKey, updatedSettings, cacheTTL.settings);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('activeSemester', newSemester.toString());
       }
     } catch {
       // ignore
@@ -65,7 +79,13 @@ export function usePlatformSettings() {
         .upsert({ key: "active_semester", value: payload, updated_at: new Date().toISOString() }, { onConflict: "key" });
 
       if (error) throw error;
-      setSettings({ active_semester: semester });
+      
+      const updatedSettings = { active_semester: semester };
+      setSettings(updatedSettings);
+      
+      // Invalidate cache
+      queryCache.delete(cacheKeys.settings());
+
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeSemester', semester.toString());
       }

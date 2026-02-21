@@ -4,6 +4,8 @@ import { Appeal } from "../types/database";
 import { useNotifications } from "./useNotifications";
 import { useAuth } from "../contexts/AuthContext";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
+import { confirmToast } from "../lib/confirmToast";
+import { toast } from "sonner";
 
 // Keep track of the inflight request to deduplicate simultaneous calls
 let inflightRequest: Promise<Appeal[]> | null = null;
@@ -65,7 +67,11 @@ export function useAppeals() {
   }, []);
   const deleteAppeal = useCallback(async (id: string) => {
     try {
-      if (!confirm("هل أنت متأكد أنك تريد حذف هذا الطعن؟")) return;
+      const confirmed = await confirmToast("هل أنت متأكد أنك تريد حذف هذا الطعن؟", {
+        confirmLabel: "حذف",
+        cancelLabel: "إلغاء",
+      });
+      if (!confirmed) return;
 
       const { error } = await supabase.from("appeals").delete().eq("id", id);
 
@@ -73,14 +79,18 @@ export function useAppeals() {
 
       setAppeals((prev) => prev.filter((appeal) => appeal.id !== id));
     } catch {
-      // ignore
+      toast.error("حدث خطأ أثناء حذف الطعن");
     } finally {
     }
   }, []);
 
   const acceptAppeal = useCallback(async (id: string, userId: string, contentTitle: string) => {
     try {
-      if (!confirm("هل أنت متأكد أنك تريد قبول هذا الطعن؟")) return;
+      const confirmed = await confirmToast("هل أنت متأكد أنك تريد قبول هذا الطعن؟", {
+        confirmLabel: "قبول",
+        cancelLabel: "إلغاء",
+      });
+      if (!confirmed) return;
 
       const { error } = await supabase
         .from("appeals")
@@ -103,13 +113,17 @@ export function useAppeals() {
         "appeal"
       );
     } catch {
-      // ignore
+      toast.error("حدث خطأ أثناء قبول الطعن");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const rejectAppeal = useCallback(async (id: string, userId: string, contentTitle: string) => {
     try {
-      if (!confirm("هل أنت متأكد أنك تريد رفض هذا الطعن؟")) return;
+      const confirmed = await confirmToast("هل أنت متأكد أنك تريد رفض هذا الطعن؟", {
+        confirmLabel: "رفض",
+        cancelLabel: "إلغاء",
+      });
+      if (!confirmed) return;
 
       const { error } = await supabase
         .from("appeals")
@@ -132,7 +146,7 @@ export function useAppeals() {
         "appeal"
       );
     } catch {
-      // ignore
+      toast.error("حدث خطأ أثناء رفض الطعن");
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

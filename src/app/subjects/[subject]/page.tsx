@@ -272,18 +272,18 @@ function SubjectSummariesContent() {
 
   const handleSaveLecture = async () => {
     if (!user) {
-      alert("يجب تسجيل الدخول أولاً");
+      toast.error("يجب تسجيل الدخول أولاً");
       return;
     }
 
     if (!isAdmin) {
-      alert("غير مصرح");
+      toast.error("غير مصرح");
       return;
     }
 
     const rawTitle = (lectureFormData.title || "").trim();
     if (!rawTitle) {
-      alert("اكتب اسم المحاضرة");
+      toast.error("اكتب اسم المحاضرة");
       return;
     }
 
@@ -298,7 +298,7 @@ function SubjectSummariesContent() {
         .replace(/[^a-z0-9-_]/g, "");
 
       if (!key) {
-        alert("فشل إنشاء كود المحاضرة تلقائياً");
+        toast.error("فشل إنشاء كود المحاضرة تلقائياً");
         return;
       }
 
@@ -341,7 +341,7 @@ function SubjectSummariesContent() {
 
       setSelectedLectureKey(key);
     } catch {
-      alert("حدث خطأ أثناء إضافة المحاضرة.");
+      toast.error("حدث خطأ أثناء إضافة المحاضرة.");
     } finally {
       setIsSavingLecture(false);
     }
@@ -634,7 +634,7 @@ function SubjectSummariesContent() {
 
   const handleSaveExam = async () => {
     if (!user) {
-      alert("يجب تسجيل الدخول أولاً");
+      toast.error("يجب تسجيل الدخول أولاً");
       return;
     }
 

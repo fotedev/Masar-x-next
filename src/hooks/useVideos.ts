@@ -51,7 +51,7 @@ export function useVideos(subject?: string) {
 
       // Cache the result
       if (queryCache.set) {
-        queryCache.set(cacheKey, videoData, cacheTTL.summaries || 3600);
+        queryCache.set(cacheKey, videoData, cacheTTL.videos);
       }
     } catch {
       setVideos([]);

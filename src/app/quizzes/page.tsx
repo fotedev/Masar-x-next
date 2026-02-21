@@ -59,6 +59,9 @@ function QuizDashboardInternal() {
     useAcademicOptions();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [quizToDelete, setQuizToDelete] = useState<Quiz | null>(null);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importJson, setImportJson] = useState("");
@@ -220,6 +223,22 @@ function QuizDashboardInternal() {
       setSummaries([]);
     }
   }, [formData.subject, formData.department, fetchSummaries]);
+
+  useEffect(() => {
+    if (!deleteDialogOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (isDeletingQuiz) return;
+        setDeleteDialogOpen(false);
+        setQuizToDelete(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [deleteDialogOpen, isDeletingQuiz]);
 
   const quizzesWithMeta = useMemo(() => {
     return quizzes.map((quiz: Quiz) => {
@@ -602,19 +621,36 @@ function QuizDashboardInternal() {
     }
   };
 
-  const handleDeleteQuiz = async (quizId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الاختبار؟")) return;
+  const handleDeleteQuiz = (quiz: Quiz) => {
+    setQuizToDelete(quiz);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDeleteQuiz = async () => {
+    if (!quizToDelete?.id) return;
+    if (isDeletingQuiz) return;
 
     try {
+      setIsDeletingQuiz(true);
       const { error } = await supabase
         .from("quizzes")
         .delete()
-        .eq("id", quizId);
+        .eq("id", quizToDelete.id);
 
       if (error) throw error;
-      await loadQuizzes();
+
+      await loadQuizzes(true);
+      toast.success("تم حذف الاختبار", {
+        description: "تم حذف الاختبار بنجاح.",
+      });
+      setDeleteDialogOpen(false);
+      setQuizToDelete(null);
     } catch {
-      // ignore
+      toast.error("تعذر حذف الاختبار", {
+        description: "حدث خطأ أثناء الحذف. حاول مرة أخرى.",
+      });
+    } finally {
+      setIsDeletingQuiz(false);
     }
   };
 
@@ -637,7 +673,7 @@ function QuizDashboardInternal() {
 
   const deleteQuestion = (index: number) => {
     if (formData.questions.length <= 1) {
-      alert("يجب أن يحتوي الامتحان على سؤال واحد على الأقل");
+      toast.error("يجب أن يحتوي الامتحان على سؤال واحد على الأقل");
       return;
     }
     const updatedQuestions = formData.questions.filter((_, i) => i !== index);
@@ -679,7 +715,7 @@ function QuizDashboardInternal() {
 
       updateQuestion(index, "imageUrl", result.url);
     } catch {
-      alert("حدث خطأ أثناء رفع الصورة");
+      toast.error("حدث خطأ أثناء رفع الصورة");
     }
   };
 
@@ -698,7 +734,9 @@ function QuizDashboardInternal() {
       try {
         const questions = JSON.parse(importJson);
         if (!Array.isArray(questions)) {
-          alert("تنسيق JSON غير صحيح. يجب أن يكون مصفوفة من الأسئلة.");
+          toast.error("تنسيق JSON غير صحيح", {
+            description: "يجب أن يكون مصفوفة من الأسئلة.",
+          });
           return;
         }
 
@@ -713,9 +751,10 @@ function QuizDashboardInternal() {
         );
 
         if (!isValid) {
-          alert(
-            "تنسيق الأسئلة غير صحيح. تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة.",
-          );
+          toast.error("تنسيق الأسئلة غير صحيح", {
+            description:
+              "تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة.",
+          });
           return;
         }
 
@@ -760,9 +799,11 @@ function QuizDashboardInternal() {
         setShowImportModal(false);
         setImportJson("");
         setImportMode("json");
-        alert("تم إنشاء الأسئلة بنجاح!");
+        toast.success("تم إنشاء الأسئلة بنجاح!");
       } catch {
-        alert("حدث خطأ أثناء تحليل JSON. تأكد من صحة التنسيق.");
+        toast.error("حدث خطأ أثناء تحليل JSON", {
+          description: "تأكد من صحة التنسيق.",
+        });
       }
     } else if (mode === "text") {
       if (!importJson.trim()) return;
@@ -790,12 +831,14 @@ function QuizDashboardInternal() {
           setShowImportModal(false);
           setImportJson("");
           setImportMode("json");
-          alert("تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!");
+          toast.success("تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!");
         } else {
           throw new Error("Invalid format received from AI");
         }
       } catch {
-        alert("حدث خطأ أثناء إنشاء الأسئلة. حاول مرة أخرى.");
+        toast.error("حدث خطأ أثناء إنشاء الأسئلة", {
+          description: "حاول مرة أخرى.",
+        });
       } finally {
         setIsGenerating(false);
       }
@@ -1311,9 +1354,10 @@ function QuizDashboardInternal() {
                               )
                               .join("\n");
                             const fullText = `السؤال: ${currentQuestion.question}\nالخيارات:\n${optionsText}\nالشرح: ${currentQuestion.explanation}`;
-                            alert(
-                              `معاينة المعادلات الرياضية:\n\n${fullText}\n\n(استخدم $ للمتغيرات و \\[ \\] للمعادلات المنفصلة)`,
-                            );
+                            toast("معاينة المعادلات الرياضية", {
+                              description: `${fullText}\n\n(استخدم $ للمتغيرات و \\[ \\] للمعادلات المنفصلة)`,
+                              duration: 8000,
+                            });
                           }}
                           className="text-blue-600 hover:text-blue-700 p-1 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           title="معاينة سريعة"
@@ -1659,7 +1703,7 @@ function QuizDashboardInternal() {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteQuiz(quiz.id)}
+                    onClick={() => handleDeleteQuiz(quiz)}
                     className="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                     title="حذف"
                   >
@@ -1693,6 +1737,66 @@ function QuizDashboardInternal() {
           <p className="text-gray-600 dark:text-gray-400">
             جرّب تغيير الفلاتر أو مسحها
           </p>
+        </div>
+      )}
+
+      {deleteDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="تأكيد حذف الاختبار"
+          onMouseDown={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (isDeletingQuiz) return;
+            setDeleteDialogOpen(false);
+            setQuizToDelete(null);
+          }}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+
+          <div className="relative w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 rounded-xl bg-red-50 dark:bg-red-900/20 p-3">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    حذف الاختبار؟
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {quizToDelete?.title
+                      ? `سيتم حذف "${quizToDelete.title}" نهائيًا ولا يمكن التراجع عن هذا الإجراء.`
+                      : "سيتم حذف الاختبار نهائيًا ولا يمكن التراجع عن هذا الإجراء."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isDeletingQuiz) return;
+                  setDeleteDialogOpen(false);
+                  setQuizToDelete(null);
+                }}
+                className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold"
+                disabled={isDeletingQuiz}
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteQuiz}
+                className="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors font-bold disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isDeletingQuiz}
+              >
+                {isDeletingQuiz ? "جارٍ الحذف..." : "حذف"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

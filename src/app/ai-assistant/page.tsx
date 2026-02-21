@@ -27,6 +27,8 @@ import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import type { DepartmentOption } from "@/hooks/useAcademicOptions";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
+import { confirmToast } from "@/lib/confirmToast";
 
 import { useSubjects } from "@/hooks/useSubjects";
 
@@ -203,10 +205,15 @@ function AiAssistantChatPage() {
   };
 
   const handleClearChat = () => {
-    if (window.confirm("هل أنت متأكد من رغبتك في مسح سجل المحادثة؟")) {
+    confirmToast("هل أنت متأكد من رغبتك في مسح سجل المحادثة؟", {
+      confirmLabel: "مسح",
+      cancelLabel: "إلغاء",
+    }).then((confirmed) => {
+      if (!confirmed) return;
       clearChat();
       trackEvent("ai_chat_cleared");
-    }
+      toast.success("تم مسح سجل المحادثة");
+    });
   };
 
   const handleSummarizeChat = async () => {
@@ -222,7 +229,9 @@ function AiAssistantChatPage() {
       trackEvent("ai_chat_summary_success");
     } catch (error) {
       console.error(error);
-      alert("فشل في إنشاء ملخص. تأكد من تحميل بيانات المحادثة أولاً.");
+      toast.error("فشل في إنشاء ملخص", {
+        description: "تأكد من تحميل بيانات المحادثة أولاً.",
+      });
     } finally {
       setIsSummarizing(false);
     }
@@ -280,7 +289,9 @@ function AiAssistantChatPage() {
   const handleSubmitQuizForReview = useCallback(async () => {
     if (!user || !generatedQuiz || isSubmittingQuiz) return;
     if (!submitAcademicLevel || !submitDepartment || !submitSubject) {
-      alert("من فضلك اختر الصف/المستوى والقسم والمادة قبل الإرسال.");
+      toast.error("بيانات ناقصة", {
+        description: "من فضلك اختر الصف/المستوى والقسم والمادة قبل الإرسال.",
+      });
       return;
     }
 
@@ -362,7 +373,9 @@ function AiAssistantChatPage() {
     } catch (e) {
       console.error(e);
       trackEvent("ai_quiz_submit_for_review_failed");
-      alert("عذراً، فشل إرسال الامتحان للمراجعة. حاول مرة أخرى.");
+      toast.error("فشل إرسال الامتحان للمراجعة", {
+        description: "حاول مرة أخرى.",
+      });
     } finally {
       setIsSubmittingQuiz(false);
     }
@@ -392,7 +405,9 @@ function AiAssistantChatPage() {
             );
           }
         } catch {
-          alert("خطأ في صيغة JSON. تأكد من صحة البيانات.");
+          toast.error("خطأ في صيغة JSON", {
+            description: "تأكد من صحة البيانات.",
+          });
           setIsGeneratingQuiz(false);
           return;
         }
@@ -429,7 +444,9 @@ function AiAssistantChatPage() {
       };
       setMessages((prev: ChatMessage[]) => [...prev, assistantMessage]);
     } catch {
-      alert("عذراً، فشل إنشاء الاختبار. يرجى المحاولة مرة أخرى.");
+      toast.error("فشل إنشاء الاختبار", {
+        description: "يرجى المحاولة مرة أخرى.",
+      });
     } finally {
       setIsGeneratingQuiz(false);
     }
