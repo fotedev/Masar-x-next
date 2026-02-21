@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useState } from "react";
 import Image from "next/image";
 import { FileDropzone } from "./FileDropzone";
+import { toast } from "sonner";
 
 interface AdminProfileImageProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -28,13 +29,13 @@ export function AdminProfileImage({
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("يرجى اختيار ملف صورة فقط");
+      toast.error("يرجى اختيار ملف صورة فقط");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("حجم الصورة يجب أن يكون أقل من 5 ميجابايت");
+      toast.error("حجم الصورة يجب أن يكون أقل من 5 ميجابايت");
       return;
     }
 
@@ -42,7 +43,9 @@ export function AdminProfileImage({
     try {
       await updateAvatar(file);
     } catch {
-      alert("حدث خطأ في رفع الصورة. يرجى المحاولة مرة أخرى.");
+      toast.error("حدث خطأ في رفع الصورة", {
+        description: "يرجى المحاولة مرة أخرى.",
+      });
     } finally {
       setIsUploading(false);
     }

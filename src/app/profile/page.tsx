@@ -1,12 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import * as Switch from "@radix-ui/react-switch";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Shield, Edit3, Save, X, RefreshCw } from "lucide-react";
+import {
+  User,
+  Mail,
+  Shield,
+  Edit3,
+  Save,
+  X,
+  RefreshCw,
+  Zap,
+  Clock,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { NotificationSettings } from "../../components/NotificationManager";
 import { AdminProfileImage } from "../../components/AdminProfileImage";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
+import { toast } from "sonner";
+import { supabase } from "../../lib/supabase";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,9 +38,9 @@ export default function ProfilePage() {
     levels,
     departments,
     loading: academicLoading,
-
     setUserAcademic,
   } = useUserAcademic();
+
   const [isEditing, setIsEditing] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState(displayName || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -38,6 +51,50 @@ export default function ProfilePage() {
   const [departmentId, setDepartmentId] = useState<string>(
     academic.department_id || "",
   );
+  const [showExtraAssets, setShowExtraAssets] = useState(false);
+  const [extraAssetsUpdatedAt, setExtraAssetsUpdatedAt] = useState<
+    string | null
+  >(null);
+
+  // Cooldown period: 2 hours (in milliseconds)
+  const COOLDOWN_MS = 2 * 60 * 60 * 1000;
+
+  // Calculate remaining cooldown time
+  const cooldownRemaining = useMemo(() => {
+    if (!extraAssetsUpdatedAt) return 0;
+    const lastUpdate = new Date(extraAssetsUpdatedAt).getTime();
+    const elapsed = Date.now() - lastUpdate;
+    return Math.max(0, COOLDOWN_MS - elapsed);
+  }, [extraAssetsUpdatedAt]);
+
+  // Check if cooldown is active
+  const isCooldownActive = cooldownRemaining > 0;
+
+  // Format remaining time for display
+  const formatCooldownTime = (ms: number) => {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours} ساعة و ${minutes} دقيقة`;
+    return `${minutes} دقيقة`;
+  };
+
+  useEffect(() => {
+    if (user) {
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        if (data) {
+          setShowExtraAssets(data.show_extra_assets || false);
+          setExtraAssetsUpdatedAt(data.show_extra_assets_updated_at || null);
+          setNewDisplayName(data.full_name || displayName || "");
+        }
+      };
+      fetchProfile();
+    }
+  }, [user, displayName]);
 
   useEffect(() => {
     if (academic.level != null) setLevel(academic.level);
@@ -46,11 +103,10 @@ export default function ProfilePage() {
   useEffect(() => {
     if (academic.semester != null) setSemester(academic.semester);
   }, [academic.semester]);
+
   useEffect(() => {
     if (academic.department_id != null) setDepartmentId(academic.department_id);
   }, [academic.department_id]);
-
-  // Note: Admin status is now cached and doesn't need refresh on every visit
 
   const handleSaveDisplayName = async () => {
     if (!newDisplayName.trim() || newDisplayName.trim() === displayName) {
@@ -62,8 +118,73 @@ export default function ProfilePage() {
     try {
       await updateDisplayName(newDisplayName.trim());
       setIsEditing(false);
+      toast.success("تم تحديث الاسم بنجاح");
     } catch {
-      alert("حدث خطأ في تحديث اسم المستخدم ");
+      toast.error("حدث خطأ في تحديث اسم المستخدم ");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleExtraAssets = async (enabled: boolean) => {
+    if (!user) return;
+
+    // Best practice: enabling TRW requires the unlock/code flow (logo taps).
+    // Profile page allows disabling only once the flag is already enabled.
+    if (enabled === true && showExtraAssets === false) {
+      toast.error("Locked", {
+        description: "افتح TRW من خلال إدخال الكود (اضغط على الشعار 5 مرات).",
+      });
+      return;
+    }
+
+    // Check cooldown
+    if (isCooldownActive) {
+      toast.error("Cooldown Active", {
+        description: `يرجى الانتظار ${formatCooldownTime(cooldownRemaining)} قبل التغيير مرة أخرى.`,
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          show_extra_assets: enabled,
+        })
+        .eq("id", user.id)
+        .select("show_extra_assets_updated_at")
+        .single();
+
+      if (error) throw error;
+
+      setShowExtraAssets(enabled);
+      setExtraAssetsUpdatedAt(data?.show_extra_assets_updated_at ?? null);
+
+      // Force a custom event to notify Header and other components
+      window.dispatchEvent(
+        new CustomEvent("profileUpdate", {
+          detail: { show_extra_assets: enabled },
+        }),
+      );
+
+      toast.success(enabled ? "System Update" : "System Revert", {
+        description: enabled
+          ? "Extra assets visibility enabled."
+          : "Extra assets visibility disabled.",
+        className: enabled
+          ? "bg-black text-white border-red-900 shadow-[0_0_20px_rgba(255,0,0,0.3)] font-mono"
+          : "",
+      });
+    } catch (err: unknown) {
+      const maybeMessage =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message?: unknown }).message)
+          : "";
+      toast.error("System Error", {
+        description: maybeMessage || "Failed to update preferences.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -88,8 +209,9 @@ export default function ProfilePage() {
         setAcademicError(
           result.message || "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
         );
-        // Clear error after 5 seconds
         setTimeout(() => setAcademicError(null), 5000);
+      } else {
+        toast.success("تم تحديث البيانات الأكاديمية");
       }
     } catch {
       setAcademicError("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
@@ -135,9 +257,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8">
+    <div
+      className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8 text-right"
+      dir="rtl"
+    >
       <div className="modern-card overflow-hidden sm:rounded-3xl border-0 sm:border">
-        {/* Header */}
+        {/* Header Section */}
         <div className="bg-gradient-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-12 sm:py-16 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-sky/10 rounded-full -ml-24 -mb-24 blur-2xl" />
@@ -187,9 +312,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Content */}
+        {/* Main Content Area */}
         <div className="p-5 sm:p-10 space-y-10 bg-white dark:bg-brand-navy/30">
-          {/* Personal Information */}
+          {/* Personal Info Section */}
           <section>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
@@ -198,7 +323,6 @@ export default function ProfilePage() {
               </h2>
             </div>
             <div className="grid gap-5">
-              {/* Display Name */}
               <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300 hover:shadow-xl hover:shadow-brand-blue/5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                   <div className="flex items-center gap-5">
@@ -216,13 +340,9 @@ export default function ProfilePage() {
                         <div className="relative mt-2">
                           <input
                             id="profile-display-name"
-                            name="displayName"
-                            type="text"
-                            autoComplete="name"
                             value={newDisplayName}
                             onChange={(e) => setNewDisplayName(e.target.value)}
-                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg"
-                            placeholder="أدخل اسم المستخدم"
+                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg text-right"
                             maxLength={50}
                             autoFocus
                           />
@@ -234,14 +354,13 @@ export default function ProfilePage() {
                       )}
                     </div>
                   </div>
-
                   <div className="flex justify-end pt-2 sm:pt-0">
                     {isEditing ? (
                       <div className="flex gap-3">
                         <button
                           onClick={handleSaveDisplayName}
                           disabled={isSaving}
-                          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-500/25 active:scale-95 disabled:opacity-50"
+                          className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                         >
                           <Save className="w-5 h-5" />
                           <span>حفظ</span>
@@ -257,9 +376,9 @@ export default function ProfilePage() {
                     ) : (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue rounded-2xl font-bold hover:bg-brand-blue hover:text-white transition-all duration-300 group/btn"
+                        className="flex items-center gap-2 px-6 py-3 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue rounded-2xl font-bold hover:bg-brand-blue hover:text-white transition-all duration-300"
                       >
-                        <Edit3 className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                        <Edit3 className="w-5 h-5" />
                         <span>تعديل الاسم</span>
                       </button>
                     )}
@@ -267,11 +386,9 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Email & Account Type Grid */}
               <div className="grid sm:grid-cols-2 gap-5">
-                {/* Email */}
-                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 group">
-                  <div className="w-14 h-14 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-2xl flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5">
+                  <div className="w-14 h-14 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-2xl flex items-center justify-center">
                     <Mail className="w-7 h-7 text-brand-orange" />
                   </div>
                   <div>
@@ -283,185 +400,241 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-
-                {/* Account Type */}
-                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5 group">
-                  <div className="w-14 h-14 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-2xl flex items-center justify-center shadow-inner group-hover:-rotate-12 transition-transform duration-500">
+                <div className="bg-slate-50 dark:bg-white/[0.02] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center gap-5">
+                  <div className="w-14 h-14 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-2xl flex items-center justify-center">
                     <Shield className="w-7 h-7 text-brand-blue" />
                   </div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
                       نوع الحساب
                     </p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold text-slate-900 dark:text-white text-lg">
-                        {isAdmin
-                          ? adminRole === "doctor"
-                            ? "ادمن دكتور"
-                            : adminRole === "student"
-                              ? "ادمن طالب"
-                              : "ادمن"
-                          : "مستخدم"}
-                      </p>
-                      {isAdmin && (
-                        <span className="px-3 py-1 bg-gradient-to-r from-brand-orange to-orange-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-brand-orange/20 uppercase tracking-tighter">
-                          {adminRole === "doctor"
-                            ? "صلاحيات كاملة"
-                            : "صلاحيات محدودة"}
-                        </span>
-                      )}
-                    </div>
+                    <p className="font-bold text-slate-900 dark:text-white text-lg">
+                      {isAdmin
+                        ? adminRole === "doctor"
+                          ? "ادمن دكتور"
+                          : adminRole === "student"
+                            ? "ادمن طالب"
+                            : "ادمن"
+                        : "مستخدم"}
+                    </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Academic */}
-              <div className="bg-slate-50 dark:bg-white/[0.02] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 group relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-brand-blue/20 group-hover:bg-brand-blue transition-colors duration-500" />
-                <div className="flex flex-col gap-8">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500">
-                      🎓
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
-                        المسار الأكاديمي الحالي
-                      </p>
-                      <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
-                        {academicLoading && !academic.level
-                          ? "جاري التحميل..."
-                          : `${levels.find((l) => l.level_number === academic.level)?.name || "مستوى غير محدد"} • ترم ${academic.semester ?? "؟"}`}
-                      </p>
-                      {academic.department_id && (
-                        <p className="text-sm font-bold text-brand-blue mt-1">
-                          {
-                            departments.find(
-                              (d) => d.id === academic.department_id,
-                            )?.name
-                          }
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-[1.5fr_2fr_0.8fr_1fr] gap-4 items-end">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
-                        المستوى
-                      </label>
-                      <select
-                        id="profile-academic-level"
-                        name="academicLevel"
-                        value={level}
-                        onChange={(e) => setLevel(Number(e.target.value))}
-                        disabled={academicLoading || isSavingAcademic}
-                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
-                      >
-                        <option value="">اختر المستوى</option>
-                        {levels.map((l) => (
-                          <option key={l.id} value={l.level_number ?? 0}>
-                            {l.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
-                        القسم
-                      </label>
-                      <select
-                        id="profile-academic-department"
-                        name="academicDepartment"
-                        value={departmentId}
-                        onChange={(e) => setDepartmentId(e.target.value)}
-                        disabled={academicLoading || isSavingAcademic || !level}
-                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
-                      >
-                        <option value="">اختر القسم</option>
-                        {departments
-                          .filter((d) => {
-                            const selectedLevel = levels.find(
-                              (l) => l.level_number === level,
-                            );
-                            return (
-                              !d.academic_level_id ||
-                              d.academic_level_id === selectedLevel?.id
-                            );
-                          })
-                          .map((d) => (
-                            <option key={d.id} value={d.id}>
-                              {d.name}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mr-2">
-                        الترم
-                      </label>
-                      <select
-                        id="profile-academic-semester"
-                        name="academicSemester"
-                        value={semester}
-                        onChange={(e) => setSemester(Number(e.target.value))}
-                        disabled={academicLoading || isSavingAcademic}
-                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all"
-                      >
-                        <option value={1}>ترم 1</option>
-                        <option value={2}>ترم 2</option>
-                      </select>
-                    </div>
-
-                    <button
-                      onClick={handleSaveAcademic}
-                      disabled={academicLoading || isSavingAcademic}
-                      className="h-[52px] w-full bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 px-4"
-                    >
-                      {isSavingAcademic ? (
-                        <RefreshCw className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Save className="w-5 h-5" />
-                      )}
-                      <span>{isSavingAcademic ? "جاري..." : "حفظ"}</span>
-                    </button>
-                  </div>
-
-                  {academicError && (
-                    <div className="mt-4 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="w-8 h-8 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center shrink-0">
-                        <X className="w-4 h-4" />
-                      </div>
-                      <p className="text-sm font-bold">{academicError}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Notification Settings */}
+          {/* Academic Info Section */}
           <section>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-              <span className="w-2 h-8 bg-brand-orange rounded-full shadow-[0_0_15px_rgba(var(--brand-orange),0.5)]" />
-              تنبيهات المنصة
-            </h2>
-            <div className="bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
+                المسار الأكاديمي
+              </h2>
+            </div>
+            <div className="bg-slate-50 dark:bg-white/[0.02] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 group relative overflow-hidden">
+              <div className="flex flex-col gap-8">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center text-2xl">
+                    🎓
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
+                      المسار الحالي
+                    </p>
+                    <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
+                      {academicLoading && !academic.level
+                        ? "جاري التحميل..."
+                        : `${
+                            levels.find((l) => l.level_number === level)
+                              ?.name || "مستوى غير محدد"
+                          } • ترم ${semester}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_0.8fr_auto] gap-4 items-end">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                      المستوى
+                    </label>
+                    <select
+                      value={level}
+                      onChange={(e) => setLevel(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                    >
+                      {levels.map((l) => (
+                        <option key={l.id} value={l.level_number ?? 0}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                      القسم
+                    </label>
+                    <select
+                      value={departmentId}
+                      onChange={(e) => setDepartmentId(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                    >
+                      <option value="">اختر القسم</option>
+                      {departments
+                        .filter((d) => {
+                          const selectedLevel = levels.find(
+                            (l) => l.level_number === level,
+                          );
+                          return (
+                            !d.academic_level_id ||
+                            d.academic_level_id === selectedLevel?.id
+                          );
+                        })
+                        .map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                      الترم
+                    </label>
+                    <select
+                      value={semester}
+                      onChange={(e) => setSemester(Number(e.target.value))}
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                    >
+                      <option value={1}>ترم 1</option>
+                      <option value={2}>ترم 2</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleSaveAcademic}
+                    disabled={isSavingAcademic}
+                    className="h-[52px] bg-brand-blue text-white px-8 rounded-2xl font-black hover:bg-brand-sky active:scale-95 transition-all"
+                  >
+                    {isSavingAcademic ? (
+                      <RefreshCw className="animate-spin w-5 h-5" />
+                    ) : (
+                      <Save className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {academicError && (
+                  <p className="text-red-500 text-sm font-bold">
+                    {academicError}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Special Settings Section */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <span className="w-2 h-8 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)]" />
+                إعدادات الحساب الخاصة
+              </h2>
+            </div>
+            <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-4 sm:p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300">
+              <div className="flex flex-col gap-4 sm:gap-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0">
+                    <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-red-600/10 dark:bg-red-600/20 rounded-2xl flex items-center justify-center shadow-inner">
+                      <Zap
+                        className={`w-7 h-7 ${
+                          showExtraAssets
+                            ? "text-red-600 fill-red-600"
+                            : "text-red-600"
+                        }`}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
+                          Show Extra Content
+                        </h3>
+                      </div>
+                      <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                        Enable permanent access to additional sections and
+                        features
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                    {/* Cooldown indicator */}
+                    {isCooldownActive && (
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-800 ring-1 ring-amber-200/70 shadow-sm dark:bg-amber-900/25 dark:text-amber-200 dark:ring-amber-700/30">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="text-xs font-black tabular-nums">
+                          {formatCooldownTime(cooldownRemaining)}
+                        </span>
+                      </div>
+                    )}
+
+                    <Switch.Root
+                      checked={showExtraAssets}
+                      onCheckedChange={handleToggleExtraAssets}
+                      disabled={isSaving || isCooldownActive}
+                      dir="rtl"
+                      className={`
+                        relative h-7 w-12 rounded-full outline-none transition-colors duration-300
+                        shadow-inner ring-1 ring-black/5 dark:ring-white/10
+                        focus-visible:ring-2 focus-visible:ring-red-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-brand-navy
+                        disabled:cursor-not-allowed disabled:opacity-60
+                        ${
+                          showExtraAssets
+                            ? "bg-red-600"
+                            : "bg-slate-200 dark:bg-white/10"
+                        }
+                      `}
+                    >
+                      <Switch.Thumb
+                        className={`
+                          absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-lg
+                          transition-all duration-300 will-change-[inset-inline-start]
+                          [inset-inline-start:0.125rem]
+                          data-[state=checked]:[inset-inline-start:calc(100%-1.5rem-0.125rem)]
+                        `}
+                      />
+                    </Switch.Root>
+                  </div>
+                </div>
+              </div>
+              {/* Cooldown info */}
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="font-bold">ملاحظة:</span> يمكنك تغيير هذا
+                  الإعداد مرة واحدة كل ساعتين لمنع الاستخدام الخاطئ.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Notifications Settings Section */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                <span className="w-2 h-8 bg-brand-orange rounded-full shadow-[0_0_15px_rgba(var(--brand-orange),0.5)]" />
+                إعدادات الإشعارات
+              </h2>
+            </div>
+            <div className="bg-slate-50 dark:bg-white/[0.02] p-6 sm:p-10 rounded-[3rem] border border-slate-100 dark:border-white/5">
               <NotificationSettings />
             </div>
           </section>
 
-          {/* Account Information */}
+          {/* Activity Logs Section */}
           <section>
             <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
               <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
               سجل النشاط
             </h2>
             <div className="grid sm:grid-cols-2 gap-5">
-              {/* Registration Date */}
-              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-navy/40 transition-all duration-300">
-                <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
+              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
                   تاريخ الانضمام
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
@@ -474,10 +647,8 @@ export default function ProfilePage() {
                     : "غير محدد"}
                 </p>
               </div>
-
-              {/* Last Sign In */}
-              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5 group hover:bg-white dark:hover:bg-brand-navy/40 transition-all duration-300">
-                <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">
+              <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
                   آخر نشاط مسجل
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
@@ -498,7 +669,7 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Actions */}
+          {/* Footer Actions */}
           <div className="pt-10 flex flex-col sm:flex-row gap-4 border-t border-slate-100 dark:border-white/5">
             <button
               onClick={() => router.push("/")}

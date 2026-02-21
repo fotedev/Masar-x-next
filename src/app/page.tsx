@@ -198,7 +198,7 @@ export default function HomePage() {
                         <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
                         <span className="truncate">{summary.subject}</span>
                       </div>
-                      {summary.avg_rating > 0 && (
+                      {summary.avg_rating != null && summary.avg_rating > 0 && (
                         <div className="flex items-center gap-1 bg-brand-orange/10 text-brand-orange px-2 py-0.5 rounded-lg text-[10px] font-bold">
                           <Star className="w-3 h-3 fill-brand-orange" />
                           <span>{summary.avg_rating}</span>

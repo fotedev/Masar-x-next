@@ -229,6 +229,10 @@ export function AuthProvider({
       if (freshUser) setUser(freshUser);
       return await verifyAdminStatus(freshUser, true);
     } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        console.debug("Admin status refresh aborted");
+        return false;
+      }
       const message = e instanceof Error ? e.message : String(e);
       if (message.toLowerCase().includes("invalid refresh token")) {
         try {
@@ -265,6 +269,10 @@ export function AuthProvider({
           verifyAdminStatus(currentUser);
         }
       } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") {
+          console.debug("Auth initialization aborted");
+          return;
+        }
         const message = e instanceof Error ? e.message : String(e);
         if (message.toLowerCase().includes("invalid refresh token")) {
           try {

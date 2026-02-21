@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { Card, CardContent, Button, Badge } from "./ui";
 import { Users, CheckCircle, XCircle, Clock, Eye, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
 interface Enrollment {
   id: string;
@@ -28,11 +29,23 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  const fetchEnrollments = useCallback(async () => {
-    try {
-      setLoading(true);
+  const fetchEnrollments = useCallback(
+    async (skipCache = false) => {
+      try {
+        setLoading(true);
 
-      let query = supabase.from("enrollments").select(`
+        const cacheKey = cacheKeys.enrollments(instructorId);
+
+        if (!skipCache) {
+          const cached = queryCache.get<Enrollment[]>(cacheKey);
+          if (cached) {
+            setEnrollments(cached);
+            setLoading(false);
+            return;
+          }
+        }
+
+        let query = supabase.from("enrollments").select(`
           *,
           courses!inner (
             title,
@@ -43,48 +56,52 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
           )
         `);
 
-      if (instructorId) {
-        query = query.eq("courses.instructor_id", instructorId);
-      }
-
-      const { data, error } = await query.order("created_at", {
-        ascending: false,
-      });
-
-      if (error) throw error;
-
-      if (data) {
-        interface RawEnrollment {
-          id: string;
-          status: "pending" | "active" | "rejected";
-          payment_screenshot_url?: string;
-          created_at: string;
-          course_id: string;
-          student_id: string;
-          courses?: {
-            title: string;
-            instructor_id: string;
-          };
-          profiles?: {
-            display_name: string;
-          };
+        if (instructorId) {
+          query = query.eq("courses.instructor_id", instructorId);
         }
 
-        const formattedData = (data as RawEnrollment[]).map((e) => ({
-          ...e,
-          course_title: e.courses?.title || "كورس غير محدد",
-          student_name: e.profiles?.display_name || "طالب",
-          instructor_id: e.courses?.instructor_id,
-        }));
-        setEnrollments(formattedData);
+        const { data, error } = await query.order("created_at", {
+          ascending: false,
+        });
+
+        if (error) throw error;
+
+        if (data) {
+          interface RawEnrollment {
+            id: string;
+            status: "pending" | "active" | "rejected";
+            payment_screenshot_url?: string;
+            created_at: string;
+            course_id: string;
+            student_id: string;
+            courses?: {
+              title: string;
+              instructor_id: string;
+            };
+            profiles?: {
+              display_name: string;
+            };
+          }
+
+          const formattedData = (data as RawEnrollment[]).map((e) => ({
+            ...e,
+            course_title: e.courses?.title || "كورس غير محدد",
+            student_name: e.profiles?.display_name || "طالب",
+            instructor_id: e.courses?.instructor_id,
+          }));
+          setEnrollments(formattedData);
+
+          // Cache the result
+          queryCache.set(cacheKey, formattedData, cacheTTL.enrollments);
+        }
+      } catch {
+        toast.error("حدث خطأ في تحميل طلبات التسجيل");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      // ignore
-    } finally {
-      toast.error("حدث خطأ في تحميل طلبات التسجيل");
-      setLoading(false);
-    }
-  }, [instructorId]);
+    },
+    [instructorId],
+  );
 
   useEffect(() => {
     fetchEnrollments();
@@ -126,7 +143,11 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
       toast.success(
         action === "approve" ? "تم قبول الطلب بنجاح" : "تم رفض الطلب",
       );
-      fetchEnrollments();
+
+      // Invalidate cache
+      queryCache.delete(cacheKeys.enrollments(instructorId));
+
+      fetchEnrollments(true);
     } catch {
       toast.error("حدث خطأ في معالجة الطلب");
     } finally {
