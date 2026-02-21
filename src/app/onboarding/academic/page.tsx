@@ -78,7 +78,7 @@ export default function AcademicOnboardingPage() {
         level,
         semester,
         department_id: null,
-      });
+      }, { isProfileUpdate: false });
       if (!result.success) {
         setError(result.message || "حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
         return;

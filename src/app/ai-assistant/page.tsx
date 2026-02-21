@@ -202,6 +202,91 @@ function AiAssistantChatPage() {
     autoReloadData();
   }, [dataLoaded]);
 
+  const [hasSynced, setHasSynced] = useState(false);
+
+  // Parse Supabase Draft Row helper
+  const parseSupabaseDraftRow = useCallback(
+    (row: SupabaseDraftRow): LocalGeneratedQuiz | null => {
+      try {
+        const rawDesc = row.description || "";
+        const parsed = rawDesc ? JSON.parse(rawDesc) : null;
+        const data = parsed?.data;
+        if (!data || typeof data !== "object") return null;
+        if (typeof data.title !== "string" || !Array.isArray(data.questions))
+          return null;
+        return {
+          localId: row.id,
+          createdAt: row.created_at,
+          data: data as QuizDataInput,
+        };
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
+
+  const loadSupabaseDrafts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const rows = (await quizService.getAiGeneratedDraftsForUser(
+        user.id,
+        20,
+      )) as unknown as SupabaseDraftRow[];
+
+      const parsed = rows
+        .map((r) => parseSupabaseDraftRow(r))
+        .filter(Boolean) as LocalGeneratedQuiz[];
+
+      setLocalGeneratedQuizzes(parsed);
+      setGeneratedQuiz((prev) => prev || parsed[0] || null);
+    } catch {
+      // ignore
+    }
+  }, [parseSupabaseDraftRow, user]);
+
+  const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = localStorage.getItem("local_ai_generated_quizzes");
+      const arr: LocalGeneratedQuiz[] = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // Sync mechanism: local to cloud (one-time upon login)
+  useEffect(() => {
+    if (user && !loading && !hasSynced) {
+      const syncDrafts = async () => {
+        const localItems = readLocalQuizzes();
+        if (localItems.length > 0) {
+          try {
+            const { count } = await quizService.syncLocalQuizzes(
+              user.id,
+              localItems,
+            );
+            if (count > 0) {
+              toast.success(
+                `تمت مزامنة ${count} اختبارات من جهازك إلى حسابك بنجاح.`,
+              );
+              // Clear local storage after successful sync to maintain single source of truth
+              localStorage.removeItem(LOCAL_AI_QUIZZES_KEY);
+            }
+            setHasSynced(true);
+            loadSupabaseDrafts();
+          } catch (error) {
+            console.error("Sync failed:", error);
+          }
+        } else {
+          setHasSynced(true);
+        }
+      };
+      syncDrafts();
+    }
+  }, [user, loading, hasSynced, readLocalQuizzes, loadSupabaseDrafts]);
+
   // Handle auto-scroll when messages change
   useEffect(() => {
     scrollToBottom(true);
@@ -253,57 +338,6 @@ function AiAssistantChatPage() {
 
   const LOCAL_AI_QUIZZES_KEY = "local_ai_generated_quizzes";
 
-  const parseSupabaseDraftRow = useCallback(
-    (row: SupabaseDraftRow): LocalGeneratedQuiz | null => {
-      try {
-        const rawDesc = row.description || "";
-        const parsed = rawDesc ? JSON.parse(rawDesc) : null;
-        const data = parsed?.data;
-        if (!data || typeof data !== "object") return null;
-        if (typeof data.title !== "string" || !Array.isArray(data.questions))
-          return null;
-        return {
-          localId: row.id,
-          createdAt: row.created_at,
-          data: data as QuizDataInput,
-        };
-      } catch {
-        return null;
-      }
-    },
-    [],
-  );
-
-  const loadSupabaseDrafts = useCallback(async () => {
-    if (!user) return;
-    try {
-      const rows = (await quizService.getAiGeneratedDraftsForUser(
-        user.id,
-        20,
-      )) as unknown as SupabaseDraftRow[];
-
-      const parsed = rows
-        .map((r) => parseSupabaseDraftRow(r))
-        .filter(Boolean) as LocalGeneratedQuiz[];
-
-      setLocalGeneratedQuizzes(parsed);
-      setGeneratedQuiz((prev) => prev || parsed[0] || null);
-    } catch {
-      // ignore
-    }
-  }, [parseSupabaseDraftRow, user]);
-
-  const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(LOCAL_AI_QUIZZES_KEY);
-      const arr: LocalGeneratedQuiz[] = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
-  }, []);
-
   const persistLocalQuiz = useCallback((quiz: LocalGeneratedQuiz) => {
     if (typeof window === "undefined") return;
     try {
@@ -318,15 +352,18 @@ function AiAssistantChatPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      loadSupabaseDrafts();
-      return;
+    // If logged in, only use Supabase drafts.
+    // If guest, use localStorage.
+    if (!loading) {
+      if (user) {
+        loadSupabaseDrafts();
+      } else {
+        const arr = readLocalQuizzes();
+        setLocalGeneratedQuizzes(arr);
+        setGeneratedQuiz((prev) => prev || arr[0] || null);
+      }
     }
-
-    const arr = readLocalQuizzes();
-    setLocalGeneratedQuizzes(arr);
-    setGeneratedQuiz((prev) => prev || arr[0] || null);
-  }, [loadSupabaseDrafts, readLocalQuizzes, user]);
+  }, [loadSupabaseDrafts, readLocalQuizzes, user, loading]);
 
   const resetLocalQuizPlayer = useCallback(() => {
     setLocalQuizIndex(0);
@@ -437,7 +474,7 @@ function AiAssistantChatPage() {
 
   // Generate quiz from user input
   const handleGenerateQuiz = async () => {
-    if (isGeneratingQuiz || !quizTextInput.trim()) return;
+    if (isGeneratingQuiz || !quizTextInput.trim() || loading) return;
 
     setIsGeneratingQuiz(true);
     trackEvent("ai_quiz_generation_started");
@@ -472,9 +509,10 @@ function AiAssistantChatPage() {
       }
 
       const questions = quizData.questions || [];
+      const clientGeneratedId = crypto.randomUUID();
 
       const localQuiz: LocalGeneratedQuiz = {
-        localId: `local_${Date.now()}`,
+        localId: clientGeneratedId,
         createdAt: new Date().toISOString(),
         data: {
           title: quizData.title,
@@ -484,7 +522,9 @@ function AiAssistantChatPage() {
       };
 
       if (user) {
+        // Save directly to Supabase with client-side UUID
         await quizService.saveAiGeneratedDraft(user.id, {
+          id: clientGeneratedId,
           title: localQuiz.data.title,
           description: localQuiz.data.description,
           questions: localQuiz.data.questions.map((q) => ({
@@ -496,6 +536,7 @@ function AiAssistantChatPage() {
         });
         await loadSupabaseDrafts();
       } else {
+        // Guest: Only use localStorage
         setGeneratedQuiz(localQuiz);
         persistLocalQuiz(localQuiz);
       }

@@ -201,7 +201,7 @@ export default function ProfilePage() {
         level,
         semester,
         department_id: departmentId || null,
-      });
+      }, { isProfileUpdate: true });
       if (!result.success) {
         setAcademicError(
           result.message || "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
