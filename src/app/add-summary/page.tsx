@@ -19,7 +19,8 @@ export default function AddSummaryPage() {
   const { user, displayName } = useAuth();
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const { levels, getDepartmentsForLevelName, optionsLoading } =
+    useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
 
   const [formData, setFormData] = useState({
@@ -328,14 +329,18 @@ export default function AddSummaryPage() {
                   if (!formData.year) return;
                   if (![1, 2].includes(semester)) setSemester(1);
                 }}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={optionsLoading}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
               >
-                <option value="">اختر المستوي</option>
-                {levels.map((lvl) => (
-                  <option key={lvl.id} value={lvl.name}>
-                    {lvl.name}
-                  </option>
-                ))}
+                <option value="">
+                  {optionsLoading ? "جاري التحميل..." : "اختر المستوي"}
+                </option>
+                {!optionsLoading &&
+                  levels.map((lvl) => (
+                    <option key={lvl.id} value={lvl.name}>
+                      {lvl.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -379,24 +384,28 @@ export default function AddSummaryPage() {
               <select
                 id="summary-department"
                 name="summaryDepartment"
-                required
-                autoComplete="off"
                 value={formData.department}
                 onChange={(e) =>
                   setFormData({ ...formData, department: e.target.value })
                 }
-                disabled={!formData.year || availableDepartments.length === 0}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={
+                  optionsLoading ||
+                  !formData.year ||
+                  availableDepartments.length === 0
+                }
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
               >
-                <option value="">اختر التخصص</option>
-                {availableDepartments.map((dept) => (
-                  <option key={dept.id} value={dept.name}>
-                    {dept.name}
-                  </option>
-                ))}
+                <option value="">
+                  {optionsLoading ? "جاري التحميل..." : "اختر التخصص"}
+                </option>
+                {!optionsLoading &&
+                  availableDepartments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
               </select>
             </div>
-
           </div>
 
           <div>
