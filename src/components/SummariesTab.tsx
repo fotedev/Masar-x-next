@@ -276,7 +276,7 @@ export function SummariesTab({
                         بواسطة: {summary.contributor_name || "مستخدم مجهول"}
                       </span>
                       <span>المادة: {summary.subject}</span>
-                      {summary.avg_rating > 0 && (
+                      {(summary.avg_rating ?? 0) > 0 && (
                         <span className="flex items-center gap-1 text-brand-orange">
                           <Star className="w-3 h-3 fill-brand-orange" />
                           {summary.avg_rating} ({summary.reviews_count})
