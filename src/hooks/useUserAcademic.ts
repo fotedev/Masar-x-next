@@ -51,7 +51,7 @@ export function useUserAcademic() {
   const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
   const [levels, setLevels] = useState<AcademicLevel[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [optionsLoading, setOptionsLoading] = useState(false);
 
   // Use refs to prevent redundant fetches
