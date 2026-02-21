@@ -50,8 +50,8 @@ export function useAcademicOptions(params: Params = {}) {
   const { includeInactive = false } = params;
   const [levels, setLevels] = useState<AcademicLevelOption[]>([]);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [optionsLoading, setOptionsLoading] = useState(true);
 
   const levelIdByName = useMemo(() => {
     const map = new Map<string, string>();
