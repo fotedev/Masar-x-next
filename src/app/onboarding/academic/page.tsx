@@ -27,22 +27,24 @@ export default function AcademicOnboardingPage() {
   }, [authLoading, router, user]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || authLoading) return;
     if (!user) return;
     if (saving) return;
+
     if (isAdmin) {
-      router.push("/");
+      router.replace("/");
       return;
     }
 
     if (academic.level != null && academic.semester != null) {
-      router.push("/");
+      router.replace("/");
     }
   }, [
     academic.level,
     academic.semester,
     isAdmin,
     loading,
+    authLoading,
     router,
     saving,
     user,
