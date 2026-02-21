@@ -3,10 +3,12 @@ import type { Json } from '@/types/database';
 
 
 export interface QuizData {
+    id?: string;
     title: string;
     description?: string;
     summary_id?: string | null;
     questions: {
+        id?: string;
         question: string;
         options: string[];
         correctAnswer: number;
@@ -18,6 +20,7 @@ export interface QuizData {
 export class QuizService {
     async saveAiGeneratedDraft(userId: string, quizData: QuizData) {
         try {
+            const quizId = quizData.id || crypto.randomUUID();
             const draftPayload = {
                 is_draft: true,
                 draft_type: 'ai_generated',
@@ -26,7 +29,8 @@ export class QuizService {
 
             const { data: quiz, error: quizError } = await supabase
                 .from('quizzes')
-                .insert({
+                .upsert({
+                    id: quizId,
                     title: quizData.title,
                     description: JSON.stringify(draftPayload),
                     summary_id: quizData.summary_id ?? null,
@@ -36,6 +40,7 @@ export class QuizService {
                     semester: 1,
                     status: 'draft',
                     source_type: 'ai_generated_draft',
+                    updated_at: new Date().toISOString(),
                 } as any)
                 .select('id')
                 .single();
@@ -43,6 +48,35 @@ export class QuizService {
             if (quizError) throw quizError;
             return quiz.id as string;
         } catch (error) {
+            throw error;
+        }
+    }
+
+    async syncLocalQuizzes(userId: string, localQuizzes: any[]) {
+        if (!userId || !localQuizzes.length) return { success: true, count: 0 };
+
+        try {
+            const results = await Promise.all(
+                localQuizzes.map(async (local) => {
+                    try {
+                        // Ensure each local quiz has a UUID if it doesn't already
+                        const quizData = {
+                            ...local.data,
+                            id: local.localId?.startsWith('local_') ? crypto.randomUUID() : local.localId
+                        };
+                        await this.saveAiGeneratedDraft(userId, quizData);
+                        return true;
+                    } catch (e) {
+                        console.error('Failed to sync quiz:', local.localId, e);
+                        return false;
+                    }
+                })
+            );
+
+            const syncedCount = results.filter(Boolean).length;
+            return { success: true, count: syncedCount };
+        } catch (error) {
+            console.error('Sync error:', error);
             throw error;
         }
     }
