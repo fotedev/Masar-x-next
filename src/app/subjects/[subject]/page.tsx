@@ -1116,6 +1116,27 @@ function SubjectSummariesContent() {
       groupContentBySection();
     const lectureTitle = selectedLecture?.label || "المحاضرة";
 
+    const formatYmd = (value: Date) => {
+      const y = value.getFullYear();
+      const m = String(value.getMonth() + 1).padStart(2, "0");
+      const d = String(value.getDate()).padStart(2, "0");
+      return `${y}/${m}/${d}`;
+    };
+
+    const createdAtCandidates = [
+      ...lectureFilteredSummaries.map((s) => s.created_at),
+      ...lectureFilteredVideos.map((v) => (v as any)?.created_at),
+      ...lectureFilteredFiles.map((f) => (f as any)?.created_at),
+      ...lectureFilteredQuizzes.map((q) => (q as any)?.created_at),
+    ]
+      .filter(Boolean)
+      .map((v) => new Date(v as any))
+      .filter((d) => !Number.isNaN(d.getTime()));
+
+    const lectureAddedAt = createdAtCandidates.length
+      ? createdAtCandidates.sort((a, b) => a.getTime() - b.getTime())[0]
+      : null;
+
     return (
       <div
         className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 text-right ${
@@ -1154,22 +1175,60 @@ function SubjectSummariesContent() {
           {!isTheatreMode && (
             <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-white shadow-2xl">
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
-              <div className="relative z-10 space-y-4">
-                <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
-                  محتوى المحاضرة
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                <div className="lg:col-span-8 space-y-4">
+                  <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
+                    محتوى المحاضرة
+                  </div>
+                  <h1 className="text-5xl sm:text-6xl font-black leading-tight">
+                    {lectureTitle}
+                  </h1>
+                  <div className="flex flex-wrap justify-start gap-4 mt-6">
+                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                      {explanationItems.length} شرح
+                    </div>
+                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                      {homeworkItems.length} واجب
+                    </div>
+                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
+                      {examItems.length} اختبار
+                    </div>
+                  </div>
                 </div>
-                <h1 className="text-5xl sm:text-6xl font-black leading-tight">
-                  {lectureTitle}
-                </h1>
-                <div className="flex flex-wrap justify-start gap-4 mt-6">
-                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                    {explanationItems.length} شرح
-                  </div>
-                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                    {homeworkItems.length} واجب
-                  </div>
-                  <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                    {examItems.length} اختبار
+
+                <div className="lg:col-span-4">
+                  <div className="lg:border-r lg:border-white/10 lg:pr-10 lg:pt-2">
+                    <h3 className="text-lg font-black text-white/90 mb-5">
+                      معلومات المحاضرة
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-white/60">
+                          تاريخ الإضافة
+                        </span>
+                        <span className="text-sm font-black text-white">
+                          {lectureAddedAt ? formatYmd(lectureAddedAt) : "—"}
+                        </span>
+                      </div>
+                      <div className="h-px bg-white/10" />
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-white/60">
+                          عدد المصادر
+                        </span>
+                        <span className="text-sm font-black text-white">
+                          {explanationItems.length}
+                        </span>
+                      </div>
+                      <div className="h-px bg-white/10" />
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-white/60">
+                          الاختبارات
+                        </span>
+                        <span className="text-sm font-black text-white">
+                          {examItems.length}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1224,7 +1283,7 @@ function SubjectSummariesContent() {
                 >
                   {getYouTubeId(activeVideoUrl) ? (
                     <iframe
-                      src={`https://www.youtube.com/embed/${getYouTubeId(activeVideoUrl)}?autoplay=1`}
+                      src={`https://www.youtube.com/embed/${getYouTubeId(activeVideoUrl)}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1`}
                       className="absolute inset-0 w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -1449,38 +1508,6 @@ function SubjectSummariesContent() {
           </div>
 
           <div className="lg:col-span-4 space-y-8">
-            <div className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                معلومات المحاضرة
-              </h3>
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-400">
-                    تاريخ الإضافة
-                  </span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">
-                    2026/02/18
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-400">
-                    عدد المصادر
-                  </span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">
-                    {explanationItems.length + homeworkItems.length}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-400">
-                    الاختبارات
-                  </span>
-                  <span className="text-sm font-black text-slate-900 dark:text-white">
-                    {examItems.length}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-2">
                 <Trophy className="w-6 h-6 text-brand-blue" />

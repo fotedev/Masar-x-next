@@ -132,9 +132,6 @@ export default function ProfilePage() {
     // Best practice: enabling TRW requires the unlock/code flow (logo taps).
     // Profile page allows disabling only once the flag is already enabled.
     if (enabled === true && showExtraAssets === false) {
-      toast.error("Locked", {
-        description: "افتح TRW من خلال إدخال الكود (اضغط على الشعار 5 مرات).",
-      });
       return;
     }
 
@@ -530,88 +527,92 @@ export default function ProfilePage() {
           </section>
 
           {/* Special Settings Section */}
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-                <span className="w-2 h-8 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)]" />
-                إعدادات الحساب الخاصة
-              </h2>
-            </div>
-            <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-4 sm:p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300">
-              <div className="flex flex-col gap-4 sm:gap-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
-                  <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0">
-                    <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-red-600/10 dark:bg-red-600/20 rounded-2xl flex items-center justify-center shadow-inner">
-                      <Zap
-                        className={`w-7 h-7 ${
-                          showExtraAssets
-                            ? "text-red-600 fill-red-600"
-                            : "text-red-600"
-                        }`}
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
-                          Show Extra Content
-                        </h3>
+          {showExtraAssets && (
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                  <span className="w-2 h-8 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)]" />
+                  إعدادات الحساب الخاصة
+                </h2>
+              </div>
+              <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-4 sm:p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300">
+                <div className="flex flex-col gap-4 sm:gap-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0">
+                      <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-red-600/10 dark:bg-red-600/20 rounded-2xl flex items-center justify-center shadow-inner">
+                        <Zap className="w-7 h-7 text-red-600" />
                       </div>
-                      <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                        Enable permanent access to additional sections and
-                        features
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-3">
-                    {/* Cooldown indicator */}
-                    {isCooldownActive && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-800 ring-1 ring-amber-200/70 shadow-sm dark:bg-amber-900/25 dark:text-amber-200 dark:ring-amber-700/30">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span className="text-xs font-black tabular-nums">
-                          {formatCooldownTime(cooldownRemaining)}
-                        </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
+                            Show Extra Content
+                          </h3>
+                        </div>
+                        <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          Enable permanent access to additional sections and
+                          features
+                        </p>
                       </div>
-                    )}
+                    </div>
 
-                    <Switch.Root
-                      checked={showExtraAssets}
-                      onCheckedChange={handleToggleExtraAssets}
-                      disabled={isSaving || isCooldownActive}
-                      dir="rtl"
-                      className={`
-                        relative h-7 w-12 rounded-full outline-none transition-colors duration-300
-                        shadow-inner ring-1 ring-black/5 dark:ring-white/10
-                        focus-visible:ring-2 focus-visible:ring-red-500/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-brand-navy
-                        disabled:cursor-not-allowed disabled:opacity-60
-                        ${
-                          showExtraAssets
-                            ? "bg-red-600"
-                            : "bg-slate-200 dark:bg-white/10"
-                        }
-                      `}
-                    >
-                      <Switch.Thumb
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                      {/* Cooldown indicator */}
+                      {isCooldownActive && (
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-800 ring-1 ring-amber-200/70 shadow-sm dark:bg-amber-900/25 dark:text-amber-200 dark:ring-amber-700/30">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-xs font-black tabular-nums">
+                            {formatCooldownTime(cooldownRemaining)}
+                          </span>
+                        </div>
+                      )}
+
+                      <Switch.Root
+                        checked={showExtraAssets}
+                        onCheckedChange={handleToggleExtraAssets}
+                        disabled={isSaving || isCooldownActive}
+                        dir="rtl"
                         className={`
-                          absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-lg
-                          transition-all duration-300 will-change-[inset-inline-start]
-                          [inset-inline-start:0.125rem]
-                          data-[state=checked]:[inset-inline-start:calc(100%-1.5rem-0.125rem)]
+                          group relative h-8 w-14 rounded-full outline-none
+                          transition-all duration-300 ease-in-out
+                          focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-brand-navy
+                          disabled:cursor-not-allowed disabled:opacity-50
+                          ${
+                            showExtraAssets
+                              ? "bg-red-600 shadow-[0_0_16px_4px_rgba(220,38,38,0.35)]"
+                              : "bg-slate-200 dark:bg-slate-700 shadow-inner"
+                          }
                         `}
-                      />
-                    </Switch.Root>
+                      >
+                        <Switch.Thumb
+                          className={`
+                            absolute top-1 h-6 w-6 rounded-full
+                            transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                            will-change-[inset-inline-start]
+                            [inset-inline-start:0.25rem]
+                            data-[state=checked]:[inset-inline-start:calc(100%-1.5rem-0.25rem)]
+                            data-[state=checked]:shadow-[0_0_8px_2px_rgba(220,38,38,0.5)]
+                            ${
+                              showExtraAssets
+                                ? "bg-white scale-90"
+                                : "bg-white shadow-md"
+                            }
+                            group-active:scale-75
+                          `}
+                        />
+                      </Switch.Root>
+                    </div>
                   </div>
                 </div>
+                {/* Cooldown info */}
+                <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="font-bold">ملاحظة:</span> يمكنك تغيير هذا
+                    الإعداد مرة واحدة كل ساعتين لمنع الاستخدام الخاطئ.
+                  </p>
+                </div>
               </div>
-              {/* Cooldown info */}
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="font-bold">ملاحظة:</span> يمكنك تغيير هذا
-                  الإعداد مرة واحدة كل ساعتين لمنع الاستخدام الخاطئ.
-                </p>
-              </div>
-            </div>
-          </section>
+            </section>
+          )}
 
           {/* Notifications Settings Section */}
           <section>

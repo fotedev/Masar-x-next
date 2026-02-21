@@ -61,6 +61,16 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
   }
 }
 
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const cfIp = req.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+  return 'unknown';
+}
+
 // =====================
 // Edge Function
 // =====================
@@ -94,6 +104,27 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // =====================
+    // Rate limit by IP (basic abuse protection)
+    // =====================
+    try {
+      const ip = getClientIp(req);
+      const { data: allowed } = await supabase.rpc('check_rate_limit', {
+        p_identifier: ip,
+        p_endpoint: 'request-password-reset:ip',
+        p_max_requests: 20,
+        p_window_minutes: 1,
+      });
+      if (allowed === false) {
+        return new Response(
+          JSON.stringify({ error: 'Too many requests. Try again later.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch {
+      // allow on error
+    }
 
     // =====================
     // Rate limit by email (max 3 per 24h)
@@ -132,14 +163,7 @@ serve(async (req) => {
       }
     }
 
-    // Fallback if getUserByEmail is missing or failed
-    if (!user) {
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-      if (listError) {
-        throw new Error(`Auth error: ${listError.message}`);
-      }
-      user = users.find(u => u.email === email);
-    }
+    // Avoid listUsers fallback: it's expensive and can be abused to exhaust quotas.
 
     if (!user) {
       // Security: do NOT reveal existence

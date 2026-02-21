@@ -12,12 +12,15 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const realtimeResubscribeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const realtimeChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const realtimeSetupPromiseRef = useRef<Promise<ReturnType<typeof supabase.channel> | undefined> | null>(null);
 
   // جلب الإشعارات مع caching
   const fetchNotifications = useCallback(async (skipCache = false) => {
+    let userId: string | null = null;
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      userId = user.id;
 
       const cacheKey = cacheKeys.notifications(user.id);
 
@@ -66,8 +69,7 @@ export function useNotifications() {
       // ignore
     } finally {
       // Clear inflight request when done
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) inflightRequests.delete(user.id);
+      if (userId) inflightRequests.delete(userId);
       setLoading(false);
     }
   }, []);
@@ -244,33 +246,57 @@ export function useNotifications() {
 
   // Real-time subscription for notifications
   useEffect(() => {
-    const setupRealtime = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const setupRealtime = async (): Promise<ReturnType<typeof supabase.channel> | undefined> => {
+      if (realtimeChannelRef.current) return realtimeChannelRef.current;
+      if (realtimeSetupPromiseRef.current) return realtimeSetupPromiseRef.current;
 
-      if (realtimeChannelRef.current) {
-        return realtimeChannelRef.current;
-      }
+      const promise = (async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
 
-      const channel = supabase
-        .channel(`notifications:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            fetchNotifications(true); // إعادة جلب الإشعارات وتجاوز الكاش
+          if (realtimeChannelRef.current) {
+            return realtimeChannelRef.current;
           }
-        );
 
-      realtimeChannelRef.current = channel;
-      channel.subscribe();
+          const channel = supabase
+            .channel(`notifications:${user.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${user.id}`
+              },
+              () => {
+                fetchNotifications(true); // إعادة جلب الإشعارات وتجاوز الكاش
+              }
+            );
 
-      return channel;
+          realtimeChannelRef.current = channel;
+          channel.subscribe();
+
+          return channel;
+        } catch (e) {
+          const message = e instanceof Error ? e.message : String(e);
+          if (message.includes('Navigator LockManager') && message.includes('timed out')) {
+            if (!realtimeResubscribeTimeoutRef.current) {
+              realtimeResubscribeTimeoutRef.current = setTimeout(() => {
+                realtimeResubscribeTimeoutRef.current = null;
+                void setupRealtime();
+              }, 1500);
+            }
+            return;
+          }
+          return;
+        } finally {
+          realtimeSetupPromiseRef.current = null;
+        }
+      })();
+
+      realtimeSetupPromiseRef.current = promise;
+      return promise;
     };
 
     const channelPromise = setupRealtime();

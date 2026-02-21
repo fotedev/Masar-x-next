@@ -266,6 +266,15 @@ export function AuthProvider({
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
 
         if (currentUser) {
+          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          if (metadataAvatar) {
+            setAvatarUrl(metadataAvatar);
+          }
+        } else {
+          setAvatarUrl(null);
+        }
+
+        if (currentUser) {
           verifyAdminStatus(currentUser);
         }
       } catch (e) {
@@ -306,7 +315,10 @@ export function AuthProvider({
         setLoading(false);
 
         if (currentUser) {
-          setAvatarUrl(currentUser.user_metadata?.avatar_url ?? null);
+          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          if (metadataAvatar) {
+            setAvatarUrl(metadataAvatar);
+          }
 
           supabase
             .from("profiles")

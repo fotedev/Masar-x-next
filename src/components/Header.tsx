@@ -306,9 +306,9 @@ export const Header = React.memo(function Header() {
         </div>
       )}
 
-      <header className="bg-white/90 dark:bg-brand-navy/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 sticky top-0 z-50">
+      <header className="bg-white/95 dark:bg-brand-navy/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 sticky top-0 z-50 shadow-sm dark:shadow-black/20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex justify-between items-center h-15 sm:h-[60px]">
             <div className="relative flex items-center mr-4 sm:mr-8">
               <button
                 onClick={handleLogoClick}
@@ -356,39 +356,46 @@ export const Header = React.memo(function Header() {
               )}
             </div>
 
-            <nav className="flex items-center justify-end lg:justify-between flex-1">
-              <div className="hidden lg:flex items-center justify-between w-full">
-                <div className="flex items-center gap-1 xl:gap-2">
+            <nav className="flex items-center justify-end lg:justify-between">
+              <div className="hidden lg:flex items-center justify-start">
+                {/* ── Navigation Links ── */}
+                <div className="flex items-center gap-0.5 lg:ml-8">
                   <button
                     onClick={() => handleNavigate("home")}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 group ${
                       isMounted && currentPage === "home"
-                        ? "bg-brand-blue/10 text-brand-blue"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-brand-blue"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     الرئيسية
+                    {isMounted && currentPage === "home" && (
+                      <span className="absolute bottom-0.5 right-3 left-3 h-0.5 bg-brand-blue rounded-full" />
+                    )}
                   </button>
 
                   <button
                     onClick={() => handleNavigate("news")}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isMounted && currentPage === "news"
-                        ? "bg-brand-blue/10 text-brand-blue"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-brand-blue"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     الأخبار
+                    {isMounted && currentPage === "news" && (
+                      <span className="absolute bottom-0.5 right-3.5 left-3.5 h-0.5 bg-brand-blue rounded-full" />
+                    )}
                   </button>
 
                   {isTRWVisible && (
                     <button
                       onClick={() => handleNavigate("non-academic")}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-500 border border-transparent ${
+                      className={`relative px-3.5 py-2 rounded-lg text-sm font-bold transition-all duration-500 ${
                         isMounted &&
                         (currentPage === "non-academic" ||
                           currentPage.startsWith("non-academic/"))
-                          ? "bg-red-600/10 text-red-600 border-red-600/20 shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+                          ? "text-red-600 shadow-[0_0_12px_rgba(220,38,38,0.2)]"
                           : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 animate-pulse"
                       }`}
                     >
@@ -396,12 +403,15 @@ export const Header = React.memo(function Header() {
                     </button>
                   )}
 
+                  {/* Thin separator */}
+                  <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-1" />
+
                   <button
                     onClick={() => handleNavigate("subjects")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isMounted && currentPage === "subjects"
-                        ? "bg-brand-blue/10 text-brand-blue"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-brand-blue bg-brand-blue/8"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     <GraduationCap className="w-4 h-4" />
@@ -410,12 +420,12 @@ export const Header = React.memo(function Header() {
 
                   <button
                     onClick={() => handleNavigate("courses")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isMounted &&
                       (currentPage === "courses" ||
                         currentPage.startsWith("courses/"))
-                        ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-green-600 dark:text-green-400 bg-green-500/8"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     <GraduationCap className="w-4 h-4" />
@@ -424,10 +434,10 @@ export const Header = React.memo(function Header() {
 
                   <button
                     onClick={() => handleNavigate("quizzes")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isMounted && currentPage === "quizzes"
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-purple-600 dark:text-purple-400 bg-purple-500/8"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     <FileText className="w-4 h-4" />
@@ -436,10 +446,10 @@ export const Header = React.memo(function Header() {
 
                   <button
                     onClick={() => handleNavigate("ai-assistant")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isMounted && currentPage === "ai-assistant"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/8"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
                     }`}
                   >
                     <svg
@@ -466,11 +476,16 @@ export const Header = React.memo(function Header() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* ── Actions ── */}
+                <div className="flex items-center gap-1 ml-auto">
+                  {/* Subtle separator before actions */}
+                  <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mr-1" />
+
                   <NotificationDropdown />
+
                   <button
                     onClick={handleThemeToggle}
-                    className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
                     aria-label={
                       theme === "dark"
                         ? "تفعيل الوضع الفاتح"
@@ -478,41 +493,48 @@ export const Header = React.memo(function Header() {
                     }
                   >
                     {theme === "dark" ? (
-                      <Sun className="w-5 h-5" />
+                      <Sun className="w-4 h-4" />
                     ) : (
-                      <Moon className="w-5 h-5" />
+                      <Moon className="w-4 h-4" />
                     )}
                   </button>
 
                   {!isMounted || loading ? (
                     // Skeleton placeholder while auth state is resolving — prevents flash
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-24 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                      <div className="h-8 w-16 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="flex items-center gap-2 ml-1">
+                      <div className="h-8 w-20 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </div>
                   ) : user ? (
                     <>
                       {!isAdminLoading && isAdmin && (
-                        <button
-                          onClick={() => handleNavigate("admin")}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                            currentPage === "admin"
-                              ? "bg-brand-orange/10 text-brand-orange"
-                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          <Shield className="w-4 h-4" />
-                          الإدارة
-                        </button>
+                        <>
+                          <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
+                          <button
+                            onClick={() => handleNavigate("admin")}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                              currentPage === "admin"
+                                ? "bg-brand-orange/10 text-brand-orange"
+                                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            <Shield className="w-4 h-4" />
+                            الإدارة
+                          </button>
+                        </>
                       )}
+
+                      <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
+
+                      {/* Profile avatar */}
                       <button
                         onClick={() => handleNavigate("profile")}
                         aria-label="الملف الشخصي"
                         title="الملف الشخصي"
-                        className={`relative w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 transition-all duration-200 ${
+                        className={`relative w-9 h-9 rounded-full overflow-hidden transition-all duration-200 ${
                           currentPage === "profile"
-                            ? "ring-2 ring-brand-blue/40"
-                            : "hover:ring-2 hover:ring-slate-200 dark:hover:ring-white/10"
+                            ? "ring-2 ring-brand-blue ring-offset-1 dark:ring-offset-brand-navy/90"
+                            : "ring-1 ring-slate-200 dark:ring-white/10 hover:ring-2 hover:ring-brand-blue/40"
                         }`}
                       >
                         {avatarUrl ? (
@@ -524,11 +546,11 @@ export const Header = React.memo(function Header() {
                               "User"
                             }
                             fill
-                            sizes="40px"
+                            sizes="32px"
                             className="object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-black">
+                          <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-black text-xs">
                             {(displayName || user?.email?.split("@")[0] || "U")
                               .trim()
                               .slice(0, 1)
@@ -536,9 +558,11 @@ export const Header = React.memo(function Header() {
                           </div>
                         )}
                       </button>
+
+                      {/* Logout */}
                       <button
                         onClick={handleSignOut}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all duration-200"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
                       >
                         <LogOut className="w-4 h-4" />
                         خروج
@@ -546,17 +570,18 @@ export const Header = React.memo(function Header() {
                     </>
                   ) : (
                     <>
-                      <button
-                        onClick={() => handleNavigate("signup")}
-                        className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold bg-brand-blue text-white hover:bg-brand-sky shadow-lg shadow-brand-blue/25 transition-all duration-200"
-                      >
-                        تسجيل
-                      </button>
+                      <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
                       <button
                         onClick={() => handleNavigate("login")}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200"
+                        className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
                       >
                         دخول
+                      </button>
+                      <button
+                        onClick={() => handleNavigate("signup")}
+                        className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky shadow-md shadow-brand-blue/20 transition-all duration-200"
+                      >
+                        تسجيل
                       </button>
                     </>
                   )}
@@ -584,7 +609,7 @@ export const Header = React.memo(function Header() {
                   <NotificationDropdown />
                   <button
                     onClick={handleThemeToggle}
-                    className="p-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label={
                       theme === "dark"
                         ? "تفعيل الوضع الفاتح"
@@ -592,9 +617,9 @@ export const Header = React.memo(function Header() {
                     }
                   >
                     {theme === "dark" ? (
-                      <Sun className="w-5 h-5" />
+                      <Sun className="w-4 h-4" />
                     ) : (
-                      <Moon className="w-5 h-5" />
+                      <Moon className="w-4 h-4" />
                     )}
                   </button>
                 </div>
