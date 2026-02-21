@@ -490,7 +490,7 @@ function QuizDashboardInternal() {
             title: quizData.title,
             description: fullDescription,
             summary_id: quizData.summary_id,
-            user_id: user.id,
+            created_by: user.id,
             source_type: "manual",
             duration_seconds: durationSeconds,
           })

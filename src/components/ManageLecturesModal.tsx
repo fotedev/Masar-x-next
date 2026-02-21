@@ -6,6 +6,10 @@ import {
   Save,
   BookOpen,
   Edit as EditIcon,
+  FileText,
+  Video,
+  ClipboardList,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { confirmToast } from "../lib/confirmToast";
@@ -24,13 +28,20 @@ export function ManageLecturesModal({
   const [lectures, setLectures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showLectureContent, setShowLectureContent] = useState(false);
+  const [selectedLectureForContent, setSelectedLectureForContent] = useState<
+    any | null
+  >(null);
   const [editLecture, setEditLecture] = useState({
     id: "" as string,
     label: "" as string,
-    key: "" as string,
     orderIndex: "" as string,
   });
   const [newLecture, setNewLecture] = useState({ title: "", orderIndex: "" });
+
+  const standardizedSubject = decodeURIComponent(subjectName)
+    .trim()
+    .replace(/\s+/g, " ");
 
   useEffect(() => {
     if (show && subjectName) {
@@ -75,10 +86,6 @@ export function ManageLecturesModal({
       const order = newLecture.orderIndex
         ? parseInt(newLecture.orderIndex)
         : 999;
-
-      const standardizedSubject = decodeURIComponent(subjectName)
-        .trim()
-        .replace(/\s+/g, " ");
 
       const { error } = await supabase.from("subject_lectures").insert({
         subject: standardizedSubject,
@@ -218,17 +225,6 @@ export function ManageLecturesModal({
                           className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
                         />
                         <input
-                          type="text"
-                          value={editLecture.key}
-                          onChange={(e) =>
-                            setEditLecture((p) => ({
-                              ...p,
-                              key: e.target.value,
-                            }))
-                          }
-                          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
-                        />
-                        <input
                           type="number"
                           value={editLecture.orderIndex}
                           onChange={(e) =>
@@ -245,15 +241,12 @@ export function ManageLecturesModal({
                         <button
                           onClick={() => {
                             const label = (editLecture.label || "").trim();
-                            const key = (editLecture.key || "").trim();
                             const orderNum = Number(editLecture.orderIndex);
 
                             if (!label) return;
-                            if (!key) return;
 
                             handleUpdate(lec.id, {
                               lecture_label: label,
-                              lecture_key: key,
                               order_index: Number.isFinite(orderNum)
                                 ? Math.floor(orderNum)
                                 : 999999,
@@ -265,7 +258,9 @@ export function ManageLecturesModal({
                           <Save className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setEditingId(null)}
+                          onClick={() => {
+                            setEditingId(null);
+                          }}
                           className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
                         >
                           <X className="w-4 h-4" />
@@ -285,11 +280,20 @@ export function ManageLecturesModal({
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => {
+                            setSelectedLectureForContent(lec);
+                            setShowLectureContent(true);
+                          }}
+                          className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
+                          title="إدارة محتوى المحاضرة"
+                        >
+                          <BookOpen className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
                             setEditingId(lec.id);
                             setEditLecture({
                               id: lec.id,
                               label: lec.lecture_label || "",
-                              key: lec.lecture_key || "",
                               orderIndex:
                                 lec.order_index === null ||
                                 lec.order_index === undefined
@@ -314,6 +318,459 @@ export function ManageLecturesModal({
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      <LectureContentModal
+        show={showLectureContent}
+        onClose={() => {
+          setShowLectureContent(false);
+          setSelectedLectureForContent(null);
+        }}
+        subject={standardizedSubject}
+        lecture={selectedLectureForContent}
+        lecturesIndex={lectures}
+      />
+    </div>
+  );
+}
+
+function inferLectureKeyFromTitle(
+  title: string,
+  lecturesIndex: Array<{ lecture_key?: string; lecture_label?: string }>,
+): string {
+  const t = (title || "").trim();
+  if (!t) return "other";
+
+  const clean = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const normalizedTitle = clean(t);
+
+  // 1. Exact match (case-insensitive)
+  const exact = lecturesIndex.find((l) => {
+    const key = (l.lecture_key || "").trim().toLowerCase();
+    const label = clean(l.lecture_label || "");
+    return (
+      (key && key === normalizedTitle) || (label && label === normalizedTitle)
+    );
+  });
+  if (exact?.lecture_key) return exact.lecture_key;
+
+  // Sort lectures by label length descending to match most specific/longest first
+  const sortedLectures = [...lecturesIndex].sort(
+    (a, b) => (b.lecture_label?.length || 0) - (a.lecture_label?.length || 0),
+  );
+
+  // 2. Delimiter match for prefixes/suffixes
+  // Handles "محاضرة 1: فيديو تدريبي" -> matches "محاضرة 1"
+  const titleParts = t.split(/[:\-\|]/).map((p) => clean(p));
+
+  for (const part of titleParts) {
+    if (!part || part.length < 2) continue;
+    const match = sortedLectures.find((l) => {
+      const label = clean(l.lecture_label || "");
+      return label === part || part.includes(label) || label.includes(part);
+    });
+    if (match?.lecture_key) return match.lecture_key;
+  }
+
+  // 3. Substring match (Check if any lecture label is contained within the title)
+  const partial = sortedLectures.find((l) => {
+    const label = clean(l.lecture_label || "");
+    if (!label || label.length < 2) return false;
+    return normalizedTitle.includes(label) || label.includes(normalizedTitle);
+  });
+  if (partial?.lecture_key) return partial.lecture_key;
+
+  return "other";
+}
+
+function LectureContentModal({
+  show,
+  onClose,
+  subject,
+  lecture,
+  lecturesIndex,
+}: {
+  show: boolean;
+  onClose: () => void;
+  subject: string;
+  lecture: any | null;
+  lecturesIndex: any[];
+}) {
+  const [activeTab, setActiveTab] = useState<
+    "summaries" | "videos" | "files" | "quizzes"
+  >("summaries");
+  const [loading, setLoading] = useState(false);
+  const [summaries, setSummaries] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
+  const [quizzes, setQuizzes] = useState<any[]>([]);
+
+  const lectureKey = (lecture?.lecture_key || "").trim() || "other";
+  const lectureLabel = (lecture?.lecture_label || "").trim() || "غير مصنف";
+
+  useEffect(() => {
+    if (!show || !subject) return;
+    if (!lecture) return;
+
+    async function fetchAll() {
+      try {
+        setLoading(true);
+
+        const [summariesRes, videosRes, filesRes, quizzesRes] =
+          await Promise.all([
+            supabase
+              .from("summaries")
+              .select("id,title,subject,status,created_at,lecture_key")
+              .eq("subject", subject)
+              .order("created_at", { ascending: false })
+              .limit(400),
+            supabase
+              .from("videos")
+              .select("id,title,subject,url,language,created_at,lecture_key")
+              .eq("subject", subject)
+              .order("created_at", { ascending: false })
+              .limit(400),
+            supabase
+              .from("files")
+              .select(
+                "id,title,subject,file_url,description,created_at,lecture_key",
+              )
+              .eq("subject", subject)
+              .order("created_at", { ascending: false })
+              .limit(400),
+            supabase
+              .from("quizzes")
+              .select("id,title,description,created_at,lecture_key")
+              .order("created_at", { ascending: false })
+              .limit(500),
+          ]);
+
+        if (summariesRes.error) throw summariesRes.error;
+        if (videosRes.error) throw videosRes.error;
+        if (filesRes.error) throw filesRes.error;
+        if (quizzesRes.error) throw quizzesRes.error;
+
+        const lectureMatch = (row: any) => {
+          // 1. If there's an explicit lecture_key on the row, use it
+          if (
+            row.lecture_key &&
+            String(row.lecture_key).trim() === String(lectureKey).trim()
+          )
+            return true;
+
+          // 2. Otherwise fallback to title inference
+          const inferredKey = inferLectureKeyFromTitle(
+            row?.title || "",
+            lecturesIndex,
+          );
+          return inferredKey === lectureKey;
+        };
+
+        const filteredSummaries = (summariesRes.data || []).filter(
+          lectureMatch,
+        );
+        const filteredVideos = (videosRes.data || []).filter(lectureMatch);
+        const filteredFiles = (filesRes.data || []).filter(lectureMatch);
+
+        setSummaries(filteredSummaries);
+        setVideos(filteredVideos);
+        setFiles(filteredFiles);
+
+        const quizzesForSubject = (quizzesRes.data || []).filter((q: any) => {
+          const raw = q?.description;
+          if (typeof raw !== "string") return false;
+          if (!raw.trim().startsWith("{")) return false;
+          try {
+            const parsed = JSON.parse(raw);
+            return (
+              typeof parsed?.subject === "string" && parsed.subject === subject
+            );
+          } catch {
+            return false;
+          }
+        });
+        setQuizzes(quizzesForSubject.filter(lectureMatch));
+      } catch (e) {
+        console.error("Error fetching lecture content:", e);
+        setSummaries([]);
+        setVideos([]);
+        setFiles([]);
+        setQuizzes([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAll();
+  }, [lecture, lectureKey, lecturesIndex, show, subject]);
+
+  const openSubjectLecture = () => {
+    const url = `/subjects/${encodeURIComponent(subject)}?lecture=${encodeURIComponent(lectureKey)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleDeleteVideo = async (id: string) => {
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
+    const { error } = await supabase.from("videos").delete().eq("id", id);
+    if (!error) setVideos((p) => p.filter((v) => v.id !== id));
+  };
+
+  const handleDeleteFile = async (id: string) => {
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
+    const { error } = await supabase.from("files").delete().eq("id", id);
+    if (!error) setFiles((p) => p.filter((f) => f.id !== id));
+  };
+
+  const handleDeleteQuiz = async (id: string) => {
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الاختبار؟", {
+      confirmLabel: "حذف",
+      cancelLabel: "إلغاء",
+    });
+    if (!confirmed) return;
+    const { error } = await supabase.from("quizzes").delete().eq("id", id);
+    if (!error) setQuizzes((p) => p.filter((q) => q.id !== id));
+  };
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[120]">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-900/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                إدارة محتوى المحاضرة
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {subject} • {lectureLabel}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openSubjectLecture}
+              className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              title="فتح صفحة المادة على نفس المحاضرة"
+            >
+              <ExternalLink className="w-4 h-4" />
+              فتح
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveTab("summaries")}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 ${
+              activeTab === "summaries"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            ملخصات ({summaries.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("videos")}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 ${
+              activeTab === "videos"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <Video className="w-4 h-4" />
+            فيديوهات ({videos.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("files")}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 ${
+              activeTab === "files"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            ملفات ({files.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("quizzes")}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 ${
+              activeTab === "quizzes"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            <ClipboardList className="w-4 h-4" />
+            اختبارات ({quizzes.length})
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="text-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            </div>
+          ) : activeTab === "summaries" ? (
+            summaries.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                لا توجد ملخصات مرتبطة بهذه المحاضرة
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {summaries.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-800 dark:text-gray-100">
+                        {s.title}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        الحالة: {s.status}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {s.created_at
+                        ? new Date(s.created_at).toLocaleString()
+                        : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : activeTab === "videos" ? (
+            videos.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                لا توجد فيديوهات مرتبطة بهذه المحاضرة
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {videos.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-800 dark:text-gray-100">
+                        {v.title}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {v.language === "en" ? "English" : "عربي"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={v.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
+                        title="فتح الرابط"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                      <button
+                        onClick={() => handleDeleteVideo(v.id)}
+                        className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : activeTab === "files" ? (
+            files.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+                لا توجد ملفات مرتبطة بهذه المحاضرة
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {files.map((f) => (
+                  <div
+                    key={f.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-800 dark:text-gray-100">
+                        {f.title}
+                      </span>
+                      {f.description ? (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {f.description}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={f.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
+                        title="فتح الرابط"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                      <button
+                        onClick={() => handleDeleteFile(f.id)}
+                        className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : quizzes.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
+              لا توجد اختبارات مرتبطة بهذه المحاضرة
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {quizzes.map((q) => (
+                <div
+                  key={q.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-bold text-gray-800 dark:text-gray-100">
+                      {q.title}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteQuiz(q.id)}
+                    className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                    title="حذف"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

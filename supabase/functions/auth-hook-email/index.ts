@@ -52,10 +52,10 @@ serve(async (req) => {
 
     switch (email_action_type) {
       case 'signup':
-        subject = 'تأكيد التسجيل - مسار X';
-        title = 'تأكيد حسابك';
-        bodyText = 'شكراً لانضمامك إلى منصة مسار X! يرجى النقر على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك.';
-        buttonText = 'تأكيد الحساب';
+        subject = 'تفعيل حسابك - مسار X';
+        title = 'مرحباً بك في مسار X';
+        bodyText = 'شكراً لتسجيلك في مسار X. لتفعيل حسابك وتأكيد بريدك الإلكتروني، اضغط على الزر أدناه.';
+        buttonText = 'تفعيل الحساب';
         actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=signup&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
       case 'recovery':
@@ -131,13 +131,13 @@ serve(async (req) => {
               </div>
 
               <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
-                إذا لم تطلب هذا الإجراء، يمكنك تجاهل هذا الإيميل.
+                إذا لم تقم بإنشاء حساب على مسار X، يمكنك تجاهل هذه الرسالة بأمان.
               </p>
 
               <div style="border-top: 1px solid #e5e7eb; margin: 32px 0 24px 0;"></div>
 
               <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; text-align: center; margin: 0;">
-                إذا كنت تواجه مشكلة في النقر على الزر، انسخ الرابط التالي والصقه في متصفحك:<br>
+                إذا لم يعمل الزر، انسخ الرابط التالي والصقه في متصفحك:<br>
                 <a href="${actionUrl}" style="color: #3b82f6; text-decoration: none; word-break: break-all;">${actionUrl}</a>
               </p>
             </div>
