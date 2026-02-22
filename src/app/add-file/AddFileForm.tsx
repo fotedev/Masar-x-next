@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -15,7 +15,7 @@ export function AddFileForm() {
   const { user, isAdmin, isAdminLoading } = useAuth();
   const { sendNotification } = useBrowserNotifications();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     const subject = searchParams.get("subject") || "";
     const lecture = searchParams.get("lecture") || "";
     if (subject) {
@@ -24,7 +24,7 @@ export function AddFileForm() {
       return;
     }
     router.back();
-  };
+  }, [router, searchParams]);
 
   const [formData, setFormData] = useState({
     title: "",
