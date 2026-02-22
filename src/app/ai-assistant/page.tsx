@@ -244,7 +244,7 @@ function AiAssistantChatPage() {
     } catch {
       // ignore
     }
-  }, [parseSupabaseDraftRow, user]);
+  }, [parseSupabaseDraftRow, user, quizService]);
 
   const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
     if (typeof window === "undefined") return [];
@@ -414,9 +414,10 @@ function AiAssistantChatPage() {
       const { data: quiz, error: quizError } = await supabase
         .from("quizzes")
         .insert({
-          title: quizData.title,
+          title: generatedQuiz.data.title,
+          content: JSON.stringify(generatedQuiz.data.questions),
           description: JSON.stringify(descriptionJson),
-          created_by: user.id,
+          user_id: user.id,
           source_type: "ai_generated",
           subject: submitSubject,
           department: submitDepartment,
@@ -427,26 +428,6 @@ function AiAssistantChatPage() {
         .single();
 
       if (quizError) throw quizError;
-
-      const questions = quizData.questions || [];
-      if (questions.length > 0) {
-        const questionsToInsert = questions.map(
-          (q: QuizQuestionInput, index: number) => ({
-            quiz_id: quiz.id,
-            question: q.question,
-            options: q.options,
-            correct_answer: q.correctAnswer,
-            explanation: q.explanation || null,
-            order_index: index,
-          }),
-        );
-
-        const { error: questionsError } = await supabase
-          .from("quiz_questions")
-          .insert(questionsToInsert);
-
-        if (questionsError) throw questionsError;
-      }
 
       setActiveQuizId(quiz.id);
 
@@ -471,7 +452,17 @@ function AiAssistantChatPage() {
     } finally {
       setIsSubmittingQuiz(false);
     }
-  }, [generatedQuiz, isSubmittingQuiz, setMessages, trackEvent, user]);
+  }, [
+    generatedQuiz,
+    isSubmittingQuiz,
+    setMessages,
+    trackEvent,
+    user,
+    submitAcademicLevel,
+    submitDepartment,
+    submitSemester,
+    submitSubject,
+  ]);
 
   // Generate quiz from user input
   const handleGenerateQuiz = async () => {

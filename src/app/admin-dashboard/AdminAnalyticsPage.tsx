@@ -132,7 +132,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
     };
 
     loadAnalyticsData();
-  }, [isAdmin]);
+  }, [isAdmin, isAdminLoading]);
 
   const loadAnalytics = async () => {
     // Keep this function for the retry button
