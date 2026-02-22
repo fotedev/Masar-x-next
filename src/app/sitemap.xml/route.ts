@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET() {
   const baseUrl = "https://masarx.vercel.app";
@@ -42,15 +47,8 @@ export async function GET() {
 
     if (subjects) {
       subjects.forEach((subject) => {
-        // Standard URL encoding for Arabic characters
         const encodedName = encodeURIComponent(subject.name.trim());
-        dynamicUrls += `
-  <url>
-    <loc>${baseUrl}/subjects/${encodedName}</loc>
-    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`;
+        dynamicUrls += `<url><loc>${baseUrl}/subjects/${encodedName}</loc><lastmod>${new Date().toISOString().split("T")[0]}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
       });
     }
 
@@ -61,13 +59,7 @@ export async function GET() {
 
     if (courses) {
       courses.forEach((course) => {
-        dynamicUrls += `
-  <url>
-    <loc>${baseUrl}/courses/${course.id}</loc>
-    <lastmod>${new Date(course.updated_at).toISOString().split("T")[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`;
+        dynamicUrls += `<url><loc>${baseUrl}/courses/${course.id}</loc><lastmod>${new Date(course.updated_at).toISOString().split("T")[0]}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
       });
     }
 
@@ -79,13 +71,7 @@ export async function GET() {
 
     if (summaries) {
       summaries.forEach((summary) => {
-        dynamicUrls += `
-  <url>
-    <loc>${baseUrl}/summaries/${summary.id}</loc>
-    <lastmod>${new Date(summary.updated_at).toISOString().split("T")[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>`;
+        dynamicUrls += `<url><loc>${baseUrl}/summaries/${summary.id}</loc><lastmod>${new Date(summary.updated_at).toISOString().split("T")[0]}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`;
       });
     }
   } catch (error) {
@@ -94,20 +80,12 @@ export async function GET() {
 
   const staticUrls = staticPaths
     .map(
-      (path) => `
-  <url>
-    <loc>${baseUrl}${path}</loc>
-    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>${path === "" ? "1.0" : "0.8"}</priority>
-  </url>`
+      (path) => `<url><loc>${baseUrl}${path}</loc><lastmod>${new Date().toISOString().split("T")[0]}</lastmod><changefreq>daily</changefreq><priority>${path === "" ? "1.0" : "0.8"}</priority></url>`
     )
     .join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticUrls}${dynamicUrls}
-</urlset>`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${staticUrls}${dynamicUrls}</urlset>`;
 
   return new NextResponse(xml, {
     headers: {
