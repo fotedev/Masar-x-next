@@ -92,6 +92,8 @@ function AiAssistantChatPage() {
     isPuterSignedIn,
     mode,
     setMode,
+    isReady,
+    loadingMessageCount,
   } = useAiChat(user, trackEvent);
 
   const [inputMessage, setInputMessage] = useState("");
@@ -601,34 +603,38 @@ function AiAssistantChatPage() {
           </button>
 
           <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
-          <button
-            onClick={() => setShowPuterModal(true)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all border ${
-              isPuterSignedIn
-                ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/20 shadow-sm shadow-green-500/10"
-                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-500 hover:border-indigo-200"
-            }`}
-            title={
-              isPuterSignedIn ? "إعدادات المساعد (متصل)" : "تحسين أداء المساعد"
-            }
-          >
-            {isPuterSignedIn ? (
-              <>
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-xs font-bold hidden md:inline">
-                  الوضع المتقدم
-                </span>
-                <LockIcon className="w-4 h-4" />
-              </>
-            ) : (
-              <>
-                <span className="text-xs font-bold hidden md:inline">
-                  تفعيل المساعد
-                </span>
-                <LockIcon className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          {/* تم إخفاء زر تسجيل Puter لأنه يتم التفعيل تلقائياً عند الحاجة */}
+          {false && (
+            <button
+              onClick={() => setShowPuterModal(true)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all border ${
+                isPuterSignedIn
+                  ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/20 shadow-sm shadow-green-500/10"
+                  : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-500 hover:border-indigo-200"
+              }`}
+              title={
+                isPuterSignedIn
+                  ? "إعدادات المساعد (متصل)"
+                  : "تحسين أداء المساعد"
+              }
+            >
+              {isPuterSignedIn ? (
+                <>
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-bold hidden md:inline">
+                    متصل
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Bot className="w-4 h-4" />
+                  <span className="text-xs font-bold hidden md:inline">
+                    تفعيل المساعد
+                  </span>
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={handleSummarizeChat}
             disabled={isSummarizing || !hasChatData}
@@ -914,7 +920,16 @@ function AiAssistantChatPage() {
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar scroll-smooth"
         >
-          {messages.length === 0 ? (
+          {!isReady ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium animate-pulse">
+                  جاري استعادة المحادثة...
+                </p>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
               <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-full flex items-center justify-center mb-8 animate-in zoom-in duration-500 shrink-0">
                 <Bot className="w-12 h-12 text-indigo-500" />
@@ -996,12 +1011,13 @@ function AiAssistantChatPage() {
                         : "يمكنك إرسال رسالتين فقط كزائر. سجّل حساباً أو استخدم Puter للمتابعة."}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-3">
-                    {!isPuterSignedIn && (
+                    {/* تم إخفاء زر التسجيل اليدوي لأنه يتم تلقائياً عند الإرسال */}
+                    {false && !isPuterSignedIn && (
                       <button
                         onClick={() => setShowPuterModal(true)}
                         className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline transition-all"
                       >
-                        تسجيل الدخول عبر Puter →
+                        استخدم Puter للمتابعة مجاناً
                       </button>
                     )}
                   </div>
@@ -1011,7 +1027,7 @@ function AiAssistantChatPage() {
           )}
 
           {/* Remaining messages indicator */}
-          {!hasReachedLimit && !user && (
+          {isReady && !loadingMessageCount && !hasReachedLimit && !user && (
             <div className="absolute -top-7 left-6 px-3 py-1 bg-white dark:bg-slate-800 border-x border-t border-slate-200/80 dark:border-slate-700/80 rounded-t-lg text-[11px] font-bold text-slate-500 shadow-sm z-10 transition-all opacity-80 hover:opacity-100">
               الرسائل المتبقية:{" "}
               <span
