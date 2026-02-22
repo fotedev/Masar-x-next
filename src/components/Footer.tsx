@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "../contexts/AuthContext";
 import {
   BookOpen,
   Newspaper,
@@ -14,8 +15,12 @@ import {
 } from "lucide-react";
 
 export function Footer() {
+  const { displayName } = useAuth();
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
+  const trwWhatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+    `أنا الطالب: ${displayName || "زائر"}، أريد الانضمام إلى قسم TRW`,
+  )}`;
 
   return (
     <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-8 pb-6 mt-auto transition-colors">
@@ -102,6 +107,22 @@ export function Footer() {
                   <Shield className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <span>سياسة الخصوصية</span>
                 </Link>
+              </li>
+              <li className="pt-2 border-t border-slate-100 dark:border-white/5 mt-2">
+                <a
+                  href={trwWhatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col gap-1 group/trw"
+                >
+                  <div className="flex items-center gap-2 text-red-500 dark:text-red-400 hover:text-red-600 transition-colors text-sm font-bold animate-pulse group-hover/trw:animate-none">
+                    <span>The Real World</span>
+                    <ExternalLink className="w-3 h-3 opacity-0 group-hover/trw:opacity-100 transition-opacity" />
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-500 pr-7 leading-tight">
+                    تواصل على واتساب للانضمام إلى القسم الغير اكاديمي
+                  </p>
+                </a>
               </li>
             </ul>
           </div>

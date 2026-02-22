@@ -59,7 +59,15 @@ export function SubjectsGrid({
 
       {filteredSubjects.length === 0 && (
         <div className="text-center py-12">
-          <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          {is_academic ? (
+            <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          ) : (
+            <img
+              src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
+              alt="TRW Logo"
+              className="w-24 h-24 object-contain mx-auto mb-4 grayscale opacity-50"
+            />
+          )}
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {is_academic ? "لا توجد مواد" : "لا يوجد محتوى"}
           </h3>
