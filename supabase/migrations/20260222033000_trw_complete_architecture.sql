@@ -232,10 +232,25 @@ END;
 $$;
 
 -- 1) profiles: add level and semester for onboarding, plus show_extra_assets for TRW
-ALTER TABLE IF EXISTS profiles
+ALTER TABLE IF EXISTS public.profiles
   ADD COLUMN IF NOT EXISTS level integer,
   ADD COLUMN IF NOT EXISTS semester integer,
   ADD COLUMN IF NOT EXISTS show_extra_assets boolean DEFAULT false;
+
+-- Add RLS policy for profiles selection
+DROP POLICY IF EXISTS "profiles_select_authenticated" ON public.profiles;
+CREATE POLICY "profiles_select_authenticated"
+  ON public.profiles FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Ensure everyone can view basic profile info if needed, but specifically authenticated users for their own and others' show_extra_assets
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+CREATE POLICY "Public profiles are viewable by everyone"
+  ON public.profiles FOR SELECT
+  TO public
+  USING (true);
+
 
 -- 11. RLS Policies
 
