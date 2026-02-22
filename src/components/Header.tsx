@@ -79,14 +79,23 @@ export const Header = React.memo(function Header() {
 
   // Fetch profile to check obfuscated visibility flag
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       const fetchProfile = async () => {
-        const { data } = await supabase
-          .from("profiles")
-          .select("show_extra_assets")
-          .eq("id", user.id)
-          .single();
-        setProfile(data);
+        try {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("show_extra_assets")
+            .eq("id", user.id)
+            .single();
+
+          if (error) {
+            // Silently handle cases where profile might not exist yet or RLS blocks it
+            return;
+          }
+          setProfile(data);
+        } catch (err) {
+          // ignore
+        }
       };
       fetchProfile();
 
@@ -106,8 +115,11 @@ export const Header = React.memo(function Header() {
       window.addEventListener("profileUpdate", handleProfileUpdate);
       return () =>
         window.removeEventListener("profileUpdate", handleProfileUpdate);
+    } else if (!loading && !user) {
+      // Clear profile if user logs out
+      setProfile(null);
     }
-  }, [user]);
+  }, [user, loading]);
 
   const isTRWVisible =
     isMounted && (hasSecretAccess || profile?.show_extra_assets === true);
