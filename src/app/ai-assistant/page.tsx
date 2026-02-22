@@ -244,7 +244,7 @@ function AiAssistantChatPage() {
     } catch {
       // ignore
     }
-  }, [parseSupabaseDraftRow, user, quizService]);
+  }, [parseSupabaseDraftRow, user]);
 
   const readLocalQuizzes = useCallback((): LocalGeneratedQuiz[] => {
     if (typeof window === "undefined") return [];
