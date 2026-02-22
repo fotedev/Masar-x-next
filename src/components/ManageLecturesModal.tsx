@@ -57,8 +57,6 @@ export function ManageLecturesModal({
       const decodedName = decodeURIComponent(subjectName).trim();
       const normalizedName = decodedName.replace(/\s+/g, " ");
 
-      console.log("Fetching lectures for standardized:", normalizedName);
-
       // Use ILIKE for case-insensitive and more flexible matching with Arabic characters
       // We use % around the term to ensure we find matches even with slight variations
       const { data, error } = await supabase
@@ -71,7 +69,6 @@ export function ManageLecturesModal({
 
       if (error) throw error;
 
-      console.log("Lectures found:", data?.length || 0);
       setLectures(data || []);
     } catch (error) {
       console.error("Error fetching lectures:", error);
