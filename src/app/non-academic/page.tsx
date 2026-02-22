@@ -1,52 +1,39 @@
 "use client";
 
+import { useTRWMembership } from "@/hooks/trw/useTRWHooks";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SubjectsGrid } from "../../components/SubjectsGrid";
-import { BookOpen, ShieldAlert } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { useAuth } from "../../contexts/AuthContext";
+import { ShieldAlert, Loader2 } from "lucide-react";
 
 export default function NonAcademicPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { data: membership, isLoading: membershipLoading } = useTRWMembership();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    async function checkAccess() {
-      if (authLoading) return;
+    if (membershipLoading) return;
 
-      if (!user) {
-        setIsAuthorized(false);
-        router.replace("/login");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("show_extra_assets")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !data?.show_extra_assets) {
-        setIsAuthorized(false);
+    if (membership) {
+      setIsAuthorized(true);
+    } else {
+      setIsAuthorized(false);
+      // Wait for a tick to avoid "update during render" warning if called directly
+      const timer = setTimeout(() => {
         router.replace("/");
-      } else {
-        setIsAuthorized(true);
-      }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-
-    checkAccess();
-  }, [user, authLoading, router]);
+  }, [membership, membershipLoading, router]);
 
   const handleSubjectClick = (subjectName: string) => {
     router.push(`/non-academic/${encodeURIComponent(subjectName)}`);
   };
 
-  if (authLoading || isAuthorized === null) {
+  if (membershipLoading || isAuthorized === null) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin" />
+        <Loader2 className="w-12 h-12 text-brand-blue animate-spin" />
         <p className="text-slate-500 font-bold animate-pulse">
           Authenticating...
         </p>
@@ -71,14 +58,18 @@ export default function NonAcademicPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="text-center max-w-2xl mx-auto">
-        <div className="inline-flex items-center justify-center p-3 bg-brand-blue/10 rounded-2xl mb-4">
-          <BookOpen className="w-8 h-8 text-brand-blue" />
+        <div className="inline-flex items-center justify-center mb-4">
+          <img
+            src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
+            alt="TRW Logo"
+            className="w-20 h-20 object-contain shadow-lg rounded-2xl"
+          />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-          TRW
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight uppercase">
+          MONEY MAKING IS A SKILL
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg">
-          Welcome to the Real World
+          Here you will teach you how to master it
         </p>
       </div>
 
