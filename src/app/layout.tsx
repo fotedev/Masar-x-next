@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NotificationProvider } from "@/components/NotificationManager";
 import { Layout } from "@/components/Layout";
 import { Toaster } from "sonner";
+import { QueryProvider } from "@/components/QueryProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 const almarai = Almarai({
@@ -86,7 +87,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning style={{ overflowX: "clip" }}>
+    <html
+      lang="ar"
+      dir="rtl"
+      suppressHydrationWarning
+      style={{ overflowX: "clip" }}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -110,12 +116,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <ThemeProvider>
-            <NotificationProvider>
-              <Layout>{children}</Layout>
-              <Toaster position="top-center" dir="rtl" richColors />
-            </NotificationProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <NotificationProvider>
+                <Layout>{children}</Layout>
+                <Toaster position="top-center" dir="rtl" richColors />
+              </NotificationProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

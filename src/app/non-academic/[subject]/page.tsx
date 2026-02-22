@@ -79,7 +79,7 @@ function SubjectDetailsContent() {
               {normalizedSubjectName}
             </h1>
             <p className="text-xl text-brand-blue font-bold tracking-widest uppercase">
-              Welcome to the Real World
+              MONEY MAKING IS A SKILL
             </p>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
               {subjectDetails?.description ||

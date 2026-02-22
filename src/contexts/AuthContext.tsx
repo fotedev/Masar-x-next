@@ -80,12 +80,17 @@ export function AuthProvider({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const getDisplayName = useCallback((u: User) => {
-    return (
+    // Check user_metadata and app_metadata for display_name or full_name
+    const name =
       u.user_metadata?.display_name ||
+      u.user_metadata?.full_name ||
       u.user_metadata?.name ||
-      u.email?.split("@")[0] ||
-      "مستخدم"
-    );
+      u.user_metadata?.email?.split("@")[0] ||
+      u.app_metadata?.display_name ||
+      u.app_metadata?.full_name ||
+      u.email?.split("@")[0];
+
+    return name || "مستخدم";
   }, []);
 
   const adminCacheRef = useRef<{
@@ -263,7 +268,12 @@ export function AuthProvider({
 
         const currentUser = session?.user ?? null;
         setUser(currentUser);
-        setDisplayName(currentUser ? getDisplayName(currentUser) : null);
+
+        // Use a more direct extraction from session if available
+        const nameFromSession = currentUser
+          ? getDisplayName(currentUser)
+          : null;
+        setDisplayName(nameFromSession);
 
         if (currentUser) {
           const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
