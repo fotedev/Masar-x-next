@@ -34,7 +34,7 @@ import { quizService } from "@/lib/quiz";
 import { useSubjects } from "@/hooks/useSubjects";
 
 const PuterSettingsModal = dynamic(
-  () => import("@/components/ai/PuterSettingsModal"),
+  () => import("@/components/ai/PuterSettingsModal").then((mod) => mod.default),
   { ssr: false },
 );
 
@@ -610,13 +610,33 @@ function AiAssistantChatPage() {
           </button>
 
           <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
-
           <button
             onClick={() => setShowPuterModal(true)}
-            className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-all"
-            title="إعدادات Puter"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all border ${
+              isPuterSignedIn
+                ? "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 hover:bg-green-500/20 shadow-sm shadow-green-500/10"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-500 hover:border-indigo-200"
+            }`}
+            title={
+              isPuterSignedIn ? "إعدادات المساعد (متصل)" : "تحسين أداء المساعد"
+            }
           >
-            <LockIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            {isPuterSignedIn ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-bold hidden md:inline">
+                  الوضع المتقدم
+                </span>
+                <LockIcon className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                <span className="text-xs font-bold hidden md:inline">
+                  تفعيل المساعد
+                </span>
+                <LockIcon className="w-4 h-4" />
+              </>
+            )}
           </button>
           <button
             onClick={handleSummarizeChat}
@@ -896,38 +916,6 @@ function AiAssistantChatPage() {
           </div>
         </div>
       )}
-
-      {/* Stats Bar */}
-      <div className="flex gap-3 mb-4 overflow-x-auto pb-2 shrink-0 scrollbar-hide px-1">
-        <div className="bg-white/60 dark:bg-slate-800/60 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
-          <Brain className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            البيانات:{" "}
-            <span className="text-indigo-600 dark:text-indigo-400">
-              {stats.totalChunks}
-            </span>{" "}
-            فقرة
-          </span>
-        </div>
-        <div className="bg-white/60 dark:bg-slate-800/60 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
-          <MessageSquare className="w-3.5 h-3.5 text-amber-500" />
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            المواضيع:{" "}
-            <span className="text-amber-600 dark:text-amber-400">
-              {stats.totalMessages}
-            </span>{" "}
-            رسائل
-          </span>
-        </div>
-        {isPuterSignedIn && (
-          <div className="bg-green-50/80 dark:bg-green-900/20 rounded-full py-1.5 px-4 flex items-center gap-2 whitespace-nowrap border border-green-200/50 dark:border-green-800/50 shadow-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-xs font-semibold text-green-700 dark:text-green-400">
-              مفعل وضع (Puter)
-            </span>
-          </div>
-        )}
-      </div>
 
       {/* Chat Messages */}
       <div className="flex-1 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 rounded-3xl mb-4 overflow-hidden flex flex-col shadow-sm">
@@ -1496,10 +1484,12 @@ function AiAssistantChatPage() {
       )}
 
       {/* Puter Settings Modal */}
-      <PuterSettingsModal
-        isOpen={showPuterModal}
-        onClose={() => setShowPuterModal(false)}
-      />
+      {showPuterModal && (
+        <PuterSettingsModal
+          isOpen={showPuterModal}
+          onClose={() => setShowPuterModal(false)}
+        />
+      )}
     </div>
   );
 }

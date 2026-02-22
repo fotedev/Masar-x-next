@@ -33,8 +33,9 @@ export class QuizService {
                     id: quizId,
                     title: quizData.title,
                     description: JSON.stringify(draftPayload),
+                    content: JSON.stringify(quizData.questions),
                     summary_id: quizData.summary_id ?? null,
-                    created_by: userId,
+                    user_id: userId,
                     subject: 'AI Assistant',
                     level: 0,
                     semester: 1,
@@ -86,7 +87,7 @@ export class QuizService {
             const { data, error } = await supabase
                 .from('quizzes')
                 .select('id, title, description, created_at')
-                .eq('created_by', userId)
+                .eq('user_id', userId)
                 .eq('status', 'draft')
                 .eq('source_type', 'ai_generated_draft')
                 .order('created_at', { ascending: false })

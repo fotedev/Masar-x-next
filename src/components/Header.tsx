@@ -132,14 +132,14 @@ export const Header = React.memo(function Header() {
 
     if (lockoutUntil && Date.now() < lockoutUntil) {
       const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
-      toast.error("System Locked", {
-        description: `Too many attempts. Try again in ${remaining} seconds.`,
+      toast.error("النظام مغلق", {
+        description: `محاولات كثيرة جداً. حاول مرة أخرى بعد ${remaining} ثانية.`,
       });
       return;
     }
 
     if (!accessKey.trim()) {
-      toast.error("Input required");
+      toast.error("مطلوب إدخال الكود");
       return;
     }
 
@@ -156,8 +156,9 @@ export const Header = React.memo(function Header() {
 
       if (data && !error) {
         if (data.used_count >= data.max_uses) {
-          toast.error("System Error", {
-            description: "Access key usage limit reached.",
+          toast.error("خطأ في النظام", {
+            description:
+              "عذراً، هذا الكود استنفد جميع محاولات الاستخدام المتاحة.",
           });
           setAttempts((prev) => prev + 1);
           return;
@@ -181,18 +182,18 @@ export const Header = React.memo(function Header() {
         if (newAttempts >= 5) {
           const lockTime = Date.now() + 30 * 1000;
           setLockoutUntil(lockTime);
-          toast.error("Security Alert", {
-            description: "Too many failed attempts. System locked for 30s.",
+          toast.error("تنبيه أمني", {
+            description: "محاولات فاشلة كثيرة. تم قفل النظام لمدة 30 ثانية.",
           });
         } else {
-          toast.error("System Error", {
-            description: "Invalid credentials.",
+          toast.error("خطأ في النظام", {
+            description: "الكود الذي أدخلته غير صحيح أو منتهي الصلاحية.",
           });
         }
       }
     } catch (err) {
       console.error("Verification error:", err);
-      toast.error("Connection error");
+      toast.error("خطأ في الاتصال");
     } finally {
       setIsVerifying(false);
     }
@@ -374,20 +375,6 @@ export const Header = React.memo(function Header() {
                     )}
                   </button>
 
-                  <button
-                    onClick={() => handleNavigate("news")}
-                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted && currentPage === "news"
-                        ? "text-brand-blue"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    الأخبار
-                    {isMounted && currentPage === "news" && (
-                      <span className="absolute bottom-0.5 right-3.5 left-3.5 h-0.5 bg-brand-blue rounded-full" />
-                    )}
-                  </button>
-
                   {isTRWVisible && (
                     <button
                       onClick={() => handleNavigate("non-academic")}
@@ -402,6 +389,20 @@ export const Header = React.memo(function Header() {
                       TRW
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleNavigate("news")}
+                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isMounted && currentPage === "news"
+                        ? "text-brand-blue"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
+                    }`}
+                  >
+                    الأخبار
+                    {isMounted && currentPage === "news" && (
+                      <span className="absolute bottom-0.5 right-3.5 left-3.5 h-0.5 bg-brand-blue rounded-full" />
+                    )}
+                  </button>
 
                   {/* Thin separator */}
                   <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-1" />
@@ -642,6 +643,14 @@ export const Header = React.memo(function Header() {
                     <span className="text-xl">🏠</span>
                     <span>الرئيسية</span>
                   </button>
+                  {isTRWVisible && (
+                    <button
+                      onClick={() => handleNavigate("non-academic")}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold ${currentPage === "non-academic" ? "bg-red-600/10 text-red-600" : "text-red-500"}`}
+                    >
+                      <span>The Real World</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleNavigate("news")}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "news" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
@@ -649,15 +658,6 @@ export const Header = React.memo(function Header() {
                     <span className="text-xl">📰</span>
                     <span>الأخبار</span>
                   </button>
-                  {isTRWVisible && (
-                    <button
-                      onClick={() => handleNavigate("non-academic")}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold ${currentPage === "non-academic" ? "bg-red-600/10 text-red-600" : "text-red-500"}`}
-                    >
-                      <span className="text-xl">🧧</span>
-                      <span>The Real World</span>
-                    </button>
-                  )}
                   <button
                     onClick={() => handleNavigate("subjects")}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "subjects" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
