@@ -95,6 +95,19 @@ export default function RootLayout({
     >
       <head>
         <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "MasarX",
+              url: SITE_URL,
+              description:
+                "Study summaries, quizzes, courses, and AI assistant platform",
+            }),
+          }}
+        />
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

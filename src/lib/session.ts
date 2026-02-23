@@ -8,11 +8,17 @@ const SESSION_STORAGE_KEY = 'masarx_session_id';
  * but is cleared when the tab/browser is closed, ensuring privacy.
  */
 export const getSessionId = (): string => {
+    if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return uuidv4();
+
     let sessionId = sessionStorage.getItem(SESSION_STORAGE_KEY);
 
     if (!sessionId) {
         sessionId = uuidv4();
-        sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+        try {
+            sessionStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+        } catch {
+            // ignore
+        }
     }
 
     return sessionId;
@@ -23,6 +29,12 @@ export const getSessionId = (): string => {
  */
 export const resetSessionId = (): string => {
     const newSessionId = uuidv4();
-    sessionStorage.setItem(SESSION_STORAGE_KEY, newSessionId);
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+        try {
+            sessionStorage.setItem(SESSION_STORAGE_KEY, newSessionId);
+        } catch {
+            // ignore
+        }
+    }
     return newSessionId;
 };

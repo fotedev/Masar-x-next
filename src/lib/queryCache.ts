@@ -27,9 +27,9 @@ class QueryCache {
      */
     get<T>(key: string): T | null {
         const entry = this.cache.get(key) as CacheEntry<T> | undefined;
-        
+
         // Try local storage if not in memory
-        if (!entry && typeof window !== 'undefined') {
+        if (!entry && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             try {
                 const stored = localStorage.getItem(`cache_${key}`);
                 if (stored) {
@@ -53,7 +53,7 @@ class QueryCache {
         const now = Date.now();
         if (now - entry.timestamp > entry.ttl) {
             this.cache.delete(key);
-            if (typeof window !== 'undefined') {
+            if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
                 localStorage.removeItem(`cache_${key}`);
             }
             return null;
@@ -72,9 +72,9 @@ class QueryCache {
             ttl: ttlMs,
         };
         this.cache.set(key, entry);
-        
+
         // Also persist to local storage for important keys
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             try {
                 localStorage.setItem(`cache_${key}`, JSON.stringify(entry));
             } catch {
@@ -88,7 +88,7 @@ class QueryCache {
      */
     invalidate(key: string): void {
         this.cache.delete(key);
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             localStorage.removeItem(`cache_${key}`);
         }
     }
@@ -109,9 +109,9 @@ class QueryCache {
                 this.invalidate(key);
             }
         }
-        
+
         // Also check localStorage
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             try {
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -130,7 +130,7 @@ class QueryCache {
      */
     invalidateAll(): void {
         this.cache.clear();
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             try {
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);

@@ -27,7 +27,7 @@ export function useNotifications() {
       // Check cache first (unless skipping)
       if (!skipCache) {
         const cached = queryCache.get<Notification[]>(cacheKey);
-        if (cached) {
+        if (cached && Array.isArray(cached)) {
           setNotifications(cached);
           setUnreadCount(cached.filter((n: Notification) => !n.read).length);
           setLoading(false);

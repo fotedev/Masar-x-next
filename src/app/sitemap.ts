@@ -9,40 +9,24 @@ const supabase = createClient(
 const baseUrl = "https://masarx.vercel.app";
 
 const staticPaths = [
-  "",
-  "/add",
-  "/add-file",
-  "/add-summary",
-  "/add-video",
-  "/admin-dashboard",
-  "/ai-assistant",
-  "/courses",
-  "/edit-summary",
-  "/faq",
-  "/instructor-dashboard",
-  "/login",
-  "/news",
-  "/privacy",
-  "/privacy-details",
-  "/privacy-policy",
-  "/profile",
-  "/quiz-attempts",
-  "/quiz-play",
-  "/quizzes",
-  "/reset-password",
-  "/signup",
-  "/subjects",
-  "/summaries",
+  { path: "", priority: 1.0, changeFrequency: "daily" as const },
+  { path: "/subjects", priority: 0.9, changeFrequency: "daily" as const },
+  { path: "/summaries", priority: 0.9, changeFrequency: "daily" as const },
+  { path: "/quizzes", priority: 0.9, changeFrequency: "daily" as const },
+  { path: "/courses", priority: 0.8, changeFrequency: "weekly" as const },
+  { path: "/news", priority: 0.7, changeFrequency: "weekly" as const },
+  { path: "/faq", priority: 0.5, changeFrequency: "monthly" as const },
+  { path: "/privacy-policy", priority: 0.3, changeFrequency: "yearly" as const },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const today = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = staticPaths.map((path) => ({
-    url: `${baseUrl}${path}`,
+  const staticEntries: MetadataRoute.Sitemap = staticPaths.map((item) => ({
+    url: `${baseUrl}${item.path}`,
     lastModified: today,
-    changeFrequency: "daily",
-    priority: path === "" ? 1.0 : 0.8,
+    changeFrequency: item.changeFrequency,
+    priority: item.priority,
   }));
 
   let dynamicEntries: MetadataRoute.Sitemap = [];

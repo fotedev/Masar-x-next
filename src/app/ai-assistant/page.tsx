@@ -264,7 +264,7 @@ function AiAssistantChatPage() {
     if (user && !loading && !hasSynced) {
       const syncDrafts = async () => {
         const localItems = readLocalQuizzes();
-        if (localItems.length > 0) {
+        if (localItems && localItems.length > 0) {
           try {
             const { count } = await quizService.syncLocalQuizzes(
               user.id,
@@ -659,7 +659,7 @@ function AiAssistantChatPage() {
             <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
-          {generatedQuiz && (
+          {generatedQuiz?.data && (
             <>
               <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
               <button
@@ -668,7 +668,7 @@ function AiAssistantChatPage() {
                 title={`آخر اختبار مولّد: ${generatedQuiz.data.title}`}
               >
                 آخر اختبار
-                {localGeneratedQuizzes.length > 1
+                {localGeneratedQuizzes && localGeneratedQuizzes.length > 1
                   ? ` (${localGeneratedQuizzes.length})`
                   : ""}
               </button>
@@ -694,18 +694,20 @@ function AiAssistantChatPage() {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white">
-                  {generatedQuiz.data.title}
+              {generatedQuiz?.data && (
+                <div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">
+                    {generatedQuiz.data.title}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {user
+                      ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
+                      : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
+                  </div>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {user
-                    ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
-                    : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
-                </div>
-              </div>
+              )}
 
-              {localGeneratedQuizzes.length > 1 && (
+              {localGeneratedQuizzes && localGeneratedQuizzes.length > 0 && (
                 <div>
                   <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
                     اختر اختباراً
@@ -724,7 +726,7 @@ function AiAssistantChatPage() {
                   >
                     {localGeneratedQuizzes.map((q) => (
                       <option key={q.localId} value={q.localId}>
-                        {q.data.title}
+                        {q.data?.title || "بدون عنوان"}
                       </option>
                     ))}
                   </select>
@@ -929,7 +931,7 @@ function AiAssistantChatPage() {
                 </p>
               </div>
             </div>
-          ) : messages.length === 0 ? (
+          ) : messages?.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
               <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-full flex items-center justify-center mb-8 animate-in zoom-in duration-500 shrink-0">
                 <Bot className="w-12 h-12 text-indigo-500" />
@@ -1258,20 +1260,22 @@ function AiAssistantChatPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              {generatedQuiz.data.questions.length === 0 ? (
+              {!generatedQuiz?.data?.questions ||
+              generatedQuiz.data.questions.length === 0 ? (
                 <div className="text-center text-slate-500 dark:text-slate-400 p-8">
                   لا توجد أسئلة في هذا الاختبار.
                 </div>
               ) : (
                 (() => {
-                  const q = generatedQuiz.data.questions[localQuizIndex];
+                  const questions = generatedQuiz.data.questions;
+                  const q = questions[localQuizIndex];
+                  if (!q) return null;
                   const correct = q.correctAnswer;
                   return (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                         <span>
-                          سؤال {localQuizIndex + 1} من{" "}
-                          {generatedQuiz.data.questions.length}
+                          سؤال {localQuizIndex + 1} من {questions.length}
                         </span>
                         <button
                           onClick={() => {
@@ -1293,7 +1297,7 @@ function AiAssistantChatPage() {
                       </div>
 
                       <div className="grid grid-cols-1 gap-2">
-                        {q.options.map((opt, idx) => {
+                        {q.options?.map((opt, idx) => {
                           const isSelected = localSelectedOption === idx;
                           const isCorrect = idx === correct;
                           const showCorrectness = localAnswered;
@@ -1362,24 +1366,15 @@ function AiAssistantChatPage() {
                         ) : (
                           <button
                             onClick={() => {
-                              if (
-                                localQuizIndex >=
-                                generatedQuiz.data.questions.length - 1
-                              )
+                              if (localQuizIndex >= questions.length - 1)
                                 return;
                               setLocalQuizIndex((prev) =>
-                                Math.min(
-                                  generatedQuiz.data.questions.length - 1,
-                                  prev + 1,
-                                ),
+                                Math.min(questions.length - 1, prev + 1),
                               );
                               setLocalSelectedOption(null);
                               setLocalAnswered(false);
                             }}
-                            disabled={
-                              localQuizIndex >=
-                              generatedQuiz.data.questions.length - 1
-                            }
+                            disabled={localQuizIndex >= questions.length - 1}
                             className="px-4 py-2 rounded-xl bg-brand-orange text-white hover:opacity-90 transition-all text-sm font-semibold disabled:opacity-50"
                           >
                             التالي
