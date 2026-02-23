@@ -2,6 +2,8 @@ import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects } from "../hooks/useSubjects";
 
+import { usePlatformSettings } from "../hooks/usePlatformSettings";
+
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
   showOnlyOnHome?: boolean;
@@ -13,11 +15,21 @@ export function SubjectsGrid({
   showOnlyOnHome = false,
   is_academic = true,
 }: SubjectsGridProps) {
+  const { activeSemester } = usePlatformSettings();
   const { subjects, loading } = useSubjects({ is_academic });
 
-  const filteredSubjects = showOnlyOnHome
-    ? subjects.filter((s) => s.show_on_home)
-    : subjects;
+  const filteredSubjects = subjects.filter((s) => {
+    // 1. Home visibility check
+    if (showOnlyOnHome && !s.show_on_home) return false;
+
+    // 2. Semester filter (only for academic subjects)
+    if (is_academic) {
+      if (!s.semester) return true; // General subjects show in both semesters
+      return Number(s.semester) === activeSemester;
+    }
+
+    return true;
+  });
 
   if (loading) {
     return (

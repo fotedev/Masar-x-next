@@ -7,6 +7,7 @@ import { useSubjects } from "../hooks/useSubjects";
 import { useAuth } from "../contexts/AuthContext";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { EditSummaryModal } from "../components/EditSummaryModal";
+import { usePlatformSettings } from "../hooks/usePlatformSettings";
 import { SummaryWithRatings, Quiz } from "../types/database";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
@@ -15,6 +16,7 @@ export default function HomePage() {
   const { user, isAdmin } = useAuth();
   const { summaries, editSummary, loading: summariesLoading } = useSummaries();
   const { subjects, loading: subjectsLoading } = useSubjects();
+  const { activeSemester } = usePlatformSettings();
   const { trackSummaryClick } = useAnalytics();
   const [displaySummaries, setDisplaySummaries] = useState<
     SummaryWithRatings[]
@@ -35,23 +37,31 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // Filter summaries by approval status AND subject visibility
+    // Filter summaries by approval status AND subject visibility AND active semester
     const visibleSubjectNames = subjects
-      .filter((s) => s.show_on_home)
+      .filter(
+        (s) =>
+          s.show_on_home &&
+          (!s.semester || Number(s.semester) === activeSemester),
+      )
       .map((s) => s.name);
 
     const approvedSummaries = summaries.filter(
       (s) => s.status === "approved" && visibleSubjectNames.includes(s.subject),
     );
     setDisplaySummaries(approvedSummaries);
-  }, [summaries, subjects]);
+  }, [summaries, subjects, activeSemester]);
 
   useEffect(() => {
     const normalizeSubjectName = (value: string) =>
       (value || "").trim().replace(/\s+/g, " ");
 
     const visibleSubjectNames = subjects
-      .filter((s) => s.show_on_home)
+      .filter(
+        (s) =>
+          s.show_on_home &&
+          (!s.semester || Number(s.semester) === activeSemester),
+      )
       .map((s) => s.name);
     const visibleSubjectSet = new Set(
       visibleSubjectNames.map((n) => normalizeSubjectName(n)).filter(Boolean),
