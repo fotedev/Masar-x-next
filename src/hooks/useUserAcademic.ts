@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { queryCache } from "../lib/queryCache";
 
 export type AcademicLevel = {
   id: string;
@@ -106,7 +107,7 @@ export function useUserAcademic() {
           const parsed: AcademicCache = JSON.parse(cachedData);
           const isExpired = Date.now() - parsed.lastFetched > CACHE_TTL;
 
-          if (!isExpired && parsed.levels.length > 0) {
+          if (!isExpired && parsed.levels && parsed.levels.length > 0) {
             setLevels(parsed.levels);
             setDepartments(parsed.departments);
             setOptionsLoading(false);
@@ -246,24 +247,10 @@ export function useUserAcademic() {
         }
       }
 
-      setLoading(true);
-      try {
-        await executeWithRetry(async () => {
-          const { error } = await supabase.from("profiles").upsert(
-            {
-              id: user.id,
-              level: next.level,
-              semester: next.semester,
-              department_id: next.department_id,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "id" },
-          );
-          if (error) throw error;
-        });
-
-        setAcademic(next);
-
+    try {
+      // Optimistically update the state and cache
+      setAcademic(next);
+      if (typeof window !== 'undefined') {
         localStorage.setItem(
           USER_ACADEMIC_CACHE_KEY,
           JSON.stringify({
@@ -272,13 +259,37 @@ export function useUserAcademic() {
             userId: user.id,
           }),
         );
-
-        return { success: true };
-      } catch (e: any) {
-        return { success: false, message: "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى." };
-      } finally {
-        setLoading(false);
+        queryCache.invalidatePrefix("subjects");
       }
+
+      await executeWithRetry(async () => {
+        const { error } = await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            level: next.level,
+            semester: next.semester,
+            department_id: next.department_id,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" },
+        );
+        if (error) throw error;
+      });
+
+      setAcademic(next);
+
+      // Invalidate subjects cache to ensure fresh data for the new level/semester
+      if (typeof window !== 'undefined') {
+        queryCache.invalidatePrefix("subjects");
+      }
+
+      return { success: true };
+    } catch (e: any) {
+      console.error("Error setting user academic:", e);
+      return { success: false, message: "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى." };
+    } finally {
+      // No-op
+    }
     },
     [user],
   );

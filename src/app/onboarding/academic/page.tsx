@@ -80,6 +80,7 @@ export default function AcademicOnboardingPage() {
 
     setSaving(true);
     try {
+      // Small timeout to allow optimistic UI updates to happen first
       const result = await setUserAcademic(
         {
           level,
@@ -88,12 +89,17 @@ export default function AcademicOnboardingPage() {
         },
         { isProfileUpdate: false },
       );
+
       if (!result.success) {
         setError(result.message || "حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
+        setSaving(false);
         return;
       }
+
+      // Redirect immediately after optimistic update succeeds
       router.replace("/");
-    } finally {
+    } catch (err) {
+      setError("حدث خطأ غير متوقع. حاول مرة أخرى.");
       setSaving(false);
     }
   };

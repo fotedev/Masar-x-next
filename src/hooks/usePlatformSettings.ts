@@ -88,6 +88,8 @@ export function usePlatformSettings() {
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeSemester', semester.toString());
+        // Dispatch custom event to notify other parts of the UI
+        window.dispatchEvent(new CustomEvent('activeSemesterChanged', { detail: semester }));
       }
       return true;
     } catch {
@@ -99,6 +101,64 @@ export function usePlatformSettings() {
 
   useEffect(() => {
     fetchSettings();
+
+    // Listen for changes from other components/tabs
+    const handleCustomEvent = (e: any) => {
+      const newVal = Number(e.detail);
+      if (!isNaN(newVal)) {
+        setSettings({ active_semester: newVal });
+      }
+    };
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'activeSemester' && e.newValue) {
+        const newVal = Number(e.newValue);
+        if (!isNaN(newVal)) {
+          setSettings({ active_semester: newVal });
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('activeSemesterChanged', handleCustomEvent);
+      window.addEventListener('storage', handleStorageChange);
+    }
+
+    // Optional: Realtime subscription to Supabase changes
+    const channel = supabase
+      .channel('platform_settings_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'platform_settings',
+          filter: 'key=eq.active_semester'
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).value) {
+            const rawVal = (payload.new as any).value.semester;
+            const newVal = Number(rawVal);
+            if (!isNaN(newVal)) {
+              setSettings({ active_semester: newVal });
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('activeSemester', newVal.toString());
+                // Force a custom event to notify other hooks that might not be using Supabase Realtime
+                window.dispatchEvent(new CustomEvent('activeSemesterChanged', { detail: newVal }));
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('activeSemesterChanged', handleCustomEvent);
+        window.removeEventListener('storage', handleStorageChange);
+      }
+      supabase.removeChannel(channel);
+    };
   }, [fetchSettings]);
 
   return {

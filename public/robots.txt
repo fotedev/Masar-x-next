@@ -1,11 +1,20 @@
 User-agent: *
 Allow: /
 
-# Block access to admin areas
+# Private and low-value pages
 Disallow: /admin*
-
-# Block access to API endpoints
-Disallow: /api/
+Disallow: /instructor-dashboard
+Disallow: /profile
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /add
+Disallow: /add-file
+Disallow: /add-summary
+Disallow: /add-video
+Disallow: /edit-summary
+Disallow: /quiz-play
+Disallow: /quiz-attempts
 
 # Block access to development files
 Disallow: /src/

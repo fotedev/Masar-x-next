@@ -1,20 +1,46 @@
 import { Layout, Eye, EyeOff, Search } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSubjects } from "../hooks/useSubjects";
 import { SemesterSwitcher } from "./SemesterSwitcher";
+import { usePlatformSettings } from "../hooks/usePlatformSettings";
 
 export function PageManagementTab() {
-  const { subjects, loading, updateSubjectVisibility } = useSubjects();
+  const { activeSemester, loading: settingsLoading } = usePlatformSettings();
+  const {
+    subjects,
+    loading: subjectsLoading,
+    updateSubjectVisibility,
+  } = useSubjects();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredSubjects = useMemo(() => {
-    if (!searchTerm) return subjects;
-    return subjects.filter((s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [subjects, searchTerm]);
+  const isLoading = subjectsLoading || settingsLoading;
 
-  if (loading) {
+  // Re-calculate filtered subjects whenever activeSemester or subjects change
+  const filteredSubjects = useMemo(() => {
+    if (!subjects || subjects.length === 0) return [];
+
+    // 1. Filter by active semester
+    const semesterFiltered = subjects.filter((s) => {
+      const subjectSem = s.semester ? Number(s.semester) : null;
+      if (subjectSem === null) return true;
+      return subjectSem === activeSemester;
+    });
+
+    // 2. Filter by search term
+    if (!searchTerm) return semesterFiltered;
+    return semesterFiltered.filter((s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [subjects, searchTerm, activeSemester]);
+
+  // Effect to handle manual refresh if needed, though useSubjects should handle it
+  useEffect(() => {
+    // This effect ensures that when activeSemester changes,
+    // we are at least aware of it in this component
+    console.log("Active semester changed to:", activeSemester);
+  }, [activeSemester]);
+
+  if (isLoading && subjects.length === 0) {
     return (
       <div className="flex items-center justify-center p-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -63,15 +89,27 @@ export function PageManagementTab() {
             }`}
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className={`font-bold text-base ${
-                subject.show_on_home ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"
-              }`}>
+              <h3
+                className={`font-bold text-base ${
+                  subject.show_on_home
+                    ? "text-gray-900 dark:text-white"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              >
                 {subject.name}
               </h3>
-              <div className={`p-2 rounded-lg ${
-                subject.show_on_home ? "bg-green-100 dark:bg-green-900/30 text-green-600" : "bg-gray-100 dark:bg-gray-800 text-gray-400"
-              }`}>
-                {subject.show_on_home ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <div
+                className={`p-2 rounded-lg ${
+                  subject.show_on_home
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-600"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-400"
+                }`}
+              >
+                {subject.show_on_home ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
               </div>
             </div>
 
@@ -80,7 +118,9 @@ export function PageManagementTab() {
                 {subject.show_on_home ? "ظاهرة للطلاب" : "مخفية"}
               </span>
               <button
-                onClick={() => updateSubjectVisibility(subject.id, !subject.show_on_home)}
+                onClick={() =>
+                  updateSubjectVisibility(subject.id, !subject.show_on_home)
+                }
                 className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                   subject.show_on_home
                     ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
@@ -97,7 +137,9 @@ export function PageManagementTab() {
       {filteredSubjects.length === 0 && (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/30 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800">
           <Layout className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-          <p className="text-gray-500 dark:text-gray-400">لا توجد مواد تطابق بحثك</p>
+          <p className="text-gray-500 dark:text-gray-400">
+            لا توجد مواد تطابق بحثك
+          </p>
         </div>
       )}
     </div>

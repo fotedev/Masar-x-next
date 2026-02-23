@@ -347,7 +347,26 @@ function SubjectSummariesContent() {
     }
   };
 
-  const getLectureInfoFromTitle = (title: string) => {
+  const getLectureInfoFromTitle = (title: string, quizDescription?: string) => {
+    // 0. Check if it's a quiz with lecture_key in description
+    if (quizDescription && quizDescription.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(quizDescription);
+        if (parsed.lecture_key) {
+          const matchingLecture = savedLectures.find(
+            (l) => l.lecture_key === parsed.lecture_key,
+          );
+          return {
+            key: parsed.lecture_key,
+            label: matchingLecture?.lecture_label || "محاضرة",
+            order: matchingLecture?.order_index || 999999,
+          };
+        }
+      } catch (e) {
+        // ignore JSON parse error
+      }
+    }
+
     const t = (title || "").trim();
     if (!t) {
       return {
@@ -517,7 +536,7 @@ function SubjectSummariesContent() {
     });
 
     subjectQuizzes.forEach((q) => {
-      const info = getLectureInfoFromTitle(q.title);
+      const info = getLectureInfoFromTitle(q.title, q.description || undefined);
       bump(info.key, info.label, info.order, "exams");
     });
 
@@ -571,9 +590,11 @@ function SubjectSummariesContent() {
   const lectureFilteredQuizzes = useMemo(() => {
     const key = selectedLectureKey || "other";
     return subjectQuizzes.filter(
-      (q) => getLectureInfoFromTitle(q.title).key === key,
+      (q) =>
+        getLectureInfoFromTitle(q.title, q.description || undefined).key ===
+        key,
     );
-  }, [selectedLectureKey, subjectQuizzes]);
+  }, [selectedLectureKey, subjectQuizzes, savedLectures]);
 
   const fetchSubjectQuizzes = useCallback(
     async (skipCache = false) => {
@@ -631,6 +652,16 @@ function SubjectSummariesContent() {
   useEffect(() => {
     fetchSubjectQuizzes();
   }, [fetchSubjectQuizzes]);
+
+  useEffect(() => {
+    if (showAddExamForm && subjectDetails) {
+      setExamFormData((p) => ({
+        ...p,
+        year: subjectDetails.level || "",
+        department: subjectDetails.semester || "", // Or handle department appropriately if it exists in subjectDetails
+      }));
+    }
+  }, [showAddExamForm, subjectDetails]);
 
   const handleSaveExam = async () => {
     if (!user) {
@@ -1402,12 +1433,12 @@ function SubjectSummariesContent() {
                                 item.id || item.url || item.file_url,
                               );
                             }}
-                            className={`p-2 rounded-xl transition-all ${
+                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
                               completedContent.has(
                                 item.id || item.url || item.file_url,
                               )
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/30"
-                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-green-50 hover:text-green-500"
+                                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
+                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
                             }`}
                             title={
                               completedContent.has(
@@ -1417,7 +1448,20 @@ function SubjectSummariesContent() {
                                 : "تحديد كمكتمل"
                             }
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            <CheckCircle
+                              className={`w-5 h-5 transition-transform duration-500 ${
+                                completedContent.has(
+                                  item.id || item.url || item.file_url,
+                                )
+                                  ? "scale-110 rotate-[360deg]"
+                                  : "group-hover/btn:rotate-12"
+                              }`}
+                            />
+                            {completedContent.has(
+                              item.id || item.url || item.file_url,
+                            ) && (
+                              <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/20 pointer-events-none" />
+                            )}
                           </button>
                           <button
                             onClick={() => {
@@ -1470,12 +1514,12 @@ function SubjectSummariesContent() {
                                 item.id || item.url || item.file_url,
                               );
                             }}
-                            className={`p-2 rounded-xl transition-all ${
+                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
                               completedContent.has(
                                 item.id || item.url || item.file_url,
                               )
-                                ? "bg-white/30 text-white"
-                                : "bg-white/10 text-white/60 hover:bg-white/20"
+                                ? "bg-white text-emerald-600 shadow-lg scale-110"
+                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:scale-105"
                             }`}
                             title={
                               completedContent.has(
@@ -1485,7 +1529,20 @@ function SubjectSummariesContent() {
                                 : "تحديد كمكتمل"
                             }
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            <CheckCircle
+                              className={`w-5 h-5 transition-transform duration-500 ${
+                                completedContent.has(
+                                  item.id || item.url || item.file_url,
+                                )
+                                  ? "scale-110 rotate-[360deg]"
+                                  : "group-hover/btn:rotate-12"
+                              }`}
+                            />
+                            {completedContent.has(
+                              item.id || item.url || item.file_url,
+                            ) && (
+                              <span className="absolute inset-0 rounded-xl animate-ping bg-white/40 pointer-events-none" />
+                            )}
                           </button>
                         )}
                       </div>
@@ -1537,10 +1594,10 @@ function SubjectSummariesContent() {
                               e.stopPropagation();
                               toggleProgress(item.id);
                             }}
-                            className={`p-2 rounded-xl transition-all ${
+                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
                               completedContent.has(item.id)
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/30"
-                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-green-50 hover:text-green-500"
+                                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
+                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
                             }`}
                             title={
                               completedContent.has(item.id)
@@ -1548,7 +1605,16 @@ function SubjectSummariesContent() {
                                 : "تحديد كمكتمل"
                             }
                           >
-                            <CheckCircle className="w-5 h-5" />
+                            <CheckCircle
+                              className={`w-5 h-5 transition-transform duration-500 ${
+                                completedContent.has(item.id)
+                                  ? "scale-110 rotate-[360deg]"
+                                  : "group-hover/btn:rotate-12"
+                              }`}
+                            />
+                            {completedContent.has(item.id) && (
+                              <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/20 pointer-events-none" />
+                            )}
                           </button>
                         )}
                       </div>
@@ -1767,12 +1833,8 @@ function SubjectSummariesContent() {
                       اختر القسم...
                     </option>
                     {availableExamDepartments.map((dep) => (
-                      <option
-                        key={dep.id}
-                        value={dep.name}
-                        disabled={!dep.is_active}
-                      >
-                        {dep.name}
+                      <option key={dep.id} value={dep.name}>
+                        {dep.name} {!dep.is_active && "(غير نشط)"}
                       </option>
                     ))}
                   </select>
@@ -1797,12 +1859,8 @@ function SubjectSummariesContent() {
                       اختر المستوى...
                     </option>
                     {levels.map((lvl) => (
-                      <option
-                        key={lvl.id}
-                        value={lvl.name}
-                        disabled={!lvl.is_active}
-                      >
-                        {lvl.name}
+                      <option key={lvl.id} value={lvl.name}>
+                        {lvl.name} {!lvl.is_active && "(غير نشط)"}
                       </option>
                     ))}
                   </select>
