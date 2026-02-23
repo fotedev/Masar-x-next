@@ -40,10 +40,14 @@ export function useAiChat(user: any, trackEvent: any) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setMessages(parsed.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          })));
+          if (Array.isArray(parsed)) {
+            setMessages(parsed.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            })));
+          } else {
+            setMessages([]);
+          }
         } catch (e) {
           console.error("Failed to parse guest messages", e);
           setMessages([]);
@@ -59,7 +63,7 @@ export function useAiChat(user: any, trackEvent: any) {
   // AUTHENTICATED PATH — async Supabase fetch
   // ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     setIsReady(false);
     setMessages([]);
@@ -78,7 +82,7 @@ export function useAiChat(user: any, trackEvent: any) {
         if (cancelled) return;
         if (error) throw error;
 
-        const loadedMessages = data?.map((msg: any) => ({
+        const loadedMessages = (data || []).map((msg: any) => ({
           id: msg.id,
           type: msg.role as "user" | "assistant",
           content: msg.content,
@@ -98,7 +102,7 @@ export function useAiChat(user: any, trackEvent: any) {
 
     loadSupabaseMessages();
     return () => { cancelled = true; };
-  }, [user, mode]);
+  }, [user?.id, mode]);
 
   // ── Puter polling ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -169,7 +173,7 @@ export function useAiChat(user: any, trackEvent: any) {
     };
     loadCount();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user?.id]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
