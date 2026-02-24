@@ -390,6 +390,18 @@ function SubjectSummariesContent() {
       };
     }
 
+    // 1.5 Check if the title starts with a saved lecture's key (common for admin-added content)
+    const keyPrefixMatch = savedLectures.find((l) =>
+      t.toLowerCase().startsWith(l.lecture_key.trim().toLowerCase()),
+    );
+    if (keyPrefixMatch) {
+      return {
+        key: keyPrefixMatch.lecture_key,
+        label: keyPrefixMatch.lecture_label,
+        order: keyPrefixMatch.order_index,
+      };
+    }
+
     // 2. Check if the title starts with a saved lecture's label (e.g., "Partial fractions: Video")
     const prefixMatch = savedLectures.find((l) =>
       t.toLowerCase().startsWith(l.lecture_label.trim().toLowerCase()),
@@ -570,31 +582,63 @@ function SubjectSummariesContent() {
     return lectureIndex.find((l) => l.key === selectedLectureKey) || null;
   }, [lectureIndex, selectedLectureKey]);
 
+  const selectedLectureId = useMemo(() => {
+    if (!selectedLectureKey) return null;
+    const match = savedLectures.find(
+      (l) => l.lecture_key === selectedLectureKey,
+    );
+    return match?.id || null;
+  }, [savedLectures, selectedLectureKey]);
+
   const lectureFilteredSummaries = useMemo(() => {
     const key = selectedLectureKey || "other";
+
+    if (selectedLectureId) {
+      return filteredSummaries.filter(
+        (s: any) => s.lecture_id === selectedLectureId,
+      );
+    }
+
     return filteredSummaries.filter(
       (s) => getLectureInfoFromTitle(s.title).key === key,
     );
-  }, [filteredSummaries, selectedLectureKey]);
+  }, [filteredSummaries, selectedLectureId, selectedLectureKey]);
 
   const lectureFilteredVideos = useMemo(() => {
     const key = selectedLectureKey || "other";
+
+    if (selectedLectureId) {
+      return videos.filter((v: any) => v.lecture_id === selectedLectureId);
+    }
+
     return videos.filter((v) => getLectureInfoFromTitle(v.title).key === key);
-  }, [selectedLectureKey, videos]);
+  }, [selectedLectureId, selectedLectureKey, videos]);
 
   const lectureFilteredFiles = useMemo(() => {
     const key = selectedLectureKey || "other";
+
+    if (selectedLectureId) {
+      return files.filter((f: any) => f.lecture_id === selectedLectureId);
+    }
+
     return files.filter((f) => getLectureInfoFromTitle(f.title).key === key);
-  }, [files, selectedLectureKey]);
+  }, [files, selectedLectureId, selectedLectureKey]);
 
   const lectureFilteredQuizzes = useMemo(() => {
     const key = selectedLectureKey || "other";
+
+    if (selectedLectureId) {
+      return subjectQuizzes.filter(
+        (q: any) => q.lecture_id === selectedLectureId,
+      );
+    }
+
     return subjectQuizzes.filter(
       (q) =>
         getLectureInfoFromTitle(q.title, q.description || undefined).key ===
         key,
     );
-  }, [selectedLectureKey, subjectQuizzes, savedLectures]);
+  }, [selectedLectureId, selectedLectureKey, subjectQuizzes, savedLectures]);
 
   const fetchSubjectQuizzes = useCallback(
     async (skipCache = false) => {
@@ -655,13 +699,27 @@ function SubjectSummariesContent() {
 
   useEffect(() => {
     if (showAddExamForm && subjectDetails) {
+      const inferredYear = (() => {
+        const raw = (subjectDetails as any).level;
+
+        if (typeof raw === "string") return raw;
+
+        if (typeof raw === "number") {
+          const match = levels.find((l) => l.level_number === raw);
+          return match?.name || String(raw);
+        }
+
+        if (raw == null) return "";
+        return String(raw);
+      })();
+
       setExamFormData((p) => ({
         ...p,
-        year: subjectDetails.level || "",
+        year: inferredYear,
         department: subjectDetails.semester || "", // Or handle department appropriately if it exists in subjectDetails
       }));
     }
-  }, [showAddExamForm, subjectDetails]);
+  }, [levels, showAddExamForm, subjectDetails]);
 
   const handleSaveExam = async () => {
     if (!user) {

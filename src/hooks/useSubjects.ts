@@ -57,19 +57,37 @@ export function useSubjects(params: UseSubjectsParams = {}) {
                 }
             }
 
+            // Since is_academic column might not exist in some environments, but we need it for separation
             let query = supabase
                 .from("subjects")
                 .select("*")
                 .order("name", { ascending: true });
 
+            // If we are looking for non-academic subjects (TRW), and the column exists, filter by it.
+            // However, the current issue is that useSubjects is being used for TRW but TRW has its own tables.
+            // We should ideally use useTRWCategories for TRW, but the UI (SubjectsGrid) is built around useSubjects.
+            
             const { data, error } = await query;
 
             if (error) throw error;
 
             const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
 
-            // Filter by semester/level
+            // Filter by semester/level/academic
             const filtered = subjectData.filter((s) => {
+                // If the database has is_academic column, use it. 
+                // Otherwise, if we are in TRW section (is_academic: false), we shouldn't see subjects.
+                const anyS = s as any;
+                if (isAcademicParam === false) {
+                    // This is the TRW section. If the column exists and it's true, filter it out.
+                    if (anyS.is_academic === true) return false;
+                    // If the column doesn't exist, we can't reliably filter by it here yet.
+                    // But we definitely shouldn't show academic subjects in TRW.
+                } else {
+                    // This is the academic section. Filter out non-academic if the column exists.
+                    if (anyS.is_academic === false) return false;
+                }
+
                 const semesterMatch = (() => {
                     if (s.semester === undefined || s.semester === null) return true;
                     return Number(s.semester) === Number(effectiveSemester);

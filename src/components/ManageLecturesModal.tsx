@@ -352,6 +352,14 @@ function inferLectureKeyFromTitle(
   });
   if (exact?.lecture_key) return exact.lecture_key;
 
+  // 1.5 Prefix match against lecture_key (common when admin adds content via query param)
+  const keyPrefix = lecturesIndex.find((l) => {
+    const key = (l.lecture_key || "").trim().toLowerCase();
+    if (!key) return false;
+    return normalizedTitle.startsWith(key);
+  });
+  if (keyPrefix?.lecture_key) return keyPrefix.lecture_key;
+
   // Sort lectures by label length descending to match most specific/longest first
   const sortedLectures = [...lecturesIndex].sort(
     (a, b) => (b.lecture_label?.length || 0) - (a.lecture_label?.length || 0),
@@ -364,17 +372,30 @@ function inferLectureKeyFromTitle(
   for (const part of titleParts) {
     if (!part || part.length < 2) continue;
     const match = sortedLectures.find((l) => {
+      const key = (l.lecture_key || "").trim().toLowerCase();
       const label = clean(l.lecture_label || "");
-      return label === part || part.includes(label) || label.includes(part);
+      return (
+        (key &&
+          (key === part || part.startsWith(key) || key.startsWith(part))) ||
+        (label &&
+          (label === part || part.includes(label) || label.includes(part)))
+      );
     });
     if (match?.lecture_key) return match.lecture_key;
   }
 
   // 3. Substring match (Check if any lecture label is contained within the title)
   const partial = sortedLectures.find((l) => {
+    const key = (l.lecture_key || "").trim().toLowerCase();
     const label = clean(l.lecture_label || "");
-    if (!label || label.length < 2) return false;
-    return normalizedTitle.includes(label) || label.includes(normalizedTitle);
+    if (key && key.length >= 2) {
+      if (normalizedTitle.includes(key) || key.includes(normalizedTitle))
+        return true;
+    }
+    if (label && label.length >= 2) {
+      return normalizedTitle.includes(label) || label.includes(normalizedTitle);
+    }
+    return false;
   });
   if (partial?.lecture_key) return partial.lecture_key;
 
@@ -430,15 +451,13 @@ function LectureContentModal({
               .limit(400),
             supabase
               .from("files")
-              .select(
-                "id,title,subject,file_url,description,created_at,lecture_key",
-              )
+              .select("id,title,subject,file_url,description,created_at")
               .eq("subject", subject)
               .order("created_at", { ascending: false })
               .limit(400),
             supabase
               .from("quizzes")
-              .select("id,title,description,created_at,lecture_key")
+              .select("id,title,description,created_at")
               .order("created_at", { ascending: false })
               .limit(500),
           ]);

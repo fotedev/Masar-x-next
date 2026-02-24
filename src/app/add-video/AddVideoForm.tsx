@@ -87,6 +87,9 @@ export function AddVideoForm() {
     setError("");
 
     try {
+      const lectureKey = (searchParams.get("lecture") || "").trim();
+      let lectureId: string | null = null;
+
       // Validate URL
       try {
         new URL(formData.url);
@@ -98,12 +101,32 @@ export function AddVideoForm() {
         return;
       }
 
+      if (lectureKey) {
+        const { data: lectureRow, error: lectureError } = await supabase
+          .from("subject_lectures")
+          .select("id,lecture_key")
+          .eq("subject", formData.subject)
+          .eq("lecture_key", lectureKey)
+          .maybeSingle();
+
+        if (lectureError) throw lectureError;
+        if (!lectureRow) {
+          setError("المحاضرة المحددة غير صالحة لهذه المادة");
+          setLoading(false);
+          return;
+        }
+
+        lectureId = lectureRow.id || null;
+      }
+
       const videoData = {
         title: formData.title,
         subject: formData.subject,
         url: formData.url,
         language: formData.language,
         user_id: user?.id,
+        lecture_key: lectureKey || null,
+        lecture_id: lectureId,
       };
 
       const { error: insertError } = await supabase

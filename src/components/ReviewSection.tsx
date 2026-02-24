@@ -84,7 +84,7 @@ export function ReviewSection({
 
     try {
       setSubmitting(true);
-      const reviewData = {
+      const reviewData: any = {
         content: newReview.trim(),
         user_id: user.id,
         rating: rating,
@@ -268,7 +268,7 @@ export function ReviewSection({
                   )}
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                  {review.comment || ""}
+                  {(review as any).content || (review as any).comment || ""}
                 </p>
               </div>
             </div>
