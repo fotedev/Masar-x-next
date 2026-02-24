@@ -10,6 +10,8 @@ interface File {
   description: string | null;
   user_id: string;
   created_at: string;
+  lecture_key?: string | null;
+  lecture_id?: string | null;
 }
 
 export function useFiles(subject?: string) {

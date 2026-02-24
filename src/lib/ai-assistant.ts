@@ -68,7 +68,7 @@ export interface ChatChunk {
   author?: string;
 }
 
-export type AiAssistantMode = 'group_rag' | 'cs_assistant';
+export type AiAssistantMode = 'group_rag' | 'cs_assistant' | 'student_agent';
 
 export interface AiChatHistoryTurn {
   role: 'user' | 'assistant';
@@ -123,6 +123,41 @@ export class AiAssistant {
       .join('\n');
 
     return `\n\nسياق المحادثة السابقة (للاستمرارية فقط):\n${formatted}`;
+  }
+
+  private async generateStudentAgentResponse(
+    query: string,
+    options?: {
+      chatHistory?: AiChatHistoryTurn[];
+      platformContext?: string;
+    },
+  ): Promise<string> {
+    const historyContext = this.buildChatHistoryContext(options?.chatHistory);
+    const platformContext = String(options?.platformContext ?? '').trim();
+
+    if (!platformContext) {
+      return "لا يمكنني الإجابة من المنصة بدون تحديد بيانات كافية (مثل المادة/المستوى/الترم).";
+    }
+
+    const prompt = `أنت مساعد طلابي داخل منصة مسار X.
+
+مهمتك: الإجابة فقط من بيانات المنصة المرفقة في قسم (سياق المنصة). ممنوع استخدام معلومات عامة أو معرفة خارجية.
+
+قواعد صارمة:
+1) أجب فقط اعتماداً على (سياق المنصة).
+2) إذا كان السياق غير كافٍ أو لا يحتوي نتائج مرتبطة بالسؤال: قل بوضوح أنك لا تستطيع الإجابة من المنصة، واطلب من المستخدم اختيار المادة/المستوى/الترم.
+3) لا تخترع روابط أو أسماء أو مواعيد.
+4) عندما تذكر عنصر من المنصة، اذكر عنوانه كما هو.
+
+سياق المنصة:
+${platformContext}
+
+سؤال المستخدم: ${query}${historyContext}`;
+
+    const puter = await getPuterClient();
+    if (!puter) throw new Error('Puter client not available');
+    const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+    return String(response);
   }
 
   // Parse chat export text
@@ -276,6 +311,7 @@ export class AiAssistant {
     options?: {
       mode?: AiAssistantMode;
       chatHistory?: AiChatHistoryTurn[];
+      platformContext?: string;
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
@@ -302,6 +338,13 @@ export class AiAssistant {
         if (!puter) throw new Error('Puter client not available');
         const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
         return String(response);
+      }
+
+      if (mode === 'student_agent') {
+        return await this.generateStudentAgentResponse(query, {
+          chatHistory: options?.chatHistory,
+          platformContext: options?.platformContext,
+        });
       }
 
       const context = relevantChunks

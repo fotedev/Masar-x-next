@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -16,6 +16,10 @@ import { useAcademicOptions } from "../../hooks/useAcademicOptions";
 
 export default function AddSummaryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const lectureKeyFromQuery = useMemo(() => {
+    return (searchParams.get("lecture") || "").trim();
+  }, [searchParams]);
   const { user, displayName } = useAuth();
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
@@ -89,6 +93,25 @@ export default function AddSummaryPage() {
         setError("يجب تسجيل الدخول لإرسال الملخص");
         setLoading(false);
         return;
+      }
+
+      let lectureId: string | null = null;
+      if (lectureKeyFromQuery) {
+        const { data: lectureRow, error: lectureError } = await supabase
+          .from("subject_lectures")
+          .select("id,lecture_key")
+          .eq("subject", formData.subject)
+          .eq("lecture_key", lectureKeyFromQuery)
+          .maybeSingle();
+
+        if (lectureError) throw lectureError;
+        if (!lectureRow) {
+          setError("المحاضرة المحددة غير صالحة لهذه المادة");
+          setLoading(false);
+          return;
+        }
+
+        lectureId = lectureRow.id || null;
       }
 
       // Validate attachment data
@@ -168,6 +191,8 @@ export default function AddSummaryPage() {
             : driveLink || null,
         status: "pending",
         user_id: user?.id ?? null,
+        lecture_key: lectureKeyFromQuery || null,
+        lecture_id: lectureId,
       };
 
       const { data: insertedData, error: insertError } = await supabase

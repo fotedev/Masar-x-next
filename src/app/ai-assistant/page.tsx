@@ -14,7 +14,6 @@ import {
   Trash2,
   X,
   Brain,
-  Lock as LockIcon,
   FileText,
 } from "lucide-react";
 import { aiAssistant } from "@/lib/ai-assistant";
@@ -32,6 +31,7 @@ import { confirmToast } from "@/lib/confirmToast";
 import { quizService } from "@/lib/quiz";
 
 import { useSubjects } from "@/hooks/useSubjects";
+import { useUserAcademic } from "@/hooks/useUserAcademic";
 
 const PuterSettingsModal = dynamic(
   () => import("@/components/ai/PuterSettingsModal").then((mod) => mod.default),
@@ -83,18 +83,75 @@ function AiAssistantChatPage() {
   const {
     messages,
     isLoading,
-    remainingMessages,
-    hasReachedLimit,
     sendMessage,
     clearChat,
     setMessages,
-    messageLimit,
     isPuterSignedIn,
     mode,
     setMode,
     isReady,
-    loadingMessageCount,
+    studentSelectedSubject,
+    setStudentSelectedSubject,
   } = useAiChat(user, trackEvent);
+
+  const { academic } = useUserAcademic();
+
+  const [studentQuizzes, setStudentQuizzes] = useState<
+    Array<{ id: string; title: string }>
+  >([]);
+  const [studentQuizzesLoading, setStudentQuizzesLoading] = useState(false);
+  const [studentSelectedQuizId, setStudentSelectedQuizId] =
+    useState<string>("");
+
+  useEffect(() => {
+    const loadStudentQuizzes = async () => {
+      if (mode !== "student_agent") return;
+      if (!studentSelectedSubject) {
+        setStudentQuizzes([]);
+        setStudentSelectedQuizId("");
+        return;
+      }
+
+      try {
+        setStudentQuizzesLoading(true);
+
+        const { data, error } = await supabase
+          .from("quizzes")
+          .select("id,title")
+          .eq("status", "approved")
+          .eq("subject", studentSelectedSubject)
+          .order("title", { ascending: true })
+          .limit(50);
+
+        if (error) throw error;
+
+        const items = (data || []) as Array<{ id: string; title: string }>;
+        setStudentQuizzes(items);
+        if (items.length === 0) {
+          setStudentSelectedQuizId("");
+        } else if (!items.some((x) => x.id === studentSelectedQuizId)) {
+          setStudentSelectedQuizId(items[0].id);
+        }
+      } catch {
+        setStudentQuizzes([]);
+        setStudentSelectedQuizId("");
+      } finally {
+        setStudentQuizzesLoading(false);
+      }
+    };
+
+    loadStudentQuizzes();
+  }, [
+    mode,
+    studentSelectedSubject,
+    academic.level,
+    academic.semester,
+    studentSelectedQuizId,
+  ]);
+
+  const safeMessages = useMemo(() => {
+    return Array.isArray(messages) ? messages : [];
+  }, [messages]);
 
   const [inputMessage, setInputMessage] = useState("");
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
@@ -108,6 +165,10 @@ function AiAssistantChatPage() {
   const [localGeneratedQuizzes, setLocalGeneratedQuizzes] = useState<
     LocalGeneratedQuiz[]
   >([]);
+
+  const safeLocalGeneratedQuizzes = useMemo(() => {
+    return Array.isArray(localGeneratedQuizzes) ? localGeneratedQuizzes : [];
+  }, [localGeneratedQuizzes]);
   const [showLocalQuizModal, setShowLocalQuizModal] = useState(false);
   const [localQuizIndex, setLocalQuizIndex] = useState(0);
   const [localSelectedOption, setLocalSelectedOption] = useState<number | null>(
@@ -134,6 +195,19 @@ function AiAssistantChatPage() {
     level: selectedSubmitLevelNumber,
     semester: typeof submitSemester === "number" ? submitSemester : null,
   });
+
+  const { subjects: studentSubjects } = useSubjects({
+    level:
+      typeof academic.level === "number"
+        ? academic.level
+        : selectedSubmitLevelNumber,
+    semester:
+      typeof academic.semester === "number"
+        ? academic.semester
+        : typeof submitSemester === "number"
+          ? submitSemester
+          : null,
+  });
   const availableSubmitDepartments = useMemo<DepartmentOption[]>(() => {
     if (!submitAcademicLevel) return [];
     return getDepartmentsForLevelName(submitAcademicLevel);
@@ -147,9 +221,11 @@ function AiAssistantChatPage() {
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const toggleMode = useCallback(() => {
-    setMode((prev: AiAssistantMode) =>
-      prev === "group_rag" ? "cs_assistant" : "group_rag",
-    );
+    setMode((prev: AiAssistantMode) => {
+      if (prev === "group_rag") return "cs_assistant";
+      if (prev === "cs_assistant") return "student_agent";
+      return "group_rag";
+    });
   }, [setMode]);
 
   // Constants for reusability and cleaner code
@@ -293,7 +369,7 @@ function AiAssistantChatPage() {
   // Handle auto-scroll when messages change
   useEffect(() => {
     scrollToBottom(true);
-  }, [messages, scrollToBottom]);
+  }, [safeMessages, scrollToBottom]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -568,7 +644,11 @@ function AiAssistantChatPage() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {mode === "group_rag" ? "مساعد مسار X" : "المساعد الذكي"}
+              {mode === "group_rag"
+                ? "مساعد مسار X"
+                : mode === "student_agent"
+                  ? "مساعد الطالب"
+                  : "المساعد الذكي"}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="relative flex h-2 w-2">
@@ -578,7 +658,9 @@ function AiAssistantChatPage() {
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {mode === "group_rag"
                   ? "محادثات المجموعة"
-                  : "المساعد البرمجي العام"}
+                  : mode === "student_agent"
+                    ? "إجابة من بيانات المنصة"
+                    : "المساعد البرمجي العام"}
               </span>
             </div>
           </div>
@@ -591,16 +673,76 @@ function AiAssistantChatPage() {
             title={
               mode === "group_rag"
                 ? "التبديل إلى المساعد البرمجي"
-                : "التبديل إلى محادثات المجموعة"
+                : mode === "cs_assistant"
+                  ? "التبديل إلى مساعد الطالب"
+                  : "التبديل إلى محادثات المجموعة"
             }
           >
             <span className="sm:hidden flex items-center justify-center">
               <Brain className="w-4 h-4" />
             </span>
             <span className="hidden sm:inline">
-              تبديل: {mode === "group_rag" ? "مساعد برمجي" : "محادثات المجموعة"}
+              تبديل:{" "}
+              {mode === "group_rag"
+                ? "مساعد برمجي"
+                : mode === "cs_assistant"
+                  ? "مساعد الطالب"
+                  : "محادثات المجموعة"}
             </span>
           </button>
+
+          {mode === "student_agent" && (
+            <div className="flex items-center gap-2 px-2">
+              <select
+                value={studentSelectedSubject}
+                onChange={(e) => setStudentSelectedSubject(e.target.value)}
+                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+              >
+                <option value="">اختر المادة</option>
+                {studentSubjects?.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={studentSelectedQuizId}
+                onChange={(e) => setStudentSelectedQuizId(e.target.value)}
+                disabled={
+                  !studentSelectedSubject ||
+                  studentQuizzesLoading ||
+                  studentQuizzes.length === 0
+                }
+                className="px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60"
+              >
+                <option value="">
+                  {studentQuizzesLoading
+                    ? "جاري تحميل الامتحانات..."
+                    : studentQuizzes.length === 0
+                      ? "لا يوجد امتحانات"
+                      : "اختر الامتحان"}
+                </option>
+                {studentQuizzes.map((qz) => (
+                  <option key={qz.id} value={qz.id}>
+                    {qz.title}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => {
+                  if (studentSelectedQuizId)
+                    setActiveQuizId(studentSelectedQuizId);
+                }}
+                disabled={!studentSelectedQuizId}
+                className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                title="ابدأ الامتحان"
+              >
+                ابدأ
+              </button>
+            </div>
+          )}
 
           <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
           {/* تم إخفاء زر تسجيل Puter لأنه يتم التفعيل تلقائياً عند الحاجة */}
@@ -668,8 +810,8 @@ function AiAssistantChatPage() {
                 title={`آخر اختبار مولّد: ${generatedQuiz.data.title}`}
               >
                 آخر اختبار
-                {localGeneratedQuizzes && localGeneratedQuizzes.length > 1
-                  ? ` (${localGeneratedQuizzes.length})`
+                {safeLocalGeneratedQuizzes.length > 1
+                  ? ` (${safeLocalGeneratedQuizzes.length})`
                   : ""}
               </button>
             </>
@@ -707,15 +849,15 @@ function AiAssistantChatPage() {
                 </div>
               )}
 
-              {localGeneratedQuizzes && localGeneratedQuizzes.length > 0 && (
+              {safeLocalGeneratedQuizzes.length > 0 && (
                 <div>
                   <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
                     اختر اختباراً
                   </div>
                   <select
-                    value={generatedQuiz.localId}
+                    value={generatedQuiz?.localId || ""}
                     onChange={(e) => {
-                      const next = localGeneratedQuizzes.find(
+                      const next = safeLocalGeneratedQuizzes.find(
                         (q) => q.localId === e.target.value,
                       );
                       if (!next) return;
@@ -724,7 +866,7 @@ function AiAssistantChatPage() {
                     }}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm"
                   >
-                    {localGeneratedQuizzes.map((q) => (
+                    {safeLocalGeneratedQuizzes.map((q) => (
                       <option key={q.localId} value={q.localId}>
                         {q.data?.title || "بدون عنوان"}
                       </option>
@@ -883,11 +1025,12 @@ function AiAssistantChatPage() {
                   <option value="" disabled>
                     اختر المادة...
                   </option>
-                  {submitSubjects.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
+                  {submitSubjects &&
+                    submitSubjects.map((s) => (
+                      <option key={s.id} value={s.name}>
+                        {s.name}
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>
@@ -931,7 +1074,7 @@ function AiAssistantChatPage() {
                 </p>
               </div>
             </div>
-          ) : messages?.length === 0 ? (
+          ) : safeMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
               <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-full flex items-center justify-center mb-8 animate-in zoom-in duration-500 shrink-0">
                 <Bot className="w-12 h-12 text-indigo-500" />
@@ -959,7 +1102,7 @@ function AiAssistantChatPage() {
               </div>
             </div>
           ) : (
-            messages.map((msg) => (
+            safeMessages.map((msg) => (
               <ChatMessageItem key={msg.id} message={msg} />
             ))
           )}
@@ -990,67 +1133,61 @@ function AiAssistantChatPage() {
 
         {/* Input Area */}
         <div className="relative p-3 sm:p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-700/50 shrink-0">
-          {/* Limit reached message */}
-          {!loading && hasReachedLimit && (
-            <div className="mb-4 p-4 bg-amber-50/90 dark:bg-amber-900/30 border border-amber-200/60 dark:border-amber-800/60 rounded-2xl shadow-sm animate-in fade-in slide-in-from-bottom-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center shrink-0">
-                  <LockIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-amber-800 dark:text-amber-300 mb-1">
-                    {isPuterSignedIn
-                      ? "غير محدود (Puter)"
-                      : user
-                        ? "انتهت رسائلك اليومية"
-                        : "انتهت رسائلك المجانية"}
-                  </h4>
-                  <p className="text-sm text-amber-700 dark:text-amber-400/80">
-                    {isPuterSignedIn
-                      ? "يمكنك المتابعة باستخدام رصيد Puter الخاص بك."
-                      : user
-                        ? "لقد استخدمت جميع رسائلك الـ 5 لهذا اليوم. سجّل الدخول عبر Puter للمتابعة باستخدام رصيدك."
-                        : "يمكنك إرسال رسالتين فقط كزائر. سجّل حساباً أو استخدم Puter للمتابعة."}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {/* تم إخفاء زر التسجيل اليدوي لأنه يتم تلقائياً عند الإرسال */}
-                    {false && !isPuterSignedIn && (
-                      <button
-                        onClick={() => setShowPuterModal(true)}
-                        className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline transition-all"
-                      >
-                        استخدم Puter للمتابعة مجاناً
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Remaining messages indicator */}
-          {isReady && !loadingMessageCount && !hasReachedLimit && !user && (
-            <div className="absolute -top-7 left-6 px-3 py-1 bg-white dark:bg-slate-800 border-x border-t border-slate-200/80 dark:border-slate-700/80 rounded-t-lg text-[11px] font-bold text-slate-500 shadow-sm z-10 transition-all opacity-80 hover:opacity-100">
-              الرسائل المتبقية:{" "}
-              <span
-                className={`font-black ${!isPuterSignedIn && remainingMessages <= 1 ? "text-amber-500" : "text-indigo-600 dark:text-indigo-400"}`}
+          {mode === "student_agent" && (
+            <div className="mb-3 flex flex-col sm:flex-row gap-2 sm:items-center">
+              <select
+                value={studentSelectedSubject}
+                onChange={(e) => setStudentSelectedSubject(e.target.value)}
+                className="w-full sm:w-auto px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm font-bold"
               >
-                {isPuterSignedIn
-                  ? "غير محدود (Puter)"
-                  : `${remainingMessages} من ${messageLimit}`}
-              </span>
+                <option value="">اختر المادة</option>
+                {studentSubjects?.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={studentSelectedQuizId}
+                onChange={(e) => setStudentSelectedQuizId(e.target.value)}
+                disabled={
+                  !studentSelectedSubject ||
+                  studentQuizzesLoading ||
+                  studentQuizzes.length === 0
+                }
+                className="w-full sm:w-auto px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-sm font-bold disabled:opacity-60"
+              >
+                <option value="">
+                  {studentQuizzesLoading
+                    ? "جاري تحميل الامتحانات..."
+                    : studentQuizzes.length === 0
+                      ? "لا يوجد امتحانات"
+                      : "اختر الامتحان"}
+                </option>
+                {studentQuizzes.map((qz) => (
+                  <option key={qz.id} value={qz.id}>
+                    {qz.title}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => {
+                  if (studentSelectedQuizId)
+                    setActiveQuizId(studentSelectedQuizId);
+                }}
+                disabled={!studentSelectedQuizId}
+                className="w-full sm:w-auto px-4 py-2 rounded-2xl bg-indigo-600 text-white hover:bg-indigo-700 text-sm font-extrabold disabled:opacity-50"
+              >
+                ابدأ الامتحان
+              </button>
             </div>
           )}
-
           <div className="flex gap-2 sm:gap-3 items-end bg-slate-50/80 dark:bg-slate-900/80 p-2 sm:p-2.5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400/50 transition-all z-20 relative">
             <button
               onClick={handleOpenQuizModal}
-              disabled={hasReachedLimit}
-              className={`h-[46px] w-[46px] shrink-0 rounded-[18px] flex items-center justify-center transition-all ${
-                hasReachedLimit
-                  ? "bg-slate-100 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed"
-                  : "bg-white dark:bg-slate-800 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-sm"
-              }`}
+              className="h-[46px] w-[46px] shrink-0 rounded-[18px] flex items-center justify-center transition-all bg-white dark:bg-slate-800 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-slate-200/50 dark:border-slate-700/50 hover:shadow-sm"
               title="إنشاء اختبار من نص"
             >
               <Brain className="w-5 h-5" />
@@ -1067,14 +1204,7 @@ function AiAssistantChatPage() {
                     handleSendMessage();
                   }
                 }}
-                placeholder={
-                  hasReachedLimit
-                    ? user
-                      ? "انتظر حتى الغد لإرسال رسائل جديدة"
-                      : "سجّل حساباً للحصول على رسائل إضافية"
-                    : "اكتب سؤالك هنا (Enter للإرسال)..."
-                }
-                disabled={hasReachedLimit}
+                placeholder={"اكتب سؤالك هنا (Enter للإرسال)..."}
                 rows={1}
                 className="w-full bg-transparent px-3 py-3 focus:outline-none resize-none text-[15px] text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50 min-h-[46px] max-h-[150px] leading-relaxed block placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 dir="auto"
@@ -1084,11 +1214,11 @@ function AiAssistantChatPage() {
 
             <button
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading || hasReachedLimit}
-              className={`h-[46px] w-[46px] shrink-0 rounded-[18px] flex items-center justify-center transition-all ${
-                !inputMessage.trim() || isLoading || hasReachedLimit
-                  ? "bg-slate-200/80 dark:bg-slate-800/80 text-slate-400 cursor-not-allowed"
-                  : "bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md hover:shadow-lg hover:from-indigo-600 hover:to-blue-700 hover:scale-[1.03] active:scale-[0.97]"
+              disabled={!inputMessage.trim() || isLoading}
+              className={`h-[46px] w-[46px] shrink-0 flex items-center justify-center transition-all ${"rounded-[18px]"} ${
+                !inputMessage.trim() || isLoading
+                  ? "bg-slate-200/80 dark:bg-slate-800/80 text-slate-400"
+                  : "bg-slate-950 text-cyan-200 border border-cyan-300/60 shadow-[0_0_0_1px_rgba(34,211,238,0.25),0_0_18px_rgba(34,211,238,0.25)] hover:shadow-[0_0_0_2px_rgba(34,211,238,0.35),0_0_26px_rgba(34,211,238,0.35)] hover:text-cyan-100 hover:border-cyan-200/80 active:scale-[0.98]"
               }`}
             >
               <Send className="w-5 h-5 -ml-1" />
@@ -1446,29 +1576,30 @@ function AiAssistantChatPage() {
                   النقاط والرسائل المهمة
                 </h4>
                 <div className="space-y-3">
-                  {summaryResult.important_messages?.map(
-                    (msg: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold text-sm text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded-md">
-                            {msg.sender_name}
-                          </span>
-                        </div>
-                        <p className="text-slate-800 dark:text-slate-200 font-medium mb-2">
-                          {msg.content}
-                        </p>
-                        {msg.context && (
-                          <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                            <span className="font-semibold">السياق:</span>{" "}
-                            {msg.context}
+                  {summaryResult?.important_messages &&
+                    summaryResult.important_messages.map(
+                      (msg: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-bold text-sm text-brand-blue bg-brand-blue/10 px-2 py-0.5 rounded-md">
+                              {msg.sender_name}
+                            </span>
+                          </div>
+                          <p className="text-slate-800 dark:text-slate-200 font-medium mb-2">
+                            {msg.content}
                           </p>
-                        )}
-                      </div>
-                    ),
-                  )}
+                          {msg.context && (
+                            <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                              <span className="font-semibold">السياق:</span>{" "}
+                              {msg.context}
+                            </p>
+                          )}
+                        </div>
+                      ),
+                    )}
                 </div>
               </div>
             </div>

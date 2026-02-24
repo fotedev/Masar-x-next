@@ -53,6 +53,12 @@ export function useAcademicOptions(params: Params = {}) {
   const [loading, setLoading] = useState(true);
   const [optionsLoading, setOptionsLoading] = useState(true);
 
+  const normalizeLevelName = useCallback((value: unknown) => {
+    if (typeof value === "string") return value.trim();
+    if (typeof value === "number") return String(value).trim();
+    return "";
+  }, []);
+
   const levelIdByName = useMemo(() => {
     const map = new Map<string, string>();
     for (const lvl of levels) {
@@ -62,12 +68,13 @@ export function useAcademicOptions(params: Params = {}) {
   }, [levels]);
 
   const getDepartmentsForLevelName = useCallback(
-    (levelName: string) => {
-      const id = levelIdByName.get((levelName || "").trim());
+    (levelName: unknown) => {
+      const normalized = normalizeLevelName(levelName);
+      const id = levelIdByName.get(normalized);
       if (!id) return [] as DepartmentOption[];
       return departments.filter((d) => d.academic_level_id === id);
     },
-    [departments, levelIdByName],
+    [departments, levelIdByName, normalizeLevelName],
   );
 
   const cacheKey = useMemo(() => {
