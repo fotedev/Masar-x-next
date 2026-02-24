@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
 import { supabase } from "../../lib/supabase";
@@ -16,15 +16,17 @@ import { useAcademicOptions } from "../../hooks/useAcademicOptions";
 
 export default function AddSummaryPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const lectureKeyFromQuery = useMemo(() => {
-    return (searchParams.get("lecture") || "").trim();
-  }, [searchParams]);
+  const [lectureKeyFromQuery, setLectureKeyFromQuery] = useState("");
   const { user, displayName } = useAuth();
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
   const { levels, getDepartmentsForLevelName, optionsLoading } =
     useAcademicOptions();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setLectureKeyFromQuery((params.get("lecture") || "").trim());
+  }, []);
   const [semester, setSemester] = useState<number>(1);
 
   const [formData, setFormData] = useState({

@@ -55,8 +55,8 @@ export function QuizzesTab({
           break;
         case "date":
         default:
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
+          aValue = a.created_at ? new Date(a.created_at).getTime() : 0;
+          bValue = b.created_at ? new Date(b.created_at).getTime() : 0;
           break;
       }
 
@@ -242,7 +242,9 @@ export function QuizzesTab({
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>
                   تم الإنشاء:{" "}
-                  {new Date(quiz.created_at).toLocaleDateString("ar-SA")}
+                  {quiz.created_at
+                    ? new Date(quiz.created_at).toLocaleDateString("ar-SA")
+                    : "-"}
                 </span>
                 <span
                   className={`px-2 py-0.5 rounded-full ${
