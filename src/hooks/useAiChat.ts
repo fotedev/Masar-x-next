@@ -4,6 +4,8 @@ import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
+import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
+import { useUserAcademic } from "@/hooks/useUserAcademic";
 
 interface ChatMessage {
   id: string;
@@ -12,22 +14,18 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-const GUEST_MESSAGE_LIMIT = 2;
-const REGISTERED_MESSAGE_LIMIT = 5;
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
-const GUEST_COUNT_KEY = "ai_daily_count_guest";
-
-import { signInToPuter } from "@/lib/puter";
 
 export function useAiChat(user: any, trackEvent: any) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
-  const [dailyMessageCount, setDailyMessageCount] = useState(0);
-  const [loadingMessageCount, setLoadingMessageCount] = useState(true);
   const [isPuterSignedIn, setIsPuterSignedIn] = useState(false);
   const [mode, setModeState] = useState<AiAssistantMode>('cs_assistant');
   const storageKey = `${CHAT_STORAGE_KEY_PREFIX}_${mode}`;
+
+  const { academic } = useUserAcademic();
+  const [studentSelectedSubject, setStudentSelectedSubject] = useState<string>("");
 
   // ────────────────────────────────────────────────────────────────────────────
   // GUEST PATH — useLayoutEffect runs synchronously before the browser paints.
@@ -119,12 +117,6 @@ export function useAiChat(user: any, trackEvent: any) {
     };
   }, []);
 
-  const messageLimit = user ? REGISTERED_MESSAGE_LIMIT : GUEST_MESSAGE_LIMIT;
-
-  // If signed in to Puter, user has unlimited messages (subject to Puter's own limits)
-  const hasReachedLimit = isPuterSignedIn ? false : dailyMessageCount >= messageLimit;
-  const remainingMessages = isPuterSignedIn ? 999 : Math.max(0, messageLimit - dailyMessageCount);
-
   // Persist messages to localStorage (only for guests)
   useEffect(() => {
     if (typeof window === 'undefined' || user) return;
@@ -135,56 +127,20 @@ export function useAiChat(user: any, trackEvent: any) {
     }
   }, [messages, user, storageKey]);
 
-  // ── Daily message count ─────────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    const loadCount = async () => {
-      setLoadingMessageCount(true);
-      if (user) {
-        try {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const { count } = await supabase
-            .from("ai_chat_messages")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .eq("role", "user")
-            .gte("created_at", today.toISOString());
-          if (!cancelled) setDailyMessageCount(count || 0);
-        } catch (e) {
-          if (!cancelled) setDailyMessageCount(0);
-        }
-      } else {
-        if (typeof window !== 'undefined') {
-          const stored = localStorage.getItem(GUEST_COUNT_KEY);
-          if (stored) {
-            try {
-              const { count, date } = JSON.parse(stored);
-              if (!cancelled) {
-                setDailyMessageCount(date === new Date().toDateString() ? count : 0);
-              }
-            } catch (e) {
-              if (!cancelled) setDailyMessageCount(0);
-            }
-          }
-        }
-      }
-      if (!cancelled) setLoadingMessageCount(false);
-    };
-    loadCount();
-    return () => { cancelled = true; };
-  }, [user?.id]);
-
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    // Check limit again (unless Puter signed in)
-    if (!isPuterSignedIn && hasReachedLimit) {
-      // Automatically trigger Puter login if limit reached
-      const success = await signInToPuter();
-      if (!success) return; // User cancelled or error
-      // If success, we continue to send the message because isPuterSignedIn will be updated by polling
-      // but we need to wait a bit or use the local status
+    if (mode === 'student_agent' && !studentSelectedSubject) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `assistant_${Date.now()}`,
+          type: "assistant",
+          content: "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك.",
+          timestamp: new Date(),
+        },
+      ]);
+      return;
     }
 
     const userMsg: ChatMessage = {
@@ -207,17 +163,6 @@ export function useAiChat(user: any, trackEvent: any) {
       }).then();
     }
 
-    // Increment local count if not using Puter login (or even if using it, to track usage)
-    const newCount = dailyMessageCount + 1;
-    setDailyMessageCount(newCount);
-
-    if (!user && typeof window !== 'undefined') {
-      localStorage.setItem(GUEST_COUNT_KEY, JSON.stringify({
-        count: newCount,
-        date: new Date().toDateString()
-      }));
-    }
-
     trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn });
 
     try {
@@ -228,9 +173,30 @@ export function useAiChat(user: any, trackEvent: any) {
           content: m.content,
         }));
 
+      const platformContext = await (async () => {
+        if (mode !== 'student_agent') return undefined;
+
+        const scopedQuery = studentSelectedSubject
+          ? `${content} (المادة المختارة: ${studentSelectedSubject})`
+          : content;
+
+        const built = await buildStudentContext(
+          {
+            level: academic.level,
+            semester: academic.semester,
+            department_id: academic.department_id,
+          },
+          scopedQuery,
+        );
+
+        if (!built.context || built.sources.length === 0) return "";
+        return built.context;
+      })();
+
       const response = await aiAssistant.generateResponse(content, undefined, {
         mode,
         chatHistory: historyTurns,
+        platformContext,
       });
       const assistantMsg: ChatMessage = {
         id: `assistant_${Date.now()}`,
@@ -260,7 +226,7 @@ export function useAiChat(user: any, trackEvent: any) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, dailyMessageCount, hasReachedLimit, isLoading, trackEvent, isPuterSignedIn, messages, mode]);
+  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject]);
 
   const clearChat = useCallback(async () => {
     setMessages([]);
@@ -282,16 +248,14 @@ export function useAiChat(user: any, trackEvent: any) {
   return {
     messages,
     isLoading,
-    remainingMessages,
-    hasReachedLimit,
-    loadingMessageCount,
     isReady, // Changed from isInitialLoading
     sendMessage,
     clearChat,
     setMessages,
-    messageLimit,
     isPuterSignedIn,
     mode,
     setMode,
+    studentSelectedSubject,
+    setStudentSelectedSubject,
   };
 }

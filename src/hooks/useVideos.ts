@@ -10,6 +10,8 @@ interface Video {
   language: "ar" | "en";
   user_id: string;
   created_at: string;
+  lecture_key?: string | null;
+  lecture_id?: string | null;
 }
 
 export function useVideos(subject?: string) {

@@ -109,6 +109,9 @@ export interface Database {
           contributor_name: string | null
           pdf_url: string | null
           status: string
+          lecture_key: string | null
+          lecture_id: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
@@ -122,6 +125,9 @@ export interface Database {
           contributor_name?: string | null
           pdf_url?: string | null
           status?: string
+          lecture_key?: string | null
+          lecture_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
@@ -135,6 +141,9 @@ export interface Database {
           contributor_name?: string | null
           pdf_url?: string | null
           status?: string
+          lecture_key?: string | null
+          lecture_id?: string | null
+          updated_at?: string | null
         }
       }
       quizzes: {
@@ -142,49 +151,49 @@ export interface Database {
           id: string
           title: string
           description: string | null
-          subject: string
-          level: number
-          semester: number
-          department_id: string | null
-          created_at: string
-          created_by: string
+          user_id: string | null
+          source_type: string | null
+          created_at: string | null
+          summary_id: string | null
+          subject: string | null
+          department: string | null
+          year: string | null
           status: string
-          summary_id?: string | null
-          department?: string | null
-          year?: string | null
-          source_type?: string | null
+          duration_seconds: number | null
+          lecture_key: string | null
+          lecture_id: string | null
         }
         Insert: {
           id?: string
           title: string
           description?: string | null
-          subject: string
-          level: number
-          semester: number
-          department_id?: string | null
-          created_at?: string
-          created_by: string
-          status?: string
+          user_id?: string | null
+          source_type?: string | null
+          created_at?: string | null
           summary_id?: string | null
+          subject?: string | null
           department?: string | null
           year?: string | null
-          source_type?: string | null
+          status?: string
+          duration_seconds?: number | null
+          lecture_key?: string | null
+          lecture_id?: string | null
         }
         Update: {
           id?: string
           title?: string
           description?: string | null
-          subject?: string
-          level?: number
-          semester?: number
-          department_id?: string | null
-          created_at?: string
-          created_by?: string
-          status?: string
+          user_id?: string | null
+          source_type?: string | null
+          created_at?: string | null
           summary_id?: string | null
+          subject?: string | null
           department?: string | null
           year?: string | null
-          source_type?: string | null
+          status?: string
+          duration_seconds?: number | null
+          lecture_key?: string | null
+          lecture_id?: string | null
         }
       }
       news: {
@@ -520,6 +529,9 @@ export interface Database {
           contributor_name: string | null
           pdf_url: string | null
           status: string
+          lecture_key: string | null
+          lecture_id: string | null
+          updated_at: string | null
           avg_rating: number | null
           reviews_count: number | null
         }
@@ -535,6 +547,9 @@ export interface Database {
           contributor_name?: string | null
           pdf_url?: string | null
           status?: string
+          lecture_key?: string | null
+          lecture_id?: string | null
+          updated_at?: string | null
           avg_rating?: number | null
           reviews_count?: number | null
         }
@@ -550,6 +565,9 @@ export interface Database {
           contributor_name?: string | null
           pdf_url?: string | null
           status?: string
+          lecture_key?: string | null
+          lecture_id?: string | null
+          updated_at?: string | null
           avg_rating?: number | null
           reviews_count?: number | null
         }
@@ -582,7 +600,6 @@ export interface QuizWithRatings extends Quiz {
   avg_rating?: number | null;
   total_ratings?: number | null;
   reviews_count?: number | null;
-  source_type?: string | null;
 }
 
 // News types

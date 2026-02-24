@@ -78,6 +78,27 @@ export function AddFileForm() {
     setUploadStage("");
 
     try {
+      const lectureKey = (searchParams.get("lecture") || "").trim();
+      let lectureId: string | null = null;
+
+      if (lectureKey) {
+        const { data: lectureRow, error: lectureError } = await supabase
+          .from("subject_lectures")
+          .select("id,lecture_key")
+          .eq("subject", formData.subject)
+          .eq("lecture_key", lectureKey)
+          .maybeSingle();
+
+        if (lectureError) throw lectureError;
+        if (!lectureRow) {
+          setError("المحاضرة المحددة غير صالحة لهذه المادة");
+          setLoading(false);
+          return;
+        }
+
+        lectureId = lectureRow.id || null;
+      }
+
       if (uploadType === "file" && !file) {
         setError("يرجى اختيار ملف");
         setLoading(false);
@@ -112,6 +133,8 @@ export function AddFileForm() {
         file_url: finalFileUrl,
         description: formData.description,
         user_id: user?.id,
+        lecture_key: lectureKey || null,
+        lecture_id: lectureId,
       };
 
       const { error: insertError } = await supabase
