@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Bot, User } from "lucide-react";
+import { LatexRenderer } from "@/components/LatexRenderer";
 
 interface ChatMessage {
   id: string;
@@ -18,6 +19,58 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
 }) => {
   const isUser = message.type === "user";
+
+  const normalizeLatexDelimiters = (text: string) => {
+    return String(text ?? "")
+      .replace(/\\\[([\s\S]*?)\\\]/g, "$$$1$$")
+      .replace(/\\\(([\s\S]*?)\\\)/g, "$$1$");
+  };
+
+  const renderAssistantContent = (content: string) => {
+    const raw = String(content ?? "");
+
+    const parts: Array<
+      | { type: "text"; value: string }
+      | { type: "code"; lang?: string; value: string }
+    > = [];
+
+    const fenceRegex = /```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g;
+    let lastIndex = 0;
+    for (const m of raw.matchAll(fenceRegex)) {
+      const start = m.index ?? 0;
+      const end = start + m[0].length;
+      const before = raw.slice(lastIndex, start);
+      if (before) parts.push({ type: "text", value: before });
+      parts.push({ type: "code", lang: m[1] || undefined, value: m[2] ?? "" });
+      lastIndex = end;
+    }
+    const remaining = raw.slice(lastIndex);
+    if (remaining) parts.push({ type: "text", value: remaining });
+
+    return (
+      <div className="space-y-3">
+        {parts.map((p, idx) => {
+          if (p.type === "code") {
+            return (
+              <pre
+                key={idx}
+                dir="ltr"
+                className="w-full overflow-x-auto rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-950 text-slate-100 p-4 text-[13px] leading-relaxed"
+              >
+                <code>{p.value}</code>
+              </pre>
+            );
+          }
+          const normalized = normalizeLatexDelimiters(p.value);
+          return (
+            <div key={idx} className="whitespace-pre-wrap">
+              <LatexRenderer text={normalized} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -51,7 +104,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 : "bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 rounded-tr-sm"
             }`}
           >
-            <div className="whitespace-pre-wrap">{message.content}</div>
+            {isUser ? (
+              <div className="whitespace-pre-wrap">{message.content}</div>
+            ) : (
+              renderAssistantContent(message.content)
+            )}
           </div>
           <div
             className={`text-[11px] px-2 font-medium opacity-60 ${

@@ -7,6 +7,8 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const isDev = process.env.NODE_ENV !== "production";
+
     const fetchReviews = useCallback(async () => {
         try {
             setLoading(true);
@@ -35,11 +37,29 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
     const addReview = async (review: ReviewInsert) => {
         try {
+            if (isDev) {
+                console.debug("[reviews] insert payload", {
+                    contentType,
+                    contentId,
+                    review,
+                });
+            }
             const { error } = await supabase
                 .from("reviews")
                 .insert(review);
 
-            if (error) throw error;
+            if (error) {
+                if (isDev) {
+                    console.error("[reviews] insert error", {
+                        code: (error as any).code,
+                        message: (error as any).message,
+                        details: (error as any).details,
+                        hint: (error as any).hint,
+                        error,
+                    });
+                }
+                throw error;
+            }
             await fetchReviews();
         } catch (error) {
             throw error;
@@ -53,7 +73,19 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
                 .delete()
                 .eq("id", reviewId);
 
-            if (error) throw error;
+            if (error) {
+                if (isDev) {
+                    console.error("[reviews] delete error", {
+                        reviewId,
+                        code: (error as any).code,
+                        message: (error as any).message,
+                        details: (error as any).details,
+                        hint: (error as any).hint,
+                        error,
+                    });
+                }
+                throw error;
+            }
             setReviews((prev) => prev.filter((r) => r.id !== reviewId));
         } catch (error) {
             throw error;

@@ -215,18 +215,39 @@ export class QuizService {
     // Save a single answer
     async saveAnswer(attemptId: string, questionId: string, selectedOption: number, isCorrect: boolean) {
         try {
+            const isDev = process.env.NODE_ENV !== 'production';
+            const payload = {
+                attempt_id: attemptId,
+                question_id: questionId,
+                selected_option: selectedOption,
+                is_correct: isCorrect,
+                created_at: new Date().toISOString()
+            };
+
+            if (isDev) {
+                console.debug('[quiz_answers] upsert payload', {
+                    onConflict: 'attempt_id,question_id',
+                    payload,
+                });
+            }
+
             // Upsert answer
             const { error: answerError } = await supabase
                 .from('quiz_answers')
-                .upsert({
-                    attempt_id: attemptId,
-                    question_id: questionId,
-                    selected_option: selectedOption,
-                    is_correct: isCorrect,
-                    created_at: new Date().toISOString()
-                }, { onConflict: 'attempt_id, question_id' });
+                .upsert(payload, { onConflict: 'attempt_id, question_id' });
 
-            if (answerError) throw answerError;
+            if (answerError) {
+                if (isDev) {
+                    console.error('[quiz_answers] upsert error', {
+                        code: (answerError as any).code,
+                        message: (answerError as any).message,
+                        details: (answerError as any).details,
+                        hint: (answerError as any).hint,
+                        answerError,
+                    });
+                }
+                throw answerError;
+            }
 
         } catch (error) {
             throw error;
