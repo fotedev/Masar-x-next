@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   FileText,
   Video,
@@ -21,19 +22,19 @@ import {
   Monitor,
   Settings, // Added Settings icon
 } from "lucide-react";
-import { useSummaries } from "../../../hooks/useSummaries";
-import { useAuth } from "../../../contexts/AuthContext";
-import { useAnalytics } from "../../../hooks/useAnalytics";
-import { EditSummaryModal } from "../../../components/EditSummaryModal";
-import { AddSubjectModal } from "../../../components/AddSubjectModal"; // Added AddSubjectModal
-import { supabase } from "../../../lib/supabase";
-import { Quiz, Summary } from "../../../types/database";
-import { useVideos } from "../../../hooks/useVideos";
-import { useFiles } from "../../../hooks/useFiles";
+import { useSummaries } from "@/hooks/useSummaries";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { EditSummaryModal } from "@/components/EditSummaryModal";
+import { AddSubjectModal } from "@/components/AddSubjectModal"; // Added AddSubjectModal
+import { supabase } from "@/lib/supabase";
+import { Quiz, Summary } from "@/types/database";
+import { useVideos } from "@/hooks/useVideos";
+import { useFiles } from "@/hooks/useFiles";
 import { Suspense } from "react";
 import { toast } from "sonner";
-import { useAcademicOptions } from "../../../hooks/useAcademicOptions";
-import { queryCache, cacheKeys, cacheTTL } from "../../../lib/queryCache";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 
 function SubjectSummariesContent() {
   const params = useParams();
@@ -41,6 +42,10 @@ function SubjectSummariesContent() {
   const subjectId = (params?.subject as string) || searchParams?.get("subject");
   const lectureFromQuery = searchParams?.get("lecture");
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  const tCommon = useTranslations("common");
+  const tSubjectPage = useTranslations("subjectPage");
   const { user, isAdmin } = useAuth();
 
   const {
@@ -176,7 +181,7 @@ function SubjectSummariesContent() {
           .eq("user_id", user.id);
 
         if (data) {
-          setCompletedContent(new Set(data.map((d) => d.content_id)));
+          setCompletedContent(new Set(data.map((d: any) => d.content_id)));
         }
       } catch (error) {
         console.error("Error fetching progress:", error);
@@ -200,13 +205,12 @@ function SubjectSummariesContent() {
   }, [completedContent.size, totalPossibleItems]);
 
   const dashboardData = {
-    professor: subjectDetails?.professor || "جاري التحميل...",
+    professor: subjectDetails?.professor || tCommon("loading"),
     description:
-      subjectDetails?.description ||
-      "وصف المادة سيظهر هنا بمجرد تحديثه من قبل المشرف.",
+      subjectDetails?.description || tSubjectPage("descriptionWillAppear"),
     progress: progressPercentage,
-    schedule: subjectDetails?.schedule || "غير محدد",
-    nextLecture: subjectDetails?.location || "غير محدد",
+    schedule: subjectDetails?.schedule || tSubjectPage("unknown"),
+    nextLecture: subjectDetails?.location || tSubjectPage("unknown"),
     totalLectures: `${completedContent.size}/${totalPossibleItems}`,
   };
 
@@ -272,18 +276,18 @@ function SubjectSummariesContent() {
 
   const handleSaveLecture = async () => {
     if (!user) {
-      toast.error("يجب تسجيل الدخول أولاً");
+      toast.error(tSubjectPage("errors.mustLogin"));
       return;
     }
 
     if (!isAdmin) {
-      toast.error("غير مصرح");
+      toast.error(tSubjectPage("errors.notAuthorized"));
       return;
     }
 
     const rawTitle = (lectureFormData.title || "").trim();
     if (!rawTitle) {
-      toast.error("اكتب اسم المحاضرة");
+      toast.error(tSubjectPage("errors.enterLectureName"));
       return;
     }
 
@@ -298,7 +302,7 @@ function SubjectSummariesContent() {
         .replace(/[^a-z0-9-_]/g, "");
 
       if (!key) {
-        toast.error("فشل إنشاء كود المحاضرة تلقائياً");
+        toast.error(tSubjectPage("errors.autoLectureKeyFailed"));
         return;
       }
 
@@ -341,7 +345,7 @@ function SubjectSummariesContent() {
 
       setSelectedLectureKey(key);
     } catch {
-      toast.error("حدث خطأ أثناء إضافة المحاضرة.");
+      toast.error(tSubjectPage("errors.addLectureFailed"));
     } finally {
       setIsSavingLecture(false);
     }
@@ -358,7 +362,7 @@ function SubjectSummariesContent() {
           );
           return {
             key: parsed.lecture_key,
-            label: matchingLecture?.lecture_label || "محاضرة",
+            label: matchingLecture?.lecture_label || tSubjectPage("lecture"),
             order: matchingLecture?.order_index || 999999,
           };
         }
@@ -371,7 +375,7 @@ function SubjectSummariesContent() {
     if (!t) {
       return {
         key: "other",
-        label: "غير مصنف",
+        label: tSubjectPage("uncategorized"),
         order: 999999,
       };
     }
@@ -420,11 +424,11 @@ function SubjectSummariesContent() {
     }> = [
       {
         re: /(محاضرة|محاضره)\s*([0-9٠-٩]+(?:\s*و\s*[0-9٠-٩]+)*)/i,
-        labelPrefix: "محاضرة",
+        labelPrefix: tSubjectPage("lecture"),
       },
       {
         re: /(lecture|lec|week)\s*([0-9٠-٩]+(?:\s*(?:&|and|-)\s*[0-9٠-٩]+)*)/i,
-        labelPrefix: "Lecture",
+        labelPrefix: tSubjectPage("lecture"),
       },
     ];
 
@@ -452,7 +456,7 @@ function SubjectSummariesContent() {
 
     return {
       key: "other",
-      label: "غير مصنف",
+      label: tSubjectPage("uncategorized"),
       order: 999999,
     };
   };
@@ -506,12 +510,17 @@ function SubjectSummariesContent() {
       const item = map.get(key)!;
       item.counts[field] += 1;
       if (order < item.order) item.order = order;
-      if (item.label === "غير مصنف" && label !== "غير مصنف") item.label = label;
+      if (
+        item.label === tSubjectPage("uncategorized") &&
+        label !== tSubjectPage("uncategorized")
+      )
+        item.label = label;
     };
 
     savedLectures.forEach((l) => {
       const key = (l.lecture_key || "").trim() || "other";
-      const label = (l.lecture_label || "").trim() || "غير مصنف";
+      const label =
+        (l.lecture_label || "").trim() || tSubjectPage("uncategorized");
       const order =
         typeof l.order_index === "number" && Number.isFinite(l.order_index)
           ? l.order_index
@@ -526,7 +535,10 @@ function SubjectSummariesContent() {
         });
       } else {
         const existing = map.get(key)!;
-        if (existing.label === "غير مصنف" && label !== "غير مصنف")
+        if (
+          existing.label === tSubjectPage("uncategorized") &&
+          label !== tSubjectPage("uncategorized")
+        )
           existing.label = label;
         if (order < existing.order) existing.order = order;
       }
@@ -723,7 +735,7 @@ function SubjectSummariesContent() {
 
   const handleSaveExam = async () => {
     if (!user) {
-      toast.error("يجب تسجيل الدخول أولاً");
+      toast.error(tSubjectPage("errors.mustLogin"));
       return;
     }
 
@@ -784,8 +796,8 @@ function SubjectSummariesContent() {
       if (questionsError) throw questionsError;
 
       await fetchSubjectQuizzes(true);
-      toast.success("تم حفظ الامتحان بنجاح", {
-        description: "تمت إضافة الامتحان وتحديث قائمة الامتحانات للمادة.",
+      toast.success(tSubjectPage("exam.saveSuccessTitle"), {
+        description: tSubjectPage("exam.saveSuccessDescription"),
       });
       setShowAddExamForm(false);
       setExamFormData({
@@ -805,8 +817,8 @@ function SubjectSummariesContent() {
       });
     } catch (error: any) {
       console.error("Error saving exam:", error);
-      toast.error("حدث خطأ أثناء حفظ الامتحان", {
-        description: error.message || "يرجى المحاولة مرة أخرى لاحقاً.",
+      toast.error(tSubjectPage("exam.saveErrorTitle"), {
+        description: error.message || tSubjectPage("exam.saveErrorDescription"),
       });
     } finally {
       setIsSavingExam(false);
@@ -840,13 +852,14 @@ function SubjectSummariesContent() {
       queryCache.invalidate(cacheKeys.subjectDetails(normalizedSubjectName));
 
       setShowEditSubjectModal(false);
-      toast.success("تم تحديث البيانات بنجاح", {
-        description: "تم تحديث بيانات المادة وحفظ التغييرات.",
+      toast.success(tSubjectPage("subject.updateSuccessTitle"), {
+        description: tSubjectPage("subject.updateSuccessDescription"),
       });
     } catch (error: any) {
       console.error("Error updating subject:", error);
-      toast.error("فشل التحديث", {
-        description: error.message || "حدث خطأ أثناء تحديث المادة.",
+      toast.error(tSubjectPage("subject.updateErrorTitle"), {
+        description:
+          error.message || tSubjectPage("subject.updateErrorDescription"),
       });
     }
   };
@@ -885,18 +898,20 @@ function SubjectSummariesContent() {
     }
   };
 
+  const homeworkKeyword = tSubjectPage("homework");
+
   const groupContentBySection = () => {
     const explanationItems: any[] = [
       ...lectureFilteredVideos.map((v) => ({ ...v, type: "video" })),
       ...lectureFilteredFiles
-        .filter((f) => !f.title.includes("واجب"))
+        .filter((f) => !f.title.includes(homeworkKeyword))
         .map((f) => ({ ...f, type: "file" })),
       ...lectureFilteredSummaries.map((s) => ({ ...s, type: "summary" })),
     ];
 
     const homeworkItems: any[] = [
       ...lectureFilteredFiles
-        .filter((f) => f.title.includes("واجب"))
+        .filter((f) => f.title.includes(homeworkKeyword))
         .map((f) => ({ ...f, type: "file" })),
     ];
 
@@ -910,16 +925,18 @@ function SubjectSummariesContent() {
   const renderSubjectDashboard = () => {
     return (
       <div
-        className="space-y-12 animate-in fade-in duration-700 pb-12 text-right"
-        dir="rtl"
+        className={`space-y-12 animate-in fade-in duration-700 pb-12 ${
+          isRTL ? "text-right" : "text-left"
+        }`}
+        dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="flex justify-start">
           <button
-            onClick={() => router.push("/subjects")}
+            onClick={() => router.push(`/${locale}/subjects`)}
             className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
           >
             <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
-            العودة للمواد
+            {tSubjectPage("backToSubjects")}
           </button>
         </div>
 
@@ -943,7 +960,7 @@ function SubjectSummariesContent() {
                 <div className="space-y-3 text-right">
                   <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
                     <span className="text-transparent bg-clip-text bg-gradient-to-l from-brand-blue to-brand-blue/60">
-                      مادة
+                      {tSubjectPage("subjectLabel")}
                     </span>{" "}
                     {normalizedSubjectName}
                   </h1>
@@ -953,7 +970,7 @@ function SubjectSummariesContent() {
                       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-brand-blue hover:text-white transition-colors mt-2"
                     >
                       <Settings className="w-3.5 h-3.5" />
-                      تعديل بيانات المادة
+                      {tSubjectPage("editSubject")}
                     </button>
                   )}
                   <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
@@ -964,7 +981,7 @@ function SubjectSummariesContent() {
                 <div className="flex flex-wrap justify-start gap-6 pt-4">
                   <div className="flex flex-col items-start gap-2">
                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      الجدول الزمني
+                      {tSubjectPage("scheduleTitle")}
                     </span>
                     <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
                       <Clock className="w-6 h-6 text-brand-blue animate-pulse" />
@@ -973,7 +990,7 @@ function SubjectSummariesContent() {
                   </div>
                   <div className="flex flex-col items-start gap-2">
                     <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      القاعة / المكان
+                      {tSubjectPage("locationTitle")}
                     </span>
                     <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
                       <MapPin className="w-6 h-6 text-brand-orange" />
@@ -1028,7 +1045,7 @@ function SubjectSummariesContent() {
                       {dashboardData.progress}%
                     </span>
                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                      إنجازك
+                      {tSubjectPage("yourProgress")}
                     </span>
                   </div>
                 </div>
@@ -1050,14 +1067,16 @@ function SubjectSummariesContent() {
                     {lectureIndex.length}
                   </span>
                   <span className="text-[10px] font-bold text-white/60">
-                    محاضرة
+                    {tSubjectPage("lecture")}
                   </span>
                 </div>
               </div>
               <div className="mt-4">
-                <h3 className="text-xl font-black mb-1">استكشف المحتوى</h3>
+                <h3 className="text-xl font-black mb-1">
+                  {tSubjectPage("exploreContent")}
+                </h3>
                 <p className="text-xs text-white/60 leading-relaxed">
-                  جميع المحاضرات والملخصات منظمة بشكل يسهل عليك الوصول إليها
+                  {tSubjectPage("exploreContentDescription")}
                 </p>
               </div>
             </div>
@@ -1074,7 +1093,7 @@ function SubjectSummariesContent() {
                   {dashboardData.totalLectures.split("/")[0]}
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  إنجازاتك
+                  {tSubjectPage("achievements")}
                 </span>
               </div>
             </div>
@@ -1091,7 +1110,7 @@ function SubjectSummariesContent() {
                   {totalPossibleItems}
                 </span>
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  المحاضرات
+                  {tSubjectPage("lectures")}
                 </span>
               </div>
             </div>
@@ -1103,10 +1122,10 @@ function SubjectSummariesContent() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-brand-blue font-black text-[10px] uppercase tracking-[0.2em]">
                 <div className="w-6 h-[1.5px] bg-brand-blue" />
-                المحتوى التعليمي
+                {tSubjectPage("educationalContent")}
               </div>
               <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                قائمة المحاضرات
+                {tSubjectPage("lecturesList")}
               </h2>
             </div>
 
@@ -1116,7 +1135,7 @@ function SubjectSummariesContent() {
                 className="group flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-blue text-white font-black hover:shadow-xl hover:shadow-brand-blue/30 transition-all active:scale-95 text-sm"
               >
                 <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                إضافة محاضرة جديدة
+                {tSubjectPage("addNewLecture")}
               </button>
             )}
           </div>
@@ -1124,10 +1143,10 @@ function SubjectSummariesContent() {
           {lectureIndex.length === 0 ? (
             <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center">
               <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                لا توجد محاضرات بعد
+                {tSubjectPage("noLecturesYet")}
               </h3>
               <p className="mt-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                عند إضافة محتوى للمادة سيظهر هنا تلقائيًا.
+                {tSubjectPage("contentWillAppear")}
               </p>
             </div>
           ) : (
@@ -1164,19 +1183,19 @@ function SubjectSummariesContent() {
                       {lec.counts.summaries > 0 && (
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[10px] font-black text-blue-600 dark:text-blue-400">
                           <FileText className="w-3 h-3" />
-                          {lec.counts.summaries} ملخص
+                          {lec.counts.summaries} {tSubjectPage("summary")}
                         </div>
                       )}
                       {lec.counts.videos > 0 && (
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-50 dark:bg-red-900/20 text-[10px] font-black text-red-600 dark:text-red-400">
                           <Video className="w-3 h-3" />
-                          {lec.counts.videos} فيديو
+                          {lec.counts.videos} {tSubjectPage("video")}
                         </div>
                       )}
                       {lec.counts.exams > 0 && (
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-50 dark:bg-green-900/20 text-[10px] font-black text-green-600 dark:text-green-400">
                           <Trophy className="w-3 h-3" />
-                          {lec.counts.exams} اختبار
+                          {lec.counts.exams} {tSubjectPage("examLabel")}
                         </div>
                       )}
                     </div>
@@ -1185,10 +1204,10 @@ function SubjectSummariesContent() {
                   <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-400">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      تم التحديث مؤخراً
+                      {tSubjectPage("updatedRecently")}
                     </span>
                     <span className="group-hover:text-brand-blue transition-colors">
-                      عرض التفاصيل
+                      {tSubjectPage("viewDetails")}
                     </span>
                   </div>
                 </button>
@@ -1203,7 +1222,8 @@ function SubjectSummariesContent() {
   const renderLectureDetailView = () => {
     const { explanationItems, homeworkItems, examItems } =
       groupContentBySection();
-    const lectureTitle = selectedLecture?.label || "المحاضرة";
+    const lectureTitle =
+      selectedLecture?.label || tSubjectPage("lectureDefaultTitle");
 
     const formatYmd = (value: Date) => {
       const y = value.getFullYear();
@@ -1228,10 +1248,10 @@ function SubjectSummariesContent() {
 
     return (
       <div
-        className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 text-right ${
-          isTheatreMode && activeVideoUrl ? "max-w-[100vw]" : ""
-        }`}
-        dir="rtl"
+        className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 ${
+          isRTL ? "text-right" : "text-left"
+        } ${isTheatreMode && activeVideoUrl ? "max-w-[100vw]" : ""}`}
+        dir={isRTL ? "rtl" : "ltr"}
       >
         <div
           className={`flex flex-col gap-8 ${isTheatreMode && activeVideoUrl ? "mx-auto" : ""}`}
@@ -1239,9 +1259,9 @@ function SubjectSummariesContent() {
           {!isTheatreMode && (
             <div className="flex items-center gap-4">
               <button
-                onClick={() => router.push("/subjects")}
+                onClick={() => router.push(`/${locale}/subjects`)}
                 className="group flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-all"
-                title="العودة للمواد"
+                title={tSubjectPage("backToSubjects")}
               >
                 <ArrowRight className="w-6 h-6" />
               </button>
@@ -1256,7 +1276,7 @@ function SubjectSummariesContent() {
                 className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
               >
                 <LayoutGrid className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                العودة للمحاضرات
+                {tSubjectPage("backToLectures")}
               </button>
             </div>
           )}
@@ -1267,20 +1287,20 @@ function SubjectSummariesContent() {
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 <div className="lg:col-span-8 space-y-4">
                   <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
-                    محتوى المحاضرة
+                    {tSubjectPage("lectureContent")}
                   </div>
                   <h1 className="text-5xl sm:text-6xl font-black leading-tight">
                     {lectureTitle}
                   </h1>
                   <div className="flex flex-wrap justify-start gap-4 mt-6">
                     <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {explanationItems.length} شرح
+                      {explanationItems.length} {tSubjectPage("explanation")}
                     </div>
                     <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {homeworkItems.length} واجب
+                      {homeworkItems.length} {tSubjectPage("homework")}
                     </div>
                     <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {examItems.length} اختبار
+                      {examItems.length} {tSubjectPage("examLabel")}
                     </div>
                   </div>
                 </div>
@@ -1288,12 +1308,12 @@ function SubjectSummariesContent() {
                 <div className="lg:col-span-4">
                   <div className="lg:border-r lg:border-white/10 lg:pr-10 lg:pt-2">
                     <h3 className="text-lg font-black text-white/90 mb-5">
-                      معلومات المحاضرة
+                      {tSubjectPage("lectureInfo")}
                     </h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-bold text-white/60">
-                          تاريخ الإضافة
+                          {tSubjectPage("addedDate")}
                         </span>
                         <span className="text-sm font-black text-white">
                           {lectureAddedAt ? formatYmd(lectureAddedAt) : "—"}
@@ -1302,7 +1322,7 @@ function SubjectSummariesContent() {
                       <div className="h-px bg-white/10" />
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-bold text-white/60">
-                          عدد المصادر
+                          {tSubjectPage("sourcesCount")}
                         </span>
                         <span className="text-sm font-black text-white">
                           {explanationItems.length}
@@ -1311,7 +1331,7 @@ function SubjectSummariesContent() {
                       <div className="h-px bg-white/10" />
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-bold text-white/60">
-                          الاختبارات
+                          {tSubjectPage("exams")}
                         </span>
                         <span className="text-sm font-black text-white">
                           {examItems.length}
@@ -1341,7 +1361,7 @@ function SubjectSummariesContent() {
                         {activeVideoTitle}
                       </h3>
                       <p className="text-xs font-bold text-slate-400">
-                        مشغل الفيديو
+                        {tSubjectPage("videoPlayer")}
                       </p>
                     </div>
                   </div>
@@ -1350,7 +1370,9 @@ function SubjectSummariesContent() {
                       onClick={() => setIsTheatreMode(!isTheatreMode)}
                       className={`p-2 rounded-xl transition-colors ${isTheatreMode ? "bg-brand-blue text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"}`}
                       title={
-                        isTheatreMode ? "الخروج من وضع المسرح" : "وضع المسرح"
+                        isTheatreMode
+                          ? tSubjectPage("exitTheatreMode")
+                          : tSubjectPage("theatreMode")
                       }
                     >
                       <Monitor className="w-6 h-6" />
@@ -1399,7 +1421,7 @@ function SubjectSummariesContent() {
                   <Video className="w-6 h-6" />
                 </div>
                 <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                  الشرح والدروس
+                  {tSubjectPage("explanationsAndLessons")}
                 </h2>
                 {isAdmin && (
                   <div className="flex gap-2 mr-auto">
@@ -1412,7 +1434,7 @@ function SubjectSummariesContent() {
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue font-bold text-xs hover:bg-brand-blue hover:text-white transition-all"
                     >
                       <Plus className="w-4 h-4" />
-                      فيديو
+                      {tSubjectPage("video")}
                     </button>
                     <button
                       onClick={() =>
@@ -1423,7 +1445,7 @@ function SubjectSummariesContent() {
                       className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange font-bold text-xs hover:bg-brand-orange hover:text-white transition-all"
                     >
                       <Plus className="w-4 h-4" />
-                      ملف
+                      {tSubjectPage("file")}
                     </button>
                   </div>
                 )}
@@ -1433,7 +1455,7 @@ function SubjectSummariesContent() {
                 {explanationItems.length === 0 ? (
                   <div className="p-12 text-center rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800">
                     <div className="text-slate-400 font-black italic">
-                      لا يوجد محتوى شرح حالياً
+                      {tSubjectPage("noExplanationContent")}
                     </div>
                   </div>
                 ) : (
@@ -1469,77 +1491,78 @@ function SubjectSummariesContent() {
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                             {item.type === "video"
-                              ? "فيديو تدريبي"
+                              ? tSubjectPage("contentType.video")
                               : item.type === "summary"
-                                ? "ملخص دراسي"
-                                : "ملف دراسي"}
+                                ? tSubjectPage("contentType.summary")
+                                : tSubjectPage("contentType.file")}
                           </span>
                           <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
                           <span className="text-xs font-bold text-slate-400">
                             {new Date(
                               item.created_at || Date.now(),
-                            ).toLocaleDateString("ar-EG")}
+                            ).toLocaleDateString(locale)}
                           </span>
                         </div>
                       </div>
-                      {user && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleProgress(
-                                item.id || item.url || item.file_url,
+                      <div className="flex gap-2 relative z-10">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const contentId =
+                              item.id || item.url || item.file_url;
+                            if (user && contentId) {
+                              toggleProgress(contentId);
+                            } else if (!user) {
+                              // Show toast error if not logged in
+                              toast.error(
+                                "Please login to mark content as completed",
                               );
-                            }}
-                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
-                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
-                            }`}
-                            title={
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "إلغاء التحديد"
-                                : "تحديد كمكتمل"
                             }
-                          >
-                            <CheckCircle
-                              className={`w-5 h-5 transition-transform duration-500 ${
-                                completedContent.has(
-                                  item.id || item.url || item.file_url,
-                                )
-                                  ? "scale-110 rotate-[360deg]"
-                                  : "group-hover/btn:rotate-12"
-                              }`}
-                            />
-                            {completedContent.has(
+                          }}
+                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
+                            completedContent.has(
                               item.id || item.url || item.file_url,
-                            ) && (
-                              <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/20 pointer-events-none" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (item.type === "summary") {
-                                trackSummaryClick(item.id, "view");
-                                router.push(`/summaries/${item.id}`);
-                              } else if (item.type === "video") {
-                                setActiveVideoUrl(item.url);
-                                setActiveVideoTitle(item.title);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              } else if (item.file_url) {
-                                window.open(item.file_url, "_blank");
-                              }
-                            }}
-                            className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
-                          >
-                            عرض المحتوى
-                          </button>
-                        </div>
-                      )}
+                            )
+                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110 animate-bounce"
+                              : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105 active:scale-95"
+                          }`}
+                          title="Mark lesson as completed"
+                        >
+                          <CheckCircle
+                            className={`w-5 h-5 transition-all duration-500 will-change-transform ${
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "scale-110 animate-spin"
+                                : "group-hover/btn:rotate-12"
+                            }`}
+                          />
+                          {completedContent.has(
+                            item.id || item.url || item.file_url,
+                          ) && (
+                            <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/60" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (item.type === "summary") {
+                              trackSummaryClick(item.id, "view");
+                              router.push(`/summaries/${item.id}`);
+                            } else if (item.type === "video") {
+                              setActiveVideoUrl(item.url);
+                              setActiveVideoTitle(item.title);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            } else if (item.file_url) {
+                              window.open(item.file_url, "_blank");
+                            }
+                          }}
+                          className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
+                        >
+                          {tSubjectPage("viewContent")}
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -1553,7 +1576,7 @@ function SubjectSummariesContent() {
                     <ClipboardList className="w-6 h-6" />
                   </div>
                   <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                    التكاليف والواجبات
+                    {tSubjectPage("assignmentsAndHomework")}
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -1564,45 +1587,43 @@ function SubjectSummariesContent() {
                     >
                       <div className="flex justify-between items-start mb-6">
                         <FileText className="w-10 h-10 opacity-40" />
-                        {user && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleProgress(
-                                item.id || item.url || item.file_url,
-                              );
-                            }}
-                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "bg-white text-emerald-600 shadow-lg scale-110"
-                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:scale-105"
-                            }`}
-                            title={
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "إلغاء التحديد"
-                                : "تحديد كمكتمل"
-                            }
-                          >
-                            <CheckCircle
-                              className={`w-5 h-5 transition-transform duration-500 ${
-                                completedContent.has(
-                                  item.id || item.url || item.file_url,
-                                )
-                                  ? "scale-110 rotate-[360deg]"
-                                  : "group-hover/btn:rotate-12"
-                              }`}
-                            />
-                            {completedContent.has(
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleProgress(
                               item.id || item.url || item.file_url,
-                            ) && (
-                              <span className="absolute inset-0 rounded-xl animate-ping bg-white/40 pointer-events-none" />
-                            )}
-                          </button>
-                        )}
+                            );
+                          }}
+                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
+                            completedContent.has(
+                              item.id || item.url || item.file_url,
+                            )
+                              ? "bg-white text-emerald-600 shadow-lg scale-110"
+                              : "bg-white/10 text-white/60 hover:bg-white/20 hover:scale-105"
+                          }`}
+                          title={
+                            completedContent.has(
+                              item.id || item.url || item.file_url,
+                            )
+                              ? tSubjectPage("unmarkCompleted")
+                              : tSubjectPage("markAsCompleted")
+                          }
+                        >
+                          <CheckCircle
+                            className={`w-5 h-5 transition-all duration-500 ${
+                              completedContent.has(
+                                item.id || item.url || item.file_url,
+                              )
+                                ? "scale-110 rotate-[360deg] text-emerald-600"
+                                : "group-hover/btn:rotate-12"
+                            }`}
+                          />
+                          {completedContent.has(
+                            item.id || item.url || item.file_url,
+                          ) && (
+                            <span className="absolute inset-0 rounded-xl animate-ping-slow bg-white/40 pointer-events-none" />
+                          )}
+                        </button>
                       </div>
                       <h4 className="text-xl font-black mb-4">{item.title}</h4>
                       <button
@@ -1613,7 +1634,7 @@ function SubjectSummariesContent() {
                         }}
                         className="w-full py-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 font-black text-sm hover:bg-white/30 transition-all"
                       >
-                        تحميل الواجب
+                        {tSubjectPage("downloadHomework")}
                       </button>
                     </div>
                   ))}
@@ -1627,14 +1648,14 @@ function SubjectSummariesContent() {
               <div className="flex items-center gap-3 mb-2">
                 <Trophy className="w-6 h-6 text-brand-blue" />
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                  الاختبارات
+                  {tSubjectPage("exams")}
                 </h3>
               </div>
 
               <div className="space-y-4">
                 {examItems.length === 0 ? (
                   <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 font-bold italic">
-                    لا يوجد اختبارات
+                    {tSubjectPage("noExams")}
                   </div>
                 ) : (
                   examItems.map((item, idx) => (
@@ -1646,35 +1667,33 @@ function SubjectSummariesContent() {
                         <h4 className="font-black text-slate-900 dark:text-white leading-tight">
                           {item.title}
                         </h4>
-                        {user && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleProgress(item.id);
-                            }}
-                            className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleProgress(item.id);
+                          }}
+                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
+                            completedContent.has(item.id)
+                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
+                              : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
+                          }`}
+                          title={
+                            completedContent.has(item.id)
+                              ? tSubjectPage("unmarkCompleted")
+                              : tSubjectPage("markAsCompleted")
+                          }
+                        >
+                          <CheckCircle
+                            className={`w-5 h-5 transition-all duration-500 ${
                               completedContent.has(item.id)
-                                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
-                                : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
+                                ? "scale-110 rotate-[360deg] text-white"
+                                : "group-hover/btn:rotate-12"
                             }`}
-                            title={
-                              completedContent.has(item.id)
-                                ? "إلغاء التحديد"
-                                : "تحديد كمكتمل"
-                            }
-                          >
-                            <CheckCircle
-                              className={`w-5 h-5 transition-transform duration-500 ${
-                                completedContent.has(item.id)
-                                  ? "scale-110 rotate-[360deg]"
-                                  : "group-hover/btn:rotate-12"
-                              }`}
-                            />
-                            {completedContent.has(item.id) && (
-                              <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/20 pointer-events-none" />
-                            )}
-                          </button>
-                        )}
+                          />
+                          {completedContent.has(item.id) && (
+                            <span className="absolute inset-0 rounded-xl animate-ping-slow bg-emerald-400/40 pointer-events-none" />
+                          )}
+                        </button>
                       </div>
                       <button
                         onClick={() =>
@@ -1682,7 +1701,7 @@ function SubjectSummariesContent() {
                         }
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-blue text-white font-black text-sm group-hover:shadow-lg group-hover:shadow-brand-blue/30 transition-all"
                       >
-                        ابدأ التحدي
+                        {tSubjectPage("startChallenge")}
                         <ArrowLeft className="w-4 h-4 mr-2" />
                       </button>
                     </div>
@@ -1702,7 +1721,7 @@ function SubjectSummariesContent() {
                     className="w-full flex items-center justify-center gap-2 p-6 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:border-brand-blue hover:text-brand-blue transition-all font-black"
                   >
                     <Plus className="w-5 h-5" />
-                    إضافة اختبار
+                    {tSubjectPage("addExam")}
                   </button>
                 )}
               </div>
@@ -1750,12 +1769,12 @@ function SubjectSummariesContent() {
               <X className="w-6 h-6" />
             </button>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
-              إضافة محاضرة جديدة
+              {tSubjectPage("addNewLecture")}
             </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-500 mb-2">
-                  عنوان المحاضرة
+                  {tSubjectPage("lectureForm.titleLabel")}
                 </label>
                 <input
                   type="text"
@@ -1769,14 +1788,14 @@ function SubjectSummariesContent() {
                         : { key: getLectureInfoFromTitle(e.target.value).key }),
                     }))
                   }
-                  placeholder="مثال: محاضرة 1"
+                  placeholder={tSubjectPage("lectureForm.titlePlaceholder")}
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-500 mb-2">
-                  اسم المحاضرة (للعرض)
+                  {tSubjectPage("lectureForm.labelLabel")}
                 </label>
                 <input
                   type="text"
@@ -1793,7 +1812,7 @@ function SubjectSummariesContent() {
 
               <div>
                 <label className="block text-sm font-bold text-slate-500 mb-2">
-                  الترتيب (اختياري)
+                  {tSubjectPage("orderOptional")}
                 </label>
                 <input
                   type="number"
@@ -1804,7 +1823,7 @@ function SubjectSummariesContent() {
                       orderIndex: e.target.value,
                     }))
                   }
-                  placeholder="تلقائي"
+                  placeholder={tSubjectPage("lectureForm.orderPlaceholder")}
                   className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                 />
               </div>
@@ -1813,7 +1832,9 @@ function SubjectSummariesContent() {
                 disabled={isSavingLecture || !lectureFormData.title.trim()}
                 className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-4"
               >
-                {isSavingLecture ? "جاري الحفظ..." : "حفظ المحاضرة"}
+                {isSavingLecture
+                  ? tCommon("loading")
+                  : tSubjectPage("lectureForm.save")}
               </button>
             </div>
           </div>
@@ -1825,7 +1846,7 @@ function SubjectSummariesContent() {
           <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-2xl p-8 shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                إضافة امتحان جديد
+                {tSubjectPage("exam.addNew")}
               </h3>
               <button
                 onClick={() => setShowAddExamForm(false)}
@@ -1839,7 +1860,7 @@ function SubjectSummariesContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-500 mb-2">
-                    عنوان الامتحان
+                    {tSubjectPage("exam.titleLabel")}
                   </label>
                   <input
                     value={examFormData.title}
@@ -1851,7 +1872,7 @@ function SubjectSummariesContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-500 mb-2">
-                    المدة (بالدقائق)
+                    {tSubjectPage("exam.durationMinutesLabel")}
                   </label>
                   <input
                     type="number"
@@ -1870,7 +1891,7 @@ function SubjectSummariesContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-slate-500 mb-2">
-                    القسم
+                    {tSubjectPage("exam.departmentLabel")}
                   </label>
                   <select
                     value={examFormData.department}
@@ -1888,18 +1909,18 @@ function SubjectSummariesContent() {
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                   >
                     <option value="" disabled>
-                      اختر القسم...
+                      {tSubjectPage("exam.departmentPlaceholder")}
                     </option>
-                    {availableExamDepartments.map((dep) => (
+                    {availableExamDepartments.map((dep: any) => (
                       <option key={dep.id} value={dep.name}>
-                        {dep.name} {!dep.is_active && "(غير نشط)"}
+                        {dep.name} {!dep.is_active && tSubjectPage("inactive")}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-500 mb-2">
-                    السنة
+                    {tSubjectPage("year")}
                   </label>
                   <select
                     value={examFormData.year}
@@ -1914,11 +1935,11 @@ function SubjectSummariesContent() {
                     className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                   >
                     <option value="" disabled>
-                      اختر المستوى...
+                      {tSubjectPage("exam.yearPlaceholder")}
                     </option>
-                    {levels.map((lvl) => (
+                    {levels.map((lvl: any) => (
                       <option key={lvl.id} value={lvl.name}>
-                        {lvl.name} {!lvl.is_active && "(غير نشط)"}
+                        {lvl.name} {!lvl.is_active && tSubjectPage("inactive")}
                       </option>
                     ))}
                   </select>
@@ -1928,7 +1949,7 @@ function SubjectSummariesContent() {
               <div className="pt-6 border-t-2 border-slate-50 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-6">
                   <h4 className="text-xl font-black text-slate-900 dark:text-white">
-                    الأسئلة
+                    {tSubjectPage("exam.questions")}
                   </h4>
                   <button
                     onClick={() =>
@@ -1947,7 +1968,8 @@ function SubjectSummariesContent() {
                     }
                     className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold hover:bg-brand-blue hover:text-white transition-all flex items-center gap-2"
                   >
-                    <Plus className="w-4 h-4" /> إضافة سؤال
+                    <Plus className="w-4 h-4" />{" "}
+                    {tSubjectPage("exam.addQuestion")}
                   </button>
                 </div>
 
@@ -1958,8 +1980,8 @@ function SubjectSummariesContent() {
                       className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-brand-blue/20 transition-all"
                     >
                       <div className="flex justify-between mb-4">
-                        <span className="text-sm font-black text-brand-blue uppercase tracking-widest">
-                          سؤال {idx + 1}
+                        <span className="text-sm font-black text-slate-400 uppercase tracking-widest">
+                          {tSubjectPage("exam.question")} {idx + 1}
                         </span>
                         {examFormData.questions.length > 1 && (
                           <button
@@ -1973,7 +1995,7 @@ function SubjectSummariesContent() {
                             }
                             className="text-red-500 font-bold text-xs"
                           >
-                            حذف
+                            {tSubjectPage("exam.deleteQuestion")}
                           </button>
                         )}
                       </div>
@@ -1989,7 +2011,7 @@ function SubjectSummariesContent() {
                             ),
                           }))
                         }
-                        placeholder="نص السؤال (يدعم LaTeX)"
+                        placeholder={tSubjectPage("exam.questionPlaceholder")}
                         className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold mb-4"
                       />
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2012,7 +2034,7 @@ function SubjectSummariesContent() {
                                 ),
                               }))
                             }
-                            placeholder={`اختيار ${optIdx + 1}`}
+                            placeholder={`${tSubjectPage("exam.option")} ${optIdx + 1}`}
                             className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
                           />
                         ))}
@@ -2035,10 +2057,18 @@ function SubjectSummariesContent() {
                           }
                           className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none"
                         >
-                          <option value={0}>الاختيار الأول صحيح</option>
-                          <option value={1}>الاختيار الثاني صحيح</option>
-                          <option value={2}>الاختيار الثالث صحيح</option>
-                          <option value={3}>الاختيار الرابع صحيح</option>
+                          <option value={0}>
+                            {tSubjectPage("exam.option1Correct")}
+                          </option>
+                          <option value={1}>
+                            {tSubjectPage("exam.option2Correct")}
+                          </option>
+                          <option value={2}>
+                            {tSubjectPage("exam.option3Correct")}
+                          </option>
+                          <option value={3}>
+                            {tSubjectPage("exam.option4Correct")}
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -2055,7 +2085,9 @@ function SubjectSummariesContent() {
                 }
                 className="w-full py-5 rounded-3xl bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/40 disabled:opacity-50 transition-all"
               >
-                {isSavingExam ? "جاري الحفظ..." : "حفظ الامتحان"}
+                {isSavingExam
+                  ? tCommon("loading")
+                  : tSubjectPage("exam.saveButton")}
               </button>
             </div>
           </div>
