@@ -270,6 +270,12 @@
     "descriptionWithSubject": "Summaries, lectures, files, and videos for {subject} on Masar X.",
     "descriptionFallback": "Summaries, lectures, and learning resources on Masar X."
   },
+  "notFound": {
+    "title": "404",
+    "message": "Sorry, the page you are looking for does not exist.",
+    "backHome": "Back to Home",
+    "pageTitle": "Page Not Found | Masar X"
+  },
   "news": {
     "pageTitle": "News and Important Announcements",
     "pageDescription": "Stay informed about everything that matters in your learning journey",
