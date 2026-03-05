@@ -8,7 +8,7 @@ import {
 } from "../utils/notificationUtils";
 import {
   NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY,
+  NOTIFICATION_ACCESSIBILITY_KEYS,
 } from "../constants/notifications";
 
 interface NotificationItemProps {
@@ -109,8 +109,8 @@ export function NotificationItem({
               onClick={handleDelete}
               disabled={isDeleting}
               className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-300 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100 translate-x-2 group-hover:translate-x-0"
-              title={NOTIFICATION_ACCESSIBILITY.deleteNotification}
-              aria-label={`${NOTIFICATION_ACCESSIBILITY.deleteNotification}: ${notification.title}`}
+              title={NOTIFICATION_ACCESSIBILITY_KEYS.deleteNotification}
+              aria-label={`${NOTIFICATION_ACCESSIBILITY_KEYS.deleteNotification}: ${notification.title}`}
             >
               {isDeleting ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />

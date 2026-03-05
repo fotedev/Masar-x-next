@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
   CardTitle,
   Button,
   Badge,
-} from "../../components/ui";
+} from "@/components/ui";
 import { GraduationCap, Users, Star, Search } from "lucide-react";
 
 interface Course {
@@ -64,34 +64,36 @@ export default function CoursesPage() {
       if (error) throw error;
 
       if (coursesData) {
-        const processedCourses = coursesData.map((course) => {
-          const activeEnrollments =
-            (course.enrollments as { status: string }[] | undefined)?.filter(
-              (e) => e.status === "active",
-            ) || [];
-          const reviews =
-            (course.reviews as { rating: number }[] | undefined) || [];
-          const averageRating =
-            reviews.length > 0
-              ? reviews.reduce((sum: number, r) => sum + r.rating, 0) /
-                reviews.length
-              : 0;
-
-          const priceNumber =
-            typeof course.price === "number"
-              ? course.price
-              : typeof course.price === "string"
-                ? Number(course.price)
+        const processedCourses = coursesData.map(
+          (course: (typeof coursesData)[number]) => {
+            const activeEnrollments =
+              (course.enrollments as { status: string }[] | undefined)?.filter(
+                (e) => e.status === "active",
+              ) || [];
+            const reviews =
+              (course.reviews as { rating: number }[] | undefined) || [];
+            const averageRating =
+              reviews.length > 0
+                ? reviews.reduce((sum: number, r) => sum + r.rating, 0) /
+                  reviews.length
                 : 0;
 
-          return {
-            ...course,
-            price: Number.isFinite(priceNumber) ? priceNumber : 0,
-            instructor_name: course.profiles?.display_name || "مدرب",
-            average_rating: averageRating,
-            total_students: activeEnrollments.length,
-          };
-        });
+            const priceNumber =
+              typeof course.price === "number"
+                ? course.price
+                : typeof course.price === "string"
+                  ? Number(course.price)
+                  : 0;
+
+            return {
+              ...course,
+              price: Number.isFinite(priceNumber) ? priceNumber : 0,
+              instructor_name: course.profiles?.display_name || "مدرب",
+              average_rating: averageRating,
+              total_students: activeEnrollments.length,
+            };
+          },
+        );
 
         setCourses(processedCourses);
       }

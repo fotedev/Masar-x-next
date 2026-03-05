@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { LogIn, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/navigation";
 import Image from "next/image";
-import { useAuth } from "../../contexts/AuthContext";
-import { useAnalytics } from "../../hooks/useAnalytics";
-import { supabase } from "../../lib/supabase";
+import { AuthError, useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { supabase } from "@/lib/supabase";
+import { useTranslations } from "next-intl";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations("authPages");
   const { signIn, signInWithGoogle, user } = useAuth();
   const { trackEvent, logError } = useAnalytics();
   const [email, setEmail] = useState("");
@@ -74,9 +76,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockoutTime > 0) {
-      setError(
-        `تم تعليق المحاولات. انتظر ${Math.ceil(lockoutTime / 1000)} ثانية`,
-      );
+      setError(t("lockoutWait", { seconds: Math.ceil(lockoutTime / 1000) }));
       return;
     }
     setLoading(true);
@@ -103,10 +103,14 @@ export default function LoginPage() {
       if (newAttempts >= 20) {
         setLockoutTime(lockoutDuration);
         setError(
-          `تم تعليق المحاولات بسبب محاولات فاشلة متكررة. انتظر ${Math.ceil(lockoutDuration / 1000)} ثانية`,
+          t("lockoutRepeated", { seconds: Math.ceil(lockoutDuration / 1000) }),
         );
       } else {
-        setError("خطأ في البريد الإلكتروني أو كلمة المرور");
+        if (err instanceof AuthError && err.code === "INVALID_CREDENTIALS") {
+          setError(t("invalidCredentials"));
+        } else {
+          setError(t("loginGenericError"));
+        }
       }
     } finally {
       setLoading(false);
@@ -125,7 +129,7 @@ export default function LoginPage() {
         metadata: { method: "google" },
       });
       trackEvent("login_failure", { method: "google" });
-      setError("حدث خطأ أثناء تسجيل الدخول بـ Google. يرجى المحاولة مرة أخرى.");
+      setError(t("googleLoginFailed"));
       setGoogleLoading(false);
     }
   };
@@ -133,40 +137,33 @@ export default function LoginPage() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError("يرجى إدخال البريد الإلكتروني أولاً");
+      setError(t("emailRequiredForReset"));
       return;
     }
     setResetLoading(true);
     setError("");
     setResetMessage("");
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke(
-        "request-password-reset",
-        {
-          body: { email },
-        },
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-      if (invokeError) {
-        throw new Error(invokeError.message || "Request failed");
+      if (error) {
+        throw error;
       }
 
-      if (data?.error) {
-        throw new Error(data.error || "Request failed");
-      }
-
-      setSuccess("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.");
-      trackEvent("password_reset_requested", { method: "brevo" });
+      setSuccess(t("resetLinkSent"));
+      trackEvent("password_reset_requested", { method: "supabase_auth" });
     } catch (err) {
       logError(err instanceof Error ? err : String(err), {
         message: "Password reset failed",
-        metadata: { method: "brevo" },
+        metadata: { method: "supabase_auth" },
       });
-      trackEvent("password_reset_failure", { method: "brevo" });
+      trackEvent("password_reset_failure", { method: "supabase_auth" });
       setError(
         err instanceof Error
           ? err.message
-          : "حدث خطأ أثناء إرسال رابط إعادة التعيين.",
+          : t("resetRequestFailed"),
       );
     } finally {
       setResetLoading(false);
@@ -187,11 +184,13 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
-            {showForgotPasswordForm ? "نسيت كلمة المرور؟" : "مرحباً بك مجدداً"}
+            {showForgotPasswordForm
+              ? t("forgotPasswordTitle")
+              : t("welcomeBackTitle")}
           </h1>
           {!showForgotPasswordForm && (
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              سجل دخولك لمتابعة رحلة التعلم
+              {t("loginSubtitle")}
             </p>
           )}
         </div>
@@ -215,10 +214,11 @@ export default function LoginPage() {
                 htmlFor="forgot-email"
                 className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
               >
-                البريد الإلكتروني
+                {t("emailLabel")}
               </label>
               <input
                 id="forgot-email"
+                name="email"
                 type="email"
                 required
                 value={email}
@@ -235,10 +235,10 @@ export default function LoginPage() {
               {resetLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>جاري الإرسال...</span>
+                  <span>{t("sending")}</span>
                 </>
               ) : (
-                <span>إرسال رابط إعادة التعيين</span>
+                <span>{t("sendResetLink")}</span>
               )}
             </button>
             <div className="text-center mt-6">
@@ -251,7 +251,7 @@ export default function LoginPage() {
                 }}
                 className="text-sm font-bold text-slate-500 hover:text-brand-blue transition-colors"
               >
-                العودة إلى تسجيل الدخول
+                {t("backToLogin")}
               </button>
             </div>
           </form>
@@ -262,10 +262,11 @@ export default function LoginPage() {
                 htmlFor="login-email"
                 className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
               >
-                البريد الإلكتروني
+                {t("emailLabel")}
               </label>
               <input
                 id="login-email"
+                name="email"
                 type="email"
                 required
                 autoComplete="email"
@@ -280,11 +281,12 @@ export default function LoginPage() {
                 htmlFor="login-password"
                 className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
               >
-                كلمة المرور
+                {t("passwordLabel")}
               </label>
               <div className="relative">
                 <input
                   id="login-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
@@ -316,7 +318,7 @@ export default function LoginPage() {
                 }}
                 className="text-sm font-bold text-brand-blue hover:text-brand-sky transition-colors"
               >
-                نسيت كلمة المرور؟
+                {t("forgotPassword")}
               </button>
             </div>
             <button
@@ -327,12 +329,12 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>جاري تسجيل الدخول...</span>
+                  <span>{t("signingIn")}</span>
                 </>
               ) : (
                 <>
                   <LogIn className="w-6 h-6" />
-                  <span>تسجيل الدخول</span>
+                  <span>{t("signIn")}</span>
                 </>
               )}
             </button>
@@ -346,7 +348,7 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white dark:bg-brand-navy text-slate-400 font-bold">
-                أو
+                {t("or")}
               </span>
             </div>
           </div>
@@ -379,24 +381,24 @@ export default function LoginPage() {
               />
             </svg>
           )}
-          <span>تسجيل الدخول باستخدام Google</span>
+          <span>{t("signInWithGoogle")}</span>
         </button>
 
         <div className="mt-10 text-center space-y-4">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            ليس لديك حساب؟{" "}
+            {t("noAccountPrompt")}{" "}
             <button
               onClick={() => onNavigate("signup")}
               className="text-brand-blue hover:text-brand-sky font-bold transition-colors"
             >
-              إنشاء حساب جديد
+              {t("createNewAccount")}
             </button>
           </p>
           <button
             onClick={() => onNavigate("home")}
             className="text-sm font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
           >
-            العودة إلى الصفحة الرئيسية
+            {t("backToHome")}
           </button>
         </div>
       </div>

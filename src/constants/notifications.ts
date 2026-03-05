@@ -26,17 +26,20 @@ export const NOTIFICATION_STYLES = {
 } as const;
 
 /**
- * ARIA labels and accessibility text
+ * Translation keys for ARIA labels and accessibility text
+ * These should be accessed via useTranslations('notifications')
+ * 
+ * Keys: dropdown, bellButton, closeButton, markAllRead, deleteNotification, loading, empty, unreadBadge
  */
-export const NOTIFICATION_ACCESSIBILITY = {
-  dropdown: 'قائمة الإشعارات',
-  bellButton: 'الإشعارات',
-  closeButton: 'إغلاق قائمة الإشعارات',
-  markAllRead: 'تحديد الكل كمقروء',
-  deleteNotification: 'حذف الإشعار',
-  loading: 'جاري التحميل...',
-  empty: 'لا توجد إشعارات',
-  unreadBadge: 'عدد الإشعارات غير المقروءة',
+export const NOTIFICATION_ACCESSIBILITY_KEYS = {
+  dropdown: 'notifications.dropdown',
+  bellButton: 'notifications.bellButton',
+  closeButton: 'notifications.closeButton',
+  markAllRead: 'notifications.markAllRead',
+  deleteNotification: 'notifications.deleteNotification',
+  loading: 'notifications.loading',
+  empty: 'notifications.empty',
+  unreadBadge: 'notifications.unreadBadge',
 } as const;
 
 /**

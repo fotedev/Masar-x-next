@@ -58,6 +58,36 @@ export function useUserAcademic() {
   // Use refs to prevent redundant fetches
   const hasInitialized = useRef(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncFromCache = () => {
+      if (!user) return;
+      try {
+        const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+        if (!cached) return;
+        const parsed = JSON.parse(cached);
+        if (parsed.userId !== user.id) return;
+        if (!parsed.data) return;
+        setAcademic(parsed.data);
+      } catch {
+        // ignore
+      }
+    };
+
+    const onCustomUpdate = () => syncFromCache();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === USER_ACADEMIC_CACHE_KEY) syncFromCache();
+    };
+
+    window.addEventListener("masarx_user_academic_updated", onCustomUpdate as EventListener);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("masarx_user_academic_updated", onCustomUpdate as EventListener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [user]);
+
   // 1. Initialize from cache as soon as user is available (Fixing the form flickering)
   useEffect(() => {
     if (authLoading) return;
@@ -176,6 +206,9 @@ export function useUserAcademic() {
           userId: userId,
         }),
       );
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("masarx_user_academic_updated"));
+      }
       localStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString());
     } catch (e) {
       console.error("Failed to fetch academic", e);
@@ -259,6 +292,7 @@ export function useUserAcademic() {
             userId: user.id,
           }),
         );
+        window.dispatchEvent(new Event("masarx_user_academic_updated"));
         queryCache.invalidatePrefix("subjects");
       }
 

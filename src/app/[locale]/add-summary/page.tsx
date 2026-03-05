@@ -4,15 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { uploadToCloudinary } from "../../lib/cloudinary";
-import { useAuth } from "../../contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
-import { useNotifications as useDbNotifications } from "../../hooks/useNotifications";
-import { useSubjects } from "../../hooks/useSubjects";
-import type { SummaryInsert } from "../../types/database";
-import { FileDropzone } from "../../components/FileDropzone";
-import { useAcademicOptions } from "../../hooks/useAcademicOptions";
+import { supabase } from "@/lib/supabase";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
+import { useNotifications as useDbNotifications } from "@/hooks/useNotifications";
+import { useSubjects } from "@/hooks/useSubjects";
+import type { SummaryInsert } from "@/types/database";
+import { FileDropzone } from "@/components/FileDropzone";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 
 export default function AddSummaryPage() {
   const router = useRouter();
@@ -35,6 +35,7 @@ export default function AddSummaryPage() {
     year: "",
     department: "",
     content: "",
+    youtube_url: "",
   });
 
   const selectedLevelNumber = useMemo(() => {
@@ -59,6 +60,7 @@ export default function AddSummaryPage() {
   const [uploadStage, setUploadStage] = useState<string>("");
   const [attachmentType, setAttachmentType] = useState<"file" | "link">("file");
   const [driveLink, setDriveLink] = useState<string>("");
+  const [youtubeLink, setYoutubeLink] = useState<string>("");
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
@@ -97,6 +99,31 @@ export default function AddSummaryPage() {
         return;
       }
 
+      // Check PDF file size (10MB limit)
+      if (attachmentType === "file" && pdfFile) {
+        const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
+        if (pdfFile.size > MAX_PDF_SIZE) {
+          setError("حجم ملف PDF يتجاوز الحد المسموح به (10MB)");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Check Image file sizes (5MB limit per image)
+      if (imageFiles.length > 0) {
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+        const oversizedImage = imageFiles.find(
+          (file) => file.size > MAX_IMAGE_SIZE,
+        );
+        if (oversizedImage) {
+          setError(
+            `حجم الصورة "${oversizedImage.name}" يتجاوز الحد المسموح به (5MB)`,
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       let lectureId: string | null = null;
       if (lectureKeyFromQuery) {
         const { data: lectureRow, error: lectureError } = await supabase
@@ -118,11 +145,15 @@ export default function AddSummaryPage() {
 
       // Validate attachment data
       if (attachmentType === "link" && driveLink.trim()) {
-        // Basic URL validation
-        try {
-          new URL(driveLink.trim());
-        } catch {
-          setError("يرجى إدخال رابط صحيح");
+        // Strict Google Drive validation
+        const isGoogleDrive =
+          /^(https?:\/\/)?(www\.)?(drive|docs)\.google\.com\/.+/.test(
+            driveLink.trim(),
+          );
+        if (!isGoogleDrive) {
+          setError(
+            "يرجى إدخال رابط Google Drive صحيح (https://drive.google.com/...)",
+          );
           setLoading(false);
           return;
         }
@@ -130,6 +161,17 @@ export default function AddSummaryPage() {
         setError("يرجى إدخال رابط Google Drive أو اختر رفع ملف");
         setLoading(false);
         return;
+      }
+
+      // Validate YouTube link if provided
+      if (youtubeLink.trim()) {
+        const youtubeRegex =
+          /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|.+\?v=)?([^&=%\?]{11})/;
+        if (!youtubeRegex.test(youtubeLink.trim())) {
+          setError("يرجى إدخال رابط يوتيوب صحيح");
+          setLoading(false);
+          return;
+        }
       }
 
       let cloudinaryResult = null;
@@ -191,6 +233,7 @@ export default function AddSummaryPage() {
           attachmentType === "file"
             ? cloudinaryResult?.url || null
             : driveLink || null,
+        youtube_url: youtubeLink.trim() || null,
         status: "pending",
         user_id: user?.id ?? null,
         lecture_key: lectureKeyFromQuery || null,
@@ -233,7 +276,9 @@ export default function AddSummaryPage() {
         year: "",
         department: "",
         content: "",
+        youtube_url: "",
       });
+      setYoutubeLink("");
       setPdfFile(null);
       setImageFiles([]);
       setAttachmentType("file");
@@ -481,6 +526,23 @@ export default function AddSummaryPage() {
               rows={10}
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
               placeholder="اكتب محتوى الملخص هنا..."
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="summary-youtube"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              رابط يوتيوب (اختياري)
+            </label>
+            <input
+              id="summary-youtube"
+              type="url"
+              value={youtubeLink}
+              onChange={(e) => setYoutubeLink(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
             />
           </div>
 

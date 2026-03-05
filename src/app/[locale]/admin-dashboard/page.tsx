@@ -14,30 +14,31 @@ import {
   CreditCard,
   School,
 } from "lucide-react";
-import { useSummaries } from "../../hooks/useSummaries";
-import { useSubjects } from "../../hooks/useSubjects";
-import { useNews } from "../../hooks/useNews";
-import { useAppeals } from "../../hooks/useAppeals";
-import { useQuizzes } from "../../hooks/useQuizzes";
-import { SummariesTab } from "../../components/SummariesTab";
-import { NewsTab } from "../../components/NewsTab";
-import { AppealsTab } from "../../components/AppealsTab";
-import { QuizzesTab } from "../../components/QuizzesTab";
-import { AddNewsModal } from "../../components/AddNewsModal";
-import { EditSummaryModal } from "../../components/EditSummaryModal";
+import { useSummaries } from "@/hooks/useSummaries";
+import { useSubjects } from "@/hooks/useSubjects";
+import { useNews } from "@/hooks/useNews";
+import { useAppeals } from "@/hooks/useAppeals";
+import { useQuizzes } from "@/hooks/useQuizzes";
+import { SummariesTab } from "@/components/SummariesTab";
+import { NewsTab } from "@/components/NewsTab";
+import { AppealsTab } from "@/components/AppealsTab";
+import { QuizzesTab } from "@/components/QuizzesTab";
+import { AddNewsModal } from "@/components/AddNewsModal";
+import { EditSummaryModal } from "@/components/EditSummaryModal";
 import { AdminAnalyticsPage } from "./AdminAnalyticsPage";
-import { PageManagementTab } from "../../components/PageManagementTab";
-import { CoursesTab } from "../../components/CoursesTab";
-import { EnrollmentsTab } from "../../components/EnrollmentsTab";
-import { AddCourseModal } from "../../components/AddCourseModal";
-import { SubjectsTab } from "../../components/SubjectsTab";
-import { AddSubjectModal } from "../../components/AddSubjectModal";
-import { ManageLecturesModal } from "../../components/ManageLecturesModal";
-import { useAuth } from "../../contexts/AuthContext";
-import { usePlatformSettings } from "../../hooks/usePlatformSettings";
-import { useAcademicOptions } from "../../hooks/useAcademicOptions";
-import { supabase } from "../../lib/supabase";
-import type { SummaryWithRatings, Course } from "../../types/database";
+import { PageManagementTab } from "@/components/PageManagementTab";
+import { CoursesTab } from "@/components/CoursesTab";
+import { EnrollmentsTab } from "@/components/EnrollmentsTab";
+import { AddCourseModal } from "@/components/AddCourseModal";
+import { SubjectsTab } from "@/components/SubjectsTab";
+import { AddSubjectModal } from "@/components/AddSubjectModal";
+import { ManageLecturesModal } from "@/components/ManageLecturesModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import { supabase } from "@/lib/supabase";
+import type { SummaryWithRatings, Course } from "@/types/database";
+import { usePathname } from "next/navigation";
 
 // Memoized tab components to prevent unnecessary re-renders
 const MemoizedSummariesTab = memo(SummariesTab);
@@ -52,6 +53,7 @@ const MemoizedSubjectsTab = memo(SubjectsTab);
 
 function AdminDashboard() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAdmin, isAdminLoading, loading: authLoading } = useAuth();
 
   // Auth guard: redirect non-admin users
@@ -59,9 +61,10 @@ function AdminDashboard() {
 
   useEffect(() => {
     if (!isAuthChecking && (!user || !isAdmin)) {
-      router.replace("/");
+      const isEn = pathname?.startsWith("/en");
+      router.replace(isEn ? "/en" : "/");
     }
-  }, [user, isAdmin, isAuthChecking, router]);
+  }, [user, isAdmin, isAuthChecking, router, pathname]);
 
   if (isAuthChecking) {
     return (
@@ -99,6 +102,7 @@ function AdminDashboardContent() {
   const { adminRole } = useAuth();
   const { activeSemester } = usePlatformSettings();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const [coursesRefreshKey, setCoursesRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState(
     adminRole === "doctor" ? "courses" : "summaries",
   );
@@ -254,6 +258,7 @@ function AdminDashboardContent() {
     // Courses tab will refresh automatically
     setShowAddCourse(false);
     setEditingCourse(null);
+    setCoursesRefreshKey((prev) => prev + 1);
   };
 
   const handleCreateSubject = () => {
@@ -304,6 +309,7 @@ function AdminDashboardContent() {
             onEditCourse={(course: unknown) =>
               handleEditCourse(course as Course)
             }
+            refreshKey={coursesRefreshKey}
           />
         ) : (
           <div className="p-8 text-center text-gray-500">

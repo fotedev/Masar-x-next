@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../../contexts/AuthContext";
-import { useUserAcademic } from "@/hooks/useUserAcademic";
+import { useAuth } from "../../../../contexts/AuthContext";
+import { useUserAcademic } from "../../../../hooks/useUserAcademic";
 
 export default function AcademicOnboardingPage() {
   const router = useRouter();

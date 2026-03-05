@@ -1,36 +1,23 @@
 "use client";
 
-import {
-  Shield,
-  LogOut,
-  Sun,
-  Moon,
-  GraduationCap,
-  FileText,
-  Lock,
-} from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import { Lock, LogIn, LogOut, Shield, User, UserPlus } from "lucide-react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
-import { useRouter, usePathname } from "next/navigation";
-import { NotificationDropdown } from "./NotificationDropdown";
+import { useRouter, usePathname } from "@/i18n/routing";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
+import { useTranslations } from "next-intl";
+import { LanguageToggle } from "./LanguageToggle";
 
 export const Header = React.memo(function Header() {
-  const {
-    user,
-    loading,
-    isAdmin,
-    isAdminLoading,
-    signOut,
-    avatarUrl,
-    displayName,
-  } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const tNav = useTranslations("nav");
+  const tHeader = useTranslations("header");
+  const { user, loading, isAdmin, isAdminLoading, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Visibility Logic (Obfuscated)
   const [showAccessInput, setShowAccessInput] = useState(false);
@@ -42,16 +29,58 @@ export const Header = React.memo(function Header() {
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const logoClickCount = useRef(0);
   const logoClickTimeout = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<{
+    show_extra_assets?: boolean;
+  } | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
 
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileBackdropRef = useRef<HTMLDivElement | null>(null);
+
+  const effectivePathname = isMounted ? (pathname ?? "/") : "/";
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    setHasEntered(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const update = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [isMounted]);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    if (!isMobileMenuOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      mobileMenuButtonRef.current?.focus();
+    };
+  }, [isMounted, isMobileMenuOpen]);
 
   const enterMatrix = async () => {
     setIsMatrixActive(true);
@@ -100,14 +129,14 @@ export const Header = React.memo(function Header() {
       fetchProfile();
 
       // Listen for profile updates from the Profile page
-      const handleProfileUpdate = (event: any) => {
-        if (
-          event.detail &&
-          typeof event.detail.show_extra_assets === "boolean"
-        ) {
-          setProfile((prev: any) => ({
-            ...prev,
-            show_extra_assets: event.detail.show_extra_assets,
+      const handleProfileUpdate = (event: Event) => {
+        const customEvent = event as CustomEvent<{
+          show_extra_assets?: boolean;
+        }>;
+        if (typeof customEvent.detail?.show_extra_assets === "boolean") {
+          setProfile((prev) => ({
+            ...(prev || {}),
+            show_extra_assets: customEvent.detail.show_extra_assets,
           }));
         }
       };
@@ -144,14 +173,16 @@ export const Header = React.memo(function Header() {
 
     if (lockoutUntil && Date.now() < lockoutUntil) {
       const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
-      toast.error("النظام مغلق", {
-        description: `محاولات كثيرة جداً. حاول مرة أخرى بعد ${remaining} ثانية.`,
+      toast.error(tHeader("access.lockedTitle"), {
+        description: tHeader("access.lockedDescription", {
+          seconds: remaining,
+        }),
       });
       return;
     }
 
     if (!accessKey.trim()) {
-      toast.error("مطلوب إدخال الكود");
+      toast.error(tHeader("access.codeRequired"));
       return;
     }
 
@@ -168,9 +199,8 @@ export const Header = React.memo(function Header() {
 
       if (data && !error) {
         if (data.used_count >= data.max_uses) {
-          toast.error("خطأ في النظام", {
-            description:
-              "عذراً، هذا الكود استنفد جميع محاولات الاستخدام المتاحة.",
+          toast.error(tHeader("access.systemErrorTitle"), {
+            description: tHeader("access.maxUsesDescription"),
           });
           setAttempts((prev) => prev + 1);
           return;
@@ -194,25 +224,31 @@ export const Header = React.memo(function Header() {
         if (newAttempts >= 5) {
           const lockTime = Date.now() + 30 * 1000;
           setLockoutUntil(lockTime);
-          toast.error("تنبيه أمني", {
-            description: "محاولات فاشلة كثيرة. تم قفل النظام لمدة 30 ثانية.",
+          toast.error(tHeader("access.securityAlertTitle"), {
+            description: tHeader("access.locked30Description"),
           });
         } else {
-          toast.error("خطأ في النظام", {
-            description: "الكود الذي أدخلته غير صحيح أو منتهي الصلاحية.",
+          toast.error(tHeader("access.systemErrorTitle"), {
+            description: tHeader("access.invalidOrExpiredDescription"),
           });
         }
       }
     } catch (err) {
       console.error("Verification error:", err);
-      toast.error("خطأ في الاتصال");
+      toast.error(tHeader("access.connectionError"));
     } finally {
       setIsVerifying(false);
     }
   };
 
+  const normalizedPathname = effectivePathname.startsWith("/en")
+    ? effectivePathname.replace(/^\/en(\/|$)/, "/")
+    : effectivePathname;
+
   const currentPage =
-    pathname === "/" ? "home" : pathname?.substring(1) || "home";
+    normalizedPathname === "/"
+      ? "home"
+      : normalizedPathname?.substring(1) || "home";
 
   const handleSignOut = async () => {
     try {
@@ -223,43 +259,70 @@ export const Header = React.memo(function Header() {
     }
   };
 
-  const playToggleSound = () => {
-    // Clean up previous audio and timeout
-    if (audioTimeoutRef.current) {
-      clearTimeout(audioTimeoutRef.current);
-    }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-
-    const audio = new Audio("/lightswitch.mp3");
-    audioRef.current = audio;
-    audio.play().catch(() => {
-      // Silently handle autoplay restrictions
-    });
-
-    audioTimeoutRef.current = setTimeout(() => {
-      if (audioRef.current === audio) {
-        audio.pause();
-        audio.currentTime = 0;
-        audioRef.current = null;
-      }
-    }, 300);
-  };
-
-  const handleThemeToggle = () => {
-    playToggleSound();
-    toggleTheme();
-  };
-
   const handleNavigate = (page: string, id?: string) => {
-    router.push(id ? `/${page}/${id}` : `/${page}`);
+    if (page === "home") {
+      router.push("/");
+    } else {
+      router.push(id ? `/${page}/${id}` : `/${page}`);
+    }
     setIsMobileMenuOpen(false);
   };
 
+  const primaryNavItems = [
+    {
+      key: "home",
+      page: "home",
+      label: tNav("home"),
+      isActive: () => isMounted && currentPage === "home",
+      activeText: "text-brand-blue",
+      activeUnderline: "bg-brand-blue",
+    },
+    {
+      key: "news",
+      page: "news",
+      label: tNav("news"),
+      isActive: () => isMounted && currentPage === "news",
+      activeText: "text-brand-blue",
+      activeUnderline: "bg-brand-blue",
+    },
+    {
+      key: "subjects",
+      page: "subjects",
+      label: tNav("subjects"),
+      isActive: () => isMounted && currentPage === "subjects",
+      activeText: "text-brand-blue",
+      activeUnderline: "bg-brand-blue",
+    },
+    {
+      key: "courses",
+      page: "courses",
+      label: tNav("courses"),
+      isActive: () =>
+        isMounted &&
+        (currentPage === "courses" || currentPage.startsWith("courses/")),
+      activeText: "text-green-600 dark:text-green-400",
+      activeUnderline: "bg-green-600 dark:bg-green-400",
+    },
+    {
+      key: "quizzes",
+      page: "quizzes",
+      label: tNav("quizzes"),
+      isActive: () => isMounted && currentPage === "quizzes",
+      activeText: "text-purple-600 dark:text-purple-400",
+      activeUnderline: "bg-purple-600 dark:bg-purple-400",
+    },
+    {
+      key: "assistant",
+      page: "ai-assistant",
+      label: tNav("assistant"),
+      isActive: () => isMounted && currentPage === "ai-assistant",
+      activeText: "text-emerald-600 dark:text-emerald-400",
+      activeUnderline: "bg-emerald-600 dark:bg-emerald-400",
+    },
+  ] as const;
+
   return (
-    <>
+    <Fragment>
       {/* Matrix Entry Animation Overlay */}
       {isMatrixActive && (
         <div
@@ -319,13 +382,24 @@ export const Header = React.memo(function Header() {
         </div>
       )}
 
-      <header className="bg-white/95 dark:bg-brand-navy/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 sticky top-0 z-50 shadow-sm dark:shadow-black/20">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-15 sm:h-[60px]">
-            <div className="relative flex items-center mr-4 sm:mr-8">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          hasEntered
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-full opacity-0"
+        } ${
+          isScrolled
+            ? "bg-[#020617] border-b border-white/10 shadow-xl"
+            : "bg-transparent border-b border-transparent"
+        }`}
+      >
+        <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-full">
+            <div className="relative flex items-center gap-3">
               <button
                 onClick={handleLogoClick}
-                className="flex items-center text-slate-900 dark:text-white hover:opacity-80 transition-opacity flex-shrink-0"
+                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0"
+                type="button"
               >
                 <Image
                   src="/logo.png"
@@ -338,8 +412,8 @@ export const Header = React.memo(function Header() {
               </button>
 
               {showAccessInput && (
-                <div className="absolute top-16 right-0 bg-white dark:bg-brand-navy border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-2xl z-[100] w-64 animate-in fade-in slide-in-from-top-4 duration-300">
-                  <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest text-right">
+                <div className="absolute top-16 start-0 bg-white dark:bg-brand-navy border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-2xl z-[100] w-64 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <p className="text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest text-start">
                     System Authentication
                   </p>
                   <div className="flex gap-2">
@@ -348,13 +422,14 @@ export const Header = React.memo(function Header() {
                       value={accessKey}
                       onChange={(e) => setAccessKey(e.target.value)}
                       placeholder="Input key"
-                      className="bg-slate-100 dark:bg-white/5 border-none rounded-lg px-3 py-2 text-sm w-full focus:ring-1 focus:ring-red-500 transition-all outline-none text-right"
+                      className="bg-slate-100 dark:bg-white/5 border-none rounded-lg px-3 py-2 text-sm w-full focus:ring-1 focus:ring-red-500 transition-all outline-none text-start"
                       autoFocus
                       onKeyDown={(e) => e.key === "Enter" && verifyAccessKey()}
                     />
                     <button
                       onClick={verifyAccessKey}
                       className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors"
+                      type="button"
                     >
                       <Lock className="w-4 h-4" />
                     </button>
@@ -362,6 +437,7 @@ export const Header = React.memo(function Header() {
                   <button
                     onClick={() => setShowAccessInput(false)}
                     className="mt-2 text-[10px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 w-full text-center underline"
+                    type="button"
                   >
                     Close
                   </button>
@@ -369,396 +445,269 @@ export const Header = React.memo(function Header() {
               )}
             </div>
 
-            <nav className="flex items-center justify-end lg:justify-between">
-              <div className="hidden lg:flex items-center justify-start">
-                {/* ── Navigation Links ── */}
-                <div className="flex items-center gap-0.5 lg:ml-8">
-                  <button
-                    onClick={() => handleNavigate("home")}
-                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                      isMounted && currentPage === "home"
-                        ? "text-brand-blue"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    الرئيسية
-                    {isMounted && currentPage === "home" && (
-                      <span className="absolute bottom-0.5 right-3 left-3 h-0.5 bg-brand-blue rounded-full" />
-                    )}
-                  </button>
-
-                  {isTRWVisible && (
+            <div className="hidden lg:flex items-center justify-center flex-1 px-6">
+              <nav className="flex items-center gap-8">
+                {primaryNavItems.map((item) => {
+                  const active = item.isActive();
+                  return (
                     <button
-                      onClick={() => handleNavigate("non-academic")}
-                      className={`relative px-3.5 py-2 rounded-lg text-sm font-bold transition-all duration-500 ${
-                        isMounted &&
-                        (currentPage === "non-academic" ||
-                          currentPage.startsWith("non-academic/"))
-                          ? "text-red-600 shadow-[0_0_12px_rgba(220,38,38,0.2)]"
-                          : "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 animate-pulse"
-                      }`}
+                      key={item.key}
+                      onClick={() => handleNavigate(item.page)}
+                      className={`relative px-3 py-2 rounded-[6px] text-[14px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+                        active
+                          ? "text-white bg-[rgba(255,255,255,0.12)]"
+                          : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                      } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
+                      type="button"
                     >
-                      TRW
+                      {item.label}
                     </button>
-                  )}
+                  );
+                })}
 
+                {isTRWVisible && (
                   <button
-                    onClick={() => handleNavigate("news")}
-                    className={`relative px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted && currentPage === "news"
-                        ? "text-brand-blue"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
+                    onClick={() => handleNavigate("non-academic")}
+                    className={`relative px-3 py-2 rounded-[6px] text-[14px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96] ${
+                      isMounted && currentPage === "non-academic"
+                        ? "text-white bg-[rgba(255,255,255,0.12)]"
+                        : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
                     }`}
+                    type="button"
                   >
-                    الأخبار
-                    {isMounted && currentPage === "news" && (
-                      <span className="absolute bottom-0.5 right-3.5 left-3.5 h-0.5 bg-brand-blue rounded-full" />
+                    <span>The Real World</span>
+                  </button>
+                )}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
+                <LanguageToggle />
+
+                {!isMounted || loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-24 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="h-9 w-24 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </div>
+                ) : user ? (
+                  <div className="flex items-center gap-2">
+                    {!isAdminLoading && isAdmin && (
+                      <button
+                        onClick={() => handleNavigate("admin-dashboard")}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-brand-orange hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                        type="button"
+                      >
+                        <Shield className="w-4 h-4" />
+                        <span>Admin</span>
+                      </button>
                     )}
-                  </button>
-
-                  {/* Thin separator */}
-                  <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-1" />
-
-                  <button
-                    onClick={() => handleNavigate("subjects")}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted && currentPage === "subjects"
-                        ? "text-brand-blue bg-brand-blue/8"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    المواد
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigate("courses")}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted &&
-                      (currentPage === "courses" ||
-                        currentPage.startsWith("courses/"))
-                        ? "text-green-600 dark:text-green-400 bg-green-500/8"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    الكورسات
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigate("quizzes")}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted && currentPage === "quizzes"
-                        ? "text-purple-600 dark:text-purple-400 bg-purple-500/8"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    الامتحانات
-                  </button>
-
-                  <button
-                    onClick={() => handleNavigate("ai-assistant")}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isMounted && currentPage === "ai-assistant"
-                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/8"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-4 h-4"
-                      aria-hidden="true"
+                    <button
+                      onClick={() => handleNavigate("profile")}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                      type="button"
                     >
-                      <path d="M12 8V4H8" />
-                      <rect width="16" height="12" x="4" y="8" rx="2" />
-                      <path d="M2 14h2" />
-                      <path d="M20 14h2" />
-                      <path d="M15 13v2" />
-                      <path d="M9 13v2" />
-                    </svg>
-                    مساعدة
-                  </button>
-                </div>
-
-                {/* ── Actions ── */}
-                <div className="flex items-center gap-1 ml-auto">
-                  {/* Subtle separator before actions */}
-                  <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mr-1" />
-
-                  <NotificationDropdown />
-
-                  <button
-                    onClick={handleThemeToggle}
-                    className="p-3 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
-                    aria-label={
-                      theme === "dark"
-                        ? "تفعيل الوضع الفاتح"
-                        : "تفعيل الوضع الداكن"
-                    }
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="w-4 h-4" />
-                    ) : (
-                      <Moon className="w-4 h-4" />
-                    )}
-                  </button>
-
-                  {!isMounted || loading ? (
-                    // Skeleton placeholder while auth state is resolving — prevents flash
-                    <div className="flex items-center gap-2 ml-1">
-                      <div className="h-8 w-20 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                      <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                    </div>
-                  ) : user ? (
-                    <>
-                      {!isAdminLoading && isAdmin && (
-                        <>
-                          <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
-                          <button
-                            onClick={() => handleNavigate("admin")}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                              currentPage === "admin"
-                                ? "bg-brand-orange/10 text-brand-orange"
-                                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5"
-                            }`}
-                          >
-                            <Shield className="w-4 h-4" />
-                            الإدارة
-                          </button>
-                        </>
-                      )}
-
-                      <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
-
-                      {/* Profile avatar */}
-                      <button
-                        onClick={() => handleNavigate("profile")}
-                        aria-label="الملف الشخصي"
-                        title="الملف الشخصي"
-                        className={`relative w-9 h-9 rounded-full overflow-hidden transition-all duration-200 ${
-                          currentPage === "profile"
-                            ? "ring-2 ring-brand-blue ring-offset-1 dark:ring-offset-brand-navy/90"
-                            : "ring-1 ring-slate-200 dark:ring-white/10 hover:ring-2 hover:ring-brand-blue/40"
-                        }`}
-                      >
-                        {avatarUrl ? (
-                          <Image
-                            src={avatarUrl}
-                            alt={
-                              displayName ||
-                              user?.email?.split("@")[0] ||
-                              "User"
-                            }
-                            fill
-                            sizes="32px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-black text-xs">
-                            {(displayName || user?.email?.split("@")[0] || "U")
-                              .trim()
-                              .slice(0, 1)
-                              .toUpperCase()}
-                          </div>
-                        )}
-                      </button>
-
-                      {/* Logout */}
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        خروج
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-px h-5 bg-slate-200 dark:bg-white/10 mx-0.5" />
-                      <button
-                        onClick={() => handleNavigate("login")}
-                        className="px-3.5 py-1.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
-                      >
-                        دخول
-                      </button>
-                      <button
-                        onClick={() => handleNavigate("signup")}
-                        className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-brand-blue text-white hover:bg-brand-sky shadow-md shadow-brand-blue/20 transition-all duration-200"
-                      >
-                        تسجيل
-                      </button>
-                    </>
-                  )}
-                </div>
+                      <User className="w-4 h-4" />
+                      <span>{tNav("profile")}</span>
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50/70 dark:hover:bg-white/5 transition-colors"
+                      type="button"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>{tNav("logout")}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleNavigate("login")}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                      type="button"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>{tNav("login")}</span>
+                    </button>
+                    <button
+                      onClick={() => handleNavigate("signup")}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold bg-brand-blue text-white hover:opacity-90 transition-opacity"
+                      type="button"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>{tNav("signup")}</span>
+                    </button>
+                  </div>
+                )}
               </div>
-
-              <div className="lg:hidden flex items-center gap-2 flex-row-reverse sm:flex-row">
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="lg:hidden relative w-10 h-10 flex flex-col items-center justify-center rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 transition-all duration-300 group z-[70]"
-                  aria-label="قائمة التنقل"
-                >
-                  <div
-                    className={`w-6 h-0.5 bg-brand-blue rounded-full transition-all duration-400 absolute ${isMobileMenuOpen ? "translate-y-0 rotate-45 w-6" : "-translate-y-1.5 w-4 mr-auto ml-2"}`}
-                  />
-                  <div
-                    className={`w-6 h-0.5 bg-brand-blue rounded-full transition-all duration-400 ${isMobileMenuOpen ? "opacity-0 scale-x-0" : "opacity-100"}`}
-                  />
-                  <div
-                    className={`w-6 h-0.5 bg-brand-blue rounded-full transition-all duration-400 absolute ${isMobileMenuOpen ? "translate-y-0 -rotate-45 w-6" : "translate-y-1.5 w-4 ml-auto mr-2"}`}
-                  />
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <NotificationDropdown />
-                  <button
-                    onClick={handleThemeToggle}
-                    className="p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    aria-label={
-                      theme === "dark"
-                        ? "تفعيل الوضع الفاتح"
-                        : "تفعيل الوضع الداكن"
-                    }
-                  >
-                    {theme === "dark" ? (
-                      <Sun className="w-4 h-4" />
-                    ) : (
-                      <Moon className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </nav>
-
-            <div
-              className={`lg:hidden fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm transition-all duration-500 ${isMounted && isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <div
-                className={`fixed top-14 left-0 right-0 bg-white dark:bg-brand-navy border-t border-slate-200 dark:border-slate-800 shadow-2xl max-h-[calc(100vh-3.5rem)] overflow-y-auto transition-all duration-500 ease-out transform ${isMounted && isMobileMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0"}`}
-                onClick={(e) => e.stopPropagation()}
+              <button
+                ref={mobileMenuButtonRef}
+                type="button"
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-haspopup="dialog"
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-nav-drawer"
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                className="lg:hidden flex flex-col items-center justify-center w-[40px] h-[40px] z-[100] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
               >
-                <nav className="flex flex-col px-4 py-6 space-y-2">
-                  <button
-                    onClick={() => handleNavigate("home")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "home" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
-                  >
-                    <span className="text-xl">🏠</span>
-                    <span>الرئيسية</span>
-                  </button>
-                  {isTRWVisible && (
+                <div className="relative flex flex-col items-center justify-center w-[24px] h-[18px]">
+                  <span
+                    className={`absolute block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      isMobileMenuOpen
+                        ? "top-[8px] rotate-45"
+                        : "top-0 rotate-0"
+                    }`}
+                  />
+                  <span
+                    className={`absolute top-[8px] block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      isMobileMenuOpen
+                        ? "opacity-0 translate-x-[10px]"
+                        : "opacity-100 translate-x-0"
+                    }`}
+                  />
+                  <span
+                    className={`absolute block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      isMobileMenuOpen
+                        ? "bottom-[8px] -rotate-45"
+                        : "bottom-0 rotate-0"
+                    }`}
+                  />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`lg:hidden fixed inset-0 z-[51] ${
+            isMounted && isMobileMenuOpen
+              ? "pointer-events-auto"
+              : "pointer-events-none"
+          }`}
+        >
+          <div
+            ref={mobileBackdropRef}
+            className={`absolute inset-0 bg-[rgba(0,0,0,0.85)] backdrop-blur-[12px] transition-opacity duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              isMounted && isMobileMenuOpen ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setIsMobileMenuOpen(false);
+              }
+            }}
+          />
+
+          <div
+            id="mobile-nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            className={`absolute top-0 bottom-0 right-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              isMounted && isMobileMenuOpen
+                ? "translate-x-0"
+                : "translate-x-full"
+            }`}
+          >
+            <div className="pt-[80px] px-4 md:px-6 pb-6 overflow-y-auto max-h-[100vh] bg-[#020617]">
+              <nav className="flex flex-col gap-4">
+                {primaryNavItems.map((item) => {
+                  const active = item.isActive();
+                  return (
                     <button
-                      onClick={() => handleNavigate("non-academic")}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold ${currentPage === "non-academic" ? "bg-red-600/10 text-red-600" : "text-red-500"}`}
+                      key={item.key}
+                      onClick={() => handleNavigate(item.page)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+                        active
+                          ? "text-white bg-[rgba(255,255,255,0.12)]"
+                          : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                      } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
+                      type="button"
                     >
-                      <span>The Real World</span>
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+
+                {isTRWVisible && (
+                  <button
+                    onClick={() => handleNavigate("non-academic")}
+                    className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+                      isMounted && currentPage === "non-academic"
+                        ? "text-white bg-[rgba(255,255,255,0.12)]"
+                        : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                    } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
+                    type="button"
+                  >
+                    <span>The Real World</span>
+                  </button>
+                )}
+              </nav>
+
+              <div className="h-px bg-[rgba(255,255,255,0.08)] my-4" />
+
+              <div className="flex items-center justify-between">
+                <LanguageToggle />
+              </div>
+
+              <div className="h-px bg-[rgba(255,255,255,0.08)] my-4" />
+
+              {!isMounted || loading ? (
+                <div className="flex flex-col gap-2">
+                  <div className="h-11 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  <div className="h-11 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                </div>
+              ) : user ? (
+                <div className="flex flex-col gap-2">
+                  {!isAdminLoading && isAdmin && (
+                    <button
+                      onClick={() => handleNavigate("admin-dashboard")}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-brand-orange hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                      type="button"
+                    >
+                      <Shield className="w-5 h-5" />
+                      <span>Admin</span>
                     </button>
                   )}
                   <button
-                    onClick={() => handleNavigate("news")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "news" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
+                    onClick={() => handleNavigate("profile")}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                    type="button"
                   >
-                    <span className="text-xl">📰</span>
-                    <span>الأخبار</span>
+                    <User className="w-5 h-5" />
+                    <span>{tNav("profile")}</span>
                   </button>
                   <button
-                    onClick={() => handleNavigate("subjects")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "subjects" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-red-600 hover:bg-red-50/70 dark:hover:bg-white/5 transition-colors"
+                    type="button"
                   >
-                    <span className="text-xl">📚</span>
-                    <span>المواد</span>
+                    <LogOut className="w-5 h-5" />
+                    <span>{tNav("logout")}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => handleNavigate("signup")}
+                    className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-base font-bold bg-brand-blue text-white hover:opacity-90 transition-opacity"
+                    type="button"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    <span>{tNav("signup")}</span>
                   </button>
                   <button
-                    onClick={() => handleNavigate("courses")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "courses" || currentPage.startsWith("courses/") ? "bg-green-500/10 text-green-600 dark:text-green-400" : "text-slate-600 dark:text-slate-400"}`}
+                    onClick={() => handleNavigate("login")}
+                    className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
+                    type="button"
                   >
-                    <span className="text-xl">🎓</span>
-                    <span>الكورسات</span>
+                    <LogIn className="w-5 h-5" />
+                    <span>{tNav("login")}</span>
                   </button>
-                  <button
-                    onClick={() => handleNavigate("quizzes")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "quizzes" ? "bg-purple-500/10 text-purple-600 dark:text-purple-400" : "text-slate-600 dark:text-slate-400"}`}
-                  >
-                    <span className="text-xl">📝</span>
-                    <span>الامتحانات</span>
-                  </button>
-                  <button
-                    onClick={() => handleNavigate("ai-assistant")}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "ai-assistant" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"}`}
-                  >
-                    <span className="text-xl">🤖</span>
-                    <span>مساعدة</span>
-                  </button>
-                  {!isMounted || loading ? (
-                    // Skeleton while auth state resolves — prevents mobile menu flash
-                    <>
-                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                      <div className="flex flex-col gap-2 px-4">
-                        <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                        <div className="h-10 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                      </div>
-                    </>
-                  ) : user ? (
-                    <>
-                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                      {!isAdminLoading && isAdmin && (
-                        <button
-                          onClick={() => handleNavigate("admin")}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "admin" ? "bg-brand-orange/10 text-brand-orange" : "text-slate-600 dark:text-slate-400"}`}
-                        >
-                          <span className="text-xl">🛡️</span>
-                          <span>الإدارة</span>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleNavigate("profile")}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold ${currentPage === "profile" ? "bg-brand-blue/10 text-brand-blue" : "text-slate-600 dark:text-slate-400"}`}
-                      >
-                        <span className="text-xl">👤</span>
-                        <span>الملف الشخصي</span>
-                      </button>
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-red-600"
-                      >
-                        <span className="text-xl">🚪</span>
-                        <span>خروج</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                      <button
-                        onClick={() => handleNavigate("signup")}
-                        className="flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold bg-brand-blue text-white"
-                      >
-                        <span className="text-xl">📝</span>
-                        <span>تسجيل جديد</span>
-                      </button>
-                      <button
-                        onClick={() => handleNavigate("login")}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold"
-                      >
-                        <span className="text-xl">🔑</span>
-                        <span>تسجيل الدخول</span>
-                      </button>
-                    </>
-                  )}
-                </nav>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
-    </>
+    </Fragment>
   );
 });

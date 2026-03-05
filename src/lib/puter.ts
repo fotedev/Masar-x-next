@@ -18,6 +18,15 @@ type PuterClient = {
   };
 };
 
+export type PuterSignInResult =
+  | { ok: true; signedIn: true }
+  | {
+      ok: false;
+      signedIn: false;
+      reason?: "cancelled" | "popup_blocked" | "not_signed_in" | "unknown";
+      error?: unknown;
+    };
+
 let puter: PuterClient = Puter as unknown as PuterClient;
 
 const PUTER_SIGNED_IN_KEY = "puter_signed_in";
@@ -61,16 +70,44 @@ export const getPuterStatus = () => {
   };
 };
 
-export const signInToPuter = async () => {
-  if (typeof window === 'undefined') return false;
+export const isProbablyMobileDevice = () => {
+  if (typeof window === "undefined") return false;
   try {
-    await puter.auth?.signIn?.();
+    if (window.matchMedia?.("(pointer: coarse)")?.matches) return true;
+  } catch {
+    // ignore
+  }
+  const ua = navigator.userAgent || "";
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+};
+
+export const signInToPuter = async (options?: {
+  attemptTempUserCreation?: boolean;
+}): Promise<PuterSignInResult> => {
+  if (typeof window === 'undefined') return { ok: false, signedIn: false, reason: "unknown" };
+  try {
+    const signInOptions = options?.attemptTempUserCreation
+      ? ({ attempt_temp_user_creation: true } as const)
+      : undefined;
+
+    await puter.auth?.signIn?.(signInOptions);
+
+    const isSignedInNow = Boolean(puter.auth?.isSignedIn?.());
+    if (!isSignedInNow) {
+      try {
+        localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+      } catch {
+        // ignore
+      }
+      return { ok: false, signedIn: false, reason: "not_signed_in" };
+    }
+
     try {
       localStorage.setItem(PUTER_SIGNED_IN_KEY, "1");
     } catch {
       // ignore
     }
-    return true;
+    return { ok: true, signedIn: true };
   } catch (error) {
     void error;
     try {
@@ -78,7 +115,7 @@ export const signInToPuter = async () => {
     } catch {
       // ignore
     }
-    return false;
+    return { ok: false, signedIn: false, reason: "unknown", error };
   }
 };
 

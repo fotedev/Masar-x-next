@@ -3,7 +3,7 @@
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -24,17 +24,18 @@ function ResetPasswordContent() {
     [router],
   );
 
-  // Check for valid reset token from URL parameters
+  // Check for valid reset token/code from URL parameters
   useEffect(() => {
-    const token = searchParams?.get("token");
+    const code = searchParams?.get("code");
+    const type = searchParams?.get("type");
 
-    if (!token) {
+    if (!code || type !== "recovery") {
       setError("رابط إعادة التعيين غير صالح. يرجى طلب رابط جديد.");
       setTimeout(() => onNavigate("login"), 3000);
       return;
     }
 
-    // Token exists, assume valid for now (will be validated on submit)
+    // Code exists and type is recovery, assume valid for now (will be validated on submit)
     setIsValidSession(true);
   }, [searchParams, onNavigate]);
 
@@ -56,36 +57,34 @@ function ResetPasswordContent() {
     setLoading(true);
 
     try {
-      // Get reset token from URL
-      const resetToken = searchParams?.get("token");
-      if (!resetToken) {
+      // Get code from URL
+      const code = searchParams?.get("code");
+      if (!code) {
         throw new Error("رمز إعادة التعيين مفقود من الرابط");
       }
 
-      // Call the Edge Function to validate token and reset password
-      const { data, error: invokeError } = await supabase.functions.invoke(
-        "reset-password",
-        {
-          body: {
-            token: resetToken,
-            newPassword: newPassword,
-          },
-        },
-      );
-
-      if (invokeError) {
-        throw new Error(invokeError.message || "فشل في تحديث كلمة المرور");
+      // Exchange the code for a session
+      const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error("رابط إعادة التعيين منتهي الصلاحية أو غير صالح");
       }
 
-      if (data?.error) {
-        throw new Error(data.error || "فشل في تحديث كلمة المرور");
+      // Update password with the new session
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        throw updateError;
       }
 
       setSuccess(
         "تم تحديث كلمة المرور بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...",
       );
 
-      // Redirect after successful password reset
+      // Sign out and redirect to login
+      await supabase.auth.signOut();
       setTimeout(() => {
         onNavigate("login");
       }, 3000);
