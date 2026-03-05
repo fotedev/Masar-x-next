@@ -3,7 +3,7 @@ import type { Notification } from "../types/database";
 import { NotificationItem } from "./NotificationItem";
 import {
   NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY,
+  NOTIFICATION_ACCESSIBILITY_KEYS,
 } from "../constants/notifications";
 
 interface NotificationListProps {
@@ -25,7 +25,7 @@ function LoadingState() {
       </div>
       <div className="space-y-1 relative z-10">
         <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-          {NOTIFICATION_ACCESSIBILITY.loading}
+          {NOTIFICATION_ACCESSIBILITY_KEYS.loading}
         </p>
         <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium animate-pulse">
           نحن نقوم بجلب آخر التنبيهات لك...
@@ -46,7 +46,7 @@ function EmptyState() {
       </div>
       <div className="space-y-3 relative z-10">
         <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-          {NOTIFICATION_ACCESSIBILITY.empty}
+          {NOTIFICATION_ACCESSIBILITY_KEYS.empty}
         </p>
         <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-[240px] mx-auto leading-relaxed font-medium">
           لا توجد تنبيهات جديدة في الوقت الحالي. سنخبرك فور وصول شيء جديد!

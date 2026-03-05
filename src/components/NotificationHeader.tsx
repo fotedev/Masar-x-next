@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { NOTIFICATION_ACCESSIBILITY } from "../constants/notifications";
+import { NOTIFICATION_ACCESSIBILITY_KEYS } from "../constants/notifications";
 
 interface NotificationHeaderProps {
   unreadCount: number;
@@ -20,8 +20,8 @@ export function NotificationHeader({
         <button
           onClick={onClose}
           className="p-2.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-2xl transition-all duration-300 text-gray-400 hover:text-gray-900 dark:hover:text-white group"
-          title={NOTIFICATION_ACCESSIBILITY.closeButton}
-          aria-label={NOTIFICATION_ACCESSIBILITY.closeButton}
+          title={NOTIFICATION_ACCESSIBILITY_KEYS.closeButton}
+          aria-label={NOTIFICATION_ACCESSIBILITY_KEYS.closeButton}
         >
           <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
         </button>

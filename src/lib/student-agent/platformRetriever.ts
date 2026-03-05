@@ -71,7 +71,8 @@ export async function fetchStudentSubjects(academic: StudentAcademicScope, query
   const { data, error } = await q;
   if (error) throw error;
 
-  const items: StudentAgentSource[] = (data || []).map((s) => ({
+  const items: StudentAgentSource[] = (data || []).map(
+    (s: (typeof data)[number]) => ({
     source_id: `subject:${s.id}`,
     title: s.name,
     snippet: truncate(String(s.description || ""), MAX_SNIPPET_CHARS),
@@ -80,7 +81,8 @@ export async function fetchStudentSubjects(academic: StudentAcademicScope, query
       level: s.level,
       semester: s.semester,
     },
-  }));
+    }),
+  );
 
   queryCache.set(cacheKey, items, TTL_MS);
   return items;
@@ -109,7 +111,8 @@ export async function fetchStudentQuizzes(academic: StudentAcademicScope, query?
   const { data, error } = await q;
   if (error) throw error;
 
-  const items: StudentAgentSource[] = (data || []).map((quiz) => ({
+  const items: StudentAgentSource[] = (data || []).map(
+    (quiz: (typeof data)[number]) => ({
     source_id: `quiz:${quiz.id}`,
     title: quiz.title,
     snippet: truncate(String(quiz.description || ""), MAX_SNIPPET_CHARS),
@@ -119,7 +122,8 @@ export async function fetchStudentQuizzes(academic: StudentAcademicScope, query?
       semester: quiz.semester,
       created_at: quiz.created_at,
     },
-  }));
+    }),
+  );
 
   queryCache.set(cacheKey, items, TTL_MS);
   return items;
@@ -146,7 +150,8 @@ export async function fetchStudentSummaries(academic: StudentAcademicScope, quer
   const { data, error } = await q;
   if (error) throw error;
 
-  const items: StudentAgentSource[] = (data || []).map((s) => ({
+  const items: StudentAgentSource[] = (data || []).map(
+    (s: (typeof data)[number]) => ({
     source_id: `summary:${s.id}`,
     title: s.title,
     snippet: truncate(String(s.content || ""), MAX_SNIPPET_CHARS),
@@ -159,7 +164,8 @@ export async function fetchStudentSummaries(academic: StudentAcademicScope, quer
       created_at: s.created_at,
     },
     url: s.pdf_url || undefined,
-  }));
+    }),
+  );
 
   queryCache.set(cacheKey, items, TTL_MS);
   return items;
@@ -186,7 +192,8 @@ export async function fetchStudentVideos(academic: StudentAcademicScope, query?:
   const { data, error } = await q;
   if (error) throw error;
 
-  const items: StudentAgentSource[] = (data || []).map((v) => ({
+  const items: StudentAgentSource[] = (data || []).map(
+    (v: (typeof data)[number]) => ({
     source_id: `video:${v.id}`,
     title: v.title,
     snippet: truncate(String(v.subject || ""), MAX_SNIPPET_CHARS),
@@ -196,7 +203,8 @@ export async function fetchStudentVideos(academic: StudentAcademicScope, query?:
       created_at: v.created_at,
     },
     url: v.url,
-  }));
+    }),
+  );
 
   queryCache.set(cacheKey, items, TTL_MS);
   return items;
@@ -222,7 +230,8 @@ export async function fetchRecentNews(query?: string) {
   const { data, error } = await q;
   if (error) throw error;
 
-  const items: StudentAgentSource[] = (data || []).map((n) => ({
+  const items: StudentAgentSource[] = (data || []).map(
+    (n: (typeof data)[number]) => ({
     source_id: `news:${n.id}`,
     title: n.title,
     snippet: truncate(String(n.content || ""), MAX_SNIPPET_CHARS),
@@ -235,7 +244,8 @@ export async function fetchRecentNews(query?: string) {
       year: n.year,
     },
     url: n.file_url || undefined,
-  }));
+    }),
+  );
 
   queryCache.set(cacheKey, items, TTL_MS);
   return items;

@@ -13,6 +13,18 @@ import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
 
+export type AuthErrorCode = "INVALID_CREDENTIALS" | "EMAIL_ALREADY_REGISTERED";
+
+export class AuthError extends Error {
+  code: AuthErrorCode;
+
+  constructor(code: AuthErrorCode, message?: string) {
+    super(message);
+    this.code = code;
+    this.name = "AuthError";
+  }
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -47,7 +59,7 @@ export function AuthProvider({
       );
       if (keys.length > 0) {
         const cached = JSON.parse(localStorage.getItem(keys[0])!);
-        if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) {
+        if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
           return cached.isAdmin;
         }
       }
@@ -66,7 +78,7 @@ export function AuthProvider({
         );
         if (keys.length > 0) {
           const cached = JSON.parse(localStorage.getItem(keys[0])!);
-          if (cached && Date.now() - cached.timestamp < 30 * 60 * 1000) {
+          if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
             return cached.role || null;
           }
         }
@@ -106,7 +118,7 @@ export function AuthProvider({
       }
 
       const cacheKey = `admin_status_${u.id}`;
-      const cacheExpiry = 1000 * 60 * 30;
+      const cacheExpiry = 1000 * 60 * 5; // Reduced to 5 minutes for better security
 
       const userMetadataRole = u.user_metadata?.role;
       const appMetadataRole = u.app_metadata?.role;
@@ -361,7 +373,13 @@ export function AuthProvider({
             .eq("id", currentUser.id)
             .maybeSingle()
             .then(
-              ({ data: profileData, error }) => {
+              ({
+                data: profileData,
+                error,
+              }: {
+                data: { avatar_url: string | null } | null;
+                error: unknown;
+              }) => {
                 if (!error && profileData?.avatar_url) {
                   setAvatarUrl(profileData.avatar_url);
                 }
@@ -467,12 +485,28 @@ export function AuthProvider({
       email,
       password,
     });
-    if (error) throw error;
+    if (error) {
+      const message = (error.message || "").toLowerCase();
+      if (message.includes("invalid login credentials")) {
+        throw new AuthError("INVALID_CREDENTIALS", error.message);
+      }
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    if (error) {
+      const message = (error.message || "").toLowerCase();
+      if (
+        message.includes("already registered") ||
+        message.includes("user already registered") ||
+        message.includes("already exists")
+      ) {
+        throw new AuthError("EMAIL_ALREADY_REGISTERED", error.message);
+      }
+      throw error;
+    }
   };
 
   const signInWithGoogle = async () => {

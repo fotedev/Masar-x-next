@@ -108,6 +108,7 @@ export interface Database {
           user_id: string
           contributor_name: string | null
           pdf_url: string | null
+          youtube_url: string | null
           status: string
           lecture_key: string | null
           lecture_id: string | null
@@ -124,6 +125,7 @@ export interface Database {
           user_id: string | null
           contributor_name?: string | null
           pdf_url?: string | null
+          youtube_url?: string | null
           status?: string
           lecture_key?: string | null
           lecture_id?: string | null
@@ -140,6 +142,7 @@ export interface Database {
           user_id?: string
           contributor_name?: string | null
           pdf_url?: string | null
+          youtube_url?: string | null
           status?: string
           lecture_key?: string | null
           lecture_id?: string | null
@@ -250,6 +253,7 @@ export interface Database {
         Row: {
           id: string
           name: string
+          name_en: string | null
           is_academic: boolean | null
           semester: number | null
           level: number | null
@@ -487,6 +491,7 @@ export interface Database {
           summary_id: string | null
           quiz_id: string | null
           course_id: string | null
+          video_id: string | null
           created_at: string
           reviewer_name: string | null
           reviewer_avatar: string | null
@@ -499,6 +504,7 @@ export interface Database {
           summary_id?: string | null
           quiz_id?: string | null
           course_id?: string | null
+          video_id?: string | null
           created_at?: string
           reviewer_name?: string | null
           reviewer_avatar?: string | null
@@ -511,6 +517,7 @@ export interface Database {
           summary_id?: string | null
           quiz_id?: string | null
           course_id?: string | null
+          video_id?: string | null
           created_at?: string
           reviewer_name?: string | null
           reviewer_avatar?: string | null
@@ -528,6 +535,7 @@ export interface Database {
           user_id: string
           contributor_name: string | null
           pdf_url: string | null
+          youtube_url: string | null
           status: string
           lecture_key: string | null
           lecture_id: string | null
@@ -640,6 +648,21 @@ export interface MessageWithSender extends Message {
 // Summary with ratings (view)
 export type SummaryWithRatings = Database['public']['Views']['summaries_with_ratings']['Row']
 export type SummaryUpdate = Database['public']['Tables']['summaries']['Update']
+
+// Videos with ratings (view)
+export interface VideoWithRatings {
+  id: string
+  subject: string
+  title: string
+  url: string
+  language: 'ar' | 'en'
+  user_id: string
+  created_at: string
+  lecture_key?: string | null
+  lecture_id?: string | null
+  avg_rating?: number | null
+  reviews_count?: number | null
+}
 
 // Course types
 export type Course = Database['public']['Tables']['courses']['Row']

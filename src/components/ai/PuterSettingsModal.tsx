@@ -1,8 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { X, LogOut, CheckCircle2, Brain } from "lucide-react";
-import { signInToPuter, signOutFromPuter, getPuterStatus } from "@/lib/puter";
+import {
+  signInToPuter,
+  signOutFromPuter,
+  getPuterStatus,
+  isProbablyMobileDevice,
+} from "@/lib/puter";
 import { toast } from "sonner";
 
 interface PuterSettingsModalProps {
@@ -16,29 +21,89 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState(() => getPuterStatus());
+  const [waitingForAuth, setWaitingForAuth] = useState(false);
+  const [authStartedAt, setAuthStartedAt] = useState<number | null>(null);
+
+  const isMobile = useMemo(() => isProbablyMobileDevice(), []);
 
   useEffect(() => {
     if (!isOpen) return;
     setStatus(getPuterStatus());
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!waitingForAuth) return;
+
+    let cancelled = false;
+    const startedAt = authStartedAt ?? Date.now();
+
+    const interval = window.setInterval(() => {
+      if (cancelled) return;
+      const newStatus = getPuterStatus();
+      setStatus(newStatus);
+      if (newStatus.isSignedIn) {
+        window.clearInterval(interval);
+        toast.success("تم تفعيل الوضع المتقدم بنجاح");
+        setWaitingForAuth(false);
+        setIsLoading(false);
+        onClose();
+      }
+    }, 1000);
+
+    const timeout = window.setTimeout(
+      () => {
+        if (cancelled) return;
+        const newStatus = getPuterStatus();
+        setStatus(newStatus);
+        if (!newStatus.isSignedIn) {
+          toast.error("فشل تفعيل الوضع المتقدم", {
+            description:
+              "تأكد من إكمال تسجيل الدخول ثم ارجع إلى التطبيق وحاول مرة أخرى.",
+          });
+        }
+        setWaitingForAuth(false);
+        setIsLoading(false);
+        window.clearInterval(interval);
+      },
+      Math.max(0, 30000 - (Date.now() - startedAt)),
+    );
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.clearTimeout(timeout);
+    };
+  }, [authStartedAt, isOpen, onClose, waitingForAuth]);
+
   if (!isOpen) return null;
 
   const handleSignIn = async () => {
     setIsLoading(true);
+    setWaitingForAuth(true);
+    setAuthStartedAt(Date.now());
     try {
-      await signInToPuter();
-      const newStatus = getPuterStatus();
-      setStatus(newStatus);
-      if (newStatus.isSignedIn) {
-        toast.success("تم تفعيل الوضع المتقدم بنجاح");
-        onClose();
-      }
+      void signInToPuter()
+        .then((res) => {
+          if (res.ok) return;
+          toast.error("فشل تفعيل الوضع المتقدم", {
+            description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
+          });
+          setWaitingForAuth(false);
+        })
+        .catch((error) => {
+          console.error("Sign in error:", error);
+          toast.error("فشل تفعيل الوضع المتقدم", {
+            description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
+          });
+          setWaitingForAuth(false);
+        });
     } catch (error) {
       console.error("Sign in error:", error);
       toast.error("فشل تفعيل الوضع المتقدم", {
         description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
       });
+      setWaitingForAuth(false);
     } finally {
       setIsLoading(false);
     }
@@ -51,6 +116,7 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
       setStatus({ isReady: true, isSignedIn: false });
       toast.success("تم إيقاف الوضع المتقدم");
     } finally {
+      setWaitingForAuth(false);
       setIsLoading(false);
     }
   };
@@ -91,17 +157,28 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
             قم بالتسجيل للحصول علي Free Tier
           </p>
 
+          {!status.isSignedIn && isMobile && (
+            <div className="mb-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/30 p-4 text-sm text-slate-700 dark:text-slate-300">
+              قد يفتح تسجيل الدخول في نافذة/تبويب جديد على الموبايل. بعد إكمال
+              التسجيل، ارجع إلى هذه الصفحة وسيتم التفعيل تلقائيًا.
+            </div>
+          )}
+
           {!status.isSignedIn ? (
             <div className="space-y-6">
               <button
                 onClick={handleSignIn}
-                disabled={isLoading}
+                disabled={isLoading || waitingForAuth}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 {isLoading ? (
                   <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <span>تسجيل الدخول</span>
+                  <span>
+                    {waitingForAuth
+                      ? "جاري انتظار تسجيل الدخول..."
+                      : "تسجيل الدخول"}
+                  </span>
                 )}
               </button>
 
