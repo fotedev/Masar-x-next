@@ -9,19 +9,21 @@ export default function NotFound() {
 
   const locale =
     requestLocale === "en" || acceptLanguage.includes("en") ? "en" : "ar";
-  const isEn = locale === "en";
 
+  // Static content mapping based on locale
   const content = {
     en: {
       title: "404",
       message: "Sorry, the page you are looking for does not exist.",
       backHome: "Back to Home",
+      pageTitle: "Page Not Found | Masar X",
       dir: "ltr",
     },
     ar: {
       title: "٤٠٤",
       message: "عذراً، الصفحة التي تبحث عنها غير موجودة.",
       backHome: "العودة للرئيسية",
+      pageTitle: "الصفحة غير موجودة | مسار إكس",
       dir: "rtl",
     },
   };
@@ -31,9 +33,7 @@ export default function NotFound() {
   return (
     <html lang={locale} dir={t.dir}>
       <head>
-        <title>
-          {isEn ? "Page Not Found | Masar X" : "الصفحة غير موجودة | مسار إكس"}
-        </title>
+        <title>{t.pageTitle}</title>
       </head>
       <body className="bg-gray-50 dark:bg-slate-900 font-sans">
         <div className="min-h-screen flex items-center justify-center px-4">
