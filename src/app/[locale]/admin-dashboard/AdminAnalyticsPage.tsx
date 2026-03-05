@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { analyticsHelpers } from "../../lib/analyticsHelpers";
+import { useAuth } from "@/contexts/AuthContext";
+import { analyticsHelpers } from "@/lib/analyticsHelpers";
 
 interface AdminAnalyticsPageProps {
   onNavigate: (page: string) => void;

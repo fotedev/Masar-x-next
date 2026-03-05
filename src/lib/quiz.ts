@@ -42,7 +42,7 @@ export class QuizService {
                     status: 'draft',
                     source_type: 'ai_generated_draft',
                     updated_at: new Date().toISOString(),
-                } as any)
+                })
                 .select('id')
                 .single();
 
@@ -53,22 +53,20 @@ export class QuizService {
         }
     }
 
-    async syncLocalQuizzes(userId: string, localQuizzes: any[]) {
+    async syncLocalQuizzes(userId: string, localQuizzes: { data: QuizData; localId?: string }[]) {
         if (!userId || !localQuizzes.length) return { success: true, count: 0 };
 
         try {
             const results = await Promise.all(
                 localQuizzes.map(async (local) => {
                     try {
-                        // Ensure each local quiz has a UUID if it doesn't already
                         const quizData = {
                             ...local.data,
                             id: local.localId?.startsWith('local_') ? crypto.randomUUID() : local.localId
                         };
                         await this.saveAiGeneratedDraft(userId, quizData);
                         return true;
-                    } catch (e) {
-                        console.error('Failed to sync quiz:', local.localId, e);
+                    } catch {
                         return false;
                     }
                 })
@@ -77,7 +75,6 @@ export class QuizService {
             const syncedCount = results.filter(Boolean).length;
             return { success: true, count: syncedCount };
         } catch (error) {
-            console.error('Sync error:', error);
             throw error;
         }
     }
@@ -215,7 +212,6 @@ export class QuizService {
     // Save a single answer
     async saveAnswer(attemptId: string, questionId: string, selectedOption: number, isCorrect: boolean) {
         try {
-            const isDev = process.env.NODE_ENV !== 'production';
             const payload = {
                 attempt_id: attemptId,
                 question_id: questionId,
@@ -224,28 +220,12 @@ export class QuizService {
                 created_at: new Date().toISOString()
             };
 
-            if (isDev) {
-                console.debug('[quiz_answers] upsert payload', {
-                    onConflict: 'attempt_id,question_id',
-                    payload,
-                });
-            }
-
             // Upsert answer
             const { error: answerError } = await supabase
                 .from('quiz_answers')
                 .upsert(payload, { onConflict: 'attempt_id, question_id' });
 
             if (answerError) {
-                if (isDev) {
-                    console.error('[quiz_answers] upsert error', {
-                        code: (answerError as any).code,
-                        message: (answerError as any).message,
-                        details: (answerError as any).details,
-                        hint: (answerError as any).hint,
-                        answerError,
-                    });
-                }
                 throw answerError;
             }
 

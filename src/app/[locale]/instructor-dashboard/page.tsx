@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../contexts/AuthContext";
-import { supabase } from "../../lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardContent,
@@ -12,8 +12,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "../../components/ui";
-import { EnrollmentsTab } from "../../components/EnrollmentsTab";
+} from "@/components/ui";
+import { EnrollmentsTab } from "@/components/EnrollmentsTab";
 import { Users, Star, Clock, TrendingUp, BookOpen } from "lucide-react";
 
 // Enrollment interface is now handled by EnrollmentsTab component

@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string };
+  params: { subject: string; locale: string };
 }): Promise<Metadata> {
+  const locale =
+    params.locale === "en" || params.locale === "ar" ? params.locale : "ar";
+  const t = await getTranslations({ locale, namespace: "subjectMetadata" });
   const subjectName = decodeURIComponent(params.subject || "").trim();
-  const title = subjectName || "المادة";
-  const canonicalPath = `/subjects/${encodeURIComponent(params.subject || "")}`;
+  const title = subjectName || t("fallbackTitle");
+  const canonicalPath = `/${locale}/subjects/${encodeURIComponent(params.subject || "")}`;
 
   const description = subjectName
-    ? `ملخصات، محاضرات، ملفات، وفيديوهات لمادة ${subjectName} على منصة Masar X.`
-    : "ملخصات ومحاضرات ومواد تعليمية على منصة Masar X.";
+    ? t("descriptionWithSubject", { subject: subjectName })
+    : t("descriptionFallback");
 
   return {
     title,

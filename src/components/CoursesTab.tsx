@@ -35,11 +35,13 @@ interface Course {
 interface CoursesTabProps {
   onCreateCourse?: () => void;
   onEditCourse?: (course: Course) => void;
+  refreshKey?: number;
 }
 
 export const CoursesTab: React.FC<CoursesTabProps> = ({
   onCreateCourse,
   onEditCourse,
+  refreshKey,
 }) => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
 
   useEffect(() => {
     loadCourses();
-  }, []);
+  }, [refreshKey]);
 
   const loadCourses = async () => {
     try {
@@ -69,53 +71,74 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
 
       // Get instructor names separately
       const instructorIds = [
-        ...new Set(coursesData.map((c) => c.instructor_id)),
-      ];
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, display_name")
-        .in("id", instructorIds);
+        ...new Set(
+          coursesData.map((c: (typeof coursesData)[number]) => c.instructor_id),
+        ),
+      ].filter((id): id is string => typeof id === "string" && id.length > 0);
+      const { data: profilesData, error: profilesError } = instructorIds.length
+        ? await supabase
+            .from("profiles")
+            .select("id, full_name, username")
+            .in("id", instructorIds)
+        : { data: [], error: null };
 
       // Get enrollments for each course
-      const courseIds = coursesData.map((c) => c.id);
-      const { data: enrollmentsData, error: enrollmentsError } = await supabase
-        .from("enrollments")
-        .select("course_id, status")
-        .in("course_id", courseIds);
+      const courseIds = coursesData.map(
+        (c: (typeof coursesData)[number]) => c.id,
+      );
+      const { data: enrollmentsData, error: enrollmentsError } =
+        courseIds.length
+          ? await supabase
+              .from("enrollments")
+              .select("course_id, status")
+              .in("course_id", courseIds)
+          : { data: [], error: null };
 
       if (coursesError || profilesError || enrollmentsError) {
         throw coursesError || profilesError || enrollmentsError;
       }
 
       // Combine the data
-      const processedCourses = coursesData.map((course) => {
-        const instructor = profilesData?.find(
-          (p) => p.id === course.instructor_id,
-        );
-        const courseEnrollments =
-          enrollmentsData?.filter((e) => e.course_id === course.id) || [];
-        const activeEnrollments = courseEnrollments.filter(
-          (e: any) => e.status === "active",
-        );
+      const processedCourses = coursesData.map(
+        (course: (typeof coursesData)[number]) => {
+          const instructor = profilesData?.find(
+            (p: NonNullable<typeof profilesData>[number]) =>
+              p.id === course.instructor_id,
+          );
+          const courseEnrollments: NonNullable<
+            typeof enrollmentsData
+          >[number][] =
+            enrollmentsData?.filter(
+              (e: NonNullable<typeof enrollmentsData>[number]) =>
+                e.course_id === course.id,
+            ) ?? [];
 
-        const priceNumber =
-          typeof course.price === "number"
-            ? course.price
-            : typeof course.price === "string"
-              ? Number(course.price)
-              : 0;
+          const activeEnrollments = courseEnrollments.filter(
+            (e) => e.status === "active",
+          );
 
-        return {
-          ...course,
-          price: Number.isFinite(priceNumber) ? priceNumber : 0,
-          instructor_name: instructor?.display_name || "مدرب",
-          enrollments_count: activeEnrollments.length,
-        };
-      });
+          const priceNumber =
+            typeof course.price === "number"
+              ? course.price
+              : typeof course.price === "string"
+                ? Number(course.price)
+                : 0;
+
+          return {
+            ...course,
+            price: Number.isFinite(priceNumber) ? priceNumber : 0,
+            instructor_name:
+              instructor?.full_name || instructor?.username || "مدرب",
+            enrollments_count: activeEnrollments.length,
+          };
+        },
+      );
 
       setCourses(processedCourses);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to load courses", e);
+      setError("حدث خطأ في تحميل الكورسات");
+      toast.error("حدث خطأ في تحميل الكورسات");
     } finally {
       setLoading(false);
     }

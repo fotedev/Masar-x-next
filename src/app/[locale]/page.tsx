@@ -1,26 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Calendar, BookOpen, Star } from "lucide-react";
-import { useSummaries } from "../hooks/useSummaries";
-import { useSubjects } from "../hooks/useSubjects";
-import { useAuth } from "../contexts/AuthContext";
-import { useAnalytics } from "../hooks/useAnalytics";
-import { EditSummaryModal } from "../components/EditSummaryModal";
-import { usePlatformSettings } from "../hooks/usePlatformSettings";
-import { SummaryWithRatings, Quiz } from "../types/database";
-import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";
+import { FileText, Calendar, BookOpen, Star, Play } from "lucide-react";
+import { useSummaries } from "@/hooks/useSummaries";
+import { useSubjects } from "@/hooks/useSubjects";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { EditSummaryModal } from "@/components/EditSummaryModal";
+import { usePlatformSettings } from "@/hooks/usePlatformSettings";
+import { SummaryWithRatings, Quiz, VideoWithRatings } from "@/types/database";
+import { useRouter } from "@/i18n/routing";
+import { supabase } from "@/lib/supabase";
+import { useTranslations } from "next-intl";
+import { useTopVideos } from "@/hooks/useVideoRatings";
 
 export default function HomePage() {
+  const tHome = useTranslations("home");
+  const tCommon = useTranslations("common");
   const { user, isAdmin } = useAuth();
   const { summaries, editSummary, loading: summariesLoading } = useSummaries();
   const { subjects, loading: subjectsLoading } = useSubjects();
   const { activeSemester } = usePlatformSettings();
   const { trackSummaryClick } = useAnalytics();
+  const { videos: topVideos, loading: videosLoading } = useTopVideos(10);
   const [displaySummaries, setDisplaySummaries] = useState<
     SummaryWithRatings[]
   >([]);
+  const [displayVideos, setDisplayVideos] = useState<VideoWithRatings[]>([]);
   const [displayQuizzes, setDisplayQuizzes] = useState<Quiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(true);
   const [editingSummary, setEditingSummary] =
@@ -46,11 +52,51 @@ export default function HomePage() {
       )
       .map((s) => s.name);
 
+    // Create a Set for faster lookup
+    const visibleSubjectSet = new Set(visibleSubjectNames);
+
     const approvedSummaries = summaries.filter(
-      (s) => s.status === "approved" && visibleSubjectNames.includes(s.subject),
+      (s) => s.status === "approved" && visibleSubjectSet.has(s.subject),
     );
-    setDisplaySummaries(approvedSummaries);
+    // Sort by avg_rating descending, then created_at descending
+    const sortedSummaries = [...approvedSummaries].sort((a, b) => {
+      const ratingA = a.avg_rating || 0;
+      const ratingB = b.avg_rating || 0;
+      if (ratingB !== ratingA) return ratingB - ratingA;
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    });
+
+    setDisplaySummaries(sortedSummaries.slice(0, 10)); // Limit to top 10
   }, [summaries, subjects, activeSemester]);
+
+  useEffect(() => {
+    // Filter videos by subject visibility and active semester AND has ratings
+    const visibleSubjectNames = subjects
+      .filter(
+        (s) =>
+          s.show_on_home &&
+          (!s.semester || Number(s.semester) === activeSemester),
+      )
+      .map((s) => s.name);
+
+    const visibleSubjectSet = new Set(visibleSubjectNames);
+
+    // Filter videos that are visible AND have ratings
+    const ratedVideos = topVideos.filter(
+      (v) => visibleSubjectSet.has(v.subject) && (v.avg_rating || 0) > 0,
+    );
+
+    // Sort by avg_rating descending
+    const sortedVideos = [...ratedVideos].sort((a, b) => {
+      const ratingA = a.avg_rating || 0;
+      const ratingB = b.avg_rating || 0;
+      return ratingB - ratingA;
+    });
+
+    setDisplayVideos(sortedVideos.slice(0, 10)); // Limit to top 10
+  }, [topVideos, subjects, activeSemester]);
 
   useEffect(() => {
     const normalizeSubjectName = (value: string) =>
@@ -103,7 +149,7 @@ export default function HomePage() {
           return visibleSubjectSet.has(normalizedQuizSubject);
         });
 
-        setDisplayQuizzes(filtered);
+        setDisplayQuizzes(filtered.slice(0, 10)); // Limit to top 10 for Home page
       } catch {
         setDisplayQuizzes([]);
       } finally {
@@ -134,13 +180,13 @@ export default function HomePage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            الأفضل
+            {tHome("best")}
           </h2>
           <button
             onClick={() => onNavigate("subjects")}
             className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
           >
-            عرض المواد
+            {tHome("viewSubjects")}
             <span className="text-lg">←</span>
           </button>
         </div>
@@ -148,14 +194,14 @@ export default function HomePage() {
           <div className="modern-card p-12 text-center loading-placeholder">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              جاري التحميل ...
+              {tCommon("loading")}
             </p>
           </div>
         ) : displaySummaries.length === 0 ? (
           <div className="modern-card p-12 text-center">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              اذهب للمواد
+              {tHome("goToSubjects")}
             </p>
           </div>
         ) : (
@@ -183,7 +229,7 @@ export default function HomePage() {
                           handleEditSummary(summary);
                         }}
                         className="text-slate-400 hover:text-brand-blue p-1.5 rounded-lg hover:bg-brand-blue/5 transition-all"
-                        title="تعديل الملخص"
+                        title={tHome("editSummary")}
                       >
                         <svg
                           className="w-4 h-4"
@@ -236,16 +282,99 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Lectures Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            الامتحانات
+            {tHome("topLectures")}
+          </h2>
+          <button
+            onClick={() => onNavigate("subjects")}
+            className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
+          >
+            {tHome("viewSubjects")}
+            <span className="text-lg">←</span>
+          </button>
+        </div>
+
+        {videosLoading || subjectsLoading ? (
+          <div className="modern-card p-12 text-center loading-placeholder">
+            <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
+              {tCommon("loading")}
+            </p>
+          </div>
+        ) : displayVideos.length === 0 ? (
+          <div className="modern-card p-12 text-center">
+            <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
+              {tHome("goToSubjects")}
+            </p>
+          </div>
+        ) : (
+          <div className="summary-grid">
+            {displayVideos.map((video) => (
+              <div
+                key={video.id}
+                className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
+                onClick={() =>
+                  onNavigate("subjects", encodeURIComponent(video.subject))
+                }
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-blue transition-colors">
+                    {video.title}
+                  </h3>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
+                      <span className="truncate">{video.subject}</span>
+                    </div>
+                    {video.avg_rating != null && video.avg_rating > 0 && (
+                      <div className="flex items-center gap-1 bg-brand-orange/10 text-brand-orange px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                        <Star className="w-3 h-3 fill-brand-orange" />
+                        <span>{video.avg_rating}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <Calendar className="w-3.5 h-3.5 text-brand-orange" />
+                    <span className="truncate text-xs">
+                      {new Date(video.created_at).toLocaleDateString("ar-SA", {
+                        year: "numeric",
+                        month: "long",
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 leading-relaxed">
+                    {video.reviews_count
+                      ? `${video.reviews_count} تقييم`
+                      : "لم يتم تقييمها بعد"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+            {tHome("exams")}
           </h2>
           <button
             onClick={() => onNavigate("quizzes")}
             className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
           >
-            عرض الامتحانات
+            {tHome("viewExams")}
             <span className="text-lg">←</span>
           </button>
         </div>
@@ -254,14 +383,14 @@ export default function HomePage() {
           <div className="modern-card p-12 text-center loading-placeholder">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              جاري التحميل ...
+              {tCommon("loading")}
             </p>
           </div>
         ) : displayQuizzes.length === 0 ? (
           <div className="modern-card p-12 text-center">
             <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              اذهب للامتحانات
+              {tHome("goToExams")}
             </p>
           </div>
         ) : (
@@ -301,17 +430,42 @@ export default function HomePage() {
                       {(() => {
                         try {
                           const parsed = JSON.parse(quiz.description || "{}");
+                          const quizRecord = quiz as unknown as Record<
+                            string,
+                            unknown
+                          >;
+                          const deptRaw =
+                            typeof parsed?.department === "string"
+                              ? parsed.department
+                              : quizRecord.department;
+                          const yearRaw =
+                            typeof parsed?.year === "string"
+                              ? parsed.year
+                              : quizRecord.year;
+
                           const dept =
-                            parsed.department || (quiz as any).department;
-                          const year = parsed.year || (quiz as any).year;
+                            typeof deptRaw === "string" ? deptRaw : "";
+                          const year =
+                            typeof yearRaw === "string" ? yearRaw : "";
                           return (
                             `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
                             ""
                           );
                         } catch {
-                          const anyQ = quiz as any;
+                          const quizRecord = quiz as unknown as Record<
+                            string,
+                            unknown
+                          >;
+                          const dept =
+                            typeof quizRecord.department === "string"
+                              ? quizRecord.department
+                              : "";
+                          const year =
+                            typeof quizRecord.year === "string"
+                              ? quizRecord.year
+                              : "";
                           return (
-                            `${anyQ.year || ""}${anyQ.department ? ` - ${anyQ.department}` : ""}`.trim() ||
+                            `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
                             ""
                           );
                         }

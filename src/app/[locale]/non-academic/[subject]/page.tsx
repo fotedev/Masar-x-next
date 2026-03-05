@@ -3,8 +3,8 @@
 import React, { Suspense, useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, Monitor } from "lucide-react";
-import { supabase } from "../../../lib/supabase";
-import { queryCache, cacheKeys, cacheTTL } from "../../../lib/queryCache";
+import { supabase } from "@/lib/supabase";
+import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 
 function SubjectDetailsContent() {
   const params = useParams();

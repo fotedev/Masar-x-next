@@ -33,15 +33,21 @@ export async function updateSession(request: NextRequest) {
     await supabase.auth.getUser();
 
     // Protect TRW (non-academic) routes
-    if (request.nextUrl.pathname.startsWith('/non-academic')) {
+    const pathname = request.nextUrl.pathname
+    const localeMatch = pathname.match(/^\/(ar|en)(\/|$)/)
+    const localePrefix = localeMatch ? `/${localeMatch[1]}` : ''
+    const pathWithoutLocale = localePrefix ? pathname.slice(localePrefix.length) || '/' : pathname
+
+    // 1. Protect TRW (non-academic) routes
+    if (pathWithoutLocale.startsWith('/non-academic')) {
         const { data: { session } } = await supabase.auth.getSession();
         
-        // 1. If no session, redirect to login
+        // If no session, redirect to login
         if (!session) {
-            return NextResponse.redirect(new URL('/login', request.url));
+            return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
         }
 
-        // 2. Check if user has show_extra_assets flag in profiles
+        // Check if user has show_extra_assets flag in profiles
         const { data: profile } = await supabase
             .from('profiles')
             .select('show_extra_assets')
@@ -50,7 +56,36 @@ export async function updateSession(request: NextRequest) {
 
         if (!profile?.show_extra_assets) {
             // If not authorized, redirect to home
-            return NextResponse.redirect(new URL('/', request.url));
+            return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
+        }
+    }
+
+    // 2. Protect Admin routes
+    if (pathWithoutLocale.startsWith('/admin') || pathWithoutLocale.startsWith('/admin-dashboard')) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
+        }
+
+        const { data: admin } = await supabase
+            .from('admins')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+        if (!admin) {
+            return NextResponse.redirect(new URL(`${localePrefix}/`, request.url));
+        }
+    }
+
+    // 3. Protect Profile and Protected User routes
+    const protectedUserRoutes = ['/profile', '/quiz-attempts', '/add-summary', '/add-video', '/add-file'];
+    if (protectedUserRoutes.some(route => pathWithoutLocale.startsWith(route))) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
         }
     }
 

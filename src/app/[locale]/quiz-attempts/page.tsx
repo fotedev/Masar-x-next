@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { quizService } from "../../lib/quiz";
-import MathDisplay from "../../components/MathDisplay";
-import { confirmToast } from "@/lib/confirmToast";
+import { useAuth } from "../../../contexts/AuthContext";
+import { quizService } from "../../../lib/quiz";
+import MathDisplay from "../../../components/MathDisplay";
+import { confirmToast } from "../../../lib/confirmToast";
 
 type AttemptAnswer = {
   question_id?: string;
@@ -181,7 +181,7 @@ export default function QuizAttemptsPage() {
               confirmToast("هل أنت متأكد من مسح سجل الامتحانات المحلي؟", {
                 confirmLabel: "مسح",
                 cancelLabel: "إلغاء",
-              }).then((confirmed) => {
+              }).then((confirmed: boolean) => {
                 if (!confirmed) return;
                 localStorage.removeItem("quiz_history");
                 window.location.reload();

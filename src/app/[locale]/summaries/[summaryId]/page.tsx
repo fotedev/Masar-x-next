@@ -14,13 +14,13 @@ import {
   Edit,
   Play,
 } from "lucide-react";
-import { supabase } from "../../../lib/supabase";
-import { useAuth } from "../../../contexts/AuthContext";
-import { useAnalytics } from "../../../hooks/useAnalytics";
-import { Summary, Quiz } from "../../../types/database";
-import { AppealFormModal } from "../../../components/AppealFormModal";
-import { ReviewSection } from "../../../components/ReviewSection";
-import { SUBJECT_ICONS } from "../../../constants/subjects";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { Summary, Quiz } from "@/types/database";
+import { AppealFormModal } from "@/components/AppealFormModal";
+import { ReviewSection } from "@/components/ReviewSection";
+import { SUBJECT_ICONS } from "@/constants/subjects";
 
 interface ExtendedSummary extends Summary {
   profiles: {
@@ -28,7 +28,18 @@ interface ExtendedSummary extends Summary {
     avatar_url: string | null;
     username: string | null;
   } | null;
+  youtube_url: string | null;
 }
+
+const getYouTubeEmbedUrl = (url: string) => {
+  if (!url) return null;
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11
+    ? `https://www.youtube.com/embed/${match[2]}`
+    : null;
+};
 
 export default function SummaryDetailPage() {
   const params = useParams();
@@ -276,6 +287,24 @@ export default function SummaryDetailPage() {
                 <Play className="w-5 h-5" />
                 <span>ابدأ الامتحان</span>
               </button>
+            </div>
+          )}
+
+          {summary.youtube_url && getYouTubeEmbedUrl(summary.youtube_url) && (
+            <div className="mb-10">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                <span className="w-1.5 h-8 bg-red-600 rounded-full" />
+                شرح الفيديو
+              </h2>
+              <div className="relative pt-[56.25%] w-full overflow-hidden rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800">
+                <iframe
+                  src={getYouTubeEmbedUrl(summary.youtube_url)!}
+                  className="absolute top-0 left-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube video player"
+                ></iframe>
+              </div>
             </div>
           )}
 

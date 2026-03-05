@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { QuizPlayer } from "../../../components/QuizPlayer";
+import { QuizPlayer } from "@/components/QuizPlayer";
 
 export default function QuizPlayPage({
   params,

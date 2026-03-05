@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Trash } from "lucide-react";
 import {
@@ -15,17 +16,18 @@ import {
   Download,
   FileText as FileIcon,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { useNotifications } from "../../hooks/useNotifications";
-import { useNews } from "../../hooks/useNews";
-import { News, Database } from "../../types/database";
-import { AppealFormModal } from "../../components/AppealFormModal";
-import { AddNewsModal } from "../../components/AddNewsModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useNews } from "@/hooks/useNews";
+import { News, Database } from "@/types/database";
+import { AppealFormModal } from "@/components/AppealFormModal";
+import { AddNewsModal } from "@/components/AddNewsModal";
 
 // استخدام نوع News من قاعدة البيانات
 type NewsItem = News & { summary?: string };
 
 function NewsPage() {
+  const t = useTranslations("news");
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { notifyAdmins, notifyAllUsers } = useNotifications();
@@ -51,17 +53,22 @@ function NewsPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const categories = [
-    { id: "all", label: "الكل", icon: Newspaper, color: "blue" },
+    { id: "all", label: t("categoryAll"), icon: Newspaper, color: "blue" },
     {
       id: "announcement",
-      label: "📢 إعلانات مهمة",
+      label: t("categoryAnnouncement"),
       icon: AlertTriangle,
       color: "orange",
     },
-    { id: "update", label: "✨ تحديثات", icon: Sparkles, color: "green" },
+    {
+      id: "update",
+      label: t("categoryUpdate"),
+      icon: Sparkles,
+      color: "green",
+    },
     {
       id: "important",
-      label: "🔥 مهم جداً",
+      label: t("categoryImportant"),
       icon: AlertTriangle,
       color: "red",
     },
@@ -148,7 +155,7 @@ function NewsPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400 font-bold">
-            جاري تحميل الأخبار...
+            {t("loadingNews")}
           </p>
         </div>
       </div>
@@ -163,10 +170,10 @@ function NewsPage() {
           <Newspaper className="w-12 h-12 flex-shrink-0" />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              الأخبار والإعلانات المهمة
+              {t("pageTitle")}
             </h1>
             <p className="text-blue-100 text-sm sm:text-base">
-              ابقَ على اطلاع بكل ما يهمك في رحلتك الدراسية
+              {t("pageDescription")}
             </p>
           </div>
         </div>
@@ -178,14 +185,14 @@ function NewsPage() {
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span>إضافة خبر مهم</span>
+              <span>{t("addNews")}</span>
             </button>
           ) : (
             <button
               onClick={() => router.push("/login")}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
             >
-              تسجيل الدخول لإضافة خبر
+              {t("loginToAddNews")}
             </button>
           )}
         </div>
@@ -196,14 +203,14 @@ function NewsPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <label htmlFor="news-search" className="sr-only">
-              البحث في الأخبار
+              {t("searchLabel")}
             </label>
             <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
               id="news-search"
               name="newsSearch"
               type="text"
-              placeholder="البحث في الأخبار..."
+              placeholder={t("searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pr-12 pl-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
@@ -246,10 +253,10 @@ function NewsPage() {
         <div className="text-center py-12">
           <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            لا توجد أخبار
+            {t("noNews")}
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            جرب تغيير معايير البحث أو كن أول من يضيف خبراً مهماً
+            {t("noNewsDescription")}
           </p>
         </div>
       ) : (

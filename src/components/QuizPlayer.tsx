@@ -63,6 +63,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     finishAttempt: saveFinishAttempt,
     startTime: attemptStartTime,
     isGuest,
+    error: attemptError,
   } = useQuizAttempt({
     quizId,
     userId: user?.id,
@@ -494,6 +495,15 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       </div>
 
       <div className="p-6 sm:p-10">
+        {attemptError && (
+          <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <p className="text-xs font-medium text-red-700 dark:text-red-300">
+              {attemptError}
+            </p>
+          </div>
+        )}
+
         {isGuest && (
           <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex items-center gap-3">
             <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />

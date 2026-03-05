@@ -135,7 +135,8 @@ export function usePlatformSettings() {
           table: 'platform_settings',
           filter: 'key=eq.active_semester'
         },
-        (payload) => {
+        (payload: { new: unknown } | null) => {
+          if (!payload) return;
           if (payload.new && (payload.new as any).value) {
             const rawVal = (payload.new as any).value.semester;
             const newVal = Number(rawVal);

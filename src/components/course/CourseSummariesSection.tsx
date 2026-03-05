@@ -73,10 +73,9 @@ export default function CourseSummariesSection({
                     </div>
                   )}
                 </div>
-                <div
-                  className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: summary.content }}
-                />
+                <div className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none whitespace-pre-wrap">
+                  {summary.content}
+                </div>
               </div>
             ))}
           </div>

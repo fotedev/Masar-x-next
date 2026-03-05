@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/navigation";
 import Image from "next/image";
-import { useAuth } from "../../contexts/AuthContext";
+import { AuthError, useAuth } from "@/contexts/AuthContext";
+import { useTranslations } from "next-intl";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const t = useTranslations("authPages");
   const { signUp, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,19 +70,17 @@ export default function SignUpPage() {
 
     // Check if user is locked out
     if (lockoutTime > 0) {
-      setError(
-        `تم تعليق المحاولات. انتظر ${Math.ceil(lockoutTime / 1000)} ثانية`,
-      );
+      setError(t("lockoutWait", { seconds: Math.ceil(lockoutTime / 1000) }));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("كلمة المرور غير متطابقة");
+      setError(t("passwordMismatch"));
       return;
     }
 
     if (password.length < 6) {
-      setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      setError(t("passwordMinLength"));
       return;
     }
 
@@ -88,9 +88,7 @@ export default function SignUpPage() {
 
     try {
       await signUp(email, password);
-      setSuccess(
-        "تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من بريدك الإلكتروني.",
-      );
+      setSuccess(t("signupConfirmationSent"));
       setEmail("");
       setPassword("");
       setConfirmPassword("");
@@ -117,18 +115,16 @@ export default function SignUpPage() {
       if (newAttempts >= 20) {
         setLockoutTime(lockoutDuration);
         setError(
-          `تم تعليق المحاولات بسبب محاولات فاشلة متكررة. انتظر ${Math.ceil(
-            lockoutDuration / 1000,
-          )} ثانية`,
+          t("lockoutRepeated", { seconds: Math.ceil(lockoutDuration / 1000) }),
         );
       } else {
-        const message = err instanceof Error ? err.message : "";
-        if (message.includes("already registered")) {
-          setError(
-            "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك.",
-          );
+        if (
+          err instanceof AuthError &&
+          err.code === "EMAIL_ALREADY_REGISTERED"
+        ) {
+          setError(t("signupEmailAlreadyRegistered"));
         } else {
-          setError("حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.");
+          setError(t("signupGenericError"));
         }
       }
     } finally {
@@ -143,7 +139,7 @@ export default function SignUpPage() {
     try {
       await signInWithGoogle();
     } catch {
-      setError("حدث خطأ ما أثناء إنشاء الحساب");
+      setError(t("googleSignupFailed"));
     } finally {
       setGoogleLoading(false);
     }
@@ -163,10 +159,10 @@ export default function SignUpPage() {
             />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
-            إنشاء حساب جديد
+            {t("signupTitle")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            انضم إلى المجتمع للنشر
+            {t("signupSubtitle")}
           </p>
         </div>
 
@@ -188,7 +184,7 @@ export default function SignUpPage() {
               htmlFor="signup-email"
               className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
             >
-              البريد الإلكتروني
+              {t("emailLabel")}
             </label>
             <div className="relative">
               <input
@@ -211,7 +207,7 @@ export default function SignUpPage() {
               htmlFor="signup-password"
               className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
             >
-              كلمة المرور
+              {t("passwordLabel")}
             </label>
             <div className="relative">
               <input
@@ -245,7 +241,7 @@ export default function SignUpPage() {
               htmlFor="signup-confirm-password"
               className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
             >
-              تأكيد كلمة المرور
+              {t("confirmPasswordLabel")}
             </label>
             <div className="relative">
               <input
@@ -282,12 +278,12 @@ export default function SignUpPage() {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>جاري إنشاء الحساب...</span>
+                <span>{t("signingUp")}</span>
               </>
             ) : (
               <>
                 <UserPlus className="w-6 h-6" />
-                <span>إنشاء حساب</span>
+                <span>{t("signUp")}</span>
               </>
             )}
           </button>
@@ -300,7 +296,7 @@ export default function SignUpPage() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white dark:bg-brand-navy text-slate-400 font-bold">
-                أو
+                {t("or")}
               </span>
             </div>
           </div>
@@ -333,17 +329,17 @@ export default function SignUpPage() {
               />
             </svg>
           )}
-          <span>التسجيل باستخدام Google</span>
+          <span>{t("signUpWithGoogle")}</span>
         </button>
 
         <div className="mt-10 text-center space-y-4">
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            لديك حساب بالفعل؟{" "}
+            {t("alreadyHaveAccountPrompt")}{" "}
             <button
               onClick={() => onNavigate("login")}
               className="text-brand-blue hover:text-brand-sky font-bold transition-colors"
             >
-              تسجيل الدخول
+              {t("goToLogin")}
             </button>
           </p>
           <button
@@ -351,7 +347,7 @@ export default function SignUpPage() {
             className="flex items-center justify-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mx-auto"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>العودة إلى الصفحة الرئيسية</span>
+            <span>{t("backToHome")}</span>
           </button>
         </div>
       </div>

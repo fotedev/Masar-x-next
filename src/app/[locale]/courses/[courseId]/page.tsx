@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "../../../contexts/AuthContext";
-import { supabase } from "../../../lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import {
   Button,
   Card,
@@ -13,7 +13,7 @@ import {
   CardTitle,
   Badge,
   Textarea,
-} from "../../../components/ui";
+} from "@/components/ui";
 import {
   Star,
   Upload,
@@ -203,7 +203,7 @@ export default function CourseDetailPage() {
 
         if (reviewsData) {
           setReviews(
-            reviewsData.map((review) => ({
+            reviewsData.map((review: (typeof reviewsData)[number]) => ({
               ...review,
               student_name: review.full_name || review.username || "طالب",
             })),
@@ -858,10 +858,9 @@ export default function CourseDetailPage() {
                         </div>
                       )}
                     </div>
-                    <div
-                      className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: summary.content }}
-                    />
+                    <div className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none whitespace-pre-wrap">
+                      {summary.content}
+                    </div>
                   </div>
                 ))}
               </div>

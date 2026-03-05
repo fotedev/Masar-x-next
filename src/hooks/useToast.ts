@@ -30,12 +30,23 @@ function showToast(message: string, type: 'success' | 'error' | 'info') {
     'bg-blue-500 text-white'
   }`;
 
-  toastElement.innerHTML = `
-    <div class="flex items-center">
-      <span>${message}</span>
-      <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">×</button>
-    </div>
-  `;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex items-center';
+
+  const messageSpan = document.createElement('span');
+  messageSpan.textContent = message;
+
+  const closeButton = document.createElement('button');
+  closeButton.className = 'ml-4 text-white hover:text-gray-200';
+  closeButton.type = 'button';
+  closeButton.textContent = '×';
+  closeButton.addEventListener('click', () => {
+    toastElement.remove();
+  });
+
+  wrapper.appendChild(messageSpan);
+  wrapper.appendChild(closeButton);
+  toastElement.appendChild(wrapper);
 
   // Add to container
   toastContainer.appendChild(toastElement);
