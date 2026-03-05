@@ -7,7 +7,7 @@ import { confirmToast } from "../lib/confirmToast";
 
 interface ReviewSectionProps {
   contentId: string;
-  contentType?: "summary" | "quiz" | "course";
+  contentType?: "summary" | "quiz" | "course" | "video";
 }
 
 const StarRatingInput = ({
@@ -91,6 +91,7 @@ export function ReviewSection({
         summary_id: contentType === "summary" ? contentId : undefined,
         quiz_id: contentType === "quiz" ? contentId : undefined,
         course_id: contentType === "course" ? contentId : undefined,
+        video_id: contentType === "video" ? contentId : undefined,
       };
 
       await addReview(reviewData);

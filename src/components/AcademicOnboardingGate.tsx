@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 
 export function AcademicOnboardingGate() {
   const router = useRouter();
   const pathname = usePathname();
+  const locale = useLocale();
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { academic, loading: academicLoading } = useUserAcademic();
   const hasRedirected = useRef(false);
@@ -31,7 +33,7 @@ export function AcademicOnboardingGate() {
 
     if (!hasAcademic) {
       hasRedirected.current = true;
-      router.replace("/onboarding/academic");
+      router.replace(`/${locale}/onboarding/academic`);
     }
   }, [
     academic.level,

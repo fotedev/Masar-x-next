@@ -150,6 +150,7 @@ export function useAiChat(user: any, trackEvent: any) {
       timestamp: new Date(),
     };
 
+    const currentMode = mode;
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
@@ -193,11 +194,15 @@ export function useAiChat(user: any, trackEvent: any) {
         return built.context;
       })();
 
-      const response = await aiAssistant.generateResponse(content, undefined, {
+    const response = await aiAssistant.generateResponse(content, undefined, {
         mode,
         chatHistory: historyTurns,
         platformContext,
       });
+
+      // Avoid setting state if another request was started or mode changed
+      if (mode !== currentMode) return;
+
       const assistantMsg: ChatMessage = {
         id: `assistant_${Date.now()}`,
         type: "assistant",

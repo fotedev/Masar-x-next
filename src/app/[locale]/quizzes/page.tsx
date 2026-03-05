@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import {
   Plus,
@@ -52,6 +53,7 @@ export default function QuizDashboardPage() {
 }
 
 function QuizDashboardInternal() {
+  const t = useTranslations();
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
@@ -166,7 +168,7 @@ function QuizDashboardInternal() {
         { quiz_id: string; score: number; total_questions: number }
       > = {};
 
-      (data || []).forEach((attempt) => {
+      (data || []).forEach((attempt: (typeof data)[number]) => {
         const quizId =
           typeof attempt.quiz_id === "string" ? attempt.quiz_id : "";
         const score = typeof attempt.score === "number" ? attempt.score : 0;
@@ -599,21 +601,23 @@ function QuizDashboardInternal() {
         semester,
         subject,
         summaryId: quiz.summary_id || "",
-        questions: (questions || []).map((q) => {
-          const isTrueFalse =
-            Array.isArray(q.options) &&
-            q.options.length === 2 &&
-            q.options.includes("صح") &&
-            q.options.includes("خطأ");
-          return {
-            question: q.question,
-            options: q.options,
-            correctAnswer: q.correct_answer,
-            explanation: q.explanation || "",
-            type: isTrueFalse ? "true-false" : "multiple-choice",
-            imageUrl: q.image_url || "",
-          };
-        }),
+        questions: (questions || []).map(
+          (q: NonNullable<typeof questions>[number]) => {
+            const isTrueFalse =
+              Array.isArray(q.options) &&
+              q.options.length === 2 &&
+              q.options.includes("صح") &&
+              q.options.includes("خطأ");
+            return {
+              question: q.question,
+              options: q.options,
+              correctAnswer: q.correct_answer,
+              explanation: q.explanation || "",
+              type: isTrueFalse ? "true-false" : "multiple-choice",
+              imageUrl: q.image_url || "",
+            };
+          },
+        ),
       });
       setShowCreateForm(true);
     } catch {
@@ -708,14 +712,27 @@ function QuizDashboardInternal() {
 
   const handleImageUpload = async (index: number, file: File) => {
     try {
+      // Check image size (5MB limit)
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error("حجم الصورة كبير جداً", {
+          description: `حجم الصورة "${file.name}" يتجاوز الحد المسموح به (5MB)`,
+        });
+        return;
+      }
+
       const result = await uploadToCloudinary(file, {
         folder: "quiz-images",
         resourceType: "image",
       });
 
       updateQuestion(index, "imageUrl", result.url);
-    } catch {
-      toast.error("حدث خطأ أثناء رفع الصورة");
+    } catch (err) {
+      console.error("Error uploading quiz image:", err);
+      toast.error("حدث خطأ أثناء رفع الصورة", {
+        description:
+          err instanceof Error ? err.message : "يرجى المحاولة مرة أخرى.",
+      });
     }
   };
 
@@ -1018,8 +1035,8 @@ function QuizDashboardInternal() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 w-full max-w-2xl">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               {importMode === "json"
-                ? "استيراد أسئلة من NotebookLM"
-                : "إنشاء أسئلة بالذكاء الاصطناعي"}
+                ? t("quizzes.importFromNotebookLM")
+                : t("quizzes.generateWithAI")}
             </h3>
 
             <div className="flex gap-2 mb-4">
@@ -1031,7 +1048,7 @@ function QuizDashboardInternal() {
                     : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                 }`}
               >
-                استيراد JSON
+                {t("quizzes.importJSON")}
               </button>
               <button
                 onClick={() => setImportMode("text")}
@@ -1043,15 +1060,15 @@ function QuizDashboardInternal() {
               >
                 <div className="flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4" />
-                  <span>توليد من النص</span>
+                  <span>{t("quizzes.generateText")}</span>
                 </div>
               </button>
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               {importMode === "json"
-                ? "الصق كود JSON المستخرج من NotebookLM هنا. ستتم إضافة الأسئلة الجديدة إلى الأسئلة الحالية."
-                : "الصق نص المحاضرة أو الملخص هنا، وسيقوم الذكاء الاصطناعي بإنشاء أسئلة عليه."}
+                ? t("quizzes.pasteJSONHere")
+                : t("quizzes.pasteTextHere")}
             </p>
             <textarea
               value={importJson}
@@ -1060,7 +1077,7 @@ function QuizDashboardInternal() {
               placeholder={
                 importMode === "json"
                   ? '[{"question": "...", "options": ["..."], "correctAnswer": 0, "explanation": "..."}]'
-                  : "الصق النص هنا..."
+                  : t("quizzes.pasteTextInputPlaceholder")
               }
             />
             <div className="flex justify-end gap-4 mt-4">
@@ -1068,7 +1085,7 @@ function QuizDashboardInternal() {
                 onClick={() => setShowImportModal(false)}
                 className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                إلغاء
+                {t("quizzes.cancel")}
               </button>
               {importMode === "json" ? (
                 <button
@@ -1076,7 +1093,7 @@ function QuizDashboardInternal() {
                   disabled={!importJson.trim()}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  استيراد
+                  {t("quizzes.import")}
                 </button>
               ) : (
                 <button
@@ -1087,12 +1104,12 @@ function QuizDashboardInternal() {
                   {isGenerating ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>جاري التوليد...</span>
+                      <span>{t("quizzes.generate")}...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      <span>توليد الأسئلة</span>
+                      <span>{t("quizzes.generate")}</span>
                     </>
                   )}
                 </button>

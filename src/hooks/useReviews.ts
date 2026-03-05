@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { ReviewDetails, ReviewInsert } from "../types/database";
 
-export function useReviews(contentId: string, contentType: "summary" | "quiz" | "course" = "summary") {
+export function useReviews(contentId: string, contentType: "summary" | "quiz" | "course" | "video" = "summary") {
     const [reviews, setReviews] = useState<ReviewDetails[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -20,8 +20,10 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
                 query.eq("summary_id", contentId);
             } else if (contentType === "quiz") {
                 query.eq("quiz_id", contentId);
-            } else {
+            } else if (contentType === "course") {
                 query.eq("course_id", contentId);
+            } else if (contentType === "video") {
+                query.eq("video_id", contentId);
             }
 
             const { data, error } = await query.order("created_at", { ascending: false });

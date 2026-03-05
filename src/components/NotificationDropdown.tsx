@@ -5,7 +5,7 @@ import { NotificationHeader } from "./NotificationHeader";
 import { NotificationList } from "./NotificationList";
 import {
   NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY,
+  NOTIFICATION_ACCESSIBILITY_KEYS,
   NOTIFICATION_LIMITS,
 } from "../constants/notifications";
 import type { Notification } from "../types/database";
@@ -96,8 +96,8 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40"
             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
         }`}
-        title={NOTIFICATION_ACCESSIBILITY.bellButton}
-        aria-label={`${NOTIFICATION_ACCESSIBILITY.bellButton}${
+        title={NOTIFICATION_ACCESSIBILITY_KEYS.bellButton}
+        aria-label={`${NOTIFICATION_ACCESSIBILITY_KEYS.bellButton}${
           unreadCount > 0 ? ` (${unreadCount} جديد)` : ""
         }`}
         aria-expanded={isOpen}
@@ -108,8 +108,8 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
         />
         {unreadCount > 0 && (
           <span
-            className={`${NOTIFICATION_STYLES.badge} ${isOpen ? "border-blue-600" : ""}`}
-            aria-label={`${unreadCount} ${NOTIFICATION_ACCESSIBILITY.unreadBadge}`}
+            aria-label={NOTIFICATION_ACCESSIBILITY_KEYS.unreadBadge}
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
           >
             {unreadCount > NOTIFICATION_LIMITS.UNREAD_BADGE_MAX
               ? `${NOTIFICATION_LIMITS.UNREAD_BADGE_MAX}+`
@@ -122,7 +122,7 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
         <div
           className={NOTIFICATION_STYLES.container}
           role="listbox"
-          aria-label={NOTIFICATION_ACCESSIBILITY.dropdown}
+          aria-label={NOTIFICATION_ACCESSIBILITY_KEYS.dropdown}
         >
           <NotificationHeader
             unreadCount={unreadCount}

@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { uploadToCloudinary } from "../../lib/cloudinary";
-import { useAuth } from "../../contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
-import { FileDropzone } from "../../components/FileDropzone";
+import { supabase } from "@/lib/supabase";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
+import { FileDropzone } from "@/components/FileDropzone";
 
 export function AddFileForm() {
   const router = useRouter();

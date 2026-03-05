@@ -1,6 +1,7 @@
 import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects } from "../hooks/useSubjects";
+import { useLocale, useTranslations } from "next-intl";
 
 import { usePlatformSettings } from "../hooks/usePlatformSettings";
 
@@ -15,6 +16,8 @@ export function SubjectsGrid({
   showOnlyOnHome = false,
   is_academic = true,
 }: SubjectsGridProps) {
+  const locale = useLocale();
+  const tSubjects = useTranslations("subjects");
   const { activeSemester } = usePlatformSettings();
   const { subjects, loading } = useSubjects({ is_academic });
 
@@ -50,6 +53,9 @@ export function SubjectsGrid({
         {filteredSubjects.map((subject) => {
           const IconComponent = SUBJECT_ICONS[subject.name] || BookOpen;
 
+          const displayName =
+            locale === "en" && subject.name_en ? subject.name_en : subject.name;
+
           return (
             <div
               key={subject.id}
@@ -61,7 +67,7 @@ export function SubjectsGrid({
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2">
-                  {subject.name}
+                  {displayName}
                 </h3>
               </div>
             </div>
@@ -81,12 +87,14 @@ export function SubjectsGrid({
             />
           )}
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {is_academic ? "لا توجد مواد" : "لا يوجد محتوى"}
+            {is_academic
+              ? tSubjects("emptyAcademicTitle")
+              : tSubjects("emptyNonAcademicTitle")}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
             {is_academic
-              ? "سيتم إضافة المواد الدراسية قريباً"
-              : "سيتم إضافة محتوى جديد قريباً"}
+              ? tSubjects("emptyAcademicDescription")
+              : tSubjects("emptyNonAcademicDescription")}
           </p>
         </div>
       )}

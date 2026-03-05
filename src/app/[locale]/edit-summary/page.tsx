@@ -3,13 +3,13 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { uploadToCloudinary } from "../../lib/cloudinary";
-import { useAuth } from "../../contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
-import { useSubjects } from "../../hooks/useSubjects";
-import { FileDropzone } from "../../components/FileDropzone";
-import { useAcademicOptions } from "../../hooks/useAcademicOptions";
+import { supabase } from "@/lib/supabase";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
+import { useSubjects } from "@/hooks/useSubjects";
+import { FileDropzone } from "@/components/FileDropzone";
+import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 
 function EditSummaryContent() {
   const params = useParams();
@@ -21,7 +21,6 @@ function EditSummaryContent() {
   const { sendNotification } = useBrowserNotifications();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
-
 
   const [formData, setFormData] = useState({
     title: "",
@@ -325,7 +324,6 @@ function EditSummaryContent() {
                     {dep.name}
                   </option>
                 ))}
-
               </select>
             </div>
           </div>

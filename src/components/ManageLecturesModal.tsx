@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { confirmToast } from "../lib/confirmToast";
+import { queryCache, cacheKeys } from "../lib/queryCache";
+import { inferLectureKeyFromTitle } from "../utils/lecture-inference";
 
 interface ManageLecturesModalProps {
   show: boolean;
@@ -79,22 +81,43 @@ export function ManageLecturesModal({
 
   const handleAddLecture = async () => {
     if (!newLecture.title.trim()) return;
+
+    // Check if user is admin (security)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: admin } = await supabase
+      .from("admins")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!admin) {
+      console.error("Unauthorized: Only admins can add lectures");
+      return;
+    }
+
     try {
+      setLoading(true);
       const order = newLecture.orderIndex
         ? parseInt(newLecture.orderIndex)
-        : 999;
+        : 999999;
 
       const { error } = await supabase.from("subject_lectures").insert({
         subject: standardizedSubject,
-        lecture_label: newLecture.title,
+        lecture_label: newLecture.title.trim(),
         lecture_key: `lec-${Date.now()}`,
-        order_index: order,
+        order_index: Number.isFinite(order) ? order : 999999,
       });
       if (error) throw error;
       setNewLecture({ title: "", orderIndex: "" });
       fetchLectures();
     } catch (error) {
       console.error("Error adding lecture:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -332,75 +355,7 @@ export function ManageLecturesModal({
   );
 }
 
-function inferLectureKeyFromTitle(
-  title: string,
-  lecturesIndex: Array<{ lecture_key?: string; lecture_label?: string }>,
-): string {
-  const t = (title || "").trim();
-  if (!t) return "other";
 
-  const clean = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
-  const normalizedTitle = clean(t);
-
-  // 1. Exact match (case-insensitive)
-  const exact = lecturesIndex.find((l) => {
-    const key = (l.lecture_key || "").trim().toLowerCase();
-    const label = clean(l.lecture_label || "");
-    return (
-      (key && key === normalizedTitle) || (label && label === normalizedTitle)
-    );
-  });
-  if (exact?.lecture_key) return exact.lecture_key;
-
-  // 1.5 Prefix match against lecture_key (common when admin adds content via query param)
-  const keyPrefix = lecturesIndex.find((l) => {
-    const key = (l.lecture_key || "").trim().toLowerCase();
-    if (!key) return false;
-    return normalizedTitle.startsWith(key);
-  });
-  if (keyPrefix?.lecture_key) return keyPrefix.lecture_key;
-
-  // Sort lectures by label length descending to match most specific/longest first
-  const sortedLectures = [...lecturesIndex].sort(
-    (a, b) => (b.lecture_label?.length || 0) - (a.lecture_label?.length || 0),
-  );
-
-  // 2. Delimiter match for prefixes/suffixes
-  // Handles "محاضرة 1: فيديو تدريبي" -> matches "محاضرة 1"
-  const titleParts = t.split(/[:\-\|]/).map((p) => clean(p));
-
-  for (const part of titleParts) {
-    if (!part || part.length < 2) continue;
-    const match = sortedLectures.find((l) => {
-      const key = (l.lecture_key || "").trim().toLowerCase();
-      const label = clean(l.lecture_label || "");
-      return (
-        (key &&
-          (key === part || part.startsWith(key) || key.startsWith(part))) ||
-        (label &&
-          (label === part || part.includes(label) || label.includes(part)))
-      );
-    });
-    if (match?.lecture_key) return match.lecture_key;
-  }
-
-  // 3. Substring match (Check if any lecture label is contained within the title)
-  const partial = sortedLectures.find((l) => {
-    const key = (l.lecture_key || "").trim().toLowerCase();
-    const label = clean(l.lecture_label || "");
-    if (key && key.length >= 2) {
-      if (normalizedTitle.includes(key) || key.includes(normalizedTitle))
-        return true;
-    }
-    if (label && label.length >= 2) {
-      return normalizedTitle.includes(label) || label.includes(normalizedTitle);
-    }
-    return false;
-  });
-  if (partial?.lecture_key) return partial.lecture_key;
-
-  return "other";
-}
 
 function LectureContentModal({
   show,
@@ -451,7 +406,7 @@ function LectureContentModal({
               .limit(400),
             supabase
               .from("files")
-              .select("id,title,subject,file_url,description,created_at")
+              .select("id,title,subject,file_url,description,created_at,lecture_key,lecture_id")
               .eq("subject", subject)
               .order("created_at", { ascending: false })
               .limit(400),
@@ -532,8 +487,19 @@ function LectureContentModal({
       cancelLabel: "إلغاء",
     });
     if (!confirmed) return;
-    const { error } = await supabase.from("videos").delete().eq("id", id);
-    if (!error) setVideos((p) => p.filter((v) => v.id !== id));
+    try {
+      const { error } = await supabase.from("videos").delete().eq("id", id);
+      if (!error) {
+        setVideos((p) => p.filter((v) => v.id !== id));
+        // Invalidate cache
+        const cacheKey = cacheKeys.videos?.() || "videos";
+        if (queryCache.invalidate) {
+          queryCache.invalidate(cacheKey);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting video:", error);
+    }
   };
 
   const handleDeleteFile = async (id: string) => {
@@ -542,8 +508,19 @@ function LectureContentModal({
       cancelLabel: "إلغاء",
     });
     if (!confirmed) return;
-    const { error } = await supabase.from("files").delete().eq("id", id);
-    if (!error) setFiles((p) => p.filter((f) => f.id !== id));
+    try {
+      const { error } = await supabase.from("files").delete().eq("id", id);
+      if (!error) {
+        setFiles((p) => p.filter((f) => f.id !== id));
+        // Invalidate cache
+        const cacheKey = cacheKeys.files?.() || "files";
+        if (queryCache.invalidate) {
+          queryCache.invalidate(cacheKey);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
   };
 
   const handleDeleteQuiz = async (id: string) => {
@@ -552,8 +529,18 @@ function LectureContentModal({
       cancelLabel: "إلغاء",
     });
     if (!confirmed) return;
-    const { error } = await supabase.from("quizzes").delete().eq("id", id);
-    if (!error) setQuizzes((p) => p.filter((q) => q.id !== id));
+    try {
+      const { error } = await supabase.from("quizzes").delete().eq("id", id);
+      if (!error) {
+        setQuizzes((p) => p.filter((q) => q.id !== id));
+        // Invalidate cache
+        if (queryCache.invalidate) {
+          queryCache.invalidate("quizzes");
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting quiz:", error);
+    }
   };
 
   if (!show) return null;

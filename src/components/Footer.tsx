@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslations, useLocale } from "next-intl";
 import {
   BookOpen,
   Newspaper,
@@ -15,12 +16,19 @@ import {
 } from "lucide-react";
 
 export function Footer() {
+  const tFooter = useTranslations("footer");
+  const tNav = useTranslations("nav");
+  const locale = useLocale();
   const { displayName } = useAuth();
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
   const trwWhatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-    `أنا الطالب: ${displayName || "زائر"}، أريد الانضمام إلى قسم TRW`,
+    locale === "ar"
+      ? `أنا الطالب: ${displayName || "زائر"}، أريد الانضمام إلى قسم TRW`
+      : `I am the student: ${displayName || "Guest"}, I want to join the TRW section`,
   )}`;
+
+  const localePrefix = locale === "en" ? "/en" : "/ar";
 
   return (
     <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-8 pb-6 mt-auto transition-colors">
@@ -37,75 +45,74 @@ export function Footer() {
                 className="object-contain w-10 h-10"
               />
               <span className="text-lg font-bold text-slate-900 dark:text-white">
-                Masar X
+                {tFooter("brandTitle")}
               </span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
-              منصة تعليمية متكاملة تهدف إلى تسهيل مشاركة الملخصات والمصادر
-              الدراسية بين الطلاب، لتعزيز التعاون وتحقيق أفضل النتائج.
+              {tFooter("brandDescription")}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h3 className="text-slate-900 dark:text-white font-bold mb-4 text-lg">
-              روابط سريعة
+              {tFooter("quickLinks")}
             </h3>
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/"
+                  href={`${localePrefix}/`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <LayoutDashboard className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span>الرئيسية</span>
+                  <span>{tNav("home")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/news"
+                  href={`${localePrefix}/news`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <Newspaper className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span>الأخبار</span>
+                  <span>{tNav("news")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/subjects"
+                  href={`${localePrefix}/subjects`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <BookOpen className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span>المواد الدراسية</span>
+                  <span>{tNav("subjects")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/quizzes"
+                  href={`${localePrefix}/quizzes`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <MessageSquare className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span>الامتحانات</span>
+                  <span>{tNav("quizzes")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/faq"
+                  href={`${localePrefix}/faq`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <span className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     ❓
                   </span>
-                  <span>الأسئلة الشائعة</span>
+                  <span>{tFooter("faq")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/privacy"
+                  href={`${localePrefix}/privacy`}
                   className="text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-brand-blue transition-colors flex items-center gap-2 text-sm font-medium group"
                 >
                   <Shield className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span>سياسة الخصوصية</span>
+                  <span>{tFooter("privacyPolicy")}</span>
                 </Link>
               </li>
               <li className="pt-2 border-t border-slate-100 dark:border-white/5 mt-2">
@@ -120,7 +127,7 @@ export function Footer() {
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover/trw:opacity-100 transition-opacity" />
                   </div>
                   <p className="text-[10px] text-slate-500 dark:text-slate-500 pr-7 leading-tight">
-                    تواصل على واتساب للانضمام إلى القسم الغير اكاديمي
+                    {tFooter("trwCaption")}
                   </p>
                 </a>
               </li>
@@ -130,11 +137,11 @@ export function Footer() {
           {/* Support Section */}
           <div>
             <h3 className="text-slate-900 dark:text-white font-bold mb-4 text-lg">
-              الدعم والمساعدة
+              {tFooter("support")}
             </h3>
             <div className="space-y-3">
               <p className="text-slate-600 dark:text-slate-400 text-sm">
-                هل لديك استفسار أو واجهت مشكلة؟
+                {tFooter("supportPrompt")}
               </p>
               <a
                 href={whatsappUrl}
@@ -159,7 +166,7 @@ export function Footer() {
                     fill="currentColor"
                   ></path>
                 </svg>
-                <span>تواصل</span>
+                <span>{tFooter("contact")}</span>
               </a>
             </div>
           </div>
@@ -167,7 +174,7 @@ export function Footer() {
           {/* Developer Section */}
           <div>
             <h3 className="text-slate-900 dark:text-white font-bold mb-4 text-lg">
-              المطور
+              {tFooter("developer")}
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -189,7 +196,7 @@ export function Footer() {
                 }
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
               >
-                <span>متابعة على GitHub</span>
+                <span>{tFooter("followOnGithub")}</span>
                 <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
@@ -199,13 +206,13 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 dark:text-slate-500 text-xs font-medium">
-            © {new Date().getFullYear()} Masar X - جميع الحقوق محفوظة
+            {tFooter("copyright", { year: new Date().getFullYear() })}
           </p>
           <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-500">
             <span className="text-brand-blue font-bold">Aboalayoun</span>
-            <span>by</span>
+            <span>{tFooter("by")}</span>
             <Heart className="w-3 h-3 text-white fill-white animate-pulse" />
-            <span>Made with</span>
+            <span>{tFooter("madeWith")}</span>
           </div>
         </div>
       </div>

@@ -14,12 +14,12 @@ import {
   Zap,
   Clock,
 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
-import { NotificationSettings } from "../../components/NotificationManager";
-import { AdminProfileImage } from "../../components/AdminProfileImage";
+import { useAuth } from "@/contexts/AuthContext";
+import { NotificationSettings } from "@/components/NotificationManager";
+import { AdminProfileImage } from "@/components/AdminProfileImage";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { toast } from "sonner";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const router = useRouter();

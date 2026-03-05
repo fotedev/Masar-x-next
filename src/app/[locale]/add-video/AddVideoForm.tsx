@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Send, CheckCircle, X } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { useAuth } from "../../contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "../../components/NotificationManager";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
 
 export function AddVideoForm() {
   const router = useRouter();

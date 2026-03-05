@@ -6,6 +6,7 @@ interface Answer {
     question_id: string;
     selected_option: number;
     is_correct: boolean;
+    updated_at?: string;
 }
 
 interface UseQuizAttemptProps {
@@ -19,6 +20,7 @@ interface DatabaseAnswer {
     question_id: string;
     selected_option: number;
     is_correct: boolean;
+    created_at: string;
 }
 
 interface QuizHistoryEntry {
@@ -66,24 +68,32 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                     answersMap[ans.question_id] = {
                         question_id: ans.question_id,
                         selected_option: ans.selected_option,
-                        is_correct: ans.is_correct
+                        is_correct: ans.is_correct,
+                        updated_at: ans.created_at
                     };
                 });
 
-                // Merge with localStorage if needed
-                if (existingAnswers.length === 0) {
-                    const localData = localStorage.getItem(`quiz_attempt_${quizId}_${userId}`);
-                    if (localData) {
-                        try {
-                            const parsed = JSON.parse(localData);
-                            setAnswers(parsed);
-                        } catch {
-                            // ignore
-                        }
+                // Merge with localStorage intelligently
+                const localKey = `quiz_attempt_${quizId}_${userId}`;
+                const localData = localStorage.getItem(localKey);
+                if (localData) {
+                    try {
+                        const parsed: Record<string, Answer> = JSON.parse(localData);
+                        Object.entries(parsed).forEach(([qId, localAns]) => {
+                            const dbAns = answersMap[qId];
+                            // Only use local answer if DB answer doesn't exist or local is newer
+                            if (!dbAns || (localAns.updated_at && new Date(localAns.updated_at) > new Date(dbAns.updated_at || 0))) {
+                                answersMap[qId] = localAns;
+                            }
+                        });
+                        // Sync back merged state to localStorage
+                        localStorage.setItem(localKey, JSON.stringify(answersMap));
+                    } catch (e) {
+                        console.error('Error parsing local quiz data:', e);
                     }
-                } else {
-                    setAnswers(answersMap);
                 }
+                
+                setAnswers(answersMap);
 
             } catch {
                 // ignore
@@ -97,7 +107,13 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
 
     // Save answer
     const saveAnswer = useCallback(async (questionId: string, selectedOption: number, isCorrect: boolean) => {
-        const newAnswer: Answer = { question_id: questionId, selected_option: selectedOption, is_correct: isCorrect };
+        const timestamp = new Date().toISOString();
+        const newAnswer: Answer = { 
+            question_id: questionId, 
+            selected_option: selectedOption, 
+            is_correct: isCorrect,
+            updated_at: timestamp
+        };
 
         // Optimistic update - ALWAYS update local state first
         setAnswers(prev => {
@@ -115,9 +131,12 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
 
         try {
             setSaving(true);
+            setError(null);
             await quizService.saveAnswer(attemptId, questionId, selectedOption, isCorrect);
-        } catch {
-            // ignore
+        } catch (err) {
+            console.error('Failed to save answer to DB:', err);
+            setError(err instanceof Error ? err.message : 'فشل حفظ الإجابة في السحابة. سيتم الاحتفاظ بها محلياً.');
+            throw err;
         } finally {
             setSaving(false);
         }

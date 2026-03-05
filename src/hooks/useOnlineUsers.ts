@@ -56,7 +56,7 @@ export function useOnlineUsers() {
         });
 
       // Subscribe first, then track presence
-      channel.subscribe(async (status) => {
+      channel.subscribe(async (status: 'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | string) => {
         if (status === 'SUBSCRIBED' && user) {
           await channel.track({
             user_id: user.id,
@@ -87,33 +87,42 @@ export function useOnlineUsers() {
 
   // Handle auth state changes
   useEffect(() => {
-    const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Re-track presence when user signs in - only if subscription exists and is subscribed
-          if (subscriptionRef.current && subscriptionRef.current.state === 'joined') {
-            await subscriptionRef.current.track({
-              user_id: session.user.id,
-              online_at: new Date().toISOString(),
-            });
-          } else {
-            // If no valid subscription, re-initialize presence tracking
-            await trackPresence();
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // Clean up presence when user signs out
-          if (subscriptionRef.current) {
-            subscriptionRef.current.unsubscribe();
-            subscriptionRef.current = null;
-            setOnlineCount(0);
-            setOnlineUsers([]);
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    
+    const initAuthListener = async () => {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event: AuthChangeEvent, session: Session | null) => {
+          if (event === 'SIGNED_IN' && session?.user) {
+            // Re-track presence when user signs in - only if subscription exists and is subscribed
+            if (subscriptionRef.current && subscriptionRef.current.state === 'joined') {
+              await subscriptionRef.current.track({
+                user_id: session.user.id,
+                online_at: new Date().toISOString(),
+              });
+            } else {
+              // If no valid subscription, re-initialize presence tracking
+              await trackPresence();
+            }
+          } else if (event === 'SIGNED_OUT') {
+            // Clean up presence when user signs out
+            if (subscriptionRef.current) {
+              subscriptionRef.current.unsubscribe();
+              subscriptionRef.current = null;
+              setOnlineCount(0);
+              setOnlineUsers([]);
+            }
           }
         }
-      }
-    );
+      );
+      authSubscription = data.subscription;
+    };
+
+    initAuthListener();
 
     return () => {
-      authSubscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, [trackPresence]);
 

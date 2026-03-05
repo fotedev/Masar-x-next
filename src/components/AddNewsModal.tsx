@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, Upload } from "lucide-react";
 import Image from "next/image";
 import { Database } from "../types/database";
@@ -28,6 +29,7 @@ export function AddNewsModal({
   onSetNewNews,
   onAddNews,
 }: AddNewsModalProps) {
+  const t = useTranslations("news");
   const { user } = useAuth();
   const [semester, setSemester] = useState<number>(1);
   const { levels, getDepartmentsForLevelName } = useAcademicOptions({
@@ -78,6 +80,13 @@ export function AddNewsModal({
 
     try {
       if (fileFile) {
+        // Check file size (10MB limit)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        if (fileFile.size > MAX_FILE_SIZE) {
+          setError("حجم الملف يتجاوز الحد المسموح به (10MB)");
+          setLoading(false);
+          return;
+        }
         const result = await uploadToCloudinary(fileFile, {
           folder: "masarx-news-files",
         });
@@ -85,7 +94,15 @@ export function AddNewsModal({
       }
 
       if (imageFiles.length > 0) {
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
         for (const imageFile of imageFiles) {
+          if (imageFile.size > MAX_IMAGE_SIZE) {
+            setError(
+              `حجم الصورة "${imageFile.name}" يتجاوز الحد المسموح به (5MB)`,
+            );
+            setLoading(false);
+            return;
+          }
           const result = await uploadToCloudinary(imageFile, {
             folder: "masarx-news-images",
           });
@@ -105,10 +122,13 @@ export function AddNewsModal({
       setFileFile(null);
       setImageFiles([]);
       setCustomCategory("");
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "حدث خطأ أثناء رفع الملفات. يرجى المحاولة مرة أخرى.",
+      );
     } finally {
-      setError("حدث خطأ أثناء رفع الملفات. يرجى المحاولة مرة أخرى.");
       setLoading(false);
     }
   };
@@ -118,7 +138,7 @@ export function AddNewsModal({
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            إضافة خبر جديد
+            {t("addNewsModal")}
           </h2>
 
           {error && (
@@ -130,7 +150,7 @@ export function AddNewsModal({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                العنوان
+                {t("newsTitle")}
               </label>
               <input
                 type="text"
@@ -139,13 +159,13 @@ export function AddNewsModal({
                   onSetNewNews({ ...newNews, title: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="أدخل عنوان الخبر"
+                placeholder={t("newsPlaceholder")}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                النوع
+                {t("newsType")}
               </label>
               <select
                 value={newNews.type}
@@ -157,9 +177,11 @@ export function AddNewsModal({
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
-                <option value="announcement">إعلان</option>
-                <option value="update">تحديث</option>
-                <option value="important">مهم</option>
+                <option value="announcement">
+                  {t("newsTypeAnnouncement")}
+                </option>
+                <option value="update">{t("newsTypeUpdate")}</option>
+                <option value="important">{t("newsTypeImportant")}</option>
                 <option value="custom">مخصص</option>
               </select>
             </div>
@@ -167,21 +189,21 @@ export function AddNewsModal({
             {(newNews.type as any) === "custom" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  التصنيف المخصص ( جدول مادة ****)
+                  {t("newsCustomCategory")}
                 </label>
                 <input
                   type="text"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="أدخل تصنيف مخصص للخبر (اختياري)"
+                  placeholder={t("newsCustomCategoryPlaceholder")}
                 />
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                المحتوى
+                {t("newsContent")}
               </label>
               <textarea
                 value={newNews.content}
@@ -189,14 +211,14 @@ export function AddNewsModal({
                   onSetNewNews({ ...newNews, content: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[100px]"
-                placeholder="أدخل محتوى الخبر"
+                placeholder={t("newsContentPlaceholder")}
               ></textarea>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  المستوى (اختياري)
+                  {t("newsLevel")} ({t("newsOptional")})
                 </label>
                 <select
                   value={newNews.year || ""}
@@ -444,13 +466,13 @@ export function AddNewsModal({
               disabled={loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "جاري الإضافة..." : "إضافة الخبر"}
+              {loading ? t("newsPublishing") : t("newsPublish")}
             </button>
             <button
               onClick={() => onSetShowAddNews(false)}
               className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-medium transition-colors"
             >
-              إلغاء
+              {t("newsCancel")}
             </button>
           </div>
         </div>
