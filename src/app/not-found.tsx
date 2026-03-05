@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import ar from "@/messages/ar.json";
+import en from "@/messages/en.json";
 
 export default function NotFound() {
   const headersList = headers();
@@ -10,28 +12,12 @@ export default function NotFound() {
   const locale =
     requestLocale === "en" || acceptLanguage.includes("en") ? "en" : "ar";
 
-  // Static content mapping based on locale
-  const content = {
-    en: {
-      title: "404",
-      message: "Sorry, the page you are looking for does not exist.",
-      backHome: "Back to Home",
-      pageTitle: "Page Not Found | Masar X",
-      dir: "ltr",
-    },
-    ar: {
-      title: "٤٠٤",
-      message: "عذراً، الصفحة التي تبحث عنها غير موجودة.",
-      backHome: "العودة للرئيسية",
-      pageTitle: "الصفحة غير موجودة | مسار إكس",
-      dir: "rtl",
-    },
-  };
-
-  const t = content[locale];
+  const messages = locale === "en" ? en : ar;
+  const t = messages.notFound;
+  const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={t.dir}>
+    <html lang={locale} dir={dir}>
       <head>
         <title>{t.pageTitle}</title>
       </head>
