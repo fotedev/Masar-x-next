@@ -114,19 +114,28 @@ Deno.serve(async (req: Request) => {
 
     // Update user profile in database if not skipped
     if (!skipProfileUpdate) {
+      console.log('Updating profile for user:', user.id)
       const { error: updateError } = await supabaseClient
         .from('profiles')
-        .upsert({
-          id: user.id,
+        .update({
           avatar_url: cloudinaryData.secure_url,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
         })
+        .eq('id', user.id)
 
       if (updateError) {
         console.error('Database update failed:', updateError)
-        // Don't fail the request if DB update fails, but log it
+        // Try upsert as fallback if update failed (though profile should exist)
+        const { error: upsertError } = await supabaseClient
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            avatar_url: cloudinaryData.secure_url,
+            updated_at: new Date().toISOString()
+          })
+        if (upsertError) console.error('Database upsert also failed:', upsertError)
+      } else {
+        console.log('Profile updated successfully with URL:', cloudinaryData.secure_url)
       }
     }
 

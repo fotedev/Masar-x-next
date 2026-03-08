@@ -2,8 +2,11 @@ import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects } from "../hooks/useSubjects";
 import { useLocale, useTranslations } from "next-intl";
+import { Skeleton } from "./ui/Skeleton";
 
 import { usePlatformSettings } from "../hooks/usePlatformSettings";
+
+import { motion } from "framer-motion";
 
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
@@ -36,11 +39,13 @@ export function SubjectsGrid({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="modern-card p-6 animate-pulse">
-            <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-2xl mx-auto mb-4"></div>
-            <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto w-3/4"></div>
+          <div key={index} className="modern-card p-6">
+            <div className="text-center">
+              <Skeleton className="w-14 h-14 rounded-2xl mx-auto mb-4" />
+              <Skeleton className="h-5 rounded-lg mx-auto w-3/4" />
+            </div>
           </div>
         ))}
       </div>
@@ -49,7 +54,21 @@ export function SubjectsGrid({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.05,
+              delayChildren: 0.1,
+            },
+          },
+        }}
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+      >
         {filteredSubjects.map((subject) => {
           const IconComponent = SUBJECT_ICONS[subject.name] || BookOpen;
 
@@ -57,8 +76,14 @@ export function SubjectsGrid({
             locale === "en" && subject.name_en ? subject.name_en : subject.name;
 
           return (
-            <div
+            <motion.div
               key={subject.id}
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1 },
+              }}
+              whileHover={{ scale: 1.05, translateY: -4 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => onSubjectClick?.(subject.name)}
               className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
             >
@@ -70,10 +95,10 @@ export function SubjectsGrid({
                   {displayName}
                 </h3>
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {filteredSubjects.length === 0 && (
         <div className="text-center py-12">

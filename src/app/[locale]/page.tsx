@@ -13,10 +13,11 @@ import { useRouter } from "@/i18n/routing";
 import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";
+import { queryCache, cacheTTL } from "@/lib/queryCache";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   const tHome = useTranslations("home");
-  const tCommon = useTranslations("common");
   const { user, isAdmin } = useAuth();
   const { summaries, editSummary, loading: summariesLoading } = useSummaries();
   const { subjects, loading: subjectsLoading } = useSubjects();
@@ -119,6 +120,47 @@ export default function HomePage() {
       try {
         setQuizzesLoading(true);
 
+        // Check cache first
+        const cacheKey = `home_quizzes_approved`;
+        const cached = queryCache.get<Quiz[]>(cacheKey);
+        if (cached) {
+          const visibleSubjectNames = subjects
+            .filter(
+              (s) =>
+                s.show_on_home &&
+                (!s.semester || Number(s.semester) === activeSemester),
+            )
+            .map((s) => s.name);
+          const visibleSubjectSet = new Set(
+            visibleSubjectNames
+              .map((n) => normalizeSubjectName(n))
+              .filter(Boolean),
+          );
+
+          const filtered = cached.filter((q: Quiz) => {
+            let subject = (q.subject || "").toString();
+            if (!subject) {
+              try {
+                const parsed = JSON.parse(q.description || "{}");
+                if (typeof parsed?.subject === "string") {
+                  subject = parsed.subject;
+                }
+              } catch {
+                /* ignore */
+              }
+            }
+            const normalizedQuizSubject = normalizeSubjectName(subject);
+            return (
+              normalizedQuizSubject &&
+              visibleSubjectSet.has(normalizedQuizSubject)
+            );
+          });
+
+          setDisplayQuizzes(filtered.slice(0, 10));
+          setQuizzesLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("quizzes")
           .select("*")
@@ -129,6 +171,9 @@ export default function HomePage() {
         if (error) throw error;
 
         const rows = (data || []) as Quiz[];
+
+        // Cache the raw approved quizzes
+        queryCache.set(cacheKey, rows, cacheTTL.quizzes);
 
         const filtered = rows.filter((q) => {
           let subject = (q.subject || "").toString();
@@ -174,6 +219,22 @@ export default function HomePage() {
     setEditingSummary(null);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1 },
+  };
+
   return (
     <div className="space-y-8">
       {/* All Summaries Section */}
@@ -191,11 +252,21 @@ export default function HomePage() {
           </button>
         </div>
         {summariesLoading || subjectsLoading ? (
-          <div className="modern-card p-12 text-center loading-placeholder">
-            <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tCommon("loading")}
-            </p>
+          <div className="summary-grid">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="modern-card p-5 animate-pulse">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                </div>
+                <div className="space-y-3 mb-4">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : displaySummaries.length === 0 ? (
           <div className="modern-card p-12 text-center">
@@ -205,13 +276,20 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="summary-grid">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="summary-grid"
+          >
             {displaySummaries.map((summary: SummaryWithRatings) => {
               const canEdit = user && (isAdmin || summary.user_id === user.id);
 
               return (
-                <div
+                <motion.div
                   key={summary.id}
+                  variants={itemVariants}
+                  whileHover={{ y: -4 }}
                   className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
                   onClick={() => {
                     trackSummaryClick(summary.id, "trending_click");
@@ -275,10 +353,10 @@ export default function HomePage() {
                       {summary.content}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -298,11 +376,19 @@ export default function HomePage() {
         </div>
 
         {videosLoading || subjectsLoading ? (
-          <div className="modern-card p-12 text-center loading-placeholder">
-            <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tCommon("loading")}
-            </p>
+          <div className="summary-grid">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="modern-card p-5 animate-pulse">
+                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3"></div>
+                <div className="space-y-3 mb-4">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : displayVideos.length === 0 ? (
           <div className="modern-card p-12 text-center">
@@ -312,10 +398,17 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="summary-grid">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="summary-grid"
+          >
             {displayVideos.map((video) => (
-              <div
+              <motion.div
                 key={video.id}
+                variants={itemVariants}
+                whileHover={{ y: -4 }}
                 className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
                 onClick={() =>
                   onNavigate("subjects", encodeURIComponent(video.subject))
@@ -359,9 +452,9 @@ export default function HomePage() {
                       : "لم يتم تقييمها بعد"}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 
@@ -380,11 +473,19 @@ export default function HomePage() {
         </div>
 
         {subjectsLoading || quizzesLoading ? (
-          <div className="modern-card p-12 text-center loading-placeholder">
-            <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 animate-pulse" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tCommon("loading")}
-            </p>
+          <div className="summary-grid">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="modern-card p-5 animate-pulse">
+                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3"></div>
+                <div className="space-y-3 mb-4">
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : displayQuizzes.length === 0 ? (
           <div className="modern-card p-12 text-center">
@@ -394,10 +495,17 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="summary-grid">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="summary-grid"
+          >
             {displayQuizzes.map((quiz) => (
-              <div
+              <motion.div
                 key={quiz.id}
+                variants={itemVariants}
+                whileHover={{ y: -4 }}
                 className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
                 onClick={() => onNavigate("quiz-play", quiz.id)}
               >
@@ -486,9 +594,9 @@ export default function HomePage() {
                     })()}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 

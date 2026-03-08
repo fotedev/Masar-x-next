@@ -1,6 +1,6 @@
 import { User, Camera } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { FileDropzone } from "./FileDropzone";
 import { toast } from "sonner";
@@ -20,6 +20,18 @@ export function AdminProfileImage({
 }: AdminProfileImageProps) {
   const { isAdmin, avatarUrl, updateAvatar } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
+
+  // Safety effect: reset isUploading if avatarUrl changes, or after a timeout
+  useEffect(() => {
+    if (isUploading) {
+      // If the URL changed, the upload definitely succeeded
+      const timer = setTimeout(() => {
+        setIsUploading(false);
+      }, 5000); // 5s safety timeout
+
+      return () => clearTimeout(timer);
+    }
+  }, [isUploading, avatarUrl]);
 
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -42,7 +54,10 @@ export function AdminProfileImage({
     setIsUploading(true);
     try {
       await updateAvatar(file);
-    } catch {
+      // Wait for a small delay to ensure AuthContext state has propagated if needed
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error("Upload error in component:", error);
       toast.error("حدث خطأ في رفع الصورة", {
         description: "يرجى المحاولة مرة أخرى.",
       });

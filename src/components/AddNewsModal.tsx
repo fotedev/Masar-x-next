@@ -69,7 +69,7 @@ export function AddNewsModal({
   const handleAddNews = async () => {
     // Check authentication first
     if (!user) {
-      setError("يجب تسجيل الدخول أولاً لإضافة الأخبار");
+      setError(t("newsLoginRequired"));
       return;
     }
 
@@ -83,7 +83,7 @@ export function AddNewsModal({
         // Check file size (10MB limit)
         const MAX_FILE_SIZE = 10 * 1024 * 1024;
         if (fileFile.size > MAX_FILE_SIZE) {
-          setError("حجم الملف يتجاوز الحد المسموح به (10MB)");
+          setError(t("newsFileSizeError"));
           setLoading(false);
           return;
         }
@@ -97,9 +97,7 @@ export function AddNewsModal({
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
         for (const imageFile of imageFiles) {
           if (imageFile.size > MAX_IMAGE_SIZE) {
-            setError(
-              `حجم الصورة "${imageFile.name}" يتجاوز الحد المسموح به (5MB)`,
-            );
+            setError(t("newsImageSizeError", { name: imageFile.name }));
             setLoading(false);
             return;
           }
@@ -123,11 +121,7 @@ export function AddNewsModal({
       setImageFiles([]);
       setCustomCategory("");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "حدث خطأ أثناء رفع الملفات. يرجى المحاولة مرة أخرى.",
-      );
+      setError(err instanceof Error ? err.message : t("newsUploadError"));
     } finally {
       setLoading(false);
     }
@@ -182,7 +176,7 @@ export function AddNewsModal({
                 </option>
                 <option value="update">{t("newsTypeUpdate")}</option>
                 <option value="important">{t("newsTypeImportant")}</option>
-                <option value="custom">مخصص</option>
+                <option value="custom">{t("newsTypeCustom")}</option>
               </select>
             </div>
 
@@ -232,7 +226,7 @@ export function AddNewsModal({
                   }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
-                  <option value="">كل المستويات</option>
+                  <option value="">{t("newsLevelAll")}</option>
                   {levels.map((level) => (
                     <option key={level.id} value={level.name}>
                       {level.name}
@@ -243,7 +237,7 @@ export function AddNewsModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  الترم (اختياري)
+                  {t("newsSemesterLabel")}
                 </label>
                 <select
                   value={semester}
@@ -259,14 +253,14 @@ export function AddNewsModal({
                   disabled={!newNews.year}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
                 >
-                  <option value={1}>ترم 1</option>
-                  <option value={2}>ترم 2</option>
+                  <option value={1}>{t("newsSemester1")}</option>
+                  <option value={2}>{t("newsSemester2")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  القسم (اختياري)
+                  {t("newsDepartment")} ({t("newsOptional")})
                 </label>
                 <select
                   value={newNews.department || ""}
@@ -280,7 +274,7 @@ export function AddNewsModal({
                   disabled={!newNews.year || availableDepartments.length === 0}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
-                  <option value="">كل الأقسام</option>
+                  <option value="">{t("newsDepartmentAll")}</option>
                   {availableDepartments.map((dept) => (
                     <option key={dept.id} value={dept.name}>
                       {dept.name}
@@ -291,7 +285,7 @@ export function AddNewsModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  المادة (اختياري)
+                  {t("newsSubject")} ({t("newsOptional")})
                 </label>
                 <select
                   value={newNews.subject || ""}
@@ -305,7 +299,9 @@ export function AddNewsModal({
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
                 >
                   <option value="">
-                    {subjectsLoading ? "جاري تحميل المواد..." : "كل المواد"}
+                    {subjectsLoading
+                      ? t("newsSubjectLoading")
+                      : t("newsSubjectAll")}
                   </option>
                   {subjects.map((s) => (
                     <option key={s.id} value={s.name}>
@@ -318,7 +314,7 @@ export function AddNewsModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                رفع ملف (PDF أو Word) (اختياري)
+                {t("newsFile")}
               </label>
               <FileDropzone
                 onFileSelect={(files) => {
@@ -334,7 +330,7 @@ export function AddNewsModal({
                       setFileFile(file);
                       setError("");
                     } else {
-                      setError("يرجى اختيار ملف PDF أو Word فقط");
+                      setError(t("newsFileError"));
                       setFileFile(null);
                     }
                   }
@@ -353,11 +349,11 @@ export function AddNewsModal({
                       <>
                         <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                           <span className="font-semibold">
-                            اضغط أو اسحب لرفع ملف
+                            {t("newsFileDrop")}
                           </span>
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-500">
-                          PDF, Word (حتى 10MB)
+                          {t("newsFileSize")}
                         </p>
                       </>
                     )}
@@ -368,7 +364,7 @@ export function AddNewsModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                رفع صور (اختياري)
+                {t("newsImages")}
               </label>
               <FileDropzone
                 onFileSelect={(files) => {
@@ -384,9 +380,7 @@ export function AddNewsModal({
                   });
 
                   if (validImages.length !== files.length) {
-                    setError(
-                      "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)",
-                    );
+                    setError(t("newsImagesError"));
                   } else {
                     setError("");
                   }
@@ -402,11 +396,11 @@ export function AddNewsModal({
                     <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
                     <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                       <span className="font-semibold">
-                        اضغط أو اسحب لرفع الصور
+                        {t("newsImagesDrop")}
                       </span>
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-500">
-                      JPEG, PNG, GIF, WebP (حتى 5MB لكل صورة)
+                      {t("newsImagesSize")}
                     </p>
                   </div>
                 </div>
@@ -441,7 +435,7 @@ export function AddNewsModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                الأولوية
+                {t("newsPriority")}
               </label>
               <input
                 type="number"
@@ -453,7 +447,7 @@ export function AddNewsModal({
                   })
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="أدخل الأولوية (0-10)"
+                placeholder={t("newsPriorityPlaceholder")}
                 min="0"
                 max="10"
               />
