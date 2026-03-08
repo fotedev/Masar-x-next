@@ -39,9 +39,9 @@ const nextConfig = {
     },
     async headers() {
         const csp = [
-            "default-src 'self'",
+            "default-src 'self' https://*.youtube.com https://*.googlevideo.com",
             // Next currently injects inline scripts (theme + JSON-LD). We keep 'unsafe-inline' for compatibility.
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' https: data: https://*.ytimg.com",
             "font-src 'self' data:",
