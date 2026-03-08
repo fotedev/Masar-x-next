@@ -302,6 +302,7 @@ export default function SummaryDetailPage() {
                   className="absolute top-0 left-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   title="YouTube video player"
                 ></iframe>
               </div>
