@@ -947,7 +947,7 @@ function SubjectSummariesContent() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-full overflow-hidden">
       <AnimatePresence mode="wait">
         {!isLectureView ? (
           <motion.div
