@@ -43,7 +43,7 @@ const nextConfig = {
             // Next currently injects inline scripts (theme + JSON-LD). We keep 'unsafe-inline' for compatibility.
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com",
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' https: data: https://*.ytimg.com",
+            "img-src 'self' https: data: https://*.ytimg.com https://www.transparenttextures.com",
             "font-src 'self' data:",
             "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://res.cloudinary.com https://www.transparenttextures.com https://raw.githubusercontent.com https://*.youtube.com https://*.googlevideo.com https://*.google.com ws://localhost:*",
             "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
