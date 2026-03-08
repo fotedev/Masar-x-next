@@ -22,18 +22,54 @@ export function AcademicOnboardingGate() {
   }, [pathname]);
 
   useEffect(() => {
-    if (authLoading || academicLoading) return;
-    if (!user) return;
-    if (isAdmin) return;
+    if (authLoading || academicLoading) {
+      return;
+    }
+
+    if (!user) {
+      return;
+    }
+
+    // Admins bypass onboarding
+    if (isAdmin) {
+      return;
+    }
+
     if (pathname?.startsWith("/onboarding")) return;
     if (hasRedirected.current) return;
 
-    // IMPORTANT: Wait for academic data to be fully loaded (not just from initial empty state)
-    const hasAcademic = academic.level != null && academic.semester != null;
+    // Check if academic data is actually missing
+    const hasAcademic = academic.level !== null && academic.semester !== null;
 
     if (!hasAcademic) {
-      hasRedirected.current = true;
-      router.replace(`/${locale}/onboarding/academic`);
+      // Add a 1-second grace period for state to settle
+      const timer = setTimeout(() => {
+        if (
+          !hasRedirected.current &&
+          pathname &&
+          !pathname.startsWith("/onboarding")
+        ) {
+          // Final check: if still no academic data AND still not admin, redirect
+          if (
+            !isAdmin &&
+            academic.level === null &&
+            academic.semester === null
+          ) {
+            console.log(
+              "[AcademicOnboardingGate] Redirecting after 1s grace period",
+              {
+                level: academic.level,
+                semester: academic.semester,
+                isAdmin,
+              },
+            );
+            hasRedirected.current = true;
+            router.replace(`/${locale}/onboarding/academic`);
+          }
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
   }, [
     academic.level,

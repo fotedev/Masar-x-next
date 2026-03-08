@@ -487,8 +487,8 @@ export const Header = React.memo(function Header() {
 
                 {!isMounted || loading ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-9 w-24 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                    <div className="h-9 w-24 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    <div className="h-9 w-24 rounded-lg bg-white/10 animate-pulse" />
+                    <div className="h-9 w-24 rounded-lg bg-white/10 animate-pulse" />
                   </div>
                 ) : user ? (
                   <div className="flex items-center gap-2">
@@ -652,8 +652,8 @@ export const Header = React.memo(function Header() {
 
               {!isMounted || loading ? (
                 <div className="flex flex-col gap-2">
-                  <div className="h-11 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
-                  <div className="h-11 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  <div className="h-11 rounded-xl bg-white/10 animate-pulse" />
+                  <div className="h-11 rounded-xl bg-white/10 animate-pulse" />
                 </div>
               ) : user ? (
                 <div className="flex flex-col gap-2">

@@ -49,8 +49,28 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }): JSX.Element {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const sessionStr = localStorage.getItem("supabase.auth.token");
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session?.user ?? null;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const sessionStr = localStorage.getItem("supabase.auth.token");
+      return !sessionStr;
+    } catch {
+      return true;
+    }
+  });
   const [isAdmin, setIsAdmin] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -92,14 +112,14 @@ export function AuthProvider({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const getDisplayName = useCallback((u: User) => {
-    // Check user_metadata and app_metadata for display_name or full_name
+    // Check for custom metadata first, then fallbacks
     const name =
       u.user_metadata?.display_name ||
       u.user_metadata?.full_name ||
       u.user_metadata?.name ||
-      u.user_metadata?.email?.split("@")[0] ||
       u.app_metadata?.display_name ||
       u.app_metadata?.full_name ||
+      u.user_metadata?.email?.split("@")[0] ||
       u.email?.split("@")[0];
 
     return name || "مستخدم";
@@ -281,6 +301,13 @@ export function AuthProvider({
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
+        // Sync with localStorage for faster subsequent loads
+        if (session) {
+          localStorage.setItem("supabase.auth.token", JSON.stringify(session));
+        } else {
+          localStorage.removeItem("supabase.auth.token");
+        }
+
         // Use a more direct extraction from session if available
         const nameFromSession = currentUser
           ? getDisplayName(currentUser)
@@ -288,10 +315,37 @@ export function AuthProvider({
         setDisplayName(nameFromSession);
 
         if (currentUser) {
-          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          // 1. Initial fallback to metadata (fast)
+          const metadataAvatar =
+            (currentUser.user_metadata as any)?.custom_avatar ||
+            (currentUser.user_metadata as any)?.avatar_url;
           if (metadataAvatar) {
             setAvatarUrl(metadataAvatar);
           }
+
+          // 2. Fetch the "Source of Truth" from the profiles table
+          supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", currentUser.id)
+            .maybeSingle()
+            .then(
+              ({
+                data: profileData,
+                error,
+              }: {
+                data: { avatar_url: string | null } | null;
+                error: unknown;
+              }) => {
+                // If we have a database entry, it MUST override the metadata (Google/OAuth)
+                if (!error && profileData?.avatar_url) {
+                  setAvatarUrl(profileData.avatar_url);
+                }
+              },
+              () => {
+                /* ignore */
+              },
+            );
         } else {
           setAvatarUrl(null);
         }
@@ -336,6 +390,13 @@ export function AuthProvider({
         setDisplayName(currentUser ? getDisplayName(currentUser) : null);
         setLoading(false);
 
+        // Sync with localStorage
+        if (session) {
+          localStorage.setItem("supabase.auth.token", JSON.stringify(session));
+        } else {
+          localStorage.removeItem("supabase.auth.token");
+        }
+
         // Handle deleted user or invalid session
         if (
           currentUser &&
@@ -343,30 +404,50 @@ export function AuthProvider({
             event === "USER_UPDATED" ||
             event === "INITIAL_SESSION")
         ) {
-          const {
-            data: { user: freshUser },
-            error,
-          } = await supabase.auth.getUser();
-          if (error || !freshUser) {
-            console.warn(
-              "User session invalid or user deleted, signing out...",
-            );
-            await supabase.auth.signOut();
-            setUser(null);
-            setDisplayName(null);
-            setAvatarUrl(null);
-            setIsAdmin(false);
-            setAdminRole(null);
-            return;
+          try {
+            const {
+              data: { user: freshUser },
+              error,
+            } = await supabase.auth.getUser();
+
+            if (error || !freshUser) {
+              // Only sign out if it's explicitly a session error, not a network error or transient 403
+              const isSessionError =
+                error &&
+                (error.message.toLowerCase().includes("session") ||
+                  error.message.toLowerCase().includes("invalid") ||
+                  error.status === 401);
+
+              if (isSessionError || !freshUser) {
+                console.warn(
+                  "User session invalid or user deleted, signing out...",
+                  error,
+                );
+                await supabase.auth.signOut();
+                setUser(null);
+                setDisplayName(null);
+                setAvatarUrl(null);
+                setIsAdmin(false);
+                setAdminRole(null);
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Auth check failed:", e);
+            // Don't immediately sign out on catch block to avoid boot loops on transient network issues
           }
         }
 
         if (currentUser) {
-          const metadataAvatar = (currentUser.user_metadata as any)?.avatar_url;
+          // 1. Initial fallback to metadata
+          const metadataAvatar =
+            (currentUser.user_metadata as any)?.custom_avatar ||
+            (currentUser.user_metadata as any)?.avatar_url;
           if (metadataAvatar) {
             setAvatarUrl(metadataAvatar);
           }
 
+          // 2. Fetch Source of Truth from database
           supabase
             .from("profiles")
             .select("avatar_url")
@@ -380,6 +461,7 @@ export function AuthProvider({
                 data: { avatar_url: string | null } | null;
                 error: unknown;
               }) => {
+                // Database always wins over OAuth metadata
                 if (!error && profileData?.avatar_url) {
                   setAvatarUrl(profileData.avatar_url);
                 }
@@ -459,6 +541,15 @@ export function AuthProvider({
 
       if (data.success && data.url) {
         setAvatarUrl(data.url);
+        // Sync with auth metadata to ensure it persists across logins in the session
+        // We use a custom key to avoid Google OAuth overwriting it if possible,
+        // though Supabase usually maps 'avatar_url' automatically.
+        await supabase.auth.updateUser({
+          data: {
+            avatar_url: data.url,
+            custom_avatar: data.url,
+          },
+        });
       } else {
         throw new Error("Upload failed");
       }
@@ -535,6 +626,7 @@ export function AuthProvider({
     }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    localStorage.removeItem("supabase.auth.token");
   };
 
   return (

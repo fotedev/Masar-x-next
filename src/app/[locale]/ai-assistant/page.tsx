@@ -71,6 +71,7 @@ type SupabaseDraftRow = {
   created_at: string;
 };
 
+import { useTranslations } from "next-intl";
 import { useAiChat } from "@/hooks/useAiChat";
 
 function AiAssistantChatPage() {
@@ -80,6 +81,7 @@ function AiAssistantChatPage() {
       includeInactive: true,
     });
   const { trackEvent } = useAnalytics();
+  const t = useTranslations("assistant");
   const {
     messages,
     isLoading,
@@ -230,10 +232,10 @@ function AiAssistantChatPage() {
 
   // Constants for reusability and cleaner code
   const SUGGESTIONS = [
-    "اشرح لي مفهوم التشفير",
-    "لخص لي أهم نقاط مادة الشبكات",
-    "أنشئ لي اختباراً قصيراً",
-    "كيف أذاكر بفعالية؟",
+    t("suggestion1"),
+    t("suggestion2"),
+    t("suggestion3"),
+    t("suggestion4"),
   ];
 
   // Helper function to scroll to bottom
@@ -645,10 +647,10 @@ function AiAssistantChatPage() {
           <div className="flex flex-col">
             <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {mode === "group_rag"
-                ? "مساعد مسار X"
+                ? t("assistantGroupChat")
                 : mode === "student_agent"
-                  ? "مساعد الطالب"
-                  : "المساعد الذكي"}
+                  ? t("assistantStudent")
+                  : t("smartAssistant")}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="relative flex h-2 w-2">
@@ -657,10 +659,10 @@ function AiAssistantChatPage() {
               </span>
               <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                 {mode === "group_rag"
-                  ? "محادثات المجموعة"
+                  ? t("assistantGroupChat")
                   : mode === "student_agent"
-                    ? "إجابة من بيانات المنصة"
-                    : "المساعد البرمجي العام"}
+                    ? t("responseFromPlatform")
+                    : t("generalCsAssistant")}
               </span>
             </div>
           </div>
@@ -672,22 +674,22 @@ function AiAssistantChatPage() {
             className="px-3 py-1.5 text-xs font-bold rounded-xl transition-all text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 hover:shadow-sm"
             title={
               mode === "group_rag"
-                ? "التبديل إلى المساعد البرمجي"
+                ? t("switchCsAssistant")
                 : mode === "cs_assistant"
-                  ? "التبديل إلى مساعد الطالب"
-                  : "التبديل إلى محادثات المجموعة"
+                  ? t("switchStudentAssistant")
+                  : t("switchGroupChat")
             }
           >
             <span className="sm:hidden flex items-center justify-center">
               <Brain className="w-4 h-4" />
             </span>
             <span className="hidden sm:inline">
-              تبديل:{" "}
+              {t("switchLabel")}
               {mode === "group_rag"
-                ? "مساعد برمجي"
+                ? t("assistantProgramming")
                 : mode === "cs_assistant"
-                  ? "مساعد الطالب"
-                  : "محادثات المجموعة"}
+                  ? t("assistantStudent")
+                  : t("assistantGroupChat")}
             </span>
           </button>
 
@@ -698,7 +700,7 @@ function AiAssistantChatPage() {
                 onChange={(e) => setStudentSelectedSubject(e.target.value)}
                 className="px-3 py-1.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200"
               >
-                <option value="">اختر المادة</option>
+                <option value="">{t("selectSubject")}</option>
                 {studentSubjects?.map((s) => (
                   <option key={s.id} value={s.name}>
                     {s.name}
@@ -718,10 +720,10 @@ function AiAssistantChatPage() {
               >
                 <option value="">
                   {studentQuizzesLoading
-                    ? "جاري تحميل الامتحانات..."
+                    ? t("loadingExams")
                     : studentQuizzes.length === 0
-                      ? "لا يوجد امتحانات"
-                      : "اختر الامتحان"}
+                      ? t("noExams")
+                      : t("selectExam")}
                 </option>
                 {studentQuizzes.map((qz) => (
                   <option key={qz.id} value={qz.id}>
@@ -737,9 +739,9 @@ function AiAssistantChatPage() {
                 }}
                 disabled={!studentSelectedQuizId}
                 className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                title="ابدأ الامتحان"
+                title={t("startExam")}
               >
-                ابدأ
+                {t("start")}
               </button>
             </div>
           )}
@@ -824,12 +826,12 @@ function AiAssistantChatPage() {
           <div className="w-full max-w-2xl modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                آخر اختبار مولّد
+                {t("lastGeneratedExam")}
               </h3>
               <button
                 onClick={() => setShowGeneratedQuizModal(false)}
                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
-                aria-label="إغلاق"
+                aria-label={t("close")}
               >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
@@ -842,9 +844,7 @@ function AiAssistantChatPage() {
                     {generatedQuiz.data.title}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {user
-                      ? "يمكنك حلّه محلياً أو إرساله للمراجعة والنشر (سيظهر للإدارة باسمك)."
-                      : "كزائر: يمكنك حلّه محلياً. لإرساله للمراجعة والنشر يجب تسجيل الدخول."}
+                    {user ? t("userExamNotice") : t("guestExamNotice")}
                   </div>
                 </div>
               )}
@@ -852,7 +852,7 @@ function AiAssistantChatPage() {
               {safeLocalGeneratedQuizzes.length > 0 && (
                 <div>
                   <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
-                    اختر اختباراً
+                    {t("selectExam")}
                   </div>
                   <select
                     value={generatedQuiz?.localId || ""}
@@ -868,7 +868,7 @@ function AiAssistantChatPage() {
                   >
                     {safeLocalGeneratedQuizzes.map((q) => (
                       <option key={q.localId} value={q.localId}>
-                        {q.data?.title || "بدون عنوان"}
+                        {q.data?.title || t("noTitle")}
                       </option>
                     ))}
                   </select>
@@ -1080,11 +1080,10 @@ function AiAssistantChatPage() {
                 <Bot className="w-12 h-12 text-indigo-500" />
               </div>
               <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3">
-                كيف يمكنني مساعدتك اليوم؟
+                {t("welcomeTitle")}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed text-[15px]">
-                يمكنك سؤالي عن أي شيء يخص المواد الدراسية، الملخصات، أو حتى طلب
-                إنشاء اختبار تجريبي لك.
+                {t("welcomeDescription")}
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-10 w-full max-w-lg">
@@ -1204,7 +1203,7 @@ function AiAssistantChatPage() {
                     handleSendMessage();
                   }
                 }}
-                placeholder={"اكتب سؤالك هنا (Enter للإرسال)..."}
+                placeholder={t("inputPlaceholder")}
                 rows={1}
                 className="w-full bg-transparent px-3 py-3 focus:outline-none resize-none text-[15px] text-slate-900 dark:text-white custom-scrollbar disabled:opacity-50 min-h-[46px] max-h-[150px] leading-relaxed block placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 dir="auto"
@@ -1225,7 +1224,7 @@ function AiAssistantChatPage() {
             </button>
           </div>
           <p className="text-[11px] font-medium text-center text-slate-400/80 dark:text-slate-500 mt-2.5 hidden sm:block">
-            قد يرتكب المساعد الذكي أخطاء، يرجى التحقق من المعلومات المهمة.
+            {t("aiDisclaimer")}
           </p>
         </div>
       </div>

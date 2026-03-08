@@ -1,10 +1,8 @@
 import { Bell } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { Notification } from "../types/database";
 import { NotificationItem } from "./NotificationItem";
-import {
-  NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY_KEYS,
-} from "../constants/notifications";
+import { NOTIFICATION_STYLES } from "../constants/notifications";
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -13,7 +11,9 @@ interface NotificationListProps {
   onNotificationDelete: (notificationId: string) => void;
 }
 
-function LoadingState() {
+function LoadingState(props: { tNotifications: (key: string) => string }) {
+  const { tNotifications } = props;
+
   return (
     <div className={NOTIFICATION_STYLES.emptyState}>
       <div className="relative flex items-center justify-center">
@@ -25,17 +25,19 @@ function LoadingState() {
       </div>
       <div className="space-y-1 relative z-10">
         <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-          {NOTIFICATION_ACCESSIBILITY_KEYS.loading}
+          {tNotifications("loading")}
         </p>
         <p className="text-[13px] text-gray-500 dark:text-gray-400 font-medium animate-pulse">
-          نحن نقوم بجلب آخر التنبيهات لك...
+          {tNotifications("loadingDescription")}
         </p>
       </div>
     </div>
   );
 }
 
-function EmptyState() {
+function EmptyState(props: { tNotifications: (key: string) => string }) {
+  const { tNotifications } = props;
+
   return (
     <div className={NOTIFICATION_STYLES.emptyState}>
       <div className="relative group">
@@ -46,10 +48,10 @@ function EmptyState() {
       </div>
       <div className="space-y-3 relative z-10">
         <p className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-          {NOTIFICATION_ACCESSIBILITY_KEYS.empty}
+          {tNotifications("empty")}
         </p>
         <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-[240px] mx-auto leading-relaxed font-medium">
-          لا توجد تنبيهات جديدة في الوقت الحالي. سنخبرك فور وصول شيء جديد!
+          {tNotifications("emptyDescription")}
         </p>
       </div>
     </div>
@@ -62,19 +64,21 @@ export function NotificationList({
   onNotificationClick,
   onNotificationDelete,
 }: NotificationListProps) {
+  const tNotifications = useTranslations("notifications");
+
   if (loading) {
-    return <LoadingState />;
+    return <LoadingState tNotifications={tNotifications} />;
   }
 
   if (notifications.length === 0) {
-    return <EmptyState />;
+    return <EmptyState tNotifications={tNotifications} />;
   }
 
   return (
     <div
       className={NOTIFICATION_STYLES.list}
       role="list"
-      aria-label="قائمة الإشعارات"
+      aria-label={tNotifications("listAriaLabel")}
     >
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {notifications.map((notification) => (

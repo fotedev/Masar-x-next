@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
+import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -18,7 +19,6 @@ import {
   Star,
   Upload,
   Lock,
-  Unlock,
   MessageSquare,
   CheckCircle,
   Clock,
@@ -31,6 +31,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { confirmToast } from "@/lib/confirmToast";
 
@@ -105,17 +106,14 @@ export default function CourseDetailPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Subscribe modal state
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
 
-  // Review state
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
-  // Content management state
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [editingSummary, setEditingSummary] = useState<CourseSummary | null>(
     null,
@@ -137,7 +135,6 @@ export default function CourseDetailPage() {
   const [fileDescription, setFileDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Helper to check if current user is the instructor or a doctor admin
   const isInstructor = () => {
     if (!user || !course) return false;
     return user.id === course.instructor_id || adminRole === "doctor";
@@ -145,34 +142,19 @@ export default function CourseDetailPage() {
 
   const fetchCourseData = useCallback(async () => {
     if (!courseId) return;
-
     try {
       setLoading(true);
-
-      // Fetch course with instructor name
-      const query = supabase
+      const { data: courseData, error: courseError } = await supabase
         .from("courses")
-        .select(
-          `
-          *,
-          profiles:instructor_id (
-            display_name
-          )
-        `,
-        )
-        .eq("id", courseId);
-
-      // If user is not admin and not the instructor, only show published courses
-      // We'll fetch the course first, then check permissions
-      const { data: courseData, error: courseError } = await query.single();
+        .select("*, profiles:instructor_id (display_name)")
+        .eq("id", courseId)
+        .single();
 
       if (courseError) throw courseError;
 
       if (courseData) {
-        // Check if course is published or if user has permission to see it
         const isInstructorUser = user && user.id === courseData.instructor_id;
         const isDoctorAdmin = adminRole === "doctor";
-
         if (!courseData.is_published && !isInstructorUser && !isDoctorAdmin) {
           throw new Error("Course is not published");
         }
@@ -182,7 +164,6 @@ export default function CourseDetailPage() {
           instructor_name: courseData.profiles?.display_name || "مدرب",
         });
 
-        // Fetch enrollment status if user is logged in
         if (user) {
           const { data: enrollmentData } = await supabase
             .from("enrollments")
@@ -190,11 +171,9 @@ export default function CourseDetailPage() {
             .eq("student_id", user.id)
             .eq("course_id", courseId)
             .maybeSingle();
-
           setEnrollment(enrollmentData);
         }
 
-        // Fetch reviews using review_details view
         const { data: reviewsData } = await supabase
           .from("review_details")
           .select("*")
@@ -203,45 +182,33 @@ export default function CourseDetailPage() {
 
         if (reviewsData) {
           setReviews(
-            reviewsData.map((review: (typeof reviewsData)[number]) => ({
+            reviewsData.map((review: any) => ({
               ...review,
               student_name: review.full_name || review.username || "طالب",
             })),
           );
         }
 
-        // Fetch course summaries
         const { data: summariesData } = await supabase
           .from("course_summaries")
           .select("*")
           .eq("course_id", courseId)
           .order("order_index", { ascending: true });
+        if (summariesData) setSummaries(summariesData);
 
-        if (summariesData) {
-          setSummaries(summariesData);
-        }
-
-        // Fetch course videos
         const { data: videosData } = await supabase
           .from("course_videos")
           .select("*")
           .eq("course_id", courseId)
           .order("order_index", { ascending: true });
+        if (videosData) setVideos(videosData);
 
-        if (videosData) {
-          setVideos(videosData);
-        }
-
-        // Fetch course files
         const { data: filesData } = await supabase
           .from("course_files")
           .select("*")
           .eq("course_id", courseId)
           .order("order_index", { ascending: true });
-
-        if (filesData) {
-          setFiles(filesData);
-        }
+        if (filesData) setFiles(filesData);
       }
     } catch {
       toast.error("حدث خطأ في تحميل بيانات الكورس");
@@ -251,28 +218,20 @@ export default function CourseDetailPage() {
   }, [courseId, user, adminRole]);
 
   useEffect(() => {
-    if (courseId) {
-      fetchCourseData();
-    }
+    if (courseId) fetchCourseData();
   }, [courseId, fetchCourseData]);
 
   const handleSubscribe = async () => {
     if (!user || !course || !paymentScreenshot) return;
-
     try {
       setUploadingScreenshot(true);
-
-      // Upload payment screenshot to private bucket
       const fileExt = paymentScreenshot.name.split(".").pop();
       const fileName = `${user.id}/${course.id}/${Date.now()}.${fileExt}`;
-
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("payment-proofs")
         .upload(fileName, paymentScreenshot);
-
       if (uploadError) throw uploadError;
 
-      // Create enrollment record
       const { error: enrollmentError } = await supabase
         .from("enrollments")
         .insert({
@@ -281,14 +240,11 @@ export default function CourseDetailPage() {
           payment_screenshot_url: uploadData.path,
           status: "pending",
         });
-
       if (enrollmentError) throw enrollmentError;
 
-      toast.success("تم إرسال طلب التسجيل بنجاح! سيتم مراجعته من قبل المدرب.");
+      toast.success("تم إرسال طلب التسجيل بنجاح!");
       setShowSubscribeModal(false);
       setPaymentScreenshot(null);
-
-      // Refresh enrollment status
       fetchCourseData();
     } catch {
       toast.error("حدث خطأ في إرسال طلب التسجيل");
@@ -299,25 +255,19 @@ export default function CourseDetailPage() {
 
   const handleSubmitReview = async () => {
     if (!user || !course || reviewRating < 1 || reviewRating > 5) return;
-
     try {
       setSubmitting(true);
-
       const { error } = await supabase.from("reviews").insert({
         user_id: user.id,
         course_id: course.id,
         rating: reviewRating,
         content: reviewComment.trim() || null,
       });
-
       if (error) throw error;
-
       toast.success("تم إرسال التقييم بنجاح!");
       setShowReviewForm(false);
       setReviewRating(5);
       setReviewComment("");
-
-      // Refresh reviews
       fetchCourseData();
     } catch {
       toast.error("حدث خطأ في إرسال التقييم");
@@ -326,13 +276,10 @@ export default function CourseDetailPage() {
     }
   };
 
-  // Summary management functions
   const handleSaveSummary = async () => {
     if (!course || !summaryTitle.trim() || !summaryContent.trim()) return;
-
     try {
       setSubmitting(true);
-
       const summaryData = {
         course_id: course.id,
         title: summaryTitle.trim(),
@@ -341,28 +288,21 @@ export default function CourseDetailPage() {
           ? editingSummary.order_index
           : summaries.length,
       };
-
       if (editingSummary) {
         const { error } = await supabase
           .from("course_summaries")
           .update(summaryData)
           .eq("id", editingSummary.id);
-
         if (error) throw error;
         toast.success("تم تحديث الملخص بنجاح!");
       } else {
         const { error } = await supabase
           .from("course_summaries")
           .insert(summaryData);
-
         if (error) throw error;
         toast.success("تم إضافة الملخص بنجاح!");
       }
-
       setShowSummaryModal(false);
-      setEditingSummary(null);
-      setSummaryTitle("");
-      setSummaryContent("");
       fetchCourseData();
     } catch {
       toast.error("حدث خطأ في حفظ الملخص");
@@ -372,24 +312,130 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteSummary = async (summaryId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملخص؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
-    });
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملخص؟");
     if (!confirmed) return;
-
     try {
       const { error } = await supabase
         .from("course_summaries")
         .delete()
         .eq("id", summaryId);
-
       if (error) throw error;
-
       toast.success("تم حذف الملخص بنجاح!");
       fetchCourseData();
     } catch {
       toast.error("حدث خطأ في حذف الملخص");
+    }
+  };
+
+  const handleSaveVideo = async () => {
+    if (!course || !videoTitle.trim() || !videoUrl.trim()) return;
+    try {
+      setSubmitting(true);
+      const videoData = {
+        course_id: course.id,
+        title: videoTitle.trim(),
+        description: videoDescription.trim() || null,
+        video_url: videoUrl.trim(),
+        language: videoLanguage,
+        duration: videoDuration ? parseInt(videoDuration) : null,
+        order_index: editingVideo ? editingVideo.order_index : videos.length,
+      };
+      if (editingVideo) {
+        const { error } = await supabase
+          .from("course_videos")
+          .update(videoData)
+          .eq("id", editingVideo.id);
+        if (error) throw error;
+        toast.success("تم تحديث الفيديو بنجاح!");
+      } else {
+        const { error } = await supabase
+          .from("course_videos")
+          .insert(videoData);
+        if (error) throw error;
+        toast.success("تم إضافة الفيديو بنجاح!");
+      }
+      setShowVideoModal(false);
+      fetchCourseData();
+    } catch {
+      toast.error("حدث خطأ في حفظ الفيديو");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: string) => {
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟");
+    if (!confirmed) return;
+    try {
+      const { error } = await supabase
+        .from("course_videos")
+        .delete()
+        .eq("id", videoId);
+      if (error) throw error;
+      toast.success("تم حذف الفيديو بنجاح!");
+      fetchCourseData();
+    } catch {
+      toast.error("حدث خطأ في حذف الفيديو");
+    }
+  };
+
+  const handleSaveFile = async () => {
+    if (!course || !fileTitle.trim() || (!selectedFile && !editingFile)) return;
+    try {
+      setSubmitting(true);
+      let fileUrl = editingFile?.file_url || "";
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split(".").pop();
+        const fileName = `${course.id}/${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("course-materials")
+          .upload(fileName, selectedFile);
+        if (uploadError) throw uploadError;
+        fileUrl = uploadData.path;
+      }
+      const fileData = {
+        course_id: course.id,
+        title: fileTitle.trim(),
+        description: fileDescription.trim() || null,
+        file_url: fileUrl,
+        file_type: selectedFile?.type || editingFile?.file_type || "",
+        file_size: selectedFile?.size || editingFile?.file_size || null,
+        order_index: editingFile ? editingFile.order_index : files.length,
+      };
+      if (editingFile) {
+        const { error } = await supabase
+          .from("course_files")
+          .update(fileData)
+          .eq("id", editingFile.id);
+        if (error) throw error;
+        toast.success("تم تحديث الملف بنجاح!");
+      } else {
+        const { error } = await supabase.from("course_files").insert(fileData);
+        if (error) throw error;
+        toast.success("تم إضافة الملف بنجاح!");
+      }
+      setShowFileModal(false);
+      fetchCourseData();
+    } catch {
+      toast.error("حدث خطأ في حفظ الملف");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟");
+    if (!confirmed) return;
+    try {
+      const { error = null } = await supabase
+        .from("course_files")
+        .delete()
+        .eq("id", fileId);
+      if (error) throw error;
+      toast.success("تم حذف الملف بنجاح!");
+      fetchCourseData();
+    } catch {
+      toast.error("حدث خطأ في حذف الملف");
     }
   };
 
@@ -404,77 +450,6 @@ export default function CourseDetailPage() {
       setSummaryContent("");
     }
     setShowSummaryModal(true);
-  };
-
-  // Video management functions
-  const handleSaveVideo = async () => {
-    if (!course || !videoTitle.trim() || !videoUrl.trim()) return;
-
-    try {
-      setSubmitting(true);
-
-      const videoData = {
-        course_id: course.id,
-        title: videoTitle.trim(),
-        description: videoDescription.trim() || null,
-        video_url: videoUrl.trim(),
-        language: videoLanguage,
-        duration: videoDuration ? parseInt(videoDuration) : null,
-        order_index: editingVideo ? editingVideo.order_index : videos.length,
-      };
-
-      if (editingVideo) {
-        const { error } = await supabase
-          .from("course_videos")
-          .update(videoData)
-          .eq("id", editingVideo.id);
-
-        if (error) throw error;
-        toast.success("تم تحديث الفيديو بنجاح!");
-      } else {
-        const { error } = await supabase
-          .from("course_videos")
-          .insert(videoData);
-
-        if (error) throw error;
-        toast.success("تم إضافة الفيديو بنجاح!");
-      }
-
-      setShowVideoModal(false);
-      setEditingVideo(null);
-      setVideoTitle("");
-      setVideoDescription("");
-      setVideoUrl("");
-      setVideoLanguage("ar");
-      setVideoDuration("");
-      fetchCourseData();
-    } catch {
-      toast.error("حدث خطأ في حفظ الفيديو");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteVideo = async (videoId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
-    });
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from("course_videos")
-        .delete()
-        .eq("id", videoId);
-
-      if (error) throw error;
-
-      toast.success("تم حذف الفيديو بنجاح!");
-      fetchCourseData();
-    } catch {
-      toast.error("حدث خطأ في حذف الفيديو");
-    }
   };
 
   const openVideoModal = (video?: CourseVideo) => {
@@ -496,111 +471,26 @@ export default function CourseDetailPage() {
     setShowVideoModal(true);
   };
 
-  // File management functions
-  const handleSaveFile = async () => {
-    if (!course || !fileTitle.trim() || (!selectedFile && !editingFile)) return;
-
-    try {
-      setSubmitting(true);
-
-      let fileUrl = editingFile?.file_url || "";
-
-      if (selectedFile) {
-        const fileExt = selectedFile.name.split(".").pop();
-        const fileName = `${course.id}/${Date.now()}.${fileExt}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("course-materials")
-          .upload(fileName, selectedFile);
-
-        if (uploadError) throw uploadError;
-        fileUrl = uploadData.path;
-      }
-
-      const fileData = {
-        course_id: course.id,
-        title: fileTitle.trim(),
-        description: fileDescription.trim() || null,
-        file_url: fileUrl,
-        file_type: selectedFile?.type || editingFile?.file_type || "",
-        file_size: selectedFile?.size || editingFile?.file_size || null,
-        order_index: editingFile ? editingFile.order_index : files.length,
-      };
-
-      if (editingFile) {
-        const { error } = await supabase
-          .from("course_files")
-          .update(fileData)
-          .eq("id", editingFile.id);
-
-        if (error) throw error;
-        toast.success("تم تحديث الملف بنجاح!");
-      } else {
-        const { error } = await supabase.from("course_files").insert(fileData);
-
-        if (error) throw error;
-        toast.success("تم إضافة الملف بنجاح!");
-      }
-
-      setShowFileModal(false);
-      setEditingFile(null);
-      setFileTitle("");
-      setFileDescription("");
-      setSelectedFile(null);
-      fetchCourseData();
-    } catch {
-      toast.error("حدث خطأ في حفظ الملف");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteFile = async (fileId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
-    });
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from("course_files")
-        .delete()
-        .eq("id", fileId);
-
-      if (error) throw error;
-
-      toast.success("تم حذف الملف بنجاح!");
-      fetchCourseData();
-    } catch {
-      toast.error("حدث خطأ في حذف الملف");
-    }
-  };
-
   const openFileModal = (file?: CourseFile) => {
     if (file) {
       setEditingFile(file);
       setFileTitle(file.title);
       setFileDescription(file.description || "");
-      setSelectedFile(null);
     } else {
       setEditingFile(null);
       setFileTitle("");
       setFileDescription("");
-      setSelectedFile(null);
     }
     setShowFileModal(true);
   };
 
   const getEnrollmentStatus = () => {
-    if (!user) return "not_enrolled";
-    if (!enrollment) return "not_enrolled";
+    if (!user || !enrollment) return "not_enrolled";
     return enrollment.status;
   };
 
   const renderStatusBadge = () => {
     const status = getEnrollmentStatus();
-
     switch (status) {
       case "active":
         return (
@@ -630,15 +520,12 @@ export default function CourseDetailPage() {
 
   const renderActionButton = () => {
     const status = getEnrollmentStatus();
-
-    if (!user) {
+    if (!user)
       return (
         <Button onClick={() => router.push("/login")} className="w-full">
           تسجيل الدخول للتسجيل
         </Button>
       );
-    }
-
     switch (status) {
       case "active":
         return (
@@ -665,9 +552,6 @@ export default function CourseDetailPage() {
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
             <p className="text-yellow-800 font-medium">طلبك قيد المراجعة</p>
-            <p className="text-yellow-600 text-sm mt-1">
-              سيتم الرد عليك خلال 24-48 ساعة
-            </p>
           </div>
         );
       case "rejected":
@@ -675,9 +559,6 @@ export default function CourseDetailPage() {
           <div className="text-center p-4 bg-red-50 rounded-lg">
             <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
             <p className="text-red-800 font-medium">تم رفض طلب التسجيل</p>
-            <p className="text-red-600 text-sm mt-1">
-              يرجى مراجعة إثبات الدفع والمحاولة مرة أخرى
-            </p>
             <Button
               onClick={() => setShowSubscribeModal(true)}
               className="mt-3"
@@ -700,32 +581,31 @@ export default function CourseDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
 
-  if (!course) {
+  if (!course)
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             الكورس غير موجود
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            الكورس المطلوب غير متاح أو تم إلغاؤه.
-          </p>
         </div>
       </div>
     );
-  }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Course Header */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-4xl mx-auto p-6 space-y-6"
+    >
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -751,36 +631,7 @@ export default function CourseDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Course Content - Only for active enrollments */}
-      {getEnrollmentStatus() === "active" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Unlock className="w-5 h-5 ml-2 text-green-600" />
-              محتوى الكورس
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-12">
-              <Unlock className="w-16 h-16 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                تم تفعيل الكورس!
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                يمكنك الآن الوصول لجميع محتويات الكورس والمساعد الذكي.
-              </p>
-              <Button onClick={() => router.push("/ai-assistant")} size="lg">
-                <MessageSquare className="w-5 h-5 ml-2" />
-                بدء المساعد الذكي
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Course Content Sections */}
-      <React.Fragment>
-        {/* Summaries Section */}
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -789,11 +640,7 @@ export default function CourseDetailPage() {
                 ملخصات الكورس
               </div>
               {isInstructor() && (
-                <Button
-                  size="sm"
-                  onClick={() => openSummaryModal()}
-                  className="flex items-center gap-2"
-                >
+                <Button size="sm" onClick={() => openSummaryModal()}>
                   <Plus className="w-4 h-4" />
                   إضافة ملخص
                 </Button>
@@ -804,54 +651,36 @@ export default function CourseDetailPage() {
             {getEnrollmentStatus() !== "active" ? (
               <div className="text-center py-8">
                 <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  محتوى الملخصات متاح فقط للطلاب المسجلين في الكورس
+                <p className="text-gray-600 dark:text-gray-400">
+                  محتوى الملخصات متاح فقط للطلاب المسجلين
                 </p>
-                {user ? (
-                  getEnrollmentStatus() === "pending" ? (
-                    <Badge className="bg-yellow-100 text-yellow-800">
-                      <Clock className="w-3 h-3 ml-1" />
-                      طلب التسجيل قيد المراجعة
-                    </Badge>
-                  ) : (
-                    <Button onClick={() => setShowSubscribeModal(true)}>
-                      التسجيل في الكورس
-                    </Button>
-                  )
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                  </p>
-                )}
               </div>
             ) : summaries.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                لا توجد ملخصات متاحة لهذا الكورس بعد
+                لا توجد ملخصات متاحة
               </p>
             ) : (
               <div className="space-y-4">
-                {summaries.map((summary) => (
+                {summaries.map((s) => (
                   <div
-                    key={summary.id}
-                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    key={s.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {summary.title}
-                      </h4>
+                      <h4 className="text-lg font-semibold">{s.title}</h4>
                       {isInstructor() && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openSummaryModal(summary)}
+                            onClick={() => openSummaryModal(s)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => handleDeleteSummary(summary.id)}
+                            onClick={() => handleDeleteSummary(s.id)}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -859,7 +688,7 @@ export default function CourseDetailPage() {
                       )}
                     </div>
                     <div className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none whitespace-pre-wrap">
-                      {summary.content}
+                      {s.content}
                     </div>
                   </div>
                 ))}
@@ -868,7 +697,6 @@ export default function CourseDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Videos Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -877,11 +705,7 @@ export default function CourseDetailPage() {
                 فيدوهات الكورس
               </div>
               {isInstructor() && (
-                <Button
-                  size="sm"
-                  onClick={() => openVideoModal()}
-                  className="flex items-center gap-2"
-                >
+                <Button size="sm" onClick={() => openVideoModal()}>
                   <Plus className="w-4 h-4" />
                   إضافة فيديو
                 </Button>
@@ -892,197 +716,66 @@ export default function CourseDetailPage() {
             {getEnrollmentStatus() !== "active" ? (
               <div className="text-center py-8">
                 <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  محتوى الفيديوهات متاح فقط للطلاب المسجلين في الكورس
+                <p className="text-gray-600 dark:text-gray-400">
+                  محتوى الفيديوهات متاح فقط للطلاب المسجلين
                 </p>
-                {user ? (
-                  getEnrollmentStatus() === "pending" ? (
-                    <Badge className="bg-yellow-100 text-yellow-800">
-                      <Clock className="w-3 h-3 ml-1" />
-                      طلب التسجيل قيد المراجعة
-                    </Badge>
-                  ) : (
-                    <Button onClick={() => setShowSubscribeModal(true)}>
-                      التسجيل في الكورس
-                    </Button>
-                  )
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                  </p>
-                )}
               </div>
             ) : videos.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                لا توجد فيدوهات متاحة لهذا الكورس بعد
+                لا توجد فيدوهات متاحة
               </p>
             ) : (
-              <div className="space-y-6">
-                {/* Arabic Videos */}
-                {videos.filter((v) => v.language === "ar").length > 0 && (
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm ml-2">
-                        عربي
-                      </span>
-                      الفيدوهات العربية
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {videos
-                        .filter((v) => v.language === "ar")
-                        .map((video) => (
-                          <div
-                            key={video.id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-start space-x-3 rtl:space-x-reverse">
-                              <div className="flex-shrink-0">
-                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                  <Play className="w-6 h-6 text-red-600" />
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                    {video.title}
-                                  </h5>
-                                  {isInstructor() && (
-                                    <div className="flex gap-1 ml-2">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => openVideoModal(video)}
-                                      >
-                                        <Edit className="w-3 h-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() =>
-                                          handleDeleteVideo(video.id)
-                                        }
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                                {video.description && (
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                    {video.description}
-                                  </p>
-                                )}
-                                {video.duration && (
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    المدة: {Math.floor(video.duration / 60)}:
-                                    {(video.duration % 60)
-                                      .toString()
-                                      .padStart(2, "0")}
-                                  </p>
-                                )}
-                                <Button
-                                  size="sm"
-                                  className="mt-2"
-                                  onClick={() =>
-                                    window.open(video.video_url, "_blank")
-                                  }
-                                >
-                                  <Play className="w-4 h-4 ml-1" />
-                                  مشاهدة
-                                </Button>
-                              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {videos.map((v) => (
+                  <div
+                    key={v.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                  >
+                    <div className="flex items-start space-x-3 rtl:space-x-reverse">
+                      <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <Play className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h5 className="text-sm font-medium truncate">
+                            {v.title}
+                          </h5>
+                          {isInstructor() && (
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openVideoModal(v)}
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteVideo(v.id)}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
                             </div>
-                          </div>
-                        ))}
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="p-0 h-auto text-blue-600"
+                          onClick={() => window.open(v.video_url, "_blank")}
+                        >
+                          مشاهدة الآن
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                )}
-
-                {/* English Videos */}
-                {videos.filter((v) => v.language === "en").length > 0 && (
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm ml-2">
-                        English
-                      </span>
-                      الفيدوهات الإنجليزية
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {videos
-                        .filter((v) => v.language === "en")
-                        .map((video) => (
-                          <div
-                            key={video.id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-start space-x-3 rtl:space-x-reverse">
-                              <div className="flex-shrink-0">
-                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                                  <Play className="w-6 h-6 text-red-600" />
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                    {video.title}
-                                  </h5>
-                                  {isInstructor() && (
-                                    <div className="flex gap-1 ml-2">
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => openVideoModal(video)}
-                                      >
-                                        <Edit className="w-3 h-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() =>
-                                          handleDeleteVideo(video.id)
-                                        }
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                                {video.description && (
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                                    {video.description}
-                                  </p>
-                                )}
-                                {video.duration && (
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    Duration: {Math.floor(video.duration / 60)}:
-                                    {(video.duration % 60)
-                                      .toString()
-                                      .padStart(2, "0")}
-                                  </p>
-                                )}
-                                <Button
-                                  size="sm"
-                                  className="mt-2"
-                                  onClick={() =>
-                                    window.open(video.video_url, "_blank")
-                                  }
-                                >
-                                  <Play className="w-4 h-4 ml-1" />
-                                  Watch
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Files Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -1091,11 +784,7 @@ export default function CourseDetailPage() {
                 ملفات الكورس
               </div>
               {isInstructor() && (
-                <Button
-                  size="sm"
-                  onClick={() => openFileModal()}
-                  className="flex items-center gap-2"
-                >
+                <Button size="sm" onClick={() => openFileModal()}>
                   <Plus className="w-4 h-4" />
                   إضافة ملف
                 </Button>
@@ -1106,213 +795,130 @@ export default function CourseDetailPage() {
             {getEnrollmentStatus() !== "active" ? (
               <div className="text-center py-8">
                 <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  محتوى الملفات متاح فقط للطلاب المسجلين في الكورس
+                <p className="text-gray-600 dark:text-gray-400">
+                  محتوى الملفات متاح فقط للطلاب المسجلين
                 </p>
-                {user ? (
-                  getEnrollmentStatus() === "pending" ? (
-                    <Badge className="bg-yellow-100 text-yellow-800">
-                      <Clock className="w-3 h-3 ml-1" />
-                      طلب التسجيل قيد المراجعة
-                    </Badge>
-                  ) : (
-                    <Button onClick={() => setShowSubscribeModal(true)}>
-                      التسجيل في الكورس
-                    </Button>
-                  )
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    يرجى تسجيل الدخول أولاً للتسجيل في الكورس
-                  </p>
-                )}
               </div>
             ) : files.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
-                لا توجد ملفات متاحة لهذا الكورس بعد
+                لا توجد ملفات متاحة
               </p>
             ) : (
-              <div className="space-y-3">
-                {files.map((file) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {files.map((f) => (
                   <div
-                    key={file.id}
-                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+                    key={f.id}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                   >
                     <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        </div>
+                      <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                        <Download className="w-5 h-5 text-green-600" />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h5 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {file.title}
-                            </h5>
-                            {file.description && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                {file.description}
-                              </p>
-                            )}
-                            {file.file_size && (
-                              <p className="text-xs text-gray-400 mt-1">
-                                حجم الملف:{" "}
-                                {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            )}
-                          </div>
+                          <h5 className="text-sm font-medium truncate">
+                            {f.title}
+                          </h5>
                           {isInstructor() && (
-                            <div className="flex gap-1 ml-2">
+                            <div className="flex gap-1">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => openFileModal(file)}
+                                onClick={() => openFileModal(f)}
                               >
                                 <Edit className="w-3 h-3" />
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleDeleteFile(file.id)}
+                                onClick={() => handleDeleteFile(f.id)}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>
                             </div>
                           )}
                         </div>
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="p-0 h-auto text-blue-600"
+                          onClick={() => {
+                            const { data } = supabase.storage
+                              .from("course-materials")
+                              .getPublicUrl(f.file_url);
+                            window.open(data.publicUrl, "_blank");
+                          }}
+                        >
+                          تحميل
+                        </Button>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(file.file_url, "_blank")}
-                    >
-                      <Download className="w-4 h-4 ml-1" />
-                      تحميل
-                    </Button>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
+      </div>
 
-        {/* Reviews Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>تقييمات الطلاب</span>
-              {getEnrollmentStatus() === "active" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowReviewForm(true)}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Star className="w-5 h-5 ml-2 text-yellow-500" />
+            التقييمات والآراء
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reviews.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              لا توجد تقييمات بعد
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((r) => (
+                <div
+                  key={r.id}
+                  className="border-b border-gray-100 dark:border-gray-800 last:border-0 pb-6 last:pb-0"
                 >
-                  <Star className="w-4 h-4 ml-1" />
-                  أضف تقييم
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {reviews.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                          {review.student_name}
-                        </span>
-                      </div>
-                      <span className="text-sm text-gray-500">
-                        {new Date(review.created_at).toLocaleDateString(
-                          "ar-EG",
-                        )}
-                      </span>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-semibold">{r.student_name}</div>
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={`w-4 h-4 ${s <= r.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`}
+                        />
+                      ))}
                     </div>
-                    {review.content && (
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {review.content}
-                      </p>
-                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  {r.content && (
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      {r.content}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Subscribe Modal */}
+      <AnimatePresence>
         {showSubscribeModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle>التسجيل في الكورس</CardTitle>
-                <CardDescription>
-                  يرجى رفع إثبات دفع للكورس ({course.price} جنيه مصري)
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    إثبات الدفع (صورة أو لقطة شاشة)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      setPaymentScreenshot(e.target.files?.[0] || null)
-                    }
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    طرق الدفع المتاحة:
-                  </h4>
-                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                    <p>
-                      <strong>InstaPay:</strong>{" "}
-                      <span className="text-brand-orange font-semibold">
-                        Doctor_payment@instapay
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Vodafone Cash:</strong>{" "}
-                      <span className="text-brand-orange font-semibold">
-                        0101XXXXXXX
-                      </span>
-                    </p>
-                    <p>
-                      <strong>Another Number:</strong>{" "}
-                      <span className="text-brand-orange font-semibold">
-                        011XXXXXXXXX
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setPaymentScreenshot(e.target.files?.[0] || null)
+                  }
+                  className="w-full p-2 border rounded-lg"
+                />
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSubscribe}
@@ -1334,7 +940,6 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {/* Summary Modal */}
         {showSummaryModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-2xl">
@@ -1342,34 +947,21 @@ export default function CourseDetailPage() {
                 <CardTitle>
                   {editingSummary ? "تعديل الملخص" : "إضافة ملخص جديد"}
                 </CardTitle>
-                <CardDescription>أدخل تفاصيل الملخص</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    عنوان الملخص *
-                  </label>
-                  <input
-                    type="text"
-                    value={summaryTitle}
-                    onChange={(e) => setSummaryTitle(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="أدخل عنوان الملخص"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    محتوى الملخص *
-                  </label>
-                  <Textarea
-                    value={summaryContent}
-                    onChange={(e) => setSummaryContent(e.target.value)}
-                    placeholder="أدخل محتوى الملخص (يمكن استخدام HTML للتنسيق)"
-                    rows={10}
-                  />
-                </div>
-
+                <input
+                  type="text"
+                  value={summaryTitle}
+                  onChange={(e) => setSummaryTitle(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="العنوان"
+                />
+                <Textarea
+                  value={summaryContent}
+                  onChange={(e) => setSummaryContent(e.target.value)}
+                  placeholder="المحتوى"
+                  rows={10}
+                />
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSaveSummary}
@@ -1380,11 +972,7 @@ export default function CourseDetailPage() {
                     }
                     className="flex-1"
                   >
-                    {submitting
-                      ? "جاري الحفظ..."
-                      : editingSummary
-                        ? "تحديث"
-                        : "إضافة"}
+                    {submitting ? "جاري الحفظ..." : "حفظ"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1399,7 +987,6 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {/* Video Modal */}
         {showVideoModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-2xl">
@@ -1407,78 +994,22 @@ export default function CourseDetailPage() {
                 <CardTitle>
                   {editingVideo ? "تعديل الفيديو" : "إضافة فيديو جديد"}
                 </CardTitle>
-                <CardDescription>أدخل تفاصيل الفيديو</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    عنوان الفيديو *
-                  </label>
-                  <input
-                    type="text"
-                    value={videoTitle}
-                    onChange={(e) => setVideoTitle(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="أدخل عنوان الفيديو"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    وصف الفيديو
-                  </label>
-                  <Textarea
-                    value={videoDescription}
-                    onChange={(e) => setVideoDescription(e.target.value)}
-                    placeholder="أدخل وصف الفيديو (اختياري)"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    رابط الفيديو *
-                  </label>
-                  <input
-                    type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="أدخل رابط الفيديو (YouTube, Vimeo, إلخ)"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      اللغة *
-                    </label>
-                    <select
-                      value={videoLanguage}
-                      onChange={(e) =>
-                        setVideoLanguage(e.target.value as "ar" | "en")
-                      }
-                      className="w-full p-2 border rounded-lg"
-                    >
-                      <option value="ar">عربي</option>
-                      <option value="en">إنجليزي</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      المدة (بالثواني)
-                    </label>
-                    <input
-                      type="number"
-                      value={videoDuration}
-                      onChange={(e) => setVideoDuration(e.target.value)}
-                      className="w-full p-2 border rounded-lg"
-                      placeholder="مثال: 3600"
-                    />
-                  </div>
-                </div>
-
+                <input
+                  type="text"
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="العنوان"
+                />
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="الرابط"
+                />
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSaveVideo}
@@ -1487,11 +1018,7 @@ export default function CourseDetailPage() {
                     }
                     className="flex-1"
                   >
-                    {submitting
-                      ? "جاري الحفظ..."
-                      : editingVideo
-                        ? "تحديث"
-                        : "إضافة"}
+                    {submitting ? "جاري الحفظ..." : "حفظ"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1506,7 +1033,6 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {/* File Modal */}
         {showFileModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-2xl">
@@ -1514,53 +1040,24 @@ export default function CourseDetailPage() {
                 <CardTitle>
                   {editingFile ? "تعديل الملف" : "إضافة ملف جديد"}
                 </CardTitle>
-                <CardDescription>أدخل تفاصيل الملف</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    عنوان الملف *
-                  </label>
-                  <input
-                    type="text"
-                    value={fileTitle}
-                    onChange={(e) => setFileTitle(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="أدخل عنوان الملف"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    وصف الملف
-                  </label>
-                  <Textarea
-                    value={fileDescription}
-                    onChange={(e) => setFileDescription(e.target.value)}
-                    placeholder="أدخل وصف الملف (اختياري)"
-                    rows={3}
-                  />
-                </div>
-
+                <input
+                  type="text"
+                  value={fileTitle}
+                  onChange={(e) => setFileTitle(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="العنوان"
+                />
                 {!editingFile && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      اختر الملف *
-                    </label>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar"
-                      onChange={(e) =>
-                        setSelectedFile(e.target.files?.[0] || null)
-                      }
-                      className="w-full p-2 border rounded-lg"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      الصيغ المدعومة: PDF, Word, PowerPoint, Excel, Text, ZIP
-                    </p>
-                  </div>
+                  <input
+                    type="file"
+                    onChange={(e) =>
+                      setSelectedFile(e.target.files?.[0] || null)
+                    }
+                    className="w-full p-2 border rounded-lg"
+                  />
                 )}
-
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSaveFile}
@@ -1571,11 +1068,7 @@ export default function CourseDetailPage() {
                     }
                     className="flex-1"
                   >
-                    {submitting
-                      ? "جاري الحفظ..."
-                      : editingFile
-                        ? "تحديث"
-                        : "إضافة"}
+                    {submitting ? "جاري الحفظ..." : "حفظ"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1590,59 +1083,35 @@ export default function CourseDetailPage() {
           </div>
         )}
 
-        {/* Review Modal */}
         {showReviewForm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle>تقييم الكورس</CardTitle>
-                <CardDescription>
-                  شاركنا رأيك في الكورس لمساعدة الطلاب الآخرين
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    التقييم
-                  </label>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => setReviewRating(star)}
-                        className="focus:outline-none"
-                      >
-                        <Star
-                          className={`w-8 h-8 ${
-                            star <= reviewRating
-                              ? "text-yellow-400 fill-current"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} onClick={() => setReviewRating(star)}>
+                      <Star
+                        className={`w-8 h-8 ${star <= reviewRating ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                      />
+                    </button>
+                  ))}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    التعليق (اختياري)
-                  </label>
-                  <Textarea
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="شاركنا تجربتك مع الكورس..."
-                    rows={3}
-                  />
-                </div>
-
+                <Textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="رأيك..."
+                  rows={3}
+                />
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSubmitReview}
                     disabled={submitting}
                     className="flex-1"
                   >
-                    {submitting ? "جاري الإرسال..." : "إرسال التقييم"}
+                    {submitting ? "جاري الإرسال..." : "إرسال"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1656,7 +1125,7 @@ export default function CourseDetailPage() {
             </Card>
           </div>
         )}
-      </React.Fragment>
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 }

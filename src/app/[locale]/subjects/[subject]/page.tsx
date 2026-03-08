@@ -3,30 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  FileText,
-  Video,
-  Plus,
-  X,
-  Clock,
-  MapPin,
-  Trophy,
-  ArrowRight,
-  GraduationCap,
-  LayoutGrid,
-  Layers,
-  ArrowLeft,
-  ChevronLeft,
-  ClipboardList,
-  CheckCircle,
-  Monitor,
-  Settings, // Added Settings icon
-} from "lucide-react";
 import { useSummaries } from "@/hooks/useSummaries";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { EditSummaryModal } from "@/components/EditSummaryModal";
-import { AddSubjectModal } from "@/components/AddSubjectModal"; // Added AddSubjectModal
+import { AddSubjectModal } from "@/components/AddSubjectModal";
+import { AddLectureModal } from "@/components/subject/AddLectureModal";
+import { AddExamModal } from "@/components/subject/AddExamModal";
 import { supabase } from "@/lib/supabase";
 import { Quiz, Summary } from "@/types/database";
 import { useVideos } from "@/hooks/useVideos";
@@ -35,6 +18,52 @@ import { Suspense } from "react";
 import { toast } from "sonner";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
+import {
+  useSubjectLectureInference,
+  type SubjectLectureRow,
+} from "@/hooks/useSubjectLectureInference";
+import { SubjectDashboard } from "@/components/subject/SubjectDashboard";
+import { LectureDetailView } from "@/components/subject/LectureDetailView";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+function SubjectPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="w-full md:w-1/3 space-y-6">
+              <div className="modern-card p-6 space-y-4">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="pt-4 space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </div>
+            </div>
+            <div className="w-full md:w-2/3 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="modern-card p-6">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-4 w-12" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SubjectSummariesContent() {
   const params = useParams();
@@ -56,17 +85,7 @@ function SubjectSummariesContent() {
   const summariesHook = useSummaries();
   const { trackSummaryClick } = useAnalytics();
   const [filteredSummaries, setFilteredSummaries] = useState<Summary[]>([]);
-  const [savedLectures, setSavedLectures] = useState<
-    Array<{
-      id: string;
-      subject: string;
-      lecture_key: string;
-      lecture_label: string;
-      order_index: number;
-      created_at: string;
-      updated_at: string;
-    }>
-  >([]);
+  const [savedLectures, setSavedLectures] = useState<SubjectLectureRow[]>([]);
   const [editingSummary, setEditingSummary] = useState<Summary | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLectureKey, setSelectedLectureKey] = useState<string | null>(
@@ -106,8 +125,6 @@ function SubjectSummariesContent() {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string | null>(null);
   const [isTheatreMode, setIsTheatreMode] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
   const getYouTubeId = (url: string) => {
     // Standard YouTube and Shorts regex
     const regExp =
@@ -120,9 +137,6 @@ function SubjectSummariesContent() {
     if (!examFormData.year) return [];
     return getDepartmentsForLevelName(examFormData.year);
   }, [examFormData.year, getDepartmentsForLevelName]);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const subjectName = subjectId ? decodeURIComponent(subjectId) : "";
 
@@ -155,7 +169,7 @@ function SubjectSummariesContent() {
         const { data } = await supabase
           .from("subjects")
           .select(
-            "id, name, professor, description, schedule, location, level, semester, status, show_on_home, created_at",
+            "id, name, name_en, professor, professor_ar, professor_gender, description, description_ar, schedule, location, level, semester, status, show_on_home, created_at",
           )
           .eq("name", normalizedSubjectName)
           .maybeSingle();
@@ -205,9 +219,15 @@ function SubjectSummariesContent() {
   }, [completedContent.size, totalPossibleItems]);
 
   const dashboardData = {
-    professor: subjectDetails?.professor || tCommon("loading"),
+    professor:
+      locale === "ar" && subjectDetails?.professor_ar
+        ? subjectDetails.professor_ar
+        : subjectDetails?.professor || tCommon("loading"),
+    professorGender: subjectDetails?.professor_gender || "male",
     description:
-      subjectDetails?.description || tSubjectPage("descriptionWillAppear"),
+      locale === "ar" && subjectDetails?.description_ar
+        ? subjectDetails.description_ar
+        : subjectDetails?.description || tSubjectPage("descriptionWillAppear"),
     progress: progressPercentage,
     schedule: subjectDetails?.schedule || tSubjectPage("unknown"),
     nextLecture: subjectDetails?.location || tSubjectPage("unknown"),
@@ -218,11 +238,10 @@ function SubjectSummariesContent() {
     return Boolean((lectureFromQuery || "").trim());
   }, [lectureFromQuery]);
 
-  const toLatinDigits = (value: string) => {
-    return (value || "")
-      .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
-      .trim();
-  };
+  const { getLectureInfoFromTitle } = useSubjectLectureInference({
+    savedLectures,
+    tSubjectPage,
+  });
 
   const fetchSubjectLectures = useCallback(async () => {
     if (!normalizedSubjectName) {
@@ -349,116 +368,6 @@ function SubjectSummariesContent() {
     } finally {
       setIsSavingLecture(false);
     }
-  };
-
-  const getLectureInfoFromTitle = (title: string, quizDescription?: string) => {
-    // 0. Check if it's a quiz with lecture_key in description
-    if (quizDescription && quizDescription.trim().startsWith("{")) {
-      try {
-        const parsed = JSON.parse(quizDescription);
-        if (parsed.lecture_key) {
-          const matchingLecture = savedLectures.find(
-            (l) => l.lecture_key === parsed.lecture_key,
-          );
-          return {
-            key: parsed.lecture_key,
-            label: matchingLecture?.lecture_label || tSubjectPage("lecture"),
-            order: matchingLecture?.order_index || 999999,
-          };
-        }
-      } catch (e) {
-        // ignore JSON parse error
-      }
-    }
-
-    const t = (title || "").trim();
-    if (!t) {
-      return {
-        key: "other",
-        label: tSubjectPage("uncategorized"),
-        order: 999999,
-      };
-    }
-
-    // 1. Check if the title matches a saved lecture exactly (label or key)
-    const exactMatch = savedLectures.find(
-      (l) =>
-        l.lecture_label.trim().toLowerCase() === t.toLowerCase() ||
-        l.lecture_key.trim().toLowerCase() === t.toLowerCase(),
-    );
-    if (exactMatch) {
-      return {
-        key: exactMatch.lecture_key,
-        label: exactMatch.lecture_label,
-        order: exactMatch.order_index,
-      };
-    }
-
-    // 1.5 Check if the title starts with a saved lecture's key (common for admin-added content)
-    const keyPrefixMatch = savedLectures.find((l) =>
-      t.toLowerCase().startsWith(l.lecture_key.trim().toLowerCase()),
-    );
-    if (keyPrefixMatch) {
-      return {
-        key: keyPrefixMatch.lecture_key,
-        label: keyPrefixMatch.lecture_label,
-        order: keyPrefixMatch.order_index,
-      };
-    }
-
-    // 2. Check if the title starts with a saved lecture's label (e.g., "Partial fractions: Video")
-    const prefixMatch = savedLectures.find((l) =>
-      t.toLowerCase().startsWith(l.lecture_label.trim().toLowerCase()),
-    );
-    if (prefixMatch) {
-      return {
-        key: prefixMatch.lecture_key,
-        label: prefixMatch.lecture_label,
-        order: prefixMatch.order_index,
-      };
-    }
-
-    const patterns: Array<{
-      re: RegExp;
-      labelPrefix: string;
-    }> = [
-      {
-        re: /(محاضرة|محاضره)\s*([0-9٠-٩]+(?:\s*و\s*[0-9٠-٩]+)*)/i,
-        labelPrefix: tSubjectPage("lecture"),
-      },
-      {
-        re: /(lecture|lec|week)\s*([0-9٠-٩]+(?:\s*(?:&|and|-)\s*[0-9٠-٩]+)*)/i,
-        labelPrefix: tSubjectPage("lecture"),
-      },
-    ];
-
-    for (const p of patterns) {
-      const m = t.match(p.re);
-      if (!m) continue;
-
-      const rawNumPart = (m[2] || "").trim();
-      const latin = toLatinDigits(rawNumPart);
-      const firstNumberMatch = latin.match(/\d+/);
-      const order = firstNumberMatch ? Number(firstNumberMatch[0]) : 999999;
-      const normalizedKeyPart = latin
-        .replace(/\s*و\s*/g, "-")
-        .replace(/\s*(?:&|and)\s*/gi, "-")
-        .replace(/\s+/g, "")
-        .replace(/[^0-9-]/g, "");
-      const key = normalizedKeyPart ? `lec-${normalizedKeyPart}` : "other";
-
-      return {
-        key,
-        label: `${p.labelPrefix} ${rawNumPart}`,
-        order: Number.isFinite(order) ? order : 999999,
-      };
-    }
-
-    return {
-      key: "other",
-      label: tSubjectPage("uncategorized"),
-      order: 999999,
-    };
   };
 
   useEffect(() => {
@@ -922,829 +831,147 @@ function SubjectSummariesContent() {
     return { explanationItems, homeworkItems, examItems };
   };
 
+  const localizedSubjectName = useMemo(() => {
+    if (locale === "en" && subjectDetails?.name_en) {
+      return subjectDetails.name_en;
+    }
+    return subjectDetails?.name || normalizedSubjectName;
+  }, [locale, subjectDetails, normalizedSubjectName]);
+
+  useEffect(() => {
+    if (localizedSubjectName) {
+      document.title = `${localizedSubjectName} | Masar X`;
+    }
+  }, [localizedSubjectName]);
+
   const renderSubjectDashboard = () => {
     return (
-      <div
-        className={`space-y-12 animate-in fade-in duration-700 pb-12 ${
-          isRTL ? "text-right" : "text-left"
-        }`}
-        dir={isRTL ? "rtl" : "ltr"}
-      >
-        <div className="flex justify-start">
-          <button
-            onClick={() => router.push(`/${locale}/subjects`)}
-            className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
-          >
-            <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
-            {tSubjectPage("backToSubjects")}
-          </button>
-        </div>
-
-        {/* Modern Glassmorphism Hero Section */}
-        <div className="relative group overflow-hidden rounded-[3rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl transition-all duration-500 hover:shadow-brand-blue/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-transparent to-brand-orange/5 opacity-50" />
-
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-blue/10 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-orange/10 rounded-full blur-[100px] animate-pulse delay-700" />
-
-          <div className="relative z-10 p-6 sm:p-10">
-            <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-between">
-              <div className="flex-1 space-y-6">
-                <div className="flex flex-wrap justify-start gap-2">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 dark:text-brand-blue-light text-xs font-black shadow-sm ring-1 ring-brand-blue/20">
-                    <GraduationCap className="w-4 h-4" />
-                    {dashboardData.professor}
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-right">
-                  <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-l from-brand-blue to-brand-blue/60">
-                      {tSubjectPage("subjectLabel")}
-                    </span>{" "}
-                    {normalizedSubjectName}
-                  </h1>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setShowEditSubjectModal(true)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-brand-blue hover:text-white transition-colors mt-2"
-                    >
-                      <Settings className="w-3.5 h-3.5" />
-                      {tSubjectPage("editSubject")}
-                    </button>
-                  )}
-                  <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
-                    {dashboardData.description}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap justify-start gap-6 pt-4">
-                  <div className="flex flex-col items-start gap-2">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      {tSubjectPage("scheduleTitle")}
-                    </span>
-                    <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
-                      <Clock className="w-6 h-6 text-brand-blue animate-pulse" />
-                      {dashboardData.schedule}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-start gap-2">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                      {tSubjectPage("locationTitle")}
-                    </span>
-                    <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-5 py-2.5 rounded-2xl text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
-                      <MapPin className="w-6 h-6 text-brand-orange" />
-                      {dashboardData.nextLecture}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative group/progress">
-                <div className="absolute inset-0 bg-brand-blue/20 blur-[40px] rounded-full scale-75 group-hover/progress:scale-100 transition-transform duration-700" />
-                <div className="relative w-40 h-40 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full shadow-xl border-4 border-slate-50 dark:border-slate-800">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="58"
-                      stroke="currentColor"
-                      strokeWidth="10"
-                      fill="transparent"
-                      className="text-slate-100 dark:text-slate-800"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="58"
-                      stroke="url(#progressGradient)"
-                      strokeWidth="10"
-                      fill="transparent"
-                      strokeDasharray={364.4}
-                      strokeDashoffset={
-                        364.4 - (364.4 * dashboardData.progress) / 100
-                      }
-                      className="transition-all duration-1000 ease-out"
-                      strokeLinecap="round"
-                    />
-                    <defs>
-                      <linearGradient
-                        id="progressGradient"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="#2dd4bf" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white">
-                      {dashboardData.progress}%
-                    </span>
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                      {tSubjectPage("yourProgress")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2 relative overflow-hidden group rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-500">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div className="flex justify-between items-start">
-                <div className="p-3 rounded-xl bg-white/10 backdrop-blur-md">
-                  <LayoutGrid className="w-6 h-6 text-brand-blue" />
-                </div>
-                <div className="text-left">
-                  <span className="block text-3xl font-black">
-                    {lectureIndex.length}
-                  </span>
-                  <span className="text-[10px] font-bold text-white/60">
-                    {tSubjectPage("lecture")}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-4">
-                <h3 className="text-xl font-black mb-1">
-                  {tSubjectPage("exploreContent")}
-                </h3>
-                <p className="text-xs text-white/60 leading-relaxed">
-                  {tSubjectPage("exploreContentDescription")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative group rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-md hover:-translate-y-1 transition-all duration-500 overflow-hidden">
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-green-500/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="relative z-10 flex flex-col h-full items-center text-center">
-              <div className="p-3 rounded-xl bg-green-500/10 text-green-500 mb-4 group-hover:bg-green-500 group-hover:text-white transition-all duration-500">
-                <Trophy className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <span className="block text-2xl font-black text-slate-900 dark:text-white">
-                  {dashboardData.totalLectures.split("/")[0]}
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  {tSubjectPage("achievements")}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative group rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-md hover:-translate-y-1 transition-all duration-500 overflow-hidden">
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-orange/5 rounded-full group-hover:scale-150 transition-transform duration-700" />
-            <div className="relative z-10 flex flex-col h-full items-center text-center">
-              <div className="p-3 rounded-xl bg-brand-orange/10 text-brand-orange mb-4 group-hover:bg-brand-orange group-hover:text-white transition-all duration-500">
-                <Layers className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <span className="block text-2xl font-black text-slate-900 dark:text-white">
-                  {totalPossibleItems}
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  {tSubjectPage("lectures")}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-brand-blue font-black text-[10px] uppercase tracking-[0.2em]">
-                <div className="w-6 h-[1.5px] bg-brand-blue" />
-                {tSubjectPage("educationalContent")}
-              </div>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                {tSubjectPage("lecturesList")}
-              </h2>
-            </div>
-
-            {isAdmin && (
-              <button
-                onClick={() => setShowAddLectureForm(true)}
-                className="group flex items-center gap-2 px-6 py-3 rounded-2xl bg-brand-blue text-white font-black hover:shadow-xl hover:shadow-brand-blue/30 transition-all active:scale-95 text-sm"
-              >
-                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                {tSubjectPage("addNewLecture")}
-              </button>
-            )}
-          </div>
-
-          {lectureIndex.length === 0 ? (
-            <div className="rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 text-center">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                {tSubjectPage("noLecturesYet")}
-              </h3>
-              <p className="mt-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                {tSubjectPage("contentWillAppear")}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lectureIndex.map((lec, idx) => (
-                <button
-                  key={lec.key}
-                  onClick={() => {
-                    const next = new URLSearchParams(
-                      searchParams ? searchParams.toString() : "",
-                    );
-                    next.set("lecture", lec.key);
-                    router.push(`?${next.toString()}`);
-                  }}
-                  className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 hover:shadow-2xl hover:shadow-brand-blue/10 text-right"
-                >
-                  <div className="flex justify-between items-start mb-6 w-full">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-all duration-500 shadow-sm">
-                      <span className="text-xl font-black text-slate-400 dark:text-slate-500 group-hover:text-white transition-colors">
-                        {(idx + 1).toString().padStart(2, "0")}
-                      </span>
-                    </div>
-                    <div className="w-10 h-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center group-hover:border-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0">
-                      <ChevronLeft className="w-5 h-5" />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 space-y-3">
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2 leading-tight">
-                      {lec.label}
-                    </h3>
-
-                    <div className="flex flex-wrap gap-2">
-                      {lec.counts.summaries > 0 && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-[10px] font-black text-blue-600 dark:text-blue-400">
-                          <FileText className="w-3 h-3" />
-                          {lec.counts.summaries} {tSubjectPage("summary")}
-                        </div>
-                      )}
-                      {lec.counts.videos > 0 && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-50 dark:bg-red-900/20 text-[10px] font-black text-red-600 dark:text-red-400">
-                          <Video className="w-3 h-3" />
-                          {lec.counts.videos} {tSubjectPage("video")}
-                        </div>
-                      )}
-                      {lec.counts.exams > 0 && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-green-50 dark:bg-green-900/20 text-[10px] font-black text-green-600 dark:text-green-400">
-                          <Trophy className="w-3 h-3" />
-                          {lec.counts.exams} {tSubjectPage("examLabel")}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {tSubjectPage("updatedRecently")}
-                    </span>
-                    <span className="group-hover:text-brand-blue transition-colors">
-                      {tSubjectPage("viewDetails")}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <SubjectDashboard
+        isRTL={isRTL}
+        isAdmin={isAdmin}
+        normalizedSubjectName={localizedSubjectName}
+        dashboardData={dashboardData}
+        lectureIndex={lectureIndex}
+        totalPossibleItems={totalPossibleItems}
+        tSubjectPage={tSubjectPage}
+        onBackToSubjects={() => router.push(`/${locale}/subjects`)}
+        onEditSubject={() => setShowEditSubjectModal(true)}
+        onAddLecture={() => setShowAddLectureForm(true)}
+        onSelectLecture={(lectureKey) => {
+          const next = new URLSearchParams(
+            searchParams ? searchParams.toString() : "",
+          );
+          next.set("lecture", lectureKey);
+          router.push(`?${next.toString()}`);
+        }}
+      />
     );
   };
 
   const renderLectureDetailView = () => {
     const { explanationItems, homeworkItems, examItems } =
       groupContentBySection();
-    const lectureTitle =
-      selectedLecture?.label || tSubjectPage("lectureDefaultTitle");
-
-    const formatYmd = (value: Date) => {
-      const y = value.getFullYear();
-      const m = String(value.getMonth() + 1).padStart(2, "0");
-      const d = String(value.getDate()).padStart(2, "0");
-      return `${y}/${m}/${d}`;
-    };
-
-    const createdAtCandidates = [
-      ...lectureFilteredSummaries.map((s) => s.created_at),
-      ...lectureFilteredVideos.map((v) => (v as any)?.created_at),
-      ...lectureFilteredFiles.map((f) => (f as any)?.created_at),
-      ...lectureFilteredQuizzes.map((q) => (q as any)?.created_at),
-    ]
-      .filter(Boolean)
-      .map((v) => new Date(v as any))
-      .filter((d) => !Number.isNaN(d.getTime()));
-
-    const lectureAddedAt = createdAtCandidates.length
-      ? createdAtCandidates.sort((a, b) => a.getTime() - b.getTime())[0]
-      : null;
 
     return (
-      <div
-        className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 pb-20 ${
-          isRTL ? "text-right" : "text-left"
-        } ${isTheatreMode && activeVideoUrl ? "max-w-[100vw]" : ""}`}
-        dir={isRTL ? "rtl" : "ltr"}
-      >
-        <div
-          className={`flex flex-col gap-8 ${isTheatreMode && activeVideoUrl ? "mx-auto" : ""}`}
-        >
-          {!isTheatreMode && (
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push(`/${locale}/subjects`)}
-                className="group flex items-center justify-center w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-brand-blue hover:text-brand-blue transition-all"
-                title={tSubjectPage("backToSubjects")}
-              >
-                <ArrowRight className="w-6 h-6" />
-              </button>
-              <button
-                onClick={() => {
-                  const next = new URLSearchParams(
-                    searchParams ? searchParams.toString() : "",
-                  );
-                  next.delete("lecture");
-                  router.push(`?${next.toString()}`);
-                }}
-                className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all"
-              >
-                <LayoutGrid className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                {tSubjectPage("backToLectures")}
-              </button>
-            </div>
-          )}
-
-          {!isTheatreMode && (
-            <div className="relative overflow-hidden rounded-[3rem] bg-slate-900 p-12 text-white shadow-2xl">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-                <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-block px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md text-brand-blue-light font-black text-xs uppercase tracking-[0.2em] mb-2">
-                    {tSubjectPage("lectureContent")}
-                  </div>
-                  <h1 className="text-5xl sm:text-6xl font-black leading-tight">
-                    {lectureTitle}
-                  </h1>
-                  <div className="flex flex-wrap justify-start gap-4 mt-6">
-                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {explanationItems.length} {tSubjectPage("explanation")}
-                    </div>
-                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {homeworkItems.length} {tSubjectPage("homework")}
-                    </div>
-                    <div className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold">
-                      {examItems.length} {tSubjectPage("examLabel")}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-4">
-                  <div className="lg:border-r lg:border-white/10 lg:pr-10 lg:pt-2">
-                    <h3 className="text-lg font-black text-white/90 mb-5">
-                      {tSubjectPage("lectureInfo")}
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-white/60">
-                          {tSubjectPage("addedDate")}
-                        </span>
-                        <span className="text-sm font-black text-white">
-                          {lectureAddedAt ? formatYmd(lectureAddedAt) : "—"}
-                        </span>
-                      </div>
-                      <div className="h-px bg-white/10" />
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-white/60">
-                          {tSubjectPage("sourcesCount")}
-                        </span>
-                        <span className="text-sm font-black text-white">
-                          {explanationItems.length}
-                        </span>
-                      </div>
-                      <div className="h-px bg-white/10" />
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-white/60">
-                          {tSubjectPage("exams")}
-                        </span>
-                        <span className="text-sm font-black text-white">
-                          {examItems.length}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeVideoUrl && (
-            <div
-              className={`animate-in fade-in slide-in-from-top-4 duration-500 ${isTheatreMode ? "fixed inset-0 z-[100] bg-black flex flex-col h-[100dvh] w-screen overflow-hidden" : ""}`}
-            >
-              <div
-                className={`bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col ${isTheatreMode ? "flex-1 border-none rounded-none" : "rounded-[2.5rem]"}`}
-              >
-                <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
-                      <Video className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight line-clamp-1">
-                        {activeVideoTitle}
-                      </h3>
-                      <p className="text-xs font-bold text-slate-400">
-                        {tSubjectPage("videoPlayer")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setIsTheatreMode(!isTheatreMode)}
-                      className={`p-2 rounded-xl transition-colors ${isTheatreMode ? "bg-brand-blue text-white" : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"}`}
-                      title={
-                        isTheatreMode
-                          ? tSubjectPage("exitTheatreMode")
-                          : tSubjectPage("theatreMode")
-                      }
-                    >
-                      <Monitor className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setActiveVideoUrl(null);
-                        setActiveVideoTitle(null);
-                        setIsTheatreMode(false);
-                      }}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                    >
-                      <X className="w-6 h-6 text-slate-400" />
-                    </button>
-                  </div>
-                </div>
-                <div
-                  className={`relative bg-black ${isTheatreMode ? "flex-1" : "aspect-video"}`}
-                >
-                  {getYouTubeId(activeVideoUrl) ? (
-                    <iframe
-                      src={`https://www.youtube.com/embed/${getYouTubeId(activeVideoUrl)}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1`}
-                      className="absolute inset-0 w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  ) : (
-                    <video
-                      src={activeVideoUrl}
-                      controls
-                      autoPlay
-                      className="absolute inset-0 w-full h-full"
-                    ></video>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-8 space-y-12">
-            <section className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
-                  <Video className="w-6 h-6" />
-                </div>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                  {tSubjectPage("explanationsAndLessons")}
-                </h2>
-                {isAdmin && (
-                  <div className="flex gap-2 mr-auto">
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/add-video?subject=${encodeURIComponent(normalizedSubjectName)}&lecture=${selectedLectureKey || ""}`,
-                        )
-                      }
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue font-bold text-xs hover:bg-brand-blue hover:text-white transition-all"
-                    >
-                      <Plus className="w-4 h-4" />
-                      {tSubjectPage("video")}
-                    </button>
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/add-file?subject=${encodeURIComponent(normalizedSubjectName)}&lecture=${selectedLectureKey || ""}`,
-                        )
-                      }
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange font-bold text-xs hover:bg-brand-orange hover:text-white transition-all"
-                    >
-                      <Plus className="w-4 h-4" />
-                      {tSubjectPage("file")}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {explanationItems.length === 0 ? (
-                  <div className="p-12 text-center rounded-[2.5rem] bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800">
-                    <div className="text-slate-400 font-black italic">
-                      {tSubjectPage("noExplanationContent")}
-                    </div>
-                  </div>
-                ) : (
-                  explanationItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="group flex flex-col sm:flex-row items-center gap-6 p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-brand-blue/5"
-                    >
-                      <div
-                        className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center ${
-                          item.type === "video"
-                            ? "bg-red-50 text-red-500"
-                            : "bg-brand-blue/5 text-brand-blue"
-                        }`}
-                      >
-                        {item.type === "video" ? (
-                          <Video className="w-8 h-8" />
-                        ) : (
-                          <FileText className="w-8 h-8" />
-                        )}
-                      </div>
-                      <div className="flex-1 text-right">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-lg font-black text-slate-900 dark:text-white">
-                            {item.title}
-                          </h4>
-                          {item.type === "video" && (
-                            <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black">
-                              LIVE
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                            {item.type === "video"
-                              ? tSubjectPage("contentType.video")
-                              : item.type === "summary"
-                                ? tSubjectPage("contentType.summary")
-                                : tSubjectPage("contentType.file")}
-                          </span>
-                          <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-                          <span className="text-xs font-bold text-slate-400">
-                            {new Date(
-                              item.created_at || Date.now(),
-                            ).toLocaleDateString(locale)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 relative z-10">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const contentId =
-                              item.id || item.url || item.file_url;
-                            if (user && contentId) {
-                              toggleProgress(contentId);
-                            } else if (!user) {
-                              // Show toast error if not logged in
-                              toast.error(
-                                "Please login to mark content as completed",
-                              );
-                            }
-                          }}
-                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
-                            completedContent.has(
-                              item.id || item.url || item.file_url,
-                            )
-                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110 animate-bounce"
-                              : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105 active:scale-95"
-                          }`}
-                          title="Mark lesson as completed"
-                        >
-                          <CheckCircle
-                            className={`w-5 h-5 transition-all duration-500 will-change-transform ${
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "scale-110 animate-spin"
-                                : "group-hover/btn:rotate-12"
-                            }`}
-                          />
-                          {completedContent.has(
-                            item.id || item.url || item.file_url,
-                          ) && (
-                            <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/60" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (item.type === "summary") {
-                              trackSummaryClick(item.id, "view");
-                              router.push(`/summaries/${item.id}`);
-                            } else if (item.type === "video") {
-                              setActiveVideoUrl(item.url);
-                              setActiveVideoTitle(item.title);
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            } else if (item.file_url) {
-                              window.open(item.file_url, "_blank");
-                            }
-                          }}
-                          className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
-                        >
-                          {tSubjectPage("viewContent")}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-
-            {homeworkItems.length > 0 && (
-              <section className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-orange/10 flex items-center justify-center text-brand-orange">
-                    <ClipboardList className="w-6 h-6" />
-                  </div>
-                  <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                    {tSubjectPage("assignmentsAndHomework")}
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {homeworkItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="p-8 rounded-[2.5rem] bg-gradient-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group hover:scale-[1.02] transition-transform duration-500 text-right"
-                    >
-                      <div className="flex justify-between items-start mb-6">
-                        <FileText className="w-10 h-10 opacity-40" />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleProgress(
-                              item.id || item.url || item.file_url,
-                            );
-                          }}
-                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
-                            completedContent.has(
-                              item.id || item.url || item.file_url,
-                            )
-                              ? "bg-white text-emerald-600 shadow-lg scale-110"
-                              : "bg-white/10 text-white/60 hover:bg-white/20 hover:scale-105"
-                          }`}
-                          title={
-                            completedContent.has(
-                              item.id || item.url || item.file_url,
-                            )
-                              ? tSubjectPage("unmarkCompleted")
-                              : tSubjectPage("markAsCompleted")
-                          }
-                        >
-                          <CheckCircle
-                            className={`w-5 h-5 transition-all duration-500 ${
-                              completedContent.has(
-                                item.id || item.url || item.file_url,
-                              )
-                                ? "scale-110 rotate-[360deg] text-emerald-600"
-                                : "group-hover/btn:rotate-12"
-                            }`}
-                          />
-                          {completedContent.has(
-                            item.id || item.url || item.file_url,
-                          ) && (
-                            <span className="absolute inset-0 rounded-xl animate-ping-slow bg-white/40 pointer-events-none" />
-                          )}
-                        </button>
-                      </div>
-                      <h4 className="text-xl font-black mb-4">{item.title}</h4>
-                      <button
-                        onClick={() => {
-                          if (item.file_url) {
-                            window.open(item.file_url, "_blank");
-                          }
-                        }}
-                        className="w-full py-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 font-black text-sm hover:bg-white/30 transition-all"
-                      >
-                        {tSubjectPage("downloadHomework")}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-
-          <div className="lg:col-span-4 space-y-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Trophy className="w-6 h-6 text-brand-blue" />
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                  {tSubjectPage("exams")}
-                </h3>
-              </div>
-
-              <div className="space-y-4">
-                {examItems.length === 0 ? (
-                  <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 font-bold italic">
-                    {tSubjectPage("noExams")}
-                  </div>
-                ) : (
-                  examItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="group p-6 rounded-[2rem] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <h4 className="font-black text-slate-900 dark:text-white leading-tight">
-                          {item.title}
-                        </h4>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleProgress(item.id);
-                          }}
-                          className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
-                            completedContent.has(item.id)
-                              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110"
-                              : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105"
-                          }`}
-                          title={
-                            completedContent.has(item.id)
-                              ? tSubjectPage("unmarkCompleted")
-                              : tSubjectPage("markAsCompleted")
-                          }
-                        >
-                          <CheckCircle
-                            className={`w-5 h-5 transition-all duration-500 ${
-                              completedContent.has(item.id)
-                                ? "scale-110 rotate-[360deg] text-white"
-                                : "group-hover/btn:rotate-12"
-                            }`}
-                          />
-                          {completedContent.has(item.id) && (
-                            <span className="absolute inset-0 rounded-xl animate-ping-slow bg-emerald-400/40 pointer-events-none" />
-                          )}
-                        </button>
-                      </div>
-                      <button
-                        onClick={() =>
-                          router.push(`/quiz-play?quizId=${item.id}`)
-                        }
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-blue text-white font-black text-sm group-hover:shadow-lg group-hover:shadow-brand-blue/30 transition-all"
-                      >
-                        {tSubjectPage("startChallenge")}
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                {isAdmin && (
-                  <button
-                    onClick={() => {
-                      setShowAddExamForm(true);
-                      setExamFormData((p) => ({
-                        ...p,
-                        year: p.year || levels[0]?.name || "",
-                        department: p.department || "",
-                      }));
-                    }}
-                    className="w-full flex items-center justify-center gap-2 p-6 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:border-brand-blue hover:text-brand-blue transition-all font-black"
-                  >
-                    <Plus className="w-5 h-5" />
-                    {tSubjectPage("addExam")}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <LectureDetailView
+        isRTL={isRTL}
+        locale={locale}
+        isAdmin={isAdmin}
+        user={user}
+        subjectName={localizedSubjectName}
+        selectedLecture={selectedLecture}
+        explanationItems={explanationItems}
+        homeworkItems={homeworkItems}
+        examItems={examItems}
+        activeVideoUrl={activeVideoUrl}
+        activeVideoTitle={activeVideoTitle}
+        isTheatreMode={isTheatreMode}
+        completedContent={completedContent}
+        tSubjectPage={tSubjectPage}
+        getYouTubeId={getYouTubeId}
+        onBackToSubjects={() => router.push(`/${locale}/subjects`)}
+        onBackToLectures={() => {
+          const next = new URLSearchParams(
+            searchParams ? searchParams.toString() : "",
+          );
+          next.delete("lecture");
+          router.push(`?${next.toString()}`);
+        }}
+        onToggleTheatreMode={() => setIsTheatreMode((p) => !p)}
+        onCloseVideo={() => {
+          setActiveVideoUrl(null);
+          setActiveVideoTitle(null);
+          setIsTheatreMode(false);
+        }}
+        onToggleProgress={(contentId) => toggleProgress(contentId)}
+        onViewContent={(item) => {
+          if (item.type === "summary" && item.id) {
+            trackSummaryClick(item.id, "view");
+            router.push(`/summaries/${item.id}`);
+            return;
+          }
+          if (item.type === "video" && item.url) {
+            setActiveVideoUrl(item.url);
+            setActiveVideoTitle(item.title);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+          if (item.type === "file" && item.file_url) {
+            window.open(item.file_url, "_blank");
+            return;
+          }
+          if (item.type === "quiz" && item.id) {
+            router.push(`/quiz-play?quizId=${item.id}`);
+          }
+        }}
+        onAddVideo={() =>
+          router.push(
+            `/add-video?subject=${encodeURIComponent(normalizedSubjectName)}&lecture=${selectedLectureKey || ""}`,
+          )
+        }
+        onAddFile={() =>
+          router.push(
+            `/add-file?subject=${encodeURIComponent(normalizedSubjectName)}&lecture=${selectedLectureKey || ""}`,
+          )
+        }
+        onAddExam={() => {
+          setShowAddExamForm(true);
+          setExamFormData((p) => ({
+            ...p,
+            year: p.year || levels[0]?.name || "",
+            department: p.department || "",
+          }));
+        }}
+      />
     );
   };
 
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {!isLectureView ? renderSubjectDashboard() : renderLectureDetailView()}
-      </div>
+    <div className="w-full">
+      <AnimatePresence mode="wait">
+        {!isLectureView ? (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderSubjectDashboard()}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="lecture"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderLectureDetailView()}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <EditSummaryModal
         summary={editingSummary}
         isOpen={showEditModal}
@@ -1759,340 +986,31 @@ function SubjectSummariesContent() {
         editingSubject={subjectDetails}
       />
 
-      {showAddLectureForm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative animate-in zoom-in-95 duration-300">
-            <button
-              onClick={() => setShowAddLectureForm(false)}
-              className="absolute top-6 left-6 text-slate-400 hover:text-brand-blue transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
-              {tSubjectPage("addNewLecture")}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  {tSubjectPage("lectureForm.titleLabel")}
-                </label>
-                <input
-                  type="text"
-                  value={lectureFormData.title}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({
-                      ...p,
-                      title: e.target.value,
-                      ...(p.key.trim()
-                        ? {}
-                        : { key: getLectureInfoFromTitle(e.target.value).key }),
-                    }))
-                  }
-                  placeholder={tSubjectPage("lectureForm.titlePlaceholder")}
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
+      <AddLectureModal
+        isOpen={showAddLectureForm}
+        onClose={() => setShowAddLectureForm(false)}
+        tSubjectPage={tSubjectPage}
+        tCommon={tCommon}
+        lectureFormData={lectureFormData}
+        setLectureFormData={setLectureFormData}
+        getLectureInfoFromTitle={getLectureInfoFromTitle}
+        isSavingLecture={isSavingLecture}
+        onSaveLecture={handleSaveLecture}
+      />
 
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  {tSubjectPage("lectureForm.labelLabel")}
-                </label>
-                <input
-                  type="text"
-                  value={lectureFormData.label}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({ ...p, label: e.target.value }))
-                  }
-                  placeholder={
-                    getLectureInfoFromTitle(lectureFormData.title).label
-                  }
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
-                  {tSubjectPage("orderOptional")}
-                </label>
-                <input
-                  type="number"
-                  value={lectureFormData.orderIndex}
-                  onChange={(e) =>
-                    setLectureFormData((p) => ({
-                      ...p,
-                      orderIndex: e.target.value,
-                    }))
-                  }
-                  placeholder={tSubjectPage("lectureForm.orderPlaceholder")}
-                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                />
-              </div>
-              <button
-                onClick={handleSaveLecture}
-                disabled={isSavingLecture || !lectureFormData.title.trim()}
-                className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-4"
-              >
-                {isSavingLecture
-                  ? tCommon("loading")
-                  : tSubjectPage("lectureForm.save")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showAddExamForm && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-2xl p-8 shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-                {tSubjectPage("exam.addNew")}
-              </h3>
-              <button
-                onClick={() => setShowAddExamForm(false)}
-                className="text-slate-400 hover:text-brand-blue transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-500 mb-2">
-                    {tSubjectPage("exam.titleLabel")}
-                  </label>
-                  <input
-                    value={examFormData.title}
-                    onChange={(e) =>
-                      setExamFormData((p) => ({ ...p, title: e.target.value }))
-                    }
-                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-500 mb-2">
-                    {tSubjectPage("exam.durationMinutesLabel")}
-                  </label>
-                  <input
-                    type="number"
-                    value={examFormData.durationMinutes}
-                    onChange={(e) =>
-                      setExamFormData((p) => ({
-                        ...p,
-                        durationMinutes: e.target.value,
-                      }))
-                    }
-                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-500 mb-2">
-                    {tSubjectPage("exam.departmentLabel")}
-                  </label>
-                  <select
-                    value={examFormData.department}
-                    onChange={(e) =>
-                      setExamFormData((p) => ({
-                        ...p,
-                        department: e.target.value,
-                      }))
-                    }
-                    disabled={
-                      academicOptionsLoading ||
-                      !examFormData.year ||
-                      availableExamDepartments.length === 0
-                    }
-                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  >
-                    <option value="" disabled>
-                      {tSubjectPage("exam.departmentPlaceholder")}
-                    </option>
-                    {availableExamDepartments.map((dep: any) => (
-                      <option key={dep.id} value={dep.name}>
-                        {dep.name} {!dep.is_active && tSubjectPage("inactive")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-500 mb-2">
-                    {tSubjectPage("year")}
-                  </label>
-                  <select
-                    value={examFormData.year}
-                    onChange={(e) =>
-                      setExamFormData((p) => ({
-                        ...p,
-                        year: e.target.value,
-                        department: "",
-                      }))
-                    }
-                    disabled={academicOptionsLoading || levels.length === 0}
-                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                  >
-                    <option value="" disabled>
-                      {tSubjectPage("exam.yearPlaceholder")}
-                    </option>
-                    {levels.map((lvl: any) => (
-                      <option key={lvl.id} value={lvl.name}>
-                        {lvl.name} {!lvl.is_active && tSubjectPage("inactive")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t-2 border-slate-50 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="text-xl font-black text-slate-900 dark:text-white">
-                    {tSubjectPage("exam.questions")}
-                  </h4>
-                  <button
-                    onClick={() =>
-                      setExamFormData((p) => ({
-                        ...p,
-                        questions: [
-                          ...p.questions,
-                          {
-                            question: "",
-                            options: ["", "", "", ""],
-                            correctAnswer: 0,
-                            explanation: "",
-                          },
-                        ],
-                      }))
-                    }
-                    className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold hover:bg-brand-blue hover:text-white transition-all flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />{" "}
-                    {tSubjectPage("exam.addQuestion")}
-                  </button>
-                </div>
-
-                <div className="space-y-8">
-                  {examFormData.questions.map((q, idx) => (
-                    <div
-                      key={idx}
-                      className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border-2 border-transparent hover:border-brand-blue/20 transition-all"
-                    >
-                      <div className="flex justify-between mb-4">
-                        <span className="text-sm font-black text-slate-400 uppercase tracking-widest">
-                          {tSubjectPage("exam.question")} {idx + 1}
-                        </span>
-                        {examFormData.questions.length > 1 && (
-                          <button
-                            onClick={() =>
-                              setExamFormData((p) => ({
-                                ...p,
-                                questions: p.questions.filter(
-                                  (_, i) => i !== idx,
-                                ),
-                              }))
-                            }
-                            className="text-red-500 font-bold text-xs"
-                          >
-                            {tSubjectPage("exam.deleteQuestion")}
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        value={q.question}
-                        onChange={(e) =>
-                          setExamFormData((p) => ({
-                            ...p,
-                            questions: p.questions.map((it, i) =>
-                              i === idx
-                                ? { ...it, question: e.target.value }
-                                : it,
-                            ),
-                          }))
-                        }
-                        placeholder={tSubjectPage("exam.questionPlaceholder")}
-                        className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold mb-4"
-                      />
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {q.options.map((opt, optIdx) => (
-                          <input
-                            key={optIdx}
-                            value={opt}
-                            onChange={(e) =>
-                              setExamFormData((p) => ({
-                                ...p,
-                                questions: p.questions.map((it, i) =>
-                                  i === idx
-                                    ? {
-                                        ...it,
-                                        options: it.options.map((o, oi) =>
-                                          oi === optIdx ? e.target.value : o,
-                                        ),
-                                      }
-                                    : it,
-                                ),
-                              }))
-                            }
-                            placeholder={`${tSubjectPage("exam.option")} ${optIdx + 1}`}
-                            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold"
-                          />
-                        ))}
-                      </div>
-                      <div className="mt-4 flex gap-4">
-                        <select
-                          value={q.correctAnswer}
-                          onChange={(e) =>
-                            setExamFormData((p) => ({
-                              ...p,
-                              questions: p.questions.map((it, i) =>
-                                i === idx
-                                  ? {
-                                      ...it,
-                                      correctAnswer: Number(e.target.value),
-                                    }
-                                  : it,
-                              ),
-                            }))
-                          }
-                          className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none"
-                        >
-                          <option value={0}>
-                            {tSubjectPage("exam.option1Correct")}
-                          </option>
-                          <option value={1}>
-                            {tSubjectPage("exam.option2Correct")}
-                          </option>
-                          <option value={2}>
-                            {tSubjectPage("exam.option3Correct")}
-                          </option>
-                          <option value={3}>
-                            {tSubjectPage("exam.option4Correct")}
-                          </option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={handleSaveExam}
-                disabled={
-                  isSavingExam ||
-                  !examFormData.title.trim() ||
-                  !examFormData.year
-                }
-                className="w-full py-5 rounded-3xl bg-brand-blue text-white font-black text-xl hover:shadow-2xl hover:shadow-brand-blue/40 disabled:opacity-50 transition-all"
-              >
-                {isSavingExam
-                  ? tCommon("loading")
-                  : tSubjectPage("exam.saveButton")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddExamModal
+        isOpen={showAddExamForm}
+        onClose={() => setShowAddExamForm(false)}
+        tSubjectPage={tSubjectPage}
+        tCommon={tCommon}
+        levels={levels}
+        academicOptionsLoading={academicOptionsLoading}
+        availableExamDepartments={availableExamDepartments as any}
+        examFormData={examFormData}
+        setExamFormData={setExamFormData}
+        isSavingExam={isSavingExam}
+        onSaveExam={handleSaveExam}
+      />
     </div>
   );
 }
@@ -2105,22 +1023,12 @@ export default function SubjectSummariesPage() {
   }, []);
 
   if (!isMounted) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue text-brand-blue"></div>
-      </div>
-    );
+    return <SubjectPageSkeleton />;
   }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Suspense
-        fallback={
-          <div className="flex justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue text-brand-blue"></div>
-          </div>
-        }
-      >
+      <Suspense fallback={<SubjectPageSkeleton />}>
         <SubjectSummariesContent />
       </Suspense>
     </div>

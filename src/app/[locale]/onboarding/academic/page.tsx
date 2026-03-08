@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useAuth } from "../../../../contexts/AuthContext";
 import { useUserAcademic } from "../../../../hooks/useUserAcademic";
 
