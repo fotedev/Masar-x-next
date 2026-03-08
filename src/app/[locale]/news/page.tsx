@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Trash } from "lucide-react";
@@ -121,22 +121,24 @@ function NewsPage() {
 
       if (addedNews) {
         notifyAdmins(
-          "خبر جديد يحتاج مراجعة",
-          `تم إضافة خبر جديد بعنوان "${newsData.title}" من نوع ${
-            newsData.type === "announcement"
-              ? "إعلان"
-              : newsData.type === "update"
-                ? "تحديث"
-                : "مهم جداً"
-          }`,
+          t("reviewRequired"),
+          t("reviewRequiredDesc", {
+            title: newsData.title,
+            type:
+              newsData.type === "announcement"
+                ? t("newsTypeAnnouncement")
+                : newsData.type === "update"
+                  ? t("newsTypeUpdate")
+                  : t("newsTypeImportant"),
+          }),
           "admin_submission",
           addedNews.id,
           "news",
         );
 
         notifyAllUsers(
-          "خبر جديد!",
-          `تم نشر خبر جديد: "${newsData.title}"`,
+          t("newNewsTitle"),
+          t("newNewsDesc", { title: newsData.title }),
           "content_published",
           addedNews.id,
           "news",
@@ -333,10 +335,10 @@ function NewsPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-slate-900 dark:text-white">
-                          ملف مرفق
+                          {t("attachedFile")}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          يمكنك عرض أو تحميل الملف
+                          {t("attachedFileDesc")}
                         </p>
                       </div>
                     </div>
@@ -346,7 +348,7 @@ function NewsPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-brand-blue transition-colors"
-                        title="معاينة الملف"
+                        title={t("previewFile")}
                       >
                         <Search className="w-5 h-5" />
                       </a>
@@ -363,7 +365,7 @@ function NewsPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-brand-blue transition-colors"
-                        title="تنزيل الملف"
+                        title={t("downloadFile")}
                       >
                         <Download className="w-5 h-5" />
                       </a>
@@ -378,7 +380,7 @@ function NewsPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                      الخلاصة:
+                      {t("summary")}:
                     </span>
                   </div>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -399,7 +401,7 @@ function NewsPage() {
                   className="flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium transition-colors"
                 >
                   <Flag className="w-4 h-4" />
-                  <span>الطعن في الخبر</span>
+                  <span>{t("appealNews")}</span>
                 </button>
 
                 {isAdmin && (
@@ -408,7 +410,7 @@ function NewsPage() {
                     className="flex items-center gap-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium transition-colors"
                   >
                     <Trash className="w-4 h-4" />
-                    <span>حذف الخبر</span>
+                    <span>{t("deleteNews")}</span>
                   </button>
                 )}
 
@@ -470,7 +472,7 @@ function NewsPage() {
               className="flex items-center gap-2 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-white/10 backdrop-blur-md"
             >
               <Download className="w-4 h-4" />
-              <span>تحميل الصورة</span>
+              <span>{t("download")}</span>
             </button>
           </div>
         </div>

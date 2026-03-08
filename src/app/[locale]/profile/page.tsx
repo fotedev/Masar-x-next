@@ -2,7 +2,7 @@
 
 import * as Switch from "@radix-ui/react-switch";
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import {
   User,
   Mail,

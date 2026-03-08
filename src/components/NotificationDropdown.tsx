@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useNotifications } from "../hooks/useNotifications";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationList } from "./NotificationList";
 import {
   NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY_KEYS,
   NOTIFICATION_LIMITS,
 } from "../constants/notifications";
 import type { Notification } from "../types/database";
@@ -14,6 +14,7 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const tNotifications = useTranslations("notifications");
 
   const {
     notifications,
@@ -96,10 +97,12 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40"
             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
         }`}
-        title={NOTIFICATION_ACCESSIBILITY_KEYS.bellButton}
-        aria-label={`${NOTIFICATION_ACCESSIBILITY_KEYS.bellButton}${
-          unreadCount > 0 ? ` (${unreadCount} جديد)` : ""
-        }`}
+        title={tNotifications("bellButton")}
+        aria-label={
+          unreadCount > 0
+            ? tNotifications("bellButtonAria", { count: unreadCount })
+            : tNotifications("bellButton")
+        }
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
@@ -108,7 +111,9 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
         />
         {unreadCount > 0 && (
           <span
-            aria-label={NOTIFICATION_ACCESSIBILITY_KEYS.unreadBadge}
+            aria-label={tNotifications("unreadBadgeAria", {
+              count: unreadCount,
+            })}
             className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
           >
             {unreadCount > NOTIFICATION_LIMITS.UNREAD_BADGE_MAX
@@ -122,7 +127,7 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
         <div
           className={NOTIFICATION_STYLES.container}
           role="listbox"
-          aria-label={NOTIFICATION_ACCESSIBILITY_KEYS.dropdown}
+          aria-label={tNotifications("dropdown")}
         >
           <NotificationHeader
             unreadCount={unreadCount}
@@ -144,7 +149,7 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
                 onClick={() => setIsOpen(false)}
                 className="w-full py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 bg-gray-100/50 dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl active:scale-[0.98]"
               >
-                إغلاق النافذة
+                {tNotifications("closeFooter")}
               </button>
             </div>
           )}
