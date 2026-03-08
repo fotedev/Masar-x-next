@@ -1,6 +1,19 @@
 # Masar X - Comprehensive Learning Platform
 
-Last updated: 09 February 2026
+Last updated: 08 March 2026
+
+## Recent edits (08 Mar 2026)
+- **Bug Investigation**: Comprehensive audit of lecture system identifying 13 bugs (3 critical, 6 medium, 4 minor) with detailed reports and fix plans.
+- **Localization Completion**: Finalized not-found page and academic-onboarding localization with JSON-based translations (ar/en).
+- **Quiz System**: Enhanced QuizzesTab and quiz dashboard with improved search, sorting, and pagination.
+
+## Recent edits (06 Mar 2026)
+- **TRW Subsystem**: Launched "The Road Within" architecture with membership gating, plans (Free/Full/Money), and access code redemption.
+- **Academic Onboarding**: Implemented `AcademicOnboardingGate` and mandatory specialization selection with advanced caching.
+- **Localization Overhaul**: Completed full localization for `not-found`, `academic-onboarding`, and main pages using JSON-based translations.
+- **Lecture Linking Migration**: Migrated subject lectures to use `lecture_id` for better data integrity and relationship management.
+- **Build & SEO**: Switched to native `sitemap.ts`, fixed Vercel build errors, and hardened CSP headers for `masar-x.vercel.app`.
+- **AI Improvements**: Added auto-trigger for Puter login on usage limit and improved UI responsiveness.
 
 ## Recent edits (09 Feb 2026)
 - Multiple UI pages under `src/app/` updated (subjects, courses, quizzes, admin dashboard, AI assistant)
@@ -114,10 +127,12 @@ npm run start
 
 ### Core Features
 - **Study Summaries**: Crowdsourced platform for sharing and organizing academic summaries with PDF uploads
+- **TRW (The Road Within)**: Advanced course system with membership plans, access codes, and progress tracking
 - **Interactive Courses**: Complete course management with enrollment, reviews, and progress tracking
-- **AI Assistant**: Powered by Google Gemini for intelligent study assistance and chat with conversation history
-- **Quizzes & Assessments**: Interactive quiz system with multiple question types and scoring
-- **Multi-Role System**: Student, Instructor, and Admin roles with comprehensive permission management
+- **AI Assistant**: Powered by Google Gemini with Puter mode for extended usage and smart study assistance
+- **Quizzes & Assessments**: Interactive quiz system with draft support and role-based permissions
+- **Academic Onboarding**: Mandatory specialization setup to personalize the learning experience
+- **Multi-Role System**: Student, Instructor, and Admin roles with comprehensive RLS security
 
 ### Learning Management
 - **Course Catalog**: Browse and enroll in courses by subject, department, and instructor
@@ -161,19 +176,15 @@ npm run start
 ## Tech Stack
 
 - **Frontend**: Next.js 14 + React 18 + TypeScript
-- **Styling**: Tailwind CSS with custom components and PostCSS
+- **State & Data**: TanStack Query (React Query) + React Context + Custom Hooks
+- **Styling**: Tailwind CSS + Framer Motion for animations
 - **Icons**: Lucide React
 - **Backend**: Supabase (Database + Auth + Storage + Edge Functions)
-- **Database**: PostgreSQL with advanced RLS policies and 20+ migration files
-- **Authentication**: Supabase Auth with role-based access control
-- **File Storage**: Supabase Storage + Cloudinary integration with secure bucket policies
-- **AI Integration**: Google Gemini API for intelligent assistance
-- **Email Services**: EmailJS for notifications and password reset
-- **Math Rendering**: KaTeX for mathematical expressions in summaries
-- **Deployment**: Vercel with optimized build configuration
-- **Development**: ESLint, TypeScript strict mode, PWA support
-- **State Management**: React Context + custom hooks
-- **UI Components**: Custom component library with shadcn/ui patterns
+- **Database**: PostgreSQL with 20+ migrations and advanced RLS policies
+- **AI Integration**: Google Gemini API + Puter Integration
+- **Email Services**: Brevo (Sendinblue) via Supabase Edge Functions
+- **Math Rendering**: KaTeX for mathematical expressions
+- **Deployment**: Vercel with native `sitemap.ts` and hardened CSP
 
 ## Getting Started
 
@@ -430,24 +441,13 @@ The platform uses a comprehensive PostgreSQL database with 20+ tables, views, an
 ## Recent Updates & Roadmap
 
 ### ✅ Recently Implemented (Latest Features)
-- **Advanced Course Management System**: Complete course ecosystem with instructor dashboards, enrollment workflows, and payment proof verification
-- **Structured Course Content**: Organized course materials including summaries, videos, and files with proper ordering
-- **Enrollment & Payment System**: Secure course enrollment with payment screenshot verification and status management
-- **Error Boundary Implementation**: Robust error handling with Arabic error messages and recovery options
-- **Course Review System**: Comprehensive rating and review system for courses and instructors
-- **Enhanced UI Components**: New course-specific components and improved user interface elements
-- **Advanced AI Integration**: Google Gemini-powered chat assistant with conversation history and AI summaries
-- **Comprehensive Quiz System**: Interactive quizzes with multiple question types, scoring, attempt tracking, and duration limits
-- **Multi-Role Architecture**: Student, Instructor, and Admin roles with granular permissions (currently 2 active admins)
-- **Real-time Communication**: Live notifications, user-to-user chat, and announcement system
-- **Content Moderation**: Appeal system for content disputes and admin review workflow
-- **File Management**: Cloudinary integration for avatars and comprehensive file upload system
-- **Security Enhancements**: Advanced RLS policies, audit logging, and secure file access
-- **PWA Support**: Progressive Web App features for mobile optimization
-- **Arabic/English Support**: Full RTL support with localized user experience
-- **Admin Subject Control**: Enhanced subject management and organization features
-- **Improved Password Reset Flow**: Streamlined user authentication and password recovery
-- **Enhanced Course Filtering**: Advanced search and filtering capabilities for course discovery
+- **TRW Subsystem**: New membership-based learning paths with plan-to-category mapping
+- **Academic Onboarding**: `AcademicOnboardingGate` to ensure data consistency for students
+- **Lecture Linking**: Improved lecture management using `lecture_id`
+- **Advanced Course Management**: Complete course ecosystem with instructor dashboards and enrollment workflows
+- **AI Puter Integration**: Support for Puter to extend AI assistant capabilities
+- **Localization**: Full i18n support with JSON-based translations for AR/EN
+- **Sitemap**: Automated SEO with `sitemap.ts`
 
 ### 🔄 Currently Active Features
 - **Complete Course Management**: Full course creation, enrollment, and content management system
