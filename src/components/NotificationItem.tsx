@@ -1,15 +1,13 @@
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Notification } from "../types/database";
 import {
   formatTimeAgo,
   getNotificationIcon,
   shouldHighlightNotification,
 } from "../utils/notificationUtils";
-import {
-  NOTIFICATION_STYLES,
-  NOTIFICATION_ACCESSIBILITY_KEYS,
-} from "../constants/notifications";
+import { NOTIFICATION_STYLES } from "../constants/notifications";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -24,6 +22,7 @@ export function NotificationItem({
 }: NotificationItemProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const isHighlighted = shouldHighlightNotification(notification);
+  const tNotifications = useTranslations("notifications");
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,7 +99,7 @@ export function NotificationItem({
                   <span className="w-1 h-1 rounded-full bg-current opacity-50" />
                   {notification.created_at
                     ? formatTimeAgo(notification.created_at)
-                    : "غير معروف"}
+                    : tNotifications("unknownTime")}
                 </time>
               </div>
             </div>
@@ -109,8 +108,10 @@ export function NotificationItem({
               onClick={handleDelete}
               disabled={isDeleting}
               className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-300 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100 translate-x-2 group-hover:translate-x-0"
-              title={NOTIFICATION_ACCESSIBILITY_KEYS.deleteNotification}
-              aria-label={`${NOTIFICATION_ACCESSIBILITY_KEYS.deleteNotification}: ${notification.title}`}
+              title={tNotifications("deleteNotification")}
+              aria-label={tNotifications("deleteNotificationAria", {
+                title: notification.title,
+              })}
             >
               {isDeleting ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />

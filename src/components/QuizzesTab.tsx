@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Eye,
   Trash2,
@@ -23,6 +24,7 @@ export function QuizzesTab({
   onDeleteQuiz,
   onUpdateStatus,
 }: QuizzesTabProps) {
+  const t = useTranslations("quizzes");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "title">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -87,11 +89,9 @@ export function QuizzesTab({
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
           <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            لا توجد امتحانات
+            {t("noExams")}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            لا توجد امتحانات حالياً
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">{t("noExamsSoon")}</p>
         </div>
       </div>
     );
@@ -101,7 +101,10 @@ export function QuizzesTab({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          إدارة الامتحانات ({filteredQuizzes.length} من {quizzes.length})
+          {t("manageExamsStats", {
+            filtered: filteredQuizzes.length,
+            total: quizzes.length,
+          })}
         </h2>
       </div>
 
@@ -111,10 +114,15 @@ export function QuizzesTab({
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
+              <label htmlFor="quizzes-tab-search" className="sr-only">
+                {t("searchLabel")}
+              </label>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
+                id="quizzes-tab-search"
+                name="quizzesTabSearch"
                 type="text"
-                placeholder="البحث في العنوان أو الوصف..."
+                placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
@@ -129,8 +137,8 @@ export function QuizzesTab({
               onChange={(e) => setSortBy(e.target.value as "date" | "title")}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             >
-              <option value="date">ترتيب بالتاريخ</option>
-              <option value="title">ترتيب بالعنوان</option>
+              <option value="date">{t("dateOrder")}</option>
+              <option value="title">{t("titleOrder")}</option>
             </select>
           </div>
 
@@ -154,10 +162,10 @@ export function QuizzesTab({
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
             <Eye className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              لا توجد نتائج
+              {t("noResults")}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              لا توجد امتحانات تطابق معايير البحث المحددة
+              {t("noResultsDesc")}
             </p>
           </div>
         ) : (
@@ -202,8 +210,8 @@ export function QuizzesTab({
                       </span>
                     )}
                     <span>
-                      المصدر:{" "}
-                      {quiz.source_type === "manual" ? "يدوي" : "ذكاء اصطناعي"}
+                      {t("source")}
+                      {quiz.source_type === "manual" ? t("manual") : t("ai")}
                     </span>
                     {(quiz.avg_rating ?? 0) > 0 && (
                       <span className="flex items-center gap-1 text-brand-orange">
@@ -220,13 +228,13 @@ export function QuizzesTab({
                         onClick={() => onUpdateStatus(quiz.id, "approved")}
                         className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
-                        اعتماد
+                        {t("approve")}
                       </button>
                       <button
                         onClick={() => onUpdateStatus(quiz.id, "rejected")}
                         className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
                       >
-                        رفض
+                        {t("reject")}
                       </button>
                     </>
                   )}
@@ -235,15 +243,15 @@ export function QuizzesTab({
                     className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
                   >
                     <Trash2 className="w-4 h-4" />
-                    حذف
+                    {t("delete")}
                   </button>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>
-                  تم الإنشاء:{" "}
+                  {t("created")}
                   {quiz.created_at
-                    ? new Date(quiz.created_at).toLocaleDateString("ar-SA")
+                    ? new Date(quiz.created_at).toLocaleDateString()
                     : "-"}
                 </span>
                 <span
@@ -256,10 +264,10 @@ export function QuizzesTab({
                   }`}
                 >
                   {quiz.status === "approved"
-                    ? "معتمد"
+                    ? t("approved")
                     : quiz.status === "rejected"
-                      ? "مرفوض"
-                      : "قيد المراجعة"}
+                      ? t("rejected")
+                      : t("pending")}
                 </span>
               </div>
             </div>
@@ -271,9 +279,11 @@ export function QuizzesTab({
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                عرض {startIndex + 1}-
-                {Math.min(endIndex, filteredQuizzes.length)} من{" "}
-                {filteredQuizzes.length} امتحان
+                {t("viewCount", {
+                  start: startIndex + 1,
+                  end: Math.min(endIndex, filteredQuizzes.length),
+                  total: filteredQuizzes.length,
+                })}
               </div>
               <div className="flex items-center gap-2">
                 <button

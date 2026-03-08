@@ -53,7 +53,7 @@ export default function QuizDashboardPage() {
 }
 
 function QuizDashboardInternal() {
-  const t = useTranslations();
+  const t = useTranslations("quizzes");
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { subjects: allSubjects, loading: subjectsLoading } = useSubjects();
@@ -875,12 +875,10 @@ function QuizDashboardInternal() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {isAdmin ? "إدارة الامتحانات" : "الامتحانات"}
+            {isAdmin ? t("manageExams") : t("exams")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {isAdmin
-              ? "إنشاء وإدارة امتحانات المواد"
-              : "تصفح الامتحانات المتاحة حسب المستوى والترم"}
+            {isAdmin ? t("manageExamsDesc") : t("browseExamsDesc")}
           </p>
         </div>
         {isAdmin && (
@@ -889,7 +887,7 @@ function QuizDashboardInternal() {
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            امتحان جديد
+            {t("newExam")}
           </button>
         )}
       </div>
@@ -902,7 +900,7 @@ function QuizDashboardInternal() {
             onChange={(e) =>
               setFilters((p) => ({ ...p, search: e.target.value }))
             }
-            placeholder="ابحث في العنوان أو الوصف..."
+            placeholder={t("searchPlaceholder")}
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           />
 
@@ -919,7 +917,7 @@ function QuizDashboardInternal() {
             }
             className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
-            <option value="">كل المستويات</option>
+            <option value="">{t("allLevels")}</option>
             {filterOptions.years.map((v) => (
               <option key={v} value={v}>
                 {v}
@@ -938,14 +936,11 @@ function QuizDashboardInternal() {
               }))
             }
             disabled={!filters.year}
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-50"
           >
-            <option value="">كل الترمات</option>
-            {filterOptions.semesters.map((v) => (
-              <option key={v} value={v}>
-                ترم {v}
-              </option>
-            ))}
+            <option value="">{t("allSemesters")}</option>
+            <option value="1">{t("semester1")}</option>
+            <option value="2">{t("semester2")}</option>
           </select>
 
           <select
@@ -957,14 +952,10 @@ function QuizDashboardInternal() {
                 subject: "",
               }))
             }
-            disabled={
-              !filters.year ||
-              !filters.semester ||
-              filterOptions.departments.length === 0
-            }
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+            disabled={!filters.year}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-50"
           >
-            <option value="">كل الأقسام</option>
+            <option value="">{t("allDepartments")}</option>
             {filterOptions.departments.map((v) => (
               <option key={v} value={v}>
                 {v}
@@ -977,10 +968,9 @@ function QuizDashboardInternal() {
             onChange={(e) =>
               setFilters((p) => ({ ...p, subject: e.target.value }))
             }
-            disabled={!filters.year || !filters.semester || !filters.department}
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white disabled:opacity-60"
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
           >
-            <option value="">كل المواد</option>
+            <option value="">{t("allSubjects")}</option>
             {filterOptions.subjects.map((v) => (
               <option key={v} value={v}>
                 {v}

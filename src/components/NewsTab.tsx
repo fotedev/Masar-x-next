@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Newspaper,
   Search,
@@ -22,6 +23,7 @@ export function NewsTab({
   onSetShowAddNews,
   onDeleteNews,
 }: NewsTabProps) {
+  const t = useTranslations("news");
   const { isAdmin } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -76,23 +78,23 @@ export function NewsTab({
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            إدارة الأخبار والإعلانات
+            {t("manageNews")}
           </h2>
           <button
             onClick={() => onSetShowAddNews(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
           >
-            إضافة خبر جديد
+            {t("addNewsModal")}
           </button>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
           <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            لا توجد أخبار
+            {t("noNews")}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            لم يتم إضافة أي أخبار بعد
+            {t("noNewsDescription")}
           </p>
         </div>
       </div>
@@ -104,13 +106,16 @@ export function NewsTab({
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          إدارة الأخبار والإعلانات ({filteredNews.length} من {news.length})
+          {t("manageNewsStats", {
+            filtered: filteredNews.length,
+            total: news.length,
+          })}
         </h2>
         <button
           onClick={() => onSetShowAddNews(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
         >
-          إضافة خبر جديد
+          {t("addNewsModal")}
         </button>
       </div>
 
@@ -121,14 +126,14 @@ export function NewsTab({
           <div className="flex-1">
             <div className="relative">
               <label htmlFor="news-tab-search" className="sr-only">
-                البحث في الأخبار
+                {t("searchLabel")}
               </label>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 id="news-tab-search"
                 name="newsTabSearch"
                 type="text"
-                placeholder="البحث في العنوان، المحتوى، أو النوع..."
+                placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
@@ -139,7 +144,7 @@ export function NewsTab({
           {/* Status Filter */}
           <div className="w-full sm:w-48">
             <label htmlFor="news-tab-status-filter" className="sr-only">
-              تصفية حسب الحالة
+              {t("allStatuses")}
             </label>
             <select
               id="news-tab-status-filter"
@@ -148,9 +153,9 @@ export function NewsTab({
               onChange={(e) => setStatusFilter(e.target.value as any)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
             >
-              <option value="all">جميع الحالات</option>
-              <option value="active">نشط</option>
-              <option value="inactive">غير نشط</option>
+              <option value="all">{t("allStatuses")}</option>
+              <option value="active">{t("active")}</option>
+              <option value="inactive">{t("inactive")}</option>
             </select>
           </div>
         </div>
@@ -162,10 +167,10 @@ export function NewsTab({
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
             <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              لا توجد نتائج
+              {t("noResults")}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              لا توجد أخبار تطابق معايير البحث المحددة
+              {t("noResultsDescription")}
             </p>
           </div>
         ) : (
@@ -187,7 +192,7 @@ export function NewsTab({
                           : "bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-300"
                       }`}
                     >
-                      {item.is_active ? "نشط" : "غير نشط"}
+                      {item.is_active ? t("active") : t("inactive")}
                     </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 mb-3">
@@ -196,7 +201,9 @@ export function NewsTab({
                       : item.content}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>النوع: {item.type}</span>
+                    <span>
+                      {t("type")}: {item.type}
+                    </span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 ml-0 sm:ml-4">
@@ -208,23 +215,24 @@ export function NewsTab({
                         : "bg-green-600 hover:bg-green-700 text-white"
                     }`}
                   >
-                    {item.is_active ? "إلغاء التفعيل" : "تفعيل"}
+                    {item.is_active ? t("deactivate") : t("activate")}
                   </button>
                   {isAdmin && (
                     <button
                       onClick={() => onDeleteNews(item.id)}
                       className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-red-500 hover:bg-red-600 text-white"
                     >
-                      <Trash className="w-4 h-4 inline-block mr-1" /> حذف
+                      <Trash className="w-4 h-4 inline-block mr-1" />{" "}
+                      {t("delete")}
                     </button>
                   )}
                 </div>
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                تم النشر:{" "}
+                {t("publishedAt")}:{" "}
                 {item.created_at
-                  ? new Date(item.created_at).toLocaleDateString("ar-SA")
-                  : "غير معروف"}
+                  ? new Date(item.created_at).toLocaleDateString()
+                  : "---"}
               </div>
             </div>
           ))

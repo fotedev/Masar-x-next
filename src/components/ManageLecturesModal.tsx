@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   X,
   Plus,
@@ -27,6 +28,7 @@ export function ManageLecturesModal({
   onClose,
   subjectName,
 }: ManageLecturesModalProps) {
+  const t = useTranslations("subjectPage");
   const [lectures, setLectures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -165,7 +167,7 @@ export function ManageLecturesModal({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                إدارة المحاضرات
+                {t("lecturesList")}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {subjectName}
@@ -184,12 +186,12 @@ export function ManageLecturesModal({
           {/* Add New Lecture */}
           <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30">
             <h3 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-3">
-              إضافة محاضرة جديدة
+              {t("addNewLecture")}
             </h3>
             <div className="flex gap-3">
               <input
                 type="text"
-                placeholder="عنوان المحاضرة"
+                placeholder={t("lectureForm.titlePlaceholder")}
                 value={newLecture.title}
                 onChange={(e) =>
                   setNewLecture({ ...newLecture, title: e.target.value })
@@ -198,7 +200,7 @@ export function ManageLecturesModal({
               />
               <input
                 type="number"
-                placeholder="الترتيب"
+                placeholder={t("lectureForm.orderPlaceholder")}
                 value={newLecture.orderIndex}
                 onChange={(e) =>
                   setNewLecture({ ...newLecture, orderIndex: e.target.value })
@@ -222,7 +224,7 @@ export function ManageLecturesModal({
               </div>
             ) : lectures.length === 0 ? (
               <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                لا توجد محاضرات مضافة بعد
+                {t("noLecturesYet")}
               </div>
             ) : (
               lectures.map((lec) => (
@@ -274,6 +276,7 @@ export function ManageLecturesModal({
                             });
                           }}
                           className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-all"
+                          title={t("lectureForm.save")}
                         >
                           <Save className="w-4 h-4" />
                         </button>
@@ -304,7 +307,7 @@ export function ManageLecturesModal({
                             setShowLectureContent(true);
                           }}
                           className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
-                          title="إدارة محتوى المحاضرة"
+                          title={t("lectureForm.manageContent")}
                         >
                           <BookOpen className="w-4 h-4" />
                         </button>
@@ -322,12 +325,14 @@ export function ManageLecturesModal({
                             });
                           }}
                           className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+                          title={t("lectureForm.edit")}
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(lec.id)}
                           className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                          title={t("lectureForm.delete")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -355,8 +360,6 @@ export function ManageLecturesModal({
   );
 }
 
-
-
 function LectureContentModal({
   show,
   onClose,
@@ -370,6 +373,7 @@ function LectureContentModal({
   lecture: any | null;
   lecturesIndex: any[];
 }) {
+  const t = useTranslations("subjectPage");
   const [activeTab, setActiveTab] = useState<
     "summaries" | "videos" | "files" | "quizzes"
   >("summaries");
@@ -380,7 +384,8 @@ function LectureContentModal({
   const [quizzes, setQuizzes] = useState<any[]>([]);
 
   const lectureKey = (lecture?.lecture_key || "").trim() || "other";
-  const lectureLabel = (lecture?.lecture_label || "").trim() || "غير مصنف";
+  const lectureLabel =
+    (lecture?.lecture_label || "").trim() || t("lectureForm.uncategorized");
 
   useEffect(() => {
     if (!show || !subject) return;
@@ -406,7 +411,9 @@ function LectureContentModal({
               .limit(400),
             supabase
               .from("files")
-              .select("id,title,subject,file_url,description,created_at,lecture_key,lecture_id")
+              .select(
+                "id,title,subject,file_url,description,created_at,lecture_key,lecture_id",
+              )
               .eq("subject", subject)
               .order("created_at", { ascending: false })
               .limit(400),
@@ -482,9 +489,9 @@ function LectureContentModal({
   };
 
   const handleDeleteVideo = async (id: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("lectureForm.confirmDelete"), {
+      confirmLabel: t("lectureForm.delete"),
+      cancelLabel: t("lectureForm.cancel"),
     });
     if (!confirmed) return;
     try {
@@ -503,9 +510,9 @@ function LectureContentModal({
   };
 
   const handleDeleteFile = async (id: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("lectureForm.confirmDelete"), {
+      confirmLabel: t("lectureForm.delete"),
+      cancelLabel: t("lectureForm.cancel"),
     });
     if (!confirmed) return;
     try {
@@ -524,9 +531,9 @@ function LectureContentModal({
   };
 
   const handleDeleteQuiz = async (id: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الاختبار؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("lectureForm.confirmDelete"), {
+      confirmLabel: t("lectureForm.delete"),
+      cancelLabel: t("lectureForm.cancel"),
     });
     if (!confirmed) return;
     try {
@@ -555,7 +562,7 @@ function LectureContentModal({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                إدارة محتوى المحاضرة
+                {t("lectureContent")}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {subject} • {lectureLabel}
@@ -566,10 +573,10 @@ function LectureContentModal({
             <button
               onClick={openSubjectLecture}
               className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-2"
-              title="فتح صفحة المادة على نفس المحاضرة"
+              title={t("lectureForm.viewContent")}
             >
               <ExternalLink className="w-4 h-4" />
-              فتح
+              {t("lectureForm.viewContent")}
             </button>
             <button
               onClick={onClose}
@@ -590,7 +597,7 @@ function LectureContentModal({
             }`}
           >
             <FileText className="w-4 h-4" />
-            ملخصات ({summaries.length})
+            {t("lectures")} ({summaries.length})
           </button>
           <button
             onClick={() => setActiveTab("videos")}
@@ -601,7 +608,7 @@ function LectureContentModal({
             }`}
           >
             <Video className="w-4 h-4" />
-            فيديوهات ({videos.length})
+            {t("contentType.video")} ({videos.length})
           </button>
           <button
             onClick={() => setActiveTab("files")}
@@ -612,7 +619,7 @@ function LectureContentModal({
             }`}
           >
             <FileText className="w-4 h-4" />
-            ملفات ({files.length})
+            {t("contentType.file")} ({files.length})
           </button>
           <button
             onClick={() => setActiveTab("quizzes")}
@@ -623,7 +630,7 @@ function LectureContentModal({
             }`}
           >
             <ClipboardList className="w-4 h-4" />
-            اختبارات ({quizzes.length})
+            {t("exams")} ({quizzes.length})
           </button>
         </div>
 
@@ -635,7 +642,7 @@ function LectureContentModal({
           ) : activeTab === "summaries" ? (
             summaries.length === 0 ? (
               <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                لا توجد ملخصات مرتبطة بهذه المحاضرة
+                {t("noLecturesYet")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -649,7 +656,7 @@ function LectureContentModal({
                         {s.title}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        الحالة: {s.status}
+                        {t("lectureForm.status")}: {s.status}
                       </span>
                     </div>
                     <span className="text-xs text-gray-400">
@@ -664,7 +671,7 @@ function LectureContentModal({
           ) : activeTab === "videos" ? (
             videos.length === 0 ? (
               <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                لا توجد فيديوهات مرتبطة بهذه المحاضرة
+                {t("noLecturesYet")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -687,14 +694,14 @@ function LectureContentModal({
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
-                        title="فتح الرابط"
+                        title={t("lectureForm.viewContent")}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
                       <button
                         onClick={() => handleDeleteVideo(v.id)}
                         className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
-                        title="حذف"
+                        title={t("lectureForm.delete")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -706,7 +713,7 @@ function LectureContentModal({
           ) : activeTab === "files" ? (
             files.length === 0 ? (
               <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-                لا توجد ملفات مرتبطة بهذه المحاضرة
+                {t("noLecturesYet")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -731,14 +738,14 @@ function LectureContentModal({
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
-                        title="فتح الرابط"
+                        title={t("lectureForm.viewContent")}
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
                       <button
                         onClick={() => handleDeleteFile(f.id)}
                         className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
-                        title="حذف"
+                        title={t("lectureForm.delete")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -749,7 +756,7 @@ function LectureContentModal({
             )
           ) : quizzes.length === 0 ? (
             <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
-              لا توجد اختبارات مرتبطة بهذه المحاضرة
+              {t("noExams")}
             </div>
           ) : (
             <div className="space-y-2">
@@ -766,7 +773,7 @@ function LectureContentModal({
                   <button
                     onClick={() => handleDeleteQuiz(q.id)}
                     className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all"
-                    title="حذف"
+                    title={t("lectureForm.delete")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

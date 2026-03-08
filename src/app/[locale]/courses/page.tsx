@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import {
   Card,
@@ -13,6 +14,8 @@ import {
   Badge,
 } from "@/components/ui";
 import { GraduationCap, Users, Star, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { motion } from "framer-motion";
 
 interface Course {
   id: string;
@@ -27,6 +30,7 @@ interface Course {
 }
 
 export default function CoursesPage() {
+  const t = useTranslations("courses");
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +92,7 @@ export default function CoursesPage() {
             return {
               ...course,
               price: Number.isFinite(priceNumber) ? priceNumber : 0,
-              instructor_name: course.profiles?.display_name || "مدرب",
+              instructor_name: course.profiles?.display_name || t("instructor"),
               average_rating: averageRating,
               total_students: activeEnrollments.length,
             };
@@ -142,26 +146,60 @@ export default function CoursesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            جاري تحميل الكورسات...
-          </p>
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="text-center mb-8">
+          <Skeleton className="h-10 w-64 mx-auto mb-4" />
+          <Skeleton className="h-6 w-96 mx-auto" />
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Skeleton className="flex-1 h-12 rounded-lg" />
+          <div className="flex gap-2">
+            <Skeleton className="w-20 h-10 rounded-lg" />
+            <Skeleton className="w-20 h-10 rounded-lg" />
+            <Skeleton className="w-20 h-10 rounded-lg" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="h-[300px]">
+              <CardHeader>
+                <Skeleton className="h-6 w-20 mb-4" />
+                <Skeleton className="h-7 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-1/4" />
+                  <div className="flex justify-between items-center pt-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-9 w-24" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-7xl mx-auto p-6"
+    >
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          الكورسات المتاحة
+          {t("pageTitle")}
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
-          اختر الكورس المناسب لك من بين مجموعة متنوعة من الكورسات المتميزة
+          {t("pageDescription")}
         </p>
       </div>
 
@@ -171,7 +209,7 @@ export default function CoursesPage() {
           <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="البحث في الكورسات..."
+            placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pr-10 pl-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -188,7 +226,7 @@ export default function CoursesPage() {
                 : "opacity-80"
             }
           >
-            الكل
+            {t("filterAll")}
           </Button>
           <Button
             variant={filter === "free" ? "default" : "outline"}
@@ -200,7 +238,7 @@ export default function CoursesPage() {
                 : "opacity-80"
             }
           >
-            مجاني
+            {t("filterFree")}
           </Button>
           <Button
             variant={filter === "paid" ? "default" : "outline"}
@@ -212,67 +250,98 @@ export default function CoursesPage() {
                 : "opacity-80"
             }
           >
-            مدفوع
+            {t("filterPaid")}
           </Button>
         </div>
       </div>
 
       {/* Courses Grid */}
       {filteredCourses.length === 0 ? (
-        <div className="text-center py-12">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
           <GraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            لا توجد كورسات متاحة
+            {t("noCourses")}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
             {searchTerm || filter !== "all"
-              ? "جرب تغيير معايير البحث أو الفلترة"
-              : "سيتم إضافة كورسات جديدة قريباً"}
+              ? t("noCoursesDescription")
+              : t("noCoursesSoon")}
           </p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={{
+            hidden: { opacity: 0 },
+            show: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05,
+                delayChildren: 0.2,
+              },
+            },
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {filteredCourses.map((course) => (
-            <Card
+            <motion.div
               key={course.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push(`/courses/${course.id}`)}
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1 },
+              }}
+              whileHover={{ y: -5 }}
+              transition={{ duration: 0.3 }}
             >
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant={course.price === 0 ? "secondary" : "default"}>
-                    {course.price === 0 ? "مجاني" : `${course.price} جنيه`}
-                  </Badge>
-                </div>
-                <CardTitle className="text-xl line-clamp-2">
-                  {course.title}
-                </CardTitle>
-                <CardDescription className="line-clamp-3">
-                  {course.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Users className="w-4 h-4 ml-1" />
-                    {course.total_students} طالب
+              <Card
+                className="hover:shadow-lg transition-shadow cursor-pointer h-full"
+                onClick={() => router.push(`/courses/${course.id}`)}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge
+                      variant={course.price === 0 ? "secondary" : "default"}
+                    >
+                      {course.price === 0
+                        ? t("free")
+                        : `${course.price} ${t("currency")}`}
+                    </Badge>
                   </div>
+                  <CardTitle className="text-xl line-clamp-2">
+                    {course.title}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-3">
+                    {course.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Users className="w-4 h-4 ml-1" />
+                      {t("studentCount", { count: course.total_students || 0 })}
+                    </div>
 
-                  {course.average_rating !== undefined &&
-                    course.average_rating > 0 &&
-                    renderStars(course.average_rating)}
+                    {course.average_rating !== undefined &&
+                      course.average_rating > 0 &&
+                      renderStars(course.average_rating)}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      مدرب: {course.instructor_name}
-                    </span>
-                    <Button size="sm">عرض التفاصيل</Button>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {t("instructor")}: {course.instructor_name}
+                      </span>
+                      <Button size="sm">{t("viewDetails")}</Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Stats Footer */}
@@ -282,22 +351,35 @@ export default function CoursesPage() {
             <div className="text-2xl font-bold text-blue-600 mb-1">
               {courses.length}
             </div>
-            <div className="text-gray-600 dark:text-gray-400">كورس متاح</div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {t("courseCount", { count: courses.length })}
+            </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-green-600 mb-1">
               {courses.filter((c) => c.price === 0).length}
             </div>
-            <div className="text-gray-600 dark:text-gray-400">كورس مجاني</div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {t("freeCourseCount", {
+                count: courses.filter((c) => c.price === 0).length,
+              })}
+            </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-purple-600 mb-1">
               {courses.reduce((sum, c) => sum + (c.total_students || 0), 0)}
             </div>
-            <div className="text-gray-600 dark:text-gray-400">طالب مسجل</div>
+            <div className="text-gray-600 dark:text-gray-400">
+              {t("studentCount", {
+                count: courses.reduce(
+                  (sum, c) => sum + (c.total_students || 0),
+                  0,
+                ),
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
