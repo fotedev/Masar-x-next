@@ -163,10 +163,10 @@ export function LectureDetailView(props: {
               hidden: { opacity: 0 },
               show: { opacity: 1 },
             }}
-            className="relative overflow-hidden rounded-[3rem] bg-slate-900 text-white min-h-[350px] flex items-center shadow-2xl shadow-brand-blue/20"
+            className="relative overflow-hidden rounded-3xl sm:rounded-[3rem] bg-slate-900 text-white min-h-[250px] sm:min-h-[350px] flex items-center shadow-2xl shadow-brand-blue/20"
           >
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            <div className="relative z-10 w-full p-8 sm:p-12 lg:p-16 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
               <motion.div layout className="lg:col-span-8 space-y-4">
                 <motion.div
                   layout
@@ -179,40 +179,40 @@ export function LectureDetailView(props: {
                   key={lectureTitle}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-5xl sm:text-6xl font-black leading-tight"
+                  className="text-3xl sm:text-5xl lg:text-6xl font-black leading-tight"
                 >
                   {lectureTitle}
                 </motion.h1>
                 <motion.div
                   layout
-                  className="flex flex-wrap justify-start gap-4 mt-6"
+                  className="flex flex-wrap justify-start gap-3 sm:gap-4 mt-6"
                 >
                   <motion.div
                     layout
-                    className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold"
+                    className="px-4 sm:px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-xs sm:text-sm font-bold"
                   >
                     {explanationItems.length} {tSubjectPage("explanation")}
                   </motion.div>
                   <motion.div
                     layout
-                    className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold"
+                    className="px-4 sm:px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-xs sm:text-sm font-bold"
                   >
                     {homeworkItems.length} {tSubjectPage("homework")}
                   </motion.div>
                   <motion.div
                     layout
-                    className="px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold"
+                    className="px-4 sm:px-5 py-2 rounded-2xl bg-white/5 border border-white/10 text-xs sm:text-sm font-bold"
                   >
                     {examItems.length} {tSubjectPage("examLabel")}
                   </motion.div>
                 </motion.div>
               </motion.div>
 
-              <motion.div layout className="lg:col-span-4">
+              <motion.div layout className="lg:col-span-4 w-full">
                 <div className="lg:border-r lg:border-white/10 lg:pr-10 lg:pt-2">
                   <motion.h3
                     layout
-                    className="text-lg font-black text-white/90 mb-5"
+                    className="text-lg font-black text-white/90 mb-5 hidden lg:block"
                   >
                     {tSubjectPage("lectureInfo")}
                   </motion.h3>
@@ -283,27 +283,27 @@ export function LectureDetailView(props: {
               className={`bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col ${
                 isTheatreMode
                   ? "flex-1 border-none rounded-none"
-                  : "rounded-[2.5rem]"
+                  : "rounded-3xl sm:rounded-[2.5rem]"
               }`}
             >
-              <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
-                    <Video className="w-5 h-5" />
+              <div className="p-3 sm:p-4 lg:p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600">
+                    <Video className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight line-clamp-1">
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white leading-tight truncate max-w-[150px] sm:max-w-none">
                       {activeVideoTitle}
                     </h3>
-                    <p className="text-xs font-bold text-slate-400">
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-400">
                       {tSubjectPage("videoPlayer")}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     onClick={onToggleTheatreMode}
-                    className={`p-2 rounded-xl transition-colors ${
+                    className={`p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-colors ${
                       isTheatreMode
                         ? "bg-brand-blue text-white"
                         : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
@@ -314,13 +314,13 @@ export function LectureDetailView(props: {
                         : tSubjectPage("theatreMode")
                     }
                   >
-                    <Monitor className="w-6 h-6" />
+                    <Monitor className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                   <button
                     onClick={onCloseVideo}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                    className="p-1.5 sm:p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                   >
-                    <X className="w-6 h-6 text-slate-400" />
+                    <X className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
                   </button>
                 </div>
               </div>
@@ -361,27 +361,29 @@ export function LectureDetailView(props: {
           className="lg:col-span-8 space-y-12"
         >
           <section className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
-                <Video className="w-6 h-6" />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
+                  <Video className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  {tSubjectPage("explanationsAndLessons")}
+                </h2>
               </div>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-white">
-                {tSubjectPage("explanationsAndLessons")}
-              </h2>
               {isAdmin && (
-                <div className="flex gap-2 mr-auto">
+                <div className="flex gap-2 sm:mr-auto">
                   <button
                     onClick={onAddVideo}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue font-bold text-xs hover:bg-brand-blue hover:text-white transition-all"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-brand-blue/10 text-brand-blue font-bold text-[10px] sm:text-xs hover:bg-brand-blue hover:text-white transition-all"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     {tSubjectPage("video")}
                   </button>
                   <button
                     onClick={onAddFile}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange font-bold text-xs hover:bg-brand-orange hover:text-white transition-all"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-brand-orange/10 text-brand-orange font-bold text-[10px] sm:text-xs hover:bg-brand-orange hover:text-white transition-all"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     {tSubjectPage("file")}
                   </button>
                 </div>
@@ -417,34 +419,34 @@ export function LectureDetailView(props: {
                       show: { opacity: 1 },
                     }}
                     whileHover={{ scale: 1.01 }}
-                    className="group flex flex-col sm:flex-row items-center gap-6 p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-brand-blue/5"
+                    className="group flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-brand-blue/5"
                   >
                     <div
-                      className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center ${
+                      className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shrink-0 ${
                         item.type === "video"
                           ? "bg-red-50 text-red-500"
                           : "bg-brand-blue/5 text-brand-blue"
                       }`}
                     >
                       {item.type === "video" ? (
-                        <Video className="w-8 h-8" />
+                        <Video className="w-6 h-6 sm:w-8 sm:h-8" />
                       ) : (
-                        <FileText className="w-8 h-8" />
+                        <FileText className="w-6 h-6 sm:w-8 sm:h-8" />
                       )}
                     </div>
-                    <div className="flex-1 text-right">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                    <div className="flex-1 text-center sm:text-right w-full min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                        <h4 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
                           {item.title}
                         </h4>
                         {item.type === "video" && (
-                          <span className="px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black">
+                          <span className="inline-block self-center sm:self-auto px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-black">
                             LIVE
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      <div className="flex items-center justify-center sm:justify-start gap-3">
+                        <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
                           {item.type === "video"
                             ? tSubjectPage("contentType.video")
                             : item.type === "summary"
@@ -452,14 +454,14 @@ export function LectureDetailView(props: {
                               : tSubjectPage("contentType.file")}
                         </span>
                         <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-                        <span className="text-xs font-bold text-slate-400">
+                        <span className="text-[10px] sm:text-xs font-bold text-slate-400">
                           {new Date(
                             item.created_at || Date.now(),
                           ).toLocaleDateString(locale)}
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2 relative z-10">
+                    <div className="flex items-center gap-2 relative z-10 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -471,7 +473,7 @@ export function LectureDetailView(props: {
                             onToggleProgress(contentId);
                           }
                         }}
-                        className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn ${
+                        className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn shrink-0 ${
                           completedContent.has(
                             item.id || item.url || item.file_url || "",
                           )
@@ -481,23 +483,18 @@ export function LectureDetailView(props: {
                         title="Mark lesson as completed"
                       >
                         <CheckCircle
-                          className={`w-5 h-5 transition-all duration-500 will-change-transform ${
+                          className={`w-5 h-5 transition-all duration-500 ${
                             completedContent.has(
                               item.id || item.url || item.file_url || "",
                             )
-                              ? "scale-110 animate-spin"
+                              ? "scale-110"
                               : "group-hover/btn:rotate-12"
                           }`}
                         />
-                        {completedContent.has(
-                          item.id || item.url || item.file_url || "",
-                        ) && (
-                          <span className="absolute inset-0 rounded-xl animate-ping bg-emerald-400/60" />
-                        )}
                       </button>
                       <button
                         onClick={() => onViewContent(item)}
-                        className="px-8 py-3 rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
+                        className="flex-1 sm:flex-none px-6 sm:px-8 py-3 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"
                       >
                         {tSubjectPage("viewContent")}
                       </button>
@@ -540,10 +537,10 @@ export function LectureDetailView(props: {
                       show: { opacity: 1, y: 0 },
                     }}
                     whileHover={{ scale: 1.02, translateY: -4 }}
-                    className="p-8 rounded-[2.5rem] bg-gradient-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group transition-all duration-500 text-right"
+                    className="p-6 sm:p-8 rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group transition-all duration-500 text-right"
                   >
-                    <div className="flex justify-between items-start mb-6">
-                      <FileText className="w-10 h-10 opacity-40" />
+                    <div className="flex justify-between items-start mb-4 sm:mb-6">
+                      <FileText className="w-8 h-8 sm:w-10 sm:h-10 opacity-40" />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
