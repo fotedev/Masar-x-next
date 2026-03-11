@@ -26,6 +26,7 @@ import { SubjectDashboard } from "@/components/subject/SubjectDashboard";
 import { LectureDetailView } from "@/components/subject/LectureDetailView";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useSubjectModals } from "@/hooks/useSubjectModals";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 function SubjectPageSkeleton() {
@@ -84,43 +85,33 @@ function SubjectSummariesContent() {
   } = useAcademicOptions({ includeInactive: true });
   const summariesHook = useSummaries();
   const { trackSummaryClick } = useAnalytics();
+  const {
+    editingSummary,
+    setEditingSummary,
+    showEditModal,
+    setShowEditModal,
+    showAddLectureForm,
+    setShowAddLectureForm,
+    showEditSubjectModal,
+    setShowEditSubjectModal,
+    showAddExamForm,
+    setShowAddExamForm,
+    lectureFormData,
+    setLectureFormData,
+    examFormData,
+    setExamFormData,
+  } = useSubjectModals();
+
   const [filteredSummaries, setFilteredSummaries] = useState<Summary[]>([]);
   const [savedLectures, setSavedLectures] = useState<SubjectLectureRow[]>([]);
-  const [editingSummary, setEditingSummary] = useState<Summary | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLectureKey, setSelectedLectureKey] = useState<string | null>(
     null,
   );
 
-  const [showAddLectureForm, setShowAddLectureForm] = useState(false);
   const [isSavingLecture, setIsSavingLecture] = useState(false);
-  const [lectureFormData, setLectureFormData] = useState({
-    title: "",
-    label: "",
-    key: "",
-    orderIndex: "",
-  });
-
-  const [showEditSubjectModal, setShowEditSubjectModal] = useState(false);
-
+  const [showMergeWarning, setShowMergeWarning] = useState(false);
   const [subjectQuizzes, setSubjectQuizzes] = useState<Quiz[]>([]);
-  const [showAddExamForm, setShowAddExamForm] = useState(false);
   const [isSavingExam, setIsSavingExam] = useState(false);
-  const [examFormData, setExamFormData] = useState({
-    title: "",
-    description: "",
-    durationMinutes: "",
-    department: "",
-    year: "",
-    questions: [
-      {
-        question: "",
-        options: ["", "", "", ""],
-        correctAnswer: 0,
-        explanation: "",
-      },
-    ],
-  });
 
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string | null>(null);
@@ -293,7 +284,7 @@ function SubjectSummariesContent() {
     fetchSubjectLectures();
   }, [fetchSubjectLectures]);
 
-  const handleSaveLecture = async () => {
+  const handleSaveLecture = async (force = false) => {
     if (!user) {
       toast.error(tSubjectPage("errors.mustLogin"));
       return;
@@ -323,6 +314,27 @@ function SubjectSummariesContent() {
       if (!key) {
         toast.error(tSubjectPage("errors.autoLectureKeyFailed"));
         return;
+      }
+
+      // Check for existing lecture with same key unless forced
+      if (!force) {
+        const { data: existing } = await supabase
+          .from("subject_lectures")
+          .select("id")
+          .eq(
+            "subject",
+            decodeURIComponent(normalizedSubjectName)
+              .trim()
+              .replace(/\s+/g, " "),
+          )
+          .eq("lecture_key", key)
+          .maybeSingle();
+
+        if (existing) {
+          setShowMergeWarning(true);
+          setIsSavingLecture(false);
+          return;
+        }
       }
 
       const manualLabel = (lectureFormData.label || "").trim();
@@ -360,6 +372,7 @@ function SubjectSummariesContent() {
 
       await fetchSubjectLectures();
       setShowAddLectureForm(false);
+      setShowMergeWarning(false);
       setLectureFormData({ title: "", label: "", key: "", orderIndex: "" });
 
       setSelectedLectureKey(key);
@@ -520,9 +533,10 @@ function SubjectSummariesContent() {
       );
     }
 
-    return filteredSummaries.filter(
-      (s) => getLectureInfoFromTitle(s.title).key === key,
-    );
+    return filteredSummaries.filter((s) => {
+      if (s.lecture_key) return s.lecture_key === key;
+      return getLectureInfoFromTitle(s.title).key === key;
+    });
   }, [filteredSummaries, selectedLectureId, selectedLectureKey]);
 
   const lectureFilteredVideos = useMemo(() => {
@@ -532,7 +546,10 @@ function SubjectSummariesContent() {
       return videos.filter((v: any) => v.lecture_id === selectedLectureId);
     }
 
-    return videos.filter((v) => getLectureInfoFromTitle(v.title).key === key);
+    return videos.filter((v) => {
+      if (v.lecture_key) return v.lecture_key === key;
+      return getLectureInfoFromTitle(v.title).key === key;
+    });
   }, [selectedLectureId, selectedLectureKey, videos]);
 
   const lectureFilteredFiles = useMemo(() => {
@@ -542,7 +559,10 @@ function SubjectSummariesContent() {
       return files.filter((f: any) => f.lecture_id === selectedLectureId);
     }
 
-    return files.filter((f) => getLectureInfoFromTitle(f.title).key === key);
+    return files.filter((f) => {
+      if (f.lecture_key) return f.lecture_key === key;
+      return getLectureInfoFromTitle(f.title).key === key;
+    });
   }, [files, selectedLectureId, selectedLectureKey]);
 
   const lectureFilteredQuizzes = useMemo(() => {
@@ -554,11 +574,19 @@ function SubjectSummariesContent() {
       );
     }
 
-    return subjectQuizzes.filter(
-      (q) =>
-        getLectureInfoFromTitle(q.title, q.description || undefined).key ===
-        key,
-    );
+    return subjectQuizzes.filter((q) => {
+      if (q.description && q.description.trim().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(q.description);
+          if (parsed.lecture_key) return parsed.lecture_key === key;
+        } catch {
+          // ignore
+        }
+      }
+      return (
+        getLectureInfoFromTitle(q.title, q.description || undefined).key === key
+      );
+    });
   }, [selectedLectureId, selectedLectureKey, subjectQuizzes, savedLectures]);
 
   const fetchSubjectQuizzes = useCallback(
@@ -988,7 +1016,10 @@ function SubjectSummariesContent() {
 
       <AddLectureModal
         isOpen={showAddLectureForm}
-        onClose={() => setShowAddLectureForm(false)}
+        onClose={() => {
+          setShowAddLectureForm(false);
+          setShowMergeWarning(false);
+        }}
         tSubjectPage={tSubjectPage}
         tCommon={tCommon}
         lectureFormData={lectureFormData}
@@ -996,6 +1027,8 @@ function SubjectSummariesContent() {
         getLectureInfoFromTitle={getLectureInfoFromTitle}
         isSavingLecture={isSavingLecture}
         onSaveLecture={handleSaveLecture}
+        showMergeWarning={showMergeWarning}
+        setShowMergeWarning={setShowMergeWarning}
       />
 
       <AddExamModal

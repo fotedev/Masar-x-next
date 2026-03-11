@@ -1,15 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import {
-  Flag,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  X,
-  Trash,
-} from "lucide-react";
+import { Flag, ChevronLeft, ChevronRight } from "lucide-react";
 import { Appeal } from "../types/database";
 import { useAuth } from "../contexts/AuthContext";
+import { useTranslations } from "next-intl";
+import { AppealsFilters } from "./appeals/AppealsFilters";
+import { AppealCard } from "./appeals/AppealCard";
 
 interface AppealsTabProps {
   appeals: Appeal[];
@@ -25,6 +20,7 @@ export function AppealsTab({
   onDeleteAppeal,
 }: AppealsTabProps) {
   const { isAdmin } = useAuth();
+  const t = useTranslations("appeals");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending" | "reviewed" | "closed"
@@ -77,22 +73,23 @@ export function AppealsTab({
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
+
   if (appeals.length === 0) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            إدارة الطعون
+            {t("manageTitle")}
           </h2>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
           <Flag className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            لا توجد طعون
+            {t("noAppeals")}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            لم يتم تقديم أي طعون حتى الآن
+            {t("noAppealsDesc")}
           </p>
         </div>
       </div>
@@ -101,55 +98,14 @@ export function AppealsTab({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          إدارة الطعون والبلاغات ({filteredAppeals.length} من {appeals.length})
-        </h2>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <label htmlFor="appeal-search" className="sr-only">
-                البحث في الطعون
-              </label>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                id="appeal-search"
-                name="appealSearch"
-                type="text"
-                placeholder="البحث في سبب الطعن، نوع المحتوى، أو اسم المستخدم..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-              />
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="w-full sm:w-48">
-            <label htmlFor="status-filter" className="sr-only">
-              تصفية حسب الحالة
-            </label>
-            <select
-              id="status-filter"
-              name="statusFilter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-            >
-              <option value="all">جميع الحالات</option>
-              <option value="pending">قيد المراجعة</option>
-              <option value="reviewed">تمت المراجعة</option>
-              <option value="closed">مغلق</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <AppealsFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        filteredCount={filteredAppeals.length}
+        totalCount={appeals.length}
+      />
 
       {/* Appeals List */}
       <div className="space-y-4">
@@ -157,101 +113,22 @@ export function AppealsTab({
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
             <Flag className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              لا توجد نتائج
+              {t("noResults")}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              لا توجد طعون تطابق معايير البحث المحددة
+              {t("noResultsDesc")}
             </p>
           </div>
         ) : (
           currentAppeals.map((appeal) => (
-            <div
+            <AppealCard
               key={appeal.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors"
-            >
-              <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      طعن على:{" "}
-                      {appeal.content_type === "summary" ? "ملخص" : "خبر"}
-                      {appeal.content_title && ` - "${appeal.content_title}"`}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        appeal.status === "pending"
-                          ? "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300"
-                          : appeal.status === "accepted"
-                            ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
-                            : "bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300"
-                      }`}
-                    >
-                      {appeal.status === "pending"
-                        ? "قيد المراجعة"
-                        : appeal.status === "accepted"
-                          ? "مقبول"
-                          : "مرفوض"}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-400 mb-3">
-                    {appeal.reason}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>بواسطة: {appeal.created_by || "مستخدم مجهول"}</span>
-                    <span>معرف المحتوى: {appeal.content_id}</span>
-                  </div>
-                  {appeal.reviewed_by && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                      تمت المراجعة بواسطة: {appeal.reviewed_by}
-                    </span>
-                  )}
-                </div>
-                {isAdmin && appeal.status === "pending" && (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 ml-0 sm:ml-4">
-                    <button
-                      onClick={() =>
-                        onAcceptAppeal(
-                          appeal.id,
-                          appeal.created_by || "",
-                          appeal.content_title || "",
-                        )
-                      }
-                      className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      <Check className="w-4 h-4 inline-block mr-1" /> قبول
-                    </button>
-                    <button
-                      onClick={() =>
-                        onRejectAppeal(
-                          appeal.id,
-                          appeal.created_by || "",
-                          appeal.content_title || "",
-                        )
-                      }
-                      className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      <X className="w-4 h-4 inline-block mr-1" /> رفض
-                    </button>
-                  </div>
-                )}
-                {isAdmin && appeal.status !== "pending" && (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 ml-0 sm:ml-4">
-                    <button
-                      onClick={() => onDeleteAppeal(appeal.id)}
-                      className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-gray-500 hover:bg-gray-600 text-white"
-                    >
-                      <Trash className="w-4 h-4 inline-block mr-1" /> حذف
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                تم التقديم:{" "}
-                {appeal.created_at
-                  ? new Date(appeal.created_at).toLocaleDateString("ar-SA")
-                  : "غير معروف"}
-              </div>
-            </div>
+              appeal={appeal}
+              isAdmin={isAdmin}
+              onAccept={onAcceptAppeal}
+              onReject={onRejectAppeal}
+              onDelete={onDeleteAppeal}
+            />
           ))
         )}
 

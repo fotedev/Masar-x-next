@@ -1,13 +1,9 @@
-import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { X, Upload } from "lucide-react";
-import Image from "next/image";
 import { Database } from "../types/database";
-import { uploadToCloudinary } from "../lib/cloudinary";
-import { FileDropzone } from "./FileDropzone";
-import { useAcademicOptions } from "../hooks/useAcademicOptions";
-import { useAuth } from "../contexts/AuthContext";
-import { useSubjects } from "../hooks/useSubjects";
+import { useAddNewsForm } from "@/hooks/useAddNewsForm";
+import { NewsFormFields } from "./news-form/NewsFormFields";
+import { NewsTargetFilters } from "./news-form/NewsTargetFilters";
+import { NewsMediaUploads } from "./news-form/NewsMediaUploads";
 
 interface AddNewsModalProps {
   showAddNews: boolean;
@@ -30,102 +26,30 @@ export function AddNewsModal({
   onAddNews,
 }: AddNewsModalProps) {
   const t = useTranslations("news");
-  const { user } = useAuth();
-  const [semester, setSemester] = useState<number>(1);
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions({
-    includeInactive: true,
+
+  const {
+    semester,
+    setSemester,
+    levels,
+    subjects,
+    subjectsLoading,
+    availableDepartments,
+    fileFile,
+    setFileFile,
+    imageFiles,
+    setImageFiles,
+    customCategory,
+    setCustomCategory,
+    loading,
+    error,
+    setError,
+    handleAddNews,
+  } = useAddNewsForm({
+    newNews,
+    onAddNews,
   });
-
-  const selectedLevelNumber = useMemo(() => {
-    if (!newNews.year) return undefined;
-    const found = levels.find((l) => l.name === newNews.year);
-    return typeof found?.level_number === "number"
-      ? found.level_number
-      : undefined;
-  }, [levels, newNews.year]);
-
-  const { subjects, loading: subjectsLoading } = useSubjects({
-    level: selectedLevelNumber,
-    semester: newNews.year ? semester : undefined,
-  });
-
-  const [fileFile, setFileFile] = useState<File | null>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [customCategory, setCustomCategory] = useState<string>("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const availableDepartments = useMemo(() => {
-    if (!newNews.year) return [];
-    return getDepartmentsForLevelName(newNews.year);
-  }, [newNews.year, getDepartmentsForLevelName]);
 
   if (!showAddNews) return null;
-
-  const removeImage = (index: number) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddNews = async () => {
-    // Check authentication first
-    if (!user) {
-      setError(t("newsLoginRequired"));
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    let fileUrl: string | null = null;
-    const imageUrls: string[] = [];
-
-    try {
-      if (fileFile) {
-        // Check file size (10MB limit)
-        const MAX_FILE_SIZE = 10 * 1024 * 1024;
-        if (fileFile.size > MAX_FILE_SIZE) {
-          setError(t("newsFileSizeError"));
-          setLoading(false);
-          return;
-        }
-        const result = await uploadToCloudinary(fileFile, {
-          folder: "masarx-news-files",
-        });
-        fileUrl = result.url;
-      }
-
-      if (imageFiles.length > 0) {
-        const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-        for (const imageFile of imageFiles) {
-          if (imageFile.size > MAX_IMAGE_SIZE) {
-            setError(t("newsImageSizeError", { name: imageFile.name }));
-            setLoading(false);
-            return;
-          }
-          const result = await uploadToCloudinary(imageFile, {
-            folder: "masarx-news-images",
-          });
-          imageUrls.push(result.url);
-        }
-      }
-
-      const finalNewsData = {
-        ...newNews,
-        type:
-          (newNews.type as any) === "custom"
-            ? "announcement"
-            : (newNews.type as "announcement" | "update" | "important"),
-      };
-
-      onAddNews(finalNewsData, fileUrl, imageUrls, customCategory);
-      setFileFile(null);
-      setImageFiles([]);
-      setCustomCategory("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("newsUploadError"));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -141,297 +65,35 @@ export function AddNewsModal({
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t("newsTitle")}
-              </label>
-              <input
-                type="text"
-                value={newNews.title}
-                onChange={(e) =>
-                  onSetNewNews({ ...newNews, title: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder={t("newsPlaceholder")}
-              />
-            </div>
+          <div className="space-y-6">
+            <NewsFormFields
+              newNews={newNews as any}
+              onSetNewNews={onSetNewNews}
+              customCategory={customCategory}
+              setCustomCategory={setCustomCategory}
+              t={t}
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t("newsType")}
-              </label>
-              <select
-                value={newNews.type}
-                onChange={(e) =>
-                  onSetNewNews({
-                    ...newNews,
-                    type: e.target.value as any,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="announcement">
-                  {t("newsTypeAnnouncement")}
-                </option>
-                <option value="update">{t("newsTypeUpdate")}</option>
-                <option value="important">{t("newsTypeImportant")}</option>
-                <option value="custom">{t("newsTypeCustom")}</option>
-              </select>
-            </div>
+            <NewsTargetFilters
+              newNews={newNews as any}
+              onSetNewNews={onSetNewNews}
+              semester={semester}
+              setSemester={setSemester}
+              levels={levels}
+              availableDepartments={availableDepartments}
+              subjects={subjects}
+              subjectsLoading={subjectsLoading}
+              t={t}
+            />
 
-            {(newNews.type as any) === "custom" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("newsCustomCategory")}
-                </label>
-                <input
-                  type="text"
-                  value={customCategory}
-                  onChange={(e) => setCustomCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder={t("newsCustomCategoryPlaceholder")}
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t("newsContent")}
-              </label>
-              <textarea
-                value={newNews.content}
-                onChange={(e) =>
-                  onSetNewNews({ ...newNews, content: e.target.value })
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[100px]"
-                placeholder={t("newsContentPlaceholder")}
-              ></textarea>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("newsLevel")} ({t("newsOptional")})
-                </label>
-                <select
-                  value={newNews.year || ""}
-                  onChange={(e) =>
-                    onSetNewNews({
-                      ...newNews,
-                      year: e.target.value || null,
-                      department: null,
-                      subject: null,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">{t("newsLevelAll")}</option>
-                  {levels.map((level) => (
-                    <option key={level.id} value={level.name}>
-                      {level.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("newsSemesterLabel")}
-                </label>
-                <select
-                  value={semester}
-                  onChange={(e) => {
-                    const next = Number(e.target.value);
-                    setSemester(next);
-                    onSetNewNews({
-                      ...newNews,
-                      department: null,
-                      subject: null,
-                    });
-                  }}
-                  disabled={!newNews.year}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
-                >
-                  <option value={1}>{t("newsSemester1")}</option>
-                  <option value={2}>{t("newsSemester2")}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("newsDepartment")} ({t("newsOptional")})
-                </label>
-                <select
-                  value={newNews.department || ""}
-                  onChange={(e) =>
-                    onSetNewNews({
-                      ...newNews,
-                      department: e.target.value || null,
-                      subject: null,
-                    })
-                  }
-                  disabled={!newNews.year || availableDepartments.length === 0}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">{t("newsDepartmentAll")}</option>
-                  {availableDepartments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t("newsSubject")} ({t("newsOptional")})
-                </label>
-                <select
-                  value={newNews.subject || ""}
-                  onChange={(e) =>
-                    onSetNewNews({
-                      ...newNews,
-                      subject: e.target.value || null,
-                    })
-                  }
-                  disabled={subjectsLoading}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
-                >
-                  <option value="">
-                    {subjectsLoading
-                      ? t("newsSubjectLoading")
-                      : t("newsSubjectAll")}
-                  </option>
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t("newsFile")}
-              </label>
-              <FileDropzone
-                onFileSelect={(files) => {
-                  if (files.length > 0) {
-                    const file = files[0];
-                    if (
-                      file &&
-                      (file.type === "application/pdf" ||
-                        file.type === "application/msword" ||
-                        file.type ===
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                    ) {
-                      setFileFile(file);
-                      setError("");
-                    } else {
-                      setError(t("newsFileError"));
-                      setFileFile(null);
-                    }
-                  }
-                }}
-                accept=".pdf,.doc,.docx"
-                className="w-full h-32"
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
-                    {fileFile ? (
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
-                        {fileFile.name}
-                      </p>
-                    ) : (
-                      <>
-                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                          <span className="font-semibold">
-                            {t("newsFileDrop")}
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
-                          {t("newsFileSize")}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </FileDropzone>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t("newsImages")}
-              </label>
-              <FileDropzone
-                onFileSelect={(files) => {
-                  const validImages = files.filter((file) => {
-                    const validTypes = [
-                      "image/jpeg",
-                      "image/jpg",
-                      "image/png",
-                      "image/gif",
-                      "image/webp",
-                    ];
-                    return validTypes.includes(file.type);
-                  });
-
-                  if (validImages.length !== files.length) {
-                    setError(t("newsImagesError"));
-                  } else {
-                    setError("");
-                  }
-
-                  setImageFiles((prev) => [...prev, ...validImages]);
-                }}
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                multiple
-                className="w-full h-32"
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
-                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-semibold">
-                        {t("newsImagesDrop")}
-                      </span>
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      {t("newsImagesSize")}
-                    </p>
-                  </div>
-                </div>
-              </FileDropzone>
-
-              {imageFiles.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {imageFiles.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <div className="w-full h-24 relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt={`Preview ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="إزالة الصورة"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <NewsMediaUploads
+              fileFile={fileFile}
+              setFileFile={setFileFile}
+              imageFiles={imageFiles}
+              setImageFiles={setImageFiles}
+              setError={setError}
+              t={t}
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

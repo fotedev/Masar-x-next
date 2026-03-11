@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotifications } from "../hooks/useNotifications";
 import { AppealInsert } from "../types/database";
+import { useTranslations } from "next-intl";
 
 interface AppealFormModalProps {
   isOpen: boolean;
@@ -22,16 +23,20 @@ export function AppealFormModal({
 }: AppealFormModalProps) {
   const { displayName } = useAuth();
   const { notifyAdmins } = useNotifications();
+  const t = useTranslations("appeals");
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const appealReasons = [
-    { value: "inaccurate_content", label: "محتوى غير دقيق" },
-    { value: "copyright_violation", label: "انتهاك حقوق النشر" },
-    { value: "inappropriate_content", label: "محتوى غير مناسب" },
-    { value: "spam", label: "محتوى مزعج أو إعلاني" },
-    { value: "other", label: "سبب آخر" },
+    { value: "inaccurate_content", label: t("reasons.inaccurate_content") },
+    { value: "copyright_violation", label: t("reasons.copyright_violation") },
+    {
+      value: "inappropriate_content",
+      label: t("reasons.inappropriate_content"),
+    },
+    { value: "spam", label: t("reasons.spam") },
+    { value: "other", label: t("reasons.other") },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,20 +69,13 @@ export function AppealFormModal({
 
       if (error) throw error;
 
-      // إرسال إشعار للمدراء
-      const appealReasonsMap: { [key: string]: string } = {
-        inaccurate_content: "محتوى غير دقيق",
-        copyright_violation: "انتهاك حقوق النشر",
-        inappropriate_content: "محتوى غير مناسب",
-        spam: "محتوى مزعج أو إعلاني",
-        other: "سبب آخر",
-      };
-
       notifyAdmins(
-        "طعن جديد على محتوى",
-        `تم إرسال طعن على ${
-          contentType === "summary" ? "ملخص" : "خبر"
-        } "${contentTitle}" لسبب: ${appealReasonsMap[reason] || reason}`,
+        t("newAppealTitle"),
+        t("newAppealDesc", {
+          type: contentType === "summary" ? t("summary") : t("news"),
+          title: contentTitle,
+          reason: t(`reasons.${reason}`),
+        }),
         "admin_submission",
         contentId,
         contentType,
@@ -102,7 +100,7 @@ export function AppealFormModal({
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Flag className="w-6 h-6 text-orange-500" />
-              تقديم طعن
+              {t("submitTitle")}
             </h2>
             <button
               onClick={onClose}
@@ -114,17 +112,18 @@ export function AppealFormModal({
 
           <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>المحتوى:</strong> {contentTitle}
+              <strong>{t("contentLabel")}:</strong> {contentTitle}
             </p>
             <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-              نوع المحتوى: {contentType === "summary" ? "تلخيص" : "خبر"}
+              {t("contentTypeLabel")}:{" "}
+              {contentType === "summary" ? t("summary") : t("news")}
             </p>
           </div>
 
           {displayName && (
             <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
               <p className="text-sm text-green-800 dark:text-green-200">
-                <strong>ملاحظة:</strong> الطعن سيُرسل باسم:{" "}
+                <strong>{t("noticeTitle")}:</strong> {t("noticeName")}:{" "}
                 <strong>{displayName}</strong>
               </p>
             </div>
@@ -133,7 +132,7 @@ export function AppealFormModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                سبب الطعن *
+                {t("reasonLabel")} *
               </label>
               <select
                 value={reason}
@@ -141,7 +140,7 @@ export function AppealFormModal({
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 required
               >
-                <option value="">اختر السبب...</option>
+                <option value="">{t("reasonPlaceholder")}</option>
                 {appealReasons.map((appealReason) => (
                   <option key={appealReason.value} value={appealReason.value}>
                     {appealReason.label}
@@ -152,14 +151,14 @@ export function AppealFormModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                وصف المشكلة (اختياري)
+                {t("descriptionLabel")}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="يرجى وصف المشكلة بالتفصيل..."
+                placeholder={t("descriptionPlaceholder")}
               />
             </div>
 
@@ -169,22 +168,21 @@ export function AppealFormModal({
                 disabled={isSubmitting}
                 className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
-                {isSubmitting ? "جاري الإرسال..." : "إرسال الطعن"}
+                {isSubmitting ? t("submitting") : t("submitButton")}
               </button>
               <button
                 type="button"
                 onClick={onClose}
                 className="px-6 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
               >
-                إلغاء
+                {t("cancel")}
               </button>
             </div>
           </form>
 
           <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
-              <strong>ملاحظة:</strong> سيتم مراجعة طعنك من قبل فريق الإدارة.
-              نشكرك على مساهمتك في تحسين جودة المحتوى.
+              <strong>{t("noticeTitle")}:</strong> {t("reviewNotice")}
             </p>
           </div>
         </div>
