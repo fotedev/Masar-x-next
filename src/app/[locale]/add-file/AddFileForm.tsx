@@ -3,13 +3,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
 import { FileDropzone } from "@/components/FileDropzone";
+import { LectureSelect } from "@/components/lectures/LectureSelect";
 
 export function AddFileForm() {
+  const t = useTranslations("addFile");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAdmin, isAdminLoading } = useAuth();
@@ -72,6 +75,13 @@ export function AddFileForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const currentLectureKey = (searchParams.get("lecture") || "").trim();
+    if (!currentLectureKey) {
+      setError(t("selectLectureFirst"));
+      return;
+    }
+
     setLoading(true);
     setError("");
     setUploadProgress(0);
@@ -84,14 +94,29 @@ export function AddFileForm() {
       if (lectureKey) {
         const { data: lectureRow, error: lectureError } = await supabase
           .from("subject_lectures")
-          .select("id,lecture_key")
+          .select("id,lecture_key,subject")
           .eq("subject", formData.subject)
           .eq("lecture_key", lectureKey)
           .maybeSingle();
 
-        if (lectureError) throw lectureError;
+        if (lectureError) {
+          console.error("Lecture lookup error:", lectureError);
+          setError(t("error"));
+          setLoading(false);
+          return;
+        }
+
         if (!lectureRow) {
-          setError("المحاضرة المحددة غير صالحة لهذه المادة");
+          setError(
+            t("lectureNotFound", { lectureKey, subject: formData.subject }),
+          );
+          setLoading(false);
+          return;
+        }
+
+        // Double check subject match (extra safety)
+        if (lectureRow.subject !== formData.subject) {
+          setError(t("lectureMismatch"));
           setLoading(false);
           return;
         }
@@ -100,13 +125,13 @@ export function AddFileForm() {
       }
 
       if (uploadType === "file" && !file) {
-        setError("يرجى اختيار ملف");
+        setError(t("selectFile"));
         setLoading(false);
         return;
       }
 
       if (uploadType === "link" && !formData.externalUrl) {
-        setError("يرجى إدخال رابط جوجل درايف");
+        setError(t("error")); // Or a more specific key if available
         setLoading(false);
         return;
       }
@@ -115,12 +140,12 @@ export function AddFileForm() {
 
       if (uploadType === "file" && file) {
         // Upload file to Cloudinary
-        setUploadStage("جاري رفع الملف...");
+        setUploadStage(t("uploading", { progress: 0 }));
         const cloudinaryResult = await uploadToCloudinary(file, {
           folder: "masarx-files",
-          onProgress: (progress, stage) => {
+          onProgress: (progress) => {
             setUploadProgress(progress);
-            setUploadStage(stage);
+            setUploadStage(t("uploading", { progress }));
           },
         });
         finalFileUrl = cloudinaryResult.url;
@@ -145,11 +170,7 @@ export function AddFileForm() {
 
       setSuccess(true);
 
-      sendNotification("تم إضافة الملف بنجاح!", {
-        body: `ملف "${formData.title}" تم إضافته`,
-        icon: "/logo.png",
-        tag: "file-added",
-      });
+      sendNotification(t("success"));
 
       setTimeout(() => {
         const lecture = searchParams.get("lecture") || "";
@@ -157,7 +178,7 @@ export function AddFileForm() {
         router.push(url);
       }, 2000);
     } catch {
-      setError("حدث خطأ أثناء إضافة الملف. يرجى المحاولة مرة أخرى.");
+      setError(t("error"));
     } finally {
       setLoading(false);
     }
@@ -169,7 +190,7 @@ export function AddFileForm() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-slate-600 dark:text-slate-400">
-            جاري التحقق من الصلاحيات...
+            {t("adminOnly")}
           </p>
         </div>
       </div>
@@ -182,13 +203,10 @@ export function AddFileForm() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
           <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            تم إضافة الملف بنجاح!
+            {t("success")}
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
-            الملف متاح الآن للطلاب
-          </p>
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-            سيتم تحويلك إلى صفحة المادة...
+            {formData.title}
           </p>
         </div>
       </div>
@@ -200,19 +218,19 @@ export function AddFileForm() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            إضافة ملف جديد
+            {t("title")}
           </h1>
           <button
             type="button"
             onClick={handleClose}
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
-            aria-label="إغلاق"
+            aria-label={t("newsCancel", { ns: "news" }) || "إلغاء"}
           >
             <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
-          أضف ملف تعليمي أو كتاب للمادة
+          {t("subtitle")}
         </p>
 
         {error && (
@@ -227,7 +245,7 @@ export function AddFileForm() {
               htmlFor="file-title"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              عنوان الملف <span className="text-red-500">*</span>
+              {t("fileTitle")} <span className="text-red-500">*</span>
             </label>
             <input
               id="file-title"
@@ -239,7 +257,7 @@ export function AddFileForm() {
                 setFormData({ ...formData, title: e.target.value })
               }
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
-              placeholder="مثال: كتاب أساسيات الرياضيات"
+              placeholder={t("fileTitlePlaceholder")}
             />
           </div>
 
@@ -248,19 +266,35 @@ export function AddFileForm() {
               htmlFor="file-subject"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              اسم المادة <span className="text-red-500">*</span>
+              {t("subject")} <span className="text-red-500">*</span>
             </label>
             <input
               id="file-subject"
               name="fileSubject"
               type="text"
               required
+              readOnly
               value={formData.subject}
-              onChange={(e) =>
-                setFormData({ ...formData, subject: e.target.value })
-              }
-              className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
-              placeholder="مثال: أساسيات تكنولوجيا المعلومات"
+              className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 placeholder-gray-500 dark:placeholder-gray-400 text-base"
+            />
+          </div>
+
+          <div>
+            <LectureSelect
+              subject={formData.subject}
+              selectedKey={searchParams.get("lecture") || ""}
+              onSelect={(lec) => {
+                const newParams = new URLSearchParams(searchParams.toString());
+                if (lec) {
+                  newParams.set("lecture", lec.lecture_key);
+                } else {
+                  newParams.delete("lecture");
+                }
+                router.replace(
+                  `${window.location.pathname}?${newParams.toString()}`,
+                );
+              }}
+              label={t("lecture")}
             />
           </div>
 
@@ -269,7 +303,7 @@ export function AddFileForm() {
               htmlFor="file-description"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              وصف الملف (اختياري)
+              {t("description")}
             </label>
             <textarea
               id="file-description"
@@ -280,13 +314,13 @@ export function AddFileForm() {
               }
               rows={3}
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
-              placeholder="وصف مختصر للملف..."
+              placeholder={t("descriptionPlaceholder")}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              طريقة الإضافة <span className="text-red-500">*</span>
+              {t("uploadFile")} <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-4 mb-4">
               <button
@@ -298,7 +332,7 @@ export function AddFileForm() {
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                 }`}
               >
-                رابط خارجي (Drive)
+                Drive
               </button>
               <button
                 type="button"
@@ -309,7 +343,7 @@ export function AddFileForm() {
                     : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
                 }`}
               >
-                رفع ملف
+                File
               </button>
             </div>
           </div>
@@ -317,7 +351,7 @@ export function AddFileForm() {
           {uploadType === "file" ? (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                رفع الملف <span className="text-red-500">*</span>
+                {t("uploadFile")} <span className="text-red-500">*</span>
               </label>
               <FileDropzone
                 onFileSelect={(files) => {
@@ -340,11 +374,9 @@ export function AddFileForm() {
                       <>
                         <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                           <span className="font-semibold">
-                            اضغط أو اسحب لرفع الملف
+                            {t("fileDropzoneIdle", { ns: "common" }) ||
+                              "Click or drag files here to upload"}
                           </span>
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
-                          PDF, DOC, PPT, TXT, ZIP (حتى 50MB)
                         </p>
                       </>
                     )}
@@ -358,7 +390,7 @@ export function AddFileForm() {
                 htmlFor="external-url"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                رابط جوجل درايف <span className="text-red-500">*</span>
+                Drive <span className="text-red-500">*</span>
               </label>
               <input
                 id="external-url"
@@ -401,12 +433,12 @@ export function AddFileForm() {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>جاري الإضافة...</span>
+                <span>{t("submitting")}</span>
               </>
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                <span>إضافة الملف</span>
+                <span>{t("submit")}</span>
               </>
             )}
           </button>
