@@ -21,7 +21,8 @@
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",
-    "redirectingToPrivacyPolicy": "Redirecting to the Privacy Policy..."
+    "redirectingToPrivacyPolicy": "Redirecting to the Privacy Policy...",
+    "of": "of"
   },
   "trwRedeem": {
     "title": "Redeem access code",
@@ -202,6 +203,7 @@
     "switchStudentAssistant": "Switch: Student Assistant",
     "switchCsAssistant": "Switch: CS Assistant",
     "switchGroupChat": "Switch: Group Chat",
+    "restoringChat": "Restoring conversation...",
     "welcomeTitle": "How can I help you today?",
     "welcomeDescription": "You can ask me about anything related to study subjects, summaries, or even request a practice test for you.",
     "suggestion1": "Explain the concept of encryption",
@@ -233,6 +235,7 @@
     "allDepartments": "All Departments",
     "allSubjects": "All Subjects",
     "noExams": "No exams found",
+    "noExamsSoon": "New exams will appear here soon",
     "startNewExam": "Start by creating a new exam",
     "dateOrder": "Sort by Date",
     "titleOrder": "Sort by Title",
@@ -374,7 +377,51 @@
       "uncategorized": "Uncategorized",
       "status": "Status",
       "confirmDelete": "Are you sure you want to delete this item?",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "mergeWarningTitle": "Lecture already exists",
+      "mergeWarningDesc": "This title will update the currently existing lecture. Are you sure?",
+      "confirmMerge": "Yes, update",
+      "cancelMerge": "Cancel",
+      "reasons": {
+        "inaccurate_content": "Inaccurate Content",
+        "copyright_violation": "Copyright Violation",
+        "inappropriate_content": "Inappropriate Content",
+        "spam": "Spam or Advertising",
+        "other": "Other Reason"
+      },
+      "manageTitle": "Appeals Management",
+      "noAppeals": "No appeals found",
+      "noAppealsDesc": "No appeals have been submitted yet",
+      "noResults": "No results found",
+      "noResultsDesc": "No appeals match your search criteria",
+      "filters": {
+        "title": "Appeals & Reports Management",
+        "of": "of",
+        "searchLabel": "Search appeals",
+        "searchPlaceholder": "Search in appeal reason, content type, or username...",
+        "statusLabel": "Filter by status",
+        "statusAll": "All Statuses",
+        "statusPending": "Under Review",
+        "statusReviewed": "Reviewed",
+        "statusClosed": "Closed"
+      },
+      "card": {
+        "on": "Appeal on",
+        "summary": "Summary",
+        "news": "News",
+        "statusPending": "Under Review",
+        "statusAccepted": "Accepted",
+        "statusRejected": "Rejected",
+        "by": "By",
+        "anonymous": "Anonymous user",
+        "contentId": "Content ID",
+        "reviewedBy": "Reviewed by",
+        "accept": "Accept",
+        "reject": "Reject",
+        "delete": "Delete",
+        "submittedAt": "Submitted at",
+        "unknown": "Unknown"
+      }
     },
     "noLecturesYet": "No lectures yet",
     "summary": "Summary",
@@ -519,5 +566,234 @@
     "student": "Student",
     "currency": "EGP",
     "free": "Free"
+  },
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "subtitle": "Manage and review content, news, and exams",
+    "globalFilter": "Global Filter:",
+    "levelTwo": "Level 2",
+    "allLevels": "All Levels",
+    "allDepartments": "All Departments",
+    "allSubjects": "All Subjects",
+    "clearFilters": "Clear Filters",
+    "tabs": {
+      "courses": "Courses",
+      "subjects": "Subjects",
+      "enrollments": "Enrollments",
+      "summaries": "Summaries",
+      "news": "News",
+      "appeals": "Appeals",
+      "quizzes": "Quizzes",
+      "analytics": "Analytics",
+      "pageManagement": "Page Management"
+    },
+    "noAccess": {
+      "courses": "You do not have permission to manage courses",
+      "enrollments": "You do not have permission to view enrollments",
+      "pageManagement": "You do not have permission to manage the page"
+    },
+    "auth": {
+      "checking": "Checking permissions...",
+      "unauthorized": "Unauthorized",
+      "noPermission": "You do not have permission to access this page"
+    },
+    "coursesTab": {
+      "title": "Courses Management",
+      "subtitle": "Create and manage paid courses",
+      "createCourse": "Create New Course",
+      "noCourses": "No courses found",
+      "startFirstCourse": "Start by creating your first course",
+      "createFirstCourse": "Create First Course"
+    }
+  },
+  "appeals": {
+    "manageTitle": "Appeals Management",
+    "noAppeals": "No appeals found",
+    "noAppealsDesc": "No appeals have been submitted yet",
+    "noResults": "No results found",
+    "noResultsDesc": "No appeals match your search criteria",
+    "reasons": {
+      "inaccurate_content": "Inaccurate Content",
+      "copyright_violation": "Copyright Violation",
+      "inappropriate_content": "Inappropriate Content",
+      "spam": "Spam or Advertising",
+      "other": "Other Reason"
+    },
+    "filters": {
+      "title": "Appeals & Reports Management",
+      "of": "of",
+      "searchLabel": "Search appeals",
+      "searchPlaceholder": "Search in appeal reason, content type, or username...",
+      "statusLabel": "Filter by status",
+      "statusAll": "All Statuses",
+      "statusPending": "Under Review",
+      "statusReviewed": "Reviewed",
+      "statusClosed": "Closed"
+    },
+    "card": {
+      "on": "Appeal on",
+      "summary": "Summary",
+      "news": "News",
+      "statusPending": "Under Review",
+      "statusAccepted": "Accepted",
+      "statusRejected": "Rejected",
+      "by": "By",
+      "anonymous": "Anonymous user",
+      "contentId": "Content ID",
+      "reviewedBy": "Reviewed by",
+      "accept": "Accept",
+      "reject": "Reject",
+      "delete": "Delete",
+      "submittedAt": "Submitted at",
+      "unknown": "Unknown"
+    }
+  },
+  "summaries": {
+    "filters": {
+      "searchPlaceholder": "Search by title, content, subject, or contributor...",
+      "searchLabel": "Search summaries",
+      "statusAll": "All Statuses",
+      "statusPending": "Pending",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "statusLabel": "Filter by status",
+      "sortByDate": "Sort by Date",
+      "sortByTitle": "Sort by Title",
+      "sortBySubject": "Sort by Subject",
+      "sortByLabel": "Sort by",
+      "sortAsc": "Ascending",
+      "sortDesc": "Descending"
+    },
+    "card": {
+      "titlePrefix": "Topic Summary",
+      "edit": "Edit Summary",
+      "statusPending": "Pending",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "statusBy": "By",
+      "subject": "Subject",
+      "approve": "Approve",
+      "reject": "Reject",
+      "delete": "Delete",
+      "sentAt": "Sent at",
+      "anonymous": "Anonymous user"
+    },
+    "pagination": {
+      "viewCount": "Showing {start}-{end} of {total}",
+      "label": "summaries"
+    },
+    "manageTitle": "Manage Summaries",
+    "deleteAll": "Delete all summaries",
+    "noSummaries": "No summaries",
+    "noSummariesDesc": "No summaries in this category currently",
+    "noResults": "No results",
+    "noResultsDesc": "No summaries match your search criteria"
+  },
+  "onboarding": {
+    "welcome": "Welcome to the Platform! 🎓",
+    "subtitle": "Please complete your profile to enjoy all features",
+    "academicLevel": "Academic Level",
+    "department": "Department",
+    "selectLevel": "Select academic level",
+    "selectDepartment": "Select department",
+    "comingSoon": "Soon",
+    "otherLevelsNotice": "Other levels will be available soon",
+    "saving": "Saving...",
+    "continue": "Continue",
+    "changeLaterNotice": "You can change these details later from profile settings",
+    "error": "An error occurred while saving. Please try again."
+  },
+  "courseDetail": {
+    "videos": {
+      "title": "Course Videos",
+      "addVideo": "Add Video",
+      "empty": "No videos available for this course yet",
+      "arabic": "Arabic",
+      "english": "English",
+      "arabicTitle": "Arabic Videos",
+      "englishTitle": "English Videos",
+      "duration": "Duration",
+      "watch": "Watch"
+    },
+    "files": {
+      "title": "Course Files",
+      "addFile": "Add File",
+      "empty": "No files available for this course yet",
+      "fileSize": "File Size",
+      "download": "Download"
+    },
+    "reviews": {
+      "title": "Student Reviews",
+      "addReview": "Add Review",
+      "empty": "No reviews yet. Be the first to review this course!",
+      "anonymous": "Anonymous user"
+    }
+  },
+  "errorBoundary": {
+    "title": "Sorry, an unexpected error occurred",
+    "subtitle": "We apologize for this error. Please try again or return to the home page.",
+    "retry": "Retry",
+    "home": "Home Page",
+    "reload": "Or reload the page"
+  },
+  "pwa": {
+    "title": "Install App",
+    "description": "Install Masar X as an app on your phone for quick access",
+    "install": "Install",
+    "later": "Later"
+  },
+  "fileDropzone": {
+    "active": "Drop files here",
+    "idle": "Click or drag files here to upload"
+  },
+  "addVideo": {
+    "title": "Add New Video",
+    "subtitle": "Add a new educational video to the lecture",
+    "videoTitle": "Video Title",
+    "videoTitlePlaceholder": "Example: Introduction to Computing",
+    "subject": "Subject Name",
+    "lecture": "Associated Lecture",
+    "videoUrl": "Video URL",
+    "videoUrlPlaceholder": "YouTube or Cloudinary link",
+    "language": "Video Language",
+    "arabic": "Arabic",
+    "english": "English",
+    "submit": "Add Video",
+    "submitting": "Adding...",
+    "success": "Video added successfully",
+    "error": "Error occurred while adding the video",
+    "invalidUrl": "Please enter a valid URL",
+    "selectLectureFirst": "Please select a lecture first",
+    "adminOnly": "This page is only available to administrators",
+    "lectureNotFound": "Lecture \"{lectureKey}\" not found in subject \"{subject}\"",
+    "lectureMismatch": "This lecture does not belong to the selected subject"
+  },
+  "addFile": {
+    "title": "Add New File",
+    "subtitle": "Add a new PDF or summary to the lecture",
+    "fileTitle": "File Title",
+    "fileTitlePlaceholder": "Example: Lecture 1 Summary",
+    "subject": "Subject Name",
+    "lecture": "Associated Lecture",
+    "description": "File Description (Optional)",
+    "descriptionPlaceholder": "Enter content description...",
+    "uploadFile": "Upload File",
+    "submit": "Add File",
+    "submitting": "Adding...",
+    "success": "File added successfully",
+    "error": "Error occurred while adding the file",
+    "selectFile": "Please select a file",
+    "selectLectureFirst": "Please select a lecture first",
+    "adminOnly": "This page is only available to administrators",
+    "lectureNotFound": "Lecture \"{lectureKey}\" not found in subject \"{subject}\"",
+    "lectureMismatch": "This lecture does not belong to the selected subject",
+    "uploading": "Uploading... ({progress}%)"
+  },
+  "lectureSelect": {
+    "label": "Select Lecture...",
+    "searchPlaceholder": "Search for a lecture...",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "none": "No lecture (General)"
   }
 }
