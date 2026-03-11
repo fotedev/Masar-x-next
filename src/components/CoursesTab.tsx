@@ -1,25 +1,9 @@
-import React, { useState, useEffect } from "react";
-import {
-  GraduationCap,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  ToggleLeft,
-  ToggleRight,
-} from "lucide-react";
-import { supabase } from "../lib/supabase";
+import React from "react";
+import { GraduationCap, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "./ui/Button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/Card";
-import { Badge } from "./ui/Badge";
-import { toast } from "sonner";
-import { confirmToast } from "../lib/confirmToast";
+import { useCourses } from "@/hooks/useCourses";
+import { CourseCard } from "./courses/CourseCard";
 
 interface Course {
   id: string;
@@ -43,161 +27,17 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
   onEditCourse,
   refreshKey,
 }) => {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadCourses();
-  }, [refreshKey]);
-
-  const loadCourses = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // First get courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (coursesError) throw coursesError;
-
-      if (!coursesData || coursesData.length === 0) {
-        setCourses([]);
-        return;
-      }
-
-      // Get instructor names separately
-      const instructorIds = [
-        ...new Set(
-          coursesData.map((c: (typeof coursesData)[number]) => c.instructor_id),
-        ),
-      ].filter((id): id is string => typeof id === "string" && id.length > 0);
-      const { data: profilesData, error: profilesError } = instructorIds.length
-        ? await supabase
-            .from("profiles")
-            .select("id, full_name, username")
-            .in("id", instructorIds)
-        : { data: [], error: null };
-
-      // Get enrollments for each course
-      const courseIds = coursesData.map(
-        (c: (typeof coursesData)[number]) => c.id,
-      );
-      const { data: enrollmentsData, error: enrollmentsError } =
-        courseIds.length
-          ? await supabase
-              .from("enrollments")
-              .select("course_id, status")
-              .in("course_id", courseIds)
-          : { data: [], error: null };
-
-      if (coursesError || profilesError || enrollmentsError) {
-        throw coursesError || profilesError || enrollmentsError;
-      }
-
-      // Combine the data
-      const processedCourses = coursesData.map(
-        (course: (typeof coursesData)[number]) => {
-          const instructor = profilesData?.find(
-            (p: NonNullable<typeof profilesData>[number]) =>
-              p.id === course.instructor_id,
-          );
-          const courseEnrollments: NonNullable<
-            typeof enrollmentsData
-          >[number][] =
-            enrollmentsData?.filter(
-              (e: NonNullable<typeof enrollmentsData>[number]) =>
-                e.course_id === course.id,
-            ) ?? [];
-
-          const activeEnrollments = courseEnrollments.filter(
-            (e) => e.status === "active",
-          );
-
-          const priceNumber =
-            typeof course.price === "number"
-              ? course.price
-              : typeof course.price === "string"
-                ? Number(course.price)
-                : 0;
-
-          return {
-            ...course,
-            price: Number.isFinite(priceNumber) ? priceNumber : 0,
-            instructor_name:
-              instructor?.full_name || instructor?.username || "مدرب",
-            enrollments_count: activeEnrollments.length,
-          };
-        },
-      );
-
-      setCourses(processedCourses);
-    } catch (e) {
-      console.error("Failed to load courses", e);
-      setError("حدث خطأ في تحميل الكورسات");
-      toast.error("حدث خطأ في تحميل الكورسات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTogglePublish = async (
-    courseId: string,
-    currentStatus: boolean,
-  ) => {
-    try {
-      const { error } = await supabase
-        .from("courses")
-        .update({ is_published: !currentStatus })
-        .eq("id", courseId);
-
-      if (error) throw error;
-
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === courseId
-            ? { ...course, is_published: !currentStatus }
-            : course,
-        ),
-      );
-    } catch {
-      toast.error("فشل في تغيير حالة النشر");
-    }
-  };
-
-  const handleDeleteCourse = async (courseId: string) => {
-    const confirmed = await confirmToast(
-      "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء.",
-      {
-        confirmLabel: "حذف",
-        cancelLabel: "إلغاء",
-      },
-    );
-    if (!confirmed) return;
-
-    try {
-      const { error } = await supabase
-        .from("courses")
-        .delete()
-        .eq("id", courseId);
-
-      if (error) throw error;
-
-      setCourses((prev) => prev.filter((course) => course.id !== courseId));
-    } catch {
-      toast.error("فشل في حذف الكورس");
-    }
-  };
+  const t = useTranslations("adminDashboard.coursesTab");
+  const tCommon = useTranslations("common");
+  const { courses, loading, error, loadCourses, togglePublish, deleteCourse } =
+    useCourses(refreshKey);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <span className="mr-3 text-gray-600 dark:text-gray-400">
-          جاري تحميل الكورسات...
+          {tCommon("loading")}
         </span>
       </div>
     );
@@ -208,7 +48,7 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
       <div className="text-center py-12">
         <div className="text-red-500 mb-4">⚠️ {error}</div>
         <Button onClick={loadCourses} variant="outline">
-          إعادة المحاولة
+          {tCommon("error")}
         </Button>
       </div>
     );
@@ -219,15 +59,15 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            إدارة الكورسات
+            {t("title")}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            إنشاء وإدارة الكورسات المدفوعة
+            {t("subtitle")}
           </p>
         </div>
         <Button onClick={onCreateCourse} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          إنشاء كورس جديد
+          {t("createCourse")}
         </Button>
       </div>
 
@@ -235,89 +75,26 @@ export const CoursesTab: React.FC<CoursesTabProps> = ({
         <div className="text-center py-12">
           <GraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            لا توجد كورسات
+            {t("noCourses")}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            ابدأ بإنشاء أول كورس لك
+            {t("startFirstCourse")}
           </p>
           <Button onClick={onCreateCourse}>
             <Plus className="w-4 h-4 mr-2" />
-            إنشاء الكورس الأول
+            {t("createFirstCourse")}
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <Card key={course.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant={course.price === 0 ? "secondary" : "default"}>
-                    {course.price === 0 ? "مجاني" : `${course.price} جنيه`}
-                  </Badge>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() =>
-                        handleTogglePublish(course.id, course.is_published)
-                      }
-                      className={`p-1 rounded-full transition-colors ${
-                        course.is_published
-                          ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                          : "text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      }`}
-                      title={course.is_published ? "إلغاء النشر" : "نشر الكورس"}
-                    >
-                      {course.is_published ? (
-                        <ToggleRight className="w-5 h-5" />
-                      ) : (
-                        <ToggleLeft className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <CardTitle className="text-lg line-clamp-2">
-                  {course.title}
-                </CardTitle>
-                <CardDescription className="line-clamp-3">
-                  {course.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                    <span>المدرب: {course.instructor_name}</span>
-                    <span>{course.enrollments_count} طالب</span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEditCourse?.(course)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          window.open(`/courses/${course.id}`, "_blank")
-                        }
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteCourse(course.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CourseCard
+              key={course.id}
+              course={course}
+              onEdit={onEditCourse as any}
+              onDelete={deleteCourse}
+              onTogglePublish={togglePublish}
+            />
           ))}
         </div>
       )}

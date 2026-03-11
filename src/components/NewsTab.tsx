@@ -1,14 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Newspaper,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Trash,
-} from "lucide-react";
+import { Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
 import { News } from "../types/database";
 import { useAuth } from "../contexts/AuthContext";
+import { NewsFilters } from "./news/NewsFilters";
+import { NewsCard } from "./news/NewsCard";
 
 interface NewsTabProps {
   news: News[];
@@ -34,7 +30,7 @@ export function NewsTab({
 
   // Filtered news
   const filteredNews = useMemo(() => {
-    let filtered = news;
+    let filtered = [...news];
 
     // Search filter
     if (searchTerm) {
@@ -73,6 +69,7 @@ export function NewsTab({
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
+
   if (news.length === 0) {
     return (
       <div className="space-y-4">
@@ -119,47 +116,13 @@ export function NewsTab({
         </button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative">
-              <label htmlFor="news-tab-search" className="sr-only">
-                {t("searchLabel")}
-              </label>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                id="news-tab-search"
-                name="newsTabSearch"
-                type="text"
-                placeholder={t("searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-              />
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="w-full sm:w-48">
-            <label htmlFor="news-tab-status-filter" className="sr-only">
-              {t("allStatuses")}
-            </label>
-            <select
-              id="news-tab-status-filter"
-              name="newsTabStatusFilter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-            >
-              <option value="all">{t("allStatuses")}</option>
-              <option value="active">{t("active")}</option>
-              <option value="inactive">{t("inactive")}</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <NewsFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        t={t}
+      />
 
       {/* News List */}
       <div className="space-y-4">
@@ -175,66 +138,14 @@ export function NewsTab({
           </div>
         ) : (
           currentNews.map((item) => (
-            <div
+            <NewsCard
               key={item.id}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors"
-            >
-              <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {item.title}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.is_active
-                          ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300"
-                          : "bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-300"
-                      }`}
-                    >
-                      {item.is_active ? t("active") : t("inactive")}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-400 mb-3">
-                    {item.content.length > 200
-                      ? `${item.content.substring(0, 200)}...`
-                      : item.content}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>
-                      {t("type")}: {item.type}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 ml-0 sm:ml-4">
-                  <button
-                    onClick={() => onToggleStatus(item.id, !item.is_active)}
-                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                      item.is_active
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                    }`}
-                  >
-                    {item.is_active ? t("deactivate") : t("activate")}
-                  </button>
-                  {isAdmin && (
-                    <button
-                      onClick={() => onDeleteNews(item.id)}
-                      className="px-3 py-1 rounded-lg text-sm font-medium transition-colors bg-red-500 hover:bg-red-600 text-white"
-                    >
-                      <Trash className="w-4 h-4 inline-block mr-1" />{" "}
-                      {t("delete")}
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t("publishedAt")}:{" "}
-                {item.created_at
-                  ? new Date(item.created_at).toLocaleDateString()
-                  : "---"}
-              </div>
-            </div>
+              item={item}
+              isAdmin={isAdmin}
+              onToggleStatus={onToggleStatus}
+              onDelete={onDeleteNews}
+              t={t}
+            />
           ))
         )}
 
@@ -256,36 +167,6 @@ export function NewsTab({
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          currentPage === pageNum
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))

@@ -1,13 +1,8 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-} from "../ui";
+import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
 import { Download, FileText, Plus, Edit, Trash2 } from "lucide-react";
 import type { CourseFile } from "./types";
+import { useTranslations } from "next-intl";
 
 interface CourseFilesSectionProps {
   files: CourseFile[];
@@ -24,13 +19,15 @@ export default function CourseFilesSection({
   onEditFile,
   onDeleteFile,
 }: CourseFilesSectionProps) {
+  const t = useTranslations("courseDetail.files");
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Download className="w-5 h-5 ml-2 text-green-600" />
-            ملفات الكورس
+            {t("title")}
           </div>
           {isInstructor && (
             <Button
@@ -39,16 +36,14 @@ export default function CourseFilesSection({
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              إضافة ملف
+              {t("addFile")}
             </Button>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {files.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
-            لا توجد ملفات متاحة لهذا الكورس بعد
-          </p>
+          <p className="text-gray-500 text-center py-8">{t("empty")}</p>
         ) : (
           <div className="space-y-3">
             {files.map((file) => (
@@ -75,7 +70,8 @@ export default function CourseFilesSection({
                         )}
                         {file.file_size && (
                           <p className="text-xs text-gray-400 mt-1">
-                            حجم الملف: {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                            {t("fileSize")}:{" "}
+                            {(file.file_size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         )}
                       </div>
@@ -106,7 +102,7 @@ export default function CourseFilesSection({
                   onClick={() => window.open(file.file_url, "_blank")}
                 >
                   <Download className="w-4 h-4 ml-1" />
-                  تحميل
+                  {t("download")}
                 </Button>
               </div>
             ))}

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, AlertTriangle } from "lucide-react";
 
 type LectureFormData = {
   title: string;
@@ -24,7 +24,9 @@ export function AddLectureModal(props: {
   ) => void;
   getLectureInfoFromTitle: (title: string) => LectureInfo;
   isSavingLecture: boolean;
-  onSaveLecture: () => void;
+  onSaveLecture: (force?: boolean) => void;
+  showMergeWarning: boolean;
+  setShowMergeWarning: (show: boolean) => void;
 }) {
   const {
     isOpen,
@@ -36,6 +38,8 @@ export function AddLectureModal(props: {
     getLectureInfoFromTitle,
     isSavingLecture,
     onSaveLecture,
+    showMergeWarning,
+    setShowMergeWarning,
   } = props;
 
   return (
@@ -122,15 +126,50 @@ export function AddLectureModal(props: {
                 />
               </div>
 
-              <button
-                onClick={onSaveLecture}
-                disabled={isSavingLecture || !lectureFormData.title.trim()}
-                className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all mt-4"
-              >
-                {isSavingLecture
-                  ? tCommon("loading")
-                  : tSubjectPage("lectureForm.save")}
-              </button>
+              <div className="pt-2">
+                {showMergeWarning ? (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 mb-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-amber-900 dark:text-amber-100">
+                          {tSubjectPage("lectureForm.mergeWarningTitle") ||
+                            "محاضرة موجودة بالفعل"}
+                        </p>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                          {tSubjectPage("lectureForm.mergeWarningDesc") ||
+                            "هذا العنوان سيقوم بتحديث المحاضرة الموجودة حالياً. هل أنت متأكد؟"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => onSaveLecture(true)}
+                        className="flex-1 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-colors"
+                      >
+                        {tSubjectPage("lectureForm.confirmMerge") ||
+                          "نعم، تحديث"}
+                      </button>
+                      <button
+                        onClick={() => setShowMergeWarning(false)}
+                        className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                      >
+                        {tSubjectPage("lectureForm.cancelMerge") || "تراجع"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onSaveLecture(false)}
+                    disabled={isSavingLecture || !lectureFormData.title.trim()}
+                    className="w-full py-4 rounded-2xl bg-brand-blue text-white font-black text-lg hover:shadow-xl hover:shadow-brand-blue/30 disabled:opacity-50 transition-all"
+                  >
+                    {isSavingLecture
+                      ? tCommon("loading")
+                      : tSubjectPage("lectureForm.save")}
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>
