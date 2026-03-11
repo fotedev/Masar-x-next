@@ -46,7 +46,7 @@ function SubjectDetailsContent() {
           queryCache.set(cacheKey, data, cacheTTL.subjects);
         }
       } catch (error) {
-        console.error("Error fetching subject details:", error);
+        // console.error("Error fetching subject details:", error);
       } finally {
         setLoading(false);
       }

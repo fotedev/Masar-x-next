@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTRWCourses } from "@/hooks/trw/useTRWHooks";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import {
@@ -63,11 +64,12 @@ export default function CategoryCoursesPage() {
                   >
                     <Card className="group overflow-hidden hover:shadow-md transition-all">
                       {course.thumbnail_url && (
-                        <div className="h-40 overflow-hidden">
-                          <img
+                        <div className="h-40 overflow-hidden relative">
+                          <Image
                             src={course.thumbnail_url}
                             alt={course.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform"
                           />
                         </div>
                       )}

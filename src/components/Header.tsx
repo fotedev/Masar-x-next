@@ -82,7 +82,8 @@ export const Header = React.memo(function Header() {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prevOverflow;
-      mobileMenuButtonRef.current?.focus();
+      const button = mobileMenuButtonRef.current;
+      button?.focus();
     };
   }, [isMounted, isMobileMenuOpen]);
 

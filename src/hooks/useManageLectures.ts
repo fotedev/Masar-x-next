@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
@@ -24,13 +24,7 @@ export function useManageLectures({
     orderIndex: "",
   });
 
-  useEffect(() => {
-    if (show && subjectName) {
-      fetchLectures();
-    }
-  }, [show, subjectName]);
-
-  async function fetchLectures() {
+  const fetchLectures = useCallback(async () => {
     try {
       setLoading(true);
       const decodedName = decodeURIComponent(subjectName).trim();
@@ -51,7 +45,13 @@ export function useManageLectures({
     } finally {
       setLoading(false);
     }
-  }
+  }, [subjectName]);
+
+  useEffect(() => {
+    if (show && subjectName) {
+      fetchLectures();
+    }
+  }, [show, subjectName, fetchLectures]);
 
   const handleAddLecture = async () => {
     if (!newLecture.title.trim()) return;

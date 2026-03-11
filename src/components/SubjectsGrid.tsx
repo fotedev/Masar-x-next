@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects } from "../hooks/useSubjects";
@@ -105,9 +106,11 @@ export function SubjectsGrid({
           {is_academic ? (
             <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           ) : (
-            <img
+            <Image
               src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
               alt="TRW Logo"
+              width={96}
+              height={96}
               className="w-24 h-24 object-contain mx-auto mb-4 grayscale opacity-50"
             />
           )}

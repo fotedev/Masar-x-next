@@ -364,7 +364,6 @@ function QuizDashboardInternal() {
     filteredSubjectsForFilters,
     subjectsLoading,
     academicLevels,
-    filters.semester,
     filters.year,
     getDepartmentsForLevelName,
   ]);
@@ -547,7 +546,7 @@ function QuizDashboardInternal() {
         ],
       });
     } catch (error: any) {
-      console.error("Error saving exam:", error);
+      // console.error("Error saving exam:", error);
       toast.error("فشل حفظ الامتحان", {
         description:
           error.message || "حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.",
@@ -728,7 +727,7 @@ function QuizDashboardInternal() {
 
       updateQuestion(index, "imageUrl", result.url);
     } catch (err) {
-      console.error("Error uploading quiz image:", err);
+      // console.error("Error uploading quiz image:", err);
       toast.error("حدث خطأ أثناء رفع الصورة", {
         description:
           err instanceof Error ? err.message : "يرجى المحاولة مرة أخرى.",

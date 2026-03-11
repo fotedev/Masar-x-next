@@ -66,7 +66,7 @@ export default function ProfilePage() {
     const lastUpdate = new Date(extraAssetsUpdatedAt).getTime();
     const elapsed = Date.now() - lastUpdate;
     return Math.max(0, COOLDOWN_MS - elapsed);
-  }, [extraAssetsUpdatedAt]);
+  }, [extraAssetsUpdatedAt, COOLDOWN_MS]);
 
   // Check if cooldown is active
   const isCooldownActive = cooldownRemaining > 0;

@@ -309,7 +309,7 @@ function AdminDashboardContent() {
       setShowAddSubject(false);
       setEditingSubject(null);
     } catch (error) {
-      console.error("Error saving subject:", error);
+      // console.error("Error saving subject:", error);
       throw error;
     }
   };
