@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface FileDropzoneProps {
   onFileSelect: (files: File[]) => void;
@@ -18,6 +19,7 @@ export function FileDropzone({
   className = "",
   disabled = false,
 }: FileDropzoneProps) {
+  const t = useTranslations("fileDropzone");
   const [isDragActive, setIsDragActive] = useState(false);
 
   const handleDragEnter = useCallback(
@@ -119,9 +121,7 @@ export function FileDropzone({
           <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
             <Upload className="w-8 h-8 text-gray-400 mb-2" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {isDragActive
-                ? "أفلت الملفات هنا"
-                : "اضغط أو اسحب الملفات هنا للرفع"}
+              {isDragActive ? t("active") : t("idle")}
             </p>
           </div>
         )}
@@ -130,7 +130,7 @@ export function FileDropzone({
         {isDragActive && children && (
           <div className="absolute inset-0 bg-blue-500/10 dark:bg-blue-400/10 border-2 border-blue-500 dark:border-blue-400 rounded-lg pointer-events-none flex items-center justify-center">
             <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg text-blue-600 dark:text-blue-400 font-medium">
-              أفلت الملفات هنا
+              {t("active")}
             </div>
           </div>
         )}

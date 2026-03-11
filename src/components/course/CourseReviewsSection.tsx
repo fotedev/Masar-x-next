@@ -1,13 +1,8 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-} from "../ui";
+import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
 import { Star } from "lucide-react";
 import type { Review, EnrollmentStatus } from "./types";
+import { useTranslations, useLocale } from "next-intl";
 
 interface CourseReviewsSectionProps {
   reviews: Review[];
@@ -20,24 +15,25 @@ export default function CourseReviewsSection({
   enrollmentStatus,
   onAddReview,
 }: CourseReviewsSectionProps) {
+  const t = useTranslations("courseDetail.reviews");
+  const locale = useLocale();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>تقييمات الطلاب</span>
+          <span>{t("title")}</span>
           {enrollmentStatus === "active" && (
             <Button variant="outline" size="sm" onClick={onAddReview}>
               <Star className="w-4 h-4 ml-1" />
-              أضف تقييم
+              {t("addReview")}
             </Button>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
-            لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!
-          </p>
+          <p className="text-gray-500 text-center py-8">{t("empty")}</p>
         ) : (
           <div className="space-y-4">
             {reviews.map((review) => (
@@ -60,11 +56,13 @@ export default function CourseReviewsSection({
                       ))}
                     </div>
                     <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                      {review.student_name}
+                      {review.student_name || t("anonymous")}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {new Date(review.created_at).toLocaleDateString("ar-EG")}
+                    {new Date(review.created_at).toLocaleDateString(
+                      locale === "ar" ? "ar-EG" : "en-US",
+                    )}
                   </span>
                 </div>
                 {review.content && (

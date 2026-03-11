@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useAcademicOptions } from "../hooks/useAcademicOptions";
+import { useTranslations } from "next-intl";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
   const { user } = useAuth();
+  const t = useTranslations("onboarding");
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [formData, setFormData] = useState({
     academic_level: "",
@@ -75,7 +77,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
 
       onComplete();
     } catch {
-      setError("حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى.");
+      setError(t("error"));
     } finally {
       setLoading(false);
     }
@@ -89,11 +91,9 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
         <div className="p-6">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              مرحباً بك في المنصة! 🎓
+              {t("welcome")}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              يرجى إكمال بياناتك لتتمكن من الاستفادة من جميع المميزات
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
           </div>
 
           {error && (
@@ -105,7 +105,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                المستوى الدراسي <span className="text-red-500">*</span>
+                {t("academicLevel")} <span className="text-red-500">*</span>
               </label>
               <select
                 required
@@ -119,25 +119,25 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">اختر المستوى الدراسي</option>
+                <option value="">{t("selectLevel")}</option>
                 {levels.map((level) => (
                   <option
                     key={level.id}
                     value={level.name}
                     disabled={!level.is_active}
                   >
-                    {level.name} {!level.is_active && "(قريباً)"}
+                    {level.name} {!level.is_active && `(${t("comingSoon")})`}
                   </option>
                 ))}
               </select>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                مستويات أخرى ستتوفر قريباً
+                {t("otherLevelsNotice")}
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                التخصص <span className="text-red-500">*</span>
+                {t("department")} <span className="text-red-500">*</span>
               </label>
               <select
                 required
@@ -150,7 +150,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">اختر التخصص</option>
+                <option value="">{t("selectDepartment")}</option>
                 {availableDepartments.map((dept) => (
                   <option
                     key={dept.id}
@@ -171,17 +171,17 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>جاري الحفظ...</span>
+                  <span>{t("saving")}</span>
                 </>
               ) : (
-                <span>متابعة</span>
+                <span>{t("continue")}</span>
               )}
             </button>
           </form>
 
           <div className="mt-4 text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              يمكنك تغيير هذه البيانات لاحقاً من إعدادات الملف الشخصي
+              {t("changeLaterNotice")}
             </p>
           </div>
         </div>

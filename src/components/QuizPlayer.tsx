@@ -19,6 +19,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { LatexRenderer } from "./LatexRenderer";
 import { useQuizAttempt } from "../hooks/useQuizAttempt";
 import { ReviewSection } from "./ReviewSection";
+import { useTranslations } from "next-intl";
 
 interface QuizPlayerProps {
   quizId: string;
@@ -45,6 +46,7 @@ interface Question {
 export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
+  const t = useTranslations("quiz");
 
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -271,7 +273,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
           <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
         </div>
         <p className="text-gray-500 dark:text-gray-400 animate-pulse font-medium">
-          جاري تحضير الاختبار...
+          {t("preparing")}
         </p>
       </div>
     );
@@ -282,16 +284,16 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
       <div className="text-center p-12 bg-red-50 dark:bg-red-900/10 rounded-2xl border-2 border-dashed border-red-200 dark:border-red-800">
         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-xl font-bold text-red-700 dark:text-red-400 mb-2">
-          فشل تحميل الاختبار
+          {t("failed")}
         </h3>
         <p className="text-red-600/70 dark:text-red-400/70 mb-6">
-          نعتذر، حدث خطأ أثناء محاولة جلب بيانات الاختبار.
+          {t("failedDesc")}
         </p>
         <button
           onClick={loadQuiz}
           className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all active:scale-95"
         >
-          إعادة المحاولة
+          {t("retry")}
         </button>
       </div>
     );
@@ -309,18 +311,18 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
     let colorClass = "text-blue-600 dark:text-blue-400";
     let bgClass = "bg-blue-50 dark:bg-blue-900/20";
     let iconColor = "text-blue-500";
-    let message = "عمل جيد! استمر في المحاولة.";
+    let message = t("goodJob");
 
     if (percentage >= 90) {
       colorClass = "text-yellow-600 dark:text-yellow-400";
       bgClass = "bg-yellow-50 dark:bg-yellow-900/20";
       iconColor = "text-yellow-500";
-      message = "مذهل! أنت عبقري!";
+      message = t("amazing");
     } else if (percentage >= 70) {
       colorClass = "text-green-600 dark:text-green-400";
       bgClass = "bg-green-50 dark:bg-green-900/20";
       iconColor = "text-green-500";
-      message = "رائع! أداء متميز جداً.";
+      message = t("excellent");
     }
 
     return (
@@ -335,10 +337,10 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
         </div>
 
         <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2">
-          اكتمل التحدي!
+          {t("completed")}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-8 font-medium">
-          {endedByTimeout ? "انتهى وقت الامتحان." : message}
+          {endedByTimeout ? t("endedTimeout") : message}
         </p>
 
         <div className="grid grid-cols-3 gap-4 mb-10">
@@ -348,7 +350,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               {percentage}%
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              النتيجة
+              {t("score")}
             </div>
           </div>
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/30">
@@ -357,7 +359,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               {score}/{questions.length}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              الإجابات
+              {t("answers")}
             </div>
           </div>
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/30">
@@ -366,7 +368,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               {timeTaken}s
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              الوقت
+              {t("time")}
             </div>
           </div>
         </div>
@@ -376,11 +378,10 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300">
-                وضع الضيف
+                {t("guestMode")}
               </p>
               <p className="text-xs text-yellow-700 dark:text-yellow-400/80 mt-1">
-                تم حفظ نتيجتك محلياً على هذا الجهاز فقط. لتتمكن من رؤية نتائجك
-                من أي مكان، يرجى تسجيل الدخول.
+                {t("guestNotice")}
               </p>
             </div>
           </div>
@@ -394,13 +395,13 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             className="flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-500/30 active:scale-95"
           >
             <RefreshCw className="w-5 h-5" />
-            إعادة المحاولة
+            {t("retry")}
           </button>
           <button
             onClick={onClose}
             className="px-8 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
           >
-            العودة للرئيسية
+            {t("backToHome")}
           </button>
         </div>
 
@@ -445,15 +446,19 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             <div className="text-xl font-bold text-gray-900 dark:text-white">
               {questions.length}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">سؤال</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {t("questionsCount")}
+            </div>
           </div>
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/30">
             <Timer className="w-5 h-5 text-purple-500 mx-auto mb-2" />
             <div className="text-xl font-bold text-gray-900 dark:text-white">
-              {durationMinutes ? `${durationMinutes} دقيقة` : "مفتوح"}
+              {durationMinutes
+                ? `${durationMinutes} ${t("minutes")}`
+                : t("openTime")}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              الوقت
+              {t("time")}
             </div>
           </div>
         </div>
@@ -463,7 +468,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             onClick={startQuiz}
             className="flex items-center justify-center gap-3 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl hover:bg-blue-700 transition-all hover:shadow-2xl hover:shadow-blue-500/40 active:scale-95 group"
           >
-            <span>ابدأ الآن</span>
+            <span>{t("startNow")}</span>
             <ArrowRight className="w-6 h-6 group-hover:translate-x-[-4px] transition-transform" />
           </button>
 
@@ -471,7 +476,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
             onClick={onClose}
             className="px-8 py-4 text-gray-500 dark:text-gray-400 font-bold hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           >
-            إلغاء
+            {t("cancel")}
           </button>
         </div>
       </div>
@@ -508,7 +513,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
           <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex items-center gap-3">
             <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
-              أنت تعمل في وضع الضيف. سيتم حفظ نتيجتك محلياً فقط.
+              {t("guestAttemptNotice")}
             </p>
           </div>
         )}
@@ -519,7 +524,11 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               {currentQuestionIndex + 1}
             </div>
             <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              من {questions.length} أسئلة
+              {t("viewCount", {
+                start: currentQuestionIndex + 1,
+                end: questions.length,
+                total: questions.length,
+              })}
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -528,12 +537,12 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               {saving ? (
                 <>
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>جاري الحفظ...</span>
+                  <span>{t("saving")}</span>
                 </>
               ) : (
                 <>
                   <Cloud className="w-3 h-3 text-green-500" />
-                  <span>تم الحفظ</span>
+                  <span>{t("saved")}</span>
                 </>
               )}
             </div>
@@ -545,7 +554,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               </div>
             )}
             <div className="px-4 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm font-black border border-green-100 dark:border-green-900/30">
-              {score} نقاط
+              {score} {t("points")}
             </div>
           </div>
         </div>
@@ -654,7 +663,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               className="group flex items-center gap-2 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
             >
               <ArrowRight className="w-5 h-5 rotate-180 group-hover:translate-x-[4px] transition-transform" />
-              <span>السابق</span>
+              <span>{t("previous")}</span>
             </button>
 
             {!isAnswered ? (
@@ -663,7 +672,7 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
                 disabled={selectedOption === null}
                 className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
               >
-                تأكيد الإجابة
+                {t("confirmAnswer")}
               </button>
             ) : (
               <button
@@ -672,8 +681,8 @@ export function QuizPlayer({ quizId, onComplete, onClose }: QuizPlayerProps) {
               >
                 <span>
                   {currentQuestionIndex === questions.length - 1
-                    ? "عرض النتائج"
-                    : "السؤال التالي"}
+                    ? t("showResults")
+                    : t("nextQuestion")}
                 </span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-[-4px] transition-transform" />
               </button>
