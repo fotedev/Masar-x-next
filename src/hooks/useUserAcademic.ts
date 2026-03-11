@@ -230,7 +230,7 @@ export function useUserAcademic() {
     // Only used for manual refetching now
     if (!user) return;
     await fetchAcademicHard(user.id);
-  }, [user]);
+  }, [user, fetchAcademicHard]);
 
   const executeWithRetry = async <T,>(operation: () => Promise<T>): Promise<T> => {
     let attempt = 0;

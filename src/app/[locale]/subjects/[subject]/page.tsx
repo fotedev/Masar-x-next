@@ -170,7 +170,7 @@ function SubjectSummariesContent() {
           queryCache.set(cacheKey, data, cacheTTL.subjects);
         }
       } catch (error) {
-        console.error("Error fetching subject details:", error);
+        // console.error("Error fetching subject details:", error);
       }
     }
     fetchSubjectDetails();
@@ -189,7 +189,7 @@ function SubjectSummariesContent() {
           setCompletedContent(new Set(data.map((d: any) => d.content_id)));
         }
       } catch (error) {
-        console.error("Error fetching progress:", error);
+        // console.error("Error fetching progress:", error);
       }
     }
     fetchProgress();
@@ -753,7 +753,7 @@ function SubjectSummariesContent() {
         ],
       });
     } catch (error: any) {
-      console.error("Error saving exam:", error);
+      // console.error("Error saving exam:", error);
       toast.error(tSubjectPage("exam.saveErrorTitle"), {
         description: error.message || tSubjectPage("exam.saveErrorDescription"),
       });
@@ -793,7 +793,7 @@ function SubjectSummariesContent() {
         description: tSubjectPage("subject.updateSuccessDescription"),
       });
     } catch (error: any) {
-      console.error("Error updating subject:", error);
+      // console.error("Error updating subject:", error);
       toast.error(tSubjectPage("subject.updateErrorTitle"), {
         description:
           error.message || tSubjectPage("subject.updateErrorDescription"),
@@ -831,7 +831,7 @@ function SubjectSummariesContent() {
         });
       }
     } catch (error) {
-      console.error("Error updating progress:", error);
+      // console.error("Error updating progress:", error);
     }
   };
 

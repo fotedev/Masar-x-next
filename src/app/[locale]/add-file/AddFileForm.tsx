@@ -100,7 +100,6 @@ export function AddFileForm() {
           .maybeSingle();
 
         if (lectureError) {
-          console.error("Lecture lookup error:", lectureError);
           setError(t("error"));
           setLoading(false);
           return;

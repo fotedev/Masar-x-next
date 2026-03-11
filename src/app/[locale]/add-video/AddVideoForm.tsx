@@ -93,7 +93,7 @@ export function AddVideoForm() {
           .maybeSingle();
 
         if (lectureError) {
-          console.error("Lecture lookup error:", lectureError);
+          // console.error("Lecture lookup error:", lectureError);
           setError(t("error"));
           setLoading(false);
           return;
@@ -139,7 +139,7 @@ export function AddVideoForm() {
         handleClose();
       }, 2000);
     } catch (err) {
-      console.error("Error adding video:", err);
+      // console.error("Error adding video:", err);
       setError(t("error"));
     } finally {
       setLoading(false);
