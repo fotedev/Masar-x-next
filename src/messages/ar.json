@@ -1,4 +1,4 @@
-{
+﻿{
   "metadata": {
     "title": "مسار إكس - منصة ملخصات دراسية",
     "siteName": "مسار إكس",
@@ -21,7 +21,8 @@
   "common": {
     "loading": "جاري التحميل...",
     "error": "حدث خطأ",
-    "redirectingToPrivacyPolicy": "جاري التحويل إلى سياسة الخصوصية..."
+    "redirectingToPrivacyPolicy": "جاري التحويل إلى سياسة الخصوصية...",
+    "of": "من"
   },
   "trwRedeem": {
     "title": "تفعيل كود الوصول",
@@ -194,6 +195,7 @@
     "switchStudentAssistant": "تبديل: مساعد الطالب",
     "switchCsAssistant": "تبديل: مساعد برمجي",
     "switchGroupChat": "تبديل: محادثات المجموعة",
+    "restoringChat": "جاري استعادة المحادثة...",
     "welcomeTitle": "كيف يمكنني مساعدتك اليوم؟",
     "welcomeDescription": "يمكنك سؤالي عن أي شيء يخص المواد الدراسية، الملخصات، أو حتى طلب إنشاء اختبار تجريبي لك.",
     "suggestion1": "اشرح لي مفهوم التشفير",
@@ -226,6 +228,7 @@
     "allDepartments": "كل الأقسام",
     "allSubjects": "كل المواد",
     "noExams": "لا توجد امتحانات",
+    "noExamsSoon": "ستظهر الاختبارات الجديدة هنا قريباً",
     "startNewExam": "ابدأ بإنشاء امتحان جديد",
     "dateOrder": "ترتيب بالتاريخ",
     "titleOrder": "ترتيب بالعنوان",
@@ -367,7 +370,11 @@
       "uncategorized": "غير مصنف",
       "status": "الحالة",
       "confirmDelete": "هل أنت متأكد من حذف هذا العنصر؟",
-      "cancel": "إلغاء"
+      "cancel": "إلغاء",
+      "mergeWarningTitle": "محاضرة موجودة بالفعل",
+      "mergeWarningDesc": "هذا العنوان سيقوم بتحديث المحاضرة الموجودة حالياً. هل أنت متأكد؟",
+      "confirmMerge": "نعم، تحديث",
+      "cancelMerge": "تراجع"
     },
     "noLecturesYet": "لا توجد محاضرات بعد",
     "summary": "ملخص",
@@ -504,5 +511,279 @@
     "student": "طالب",
     "currency": "جنيه",
     "free": "مجاني"
+  },
+  "quiz": {
+    "preparing": "جاري تحضير الاختبار...",
+    "failed": "فشل تحميل الاختبار",
+    "failedDesc": "نعتذر، حدث خطأ أثناء محاولة جلب بيانات الاختبار.",
+    "retry": "إعادة المحاولة",
+    "completed": "اكتمل التحدي!",
+    "endedTimeout": "انتهى وقت الامتحان.",
+    "goodJob": "عمل جيد! استمر في المحاولة.",
+    "amazing": "مذهل! أنت عبقري!",
+    "excellent": "رائع! أداء متميز جداً.",
+    "score": "النتيجة",
+    "answers": "الإجابات",
+    "time": "الوقت",
+    "guestMode": "وضع الضيف",
+    "guestNotice": "تم حفظ نتيجتك محلياً على هذا الجهاز فقط. لتتمكن من رؤية نتائجك من أي مكان، يرجى تسجيل الدخول.",
+    "backToHome": "العودة للرئيسية",
+    "questionsCount": "أسئلة",
+    "minutes": "دقيقة",
+    "openTime": "مفتوح",
+    "startNow": "ابدأ الآن",
+    "cancel": "إلغاء",
+    "guestAttemptNotice": "أنت تعمل في وضع الضيف. سيتم حفظ نتيجتك محلياً فقط.",
+    "points": "نقاط",
+    "nextQuestion": "السؤال التالي",
+    "showResults": "عرض النتائج",
+    "previous": "السابق",
+    "confirmAnswer": "تأكيد الإجابة",
+    "saving": "جاري الحفظ...",
+    "saved": "تم الحفظ"
+  },
+  "appeals": {
+    "submitTitle": "تقديم طعن",
+    "contentLabel": "المحتوى",
+    "contentTypeLabel": "نوع المحتوى",
+    "summary": "ملخص",
+    "news": "خبر",
+    "noticeTitle": "ملاحظة",
+    "noticeName": "الطعن سيُرسل باسم",
+    "reasonLabel": "سبب الطعن",
+    "reasonPlaceholder": "اختر السبب...",
+    "descriptionLabel": "وصف المشكلة (اختياري)",
+    "descriptionPlaceholder": "يرجى وصف المشكلة بالتفصيل...",
+    "submitting": "جاري الإرسال...",
+    "submitButton": "إرسال الطعن",
+    "cancel": "إلغاء",
+    "reviewNotice": "سيتم مراجعة طعنك من قبل فريق الإدارة. نشكرك على مساهمتك في تحسين جودة المحتوى.",
+    "newAppealTitle": "طعن جديد على محتوى",
+    "newAppealDesc": "تم إرسال طعن على {type} \"{title}\" لسبب: {reason}",
+    "reasons": {
+      "inaccurate_content": "محتوى غير دقيق",
+      "copyright_violation": "انتهاك حقوق النشر",
+      "inappropriate_content": "محتوى غير مناسب",
+      "spam": "محتوى مزعج أو إعلاني",
+      "other": "سبب آخر"
+    },
+    "manageTitle": "إدارة الطعون",
+    "noAppeals": "لا توجد طعون",
+    "noAppealsDesc": "لم يتم تقديم أي طعون حتى الآن",
+    "noResults": "لا توجد نتائج",
+    "noResultsDesc": "لا توجد طعون تطابق معايير البحث المحددة",
+    "filters": {
+      "title": "إدارة الطعون والبلاغات",
+      "of": "من",
+      "searchLabel": "البحث في الطعون",
+      "searchPlaceholder": "البحث في سبب الطعن، نوع المحتوى، أو اسم المستخدم...",
+      "statusLabel": "تصفية حسب الحالة",
+      "statusAll": "جميع الحالات",
+      "statusPending": "قيد المراجعة",
+      "statusReviewed": "تمت المراجعة",
+      "statusClosed": "مغلق"
+    },
+    "card": {
+      "on": "طعن على",
+      "summary": "ملخص",
+      "news": "خبر",
+      "statusPending": "قيد المراجعة",
+      "statusAccepted": "مقبول",
+      "statusRejected": "مرفوض",
+      "by": "بواسطة",
+      "anonymous": "مستخدم مجهول",
+      "contentId": "معرف المحتوى",
+      "reviewedBy": "تمت المراجعة بواسطة",
+      "accept": "قبول",
+      "reject": "رفض",
+      "delete": "حذف",
+      "submittedAt": "تم التقديم",
+      "unknown": "غير معروف"
+    }
+  },
+  "adminDashboard": {
+    "title": "لوحة تحكم المشرفين",
+    "subtitle": "إدارة ومراجعة المحتوى والأخبار والامتحانات",
+    "globalFilter": "فلتر شامل:",
+    "levelTwo": "المستوى الثاني",
+    "allLevels": "كل المستويات",
+    "allDepartments": "كل الأقسام",
+    "allSubjects": "كل المواد",
+    "clearFilters": "مسح الفلاتر",
+    "tabs": {
+      "courses": "الكورسات",
+      "subjects": "المواد",
+      "enrollments": "إثباتات الدفع",
+      "summaries": "الملخصات",
+      "news": "الأخبار",
+      "appeals": "الطعون",
+      "quizzes": "الامتحانات",
+      "analytics": "التحليلات",
+      "pageManagement": "إدارة الصفحة"
+    },
+    "noAccess": {
+      "courses": "ليس لديك صلاحية الوصول لإدارة الكورسات",
+      "enrollments": "ليس لديك صلاحية الوصول لإثباتات الدفع",
+      "pageManagement": "ليس لديك صلاحية الوصول لإدارة الصفحة"
+    },
+    "auth": {
+      "checking": "جاري التحقق من الصلاحيات...",
+      "unauthorized": "غير مصرح",
+      "noPermission": "ليس لديك صلاحية الوصول لهذه الصفحة"
+    },
+    "coursesTab": {
+      "title": "إدارة الكورسات",
+      "subtitle": "إنشاء وإدارة الكورسات المدفوعة",
+      "createCourse": "إنشاء كورس جديد",
+      "noCourses": "لا توجد كورسات",
+      "startFirstCourse": "ابدأ بإنشاء أول كورس لك",
+      "createFirstCourse": "إنشاء الكورس الأول"
+    }
+  },
+  "summaries": {
+    "filters": {
+      "searchPlaceholder": "البحث في العنوان، المحتوى، المادة، أو اسم المساهم...",
+      "searchLabel": "البحث في الملخصات",
+      "statusAll": "جميع الحالات",
+      "statusPending": "قيد المراجعة",
+      "statusApproved": "معتمد",
+      "statusRejected": "مرفوض",
+      "statusLabel": "تصفية حسب الحالة",
+      "sortByDate": "ترتيب بالتاريخ",
+      "sortByTitle": "ترتيب بالعنوان",
+      "sortBySubject": "ترتيب بالمادة",
+      "sortByLabel": "الفرز حسب",
+      "sortAsc": "ترتيب تصاعدي",
+      "sortDesc": "ترتيب تنازلي"
+    },
+    "card": {
+      "titlePrefix": "ملخص للموضوع",
+      "edit": "تعديل الملخص",
+      "statusPending": "قيد المراجعة",
+      "statusApproved": "معتمد",
+      "statusRejected": "مرفوض",
+      "by": "بواسطة",
+      "subject": "المادة",
+      "approve": "اعتماد",
+      "reject": "رفض",
+      "delete": "حذف",
+      "sentAt": "تم الإرسال",
+      "anonymous": "مستخدم مجهول"
+    },
+    "pagination": {
+      "viewCount": "عرض {start}-{end} من {total}",
+      "label": "ملخص"
+    },
+    "noSummaries": "لا توجد ملخصات",
+    "noSummariesDesc": "لا توجد ملخصات في هذه الفئة حالياً",
+    "noResults": "لا توجد نتائج",
+    "noResultsDesc": "لا توجد ملخصات تطابق معايير البحث المحددة"
+  },
+  "onboarding": {
+    "welcome": "مرحباً بك في المنصة! 🎓",
+    "subtitle": "يرجى إكمال بياناتك لتتمكن من الاستفادة من جميع المميزات",
+    "academicLevel": "المستوى الدراسي",
+    "department": "التخصص",
+    "selectLevel": "اختر المستوى الدراسي",
+    "selectDepartment": "اختر التخصص",
+    "comingSoon": "قريباً",
+    "otherLevelsNotice": "مستويات أخرى ستتوفر قريباً",
+    "saving": "جاري الحفظ...",
+    "continue": "متابعة",
+    "changeLaterNotice": "يمكنك تغيير هذه البيانات لاحقاً من إعدادات الملف الشخصي",
+    "error": "حدث خطأ أثناء حفظ البيانات. يرجى المحاولة مرة أخرى."
+  },
+  "courseDetail": {
+    "videos": {
+      "title": "فيديوهات الكورس",
+      "addVideo": "إضافة فيديو",
+      "empty": "لا توجد فيديوهات متاحة لهذا الكورس بعد",
+      "arabic": "عربي",
+      "english": "إنجليزي",
+      "arabicTitle": "الفيديوهات العربية",
+      "englishTitle": "الفيديوهات الإنجليزية",
+      "duration": "المدة",
+      "watch": "مشاهدة"
+    },
+    "files": {
+      "title": "ملفات الكورس",
+      "addFile": "إضافة ملف",
+      "empty": "لا توجد ملفات متاحة لهذا الكورس بعد",
+      "fileSize": "حجم الملف",
+      "download": "تحميل"
+    },
+    "reviews": {
+      "title": "تقييمات الطلاب",
+      "addReview": "أضف تقييم",
+      "empty": "لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!",
+      "anonymous": "مستخدم مجهول"
+    }
+  },
+  "errorBoundary": {
+    "title": "عذراً، حدث خطأ غير متوقع",
+    "subtitle": "نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى أو العودة للصفحة الرئيسية.",
+    "retry": "إعادة المحاولة",
+    "home": "الصفحة الرئيسية",
+    "reload": "أو إعادة تحميل الصفحة"
+  },
+  "pwa": {
+    "title": "تثبيت التطبيق",
+    "description": "قم بتثبيت Masar X كتطبيق على هاتفك للوصول السريع",
+    "install": "تثبيت",
+    "later": "لاحقاً"
+  },
+  "fileDropzone": {
+    "active": "إفلات الملفات هنا",
+    "idle": "اضغط أو اسحب الملفات هنا للرفع"
+  },
+  "addVideo": {
+    "title": "إضافة فيديو جديد",
+    "subtitle": "أضف فيديو تعليمي جديد للمحاضرة",
+    "videoTitle": "عنوان الفيديو",
+    "videoTitlePlaceholder": "مثال: شرح مقدمة في الحاسب",
+    "subject": "اسم المادة",
+    "lecture": "المحاضرة المرتبطة",
+    "videoUrl": "رابط الفيديو",
+    "videoUrlPlaceholder": "رابط YouTube أو Cloudinary",
+    "language": "لغة الفيديو",
+    "arabic": "عربي",
+    "english": "إنجليزي",
+    "submit": "إضافة الفيديو",
+    "submitting": "جاري الإضافة...",
+    "success": "تم إضافة الفيديو بنجاح",
+    "error": "حدث خطأ أثناء إضافة الفيديو",
+    "invalidUrl": "يرجى إدخال رابط صحيح",
+    "selectLectureFirst": "يرجى اختيار المحاضرة أولاً",
+    "adminOnly": "هذه الصفحة متاحة للمشرفين فقط",
+    "lectureNotFound": "المحاضرة \"{lectureKey}\" غير موجودة في مادة \"{subject}\"",
+    "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة"
+  },
+  "addFile": {
+    "title": "إضافة ملف جديد",
+    "subtitle": "أضف ملف PDF أو ملخص جديد للمحاضرة",
+    "fileTitle": "عنوان الملف",
+    "fileTitlePlaceholder": "مثال: ملخص المحاضرة الأولى",
+    "subject": "اسم المادة",
+    "lecture": "المحاضرة المرتبطة",
+    "description": "وصف الملف (اختياري)",
+    "descriptionPlaceholder": "أدخل وصفاً للمحتوى...",
+    "uploadFile": "رفع الملف",
+    "submit": "إضافة الملف",
+    "submitting": "جاري الإضافة...",
+    "success": "تم إضافة الملف بنجاح",
+    "error": "حدث خطأ أثناء إضافة الملف",
+    "selectFile": "يرجى اختيار ملف",
+    "selectLectureFirst": "يرجى اختيار المحاضرة أولاً",
+    "adminOnly": "هذه الصفحة متاحة للمشرفين فقط",
+    "lectureNotFound": "المحاضرة \"{lectureKey}\" غير موجودة في مادة \"{subject}\"",
+    "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة",
+    "uploading": "جاري الرفع... ({progress}%)"
+  },
+  "lectureSelect": {
+    "label": "اختر المحاضرة...",
+    "searchPlaceholder": "بحث عن محاضرة...",
+    "loading": "جاري التحميل...",
+    "noResults": "لا توجد نتائج",
+    "none": "بدون محاضرة (عام)"
   }
 }

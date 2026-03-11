@@ -2,6 +2,7 @@
 
 import { useState, useMemo, memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   BookOpen,
   Newspaper,
@@ -52,27 +53,33 @@ const MemoizedEnrollmentsTab = memo(EnrollmentsTab);
 const MemoizedSubjectsTab = memo(SubjectsTab);
 
 function AdminDashboard() {
+  const t = useTranslations("adminDashboard");
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAdmin, isAdminLoading, loading: authLoading } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Auth guard: redirect non-admin users
   const isAuthChecking = authLoading || isAdminLoading;
 
   useEffect(() => {
-    if (!isAuthChecking && (!user || !isAdmin)) {
+    if (isMounted && !isAuthChecking && (!user || !isAdmin)) {
       const isEn = pathname?.startsWith("/en");
       router.replace(isEn ? "/en" : "/");
     }
-  }, [user, isAdmin, isAuthChecking, router, pathname]);
+  }, [user, isAdmin, isAuthChecking, router, pathname, isMounted]);
 
-  if (isAuthChecking) {
+  if (!isMounted || isAuthChecking) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">
-            جاري التحقق من الصلاحيات...
+            {t("auth.checking")}
           </p>
         </div>
       </div>
@@ -84,10 +91,10 @@ function AdminDashboard() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
-            غير مصرح
+            {t("auth.unauthorized")}
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            ليس لديك صلاحية الوصول لهذه الصفحة
+            {t("auth.noPermission")}
           </p>
         </div>
       </div>
@@ -98,10 +105,17 @@ function AdminDashboard() {
 }
 
 function AdminDashboardContent() {
+  const t = useTranslations("adminDashboard");
   const router = useRouter();
   const { adminRole } = useAuth();
   const { activeSemester } = usePlatformSettings();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [coursesRefreshKey, setCoursesRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState(
     adminRole === "doctor" ? "courses" : "summaries",
@@ -313,7 +327,7 @@ function AdminDashboardContent() {
           />
         ) : (
           <div className="p-8 text-center text-gray-500">
-            ليس لديك صلاحية الوصول لإدارة الكورسات
+            {t("noAccess.courses")}
           </div>
         );
       case "subjects":
@@ -367,7 +381,7 @@ function AdminDashboardContent() {
           <MemoizedEnrollmentsTab />
         ) : (
           <div className="p-8 text-center text-gray-500">
-            ليس لديك صلاحية الوصول لإثباتات الدفع
+            {t("noAccess.enrollments")}
           </div>
         );
       case "analytics":
@@ -383,7 +397,7 @@ function AdminDashboardContent() {
           <MemoizedPageManagementTab />
         ) : (
           <div className="p-8 text-center text-gray-500">
-            ليس لديك صلاحية الوصول لإدارة الصفحة
+            {t("noAccess.pageManagement")}
           </div>
         );
       default:
@@ -409,7 +423,7 @@ function AdminDashboardContent() {
     setEditingSummary(null);
   };
 
-  if (isLoading) {
+  if (isLoading || !isMounted) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -417,23 +431,25 @@ function AdminDashboardContent() {
     );
   }
 
+  if (!isMounted) return null;
+
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              لوحة تحكم المشرفين
+              {t("title")}
             </h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              إدارة ومراجعة المحتوى والأخبار والامتحانات
+              {t("subtitle")}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
               <Filter className="w-4 h-4" />
-              <span>فلتر شامل:</span>
+              <span>{t("globalFilter")}</span>
             </div>
 
             <select
@@ -447,7 +463,7 @@ function AdminDashboardContent() {
               }
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">كل المستويات</option>
+              <option value="">{t("allLevels")}</option>
               {levels.map((level) => (
                 <option key={level.id} value={level.name}>
                   {level.name}
@@ -468,7 +484,7 @@ function AdminDashboardContent() {
               }
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">كل الأقسام</option>
+              <option value="">{t("allDepartments")}</option>
               {availableDepartments.map((dept) => (
                 <option key={dept.id} value={dept.name}>
                   {dept.name}
@@ -486,7 +502,7 @@ function AdminDashboardContent() {
               }
               className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">كل المواد</option>
+              <option value="">{t("allSubjects")}</option>
               {[...new Set(subjectsHook.subjects.map((s) => s.name))]
                 .sort()
                 .map((subject) => (
@@ -504,7 +520,7 @@ function AdminDashboardContent() {
                   setGlobalFilters({ subject: "", department: "", year: "" })
                 }
                 className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
-                title="مسح الفلاتر"
+                title={t("clearFilters")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -525,7 +541,7 @@ function AdminDashboardContent() {
               }`}
             >
               <GraduationCap className="w-4 h-4" />
-              الكورسات
+              {t("tabs.courses")}
             </button>
           )}
           <button
@@ -537,7 +553,7 @@ function AdminDashboardContent() {
             }`}
           >
             <School className="w-4 h-4" />
-            المواد
+            {t("tabs.subjects")}
           </button>
           {adminRole === "doctor" && (
             <button
@@ -549,7 +565,7 @@ function AdminDashboardContent() {
               }`}
             >
               <CreditCard className="w-4 h-4" />
-              إثباتات الدفع
+              {t("tabs.enrollments")}
             </button>
           )}
           <button
@@ -561,7 +577,7 @@ function AdminDashboardContent() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            الملخصات
+            {t("tabs.summaries")}
           </button>
           <button
             onClick={() => setActiveTab("news")}
@@ -572,7 +588,7 @@ function AdminDashboardContent() {
             }`}
           >
             <Newspaper className="w-4 h-4" />
-            الأخبار
+            {t("tabs.news")}
           </button>
           <button
             onClick={() => setActiveTab("appeals")}
@@ -583,7 +599,7 @@ function AdminDashboardContent() {
             }`}
           >
             <Flag className="w-4 h-4" />
-            الطعون
+            {t("tabs.appeals")}
           </button>
           <button
             onClick={() => setActiveTab("quizzes")}
@@ -594,7 +610,7 @@ function AdminDashboardContent() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            الامتحانات
+            {t("tabs.quizzes")}
           </button>
           <button
             onClick={() => setActiveTab("analytics")}
@@ -605,7 +621,7 @@ function AdminDashboardContent() {
             }`}
           >
             <BarChart3 className="w-4 h-4" />
-            التحليلات
+            {t("tabs.analytics")}
           </button>
           {adminRole === "doctor" && (
             <button
@@ -617,7 +633,7 @@ function AdminDashboardContent() {
               }`}
             >
               <Layout className="w-4 h-4" />
-              إدارة الصفحة
+              {t("tabs.pageManagement")}
             </button>
           )}
         </div>
