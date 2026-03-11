@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTRWCategories } from "@/hooks/trw/useTRWHooks";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import {
@@ -52,11 +53,12 @@ export default function TRWLandingPage() {
                   <Link key={category.id} href={`/trw/${category.slug}`}>
                     <Card className="group overflow-hidden hover:shadow-lg transition-all border-muted hover:border-primary/50">
                       {category.cover_url && (
-                        <div className="h-48 overflow-hidden">
-                          <img
+                        <div className="h-48 overflow-hidden relative">
+                          <Image
                             src={category.cover_url}
                             alt={category.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                       )}

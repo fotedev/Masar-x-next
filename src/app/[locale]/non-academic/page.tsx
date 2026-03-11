@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTRWCategories, useTRWMembership } from "@/hooks/trw/useTRWHooks";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import { useEffect, useState } from "react";
@@ -65,9 +66,11 @@ export default function NonAcademicPage() {
       <div className="space-y-8 animate-in fade-in duration-700">
         <div className="text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center mb-4">
-            <img
+            <Image
               src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
               alt="TRW Logo"
+              width={80}
+              height={80}
               className="w-20 h-20 object-contain shadow-lg rounded-2xl"
             />
           </div>
@@ -94,11 +97,12 @@ export default function NonAcademicPage() {
                 <Link key={category.id} href={`/trw/${category.slug}`}>
                   <Card className="group overflow-hidden hover:shadow-lg transition-all border-muted hover:border-primary/50">
                     {category.cover_url && (
-                      <div className="h-48 overflow-hidden">
-                        <img
+                      <div className="h-48 overflow-hidden relative">
+                        <Image
                           src={category.cover_url}
                           alt={category.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     )}

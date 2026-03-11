@@ -29,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: item.priority,
   }));
 
-  let dynamicEntries: MetadataRoute.Sitemap = [];
+  const dynamicEntries: MetadataRoute.Sitemap = [];
 
   try {
     const [subjectsRes, coursesRes, summariesRes] = await Promise.all([
@@ -75,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       );
     }
   } catch (error) {
-    console.error("Sitemap generation error:", error);
+    // console.error("Sitemap generation error:", error);
   }
 
   return [...staticEntries, ...dynamicEntries];

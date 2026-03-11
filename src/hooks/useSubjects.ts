@@ -58,7 +58,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             }
 
             // Since is_academic column might not exist in some environments, but we need it for separation
-            let query = supabase
+            const query = supabase
                 .from("subjects")
                 .select("id, name, name_en, is_academic, semester, level, show_on_home, created_at, professor, description, schedule, location, status")
                 .order("name", { ascending: true });
@@ -111,7 +111,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
         } finally {
             setLoading(false);
         }
-    }, [academic.level, academic.semester, params.level, params.semester, user, activeSemester]);
+    }, [academic.level, academic.semester, params.level, params.semester, user, activeSemester, params.is_academic]);
 
     const updateSubjectVisibility = async (id: string, showOnHome: boolean) => {
         try {

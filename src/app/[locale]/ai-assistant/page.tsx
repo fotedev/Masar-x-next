@@ -358,7 +358,7 @@ function AiAssistantChatPage() {
             setHasSynced(true);
             loadSupabaseDrafts();
           } catch (error) {
-            console.error("Sync failed:", error);
+            // console.error("Sync failed:", error);
           }
         } else {
           setHasSynced(true);
@@ -403,7 +403,7 @@ function AiAssistantChatPage() {
       setShowSummaryModal(true);
       trackEvent("ai_chat_summary_success");
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       toast.error("فشل في إنشاء ملخص", {
         description: "تأكد من تحميل بيانات المحادثة أولاً.",
       });
@@ -524,7 +524,7 @@ function AiAssistantChatPage() {
 
       trackEvent("ai_quiz_submit_for_review_success", { quiz_id: quiz.id });
     } catch (e) {
-      console.error(e);
+      // console.error(e);
       trackEvent("ai_quiz_submit_for_review_failed");
       toast.error("فشل إرسال الامتحان للمراجعة", {
         description: "حاول مرة أخرى.",

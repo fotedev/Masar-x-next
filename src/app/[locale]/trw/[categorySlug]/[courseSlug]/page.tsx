@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTRWCourseDetails, useTRWProgress } from "@/hooks/trw/useTRWHooks";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -121,11 +122,14 @@ export default function CourseDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {course?.thumbnail_url && (
-                  <img
-                    src={course.thumbnail_url}
-                    alt={course.title}
-                    className="w-full rounded-lg shadow-sm"
-                  />
+                  <div className="relative w-full aspect-video">
+                    <Image
+                      src={course.thumbnail_url}
+                      alt={course.title}
+                      fill
+                      className="rounded-lg shadow-sm object-cover"
+                    />
+                  </div>
                 )}
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {course?.description}
