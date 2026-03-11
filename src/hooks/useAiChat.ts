@@ -231,7 +231,7 @@ export function useAiChat(user: any, trackEvent: any) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject]);
+  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id]);
 
   const clearChat = useCallback(async () => {
     setMessages([]);

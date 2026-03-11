@@ -203,7 +203,7 @@ export default function HomePage() {
     };
 
     loadQuizzes();
-  }, [subjects, subjectsLoading]);
+  }, [subjects, subjectsLoading, activeSemester]);
 
   const handleEditSummary = (summary: SummaryWithRatings) => {
     setEditingSummary(summary);
