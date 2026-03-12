@@ -1,6 +1,12 @@
 # Masar X - Comprehensive Learning Platform
 
-Last updated: 08 March 2026
+Last updated: 12 March 2026
+
+## Recent edits (12 Mar 2026)
+- **Localization Completion**: Finalized localization for Admin Dashboard tabs, filters, and Appeals system reasons in English and Arabic.
+- **Hydration & Stability**: Fixed hydration mismatches in client components using `isMounted` strategies.
+- **Form Refactoring**: Refactored `AddFileForm` and `AddVideoForm` for better performance, removed legacy console logs, and improved validation.
+- **UI & Performance**: Optimized `Courses` page with `useCallback` and improved layout responsiveness in `Header` and `MobileNav`.
 
 ## Recent edits (08 Mar 2026)
 - **Bug Investigation**: Comprehensive audit of lecture system identifying 13 bugs (3 critical, 6 medium, 4 minor) with detailed reports and fix plans.
