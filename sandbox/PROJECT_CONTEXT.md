@@ -5,12 +5,13 @@ Masar X هو منصة تعليمية شاملة مبنية بـ Next.js (React/T
 
 ### الميزات الأساسية
 - **نظام TRW (The Road Within)**: نظام دورات مدفوع مع إدارة اشتراكات وخطط وصول (Free/Full/Money).
-- **منصة التلخيصات**: نظام crowdsourced لمشاركة وتنظيم التلخيصات الأكاديمية
-- **الدورات التفاعلية**: إدارة دورات كاملة مع التسجيل وتتبع التقدم
-- **مساعد AI**: مدعوم بـ Google Gemini مع وضع Puter لتجاوز حدود الاستخدام
-- **الاختبارات**: نظام اختبارات تفاعلي يدعم المسودات والتحقق من الصلاحيات
-- **نظام الأدوار المتعدد**: أدوار Student/Instructor/Admin مع إدارة صلاحيات شاملة (RLS)
-- **نظام التهيئة الأكاديمية (Academic Onboarding)**: إجبار الطلاب على اختيار تخصصهم لمرة واحدة مع caching متقدم.
+- **منصة التلخيصات**: نظام crowdsourced لمشاركة وتنظيم التلخيصات الأكاديمية.
+- **الدورات التفاعلية**: إدارة دورات كاملة مع التسجيل وتتبع التقدم ونظام مراجعات متطور.
+- **مساعد AI**: مدعوم بـ Google Gemini مع وضع Puter لتجاوز حدود الاستخدام ودعم RAG.
+- **الاختبارات**: نظام اختبارات تفاعلي يدعم المسودات، التوقيت، والتحقق من الصلاحيات.
+- **نظام الأدوار المتعدد**: أدوار Student/Instructor/Admin مع إدارة صلاحيات شاملة (RLS).
+- **نظام التهيئة الأكاديمية (Academic Onboarding)**: إجبار الطلاب على اختيار تخصصهم لمرة واحدة مع caching متقدم ومنع Flicker.
+- **التدويل (Localization)**: دعم كامل للغتين العربية والإنجليزية (ar/en) باستخدام `next-intl`.
 
 ---
 
@@ -24,6 +25,7 @@ Masar X هو منصة تعليمية شاملة مبنية بـ Next.js (React/T
 - **Supabase SSR (@supabase/ssr)** لدعم تكامل Supabase مع App Router (cookies/session)
 - **TanStack Query (React Query)** لإدارة جلب البيانات والتخزين المؤقت (Caching)
 - **Framer Motion** للتحريكات وتجربة المستخدم السلسة
+- **Next-Intl** لإدارة الترجمة والتدويل (Localization)
 
 ### Backend Stack
 - **Supabase** (PostgreSQL + Auth + Storage + Edge Functions)
@@ -372,7 +374,7 @@ npx supabase db remote commit  # للإنتاج
 
 ---
 
-*آخر تحديث: 8 مارس 2026*
+*آخر تحديث: 12 مارس 2026*
 *المطور: فريق تطوير Masar X*
 
 ## Recent edits (March 2026)
@@ -384,6 +386,11 @@ npx supabase db remote commit  # للإنتاج
 - **Academic Flow**: Implemented `AcademicOnboardingGate` and migrated lecture linking to use `lecture_id` for better data integrity.
 - **Build & SEO**: Switched to native `sitemap.ts`, fixed Vercel build errors related to null `created_at` and pre-rendering.
 - **AI Improvements**: Added auto-trigger for Puter login when AI limits are reached and improved UI responsiveness.
+- **Localization Sync**: إتمام الترجمة لجميع عناصر لوحة التحكم (Admin Dashboard) ونظام الطعون (Appeals).
+- **Hydration Strategy**: تطبيق فحص `isMounted` في جميع نماذج الإدخال (Forms) لضمان استقرار الواجهة.
+- **Form Refactoring**: إعادة هيكلة `AddFileForm` و `AddVideoForm` لتحسين الأداء والتحقق من البيانات.
+- **UI Optimization**: تحسين استجابة القوائم في `Header` و `MobileNav` وتحسين أداء صفحة الكورسات.
+- **Bug Investigation**: تدقيق شامل لنظام المحاضرات وتحديد 13 خطأ مع خطط الإصلاح.
 
 ## Recent edits (21 Feb 2026)
 - Frontend pages and components updated across `src/app/`
