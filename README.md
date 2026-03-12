@@ -135,7 +135,7 @@ npm run start
 - **Study Summaries**: Crowdsourced platform for sharing and organizing academic summaries with PDF uploads
 - **TRW (The Road Within)**: Advanced course system with membership plans, access codes, and progress tracking
 - **Interactive Courses**: Complete course management with enrollment, reviews, and progress tracking
-- **AI Assistant**: Powered by Google Gemini with Puter mode for extended usage and smart study assistance
+- **AI Assistant**: Powered by Puter.js for extended usage and smart study assistance
 - **Quizzes & Assessments**: Interactive quiz system with draft support and role-based permissions
 - **Academic Onboarding**: Mandatory specialization setup to personalize the learning experience
 - **Multi-Role System**: Student, Instructor, and Admin roles with comprehensive RLS security
@@ -187,7 +187,7 @@ npm run start
 - **Icons**: Lucide React
 - **Backend**: Supabase (Database + Auth + Storage + Edge Functions)
 - **Database**: PostgreSQL with 20+ migrations and advanced RLS policies
-- **AI Integration**: Google Gemini API + Puter Integration
+- **AI Integration**: Puter.js SDK for intelligent chat and content generation
 - **Email Services**: Brevo (Sendinblue) via Supabase Edge Functions
 - **Math Rendering**: KaTeX for mathematical expressions
 - **Deployment**: Vercel with native `sitemap.ts` and hardened CSP
@@ -198,7 +198,7 @@ npm run start
 
 - Node.js 18+ and npm/pnpm
 - Supabase account and project
-- Google Gemini API key (for AI features)
+- Puter.js Integration (for AI features)
 - EmailJS account (for email notifications)
 
 ### Installation
@@ -222,7 +222,6 @@ npm run start
    NEXT_PUBLIC_SUPABASE_URL=https://jcufigozkhxazjbwhjjm.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
    NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
@@ -306,7 +305,7 @@ The project is configured for deployment on Vercel with optimized settings for p
 - **Security**: Enterprise-grade security with 20+ RLS policies and audit logging
 - **Real-time Features**: Live notifications, chat, and instant updates
 - **File Management**: Secure uploads with Cloudinary integration and access control
-- **AI Integration**: Google Gemini-powered intelligent assistance and content generation
+- **AI Integration**: Puter.js-powered intelligent assistance and content generation
 
 ## Database Schema
 
@@ -584,7 +583,7 @@ For support, feature requests, or bug reports:
 
 - **Built with Modern Web Technologies**: Next.js 14, React 18, TypeScript, and Tailwind CSS for educational excellence
 - **Designed for Arabic-Speaking Community**: Full RTL support and localized user experience
-- **Powered by Leading Services**: Supabase backend, Google Gemini AI, and Cloudinary media processing
+- **Powered by Leading Services**: Supabase backend, Puter.js AI, and Cloudinary media processing
 - **Production-Ready Platform**: Serving real users with enterprise-grade security and performance
 - **Comprehensive Database Architecture**: 20+ migrations with advanced RLS policies and audit trails
 
