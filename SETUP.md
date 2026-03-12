@@ -23,7 +23,7 @@ This guide will walk you through setting up the "Masar X" comprehensive learning
 
 - **Study Summaries**: Crowdsourced platform for sharing and organizing academic summaries with PDF uploads
 - **Interactive Courses**: Complete course management with enrollment, reviews, and progress tracking
-- **AI Assistant**: Powered by Google Gemini for intelligent study assistance and chat with conversation history
+- **AI Assistant**: Powered by Puter.js for intelligent study assistance and chat with conversation history
 - **Quizzes & Assessments**: Interactive quiz system with multiple question types and scoring
 - **Multi-Role System**: Student, Instructor, and Admin roles with comprehensive permission management
 - **Real-time Features**: Live notifications, chat system, and instant content updates
@@ -33,7 +33,7 @@ This guide will walk you through setting up the "Masar X" comprehensive learning
 
 - Node.js 18+ and npm/pnpm
 - Supabase account and project
-- Google Gemini API key (for AI features)
+- Puter.js Integration (for AI features)
 - EmailJS account (for email notifications)
 - Cloudinary account (for file uploads)
 - Git (for version control)
@@ -76,7 +76,6 @@ Create a `.env.local` file in the root directory with the following variables:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
 NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
 NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
 NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
@@ -252,7 +251,7 @@ masarx_next/
 │   ├── messages/               # JSON translations (ar.json, en.json)
 │   ├── lib/                    # Core libraries & integrations
 │   │   ├── supabase.ts         # Supabase client & SSR
-│   │   ├── gemini.ts           # AI model integration
+│   │   ├── puter.ts            # Puter.js AI integration
 │   │   └── cloudinary.ts       # Media upload handling
 │   ├── types/                  # TypeScript definitions
 │   ├── config/                 # App-wide configurations
@@ -425,7 +424,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # AI Integration
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+# Puter.js is used for AI features; no additional API key required in env if using client SDK
 
 # Email Services
 NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
@@ -499,10 +498,10 @@ npx tsc --noEmit
 - Test authentication flow in browser dev tools
 
 **AI Assistant Not Working:**
-- Verify Google Gemini API key is valid
-- Check API quota and billing status
-- Review browser console for API errors
-- Test Gemini integration separately
+- Verify Puter.js SDK is properly initialized
+- Check if user is signed in to Puter if required
+- Review browser console for SDK errors
+- Test Puter integration separately
 
 ### Database Issues
 
@@ -666,7 +665,7 @@ See `test_quiz/README.md` for detailed usage instructions.
 - **Supabase Documentation**: Database and authentication guides
 - **Next.js Documentation**: Framework-specific help
 - **Tailwind CSS**: Styling and component guidance
-- **Google Gemini AI**: AI integration documentation
+- **Puter.js Documentation**: AI integration documentation
 
 ### Development Tools:
 - **VS Code**: Recommended IDE with TypeScript support
@@ -683,7 +682,7 @@ MIT License - Free to use and modify for educational institutions and learning p
 Built with modern web technologies for the Arabic-speaking academic community:
 - **Next.js 14** - React framework for production
 - **Supabase** - Backend-as-a-Service platform
-- **Google Gemini** - AI-powered assistance
+- **Puter.js** - AI-powered assistance
 - **Tailwind CSS** - Utility-first styling
 - **TypeScript** - Type-safe development
 
