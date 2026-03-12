@@ -1,5 +1,11 @@
 # Complete Setup Instructions for Masar X
-*آخر تحديث: 12 فبراير 2026*
+*آخر تحديث: 12 مارس 2026*
+
+## Recent edits (12 Mar 2026)
+- **Localization Sync**: Finalized all translation keys for Admin Dashboard and Appeals system.
+- **Hydration Strategy**: Implemented `isMounted` checks across all client-side auth-guarded forms.
+- **Improved Form Validation**: Enhanced `AddFileForm` and `AddVideoForm` with real-time feedback and better error handling.
+- **Performance Fixes**: Optimized course listing and navigation header rendering.
 
 ## Recent edits (12 Feb 2026)
 - Updated project pages and components in `src/app/` (multiple pages)
@@ -52,7 +58,7 @@ pnpm install
 ```
 
 This will install all required packages:
-- Next.js 14.2.15
+- Next.js 14.2.35
 - React 18.3.1
 - TypeScript 5.5.3
 - Tailwind CSS 3.4.1
@@ -215,52 +221,50 @@ To create additional admin users:
 masarx_next/
 ├── src/
 │   ├── app/                      # Next.js App Router pages
-│   │   ├── layout.tsx           # Root layout
-│   │   ├── page.tsx             # Home page
-│   │   ├── login/               # Authentication pages
-│   │   ├── admin/               # Admin dashboard
-│   │   ├── courses/             # Course management
-│   │   ├── quizzes/             # Quiz system
-│   │   ├── ai-assistant/        # AI chat interface
-│   │   └── api/                 # API routes
-│   ├── components/              # Reusable UI components
-│   │   ├── Header.tsx          # Navigation header
-│   │   ├── QuizPlayer.tsx      # Quiz interface
-│   │   ├── NotificationManager.tsx # Real-time notifications
-│   │   ├── course/             # Course-specific components
-│   │   └── ui/                 # UI component library
-│   ├── contexts/               # React contexts
-│   │   ├── AuthContext.tsx     # Authentication state
-│   │   └── ThemeContext.tsx    # Theme management
-│   ├── hooks/                  # Custom React hooks
-│   │   ├── useQuizzes.ts       # Quiz management
-│   │   ├── useCourses.ts       # Course operations
-│   │   └── useNotifications.ts # Notification handling
-│   ├── lib/                    # Utilities and configurations
-│   │   ├── supabase.ts         # Supabase client setup
-│   │   ├── gemini.ts           # Google Gemini AI integration
-│   │   └── cloudinary.ts       # Cloudinary file management
-│   ├── types/                  # TypeScript type definitions
-│   │   ├── database.ts         # Database schema types
-│   │   └── generated-database.ts # Auto-generated types
-│   ├── constants/              # Application constants
-│   │   ├── subjects.ts         # Academic subjects
-│   │   └── notifications.ts    # Notification types
-│   ├── utils/                  # Utility functions
-│   └── index.css               # Global styles (Tailwind)
-├── supabase/                   # Supabase configuration
-│   ├── migrations/            # Database migrations (20+ files)
-│   └── functions/             # Edge functions
-├── test_quiz/                 # Quiz testing tools
-├── public/                    # Static assets
-│   ├── logo.png
-│   └── manifest.json          # PWA manifest
-├── README.md                  # Project documentation
-├── SETUP.md                   # This setup guide
-├── package.json               # Dependencies
-├── next.config.mjs           # Next.js configuration
-├── tailwind.config.js        # Tailwind CSS config
-└── tsconfig.json             # TypeScript configuration
+│   │   ├── [locale]/             # i18n dynamic route (main app)
+│   │   │   ├── admin-dashboard/  # Unified admin management
+│   │   │   ├── instructor-dashboard/ # Course & student management
+│   │   │   ├── trw/              # The Road Within subsystem
+│   │   │   ├── courses/          # Course catalog & enrollment
+│   │   │   ├── subjects/         # Subject details & lectures
+│   │   │   ├── quizzes/          # Quiz listings & management
+│   │   │   ├── ai-assistant/     # AI tutor interface
+│   │   │   ├── profile/          # User profile & settings
+│   │   │   └── onboarding/       # Academic onboarding gate
+│   │   ├── layout.tsx           # Global app layout
+│   │   ├── sitemap.ts           # Native SEO generation
+│   │   └── page.tsx             # Route dispatcher
+│   ├── components/              # Modular UI components
+│   │   ├── appeals/             # Content moderation appeals
+│   │   ├── course/              # Course content & sections
+│   │   ├── enrollments/         # Payment & enrollment UI
+│   │   ├── header/ & footer/    # Layout navigation modules
+│   │   ├── lectures/            # Lecture management components
+│   │   ├── subject/             # Subject & exam dashboards
+│   │   ├── summaries/           # Summary listing & filters
+│   │   └── ui/                 # shadcn/custom primitive components
+│   ├── contexts/               # React Context Providers
+│   │   ├── AuthContext.tsx     # Session & role-based auth
+│   │   └── ThemeContext.tsx    # Light/Dark mode state
+│   ├── hooks/                  # Custom React Hooks
+│   │   ├── useUserAcademic.ts  # Academic data & caching
+│   │   ├── useAiChat.ts        # AI assistant logic
+│   │   └── useTRWHooks.ts      # TRW subsystem operations
+│   ├── i18n/                   # next-intl configuration
+│   ├── messages/               # JSON translations (ar.json, en.json)
+│   ├── lib/                    # Core libraries & integrations
+│   │   ├── supabase.ts         # Supabase client & SSR
+│   │   ├── gemini.ts           # AI model integration
+│   │   └── cloudinary.ts       # Media upload handling
+│   ├── types/                  # TypeScript definitions
+│   ├── config/                 # App-wide configurations
+│   └── navigation.ts           # Shared i18n navigation
+├── supabase/                   # Database & Edge Functions
+│   ├── migrations/            # SQL schema & RLS (20+ files)
+│   └── functions/             # Deno Edge Functions (Brevo, AI, etc.)
+├── middleware.ts               # Auth & i18n middleware
+├── vercel.json                 # Security headers & CSP
+└── README.md                   # Project overview
 ```
 
 ## Features Walkthrough
@@ -273,25 +277,40 @@ masarx_next/
    - Access AI-powered study assistant for help with difficult topics
    - View detailed content with PDF downloads and rich formatting
 
-2. **Enroll in Courses**
+2. **TRW (The Road Within) Subsystem**
+   - Access non-academic premium content and specialized courses
+   - Redeem access codes to unlock specific plans (Free/Full/Money)
+   - Manage multiple subscriptions and track specialized progress
+
+3. **Academic Onboarding**
+   - Mandatory specialization setup during first-time login
+   - Personalized content filtering based on university and department
+   - Ensures data consistency and relevant study material discovery
+
+4. **Enroll in Courses**
    - Browse the course catalog with instructor information
    - Submit payment proofs for course enrollment
    - Track learning progress and completion status
    - Access structured course materials (summaries, videos, files)
 
-3. **Take Interactive Quizzes**
+5. **Take Interactive Quizzes**
    - Participate in assessments with multiple question types
    - Experience timed quizzes with auto-save functionality
    - Receive instant scoring and detailed feedback
    - Track quiz attempts and performance history
 
-4. **AI-Powered Learning**
+6. **AI-Powered Learning**
    - Chat with the AI assistant for explanations and help
-   - Get personalized study recommendations
-   - Access conversation history across sessions
-   - Receive AI-generated summaries and study aids
+   - Support for RAG (Retrieval-Augmented Generation) and group chats
+   - Get personalized study recommendations and conversation history
+   - Integrated Puter mode for extended usage limits
 
-5. **Contribute Content**
+7. **Multi-language Support (Localization)**
+   - Seamless switching between Arabic and English
+   - Full RTL support for Arabic and LTR for English
+   - Consistent translation across all platform features
+
+8. **Contribute Content**
    - Submit study summaries with rich text and PDF uploads
    - Rate and review courses and instructors
    - Participate in the learning community
@@ -320,16 +339,16 @@ masarx_next/
 ### For Admins
 
 1. **Platform Management**
-   - Access comprehensive admin dashboard
+   - Access comprehensive admin dashboard with real-time analytics
    - Manage user roles and permissions (Student/Instructor/Admin)
-   - Oversee all platform content and users
-   - Monitor system performance and analytics
+   - Oversee all platform content, subjects, and lectures
+   - Configure global platform settings (e.g., active semester)
 
-2. **Content Moderation**
+2. **Content Moderation & Appeals**
    - Review user-generated summaries and content
    - Approve or reject submissions with detailed feedback
-   - Manage appeals and dispute resolution
-   - Maintain content quality standards
+   - Manage formal appeals and dispute resolution workflow
+   - Audit activity logs for platform safety
 
 3. **User Management**
    - View all registered users and their roles
