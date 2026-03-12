@@ -244,10 +244,7 @@ npm run start
 
 ### Current Admin Users
 
-The platform currently has 2 active admin users:
-
-1. **أحمد أبوالعيون** - ahmedaboalayoun0016k@gmail.com
-2. **خالد "القائد"** - ksabry797@gmail.com
+Masar X is designed as a customizable template, so it does not come with pre-defined admin users. You must set up your own administrative accounts in your Supabase project.
 
 **Note:** Admin roles are managed through both the `admins` table and auth metadata. Use the admin dashboard to manage user roles and permissions.
 

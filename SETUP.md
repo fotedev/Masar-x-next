@@ -201,19 +201,17 @@ The application will be available at `http://localhost:3000`
 
 ### 7. Admin User Setup
 
-Currently, the platform has 2 active admin users:
-
-1. **أحمد أبو العلايون** - ahmedaboalayoun0016k@gmail.com
-2. **خالد "القائد"** - ksabry797@gmail.com
+Masar X is designed as a customizable template, so it does not come with pre-defined admin users. You must set up your own administrative accounts.
 
 **Note:** Admin roles are managed through both the `admins` table and auth metadata. Use the admin dashboard to manage user roles and permissions.
 
-To create additional admin users:
+To create admin users:
 1. Go to Supabase Dashboard → Authentication → Users
 2. Click "Add user" → "Create new user"
 3. Enter email and password
 4. Check "Auto Confirm User"
-5. Add the user to the `admins` table via SQL or admin dashboard
+5. Add the user to the `admins` table via SQL or by manually inserting a row with the user's ID.
+6. Alternatively, set the `role` to `admin` in the user's `raw_user_meta_data`.
 
 ## Project Structure
 
