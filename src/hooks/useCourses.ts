@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
 
 import { CourseWithInstructor, CourseInsert, Course } from "@/types/database";
+import { CourseWithInstructorSchema } from "@/lib/validations";
 
 export function useCourses() {
   const queryClient = useQueryClient();
@@ -58,13 +59,23 @@ export function useCourses() {
           const instructor = course.profiles;
           const instructorName = instructor?.display_name || instructor?.full_name || instructor?.username || "مدرب";
 
-          return {
+          const courseToValidate = {
             ...course,
             instructor_name: instructorName,
             enrollments_count: activeEnrollments.length,
             total_students: activeEnrollments.length,
             average_rating: averageRating,
-          } as CourseWithInstructor;
+          };
+
+          const validation = CourseWithInstructorSchema.safeParse(courseToValidate);
+          
+          if (!validation.success) {
+            logger.error(`Validation failed for course ${course.id}:`, validation.error.format());
+            // Return existing structure as fallback but log the error
+            return courseToValidate as CourseWithInstructor;
+          }
+
+          return validation.data as CourseWithInstructor;
         });
       } catch (error) {
         logger.error("Failed to fetch courses", error);
