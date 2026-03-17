@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { quizService } from '../lib/quiz';
 import type { Json } from '@/types/database';
 
+import { logger } from '../lib/logger';
+
 interface Answer {
     question_id: string;
     selected_option: number;
@@ -89,7 +91,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                         // Sync back merged state to localStorage
                         localStorage.setItem(localKey, JSON.stringify(answersMap));
                     } catch (e) {
-                        console.error('Error parsing local quiz data:', e);
+                        logger.error('Error parsing local quiz data:', e);
                     }
                 }
                 
@@ -134,7 +136,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
             setError(null);
             await quizService.saveAnswer(attemptId, questionId, selectedOption, isCorrect);
         } catch (err) {
-            console.error('Failed to save answer to DB:', err);
+            logger.error('Failed to save answer to DB:', err);
             setError(err instanceof Error ? err.message : 'فشل حفظ الإجابة في السحابة. سيتم الاحتفاظ بها محلياً.');
             throw err;
         } finally {

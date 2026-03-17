@@ -98,7 +98,7 @@ export default function AcademicOnboardingPage() {
 
       // Redirect immediately after optimistic update succeeds
       router.replace("/");
-    } catch (err) {
+    } catch {
       setError("حدث خطأ غير متوقع. حاول مرة أخرى.");
       setSaving(false);
     }

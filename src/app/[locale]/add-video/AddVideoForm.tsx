@@ -138,7 +138,7 @@ export function AddVideoForm() {
       setTimeout(() => {
         handleClose();
       }, 2000);
-    } catch (err) {
+    } catch {
       // console.error("Error adding video:", err);
       setError(t("error"));
     } finally {

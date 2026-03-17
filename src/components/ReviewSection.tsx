@@ -6,6 +6,7 @@ import { confirmToast } from "../lib/confirmToast";
 import { ReviewStats } from "./reviews/ReviewStats";
 import { ReviewForm } from "./reviews/ReviewForm";
 import { ReviewItem } from "./reviews/ReviewItem";
+import type { ReviewInsert } from "../types/database";
 
 interface ReviewSectionProps {
   contentId: string;
@@ -23,9 +24,11 @@ export function ReviewSection({
   );
 
   const handleSubmitReview = async (content: string, rating: number) => {
-    const reviewData: any = {
-      content,
-      user_id: user?.id,
+    if (!user?.id) return;
+
+    const reviewData: ReviewInsert = {
+      comment: content,
+      user_id: user.id,
       rating,
       summary_id: contentType === "summary" ? contentId : undefined,
       quiz_id: contentType === "quiz" ? contentId : undefined,

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { supabase } from "@/lib/supabase";
 import {
   Card,
   CardContent,
@@ -16,114 +15,20 @@ import {
 import { GraduationCap, Users, Star, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion } from "framer-motion";
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  is_published: boolean;
-  created_at: string;
-  instructor_name?: string;
-  average_rating?: number;
-  total_students?: number;
-}
+import { useCourses } from "@/hooks/useCourses";
+import { useCoursesFilter } from "@/hooks/useCoursesFilter";
 
 export default function CoursesPage() {
   const t = useTranslations("courses");
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { courses, loading } = useCourses();
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState<"all" | "free" | "paid">("all");
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Fetch courses with instructor names and enrollment stats
-      const { data: coursesData, error } = await supabase
-        .from("courses")
-        .select(
-          `
-          *,
-          profiles:instructor_id (
-            display_name
-          ),
-          enrollments (
-            status
-          ),
-          reviews (
-            rating
-          )
-        `,
-        )
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (coursesData) {
-        const processedCourses = coursesData.map(
-          (course: (typeof coursesData)[number]) => {
-            const activeEnrollments =
-              (course.enrollments as { status: string }[] | undefined)?.filter(
-                (e) => e.status === "active",
-              ) || [];
-            const reviews =
-              (course.reviews as { rating: number }[] | undefined) || [];
-            const averageRating =
-              reviews.length > 0
-                ? reviews.reduce((sum: number, r) => sum + r.rating, 0) /
-                  reviews.length
-                : 0;
-
-            const priceNumber =
-              typeof course.price === "number"
-                ? course.price
-                : typeof course.price === "string"
-                  ? Number(course.price)
-                  : 0;
-
-            return {
-              ...course,
-              price: Number.isFinite(priceNumber) ? priceNumber : 0,
-              instructor_name: course.profiles?.display_name || t("instructor"),
-              average_rating: averageRating,
-              total_students: activeEnrollments.length,
-            };
-          },
-        );
-
-        setCourses(processedCourses);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
-
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.instructor_name?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const price =
-      typeof course.price === "number" ? course.price : Number(course.price);
-    const safePrice = Number.isFinite(price) ? price : 0;
-
-    const matchesFilter =
-      filter === "all" ||
-      (filter === "free" && safePrice <= 0) ||
-      (filter === "paid" && safePrice > 0);
-
-    return matchesSearch && matchesFilter;
+  const { filteredCourses, stats } = useCoursesFilter({
+    courses,
+    searchTerm,
+    filter,
   });
 
   const renderStars = (rating: number) => {
@@ -327,6 +232,7 @@ export default function CoursesPage() {
                     </div>
 
                     {course.average_rating !== undefined &&
+                      course.average_rating !== null &&
                       course.average_rating > 0 &&
                       renderStars(course.average_rating)}
 
@@ -349,32 +255,29 @@ export default function CoursesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div>
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {courses.length}
+              {stats.total}
             </div>
             <div className="text-gray-600 dark:text-gray-400">
-              {t("courseCount", { count: courses.length })}
+              {t("courseCount", { count: stats.total })}
             </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-green-600 mb-1">
-              {courses.filter((c) => c.price === 0).length}
+              {stats.free}
             </div>
             <div className="text-gray-600 dark:text-gray-400">
               {t("freeCourseCount", {
-                count: courses.filter((c) => c.price === 0).length,
+                count: stats.free,
               })}
             </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-purple-600 mb-1">
-              {courses.reduce((sum, c) => sum + (c.total_students || 0), 0)}
+              {stats.totalStudents}
             </div>
             <div className="text-gray-600 dark:text-gray-400">
               {t("studentCount", {
-                count: courses.reduce(
-                  (sum, c) => sum + (c.total_students || 0),
-                  0,
-                ),
+                count: stats.totalStudents,
               })}
             </div>
           </div>

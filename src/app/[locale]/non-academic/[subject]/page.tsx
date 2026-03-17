@@ -6,12 +6,29 @@ import { ArrowRight, Monitor } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 
+type SubjectDetails = {
+  id: string;
+  name: string;
+  professor: string | null;
+  description: string | null;
+  schedule: string | null;
+  location: string | null;
+  level: string | null;
+  semester: string | null;
+  status: string | null;
+  show_on_home: boolean | null;
+  created_at: string | null;
+  is_academic: boolean | null;
+};
+
 function SubjectDetailsContent() {
   const params = useParams();
   const subjectId = params?.subject as string;
   const router = useRouter();
 
-  const [subjectDetails, setSubjectDetails] = useState<any>(null);
+  const [subjectDetails, setSubjectDetails] = useState<SubjectDetails | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   const subjectName = subjectId ? decodeURIComponent(subjectId) : "";
@@ -25,7 +42,7 @@ function SubjectDetailsContent() {
       if (!normalizedSubjectName) return;
 
       const cacheKey = cacheKeys.subjectDetails(normalizedSubjectName);
-      const cached = queryCache.get<any>(cacheKey);
+      const cached = queryCache.get<SubjectDetails>(cacheKey);
       if (cached) {
         setSubjectDetails(cached);
         setLoading(false);
@@ -42,10 +59,10 @@ function SubjectDetailsContent() {
           .maybeSingle();
 
         if (data) {
-          setSubjectDetails(data);
-          queryCache.set(cacheKey, data, cacheTTL.subjects);
+          setSubjectDetails(data as SubjectDetails);
+          queryCache.set(cacheKey, data as SubjectDetails, cacheTTL.subjects);
         }
-      } catch (error) {
+      } catch {
         // console.error("Error fetching subject details:", error);
       } finally {
         setLoading(false);

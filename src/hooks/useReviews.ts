@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { ReviewDetails, ReviewInsert } from "../types/database";
+import { PostgrestError } from "@supabase/supabase-js";
+import { logger } from "../lib/logger";
+
+interface SupabaseError extends PostgrestError {
+    code: string;
+    message: string;
+    details: string;
+    hint: string;
+}
 
 export function useReviews(contentId: string, contentType: "summary" | "quiz" | "course" | "video" = "summary") {
     const [reviews, setReviews] = useState<ReviewDetails[]>([]);
@@ -30,7 +39,8 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) throw error;
             setReviews(data || []);
-        } catch {
+        } catch (error) {
+            logger.error("Failed to fetch reviews", error, { contentId, contentType });
             setError("حدث خطأ أثناء تحميل المراجعات");
         } finally {
             setLoading(false);
@@ -40,7 +50,7 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
     const addReview = async (review: ReviewInsert) => {
         try {
             if (isDev) {
-                console.debug("[reviews] insert payload", {
+                logger.debug("[reviews] insert payload", {
                     contentType,
                     contentId,
                     review,
@@ -52,11 +62,12 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) {
                 if (isDev) {
-                    console.error("[reviews] insert error", {
-                        code: (error as any).code,
-                        message: (error as any).message,
-                        details: (error as any).details,
-                        hint: (error as any).hint,
+                    const pgError = error as SupabaseError;
+                    logger.error("[reviews] insert error", {
+                        code: pgError.code,
+                        message: pgError.message,
+                        details: pgError.details,
+                        hint: pgError.hint,
                         error,
                     });
                 }
@@ -77,12 +88,13 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
 
             if (error) {
                 if (isDev) {
-                    console.error("[reviews] delete error", {
+                    const pgError = error as SupabaseError;
+                    logger.error("[reviews] delete error", {
                         reviewId,
-                        code: (error as any).code,
-                        message: (error as any).message,
-                        details: (error as any).details,
-                        hint: (error as any).hint,
+                        code: pgError.code,
+                        message: pgError.message,
+                        details: pgError.details,
+                        hint: pgError.hint,
                         error,
                     });
                 }

@@ -1,11 +1,18 @@
 import React from "react";
-import { Edit, Trash2, CheckCircle, XCircle, GraduationCap, BookOpen as BookOpenIcon } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  GraduationCap,
+  BookOpen as BookOpenIcon,
+} from "lucide-react";
 import { Subject } from "../../types/database";
 import { SUBJECT_ICONS } from "../../constants/subjects";
 
 interface SubjectCardProps {
   subject: Subject;
-  t: any;
+  t: (key: string, values?: Record<string, string | number | Date>) => string;
   onEdit: (subject: Subject) => void;
   onDelete: (id: string) => void;
   onManageLectures: (subject: Subject) => void;
@@ -57,7 +64,20 @@ export function SubjectCard({
       </h3>
       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
         <GraduationCap className="w-4 h-4" />
-        {subject.professor || t("professorUnknown")}
+        {(() => {
+          const profName = subject.professor || "";
+          if (!profName) return t("professorUnknown");
+          const hasTitle = /^(Dr\.|Prof\.|د\.|أ\.د)/i.test(profName);
+          if (hasTitle) return profName;
+
+          const label = subject.professor_gender === "female"
+            ? t("professorLabelFemale")
+            : t("professorLabelMale");
+
+          const finalLabel = label.startsWith("subjectsTab.") ? (subject.professor_gender === "female" ? "دكتورة" : "دكتور") : label;
+
+          return `${finalLabel} ${profName}`;
+        })()}
       </div>
 
       <button

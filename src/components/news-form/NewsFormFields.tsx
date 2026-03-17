@@ -1,15 +1,20 @@
 import React from "react";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
+type NewsDraft = {
+  title: string;
+  content: string;
+  type: string;
+};
+
 interface NewsFormFieldsProps {
-  newNews: {
-    title: string;
-    content: string;
-    type: string;
-  };
-  onSetNewNews: (news: any) => void;
+  newNews: NewsDraft;
+  onSetNewNews: (news: NewsDraft) => void;
   customCategory: string;
   setCustomCategory: (val: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function NewsFormFields({
@@ -28,9 +33,7 @@ export function NewsFormFields({
         <input
           type="text"
           value={newNews.title}
-          onChange={(e) =>
-            onSetNewNews({ ...newNews, title: e.target.value })
-          }
+          onChange={(e) => onSetNewNews({ ...newNews, title: e.target.value })}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
           placeholder={t("newsPlaceholder")}
         />

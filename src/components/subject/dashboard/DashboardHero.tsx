@@ -7,8 +7,10 @@ interface DashboardHeroProps {
   normalizedSubjectName: string;
   dashboardData: {
     professor: string;
+    professorAr?: string | null;
     professorGender?: "male" | "female";
     description: string;
+    descriptionAr?: string | null;
     schedule: string;
     nextLecture: string;
     progress: number;
@@ -67,15 +69,25 @@ export function DashboardHero({
                   <GraduationCap className="w-4 h-4" />
                   <motion.span layout>
                     {(() => {
-                      const profName = dashboardData.professor || "";
-                      const hasTitle = /^(Dr\.|Prof\.|د\.|أ\.د)/i.test(profName);
+                      const profName = isRTL 
+                        ? (dashboardData.professorAr || dashboardData.professor || "")
+                        : (dashboardData.professor || "");
+                        
+                      if (!profName) return "";
+
+                      const hasTitle = /^(Dr\.|Prof\.|د\.|أ\.د|د\/|أ\.د\/)/i.test(profName.trim());
+                      
                       if (hasTitle) return profName;
 
                       const label = dashboardData.professorGender === "female"
                         ? tSubjectPage("professorLabelFemale")
                         : tSubjectPage("professorLabelMale");
 
-                      return isRTL ? `${profName} ${label}` : `${label} ${profName}`;
+                      const finalLabel = label.startsWith("subjectPage.") 
+                        ? (dashboardData.professorGender === "female" ? (isRTL ? "دكتورة" : "Dr.") : (isRTL ? "دكتور" : "Dr.")) 
+                        : label;
+
+                      return `${finalLabel} ${profName}`;
                     })()}
                   </motion.span>
                 </motion.div>
@@ -115,7 +127,9 @@ export function DashboardHero({
                   layout
                   className="text-sm sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium"
                 >
-                  {dashboardData.description}
+                  {isRTL 
+                    ? (dashboardData.descriptionAr || dashboardData.description)
+                    : dashboardData.description}
                 </motion.p>
               </motion.div>
 

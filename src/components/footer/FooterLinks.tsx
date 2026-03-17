@@ -8,9 +8,12 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface FooterLinksProps {
-  tFooter: any;
-  tNav: any;
+  tFooter: TranslationFn;
+  tNav: TranslationFn;
   localePrefix: string;
   trwWhatsappUrl: string;
 }

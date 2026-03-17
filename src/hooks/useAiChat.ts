@@ -1,11 +1,13 @@
 "use client";
 
+import { User } from "@supabase/supabase-js";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
+import { logger } from "@/lib/logger";
 
 interface ChatMessage {
   id: string;
@@ -16,7 +18,14 @@ interface ChatMessage {
 
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
 
-export function useAiChat(user: any, trackEvent: any) {
+interface SupabaseChatMessage {
+  id: string;
+  role: string;
+  content: string;
+  created_at: string;
+}
+
+export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
@@ -39,16 +48,15 @@ export function useAiChat(user: any, trackEvent: any) {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
-            setMessages(parsed.map((msg: any) => ({
+            setMessages(parsed.map((msg: ChatMessage) => ({
               ...msg,
               timestamp: new Date(msg.timestamp)
             })));
           } else {
             setMessages([]);
           }
-        } catch (e) {
-          console.error("Failed to parse guest messages", e);
-          setMessages([]);
+        } catch {
+          // ignore
         }
       } else {
         setMessages([]);
@@ -80,7 +88,7 @@ export function useAiChat(user: any, trackEvent: any) {
         if (cancelled) return;
         if (error) throw error;
 
-        const loadedMessages = (data || []).map((msg: any) => ({
+        const loadedMessages = (data || []).map((msg: SupabaseChatMessage) => ({
           id: msg.id,
           type: msg.role as "user" | "assistant",
           content: msg.content,
@@ -90,7 +98,7 @@ export function useAiChat(user: any, trackEvent: any) {
         setMessages(loadedMessages);
       } catch (e) {
         if (!cancelled) {
-          console.error("Failed to load Supabase messages", e);
+          logger.error("Failed to load Supabase messages", e);
           setMessages([]);
         }
       } finally {
@@ -221,7 +229,8 @@ export function useAiChat(user: any, trackEvent: any) {
         }).then();
       }
 
-    } catch (e) {
+    } catch (_e) {
+      logger.error("Failed to send AI message", _e);
       setMessages(prev => [...prev, {
         id: `error_${Date.now()}`,
         type: "assistant",

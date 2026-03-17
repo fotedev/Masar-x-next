@@ -18,7 +18,7 @@ interface MobileNavProps {
   isTRWVisible: boolean;
   currentPage: string;
   loading: boolean;
-  user: any;
+  user: { id: string } | null;
   isAdmin: boolean;
   isAdminLoading: boolean;
   handleSignOut: () => void;

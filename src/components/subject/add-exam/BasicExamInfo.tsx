@@ -1,4 +1,5 @@
 import React from "react";
+import type { DepartmentOption, LevelOption, SetExamFormData } from "./types";
 
 interface BasicExamInfoProps {
   examFormData: {
@@ -7,9 +8,9 @@ interface BasicExamInfoProps {
     department: string;
     year: string;
   };
-  setExamFormData: (updater: (prev: any) => any) => void;
-  levels: any[];
-  availableExamDepartments: any[];
+  setExamFormData: SetExamFormData;
+  levels: LevelOption[];
+  availableExamDepartments: DepartmentOption[];
   academicOptionsLoading: boolean;
   tSubjectPage: (key: string) => string;
 }

@@ -3,33 +3,12 @@ import { X } from "lucide-react";
 import { BasicExamInfo } from "./add-exam/BasicExamInfo";
 import { QuestionList } from "./add-exam/QuestionList";
 
-type LevelOption = {
-  id: string;
-  name: string;
-  is_active?: boolean;
-};
-
-type DepartmentOption = {
-  id: string;
-  name: string;
-  is_active?: boolean;
-};
-
-type ExamQuestion = {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-};
-
-type ExamFormData = {
-  title: string;
-  description: string;
-  durationMinutes: string;
-  department: string;
-  year: string;
-  questions: ExamQuestion[];
-};
+import type {
+  DepartmentOption,
+  ExamFormData,
+  LevelOption,
+  SetExamFormData,
+} from "./add-exam/types";
 
 export function AddExamModal(props: {
   isOpen: boolean;
@@ -40,7 +19,7 @@ export function AddExamModal(props: {
   academicOptionsLoading: boolean;
   availableExamDepartments: DepartmentOption[];
   examFormData: ExamFormData;
-  setExamFormData: (updater: (prev: ExamFormData) => ExamFormData) => void;
+  setExamFormData: SetExamFormData;
   isSavingExam: boolean;
   onSaveExam: () => void;
 }) {
@@ -91,7 +70,7 @@ export function AddExamModal(props: {
             <div className="space-y-6">
               <BasicExamInfo
                 examFormData={examFormData}
-                setExamFormData={setExamFormData as any}
+                setExamFormData={setExamFormData}
                 levels={levels}
                 availableExamDepartments={availableExamDepartments}
                 academicOptionsLoading={academicOptionsLoading}
@@ -100,7 +79,7 @@ export function AddExamModal(props: {
 
               <QuestionList
                 questions={examFormData.questions}
-                setExamFormData={setExamFormData as any}
+                setExamFormData={setExamFormData}
                 tSubjectPage={tSubjectPage}
               />
 

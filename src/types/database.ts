@@ -260,7 +260,10 @@ export interface Database {
           show_on_home: boolean | null
           created_at: string | null
           professor: string | null
+          professor_ar: string | null
+          professor_gender: "male" | "female" | null
           description: string | null
+          description_ar: string | null
           schedule: string | null
           location: string | null
           status: string | null
@@ -274,7 +277,10 @@ export interface Database {
           show_on_home?: boolean | null
           created_at?: string | null
           professor?: string | null
+          professor_ar?: string | null
+          professor_gender?: "male" | "female" | null
           description?: string | null
+          description_ar?: string | null
           schedule?: string | null
           location?: string | null
           status?: string | null
@@ -288,7 +294,10 @@ export interface Database {
           show_on_home?: boolean | null
           created_at?: string | null
           professor?: string | null
+          professor_ar?: string | null
+          professor_gender?: "male" | "female" | null
           description?: string | null
+          description_ar?: string | null
           schedule?: string | null
           location?: string | null
           status?: string | null
@@ -379,6 +388,7 @@ export interface Database {
           summary_id: string | null
           quiz_id: string | null
           course_id: string | null
+          video_id: string | null
           created_at: string
         }
         Insert: {
@@ -389,6 +399,7 @@ export interface Database {
           summary_id?: string | null
           quiz_id?: string | null
           course_id?: string | null
+          video_id?: string | null
           created_at?: string
         }
         Update: {
@@ -399,6 +410,7 @@ export interface Database {
           summary_id?: string | null
           quiz_id?: string | null
           course_id?: string | null
+          video_id?: string | null
           created_at?: string
         }
       }
@@ -459,6 +471,7 @@ export interface Database {
           instructor_id: string
           price: number
           is_published: boolean
+          is_academic: boolean
           created_at: string
         }
         Insert: {
@@ -468,6 +481,7 @@ export interface Database {
           instructor_id: string
           price?: number
           is_published?: boolean
+          is_academic?: boolean
           created_at?: string
         }
         Update: {
@@ -477,6 +491,7 @@ export interface Database {
           instructor_id?: string
           price?: number
           is_published?: boolean
+          is_academic?: boolean
           created_at?: string
         }
       }
@@ -668,8 +683,24 @@ export interface VideoWithRatings {
 export type Course = Database['public']['Tables']['courses']['Row']
 export type CourseInsert = Database['public']['Tables']['courses']['Insert']
 
-// Course extended type with instructor name
+// Course extended type with instructor name and stats
 export interface CourseWithInstructor extends Course {
   instructor_name?: string | null
   enrollments_count?: number | null
+  average_rating?: number | null
+  total_students?: number | null
+}
+
+// Admin-specific news type with targeting fields
+export interface AdminNews extends News {
+  subject: string | null
+  department: string | null
+  year: string | null
+}
+
+// Admin-specific quiz type
+export interface AdminQuiz extends Quiz {
+  subject: string | null
+  department: string | null
+  year: string | null
 }

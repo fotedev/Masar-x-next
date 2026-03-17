@@ -1,12 +1,28 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { inferLectureKeyFromTitle } from "@/utils/lecture-inference";
+import { logger } from "@/lib/logger";
+
+export interface ContentItem {
+  id: string;
+  title: string;
+  subject: string;
+  url?: string;
+  file_url?: string;
+  description?: string | null;
+  language?: string;
+  created_at: string;
+  status?: string;
+  lecture_key?: string | null;
+  lecture_id?: string | null;
+  type: "video" | "file" | "summary" | "quiz";
+}
 
 interface UseLectureContentProps {
   show: boolean;
   subject: string;
-  lecture: any | null;
-  lecturesIndex: any[];
+  lecture: { id: string; lecture_key: string } | null;
+  lecturesIndex: { id: string; title: string; lecture_key: string }[];
 }
 
 export function useLectureContent({
@@ -16,10 +32,10 @@ export function useLectureContent({
   lecturesIndex,
 }: UseLectureContentProps) {
   const [loading, setLoading] = useState(false);
-  const [summaries, setSummaries] = useState<any[]>([]);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [summaries, setSummaries] = useState<ContentItem[]>([]);
+  const [videos, setVideos] = useState<ContentItem[]>([]);
+  const [files, setFiles] = useState<ContentItem[]>([]);
+  const [quizzes, setQuizzes] = useState<ContentItem[]>([]);
 
   const lectureKey = (lecture?.lecture_key || "").trim() || "other";
 
@@ -65,7 +81,7 @@ export function useLectureContent({
         if (filesRes.error) throw filesRes.error;
         if (quizzesRes.error) throw quizzesRes.error;
 
-        const lectureMatch = (row: any) => {
+        const lectureMatch = (row: { lecture_id: string | null; lecture_key: string | null; title: string | null; id: string }) => {
           // 1. Match by ID (most reliable)
           if (lecture?.id && row.lecture_id === lecture.id) return true;
 
@@ -84,19 +100,19 @@ export function useLectureContent({
             );
             return inferredKey === lectureKey;
           } catch (inferenceError) {
-            console.error("Inference failed for row:", row.id, inferenceError);
+            logger.error("Inference failed for row:", { rowId: row.id, error: inferenceError });
             return false;
           }
         };
 
-        setSummaries((summariesRes.data || []).filter(lectureMatch));
-        setVideos((videosRes.data || []).filter(lectureMatch));
-        setFiles((filesRes.data || []).filter(lectureMatch));
+        setSummaries((summariesRes.data || []).map((s: Omit<ContentItem, 'type'>) => ({ ...s, type: 'summary' as const })).filter(lectureMatch));
+        setVideos((videosRes.data || []).map((v: Omit<ContentItem, 'type'>) => ({ ...v, type: 'video' as const })).filter(lectureMatch));
+        setFiles((filesRes.data || []).map((f: Omit<ContentItem, 'type'>) => ({ ...f, type: 'file' as const })).filter(lectureMatch));
 
         const quizzesForSubject = quizzesRes.data || [];
-        setQuizzes(quizzesForSubject.filter(lectureMatch));
+        setQuizzes(quizzesForSubject.map((q: Omit<ContentItem, 'type'>) => ({ ...q, type: 'quiz' as const })).filter(lectureMatch));
       } catch (e) {
-        console.error("Error fetching lecture content:", e);
+        logger.error("Error fetching lecture content:", e);
         setSummaries([]);
         setVideos([]);
         setFiles([]);

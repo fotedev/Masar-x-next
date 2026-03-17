@@ -1,16 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
+import type { ExamQuestion, SetExamFormData } from "./types";
 
 interface QuestionItemProps {
-  question: {
-    question: string;
-    options: string[];
-    correctAnswer: number;
-    explanation: string;
-  };
+  question: ExamQuestion;
   idx: number;
   totalQuestions: number;
-  setExamFormData: (updater: (prev: any) => any) => void;
+  setExamFormData: SetExamFormData;
   tSubjectPage: (key: string) => string;
 }
 
@@ -37,7 +33,7 @@ export function QuestionItem({
             onClick={() =>
               setExamFormData((p) => ({
                 ...p,
-                questions: p.questions.filter((_: any, i: number) => i !== idx),
+                questions: p.questions.filter((_, i) => i !== idx),
               }))
             }
             className="text-red-500 font-bold text-xs"
@@ -51,7 +47,7 @@ export function QuestionItem({
         onChange={(e) =>
           setExamFormData((p) => ({
             ...p,
-            questions: p.questions.map((it: any, i: number) =>
+            questions: p.questions.map((it, i) =>
               i === idx ? { ...it, question: e.target.value } : it,
             ),
           }))
@@ -67,7 +63,7 @@ export function QuestionItem({
             onChange={(e) =>
               setExamFormData((p) => ({
                 ...p,
-                questions: p.questions.map((it: any, i: number) =>
+                questions: p.questions.map((it, i) =>
                   i === idx
                     ? {
                         ...it,
@@ -90,7 +86,7 @@ export function QuestionItem({
           onChange={(e) =>
             setExamFormData((p) => ({
               ...p,
-              questions: p.questions.map((it: any, i: number) =>
+              questions: p.questions.map((it, i) =>
                 i === idx
                   ? {
                       ...it,

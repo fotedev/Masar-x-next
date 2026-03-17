@@ -9,6 +9,7 @@ import {
   NOTIFICATION_LIMITS,
 } from "../constants/notifications";
 import type { Notification } from "../types/database";
+import { logger } from "@/lib/logger";
 
 export const NotificationDropdown = React.memo(function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,7 +84,7 @@ export const NotificationDropdown = React.memo(function NotificationDropdown() {
       const audio = new Audio("/notif.mp3");
       audio
         .play()
-        .catch((e) => console.error("Error playing notification sound:", e));
+        .catch((e) => logger.error("Error playing notification sound", e));
     }
     setIsOpen(!isOpen);
   }, [isOpen]);

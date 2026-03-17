@@ -11,13 +11,27 @@ interface UseAddSubjectFormProps {
   onClose: () => void;
 }
 
+interface SubjectFormData {
+  name: string;
+  professor: string;
+  professor_gender: "male" | "female";
+  description: string;
+  schedule: string;
+  location: string;
+  level: number;
+  semester: number;
+  is_academic: boolean;
+  show_on_home: boolean;
+  status: string;
+}
+
 export function useAddSubjectForm({
   editingSubject,
   show,
   onSave,
   onClose,
 }: UseAddSubjectFormProps) {
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<SubjectFormData>({
     name: "",
     professor: "",
     professor_gender: "male",
@@ -38,15 +52,15 @@ export function useAddSubjectForm({
       setFormData({
         name: editingSubject.name,
         professor: editingSubject.professor || "",
-        professor_gender: (editingSubject as any).professor_gender || "male",
+        professor_gender: (editingSubject as unknown as { professor_gender: "male" | "female" }).professor_gender || "male",
         description: editingSubject.description || "",
         schedule: editingSubject.schedule || "",
         location: editingSubject.location || "",
         level: editingSubject.level || 1,
         semester: editingSubject.semester || 1,
         is_academic: editingSubject.is_academic ?? true,
-        show_on_home: editingSubject.show_on_home,
-        status: editingSubject.status,
+        show_on_home: !!editingSubject.show_on_home,
+        status: editingSubject.status || "pending",
       });
     } else {
       resetForm();
@@ -86,11 +100,12 @@ export function useAddSubjectForm({
           ? "تم تحديث بيانات المادة."
           : "تمت إضافة المادة الجديدة إلى النظام.",
       });
-    } catch (err: any) {
-      setError(err.message || "حدث خطأ أثناء حفظ المادة");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ المادة";
+      setError(message);
       toast.error("خطأ في الحفظ", {
         description:
-          err.message || "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى.",
+          message || "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى.",
       });
     } finally {
       setLoading(false);

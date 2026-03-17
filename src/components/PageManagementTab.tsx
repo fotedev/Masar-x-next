@@ -1,4 +1,5 @@
 import { Layout, Eye, EyeOff, Search } from "lucide-react";
+import { logger } from "@/lib/logger";
 import { useState, useMemo, useEffect } from "react";
 import { useSubjects } from "../hooks/useSubjects";
 import { SemesterSwitcher } from "./SemesterSwitcher";
@@ -37,7 +38,7 @@ export function PageManagementTab() {
   useEffect(() => {
     // This effect ensures that when activeSemester changes,
     // we are at least aware of it in this component
-    console.log("Active semester changed to:", activeSemester);
+    logger.debug("Active semester changed to:", { activeSemester });
   }, [activeSemester]);
 
   if (isLoading && subjects.length === 0) {

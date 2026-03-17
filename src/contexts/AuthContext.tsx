@@ -12,6 +12,7 @@ import {
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
+import { logger } from "../lib/logger";
 
 export type AuthErrorCode = "INVALID_CREDENTIALS" | "EMAIL_ALREADY_REGISTERED";
 
@@ -267,7 +268,7 @@ export function AuthProvider({
       return await verifyAdminStatus(freshUser, true);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") {
-        console.debug("Admin status refresh aborted");
+        logger.debug("Admin status refresh aborted");
         return false;
       }
       const message = e instanceof Error ? e.message : String(e);
@@ -316,9 +317,12 @@ export function AuthProvider({
 
         if (currentUser) {
           // 1. Initial fallback to metadata (fast)
+          const metadata = currentUser.user_metadata as {
+            custom_avatar?: string;
+            avatar_url?: string;
+          };
           const metadataAvatar =
-            (currentUser.user_metadata as any)?.custom_avatar ||
-            (currentUser.user_metadata as any)?.avatar_url;
+            metadata?.custom_avatar || metadata?.avatar_url;
           if (metadataAvatar) {
             setAvatarUrl(metadataAvatar);
           }
@@ -355,7 +359,7 @@ export function AuthProvider({
         }
       } catch (e) {
         if (e instanceof Error && e.name === "AbortError") {
-          console.debug("Auth initialization aborted");
+          logger.debug("Auth initialization aborted");
           return;
         }
         const message = e instanceof Error ? e.message : String(e);
@@ -419,9 +423,9 @@ export function AuthProvider({
                   error.status === 401);
 
               if (isSessionError || !freshUser) {
-                console.warn(
+                logger.warn(
                   "User session invalid or user deleted, signing out...",
-                  error,
+                  { error },
                 );
                 await supabase.auth.signOut();
                 setUser(null);
@@ -433,16 +437,19 @@ export function AuthProvider({
               }
             }
           } catch (e) {
-            console.error("Auth check failed:", e);
+            logger.error("Auth check failed:", e);
             // Don't immediately sign out on catch block to avoid boot loops on transient network issues
           }
         }
 
         if (currentUser) {
           // 1. Initial fallback to metadata
+          const metadata = currentUser.user_metadata as {
+            custom_avatar?: string;
+            avatar_url?: string;
+          };
           const metadataAvatar =
-            (currentUser.user_metadata as any)?.custom_avatar ||
-            (currentUser.user_metadata as any)?.avatar_url;
+            metadata?.custom_avatar || metadata?.avatar_url;
           if (metadataAvatar) {
             setAvatarUrl(metadataAvatar);
           }

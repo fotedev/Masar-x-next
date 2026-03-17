@@ -1,20 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FileText, Calendar, BookOpen, Star, Play } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { SummariesSection } from "@/components/home/SummariesSection";
+import { VideosSection } from "@/components/home/VideosSection";
+import { QuizzesSection } from "@/components/home/QuizzesSection";
+import { EditSummaryModal } from "@/components/EditSummaryModal";
 import { useSummaries } from "@/hooks/useSummaries";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { EditSummaryModal } from "@/components/EditSummaryModal";
 import { usePlatformSettings } from "@/hooks/usePlatformSettings";
-import { SummaryWithRatings, Quiz, VideoWithRatings } from "@/types/database";
+import {
+  SummaryWithRatings,
+  Quiz,
+  VideoWithRatings,
+  Subject,
+} from "@/types/database";
 import { useRouter } from "@/i18n/routing";
 import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";
 import { queryCache, cacheTTL } from "@/lib/queryCache";
-import { motion } from "framer-motion";
 
 export default function HomePage() {
   const tHome = useTranslations("home");
@@ -24,10 +30,6 @@ export default function HomePage() {
   const { activeSemester } = usePlatformSettings();
   const { trackSummaryClick } = useAnalytics();
   const { videos: topVideos, loading: videosLoading } = useTopVideos(10);
-  const [displaySummaries, setDisplaySummaries] = useState<
-    SummaryWithRatings[]
-  >([]);
-  const [displayVideos, setDisplayVideos] = useState<VideoWithRatings[]>([]);
   const [displayQuizzes, setDisplayQuizzes] = useState<Quiz[]>([]);
   const [quizzesLoading, setQuizzesLoading] = useState(true);
   const [editingSummary, setEditingSummary] =
@@ -43,9 +45,8 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    // Filter summaries by approval status AND subject visibility AND active semester
-    const visibleSubjectNames = subjects
+  const displaySummaries = useMemo(() => {
+    const visibleSubjectNames = (subjects as Subject[])
       .filter(
         (s) =>
           s.show_on_home &&
@@ -53,13 +54,13 @@ export default function HomePage() {
       )
       .map((s) => s.name);
 
-    // Create a Set for faster lookup
     const visibleSubjectSet = new Set(visibleSubjectNames);
 
-    const approvedSummaries = summaries.filter(
-      (s) => s.status === "approved" && visibleSubjectSet.has(s.subject),
+    const approvedSummaries = (summaries as SummaryWithRatings[]).filter(
+      (s: SummaryWithRatings) =>
+        s.status === "approved" && visibleSubjectSet.has(s.subject),
     );
-    // Sort by avg_rating descending, then created_at descending
+
     const sortedSummaries = [...approvedSummaries].sort((a, b) => {
       const ratingA = a.avg_rating || 0;
       const ratingB = b.avg_rating || 0;
@@ -69,12 +70,11 @@ export default function HomePage() {
       );
     });
 
-    setDisplaySummaries(sortedSummaries.slice(0, 10)); // Limit to top 10
+    return sortedSummaries.slice(0, 10);
   }, [summaries, subjects, activeSemester]);
 
-  useEffect(() => {
-    // Filter videos by subject visibility and active semester AND has ratings
-    const visibleSubjectNames = subjects
+  const displayVideos = useMemo(() => {
+    const visibleSubjectNames = (subjects as Subject[])
       .filter(
         (s) =>
           s.show_on_home &&
@@ -84,26 +84,24 @@ export default function HomePage() {
 
     const visibleSubjectSet = new Set(visibleSubjectNames);
 
-    // Filter videos that are visible AND have ratings
-    const ratedVideos = topVideos.filter(
+    const ratedVideos = (topVideos as VideoWithRatings[]).filter(
       (v) => visibleSubjectSet.has(v.subject) && (v.avg_rating || 0) > 0,
     );
 
-    // Sort by avg_rating descending
     const sortedVideos = [...ratedVideos].sort((a, b) => {
       const ratingA = a.avg_rating || 0;
       const ratingB = b.avg_rating || 0;
       return ratingB - ratingA;
     });
 
-    setDisplayVideos(sortedVideos.slice(0, 10)); // Limit to top 10
+    return sortedVideos.slice(0, 10);
   }, [topVideos, subjects, activeSemester]);
 
   useEffect(() => {
     const normalizeSubjectName = (value: string) =>
       (value || "").trim().replace(/\s+/g, " ");
 
-    const visibleSubjectNames = subjects
+    const visibleSubjectNames = (subjects as Subject[])
       .filter(
         (s) =>
           s.show_on_home &&
@@ -111,7 +109,9 @@ export default function HomePage() {
       )
       .map((s) => s.name);
     const visibleSubjectSet = new Set(
-      visibleSubjectNames.map((n) => normalizeSubjectName(n)).filter(Boolean),
+      visibleSubjectNames
+        .map((n: string) => normalizeSubjectName(n))
+        .filter(Boolean),
     );
 
     if (subjectsLoading) return;
@@ -124,7 +124,7 @@ export default function HomePage() {
         const cacheKey = `home_quizzes_approved`;
         const cached = queryCache.get<Quiz[]>(cacheKey);
         if (cached) {
-          const visibleSubjectNames = subjects
+          const visibleSubjectNames = (subjects as Subject[])
             .filter(
               (s) =>
                 s.show_on_home &&
@@ -133,7 +133,7 @@ export default function HomePage() {
             .map((s) => s.name);
           const visibleSubjectSet = new Set(
             visibleSubjectNames
-              .map((n) => normalizeSubjectName(n))
+              .map((n: string) => normalizeSubjectName(n))
               .filter(Boolean),
           );
 
@@ -219,386 +219,35 @@ export default function HomePage() {
     setEditingSummary(null);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1 },
-  };
-
   return (
     <div className="space-y-8">
-      {/* All Summaries Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            {tHome("best")}
-          </h2>
-          <button
-            onClick={() => onNavigate("subjects")}
-            className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
-          >
-            {tHome("viewSubjects")}
-            <span className="text-lg">←</span>
-          </button>
-        </div>
-        {summariesLoading || subjectsLoading ? (
-          <div className="summary-grid">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="modern-card p-5 animate-pulse">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
-                </div>
-                <div className="space-y-3 mb-4">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
-                </div>
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : displaySummaries.length === 0 ? (
-          <div className="modern-card p-12 text-center">
-            <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tHome("goToSubjects")}
-            </p>
-          </div>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="summary-grid"
-          >
-            {displaySummaries.map((summary: SummaryWithRatings) => {
-              const canEdit = user && (isAdmin || summary.user_id === user.id);
+      <SummariesSection
+        loading={summariesLoading}
+        subjectsLoading={subjectsLoading}
+        displaySummaries={displaySummaries}
+        tHome={tHome}
+        onNavigate={onNavigate}
+        trackSummaryClick={trackSummaryClick}
+        user={user}
+        isAdmin={isAdmin}
+        onEditSummary={handleEditSummary}
+      />
 
-              return (
-                <motion.div
-                  key={summary.id}
-                  variants={itemVariants}
-                  whileHover={{ y: -4 }}
-                  className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
-                  onClick={() => {
-                    trackSummaryClick(summary.id, "trending_click");
-                    onNavigate("summaries", summary.id);
-                  }}
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-blue transition-colors">
-                      {summary.title}
-                    </h3>
-                    {canEdit && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditSummary(summary);
-                        }}
-                        className="text-slate-400 hover:text-brand-blue p-1.5 rounded-lg hover:bg-brand-blue/5 transition-all"
-                        title={tHome("editSummary")}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+      <VideosSection
+        loading={videosLoading}
+        subjectsLoading={subjectsLoading}
+        displayVideos={displayVideos}
+        tHome={tHome}
+        onNavigate={onNavigate}
+      />
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                        <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
-                        <span className="truncate">{summary.subject}</span>
-                      </div>
-                      {summary.avg_rating != null && summary.avg_rating > 0 && (
-                        <div className="flex items-center gap-1 bg-brand-orange/10 text-brand-orange px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                          <Star className="w-3 h-3 fill-brand-orange" />
-                          <span>{summary.avg_rating}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <Calendar className="w-3.5 h-3.5 text-brand-orange" />
-                      <span className="truncate">
-                        {summary.year} - {summary.department}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                      {summary.content}
-                    </p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
-      </div>
-
-      {/* Lectures Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            {tHome("topLectures")}
-          </h2>
-          <button
-            onClick={() => onNavigate("subjects")}
-            className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
-          >
-            {tHome("viewSubjects")}
-            <span className="text-lg">←</span>
-          </button>
-        </div>
-
-        {videosLoading || subjectsLoading ? (
-          <div className="summary-grid">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="modern-card p-5 animate-pulse">
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3"></div>
-                <div className="space-y-3 mb-4">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
-                </div>
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : displayVideos.length === 0 ? (
-          <div className="modern-card p-12 text-center">
-            <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tHome("goToSubjects")}
-            </p>
-          </div>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="summary-grid"
-          >
-            {displayVideos.map((video) => (
-              <motion.div
-                key={video.id}
-                variants={itemVariants}
-                whileHover={{ y: -4 }}
-                className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
-                onClick={() =>
-                  onNavigate("subjects", encodeURIComponent(video.subject))
-                }
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-blue transition-colors">
-                    {video.title}
-                  </h3>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
-                      <span className="truncate">{video.subject}</span>
-                    </div>
-                    {video.avg_rating != null && video.avg_rating > 0 && (
-                      <div className="flex items-center gap-1 bg-brand-orange/10 text-brand-orange px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                        <Star className="w-3 h-3 fill-brand-orange" />
-                        <span>{video.avg_rating}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <Calendar className="w-3.5 h-3.5 text-brand-orange" />
-                    <span className="truncate text-xs">
-                      {new Date(video.created_at).toLocaleDateString("ar-SA", {
-                        year: "numeric",
-                        month: "long",
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 leading-relaxed">
-                    {video.reviews_count
-                      ? `${video.reviews_count} تقييم`
-                      : "لم يتم تقييمها بعد"}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-            {tHome("exams")}
-          </h2>
-          <button
-            onClick={() => onNavigate("quizzes")}
-            className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
-          >
-            {tHome("viewExams")}
-            <span className="text-lg">←</span>
-          </button>
-        </div>
-
-        {subjectsLoading || quizzesLoading ? (
-          <div className="summary-grid">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="modern-card p-5 animate-pulse">
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3"></div>
-                <div className="space-y-3 mb-4">
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
-                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
-                </div>
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : displayQuizzes.length === 0 ? (
-          <div className="modern-card p-12 text-center">
-            <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">
-              {tHome("goToExams")}
-            </p>
-          </div>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="summary-grid"
-          >
-            {displayQuizzes.map((quiz) => (
-              <motion.div
-                key={quiz.id}
-                variants={itemVariants}
-                whileHover={{ y: -4 }}
-                className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
-                onClick={() => onNavigate("quiz-play", quiz.id)}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-blue transition-colors">
-                    {quiz.title}
-                  </h3>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
-                      <span className="truncate">
-                        {(() => {
-                          try {
-                            const parsed = JSON.parse(quiz.description || "{}");
-                            return parsed.subject || quiz.subject || "عام";
-                          } catch {
-                            return quiz.subject || "عام";
-                          }
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <Calendar className="w-3.5 h-3.5 text-brand-orange" />
-                    <span className="truncate">
-                      {(() => {
-                        try {
-                          const parsed = JSON.parse(quiz.description || "{}");
-                          const quizRecord = quiz as unknown as Record<
-                            string,
-                            unknown
-                          >;
-                          const deptRaw =
-                            typeof parsed?.department === "string"
-                              ? parsed.department
-                              : quizRecord.department;
-                          const yearRaw =
-                            typeof parsed?.year === "string"
-                              ? parsed.year
-                              : quizRecord.year;
-
-                          const dept =
-                            typeof deptRaw === "string" ? deptRaw : "";
-                          const year =
-                            typeof yearRaw === "string" ? yearRaw : "";
-                          return (
-                            `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
-                            ""
-                          );
-                        } catch {
-                          const quizRecord = quiz as unknown as Record<
-                            string,
-                            unknown
-                          >;
-                          const dept =
-                            typeof quizRecord.department === "string"
-                              ? quizRecord.department
-                              : "";
-                          const year =
-                            typeof quizRecord.year === "string"
-                              ? quizRecord.year
-                              : "";
-                          return (
-                            `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
-                            ""
-                          );
-                        }
-                      })()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(quiz.description || "{}");
-                        return parsed.description || "";
-                      } catch {
-                        return "";
-                      }
-                    })()}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </div>
+      <QuizzesSection
+        loading={quizzesLoading}
+        subjectsLoading={subjectsLoading}
+        displayQuizzes={displayQuizzes}
+        tHome={tHome}
+        onNavigate={onNavigate}
+      />
 
       <EditSummaryModal
         summary={editingSummary}
