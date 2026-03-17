@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
@@ -12,6 +13,9 @@ import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 
 function EditSummaryContent() {
+  const t = useTranslations("editSummary");
+  const commonT = useTranslations("common");
+  const onboardingT = useTranslations("onboarding");
   const params = useParams();
   const searchParams = useSearchParams();
   const summaryId =
@@ -88,7 +92,7 @@ function EditSummaryContent() {
 
         // Check permissions
         if (data.user_id !== user?.id && !isAdmin) {
-          setError("ليس لديك صلاحية لتعديل هذا الملخص");
+          setError(t("noPermission"));
           setLoading(false);
           return;
         }
@@ -103,14 +107,14 @@ function EditSummaryContent() {
         setSemester(1);
         setCurrentPdfUrl(data.pdf_url);
       } catch {
-        setError("حدث خطأ أثناء تحميل بيانات الملخص");
+        setError(t("loadError"));
       } finally {
         setLoading(false);
       }
     };
 
     fetchSummary();
-  }, [summaryId, user, isAdmin]);
+  }, [summaryId, user, isAdmin, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +127,7 @@ function EditSummaryContent() {
       let pdfUrl = currentPdfUrl;
 
       if (pdfFile) {
+        setUploadStage(t("uploadingPdf"));
         const cloudinaryResult = await uploadToCloudinary(pdfFile, {
           folder: "masarx-summaries",
           onProgress: (progress, stage) => {
@@ -149,8 +154,8 @@ function EditSummaryContent() {
 
       setSuccess(true);
 
-      sendNotification("تم تعديل الملخص بنجاح!", {
-        body: `تم تحديث ملخص "${formData.title}"`,
+      sendNotification(t("updateSuccessTitle"), {
+        body: t("updateSuccessDesc", { title: formData.title }),
         icon: "/logo.png",
         tag: "summary-updated",
       });
@@ -159,7 +164,7 @@ function EditSummaryContent() {
         router.push(`/summaries/${summaryId}`);
       }, 2000);
     } catch {
-      setError("حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى.");
+      setError(t("updateError"));
     } finally {
       setSaving(false);
       setTimeout(() => {
@@ -183,10 +188,10 @@ function EditSummaryContent() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
           <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            تم تحديث الملخص بنجاح!
+            {t("updateSuccessTitle")}
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-            سيتم تحويلك إلى صفحة الملخص...
+            {t("redirecting")}
           </p>
         </div>
       </div>
@@ -204,7 +209,7 @@ function EditSummaryContent() {
             <ArrowRight className="w-6 h-6 text-gray-600 dark:text-gray-400" />
           </button>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            تعديل الملخص
+            {t("pageTitle")}
           </h1>
         </div>
 
@@ -220,7 +225,7 @@ function EditSummaryContent() {
               htmlFor="summary-title"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              عنوان الملخص <span className="text-red-500">*</span>
+              {t("summaryTitle")} <span className="text-red-500">*</span>
             </label>
             <input
               id="summary-title"
@@ -242,7 +247,8 @@ function EditSummaryContent() {
                 htmlFor="summary-year"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                المستوى الدراسي <span className="text-red-500">*</span>
+                {onboardingT("academicLevel")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-year"
@@ -260,7 +266,7 @@ function EditSummaryContent() {
                 }
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">اختر المستوي</option>
+                <option value="">{onboardingT("selectLevel")}</option>
                 {levels.map((lvl) => (
                   <option key={lvl.id} value={lvl.name}>
                     {lvl.name}
@@ -274,7 +280,7 @@ function EditSummaryContent() {
                 htmlFor="summary-semester"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                الترم <span className="text-red-500">*</span>
+                {t("semester")} <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-semester"
@@ -294,8 +300,8 @@ function EditSummaryContent() {
                 disabled={!formData.year}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
               >
-                <option value={1}>ترم 1</option>
-                <option value={2}>ترم 2</option>
+                <option value={1}>{t("semester1")}</option>
+                <option value={2}>{t("semester2")}</option>
               </select>
             </div>
 
@@ -304,7 +310,8 @@ function EditSummaryContent() {
                 htmlFor="summary-department"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                التخصص <span className="text-red-500">*</span>
+                {onboardingT("department")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-department"
@@ -318,7 +325,7 @@ function EditSummaryContent() {
                 disabled={!formData.year || availableDepartments.length === 0}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">اختر التخصص</option>
+                <option value="">{onboardingT("selectDepartment")}</option>
                 {availableDepartments.map((dep) => (
                   <option key={dep.id} value={dep.name}>
                     {dep.name}
@@ -333,7 +340,7 @@ function EditSummaryContent() {
               htmlFor="summary-subject"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              اسم المادة <span className="text-red-500">*</span>
+              {t("subjectName")} <span className="text-red-500">*</span>
             </label>
             <select
               id="summary-subject"
@@ -346,7 +353,7 @@ function EditSummaryContent() {
               }
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">اختر المادة</option>
+              <option value="">{t("selectSubject")}</option>
               {subjects.map((subject) => (
                 <option key={subject.id} value={subject.name}>
                   {subject.name}
@@ -360,7 +367,7 @@ function EditSummaryContent() {
               htmlFor="summary-content"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              محتوى الملخص <span className="text-red-500">*</span>
+              {t("summaryContent")} <span className="text-red-500">*</span>
             </label>
             <textarea
               id="summary-content"
@@ -378,12 +385,12 @@ function EditSummaryContent() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              تحديث ملف PDF (اختياري)
+              {t("updatePdf")} ({commonT("optional")})
             </label>
             {uploadProgress !== null && (
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  <span>{uploadStage || "جاري رفع الملف..."}</span>
+                  <span>{uploadStage || t("uploadingPdf")}</span>
                   <span>{Math.round(uploadProgress)}%</span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -398,7 +405,7 @@ function EditSummaryContent() {
             )}
             {currentPdfUrl && !pdfFile && (
               <div className="mb-2 text-sm text-blue-600 dark:text-blue-400">
-                يوجد ملف PDF حالي. قم برفع ملف جديد لاستبداله.
+                {t("currentPdfNote")}
               </div>
             )}
             <FileDropzone
@@ -409,7 +416,7 @@ function EditSummaryContent() {
                     setPdfFile(file);
                     setError("");
                   } else {
-                    setError("يرجى اختيار ملف PDF فقط");
+                    setError(t("pdfOnlyError"));
                     setPdfFile(null);
                   }
                 }
@@ -428,11 +435,11 @@ function EditSummaryContent() {
                     <>
                       <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                         <span className="font-semibold">
-                          اضغط أو اسحب لرفع ملف PDF جديد
+                          {t("uploadPdfDropzone")}
                         </span>
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-500">
-                        PDF فقط (حتى 10MB)
+                        {t("pdfLimitNote")}
                       </p>
                     </>
                   )}
@@ -449,12 +456,12 @@ function EditSummaryContent() {
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>جاري الحفظ...</span>
+                <span>{commonT("saving")}</span>
               </>
             ) : (
               <>
                 <Save className="w-5 h-5" />
-                <span>حفظ التعديلات</span>
+                <span>{t("saveButton")}</span>
               </>
             )}
           </button>

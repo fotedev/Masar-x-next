@@ -2,10 +2,20 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { LectureCard } from "./LectureCard";
 
+type LectureIndexItem = {
+  key: string;
+  label: string;
+  counts: {
+    summaries: number;
+    videos: number;
+    exams: number;
+  };
+};
+
 interface DashboardLectureListProps {
   isRTL: boolean;
   isAdmin: boolean;
-  lectureIndex: any[];
+  lectureIndex: LectureIndexItem[];
   tSubjectPage: (key: string) => string;
   onAddLecture: () => void;
   onSelectLecture: (lectureKey: string) => void;

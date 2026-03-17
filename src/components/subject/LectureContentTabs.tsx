@@ -1,9 +1,13 @@
 import { ExternalLink, Trash2 } from "lucide-react";
+import type { ContentItem } from "@/hooks/useLectureContent";
+
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
 
 interface VideosListProps {
-  videos: any[];
+  videos: ContentItem[];
   onDelete: (id: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function VideosList({ videos, onDelete, t }: VideosListProps) {
@@ -55,8 +59,8 @@ export function VideosList({ videos, onDelete, t }: VideosListProps) {
 }
 
 interface SummariesListProps {
-  summaries: any[];
-  t: any;
+  summaries: ContentItem[];
+  t: TranslationFn;
 }
 
 export function SummariesList({ summaries, t }: SummariesListProps) {
@@ -93,9 +97,9 @@ export function SummariesList({ summaries, t }: SummariesListProps) {
 }
 
 interface FilesListProps {
-  files: any[];
+  files: ContentItem[];
   onDelete: (id: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function FilesList({ files, onDelete, t }: FilesListProps) {
@@ -149,9 +153,9 @@ export function FilesList({ files, onDelete, t }: FilesListProps) {
 }
 
 interface QuizzesListProps {
-  quizzes: any[];
+  quizzes: ContentItem[];
   onDelete: (id: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function QuizzesList({ quizzes, onDelete, t }: QuizzesListProps) {

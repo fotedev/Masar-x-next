@@ -27,6 +27,18 @@ export function AddNewsModal({
 }: AddNewsModalProps) {
   const t = useTranslations("news");
 
+  const fieldsDraft = {
+    title: newNews.title || "",
+    content: newNews.content || "",
+    type: newNews.type || "announcement",
+  };
+
+  const targetingDraft = {
+    year: newNews.year ?? null,
+    department: newNews.department ?? null,
+    subject: newNews.subject ?? null,
+  };
+
   const {
     semester,
     setSemester,
@@ -67,16 +79,30 @@ export function AddNewsModal({
 
           <div className="space-y-6">
             <NewsFormFields
-              newNews={newNews as any}
-              onSetNewNews={onSetNewNews}
+              newNews={fieldsDraft}
+              onSetNewNews={(next) =>
+                onSetNewNews({
+                  ...newNews,
+                  title: next.title,
+                  content: next.content,
+                  type: next.type,
+                })
+              }
               customCategory={customCategory}
               setCustomCategory={setCustomCategory}
               t={t}
             />
 
             <NewsTargetFilters
-              newNews={newNews as any}
-              onSetNewNews={onSetNewNews}
+              newNews={targetingDraft}
+              onSetNewNews={(next) =>
+                onSetNewNews({
+                  ...newNews,
+                  year: next.year,
+                  department: next.department,
+                  subject: next.subject,
+                })
+              }
               semester={semester}
               setSemester={setSemester}
               levels={levels}

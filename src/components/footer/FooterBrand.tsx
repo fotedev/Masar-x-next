@@ -1,7 +1,10 @@
 import Image from "next/image";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface FooterBrandProps {
-  t: any;
+  t: TranslationFn;
 }
 
 export function FooterBrand({ t }: FooterBrandProps) {

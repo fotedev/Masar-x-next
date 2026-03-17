@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTRWCourses } from "@/hooks/trw/useTRWHooks";
+import useTRWCourses from "@/hooks/trw/useTRWCourses";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import {
   Card,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import * as Switch from "@radix-ui/react-switch";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
@@ -22,6 +23,10 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
+  const t = useTranslations("profile");
+  const commonT = useTranslations("common");
+  const authT = useTranslations("auth");
+  const academicT = useTranslations("onboarding"); // Reusing onboarding for level/department translations
   const router = useRouter();
   const {
     user,
@@ -75,8 +80,8 @@ export default function ProfilePage() {
   const formatCooldownTime = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `${hours} ساعة و ${minutes} دقيقة`;
-    return `${minutes} دقيقة`;
+    if (hours > 0) return t("cooldownWithHours", { hours, minutes });
+    return t("cooldownWithMinutes", { minutes });
   };
 
   useEffect(() => {
@@ -119,9 +124,9 @@ export default function ProfilePage() {
     try {
       await updateDisplayName(newDisplayName.trim());
       setIsEditing(false);
-      toast.success("تم تحديث الاسم بنجاح");
+      toast.success(t("nameUpdateSuccess"));
     } catch {
-      toast.error("حدث خطأ في تحديث اسم المستخدم ");
+      toast.error(t("nameUpdateError"));
     } finally {
       setIsSaving(false);
     }
@@ -138,8 +143,10 @@ export default function ProfilePage() {
 
     // Check cooldown
     if (isCooldownActive) {
-      toast.error("Cooldown Active", {
-        description: `يرجى الانتظار ${formatCooldownTime(cooldownRemaining)} قبل التغيير مرة أخرى.`,
+      toast.error(t("cooldownActive"), {
+        description: t("cooldownDescription", {
+          time: formatCooldownTime(cooldownRemaining),
+        }),
       });
       return;
     }
@@ -167,10 +174,10 @@ export default function ProfilePage() {
         }),
       );
 
-      toast.success(enabled ? "System Update" : "System Revert", {
+      toast.success(enabled ? t("systemUpdate") : t("systemRevert"), {
         description: enabled
-          ? "Extra assets visibility enabled."
-          : "Extra assets visibility disabled.",
+          ? t("extraAssetsEnabled")
+          : t("extraAssetsDisabled"),
         className: enabled
           ? "bg-black text-white border-red-900 shadow-[0_0_20px_rgba(255,0,0,0.3)] font-mono"
           : "",
@@ -180,8 +187,8 @@ export default function ProfilePage() {
         typeof err === "object" && err && "message" in err
           ? String((err as { message?: unknown }).message)
           : "";
-      toast.error("System Error", {
-        description: maybeMessage || "Failed to update preferences.",
+      toast.error(t("systemError"), {
+        description: maybeMessage || t("preferenceUpdateError"),
       });
     } finally {
       setIsSaving(false);
@@ -207,15 +214,13 @@ export default function ProfilePage() {
         { isProfileUpdate: true },
       );
       if (!result.success) {
-        setAcademicError(
-          result.message || "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
-        );
+        setAcademicError(result.message || t("academicUpdateError"));
         setTimeout(() => setAcademicError(null), 5000);
       } else {
-        toast.success("تم تحديث البيانات الأكاديمية");
+        toast.success(t("academicUpdateSuccess"));
       }
     } catch {
-      setAcademicError("حدث خطأ أثناء حفظ المعلومات الأكاديمية");
+      setAcademicError(t("academicUpdateError"));
       setTimeout(() => setAcademicError(null), 5000);
     } finally {
       setIsSavingAcademic(false);
@@ -228,7 +233,7 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin" />
           <p className="text-slate-500 dark:text-slate-400 font-bold animate-pulse">
-            جاري التحميل...
+            {commonT("loading")}
           </p>
         </div>
       </div>
@@ -241,16 +246,16 @@ export default function ProfilePage() {
         <div className="text-center">
           <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            يجب تسجيل الدخول أولاً
+            {t("mustLogin")}
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            يرجى تسجيل الدخول لرؤية ملفك الشخصي
+            {t("loginPrompt")}
           </p>
           <button
             onClick={() => router.push("/login")}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            تسجيل الدخول
+            {authT("signIn")}
           </button>
         </div>
       </div>
@@ -291,18 +296,18 @@ export default function ProfilePage() {
                   <span className="text-sm font-bold tracking-wide">
                     {isAdmin
                       ? adminRole === "doctor"
-                        ? "ادمن دكتور"
+                        ? t("adminDoctor")
                         : adminRole === "student"
-                          ? "ادمن طالب"
-                          : "ادمن"
-                      : "مستخدم"}
+                          ? t("adminStudent")
+                          : t("admin")
+                      : t("user")}
                   </span>
                 </div>
                 <button
                   onClick={() => refreshAdminStatus()}
                   disabled={isAdminLoading}
                   className="p-2 hover:bg-white/20 rounded-xl transition-all active:scale-90 duration-300 disabled:opacity-60 bg-white/5 border border-white/10 shadow-sm"
-                  title="تحديث رتبة الحساب"
+                  title={t("refreshRole")}
                 >
                   <RefreshCw
                     className={`w-4 h-4 text-white ${isAdminLoading ? "animate-spin" : ""}`}
@@ -320,7 +325,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                 <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
-                المعلومات الشخصية
+                {t("personalInfo")}
               </h2>
             </div>
             <div className="grid gap-5">
@@ -335,7 +340,7 @@ export default function ProfilePage() {
                         htmlFor="profile-display-name"
                         className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1 block"
                       >
-                        اسم المستخدم
+                        {t("username")}
                       </label>
                       {isEditing ? (
                         <div className="relative mt-2">
@@ -350,7 +355,7 @@ export default function ProfilePage() {
                         </div>
                       ) : (
                         <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
-                          {displayName || "غير محدد"}
+                          {displayName || t("notSpecified")}
                         </p>
                       )}
                     </div>
@@ -364,14 +369,14 @@ export default function ProfilePage() {
                           className="flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50"
                         >
                           <Save className="w-5 h-5" />
-                          <span>حفظ</span>
+                          <span>{t("save")}</span>
                         </button>
                         <button
                           onClick={handleCancelEdit}
                           className="flex items-center gap-2 px-6 py-3 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-2xl font-bold transition-all active:scale-95"
                         >
                           <X className="w-5 h-5" />
-                          <span>إلغاء</span>
+                          <span>{t("cancel")}</span>
                         </button>
                       </div>
                     ) : (
@@ -380,7 +385,7 @@ export default function ProfilePage() {
                         className="flex items-center gap-2 px-6 py-3 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue rounded-2xl font-bold hover:bg-brand-blue hover:text-white transition-all duration-300"
                       >
                         <Edit3 className="w-5 h-5" />
-                        <span>تعديل الاسم</span>
+                        <span>{t("editName")}</span>
                       </button>
                     )}
                   </div>
@@ -394,7 +399,7 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
-                      البريد الإلكتروني
+                      {authT("email")}
                     </p>
                     <p className="font-bold text-slate-900 dark:text-white text-lg break-all">
                       {user.email}
@@ -407,16 +412,16 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
-                      نوع الحساب
+                      {t("accountType")}
                     </p>
                     <p className="font-bold text-slate-900 dark:text-white text-lg">
                       {isAdmin
                         ? adminRole === "doctor"
-                          ? "ادمن دكتور"
+                          ? t("adminDoctor")
                           : adminRole === "student"
-                            ? "ادمن طالب"
-                            : "ادمن"
-                        : "مستخدم"}
+                            ? t("adminStudent")
+                            : t("admin")
+                        : t("user")}
                     </p>
                   </div>
                 </div>
@@ -429,7 +434,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                 <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
-                المسار الأكاديمي
+                {t("academicPath")}
               </h2>
             </div>
             <div className="bg-slate-50 dark:bg-white/[0.02] p-7 rounded-[2.5rem] border border-slate-100 dark:border-white/5 group relative overflow-hidden">
@@ -440,22 +445,22 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">
-                      المسار الحالي
+                      {t("currentPath")}
                     </p>
                     <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                       {academicLoading
-                        ? "جاري التحميل..."
+                        ? commonT("loading")
                         : `${
                             levels.find((l) => l.level_number === level)
-                              ?.name || "مستوى غير محدد"
-                          } • ترم ${semester}`}
+                              ?.name || t("notSpecified")
+                          } • ${academicT("semesterLabel", { semester })}`}
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_0.8fr_auto] gap-4 items-end">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase">
-                      المستوى
+                      {academicT("academicLevel")}
                     </label>
                     <select
                       value={level}
@@ -464,7 +469,7 @@ export default function ProfilePage() {
                       disabled={optionsLoading}
                     >
                       {optionsLoading ? (
-                        <option>جاري تحميل المستويات...</option>
+                        <option>{commonT("loading")}</option>
                       ) : (
                         levels.map((l) => (
                           <option key={l.id} value={l.level_number ?? 0}>
@@ -476,7 +481,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase">
-                      القسم
+                      {academicT("department")}
                     </label>
                     <select
                       value={departmentId}
@@ -485,7 +490,9 @@ export default function ProfilePage() {
                       disabled={optionsLoading}
                     >
                       <option value="">
-                        {optionsLoading ? "جاري التحميل..." : "اختر القسم"}
+                        {optionsLoading
+                          ? commonT("loading")
+                          : academicT("selectDepartment")}
                       </option>
                       {!optionsLoading &&
                         departments
@@ -507,15 +514,15 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase">
-                      الترم
+                      {t("semester")}
                     </label>
                     <select
                       value={semester}
                       onChange={(e) => setSemester(Number(e.target.value))}
                       className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
                     >
-                      <option value={1}>ترم 1</option>
-                      <option value={2}>ترم 2</option>
+                      <option value={1}>{t("semester1")}</option>
+                      <option value={2}>{t("semester2")}</option>
                     </select>
                   </div>
                   <button
@@ -545,7 +552,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                   <span className="w-2 h-8 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.5)]" />
-                  إعدادات الحساب الخاصة
+                  {t("specialSettings")}
                 </h2>
               </div>
               <div className="group relative bg-slate-50 dark:bg-white/[0.02] p-4 sm:p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 transition-all duration-300">
@@ -558,12 +565,11 @@ export default function ProfilePage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
-                            Show Extra Content
+                            {t("showExtraContent")}
                           </h3>
                         </div>
                         <p className="mt-0.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                          Enable permanent access to additional sections and
-                          features
+                          {t("extraContentDesc")}
                         </p>
                       </div>
                     </div>
@@ -619,8 +625,8 @@ export default function ProfilePage() {
                 {/* Cooldown info */}
                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    <span className="font-bold">ملاحظة:</span> يمكنك تغيير هذا
-                    الإعداد مرة واحدة كل ساعتين لمنع الاستخدام الخاطئ.
+                    <span className="font-bold">{t("note")}:</span>{" "}
+                    {t("cooldownNote")}
                   </p>
                 </div>
               </div>
@@ -632,7 +638,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                 <span className="w-2 h-8 bg-brand-orange rounded-full shadow-[0_0_15px_rgba(var(--brand-orange),0.5)]" />
-                إعدادات الإشعارات
+                {t("notificationSettings")}
               </h2>
             </div>
             <div className="bg-slate-50 dark:bg-white/[0.02] p-6 sm:p-10 rounded-[3rem] border border-slate-100 dark:border-white/5">
@@ -644,31 +650,34 @@ export default function ProfilePage() {
           <section>
             <h2 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
               <span className="w-2 h-8 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(var(--brand-blue),0.5)]" />
-              سجل النشاط
+              {t("activityLog")}
             </h2>
             <div className="grid sm:grid-cols-2 gap-5">
               <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                  تاريخ الانضمام
+                  {t("joinDate")}
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.created_at
-                    ? new Date(user.created_at).toLocaleDateString("ar-EG", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "غير محدد"}
+                    ? new Date(user.created_at).toLocaleDateString(
+                        t("locale"),
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        },
+                      )
+                    : t("notSpecified")}
                 </p>
               </div>
               <div className="p-7 bg-slate-50 dark:bg-white/[0.02] rounded-[2.5rem] border border-slate-100 dark:border-white/5">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
-                  آخر نشاط مسجل
+                  {t("lastActivity")}
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.last_sign_in_at
                     ? new Date(user.last_sign_in_at).toLocaleDateString(
-                        "ar-EG",
+                        t("locale"),
                         {
                           year: "numeric",
                           month: "long",
@@ -677,7 +686,7 @@ export default function ProfilePage() {
                           minute: "2-digit",
                         },
                       )
-                    : "غير محدد"}
+                    : t("notSpecified")}
                 </p>
               </div>
             </div>
@@ -689,13 +698,13 @@ export default function ProfilePage() {
               onClick={() => router.push("/")}
               className="w-full sm:w-auto px-12 py-4 bg-brand-blue text-white rounded-2xl font-black hover:bg-brand-sky shadow-xl shadow-brand-blue/25 transition-all duration-300 active:scale-95 text-center"
             >
-              العودة للرئيسية
+              {t("backToHome")}
             </button>
             <button
               onClick={() => window.history.back()}
               className="w-full sm:w-auto px-12 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all duration-300 active:scale-95 text-center"
             >
-              رجوع
+              {t("back")}
             </button>
           </div>
         </div>

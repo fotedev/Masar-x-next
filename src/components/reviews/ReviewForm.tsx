@@ -4,10 +4,11 @@ import { StarRatingInput } from "./StarRating";
 
 interface ReviewFormProps {
   onSubmit: (content: string, rating: number) => Promise<void>;
-  user: any;
+  user: { id: string } | null;
+  onCancel?: () => void;
 }
 
-export function ReviewForm({ onSubmit, user }: ReviewFormProps) {
+export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
   const [newReview, setNewReview] = useState("");
   const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +58,7 @@ export function ReviewForm({ onSubmit, user }: ReviewFormProps) {
         <button
           type="submit"
           disabled={!newReview.trim() || submitting}
-          className="absolute bottom-4 left-4 bg-brand-blue text-white px-6 py-2 rounded-xl hover:bg-brand-sky disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand-blue/20 flex items-center gap-2 font-bold"
+          className="bg-brand-blue text-white px-6 py-2 rounded-xl hover:bg-brand-sky disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand-blue/20 flex items-center gap-2 font-bold"
         >
           {submitting ? (
             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -68,6 +69,16 @@ export function ReviewForm({ onSubmit, user }: ReviewFormProps) {
             </>
           )}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-200 transition-all font-bold"
+          >
+            إلغاء
+          </button>
+        )}
       </div>
     </form>
   );

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { MessageWithSender } from '@/types/database';
+import { logger } from '@/lib/logger';
 
 type PuterClientLike = {
   auth: {
@@ -380,7 +381,7 @@ ${context}
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
         .join('\n\n');
 
-      console.error('Puter AI error:', error);
+      logger.error('Puter AI error:', error);
       if (mode === 'cs_assistant') {
         return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
       }
@@ -732,7 +733,7 @@ ${context}
   }
 
   // Summarize loaded data (from text file)
-  async summarizeLoadedData(): Promise<any> {
+  async summarizeLoadedData(): Promise<SummarizeChatAnalysis> {
     const chunks = this.chatChunks;
     if (!chunks || chunks.length === 0) {
       throw new Error('No data loaded to summarize');

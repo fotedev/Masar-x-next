@@ -17,8 +17,10 @@ type LectureIndexItem = {
 
 type DashboardData = {
   professor: string;
+  professorAr?: string | null;
   professorGender?: "male" | "female";
   description: string;
+  descriptionAr?: string | null;
   progress: number;
   schedule: string;
   nextLecture: string;

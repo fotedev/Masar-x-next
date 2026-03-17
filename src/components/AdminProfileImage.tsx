@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { FileDropzone } from "./FileDropzone";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface AdminProfileImageProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -33,12 +34,7 @@ export function AdminProfileImage({
     }
   }, [isUploading, avatarUrl]);
 
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const handleFileSelect = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("يرجى اختيار ملف صورة فقط");
@@ -57,7 +53,7 @@ export function AdminProfileImage({
       // Wait for a small delay to ensure AuthContext state has propagated if needed
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
-      console.error("Upload error in component:", error);
+      logger.error("Upload error in component", error);
       toast.error("حدث خطأ في رفع الصورة", {
         description: "يرجى المحاولة مرة أخرى.",
       });
@@ -86,11 +82,10 @@ export function AdminProfileImage({
         disabled={!editable || isUploading}
         onFileSelect={(files) => {
           if (files.length > 0) {
-            // Create synthetic event to reuse logic
-            const syntheticEvent = {
-              target: { files: [files[0]] },
-            } as any;
-            handleFileSelect(syntheticEvent);
+            const file = files[0];
+            if (file) {
+              void handleFileSelect(file);
+            }
           }
         }}
         accept="image/*"

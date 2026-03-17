@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { Subject } from "../types/database";
-import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
 import { usePlatformSettings } from "./usePlatformSettings";
+import { logger } from "../lib/logger";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type UseSubjectsParams = {
     level?: number | null;
@@ -12,140 +12,126 @@ type UseSubjectsParams = {
     is_academic?: boolean;
 };
 
-type SubjectWithSemester = Subject & {
-    semester?: string | number | null;
-};
-
 export function useSubjects(params: UseSubjectsParams = {}) {
-    const [subjects, setSubjects] = useState<Subject[]>([]);
-    const [loading, setLoading] = useState(true);
     const { academic, loading: academicLoading } = useUserAcademic();
     const { activeSemester } = usePlatformSettings();
     const { user } = useAuth();
+    const queryClient = useQueryClient();
 
-    const fetchSubjects = useCallback(async (skipCache = false) => {
-        try {
-            setLoading(true);
+    const isAcademicParam = params.is_academic !== undefined ? params.is_academic : true;
+    const isAnonymous = !user;
+    const effectiveLevel = typeof params.level === "number" ? params.level : (academic.level ?? 1);
+    const effectiveSemester = typeof params.semester === "number"
+        ? params.semester
+        : (Number(activeSemester) || Number(academic.semester) || 1);
 
-            const isAcademicParam = params.is_academic !== undefined ? params.is_academic : true;
+    const queryKey = ['subjects', {
+        level: effectiveLevel,
+        semester: effectiveSemester,
+        isAnonymous,
+        isAcademic: isAcademicParam
+    }];
 
-            // Since is_academic column doesn't exist in DB, we treat all subjects as academic
-            // unless explicitly requested otherwise (which wouldn't make sense without the column)
+    const { data: subjects = [], isLoading: loading, refetch: fetchSubjects } = useQuery({
+        queryKey,
+        enabled: !academicLoading && (isAcademicParam ? params.level !== null : true),
+        staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
+        queryFn: async () => {
+            try {
+                const query = supabase
+                    .from("subjects")
+                    .select("id, name, name_en, is_academic, semester, level, show_on_home, created_at, professor, description, schedule, location, status")
+                    .order("name", { ascending: true });
 
-            if (isAcademicParam && (params.level === null)) {
-                setSubjects([]);
-                setLoading(false);
-                return;
+                const { data, error } = await query;
+                if (error) throw error;
+
+                const subjectData = (data as Subject[]) || [];
+
+                return subjectData.filter((s) => {
+                    if (isAcademicParam === false) {
+                        if (s.is_academic === true) return false;
+                    } else {
+                        if (s.is_academic === false) return false;
+                    }
+
+                    const semesterMatch = s.semester === undefined || s.semester === null || 
+                        Number(s.semester) === Number(effectiveSemester);
+
+                    const levelMatch = s.level === undefined || s.level === null || 
+                        Number(s.level) === Number(effectiveLevel);
+
+                    const visibilityMatch = isAnonymous ? Boolean(s.show_on_home) : true;
+
+                    return semesterMatch && levelMatch && visibilityMatch;
+                });
+            } catch (error) {
+                logger.error("Failed to fetch subjects", error, {
+                    params,
+                    level: effectiveLevel,
+                    semester: effectiveSemester
+                });
+                return [];
             }
-            const isAnonymous = !user;
-            const effectiveLevel =
-                typeof params.level === "number" ? params.level : (academic.level ?? 1);
-            const effectiveSemester =
-                typeof params.semester === "number"
-                    ? params.semester
-                    : (Number(activeSemester) || Number(academic.semester) || 1);
-            const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
-            const cacheKey = `${cacheKeyBase}:lvl:${effectiveLevel}:sem:${effectiveSemester}:anon:${isAnonymous ? 1 : 0}:acad:${isAcademicParam}`;
-
-            // Check cache first
-            if (!skipCache && queryCache.get) {
-                const cached = queryCache.get<Subject[]>(cacheKey);
-                if (cached) {
-                    setSubjects(cached);
-                    setLoading(false);
-                    return;
-                }
-            }
-
-            // Since is_academic column might not exist in some environments, but we need it for separation
-            const query = supabase
-                .from("subjects")
-                .select("id, name, name_en, is_academic, semester, level, show_on_home, created_at, professor, description, schedule, location, status")
-                .order("name", { ascending: true });
-
-            const { data, error } = await query;
-
-            if (error) throw error;
-
-            const subjectData: SubjectWithSemester[] = (data as SubjectWithSemester[]) || [];
-
-            // Filter by semester/level/academic
-            const filtered = subjectData.filter((s) => {
-                // If the database has is_academic column, use it. 
-                // Otherwise, if we are in TRW section (is_academic: false), we shouldn't see subjects.
-                const anyS = s as any;
-                if (isAcademicParam === false) {
-                    // This is the TRW section. If the column exists and it's true, filter it out.
-                    if (anyS.is_academic === true) return false;
-                    // If the column doesn't exist, we can't reliably filter by it here yet.
-                    // But we definitely shouldn't show academic subjects in TRW.
-                } else {
-                    // This is the academic section. Filter out non-academic if the column exists.
-                    if (anyS.is_academic === false) return false;
-                }
-
-                const semesterMatch = (() => {
-                    if (s.semester === undefined || s.semester === null) return true;
-                    return Number(s.semester) === Number(effectiveSemester);
-                })();
-
-                const levelMatch = (() => {
-                    const anyS = s as unknown as { level?: number | null };
-                    if (anyS.level === undefined || anyS.level === null) return true;
-                    return Number(anyS.level) === Number(effectiveLevel);
-                })();
-
-                const visibilityMatch = isAnonymous ? Boolean(s.show_on_home) : true;
-
-                return semesterMatch && levelMatch && visibilityMatch;
-            });
-
-            setSubjects(filtered as Subject[]);
-
-            // Cache the result
-            if (queryCache.set) {
-                queryCache.set(cacheKey, filtered, cacheTTL.subjects || 3600000);
-            }
-        } catch {
-            // ignore
-        } finally {
-            setLoading(false);
         }
-    }, [academic.level, academic.semester, params.level, params.semester, user, activeSemester, params.is_academic]);
+    });
 
-    const updateSubjectVisibility = async (id: string, showOnHome: boolean) => {
-        try {
+    const updateSubjectVisibilityMutation = useMutation({
+        mutationFn: async ({ id, showOnHome }: { id: string, showOnHome: boolean }) => {
             const { error } = await supabase
                 .from("subjects")
                 .update({ show_on_home: showOnHome })
                 .eq("id", id);
 
             if (error) throw error;
-
-            // Update local state
-            setSubjects(prev => prev.map(s => s.id === id ? { ...s, show_on_home: showOnHome } : s));
-
-            // Invalidate cache
-            const cacheKeyBase = cacheKeys.subjects ? cacheKeys.subjects() : "subjects";
-            const cacheKey = `${cacheKeyBase}:lvl:${academic.level ?? 1}:sem:${academic.semester ?? 1}`;
-            if (queryCache.delete) {
-                queryCache.delete(cacheKey);
-            }
-        } catch (error) {
-            throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['subjects'] });
+        },
+        onError: (error) => {
+            logger.error("Failed to update subject visibility", error);
         }
-    };
+    });
 
-    useEffect(() => {
-        if (!academicLoading) {
-            fetchSubjects();
-        }
-    }, [academicLoading, activeSemester, fetchSubjects]);
+    const updateSubjectMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: Partial<Subject> }) => {
+            const { error } = await supabase.from("subjects").update(data).eq("id", id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["subjects"] });
+        },
+    });
+
+    const createSubjectMutation = useMutation({
+        mutationFn: async (data: Partial<Subject>) => {
+            const { error } = await supabase.from("subjects").insert([data]);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["subjects"] });
+        },
+    });
+
+    const deleteSubjectMutation = useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase.from("subjects").delete().eq("id", id);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["subjects"] });
+        },
+    });
 
     return {
         subjects,
         loading,
-        fetchSubjects,
-        updateSubjectVisibility,
+        fetchSubjects: () => fetchSubjects(),
+        updateSubjectVisibility: (id: string, showOnHome: boolean) =>
+            updateSubjectVisibilityMutation.mutateAsync({ id, showOnHome }),
+        updateSubject: (id: string, data: Partial<Subject>) =>
+            updateSubjectMutation.mutateAsync({ id, data }),
+        createSubject: (data: Partial<Subject>) => createSubjectMutation.mutateAsync(data),
+        deleteSubject: (id: string) => deleteSubjectMutation.mutateAsync(id),
     };
 }

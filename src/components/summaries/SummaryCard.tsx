@@ -1,11 +1,13 @@
 import { Star, Edit } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 
+import { SummaryWithRatings } from "../../types/database";
+
 interface SummaryCardProps {
-  summary: any;
-  user: any;
+  summary: SummaryWithRatings;
+  user: { id: string } | null;
   isAdmin: boolean;
-  onEdit?: (summary: any) => void;
+  onEdit?: (summary: SummaryWithRatings) => void;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
   onDelete: (id: string) => void;
 }

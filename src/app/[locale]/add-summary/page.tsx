@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -15,6 +16,9 @@ import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
 
 export default function AddSummaryPage() {
+  const t = useTranslations("addSummary");
+  const commonT = useTranslations("common");
+  const onboardingT = useTranslations("onboarding");
   const router = useRouter();
   const [lectureKeyFromQuery, setLectureKeyFromQuery] = useState("");
   const { user, displayName } = useAuth();
@@ -94,7 +98,7 @@ export default function AddSummaryPage() {
 
     try {
       if (!user?.id) {
-        setError("يجب تسجيل الدخول لإرسال الملخص");
+        setError(t("loginRequired"));
         setLoading(false);
         return;
       }
@@ -103,7 +107,7 @@ export default function AddSummaryPage() {
       if (attachmentType === "file" && pdfFile) {
         const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
         if (pdfFile.size > MAX_PDF_SIZE) {
-          setError("حجم ملف PDF يتجاوز الحد المسموح به (10MB)");
+          setError(t("pdfSizeError"));
           setLoading(false);
           return;
         }
@@ -116,9 +120,7 @@ export default function AddSummaryPage() {
           (file) => file.size > MAX_IMAGE_SIZE,
         );
         if (oversizedImage) {
-          setError(
-            `حجم الصورة "${oversizedImage.name}" يتجاوز الحد المسموح به (5MB)`,
-          );
+          setError(t("imageSizeError", { name: oversizedImage.name }));
           setLoading(false);
           return;
         }
@@ -135,7 +137,7 @@ export default function AddSummaryPage() {
 
         if (lectureError) throw lectureError;
         if (!lectureRow) {
-          setError("المحاضرة المحددة غير صالحة لهذه المادة");
+          setError(t("invalidLecture"));
           setLoading(false);
           return;
         }
@@ -151,14 +153,12 @@ export default function AddSummaryPage() {
             driveLink.trim(),
           );
         if (!isGoogleDrive) {
-          setError(
-            "يرجى إدخال رابط Google Drive صحيح (https://drive.google.com/...)",
-          );
+          setError(t("invalidDriveLink"));
           setLoading(false);
           return;
         }
       } else if (attachmentType === "link" && !driveLink.trim()) {
-        setError("يرجى إدخال رابط Google Drive أو اختر رفع ملف");
+        setError(t("driveLinkRequired"));
         setLoading(false);
         return;
       }
@@ -168,7 +168,7 @@ export default function AddSummaryPage() {
         const youtubeRegex =
           /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/|.+\?v=)?([^&=%\?]{11})/;
         if (!youtubeRegex.test(youtubeLink.trim())) {
-          setError("يرجى إدخال رابط يوتيوب صحيح");
+          setError(t("invalidYoutubeLink"));
           setLoading(false);
           return;
         }
@@ -179,7 +179,7 @@ export default function AddSummaryPage() {
 
       if (attachmentType === "file" && pdfFile) {
         // رفع الملف إلى Cloudinary مع البيانات الوصفية
-        setUploadStage("جاري رفع ملف PDF...");
+        setUploadStage(t("uploadingPdf"));
         cloudinaryResult = await uploadToCloudinary(pdfFile, {
           folder: "masarx-summaries",
           onProgress: (progress, stage) => {
@@ -191,7 +191,7 @@ export default function AddSummaryPage() {
 
       // رفع الصور إلى Cloudinary
       if (imageFiles.length > 0) {
-        setUploadStage("جاري رفع الصور...");
+        setUploadStage(t("uploadingImages"));
         for (let i = 0; i < imageFiles.length; i++) {
           const imageFile = imageFiles[i];
           try {
@@ -205,7 +205,11 @@ export default function AddSummaryPage() {
                   images: overallProgress,
                 }));
                 setUploadStage(
-                  `رفع الصورة ${i + 1}/${imageFiles.length}: ${stage}`,
+                  t("uploadingImageProgress", {
+                    current: i + 1,
+                    total: imageFiles.length,
+                    stage,
+                  }),
                 );
               },
             });
@@ -250,8 +254,11 @@ export default function AddSummaryPage() {
 
       // إرسال إشعار للمدراء
       notifyAdmins(
-        "ملخص جديد يحتاج مراجعة",
-        `تم إرسال ملخص "${formData.title}" بواسطة ${displayName || "مجهول"}`,
+        t("adminNotifyTitle"),
+        t("adminNotifyDesc", {
+          title: formData.title,
+          contributor: displayName || t("anonymous"),
+        }),
         "admin_submission",
         insertedData.id,
         "summary",
@@ -261,10 +268,10 @@ export default function AddSummaryPage() {
 
       // إرسال إشعار نجاح الإضافة للمستخدم
       const notificationMessage = pdfFile
-        ? `ملخص "${formData.title}" تم رفعه وسيتم مراجعته قريباً`
-        : `ملخص "${formData.title}" تم إرساله وسيتم مراجعته قريباً`;
+        ? t("userNotifyPdf", { title: formData.title })
+        : t("userNotifyLink", { title: formData.title });
 
-      sendNotification("تم إرسال الملخص بنجاح!", {
+      sendNotification(t("submitSuccessTitle"), {
         body: notificationMessage,
         icon: "/logo.png",
         tag: "summary-submitted",
@@ -296,7 +303,7 @@ export default function AddSummaryPage() {
         "message" in err &&
         typeof (err as { message?: unknown }).message === "string"
           ? (err as { message: string }).message
-          : "حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مرة أخرى.";
+          : t("submitError");
       setError(message);
     } finally {
       setLoading(false);
@@ -313,13 +320,13 @@ export default function AddSummaryPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
           <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            تم إرسال الملخص بنجاح!
+            {t("submitSuccessTitle")}
           </h2>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
-            سيتم مراجعة الملخص من قبل المشرفين ونشره قريباً
+            {t("submitSuccessDesc")}
           </p>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">
-            سيتم تحويلك إلى الصفحة الرئيسية...
+            {t("redirecting")}
           </p>
         </div>
       </div>
@@ -331,19 +338,19 @@ export default function AddSummaryPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            إضافة ملخص جديد
+            {t("pageTitle")}
           </h1>
           <button
             type="button"
             onClick={() => router.back()}
             className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors shrink-0"
-            aria-label="إغلاق"
+            aria-label={t("close")}
           >
             <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-6">
-          شارك ملخصك مع زملائك الطلاب
+          {t("pageDescription")}
         </p>
 
         {error && (
@@ -358,7 +365,7 @@ export default function AddSummaryPage() {
               htmlFor="summary-title"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              عنوان الملخص <span className="text-red-500">*</span>
+              {t("summaryTitle")} <span className="text-red-500">*</span>
             </label>
             <input
               id="summary-title"
@@ -371,7 +378,7 @@ export default function AddSummaryPage() {
                 setFormData({ ...formData, title: e.target.value })
               }
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
-              placeholder="مثال: ملخص الفصل الأول - مقدمة في البرمجة"
+              placeholder={t("summaryTitlePlaceholder")}
             />
           </div>
 
@@ -381,7 +388,8 @@ export default function AddSummaryPage() {
                 htmlFor="summary-year"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                المستوى الدراسي <span className="text-red-500">*</span>
+                {onboardingT("academicLevel")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-year"
@@ -405,7 +413,9 @@ export default function AddSummaryPage() {
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
               >
                 <option value="">
-                  {optionsLoading ? "جاري التحميل..." : "اختر المستوي"}
+                  {optionsLoading
+                    ? commonT("loading")
+                    : onboardingT("selectLevel")}
                 </option>
                 {!optionsLoading &&
                   levels.map((lvl) => (
@@ -421,7 +431,7 @@ export default function AddSummaryPage() {
                 htmlFor="summary-semester"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                الترم <span className="text-red-500">*</span>
+                {t("semester")} <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-semester"
@@ -441,8 +451,8 @@ export default function AddSummaryPage() {
                 disabled={!formData.year}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
               >
-                <option value={1}>ترم 1</option>
-                <option value={2}>ترم 2</option>
+                <option value={1}>{t("semester1")}</option>
+                <option value={2}>{t("semester2")}</option>
               </select>
             </div>
 
@@ -451,7 +461,8 @@ export default function AddSummaryPage() {
                 htmlFor="summary-department"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                التخصص <span className="text-red-500">*</span>
+                {onboardingT("department")}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <select
                 id="summary-department"
@@ -468,7 +479,9 @@ export default function AddSummaryPage() {
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
               >
                 <option value="">
-                  {optionsLoading ? "جاري التحميل..." : "اختر التخصص"}
+                  {optionsLoading
+                    ? commonT("loading")
+                    : onboardingT("selectDepartment")}
                 </option>
                 {!optionsLoading &&
                   availableDepartments.map((dept) => (
@@ -485,7 +498,7 @@ export default function AddSummaryPage() {
               htmlFor="summary-subject"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              اسم المادة <span className="text-red-500">*</span>
+              {t("subjectName")} <span className="text-red-500">*</span>
             </label>
             <select
               id="summary-subject"
@@ -498,7 +511,7 @@ export default function AddSummaryPage() {
               }
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">اختر المادة</option>
+              <option value="">{t("selectSubject")}</option>
               {subjects.map((subject) => (
                 <option key={subject.id} value={subject.name}>
                   {subject.name}
@@ -512,7 +525,7 @@ export default function AddSummaryPage() {
               htmlFor="summary-content"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              محتوى الملخص <span className="text-red-500">*</span>
+              {t("summaryContent")} <span className="text-red-500">*</span>
             </label>
             <textarea
               id="summary-content"
@@ -525,7 +538,7 @@ export default function AddSummaryPage() {
               }
               rows={10}
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
-              placeholder="اكتب محتوى الملخص هنا..."
+              placeholder={t("summaryContentPlaceholder")}
             />
           </div>
 
@@ -534,7 +547,7 @@ export default function AddSummaryPage() {
               htmlFor="summary-youtube"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
             >
-              رابط يوتيوب (اختياري)
+              {t("youtubeLink")} ({commonT("optional")})
             </label>
             <input
               id="summary-youtube"
@@ -548,7 +561,7 @@ export default function AddSummaryPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              المرفقات (اختياري)
+              {t("attachments")} ({commonT("optional")})
             </label>
 
             <div className="flex gap-4 mb-4">
@@ -562,7 +575,7 @@ export default function AddSummaryPage() {
                   className="ml-2 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
-                  رفع ملف PDF
+                  {t("uploadPdf")}
                 </span>
               </label>
               <label className="flex items-center">
@@ -575,7 +588,7 @@ export default function AddSummaryPage() {
                   className="ml-2 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
-                  رابط Google Drive
+                  {t("googleDriveLink")}
                 </span>
               </label>
             </div>
@@ -583,7 +596,7 @@ export default function AddSummaryPage() {
             {attachmentType === "file" && (
               <div className="mb-4">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  رفع ملف PDF
+                  {t("uploadPdf")}
                 </label>
                 <FileDropzone
                   onFileSelect={(files) => {
@@ -593,7 +606,7 @@ export default function AddSummaryPage() {
                         setPdfFile(file);
                         setError("");
                       } else {
-                        setError("يرجى اختيار ملف PDF فقط");
+                        setError(t("pdfOnlyError"));
                         setPdfFile(null);
                       }
                     }
@@ -612,11 +625,11 @@ export default function AddSummaryPage() {
                         <>
                           <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                             <span className="font-semibold">
-                              اضغط أو اسحب لرفع ملف PDF
+                              {t("uploadPdfDropzone")}
                             </span>
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-500">
-                            PDF فقط (حتى 10MB)
+                            {t("pdfLimitNote")}
                           </p>
                         </>
                       )}
@@ -629,7 +642,7 @@ export default function AddSummaryPage() {
             {attachmentType === "link" && (
               <div className="mb-4">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                  رابط Google Drive
+                  {t("googleDriveLink")}
                 </label>
                 <input
                   type="url"
@@ -639,7 +652,7 @@ export default function AddSummaryPage() {
                   className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  تأكد من أن الرابط قابل للوصول للجميع (عام)
+                  {t("driveLinkNote")}
                 </p>
               </div>
             )}
@@ -647,7 +660,7 @@ export default function AddSummaryPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              رفع صور (اختياري)
+              {t("uploadImages")} ({commonT("optional")})
             </label>
             <FileDropzone
               onFileSelect={(files) => {
@@ -663,9 +676,7 @@ export default function AddSummaryPage() {
                 });
 
                 if (validImages.length !== files.length) {
-                  setError(
-                    "بعض الملفات المختارة ليست صور صالحة (JPEG, PNG, GIF, WebP فقط)",
-                  );
+                  setError(t("invalidImagesError"));
                 } else {
                   setError("");
                 }
@@ -681,11 +692,11 @@ export default function AddSummaryPage() {
                   <Upload className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-2" />
                   <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
                     <span className="font-semibold">
-                      اضغط أو اسحب لرفع الصور
+                      {t("uploadImagesDropzone")}
                     </span>
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500">
-                    JPEG, PNG, GIF, WebP (حتى 5MB لكل صورة)
+                    {t("imagesLimitNote")}
                   </p>
                 </div>
               </div>
@@ -708,7 +719,7 @@ export default function AddSummaryPage() {
                       type="button"
                       onClick={() => removeImage(index)}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="إزالة الصورة"
+                      title={t("removeImage")}
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -721,8 +732,8 @@ export default function AddSummaryPage() {
           {displayName && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                <strong>ملاحظة:</strong> الملخص سيُنشر باسم:{" "}
-                <strong>{displayName}</strong>
+                <strong>{t("note")}:</strong>{" "}
+                {t("contributorNote", { name: displayName })}
               </p>
             </div>
           )}
@@ -769,12 +780,12 @@ export default function AddSummaryPage() {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>جاري الإرسال...</span>
+                <span>{commonT("submitting")}</span>
               </>
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                <span>إرسال الملخص</span>
+                <span>{t("submitButton")}</span>
               </>
             )}
           </button>

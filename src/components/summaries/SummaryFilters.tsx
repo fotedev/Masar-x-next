@@ -4,10 +4,10 @@ import { useTranslations } from "next-intl";
 interface SummaryFiltersProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  statusFilter: string;
-  setStatusFilter: (value: any) => void;
-  sortBy: string;
-  setSortBy: (value: any) => void;
+  statusFilter: "all" | "pending" | "approved" | "rejected";
+  setStatusFilter: (value: "all" | "pending" | "approved" | "rejected") => void;
+  sortBy: "date" | "title" | "subject";
+  setSortBy: (value: "date" | "title" | "subject") => void;
   sortOrder: "asc" | "desc";
   setSortOrder: (value: "asc" | "desc") => void;
 }

@@ -2,8 +2,17 @@ import React from "react";
 import { Card, CardContent, Button, Badge } from "../ui";
 import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 
+type Enrollment = {
+  id: string;
+  student_name: string;
+  course_title: string;
+  created_at: string;
+  status: string;
+  payment_screenshot_url?: string | null;
+};
+
 interface EnrollmentCardProps {
-  enrollment: any;
+  enrollment: Enrollment;
   onViewImage: (path: string) => void;
   onAction: (id: string, action: "approve" | "reject") => void;
   processingId: string | null;
@@ -72,9 +81,7 @@ export function EnrollmentCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  onViewImage(enrollment.payment_screenshot_url!)
-                }
+                onClick={() => onViewImage(enrollment.payment_screenshot_url!)}
               >
                 <Eye className="w-4 h-4 ml-1" />
                 عرض الإثبات

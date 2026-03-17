@@ -6,6 +6,15 @@ import { useManageLectures } from "@/hooks/useManageLectures";
 import { AddLectureForm } from "./lectures/AddLectureForm";
 import { LectureItem } from "./lectures/LectureItem";
 
+type SubjectLecture = {
+  id: string;
+  subject: string;
+  lecture_label: string;
+  lecture_key: string;
+  order_index: number;
+  created_at: string;
+};
+
 interface ManageLecturesModalProps {
   show: boolean;
   onClose: () => void;
@@ -19,9 +28,8 @@ export function ManageLecturesModal({
 }: ManageLecturesModalProps) {
   const t = useTranslations("subjectPage");
   const [showLectureContent, setShowLectureContent] = useState(false);
-  const [selectedLectureForContent, setSelectedLectureForContent] = useState<
-    any | null
-  >(null);
+  const [selectedLectureForContent, setSelectedLectureForContent] =
+    useState<SubjectLecture | null>(null);
 
   const standardizedSubject = decodeURIComponent(subjectName)
     .trim()
@@ -120,7 +128,11 @@ export function ManageLecturesModal({
         }}
         subject={standardizedSubject}
         lecture={selectedLectureForContent}
-        lecturesIndex={lectures}
+        lecturesIndex={lectures.map((l) => ({
+          id: l.id,
+          title: l.lecture_label,
+          lecture_key: l.lecture_key,
+        }))}
       />
     </div>
   );

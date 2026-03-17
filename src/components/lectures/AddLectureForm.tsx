@@ -1,10 +1,13 @@
 import { Plus } from "lucide-react";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface AddLectureFormProps {
   newLecture: { title: string; orderIndex: string };
   setNewLecture: (lecture: { title: string; orderIndex: string }) => void;
   onAdd: () => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function AddLectureForm({

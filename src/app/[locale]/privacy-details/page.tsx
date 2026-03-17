@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import { useTranslations } from "next-intl";
 import {
   Shield,
   Eye,
@@ -11,73 +12,75 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function PrivacyDetailsPage() {
+  const t = useTranslations("privacyDetails");
   const router = useRouter();
+
   const dataTypes = [
     {
-      title: "الاسم الكامل والبريد الإلكتروني عند التسجيل",
+      title: t("dataTypes.auth.title"),
       icon: "user",
-      purpose: "المصادقة والتواصل",
+      purpose: t("dataTypes.auth.purpose"),
       details: [
-        "يتم استخدام الاسم الكامل لعرض هويتك في الملف الشخصي وفي التفاعلات مع المحتوى",
-        "البريد الإلكتروني ضروري للمصادقة على الحساب وإرسال إشعارات مهمة",
-        "يتم تشفير جميع البيانات وتخزينها بشكل آمن في قاعدة البيانات",
+        t("dataTypes.auth.details.0"),
+        t("dataTypes.auth.details.1"),
+        t("dataTypes.auth.details.2"),
       ],
-      necessity: "أساسي للمصادقة",
+      necessity: t("dataTypes.auth.necessity"),
     },
     {
-      title: "المستوى الدراسي والتخصص الأكاديمي",
+      title: t("dataTypes.academic.title"),
       icon: "graduation",
-      purpose: "تخصيص التجربة الدراسية",
+      purpose: t("dataTypes.academic.purpose"),
       details: [
-        "يساعد في عرض المحتوى المناسب لمستواك الدراسي",
-        "يسهل العثور على الملخصات والمواد ذات الصلة بتخصصك",
-        "يحسن من دقة الاقتراحات والمحتوى الموصى به",
+        t("dataTypes.academic.details.0"),
+        t("dataTypes.academic.details.1"),
+        t("dataTypes.academic.details.2"),
       ],
-      necessity: "مفيد للتخصيص",
+      necessity: t("dataTypes.academic.necessity"),
     },
     {
-      title: "الملخصات والمصادر الدراسية التي تقوم برفعها",
+      title: t("dataTypes.summaries.title"),
       icon: "file-text",
-      purpose: "مشاركة المعرفة والمحتوى التعليمي",
+      purpose: t("dataTypes.summaries.purpose"),
       details: [
-        "يتم حفظ المحتوى الذي تقوم برفعه لمشاركته مع الطلاب الآخرين",
-        "يساعد في بناء مكتبة دراسية شاملة ومفيدة",
-        "يتم التحقق من جودة المحتوى قبل نشره للجميع",
+        t("dataTypes.summaries.details.0"),
+        t("dataTypes.summaries.details.1"),
+        t("dataTypes.summaries.details.2"),
       ],
-      necessity: "أساسي للوظائف",
+      necessity: t("dataTypes.summaries.necessity"),
     },
     {
-      title: "التعليقات والتقييمات والتفاعلات مع المحتوى",
+      title: t("dataTypes.interactions.title"),
       icon: "message-circle",
-      purpose: "تحسين جودة المحتوى والتفاعل",
+      purpose: t("dataTypes.interactions.purpose"),
       details: [
-        "يساعد في فهم آراء المستخدمين وتحسين المحتوى",
-        "يبني مجتمعاً دراسياً تفاعلياً ومفيداً",
-        "يساعد في تحديد المحتوى الأكثر جودة وفائدة",
+        t("dataTypes.interactions.details.0"),
+        t("dataTypes.interactions.details.1"),
+        t("dataTypes.interactions.details.2"),
       ],
-      necessity: "مفيد للتحسين",
+      necessity: t("dataTypes.interactions.necessity"),
     },
     {
-      title: "بيانات الأداء في الاختبارات والامتحانات",
+      title: t("dataTypes.performance.title"),
       icon: "bar-chart",
-      purpose: "تتبع التقدم الدراسي وتحسين التعلم",
+      purpose: t("dataTypes.performance.purpose"),
       details: [
-        "يساعد في تحليل نقاط القوة والضعف في المواد المختلفة",
-        "يوفر إحصائيات مفيدة لتحسين أسلوب الدراسة",
-        "يحافظ على سرية النتائج ولا يتم مشاركتها مع الآخرين",
+        t("dataTypes.performance.details.0"),
+        t("dataTypes.performance.details.1"),
+        t("dataTypes.performance.details.2"),
       ],
-      necessity: "مفيد للتتبع",
+      necessity: t("dataTypes.performance.necessity"),
     },
     {
-      title: "الصورة الشخصية (في حال إضافتها للملف الشخصي)",
+      title: t("dataTypes.profileImage.title"),
       icon: "camera",
-      purpose: "تعزيز التفاعل الشخصي",
+      purpose: t("dataTypes.profileImage.purpose"),
       details: [
-        "تظهر صورتك في ملفك الشخصي وفي التعليقات والتفاعلات",
-        "تساعد في بناء هوية شخصية موثوقة في المجتمع الدراسي",
-        "يمكن حذفها أو تغييرها في أي وقت من إعدادات الملف الشخصي",
+        t("dataTypes.profileImage.details.0"),
+        t("dataTypes.profileImage.details.1"),
+        t("dataTypes.profileImage.details.2"),
       ],
-      necessity: "اختياري",
+      necessity: t("dataTypes.profileImage.necessity"),
     },
   ];
 
@@ -101,20 +104,17 @@ export default function PrivacyDetailsPage() {
   };
 
   const getNecessityColor = (necessity: string) => {
-    switch (necessity) {
-      case "أساسي للمصادقة":
-        return "text-red-600 bg-red-50 dark:bg-red-900/20";
-      case "أساسي للوظائف":
-        return "text-orange-600 bg-orange-50 dark:bg-orange-900/20";
-      case "مفيد للتخصيص":
-        return "text-blue-600 bg-blue-50 dark:bg-blue-900/20";
-      case "مفيد للتحسين":
-        return "text-green-600 bg-green-50 dark:bg-green-900/20";
-      case "مفيد للتتبع":
-        return "text-purple-600 bg-purple-50 dark:bg-purple-900/20";
-      default:
-        return "text-gray-600 bg-gray-50 dark:bg-gray-900/20";
-    }
+    if (necessity === t("dataTypes.auth.necessity"))
+      return "text-red-600 bg-red-50 dark:bg-red-900/20";
+    if (necessity === t("dataTypes.summaries.necessity"))
+      return "text-orange-600 bg-orange-50 dark:bg-orange-900/20";
+    if (necessity === t("dataTypes.academic.necessity"))
+      return "text-blue-600 bg-blue-50 dark:bg-blue-900/20";
+    if (necessity === t("dataTypes.interactions.necessity"))
+      return "text-green-600 bg-green-50 dark:bg-green-900/20";
+    if (necessity === t("dataTypes.performance.necessity"))
+      return "text-purple-600 bg-purple-50 dark:bg-purple-900/20";
+    return "text-gray-600 bg-gray-50 dark:bg-gray-900/20";
   };
 
   return (
@@ -127,7 +127,7 @@ export default function PrivacyDetailsPage() {
             className="inline-flex items-center gap-2 text-brand-blue hover:text-brand-blue/80 transition-colors mb-6 font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
-            العودة إلى سياسة الخصوصية
+            {t("backToPolicy")}
           </button>
 
           <div className="text-center">
@@ -135,10 +135,10 @@ export default function PrivacyDetailsPage() {
               <Eye className="w-10 h-10 text-brand-blue" />
             </div>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-              تفاصيل المعلومات المجمعة
+              {t("title")}
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 font-medium max-w-3xl mx-auto">
-              شرح مفصل لكل نوع من المعلومات التي نجمعها وأسباب جمعها
+              {t("subtitle")}
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function PrivacyDetailsPage() {
                     </h2>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold ${getNecessityColor(
-                        dataType.necessity
+                        dataType.necessity,
                       )}`}
                     >
                       {dataType.necessity}
@@ -172,7 +172,7 @@ export default function PrivacyDetailsPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <span className="font-semibold text-blue-900 dark:text-blue-100">
-                        الغرض من الجمع:
+                        {t("collectionPurpose")}:
                       </span>
                     </div>
                     <p className="text-blue-800 dark:text-blue-200 font-medium">
@@ -183,7 +183,7 @@ export default function PrivacyDetailsPage() {
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                       <ChevronRight className="w-5 h-5 text-brand-blue" />
-                      التفاصيل والشرح:
+                      {t("detailsExplanation")}:
                     </h3>
                     <ul className="space-y-3">
                       {dataType.details.map((detail, detailIndex) => (
@@ -211,17 +211,11 @@ export default function PrivacyDetailsPage() {
             </div>
             <div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
-                التزامنا بالأمان والخصوصية
+                {t("commitment.title")}
               </h3>
               <div className="space-y-2 text-slate-600 dark:text-slate-400">
-                <p>
-                  جميع المعلومات المجمعة محمية بأحدث تقنيات التشفير والأمان. لا
-                  نستخدم بياناتك لأغراض تجارية أو مشاركتها مع أطراف ثالثة.
-                </p>
-                <p>
-                  يمكنك في أي وقت طلب حذف بياناتك أو تعديل إعدادات الخصوصية من
-                  خلال صفحة ملفك الشخصي.
-                </p>
+                <p>{t("commitment.content1")}</p>
+                <p>{t("commitment.content2")}</p>
               </div>
             </div>
           </div>

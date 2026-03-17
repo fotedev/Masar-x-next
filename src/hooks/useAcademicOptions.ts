@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { cacheTTL, queryCache } from "../lib/queryCache";
+import { logger } from "../lib/logger";
 // Removed hardcoded imports as per user request to rely solely on DB tables
 
 export type AcademicLevelOption = {
@@ -109,7 +110,7 @@ export function useAcademicOptions(params: Params = {}) {
       ]);
 
       if (levelsRes.error || departmentsRes.error) {
-        console.error("Error fetching academic options:", levelsRes.error || departmentsRes.error);
+        logger.error("Error fetching academic options:", { error: levelsRes.error || departmentsRes.error });
         setLevels([]);
         setDepartments([]);
         return;
@@ -136,7 +137,7 @@ export function useAcademicOptions(params: Params = {}) {
         cacheTTL.levels,
       );
     } catch (err) {
-      console.error("Unexpected error fetching academic options:", err);
+      logger.error("Unexpected error fetching academic options:", err);
       setLevels([]);
       setDepartments([]);
     } finally {

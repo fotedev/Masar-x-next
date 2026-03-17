@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useTRWCategories, useTRWMembership } from "@/hooks/trw/useTRWHooks";
+import useTRWCategories from "@/hooks/trw/useTRWCategories";
+import useTRWMembership from "@/hooks/trw/useTRWMembership";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,14 @@ import {
 } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import Link from "next/link";
+
+type TRWCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  cover_url?: string | null;
+};
 
 export default function NonAcademicPage() {
   const router = useRouter();
@@ -93,7 +102,7 @@ export default function NonAcademicPage() {
                   </CardHeader>
                 </Card>
               ))
-            : categories?.map((category: any) => (
+            : (categories as TRWCategory[] | undefined)?.map((category) => (
                 <Link key={category.id} href={`/trw/${category.slug}`}>
                   <Card className="group overflow-hidden hover:shadow-lg transition-all border-muted hover:border-primary/50">
                     {category.cover_url && (

@@ -1,130 +1,147 @@
-import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  is_published: boolean;
-  instructor_name: string;
-  created_at: string;
-  enrollments_count?: number;
-  instructor_id: string;
-}
+import { CourseWithInstructor, CourseInsert, Course } from "@/types/database";
 
-export function useCourses(refreshKey?: number) {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useCourses() {
+  const queryClient = useQueryClient();
 
-  const loadCourses = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const { data: courses = [], isLoading: loading, refetch: fetchCourses } = useQuery({
+    queryKey: ['courses'],
+    staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
+    queryFn: async () => {
+      try {
+        // Fetch courses with instructor names and enrollment/review stats
+        const { data: coursesData, error } = await supabase
+          .from("courses")
+          .select(`
+            *,
+            profiles:instructor_id (
+              display_name,
+              full_name,
+              username
+            ),
+            enrollments (
+              status
+            ),
+            reviews (
+              rating
+            )
+          `)
+          .order("created_at", { ascending: false });
 
-      const { data: coursesData, error: coursesError } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
+        if (error) throw error;
 
-      if (coursesError) throw coursesError;
+        interface RawCourse extends Course {
+          profiles: {
+            display_name: string | null;
+            full_name: string | null;
+            username: string | null;
+          } | null;
+          enrollments: { status: string }[] | null;
+          reviews: { rating: number }[] | null;
+        }
 
-      if (!coursesData || coursesData.length === 0) {
-        setCourses([]);
-        return;
+        const rawCourses = (coursesData as unknown as RawCourse[]) || [];
+
+        return rawCourses.map((course) => {
+          const activeEnrollments = course.enrollments?.filter(
+            (e) => e.status === "active"
+          ) || [];
+          const reviews = course.reviews || [];
+          const averageRating = reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+            : 0;
+
+          const instructor = course.profiles;
+          const instructorName = instructor?.display_name || instructor?.full_name || instructor?.username || "مدرب";
+
+          return {
+            ...course,
+            instructor_name: instructorName,
+            enrollments_count: activeEnrollments.length,
+            total_students: activeEnrollments.length,
+            average_rating: averageRating,
+          } as CourseWithInstructor;
+        });
+      } catch (error) {
+        logger.error("Failed to fetch courses", error);
+        return [];
       }
-
-      const instructorIds = [
-        ...new Set(coursesData.map((c: any) => c.instructor_id)),
-      ].filter((id): id is string => typeof id === "string" && id.length > 0);
-
-      const { data: profilesData, error: profilesError } = instructorIds.length
-        ? await supabase
-            .from("profiles")
-            .select("id, full_name, username")
-            .in("id", instructorIds)
-        : { data: [], error: null };
-
-      const courseIds = coursesData.map((c: any) => c.id);
-      const { data: enrollmentsData, error: enrollmentsError } = courseIds.length
-        ? await supabase
-            .from("enrollments")
-            .select("course_id, status")
-            .in("course_id", courseIds)
-        : { data: [], error: null };
-
-      if (profilesError || enrollmentsError) {
-        throw profilesError || enrollmentsError;
-      }
-
-      const processedCourses = (coursesData as any[]).map((course) => {
-        const instructor = (profilesData as any[])?.find((p: any) => p.id === course.instructor_id);
-        const courseEnrollments = (enrollmentsData as any[])?.filter((e: any) => e.course_id === course.id) ?? [];
-        const activeEnrollments = courseEnrollments.filter((e: any) => e.status === "active");
-
-        const priceNumber = typeof course.price === "number" ? course.price : Number(course.price) || 0;
-
-        return {
-          ...course,
-          price: Number.isFinite(priceNumber) ? priceNumber : 0,
-          instructor_name: instructor?.full_name || instructor?.username || "مدرب",
-          enrollments_count: activeEnrollments.length,
-        };
-      });
-
-      setCourses(processedCourses);
-    } catch (e) {
-      console.error("Failed to load courses", e);
-      setError("حدث خطأ في تحميل الكورسات");
-      toast.error("حدث خطأ في تحميل الكورسات");
-    } finally {
-      setLoading(false);
     }
-  };
+  });
 
-  useEffect(() => {
-    loadCourses();
-  }, [refreshKey]);
-
-  const togglePublish = async (courseId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from("courses")
-        .update({ is_published: !currentStatus })
-        .eq("id", courseId);
-
+  const addCourseMutation = useMutation({
+    mutationFn: async (course: CourseInsert) => {
+      const { error } = await supabase.from("courses").insert(course);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success("تم إضافة الكورس بنجاح");
+    },
+    onError: (error) => {
+      logger.error("Failed to add course", error);
+      toast.error("فشل في إضافة الكورس");
+    }
+  });
 
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === courseId ? { ...course, is_published: !currentStatus } : course
-        )
-      );
+  const updateCourseMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Course> }) => {
+      const { error } = await supabase.from("courses").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast.success("تم تحديث الكورس بنجاح");
+    },
+    onError: (error) => {
+      logger.error("Failed to update course", error);
+      toast.error("فشل في تحديث الكورس");
+    }
+  });
+
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ id, is_published }: { id: string, is_published: boolean }) => {
+      const { error } = await supabase.from("courses").update({ is_published }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success("تم تحديث حالة النشر");
-    } catch {
+    },
+    onError: (error) => {
+      logger.error("Failed to toggle publish status", error);
       toast.error("فشل في تغيير حالة النشر");
     }
-  };
+  });
 
-  const deleteCourse = async (courseId: string) => {
-    try {
-      const { error } = await supabase.from("courses").delete().eq("id", courseId);
+  const deleteCourseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("courses").delete().eq("id", id);
       if (error) throw error;
-      setCourses((prev) => prev.filter((course) => course.id !== courseId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast.success("تم حذف الكورس بنجاح");
-    } catch {
+    },
+    onError: (error) => {
+      logger.error("Failed to delete course", error);
       toast.error("فشل في حذف الكورس");
     }
-  };
+  });
 
   return {
-    courses,
+    courses: courses as CourseWithInstructor[],
     loading,
-    error,
-    loadCourses,
-    togglePublish,
-    deleteCourse,
+    fetchCourses: () => fetchCourses(),
+    addCourse: (course: CourseInsert) => addCourseMutation.mutateAsync(course),
+    updateCourse: (id: string, updates: Partial<Course>) => 
+      updateCourseMutation.mutateAsync({ id, updates }),
+    togglePublish: (id: string, currentStatus: boolean) => 
+      togglePublishMutation.mutateAsync({ id, is_published: !currentStatus }),
+    deleteCourse: (id: string) => deleteCourseMutation.mutateAsync(id),
   };
 }

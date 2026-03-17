@@ -9,21 +9,11 @@ import {
   CardTitle,
 } from "../ui/Card";
 import { Badge } from "../ui/Badge";
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  is_published: boolean;
-  instructor_name: string;
-  created_at: string;
-  enrollments_count?: number;
-}
+import { CourseWithInstructor } from "@/types/database";
 
 interface CourseCardProps {
-  course: Course;
-  onEdit: (course: Course) => void;
+  course: CourseWithInstructor;
+  onEdit: (course: CourseWithInstructor) => void;
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, currentStatus: boolean) => void;
 }

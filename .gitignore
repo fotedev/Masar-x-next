@@ -131,3 +131,8 @@ vite.config.ts.timestamp-*.mjs
 /scripts/generate-sitemap.js
 /scripts/test-request-password-reset.sh
 /.windsurf
+/src/messages/ar.json.bak
+/src/messages/en.json.bak
+/cloc-2.08.exe
+/hjkllllllllllllllllllllllllllllllllllllllllllllllhhjkhjhjkhjhjkhjk.txt
+/SQL_FIX_VIDEOS_RATINGS.sql
