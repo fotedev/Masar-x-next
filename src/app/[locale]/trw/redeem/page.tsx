@@ -1,6 +1,6 @@
 "use client";
 
-import { useRedeemAccessCode } from "@/hooks/trw/useTRWHooks";
+import useRedeemAccessCode from "@/hooks/trw/useRedeemAccessCode";
 import { useState } from "react";
 import {
   Card,
@@ -16,6 +16,20 @@ import { Loader2, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 
+type RedeemResponse = {
+  success: boolean;
+  plan_slug?: string;
+  error?: string;
+};
+
+const getErrorMessage = (err: unknown): string | null => {
+  if (err && typeof err === "object" && "message" in err) {
+    const msg = (err as { message?: unknown }).message;
+    return typeof msg === "string" ? msg : null;
+  }
+  return null;
+};
+
 export default function RedeemPage() {
   const [code, setCode] = useState("");
   const { mutate: redeem, isPending } = useRedeemAccessCode();
@@ -27,9 +41,9 @@ export default function RedeemPage() {
     if (!code.trim()) return;
 
     redeem(code, {
-      onSuccess: (data: any) => {
+      onSuccess: (data: RedeemResponse) => {
         if (data.success) {
-          toast.success(t("success", { plan: data.plan_slug }));
+          toast.success(t("success", { plan: data.plan_slug || "" }));
           router.push(`/${locale}/non-academic`);
         } else {
           let errorMessage = t("failed");
@@ -43,8 +57,8 @@ export default function RedeemPage() {
           toast.error(errorMessage);
         }
       },
-      onError: (error: any) => {
-        toast.error(error.message || t("connectionError"));
+      onError: (error: unknown) => {
+        toast.error(getErrorMessage(error) || t("connectionError"));
       },
     });
   };

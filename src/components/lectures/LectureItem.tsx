@@ -1,7 +1,25 @@
 import { X, Save, BookOpen, Edit as EditIcon, Trash2 } from "lucide-react";
 
+type Lecture = {
+  id: string;
+  subject: string;
+  lecture_label: string;
+  lecture_key: string;
+  order_index: number;
+  created_at: string;
+};
+
+type LectureUpdates = Partial<{
+  lecture_label: string;
+  order_index: number;
+  updated_at: string;
+}>;
+
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface LectureItemProps {
-  lec: any;
+  lec: Lecture;
   editingId: string | null;
   editLecture: { id: string; label: string; orderIndex: string };
   setEditingId: (id: string | null) => void;
@@ -10,10 +28,10 @@ interface LectureItemProps {
     label: string;
     orderIndex: string;
   }) => void;
-  onUpdate: (id: string, updates: any) => void;
+  onUpdate: (id: string, updates: LectureUpdates) => void;
   onDelete: (id: string) => void;
-  onShowContent: (lec: any) => void;
-  t: any;
+  onShowContent: (lec: Lecture) => void;
+  t: TranslationFn;
 }
 
 export function LectureItem({

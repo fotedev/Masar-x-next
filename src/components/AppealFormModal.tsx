@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Flag, X } from "lucide-react";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotifications } from "../hooks/useNotifications";
 import { AppealInsert } from "../types/database";
 import { useTranslations } from "next-intl";
+import { useAppeals } from "../hooks/useAppeals";
 
 interface AppealFormModalProps {
   isOpen: boolean;
@@ -21,8 +21,9 @@ export function AppealFormModal({
   contentType,
   contentTitle,
 }: AppealFormModalProps) {
-  const { displayName } = useAuth();
+  const { user, displayName } = useAuth();
   const { notifyAdmins } = useNotifications();
+  const { addAppeal } = useAppeals();
   const t = useTranslations("appeals");
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
@@ -42,21 +43,13 @@ export function AppealFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!reason.trim()) {
+    if (!reason.trim() || !user) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        return;
-      }
-
       const appealData: AppealInsert = {
         content_id: contentId,
         content_type: contentType,
@@ -65,9 +58,7 @@ export function AppealFormModal({
         created_by: user.id,
       };
 
-      const { error } = await supabase.from("appeals").insert(appealData);
-
-      if (error) throw error;
+      await addAppeal(appealData);
 
       notifyAdmins(
         t("newAppealTitle"),

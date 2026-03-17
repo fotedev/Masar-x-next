@@ -3,13 +3,16 @@ import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { FileDropzone } from "../FileDropzone";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface NewsMediaUploadsProps {
   fileFile: File | null;
   setFileFile: (file: File | null) => void;
   imageFiles: File[];
   setImageFiles: (files: File[] | ((prev: File[]) => File[])) => void;
   setError: (err: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function NewsMediaUploads({

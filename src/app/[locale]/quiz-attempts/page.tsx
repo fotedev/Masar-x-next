@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
@@ -41,6 +42,8 @@ type AttemptAnswerWithQuestion = AttemptAnswer & {
 };
 
 export default function QuizAttemptsPage() {
+  const t = useTranslations("quizAttempts");
+  const commonT = useTranslations("common");
   const { user } = useAuth();
   const router = useRouter();
 
@@ -168,19 +171,19 @@ export default function QuizAttemptsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-            نتائج الامتحانات السابقة
+            {t("pageTitle")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            يمكنك مشاهدة محاولاتك السابقة بالتفصيل
+            {t("pageDescription")}
           </p>
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={() => {
-              confirmToast("هل أنت متأكد من مسح سجل الامتحانات المحلي؟", {
-                confirmLabel: "مسح",
-                cancelLabel: "إلغاء",
+              confirmToast(t("confirmClearHistory"), {
+                confirmLabel: t("clear"),
+                cancelLabel: commonT("cancel"),
               }).then((confirmed: boolean) => {
                 if (!confirmed) return;
                 localStorage.removeItem("quiz_history");
@@ -189,14 +192,14 @@ export default function QuizAttemptsPage() {
             }}
             className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
           >
-            مسح السجل المحلي
+            {t("clearLocalHistory")}
           </button>
           <button
             onClick={() => router.push("/quizzes")}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
           >
             <ChevronLeft className="w-4 h-4" />
-            العودة
+            {t("back")}
           </button>
         </div>
       </div>
@@ -208,14 +211,14 @@ export default function QuizAttemptsPage() {
       ) : attemptsWithDerived.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <div className="text-gray-700 dark:text-gray-300">
-            لا توجد محاولات سابقة حتى الآن.
+            {t("noAttemptsFound")}
           </div>
         </div>
       ) : (
         <div className="space-y-3">
           {attemptsWithDerived.map((a) => {
             const isExpanded = expandedId === a.id;
-            const title = a.quizzes?.title || "امتحان";
+            const title = a.quizzes?.title || t("defaultQuizTitle");
             return (
               <div
                 key={a.id || String(a.created_at || "")}
@@ -236,13 +239,13 @@ export default function QuizAttemptsPage() {
                       </div>
                       {a.is_local && (
                         <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-full border border-blue-100 dark:border-blue-800">
-                          محلي
+                          {t("localTag")}
                         </span>
                       )}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {a.created_at
-                        ? new Date(a.created_at).toLocaleString("ar-EG")
+                        ? new Date(a.created_at).toLocaleString(t("locale"))
                         : ""}
                     </div>
                   </div>
@@ -251,7 +254,7 @@ export default function QuizAttemptsPage() {
                     <div className="text-md font-bold text-gray-800 dark:text-gray-100">
                       {a.score ?? 0}/{a.total_questions ?? 0}
                       {typeof a.time_taken_seconds === "number"
-                        ? ` - ${Math.floor(a.time_taken_seconds / 60)}د ${a.time_taken_seconds % 60}ث`
+                        ? ` - ${Math.floor(a.time_taken_seconds / 60)}${t("minutesShort")} ${a.time_taken_seconds % 60}${t("secondsShort")}`
                         : ""}
                     </div>
                     {isExpanded ? (
@@ -265,13 +268,13 @@ export default function QuizAttemptsPage() {
                 {isExpanded && (
                   <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                      نتيجة الامتحان
+                      {t("attemptResultTitle")}
                     </h2>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          الدرجات
+                          {t("scoreLabel")}
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {a.score ?? 0}/{a.total_questions ?? 0}
@@ -279,7 +282,7 @@ export default function QuizAttemptsPage() {
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          النتيجة
+                          {t("percentageLabel")}
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {(a.total_questions ?? 0) > 0
@@ -288,14 +291,18 @@ export default function QuizAttemptsPage() {
                         </div>
                       </div>
                       <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg p-4">
-                        <div className="text-xs">الأسئلة الصحيحة</div>
+                        <div className="text-xs">
+                          {t("correctQuestionsLabel")}
+                        </div>
                         <div className="text-xl font-bold mt-1">
                           {a.answers?.filter((ans) => ans.is_correct).length ??
                             0}
                         </div>
                       </div>
                       <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg p-4">
-                        <div className="text-xs">الأسئلة الخاطئة</div>
+                        <div className="text-xs">
+                          {t("wrongQuestionsLabel")}
+                        </div>
                         <div className="text-xl font-bold mt-1">
                           {a.answers?.filter((ans) => !ans.is_correct).length ??
                             0}
@@ -303,7 +310,7 @@ export default function QuizAttemptsPage() {
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          الأسئلة المحلولة
+                          {t("solvedQuestionsLabel")}
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {a.answers?.length ?? 0}
@@ -311,7 +318,7 @@ export default function QuizAttemptsPage() {
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700/40 rounded-lg p-4">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          الأسئلة الغير محلولة
+                          {t("unsolvedQuestionsLabel")}
                         </div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white mt-1">
                           {(a.total_questions ?? 0) - (a.answers?.length ?? 0)}
@@ -322,23 +329,24 @@ export default function QuizAttemptsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-6">
                       <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          بدأ في
+                          {t("startedAtLabel")}
                         </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {a._startedAt
-                            ? a._startedAt.toLocaleString("ar-EG")
+                            ? a._startedAt.toLocaleString(t("locale"))
                             : "-"}
                         </div>
                       </div>
                       <div className="p-3 bg-gray-50 dark:bg-gray-700/40 rounded-lg">
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          المدة المستغرقة
+                          {t("timeTakenLabel")}
                         </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {typeof a.time_taken_seconds === "number"
-                            ? `${Math.floor(a.time_taken_seconds / 60)} دقيقة و ${
-                                a.time_taken_seconds % 60
-                              } ثانية`
+                            ? t("timeTakenValue", {
+                                minutes: Math.floor(a.time_taken_seconds / 60),
+                                seconds: a.time_taken_seconds % 60,
+                              })
                             : "-"}
                         </div>
                       </div>
@@ -346,7 +354,7 @@ export default function QuizAttemptsPage() {
 
                     <div className="mt-4">
                       <div className="text-sm font-bold text-gray-900 dark:text-white mb-2">
-                        الإجابات
+                        {t("answersLabel")}
                       </div>
                       <div className="space-y-4">
                         {a._answersWithQuestions?.map(
@@ -373,7 +381,7 @@ export default function QuizAttemptsPage() {
                                   </span>
                                 )}
                                 <span className="text-gray-900 dark:text-white">
-                                  السؤال {index + 1}
+                                  {t("questionIndex", { number: index + 1 })}
                                 </span>
                               </div>
 
@@ -404,7 +412,9 @@ export default function QuizAttemptsPage() {
 
                               {answer.question?.explanation && (
                                 <div className="mt-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
-                                  <span className="font-bold">شرح:</span>{" "}
+                                  <span className="font-bold">
+                                    {t("explanationLabel")}:
+                                  </span>{" "}
                                   <MathDisplay
                                     latex={answer.question.explanation}
                                   />

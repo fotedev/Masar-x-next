@@ -1,16 +1,25 @@
 import React from "react";
 
-interface BasicInfoFieldsProps {
-  formData: {
-    name: string;
-    professor: string;
-    professor_gender: "male" | "female";
-  };
-  setFormData: (data: any) => void;
-  t: any;
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
+type BasicInfoShape = {
+  name: string;
+  professor: string;
+  professor_gender: "male" | "female";
+};
+
+interface BasicInfoFieldsProps<TFormData extends BasicInfoShape> {
+  formData: TFormData;
+  setFormData: React.Dispatch<React.SetStateAction<TFormData>>;
+  t: TranslationFn;
 }
 
-export function BasicInfoFields({ formData, setFormData, t }: BasicInfoFieldsProps) {
+export function BasicInfoFields<TFormData extends BasicInfoShape>({
+  formData,
+  setFormData,
+  t,
+}: BasicInfoFieldsProps<TFormData>) {
   return (
     <>
       <div>
@@ -22,7 +31,9 @@ export function BasicInfoFields({ formData, setFormData, t }: BasicInfoFieldsPro
           required
           value={formData.name}
           onChange={(e) =>
-            setFormData((prev: any) => ({ ...prev, name: e.target.value }))
+            setFormData(
+              (prev) => ({ ...prev, name: e.target.value }) as TFormData,
+            )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
           placeholder="مثال: رياضيات 2"
@@ -37,7 +48,9 @@ export function BasicInfoFields({ formData, setFormData, t }: BasicInfoFieldsPro
           type="text"
           value={formData.professor || ""}
           onChange={(e) =>
-            setFormData((prev: any) => ({ ...prev, professor: e.target.value }))
+            setFormData(
+              (prev) => ({ ...prev, professor: e.target.value }) as TFormData,
+            )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
           placeholder="مثال: د. أحمد"
@@ -56,7 +69,10 @@ export function BasicInfoFields({ formData, setFormData, t }: BasicInfoFieldsPro
               value="male"
               checked={formData.professor_gender === "male"}
               onChange={() =>
-                setFormData((prev: any) => ({ ...prev, professor_gender: "male" }))
+                setFormData(
+                  (prev) =>
+                    ({ ...prev, professor_gender: "male" }) as TFormData,
+                )
               }
               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
             />
@@ -71,7 +87,10 @@ export function BasicInfoFields({ formData, setFormData, t }: BasicInfoFieldsPro
               value="female"
               checked={formData.professor_gender === "female"}
               onChange={() =>
-                setFormData((prev: any) => ({ ...prev, professor_gender: "female" }))
+                setFormData(
+                  (prev) =>
+                    ({ ...prev, professor_gender: "female" }) as TFormData,
+                )
               }
               className="w-4 h-4 text-blue-600 focus:ring-blue-500"
             />

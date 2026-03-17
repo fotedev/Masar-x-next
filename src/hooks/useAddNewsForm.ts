@@ -91,12 +91,12 @@ export function useAddNewsForm({
         }
       }
 
-      const finalNewsData = {
+      const finalNewsData: NewsInsert = {
         ...newNews,
         type:
-          (newNews.type as any) === "custom"
+          newNews.type === "custom"
             ? "announcement"
-            : (newNews.type as "announcement" | "update" | "important"),
+            : (newNews.type as string),
       };
 
       onAddNews(finalNewsData, fileUrl, imageUrls, customCategory);

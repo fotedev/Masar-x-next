@@ -1,12 +1,15 @@
 import React from "react";
 import { Search } from "lucide-react";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface NewsFiltersProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   statusFilter: "all" | "active" | "inactive";
   setStatusFilter: (value: "all" | "active" | "inactive") => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function NewsFilters({
@@ -45,7 +48,9 @@ export function NewsFilters({
             id="news-tab-status-filter"
             name="newsTabStatusFilter"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "all" | "active" | "inactive")
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
           >
             <option value="all">{t("allStatuses")}</option>

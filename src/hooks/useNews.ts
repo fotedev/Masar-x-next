@@ -1,11 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { News, Database } from "../types/database";
-import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
-
-// Keep track of the inflight request to deduplicate simultaneous calls
-let inflightRequest: Promise<News[]> | null = null;
-let inflightActiveOnlyRequest: Promise<News[]> | null = null;
+import { News, NewsInsert } from "../types/database";
+import { logger } from "../lib/logger";
+import { toast } from "sonner";
+import { useState } from "react";
 
 type UseNewsOptions = {
   includeInactive?: boolean;
@@ -13,12 +11,9 @@ type UseNewsOptions = {
 
 export function useNews(options: UseNewsOptions = {}) {
   const { includeInactive = false } = options;
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showAddNews, setShowAddNews] = useState(false);
-  const [newNews, setNewNews] = useState<
-    Database["public"]["Tables"]["news"]["Insert"]
-  >({
+  const [newNews, setNewNews] = useState<NewsInsert>({
     title: "",
     content: "",
     type: "announcement",
@@ -26,91 +21,29 @@ export function useNews(options: UseNewsOptions = {}) {
     created_by: null,
   });
 
-  const fetchNews = useCallback(async (skipCache = false) => {
-    try {
-      setLoading(true);
+  const queryKey = ["news", { includeInactive }];
 
-      const cacheKey = includeInactive ? cacheKeys.news() : "news_active";
+  const { data: news = [], isLoading: loading, refetch: fetchNews } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const query = supabase
+        .from("news")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(30);
 
-      // Check cache first
-      if (!skipCache) {
-        const cached = queryCache.get<News[]>(cacheKey);
-        if (cached) {
-          setNews(cached);
-          setLoading(false);
-          return;
-        }
-      }
+      const { data, error } = includeInactive
+        ? await query
+        : await query.eq("is_active", true);
 
-      const activeOnly = !includeInactive;
-      const currentInflight = activeOnly
-        ? inflightActiveOnlyRequest
-        : inflightRequest;
+      if (error) throw error;
+      return (data as News[]) || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      // If there's an inflight request, wait for it instead of starting a new one
-      if (currentInflight) {
-        const data = await currentInflight;
-        setNews(data);
-        setLoading(false);
-        return;
-      }
-
-      // Start a new request
-      const request = (async () => {
-        const query = supabase
-          .from("news")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(30);
-
-        const { data, error } = activeOnly
-          ? await query.eq("is_active", true)
-          : await query;
-
-        if (error) throw error;
-        return data || [];
-      })();
-
-      if (activeOnly) {
-        inflightActiveOnlyRequest = request;
-      } else {
-        inflightRequest = request;
-      }
-
-      const newsData = await request;
-      setNews(newsData);
-
-      // Cache the result
-      queryCache.set(cacheKey, newsData, cacheTTL.news);
-    } catch {
-      // ignore
-    } finally {
-      inflightRequest = null;
-      inflightActiveOnlyRequest = null;
-      setLoading(false);
-    }
-  }, [includeInactive]);
-
-  const addNews = async (
-    newsData: Database["public"]["Tables"]["news"]["Insert"],
-    fileUrl: string | null,
-    imageUrls: string[] | null,
-    customCategory: string | null,
-    subject: string | null = null,
-    department: string | null = null,
-    year: string | null = null
-  ): Promise<News | null | undefined> => {
-    try {
-      const newsToInsert = {
-        ...newsData,
-        file_url: fileUrl,
-        image_urls: imageUrls,
-        custom_category: customCategory,
-        subject: subject ?? newsData.subject,
-        department: department ?? newsData.department,
-        year: year ?? newsData.year,
-      };
-
+  const addNewsMutation = useMutation({
+    mutationFn: async (newsToInsert: NewsInsert) => {
       const { data, error } = await supabase
         .from("news")
         .insert([newsToInsert])
@@ -118,7 +51,10 @@ export function useNews(options: UseNewsOptions = {}) {
         .single();
 
       if (error) throw error;
-
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
       setNewNews({
         title: "",
         content: "",
@@ -127,68 +63,50 @@ export function useNews(options: UseNewsOptions = {}) {
         created_by: null,
       });
       setShowAddNews(false);
+      toast.success("تمت إضافة الخبر بنجاح");
+    },
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء إضافة الخبر";
+      logger.error(`Failed to add news: ${errorMessage}`, { error });
+      toast.error(errorMessage);
+    },
+  });
 
-      // Update local state directly
-      if (data) {
-        setNews(prev => [data, ...prev]);
-      } else {
-        await fetchNews(true);
-      }
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.news());
-      queryCache.delete("news_active");
-
-      return data;
-    } catch {
-      // ignore
-      return undefined;
-    }
-  };
-
-  const toggleNewsStatus = async (id: string, is_active: boolean) => {
-    try {
+  const toggleNewsStatusMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase
         .from("news")
         .update({ is_active })
         .eq("id", id);
 
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+      toast.success("تم تحديث حالة الخبر");
+    },
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء تحديث حالة الخبر";
+      logger.error(`Failed to toggle news status: ${errorMessage}`, { error });
+      toast.error(errorMessage);
+    },
+  });
 
-      // Update local state directly
-      setNews(prev => prev.map(n => n.id === id ? { ...n, is_active } : n));
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.news());
-      queryCache.delete("news_active");
-    } catch {
-      // ignore
-    }
-  };
-
-  const deleteNews = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("news")
-        .delete()
-        .eq("id", id);
-
+  const deleteNewsMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("news").delete().eq("id", id);
       if (error) throw error;
-
-      // Update local state directly
-      setNews(prev => prev.filter(n => n.id !== id));
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.news());
-      queryCache.delete("news_active");
-    } catch {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["news"] });
+      toast.success("تم حذف الخبر بنجاح");
+    },
+    onError: (error: unknown) => {
+      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء حذف الخبر";
+      logger.error(`Failed to delete news: ${errorMessage}`, { error });
+      toast.error(errorMessage);
+    },
+  });
 
   return {
     news,
@@ -197,9 +115,20 @@ export function useNews(options: UseNewsOptions = {}) {
     setShowAddNews,
     newNews,
     setNewNews,
-    fetchNews,
-    addNews,
-    toggleNewsStatus,
-    deleteNews,
+    fetchNews: () => fetchNews(),
+    addNews: (
+      newsData: NewsInsert,
+      fileUrl: string | null,
+      imageUrls: string[] | null,
+      customCategory: string | null
+    ) => addNewsMutation.mutateAsync({
+      ...newsData,
+      file_url: fileUrl,
+      image_urls: imageUrls,
+      custom_category: customCategory,
+    }),
+    toggleNewsStatus: (id: string, is_active: boolean) =>
+      toggleNewsStatusMutation.mutateAsync({ id, is_active }),
+    deleteNews: (id: string) => deleteNewsMutation.mutateAsync(id),
   };
 }

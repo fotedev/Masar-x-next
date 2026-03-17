@@ -1,5 +1,8 @@
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface FooterSupportProps {
-  tFooter: any;
+  tFooter: TranslationFn;
   whatsappUrl: string;
 }
 

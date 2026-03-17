@@ -2,49 +2,18 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { queryCache } from "../lib/queryCache";
-
-export type AcademicLevel = {
-  id: string;
-  name: string;
-  level_number: number | null;
-};
-
-export type Department = {
-  id: string;
-  name: string;
-  academic_level_id: string | null;
-};
-
-export type UserAcademic = {
-  level: number | null;
-  semester: number | null;
-  department_id?: string | null;
-};
-
-const DEFAULT_ACADEMIC: UserAcademic = { level: null, semester: null, department_id: null };
-
-const CACHE_KEY = "masarx_academic_options_cache";
-const ACADEMIC_FETCH_KEY = "masarx_academic_fetch_timestamp";
-const USER_ACADEMIC_CACHE_KEY = "masarx_user_academic_cache";
-const RATE_LIMIT_KEY = "masarx_academic_rate_limit";
-
-// Increased TTLs for Supabase free tier unreliability
-const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
-const FETCH_COOLDOWN = 60 * 60 * 1000; // 1 hour cooldown for fetching profile data
-
-type AcademicCache = {
-  levels: AcademicLevel[];
-  departments: Department[];
-  lastFetched: number;
-};
-
-type RateLimitState = {
-  count: number;
-  blockUntil: number;
-};
-
-const MAX_RETRIES = 3;
-const BASE_DELAY = 1000;
+import { logger } from "../lib/logger";
+import { toast } from "./useToast";
+import {
+  AcademicLevel,
+  Department,
+  UserAcademic,
+  DEFAULT_ACADEMIC,
+  academicCache,
+  ACADEMIC_FETCH_KEY,
+  FETCH_COOLDOWN,
+  RATE_LIMIT_KEY,
+} from "../lib/academic-utils";
 
 export function useUserAcademic() {
   const { user, loading: authLoading } = useAuth();
@@ -55,7 +24,6 @@ export function useUserAcademic() {
   const [loading, setLoading] = useState(true);
   const [optionsLoading, setOptionsLoading] = useState(false);
 
-  // Use refs to prevent redundant fetches
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -63,21 +31,13 @@ export function useUserAcademic() {
 
     const syncFromCache = () => {
       if (!user) return;
-      try {
-        const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
-        if (!cached) return;
-        const parsed = JSON.parse(cached);
-        if (parsed.userId !== user.id) return;
-        if (!parsed.data) return;
-        setAcademic(parsed.data);
-      } catch {
-        // ignore
-      }
+      const cached = academicCache.getUserAcademic(user.id);
+      if (cached) setAcademic(cached);
     };
 
     const onCustomUpdate = () => syncFromCache();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === USER_ACADEMIC_CACHE_KEY) syncFromCache();
+      if (e.key === "masarx_user_academic_cache") syncFromCache();
     };
 
     window.addEventListener("masarx_user_academic_updated", onCustomUpdate as EventListener);
@@ -88,97 +48,26 @@ export function useUserAcademic() {
     };
   }, [user]);
 
-  // 1. Initialize from cache as soon as user is available (Fixing the form flickering)
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      setAcademic(DEFAULT_ACADEMIC);
-      setLoading(false);
-      return;
-    }
-
-    if (!hasInitialized.current) {
-      hasInitialized.current = true;
+  const executeWithRetry = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 1000;
+    let attempt = 0;
+    while (attempt < MAX_RETRIES) {
       try {
-        const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.userId === user.id && Date.now() - parsed.timestamp < CACHE_TTL) {
-            setAcademic(parsed.data);
-            setLoading(false); // Valid cache found, don't show loading state
-
-            // Stale-While-Revalidate: fetch softly in the background if cooldown passed
-            const lastFetch = localStorage.getItem(ACADEMIC_FETCH_KEY);
-            if (!lastFetch || Date.now() - Number(lastFetch) > FETCH_COOLDOWN) {
-              fetchAcademicSoftly(user.id);
-            }
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Failed to parse academic cache", e);
+        return await operation();
+      } catch (error: unknown) {
+        attempt++;
+        const err = error as { code?: string; message?: string; status?: number };
+        const isTransient = err?.code === '504' || err?.code === '502' || err?.message?.includes('fetch') || err?.status === 504 || err?.status === 502;
+        if (attempt >= MAX_RETRIES || !isTransient) throw error;
+        const delay = BASE_DELAY * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-
-      // If no valid cache, we are still loading
-      setLoading(true);
-      fetchAcademicHard(user.id);
     }
-  }, [user, authLoading]);
-
-
-  const fetchOptions = useCallback(async () => {
-    try {
-      setOptionsLoading(true);
-
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        try {
-          const parsed: AcademicCache = JSON.parse(cachedData);
-          const isExpired = Date.now() - parsed.lastFetched > CACHE_TTL;
-
-          if (!isExpired && parsed.levels && parsed.levels.length > 0) {
-            setLevels(parsed.levels);
-            setDepartments(parsed.departments);
-            setOptionsLoading(false);
-            return;
-          }
-        } catch (e) {
-          console.error("Failed to parse academic cache", e);
-        }
-      }
-
-      await executeWithRetry(async () => {
-        const [levelsRes, deptsRes] = await Promise.all([
-          supabase.from("academic_levels").select("id, name, level_number").eq("is_active", true).order("sort_order"),
-          supabase.from("departments").select("id, name, academic_level_id").eq("is_active", true).order("sort_order"),
-        ]);
-
-        if (levelsRes.error) throw levelsRes.error;
-        if (deptsRes.error) throw deptsRes.error;
-
-        const levelsData = levelsRes.data || [];
-        const deptsData = deptsRes.data || [];
-
-        setLevels(levelsData);
-        setDepartments(deptsData);
-
-        const cacheToSave: AcademicCache = {
-          levels: levelsData,
-          departments: deptsData,
-          lastFetched: Date.now(),
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheToSave));
-      });
-
-    } catch (error) {
-      console.error("Error fetching academic options:", error);
-    } finally {
-      setOptionsLoading(false);
-    }
+    throw new Error("Max retries exceeded");
   }, []);
 
-  const fetchProfileData = async (userId: string) => {
+  const fetchProfileData = useCallback(async (userId: string) => {
     try {
       const result = await executeWithRetry(async () => {
         const { data, error } = await supabase
@@ -197,153 +86,112 @@ export function useUserAcademic() {
       };
 
       setAcademic(academicData);
-
-      localStorage.setItem(
-        USER_ACADEMIC_CACHE_KEY,
-        JSON.stringify({
-          data: academicData,
-          timestamp: Date.now(),
-          userId: userId,
-        }),
-      );
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("masarx_user_academic_updated"));
-      }
+      academicCache.setUserAcademic(userId, academicData);
       localStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString());
     } catch (e) {
-      console.error("Failed to fetch academic", e);
+      logger.error("Failed to fetch academic profile data", e, { userId });
     }
-  };
+  }, [executeWithRetry]);
 
-  const fetchAcademicHard = async (userId: string) => {
-    setLoading(true);
-    await fetchProfileData(userId);
-    setLoading(false);
-  };
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setAcademic(DEFAULT_ACADEMIC);
+      setLoading(false);
+      return;
+    }
 
-  const fetchAcademicSoftly = async (userId: string) => {
-    // Background fetch, don't set loading back to true
-    await fetchProfileData(userId);
-  };
-
-  const fetchAcademic = useCallback(async () => {
-    // Only used for manual refetching now
-    if (!user) return;
-    await fetchAcademicHard(user.id);
-  }, [user, fetchAcademicHard]);
-
-  const executeWithRetry = async <T,>(operation: () => Promise<T>): Promise<T> => {
-    let attempt = 0;
-    while (attempt < MAX_RETRIES) {
-      try {
-        return await operation();
-      } catch (error: any) {
-        attempt++;
-        // If it's the last attempt or not a network/timeout error, throw
-        if (attempt >= MAX_RETRIES || (error?.code !== '504' && error?.code !== '502' && !error?.message?.includes('fetch'))) {
-          throw error;
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      const cached = academicCache.getUserAcademic(user.id);
+      if (cached) {
+        setAcademic(cached);
+        setLoading(false);
+        const lastFetch = localStorage.getItem(ACADEMIC_FETCH_KEY);
+        if (!lastFetch || Date.now() - Number(lastFetch) > FETCH_COOLDOWN) {
+          fetchProfileData(user.id);
         }
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, BASE_DELAY * Math.pow(2, attempt - 1)));
+        return;
       }
+      setLoading(true);
+      fetchProfileData(user.id).finally(() => setLoading(false));
     }
-    throw new Error("Max retries exceeded");
-  };
+  }, [user, authLoading, fetchProfileData]);
+
+  const fetchOptions = useCallback(async () => {
+    try {
+      setOptionsLoading(true);
+      const cached = academicCache.getOptions();
+      if (cached) {
+        setLevels(cached.levels);
+        setDepartments(cached.departments);
+        setOptionsLoading(false);
+        return;
+      }
+
+      await executeWithRetry(async () => {
+        const [levelsRes, deptsRes] = await Promise.all([
+          supabase.from("academic_levels").select("id, name, level_number").eq("is_active", true).order("sort_order"),
+          supabase.from("departments").select("id, name, academic_level_id").eq("is_active", true).order("sort_order"),
+        ]);
+        if (levelsRes.error) throw levelsRes.error;
+        if (deptsRes.error) throw deptsRes.error;
+
+        const levelsData = levelsRes.data || [];
+        const deptsData = deptsRes.data || [];
+        setLevels(levelsData);
+        setDepartments(deptsData);
+        academicCache.setOptions(levelsData, deptsData);
+      });
+    } catch (error) {
+      logger.error("Error fetching academic options", error);
+    } finally {
+      setOptionsLoading(false);
+    }
+  }, [executeWithRetry]);
 
   const setUserAcademic = useCallback(
     async (next: UserAcademic, options?: { isProfileUpdate?: boolean }): Promise<{ success: boolean; message?: string }> => {
       if (!user) return { success: false };
-
-      const isProfile = options?.isProfileUpdate ?? false;
-
-      if (isProfile) {
+      if (options?.isProfileUpdate) {
         const rlRaw = localStorage.getItem(RATE_LIMIT_KEY);
-        let rlStats: RateLimitState = rlRaw ? JSON.parse(rlRaw) : { count: 0, blockUntil: 0 };
-
+        const rlStats = rlRaw ? JSON.parse(rlRaw) : { count: 0, blockUntil: 0 };
         const now = Date.now();
         if (rlStats.blockUntil > now) {
           const remaining = Math.ceil((rlStats.blockUntil - now) / 1000);
           return { success: false, message: `يرجى الانتظار ${remaining} ثانية قبل تحديث بياناتك مرة أخرى.` };
         }
-
-        if (rlStats.blockUntil > 0 && rlStats.blockUntil <= now) {
-          rlStats = { count: 0, blockUntil: 0 };
-        }
-
         rlStats.count++;
-        if (rlStats.count >= 5) {
-          rlStats.blockUntil = now + 60000;
-          rlStats.count = 0; // Reset for after block
-          localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rlStats));
-        } else {
-          localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rlStats));
-        }
+        if (rlStats.count >= 5) rlStats.blockUntil = now + 60000;
+        localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rlStats));
       }
 
-    try {
-      // Optimistically update the state and cache
-      setAcademic(next);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          USER_ACADEMIC_CACHE_KEY,
-          JSON.stringify({
-            data: next,
-            timestamp: Date.now(),
-            userId: user.id,
-          }),
-        );
-        window.dispatchEvent(new Event("masarx_user_academic_updated"));
+      try {
+        setAcademic(next);
+        academicCache.setUserAcademic(user.id, next);
         queryCache.invalidatePrefix("subjects");
+
+        await executeWithRetry(async () => {
+          const { error } = await supabase.from("profiles").upsert(
+            { id: user.id, level: next.level, semester: next.semester, department_id: next.department_id, updated_at: new Date().toISOString() },
+            { onConflict: "id" }
+          );
+          if (error) throw error;
+        });
+        return { success: true };
+      } catch (e: unknown) {
+        logger.error("Error setting user academic", e, { userId: user.id, next });
+        const msg = "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى.";
+        toast.error(msg);
+        return { success: false, message: msg };
       }
-
-      await executeWithRetry(async () => {
-        const { error } = await supabase.from("profiles").upsert(
-          {
-            id: user.id,
-            level: next.level,
-            semester: next.semester,
-            department_id: next.department_id,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "id" },
-        );
-        if (error) throw error;
-      });
-
-      setAcademic(next);
-
-      // Invalidate subjects cache to ensure fresh data for the new level/semester
-      if (typeof window !== 'undefined') {
-        queryCache.invalidatePrefix("subjects");
-      }
-
-      return { success: true };
-    } catch (e: any) {
-      console.error("Error setting user academic:", e);
-      return { success: false, message: "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى." };
-    } finally {
-      // No-op
-    }
     },
-    [user],
+    [user, executeWithRetry]
   );
 
   useEffect(() => {
-    if (levels.length === 0) {
-      fetchOptions();
-    }
+    if (levels.length === 0) fetchOptions();
   }, [fetchOptions, levels.length]);
 
-  return {
-    academic,
-    userLevel: academic.level,
-    userSemester: academic.semester,
-    userDepartmentId: academic.department_id,
-    levels,
-    departments,
-    loading,
-    optionsLoading,
-    fetchAcademic,
-    setUserAcademic,
-  };
+  return { academic, userLevel: academic.level, userSemester: academic.semester, userDepartmentId: academic.department_id, levels, departments, loading, optionsLoading, fetchAcademic: () => user && fetchProfileData(user.id), setUserAcademic };
 }

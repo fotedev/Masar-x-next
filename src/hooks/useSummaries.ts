@@ -1,41 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { SummaryWithRatings, SummaryUpdate } from "../types/database";
-import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
-
-// Keep track of the inflight request to deduplicate simultaneous calls
-let inflightRequest: Promise<SummaryWithRatings[]> | null = null;
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { logger } from "../lib/logger";
 
 export function useSummaries() {
-  const [summaries, setSummaries] = useState<SummaryWithRatings[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchSummaries = useCallback(async (skipCache = false) => {
-    try {
-      setLoading(true);
-
-      const cacheKey = cacheKeys.summaries();
-
-      // Check cache first
-      if (!skipCache) {
-        const cached = queryCache.get<SummaryWithRatings[]>(cacheKey);
-        if (cached) {
-          setSummaries(cached);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // If there's an inflight request, wait for it instead of starting a new one
-      if (inflightRequest) {
-        const data = await inflightRequest;
-        setSummaries(data);
-        setLoading(false);
-        return;
-      }
-
-      // Start a new request
-      inflightRequest = (async () => {
+  const { data: summaries = [], isLoading: loading, refetch: fetchSummaries } = useQuery({
+    queryKey: ['summaries'],
+    staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
+    queryFn: async () => {
+      try {
         const { data, error } = await supabase
           .from("summaries_with_ratings")
           .select("*")
@@ -45,58 +20,80 @@ export function useSummaries() {
 
         if (error) throw error;
         return data || [];
-      })();
-
-      const summaryData = await inflightRequest;
-      setSummaries(summaryData);
-
-      // Cache the result
-      queryCache.set(cacheKey, summaryData, cacheTTL.summaries);
-    } catch {
-      // ignore
-    } finally {
-      inflightRequest = null;
-      setLoading(false);
+      } catch (error) {
+        logger.error("Failed to fetch summaries", error);
+        return [];
+      }
     }
-  }, []);
+  });
 
-  const updateStatus = async (id: string, status: "approved" | "rejected") => {
-    try {
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: "approved" | "rejected" }) => {
       const { error } = await supabase
         .from("summaries")
         .update({ status })
         .eq("id", id);
 
       if (error) throw error;
-
-      // Update local state directly
-      setSummaries(prev => prev.map(s => s.id === id ? { ...s, status } : s));
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.summaries());
-    } catch {
-      // ignore
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+    },
+    onError: (error) => {
+      logger.error("Failed to update summary status", error);
     }
-  };
+  });
 
-  const editSummary = async (id: string, updates: Partial<SummaryUpdate>) => {
-    try {
+  const editSummaryMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<SummaryUpdate> }) => {
       const { error } = await supabase
         .from("summaries")
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq("id", id);
 
       if (error) throw error;
-
-      // Update local state directly
-      setSummaries(prev => prev.map(s => s.id === id ? { ...s, ...updates, updated_at: new Date().toISOString() } : s));
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.summaries());
-    } catch (error) {
-      throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+    },
+    onError: (error) => {
+      logger.error("Failed to edit summary", error);
     }
-  };
+  });
+
+  const deleteSummaryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('summaries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+    },
+    onError: (error) => {
+      logger.error("Failed to delete summary", error);
+    }
+  });
+
+  const clearAllSummariesMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('summaries')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+    },
+    onError: (error) => {
+      logger.error("Failed to clear all summaries", error);
+    }
+  });
 
   const canEditSummary = (summary: SummaryWithRatings, currentUserId: string | null, isAdmin: boolean) => {
     if (!currentUserId) return false;
@@ -108,57 +105,17 @@ export function useSummaries() {
     return isAdmin || summary.user_id === currentUserId;
   };
 
-  const deleteSummary = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('summaries')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state directly
-      setSummaries(prev => prev.filter(s => s.id !== id));
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.summaries());
-    } catch {
-      // ignore
-    }
-  };
-
-  const clearAllSummaries = async () => {
-    try {
-      const { error } = await supabase
-        .from('summaries')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-
-      if (error) throw error;
-
-      // Update local state directly
-      setSummaries([]);
-
-      // Invalidate cache
-      queryCache.delete(cacheKeys.summaries());
-    } catch {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    fetchSummaries();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   return {
     summaries,
     loading,
-    fetchSummaries,
-    updateStatus,
-    editSummary,
+    fetchSummaries: () => fetchSummaries(),
+    updateStatus: (id: string, status: "approved" | "rejected") => 
+      updateStatusMutation.mutateAsync({ id, status }),
+    editSummary: (id: string, updates: Partial<SummaryUpdate>) => 
+      editSummaryMutation.mutateAsync({ id, updates }),
     canEditSummary,
     canDeleteSummary,
-    deleteSummary,
-    clearAllSummaries,
+    deleteSummary: (id: string) => deleteSummaryMutation.mutateAsync(id),
+    clearAllSummaries: () => clearAllSummariesMutation.mutateAsync(),
   };
 }

@@ -4,6 +4,9 @@ import { Video, Plus, Edit, Trash2, Play } from "lucide-react";
 import type { CourseVideo } from "./types";
 import { useTranslations } from "next-intl";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface CourseVideosSectionProps {
   videos: CourseVideo[];
   isInstructor: boolean;
@@ -23,7 +26,7 @@ function VideoCard({
   isInstructor: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  t: any;
+  t: TranslationFn;
 }) {
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">

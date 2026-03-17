@@ -3,7 +3,7 @@ import { Shield, User, LogOut, LogIn, UserPlus } from "lucide-react";
 interface UserMenuProps {
   isMounted: boolean;
   loading: boolean;
-  user: any;
+  user: { id: string } | null;
   isAdmin: boolean;
   isAdminLoading: boolean;
   handleNavigate: (page: string) => void;

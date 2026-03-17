@@ -51,7 +51,7 @@ export function AddSubjectModal({
           >
             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {editingSubject ? "تعديل مادة" : "إضافة مادة جديدة"}
+                {editingSubject ? tAddSubjectModal("editSubject") : tAddSubjectModal("addSubject")}
               </h2>
               <button
                 onClick={onClose}
@@ -95,14 +95,14 @@ export function AddSubjectModal({
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Save className="w-5 h-5" />
-                  {loading ? "جاري الحفظ..." : "حفظ المادة"}
+                  {loading ? tAddSubjectModal("saving") : tAddSubjectModal("saveSubject")}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
                   className="px-6 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                 >
-                  إلغاء
+                  {tAddSubjectModal("cancel")}
                 </button>
               </div>
             </form>

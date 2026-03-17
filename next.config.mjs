@@ -1,8 +1,8 @@
-/** @type {import('next').NextConfig} */
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
     // Force cache invalidation: 2026-02-14T04:30:00
     reactStrictMode: true,
@@ -22,6 +22,27 @@ const nextConfig = {
                 hostname: 'jcufigozkhxazjbwhjjm.supabase.co',
             },
         ],
+    },
+    webpack: (config) => {
+        // Suppress next-intl build dependency warnings
+        config.ignoreWarnings = [
+            (warning) => {
+                const message = warning.message || '';
+                return (
+                    message.includes('next-intl') && 
+                    (message.includes('Parsing of') || message.includes('import(t)'))
+                );
+            }
+        ];
+        
+        // Also suppress via infrastructure logging for terminal output
+        if (config.infrastructureLogging) {
+            config.infrastructureLogging.level = 'error';
+        } else {
+            config.infrastructureLogging = { level: 'error' };
+        }
+
+        return config;
     },
     async redirects() {
         return [

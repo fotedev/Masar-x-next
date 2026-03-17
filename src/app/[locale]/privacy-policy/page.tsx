@@ -1,5 +1,6 @@
-'use client';
+"use client";
 
+import { useTranslations } from "next-intl";
 import {
   Shield,
   Lock,
@@ -11,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 
 export default function PrivacyPolicyPage() {
+  const t = useTranslations("privacyPolicy");
   const router = useRouter();
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
@@ -21,10 +23,10 @@ export default function PrivacyPolicyPage() {
             <Shield className="w-10 h-10 text-brand-blue" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
-            سياسة الخصوصية
+            {t("title")}
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 font-medium max-w-2xl mx-auto">
-            نحن نولي أهمية قصوى لخصوصية بياناتك وأمان معلوماتك.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -38,12 +40,10 @@ export default function PrivacyPolicyPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  مقدمة
+                  {t("intro.title")}
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  توضح سياسة الخصوصية هذه كيفية جمع واستخدام وحماية المعلومات
-                  الخاصة بك عند استخدام منصة Masar X. نحن نلتزم بحماية خصوصيتك
-                  وضمان أمان بياناتك الشخصية.
+                  {t("intro.content")}
                 </p>
               </div>
             </div>
@@ -57,21 +57,20 @@ export default function PrivacyPolicyPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  المعلومات التي يتم جمعها
+                  {t("collection.title")}
                 </h2>
                 <div className="space-y-4">
                   <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                    نقوم بجمع المعلومات التي تقدمها لنا مباشرة عند إنشاء حساب أو
-                    استخدام خدماتنا:
+                    {t("collection.description")}
                   </p>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      "الاسم الكامل والبريد الإلكتروني عند التسجيل",
-                      "المستوى الدراسي والتخصص الأكاديمي",
-                      "الملخصات والمصادر الدراسية التي تقوم برفعها",
-                      "التعليقات والتقييمات والتفاعلات مع المحتوى",
-                      "بيانات الأداء في الاختبارات والامتحانات",
-                      "الصورة الشخصية (في حال إضافتها للملف الشخصي)",
+                      t("collection.items.fullName"),
+                      t("collection.items.academicLevel"),
+                      t("collection.items.summaries"),
+                      t("collection.items.interactions"),
+                      t("collection.items.performance"),
+                      t("collection.items.profileImage"),
                     ].map((item, i) => (
                       <li
                         key={i}
@@ -87,11 +86,11 @@ export default function PrivacyPolicyPage() {
                       onClick={() => router.push("/privacy-details")}
                       className="inline-flex items-center gap-3 px-6 py-3 bg-brand-blue/10 hover:bg-brand-blue/20 text-brand-blue rounded-xl font-bold transition-all group border border-brand-blue/20 hover:border-brand-blue/40"
                     >
-                      <span>للمزيد من التفاصيل</span>
+                      <span>{t("collection.moreDetails")}</span>
                       <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                     <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
-                      تعرف على أسباب جمع كل نوع من المعلومات وكيفية استخدامها
+                      {t("collection.detailsNote")}
                     </p>
                   </div>
                 </div>
@@ -107,12 +106,10 @@ export default function PrivacyPolicyPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  حماية البيانات
+                  {t("protection.title")}
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  نستخدم تقنيات تشفير متقدمة وبروتوكولات أمان عالمية لحماية
-                  بياناتك من الوصول غير المصرح به. يتم تخزين جميع البيانات بشكل
-                  آمن عبر خدمات Supabase السحابية.
+                  {t("protection.content")}
                 </p>
               </div>
             </div>
@@ -123,10 +120,11 @@ export default function PrivacyPolicyPage() {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-700" />
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="text-center md:text-right">
-                <h2 className="text-3xl font-bold mb-4">هل لديك أي استفسار؟</h2>
+                <h2 className="text-3xl font-bold mb-4">
+                  {t("contact.title")}
+                </h2>
                 <p className="text-white/80 font-medium max-w-md">
-                  إذا كان لديك أي أسئلة حول سياسة الخصوصية الخاصة بنا، فلا تتردد
-                  في التواصل معنا.
+                  {t("contact.description")}
                 </p>
               </div>
               <a
@@ -152,7 +150,7 @@ export default function PrivacyPolicyPage() {
                     fill="currentColor"
                   ></path>
                 </svg>
-                <span>تواصل عبر واتساب</span>
+                <span>{t("contact.whatsapp")}</span>
                 <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
               </a>
             </div>

@@ -1,26 +1,31 @@
 import React from "react";
 import { AcademicLevelOption } from "@/hooks/useAcademicOptions";
 
-interface AcademicOptionsFieldsProps {
-  formData: {
-    level: number;
-    semester: number;
-    is_academic: boolean;
-    show_on_home: boolean;
-  };
-  setFormData: (data: any) => void;
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
+type AcademicOptionsShape = {
+  level: number;
+  semester: number;
+  is_academic: boolean;
+  show_on_home: boolean;
+};
+
+interface AcademicOptionsFieldsProps<TFormData extends AcademicOptionsShape> {
+  formData: TFormData;
+  setFormData: React.Dispatch<React.SetStateAction<TFormData>>;
   levels: AcademicLevelOption[];
   optionsLoading: boolean;
-  t: any;
+  t: TranslationFn;
 }
 
-export function AcademicOptionsFields({
+export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
   formData,
   setFormData,
   levels,
   optionsLoading,
   t,
-}: AcademicOptionsFieldsProps) {
+}: AcademicOptionsFieldsProps<TFormData>) {
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
@@ -31,10 +36,13 @@ export function AcademicOptionsFields({
           <select
             value={formData.level || 1}
             onChange={(e) =>
-              setFormData((prev: any) => ({
-                ...prev,
-                level: parseInt(e.target.value),
-              }))
+              setFormData(
+                (prev) =>
+                  ({
+                    ...prev,
+                    level: parseInt(e.target.value),
+                  }) as TFormData,
+              )
             }
             disabled={optionsLoading}
             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50"
@@ -69,10 +77,13 @@ export function AcademicOptionsFields({
           <select
             value={formData.semester || 1}
             onChange={(e) =>
-              setFormData((prev: any) => ({
-                ...prev,
-                semester: parseInt(e.target.value),
-              }))
+              setFormData(
+                (prev) =>
+                  ({
+                    ...prev,
+                    semester: parseInt(e.target.value),
+                  }) as TFormData,
+              )
             }
             className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
           >
@@ -88,10 +99,13 @@ export function AcademicOptionsFields({
           id="is_academic"
           checked={formData.is_academic ?? true}
           onChange={(e) =>
-            setFormData((prev: any) => ({
-              ...prev,
-              is_academic: e.target.checked,
-            }))
+            setFormData(
+              (prev) =>
+                ({
+                  ...prev,
+                  is_academic: e.target.checked,
+                }) as TFormData,
+            )
           }
           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
         />
@@ -109,10 +123,13 @@ export function AcademicOptionsFields({
           id="show_on_home"
           checked={formData.show_on_home ?? true}
           onChange={(e) =>
-            setFormData((prev: any) => ({
-              ...prev,
-              show_on_home: e.target.checked,
-            }))
+            setFormData(
+              (prev) =>
+                ({
+                  ...prev,
+                  show_on_home: e.target.checked,
+                }) as TFormData,
+            )
           }
           className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
         />

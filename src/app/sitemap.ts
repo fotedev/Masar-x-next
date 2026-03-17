@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }))
       );
     }
-  } catch (error) {
+  } catch {
     // console.error("Sitemap generation error:", error);
   }
 

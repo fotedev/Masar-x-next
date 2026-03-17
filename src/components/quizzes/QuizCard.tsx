@@ -2,19 +2,17 @@ import React from "react";
 import { Trash2, Star } from "lucide-react";
 import { QuizWithRatings } from "../../types/database";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface QuizCardProps {
   quiz: QuizWithRatings;
   onDelete: (id: string) => void;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
-  t: any;
+  t: TranslationFn;
 }
 
-export function QuizCard({
-  quiz,
-  onDelete,
-  onUpdateStatus,
-  t,
-}: QuizCardProps) {
+export function QuizCard({ quiz, onDelete, onUpdateStatus, t }: QuizCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 transition-colors">
       <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">

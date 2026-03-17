@@ -1,6 +1,9 @@
 import React from "react";
 import { Search, SortAsc, SortDesc } from "lucide-react";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface QuizFiltersProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
@@ -10,7 +13,7 @@ interface QuizFiltersProps {
   setSortOrder: (value: "asc" | "desc") => void;
   filteredCount: number;
   totalCount: number;
-  t: any;
+  t: TranslationFn;
 }
 
 export function QuizFilters({

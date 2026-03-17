@@ -59,7 +59,7 @@ export function getLectureInfoFromTitle(
           order: matchingLecture?.order_index || 999999,
         };
       }
-    } catch (e) {
+    } catch {
       // ignore JSON parse error
     }
   }
@@ -161,8 +161,8 @@ export function getLectureInfoFromTitle(
  */
 export function inferLectureKeyFromTitle(
   title: string,
-  lecturesIndex: Array<{ lecture_key?: string; lecture_label?: string }> = []
-): string {
+  lecturesIndex: { id: string; title: string; lecture_key: string }[]
+): string | null {
   const t = (title || "").trim();
   if (!t) return "other";
 
@@ -172,7 +172,7 @@ export function inferLectureKeyFromTitle(
   // 1. Exact match (case-insensitive)
   const exact = lecturesIndex.find((l) => {
     const key = (l.lecture_key || "").trim().toLowerCase();
-    const label = clean(l.lecture_label || "");
+    const label = clean(l.title || "");
     return (
       (key && key === normalizedTitle) || (label && label === normalizedTitle)
     );
@@ -189,7 +189,7 @@ export function inferLectureKeyFromTitle(
 
   // Sort lectures by label length descending to match most specific/longest first
   const sortedLectures = [...lecturesIndex].sort(
-    (a, b) => (b.lecture_label?.length || 0) - (a.lecture_label?.length || 0)
+    (a, b) => (b.title?.length || 0) - (a.title?.length || 0)
   );
 
   // 2. Delimiter match for prefixes/suffixes
@@ -199,7 +199,7 @@ export function inferLectureKeyFromTitle(
     if (!part || part.length < 2) continue;
     const match = sortedLectures.find((l) => {
       const key = (l.lecture_key || "").trim().toLowerCase();
-      const label = clean(l.lecture_label || "");
+      const label = clean(l.title || "");
       return (
         (key &&
           (key === part || part.startsWith(key) || key.startsWith(part))) ||
@@ -213,7 +213,7 @@ export function inferLectureKeyFromTitle(
   // 3. Substring match
   const partial = sortedLectures.find((l) => {
     const key = (l.lecture_key || "").trim().toLowerCase();
-    const label = clean(l.lecture_label || "");
+    const label = clean(l.title || "");
     if (key && key.length >= 2) {
       if (normalizedTitle.includes(key) || key.includes(normalizedTitle))
         return true;
@@ -225,5 +225,5 @@ export function inferLectureKeyFromTitle(
   });
   if (partial?.lecture_key) return partial.lecture_key;
 
-  return "other";
+  return null;
 }
