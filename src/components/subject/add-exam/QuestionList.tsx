@@ -1,10 +1,11 @@
 import React from "react";
 import { Plus } from "lucide-react";
 import { QuestionItem } from "./QuestionItem";
+import type { ExamQuestion, SetExamFormData } from "./types";
 
 interface QuestionListProps {
-  questions: any[];
-  setExamFormData: (updater: (prev: any) => any) => void;
+  questions: ExamQuestion[];
+  setExamFormData: SetExamFormData;
   tSubjectPage: (key: string) => string;
 }
 

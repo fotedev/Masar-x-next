@@ -18,13 +18,18 @@ import {
 import { confirmToast } from "@/lib/confirmToast";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
+import { logger } from "@/lib/logger";
 
 interface LectureContentModalProps {
   show: boolean;
   onClose: () => void;
   subject: string;
-  lecture: any | null;
-  lecturesIndex: any[];
+  lecture: {
+    id: string;
+    lecture_key: string;
+    lecture_label?: string | null;
+  } | null;
+  lecturesIndex: { id: string; title: string; lecture_key: string }[];
 }
 
 export function LectureContentModal({
@@ -75,7 +80,7 @@ export function LectureContentModal({
         }
       }
     } catch (error) {
-      console.error("Error deleting video:", error);
+      logger.error("Error deleting video", error);
     }
   };
 
@@ -95,7 +100,7 @@ export function LectureContentModal({
         }
       }
     } catch (error) {
-      console.error("Error deleting file:", error);
+      logger.error("Error deleting file", error);
     }
   };
 
@@ -114,7 +119,7 @@ export function LectureContentModal({
         }
       }
     } catch (error) {
-      console.error("Error deleting quiz:", error);
+      logger.error("Error deleting quiz", error);
     }
   };
 

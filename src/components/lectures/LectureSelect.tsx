@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 interface Lecture {
   id: string;
@@ -32,11 +33,29 @@ export function LectureSelect({
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const fetchLectures = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data, error: fetchError } = await supabase
+        .from("subject_lectures")
+        .select("id, lecture_key, lecture_label, subject")
+        .eq("subject", subject)
+        .order("order_index", { ascending: true });
+
+      if (fetchError) throw fetchError;
+      setLectures(data || []);
+    } catch (err) {
+      logger.error("Error fetching lectures for select", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [subject]);
+
   useEffect(() => {
     if (subject) {
       fetchLectures();
     }
-  }, [subject]);
+  }, [subject, fetchLectures]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -50,24 +69,6 @@ export function LectureSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  async function fetchLectures() {
-    try {
-      setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from("subject_lectures")
-        .select("id, lecture_key, lecture_label, subject")
-        .eq("subject", subject)
-        .order("order_index", { ascending: true });
-
-      if (fetchError) throw fetchError;
-      setLectures(data || []);
-    } catch (err) {
-      console.error("Error fetching lectures for select:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const filteredLectures = lectures.filter(
     (l) =>

@@ -103,8 +103,9 @@ export function usePlatformSettings() {
     fetchSettings();
 
     // Listen for changes from other components/tabs
-    const handleCustomEvent = (e: any) => {
-      const newVal = Number(e.detail);
+    const handleCustomEvent = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const newVal = Number(customEvent.detail);
       if (!isNaN(newVal)) {
         setSettings({ active_semester: newVal });
       }
@@ -135,10 +136,10 @@ export function usePlatformSettings() {
           table: 'platform_settings',
           filter: 'key=eq.active_semester'
         },
-        (payload: { new: unknown } | null) => {
+        (payload: { new: { value?: { semester?: number } } } | null) => {
           if (!payload) return;
-          if (payload.new && (payload.new as any).value) {
-            const rawVal = (payload.new as any).value.semester;
+          if (payload.new && payload.new.value) {
+            const rawVal = payload.new.value.semester;
             const newVal = Number(rawVal);
             if (!isNaN(newVal)) {
               setSettings({ active_semester: newVal });

@@ -1,6 +1,10 @@
 import React from "react";
 import { X, Save } from "lucide-react";
-import type { Summary, SummaryWithRatings } from "../types/database";
+import type {
+  Summary,
+  SummaryUpdate,
+  SummaryWithRatings,
+} from "../types/database";
 import { AttachmentSection } from "./edit-summary/AttachmentSection";
 import { SummaryFormFields } from "./edit-summary/SummaryFormFields";
 import { useEditSummary } from "../hooks/useEditSummary";
@@ -9,7 +13,7 @@ interface EditSummaryModalProps {
   summary: Summary | SummaryWithRatings | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (id: string, updates: any) => Promise<void>;
+  onSave: (id: string, updates: SummaryUpdate) => Promise<void>;
 }
 
 export function EditSummaryModal({

@@ -1,20 +1,8 @@
 "use client";
 
-import { useState, useMemo, memo, useEffect } from "react";
+import { useState, useMemo, memo, useEffect, type ComponentProps } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  BookOpen,
-  Newspaper,
-  Flag,
-  BarChart3,
-  Filter,
-  X,
-  Layout,
-  GraduationCap,
-  CreditCard,
-  School,
-} from "lucide-react";
 import { useSummaries } from "@/hooks/useSummaries";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useNews } from "@/hooks/useNews";
@@ -35,11 +23,35 @@ import { SubjectsTab } from "@/components/SubjectsTab";
 import { AddSubjectModal } from "@/components/AddSubjectModal";
 import { ManageLecturesModal } from "@/components/ManageLecturesModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePlatformSettings } from "@/hooks/usePlatformSettings";
-import { useAcademicOptions } from "@/hooks/useAcademicOptions";
-import { supabase } from "@/lib/supabase";
-import type { SummaryWithRatings, Course } from "@/types/database";
+import { useAdminFilters } from "@/hooks/useAdminFilters";
+import { AdminDashboardHeader } from "@/components/admin/AdminDashboardHeader";
+import { AdminDashboardTabs } from "@/components/admin/AdminDashboardTabs";
+import type { SummaryWithRatings } from "@/types/database";
 import { usePathname } from "next/navigation";
+
+type CoursesTabCourse = Parameters<
+  NonNullable<ComponentProps<typeof CoursesTab>["onEditCourse"]>
+>[0];
+
+type SubjectsTabSubject = Parameters<
+  NonNullable<ComponentProps<typeof SubjectsTab>["onEdit"]>
+>[0];
+
+type EditingSubject = NonNullable<
+  ComponentProps<typeof AddSubjectModal>["editingSubject"]
+>;
+
+type SubjectInsert = Parameters<
+  ComponentProps<typeof AddSubjectModal>["onSave"]
+>[0] & { created_at?: string | null };
+
+type EditingCourse = {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  price?: number | null;
+  is_academic?: boolean | null;
+};
 
 // Memoized tab components to prevent unnecessary re-renders
 const MemoizedSummariesTab = memo(SummariesTab);
@@ -108,129 +120,50 @@ function AdminDashboardContent() {
   const t = useTranslations("adminDashboard");
   const router = useRouter();
   const { adminRole } = useAuth();
-  const { activeSemester } = usePlatformSettings();
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const [coursesRefreshKey, setCoursesRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState(
     adminRole === "doctor" ? "courses" : "summaries",
   );
-  const [globalFilters, setGlobalFilters] = useState({
-    subject: "",
-    department: "",
-    year: "",
-  });
 
-  const availableDepartments = useMemo(() => {
-    if (!globalFilters.year) return [];
-    return getDepartmentsForLevelName(globalFilters.year);
-  }, [getDepartmentsForLevelName, globalFilters.year]);
   const newsHook = useNews({ includeInactive: true });
-  const [showAddCourse, setShowAddCourse] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [showAddSubject, setShowAddSubject] = useState(false);
-  const [editingSubject, setEditingSubject] = useState<any | null>(null);
-  const [showManageLectures, setShowManageLectures] = useState(false);
-  const [selectedSubjectForLectures, setSelectedSubjectForLectures] =
-    useState<string>("");
-
   const summariesHook = useSummaries();
   const subjectsHook = useSubjects();
   const appealsHook = useAppeals();
   const quizzesHook = useQuizzes();
 
-  useEffect(() => {
-    if (globalFilters.year || !activeSemester) return;
-    const idx = activeSemester - 1;
-    const defaultLevel = levels[idx]?.name;
-    if (defaultLevel) {
-      setGlobalFilters((prev) => ({ ...prev, year: defaultLevel }));
-    }
-  }, [activeSemester, globalFilters.year, levels]);
-
-  // Apply global filters to all data
-  const filteredSummaries = useMemo(() => {
-    return summariesHook.summaries.filter((s) => {
-      const matchSubject =
-        !globalFilters.subject || s.subject === globalFilters.subject;
-      const matchDepartment =
-        !globalFilters.department || s.department === globalFilters.department;
-      const matchYear = !globalFilters.year || s.year === globalFilters.year;
-      return matchSubject && matchDepartment && matchYear;
-    });
-  }, [summariesHook.summaries, globalFilters]);
-
-  const filteredNews = useMemo(() => {
-    return newsHook.news.filter((n) => {
-      const matchSubject =
-        !globalFilters.subject || n.subject === globalFilters.subject;
-      const matchDepartment =
-        !globalFilters.department || n.department === globalFilters.department;
-      const matchYear = !globalFilters.year || n.year === globalFilters.year;
-      return matchSubject && matchDepartment && matchYear;
-    });
-  }, [newsHook.news, globalFilters]);
-
-  const filteredQuizzes = useMemo(() => {
-    return quizzesHook.quizzes.filter((q) => {
-      const matchSubject =
-        !globalFilters.subject || q.subject === globalFilters.subject;
-      const matchDepartment =
-        !globalFilters.department || q.department === globalFilters.department;
-      const matchYear = !globalFilters.year || q.year === globalFilters.year;
-      return matchSubject && matchDepartment && matchYear;
-    });
-  }, [quizzesHook.quizzes, globalFilters]);
-
-  const filteredAppeals = useMemo(() => {
-    return appealsHook.appeals.filter((a) => {
-      let content: {
-        subject?: string | null;
-        department?: string | null;
-        year?: string | null;
-      } | null = null;
-      if (a.content_type === "summary") {
-        content =
-          summariesHook.summaries.find((s) => s.id === a.content_id) || null;
-      } else if (a.content_type === "news") {
-        const foundNews = newsHook.news.find((n) => n.id === a.content_id);
-        content = foundNews
-          ? {
-              subject: foundNews.subject,
-              department: foundNews.department,
-              year: foundNews.year,
-            }
-          : null;
-      }
-
-      if (content) {
-        const matchSubject =
-          !globalFilters.subject || content.subject === globalFilters.subject;
-        const matchDepartment =
-          !globalFilters.department ||
-          content.department === globalFilters.department;
-        const matchYear =
-          !globalFilters.year || content.year === globalFilters.year;
-        return matchSubject && matchDepartment && matchYear;
-      }
-
-      return (
-        !globalFilters.subject &&
-        !globalFilters.department &&
-        !globalFilters.year
-      );
-    });
-  }, [
-    appealsHook.appeals,
-    summariesHook.summaries,
-    newsHook.news,
+  const {
     globalFilters,
-  ]);
+    setGlobalFilters,
+    availableDepartments,
+    filteredSummaries,
+    filteredNews,
+    filteredQuizzes,
+    filteredAppeals,
+    clearFilters,
+    levels,
+  } = useAdminFilters({
+    summaries: summariesHook.summaries as SummaryWithRatings[],
+    news: newsHook.news,
+    quizzes: quizzesHook.quizzes,
+    appeals: appealsHook.appeals,
+  });
+
+  const [showAddCourse, setShowAddCourse] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<EditingCourse | null>(
+    null,
+  );
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<EditingSubject | null>(
+    null,
+  );
+  const [showManageLectures, setShowManageLectures] = useState(false);
+  const [selectedSubjectForLectures, setSelectedSubjectForLectures] =
+    useState<string>("");
 
   const isLoading = useMemo(
     () =>
@@ -250,7 +183,9 @@ function AdminDashboardContent() {
     id: string,
     status: "approved" | "rejected",
   ) => {
-    const oldSummary = summariesHook.summaries.find((s) => s.id === id);
+    const oldSummary = (summariesHook.summaries as SummaryWithRatings[]).find(
+      (s: SummaryWithRatings) => s.id === id,
+    );
     await summariesHook.updateStatus(id, status);
 
     if (status === "approved" && oldSummary) {
@@ -263,16 +198,20 @@ function AdminDashboardContent() {
     setShowAddCourse(true);
   };
 
-  const handleEditCourse = (course: Course) => {
-    setEditingCourse(course);
+  const handleEditCourse = (course: CoursesTabCourse) => {
+    setEditingCourse({
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      price: course.price,
+    });
     setShowAddCourse(true);
   };
 
   const handleSaveCourse = () => {
-    // Courses tab will refresh automatically
+    // Courses tab will refresh automatically via TanStack Query invalidation
     setShowAddCourse(false);
     setEditingCourse(null);
-    setCoursesRefreshKey((prev) => prev + 1);
   };
 
   const handleCreateSubject = () => {
@@ -280,36 +219,30 @@ function AdminDashboardContent() {
     setShowAddSubject(true);
   };
 
-  const handleEditSubject = (subject: any) => {
-    setEditingSubject(subject);
+  const handleEditSubject = (subject: SubjectsTabSubject) => {
+    setEditingSubject(subject as EditingSubject);
     setShowAddSubject(true);
   };
 
-  const handleManageLectures = (subject: any) => {
+  const handleManageLectures = (subject: SubjectsTabSubject) => {
     setSelectedSubjectForLectures(subject.name);
     setShowManageLectures(true);
   };
 
-  const handleSaveSubject = async (subjectData: any) => {
+  const handleSaveSubject = async (subjectData: SubjectInsert) => {
     try {
-      // Clean up the data before sending to Supabase
-      const { id, created_at, ...cleanData } = subjectData;
+      const cleanData: Record<string, unknown> = { ...subjectData };
+      delete cleanData.id;
+      delete cleanData.created_at;
 
       if (editingSubject) {
-        const { error } = await supabase
-          .from("subjects")
-          .update(cleanData)
-          .eq("id", editingSubject.id);
-        if (error) throw error;
+        await subjectsHook.updateSubject(editingSubject.id, cleanData);
       } else {
-        const { error } = await supabase.from("subjects").insert([cleanData]);
-        if (error) throw error;
+        await subjectsHook.createSubject(cleanData);
       }
-      subjectsHook.fetchSubjects(true);
       setShowAddSubject(false);
       setEditingSubject(null);
     } catch (error) {
-      // console.error("Error saving subject:", error);
       throw error;
     }
   };
@@ -320,10 +253,7 @@ function AdminDashboardContent() {
         return adminRole === "doctor" ? (
           <MemoizedCoursesTab
             onCreateCourse={handleCreateCourse}
-            onEditCourse={(course: unknown) =>
-              handleEditCourse(course as Course)
-            }
-            refreshKey={coursesRefreshKey}
+            onEditCourse={handleEditCourse}
           />
         ) : (
           <div className="p-8 text-center text-gray-500">
@@ -334,7 +264,7 @@ function AdminDashboardContent() {
         return (
           <MemoizedSubjectsTab
             subjects={subjectsHook.subjects}
-            onRefresh={() => subjectsHook.fetchSubjects(true)}
+            onRefresh={() => subjectsHook.fetchSubjects()}
             onEdit={handleEditSubject}
             onAdd={handleCreateSubject}
             onManageLectures={handleManageLectures}
@@ -435,208 +365,21 @@ function AdminDashboardContent() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {t("title")}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {t("subtitle")}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
-              <Filter className="w-4 h-4" />
-              <span>{t("globalFilter")}</span>
-            </div>
-
-            <select
-              value={globalFilters.year}
-              onChange={(e) =>
-                setGlobalFilters((prev) => ({
-                  ...prev,
-                  year: e.target.value,
-                  department: "",
-                }))
-              }
-              className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">{t("allLevels")}</option>
-              {levels.map((level) => (
-                <option key={level.id} value={level.name}>
-                  {level.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={globalFilters.department}
-              onChange={(e) =>
-                setGlobalFilters((prev) => ({
-                  ...prev,
-                  department: e.target.value,
-                }))
-              }
-              disabled={
-                !globalFilters.year || availableDepartments.length === 0
-              }
-              className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">{t("allDepartments")}</option>
-              {availableDepartments.map((dept) => (
-                <option key={dept.id} value={dept.name}>
-                  {dept.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={globalFilters.subject}
-              onChange={(e) =>
-                setGlobalFilters((prev) => ({
-                  ...prev,
-                  subject: e.target.value,
-                }))
-              }
-              className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">{t("allSubjects")}</option>
-              {[...new Set(subjectsHook.subjects.map((s) => s.name))]
-                .sort()
-                .map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-            </select>
-
-            {(globalFilters.subject ||
-              globalFilters.department ||
-              globalFilters.year) && (
-              <button
-                onClick={() =>
-                  setGlobalFilters({ subject: "", department: "", year: "" })
-                }
-                className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
-                title={t("clearFilters")}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <AdminDashboardHeader
+        globalFilters={globalFilters}
+        setGlobalFilters={setGlobalFilters}
+        levels={levels}
+        availableDepartments={availableDepartments}
+        subjects={subjectsHook.subjects}
+        onClearFilters={clearFilters}
+      />
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors">
-        <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700 scroll-x-mobile">
-          {adminRole === "doctor" && (
-            <button
-              onClick={() => setActiveTab("courses")}
-              className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-                activeTab === "courses"
-                  ? "border-green-500 text-green-600 dark:text-green-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              }`}
-            >
-              <GraduationCap className="w-4 h-4" />
-              {t("tabs.courses")}
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab("subjects")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "subjects"
-                ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <School className="w-4 h-4" />
-            {t("tabs.subjects")}
-          </button>
-          {adminRole === "doctor" && (
-            <button
-              onClick={() => setActiveTab("enrollments")}
-              className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-                activeTab === "enrollments"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              }`}
-            >
-              <CreditCard className="w-4 h-4" />
-              {t("tabs.enrollments")}
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab("summaries")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "summaries"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            {t("tabs.summaries")}
-          </button>
-          <button
-            onClick={() => setActiveTab("news")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "news"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <Newspaper className="w-4 h-4" />
-            {t("tabs.news")}
-          </button>
-          <button
-            onClick={() => setActiveTab("appeals")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "appeals"
-                ? "border-orange-500 text-orange-600 dark:text-orange-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <Flag className="w-4 h-4" />
-            {t("tabs.appeals")}
-          </button>
-          <button
-            onClick={() => setActiveTab("quizzes")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "quizzes"
-                ? "border-purple-500 text-purple-600 dark:text-purple-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            {t("tabs.quizzes")}
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === "analytics"
-                ? "border-green-500 text-green-600 dark:text-green-400"
-                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            {t("tabs.analytics")}
-          </button>
-          {adminRole === "doctor" && (
-            <button
-              onClick={() => setActiveTab("page_management")}
-              className={`flex items-center gap-2 px-4 py-2 font-medium transition-colors border-b-2 ${
-                activeTab === "page_management"
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-              }`}
-            >
-              <Layout className="w-4 h-4" />
-              {t("tabs.pageManagement")}
-            </button>
-          )}
-        </div>
+        <AdminDashboardTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          adminRole={adminRole}
+        />
 
         {renderTabContent()}
       </div>
@@ -648,13 +391,15 @@ function AdminDashboardContent() {
         onSetNewNews={newsHook.setNewNews}
         onAddNews={(newsData, fileUrl, imageUrls, customCategory) =>
           newsHook.addNews(
-            newsData,
+            {
+              ...newsData,
+              subject: globalFilters.subject || newsData.subject,
+              department: globalFilters.department || newsData.department,
+              year: globalFilters.year || newsData.year,
+            },
             fileUrl,
             imageUrls,
             customCategory,
-            globalFilters.subject || null,
-            globalFilters.department || null,
-            globalFilters.year || null,
           )
         }
       />

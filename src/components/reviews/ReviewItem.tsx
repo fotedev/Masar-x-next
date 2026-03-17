@@ -2,10 +2,13 @@ import React from "react";
 import Image from "next/image";
 import { User, Trash2 } from "lucide-react";
 import { StarDisplay } from "./StarRating";
+import type { ReviewDetails } from "@/types/database";
+
+type ReviewLike = ReviewDetails & { content?: string | null };
 
 interface ReviewItemProps {
-  review: any;
-  user: any;
+  review: ReviewLike;
+  user: { id: string } | null;
   isAdmin: boolean;
   onDelete: (id: string) => void;
 }
@@ -63,7 +66,7 @@ export function ReviewItem({
           )}
         </div>
         <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-          {(review as any).content || (review as any).comment || ""}
+          {review.content || review.comment || ""}
         </p>
       </div>
     </div>

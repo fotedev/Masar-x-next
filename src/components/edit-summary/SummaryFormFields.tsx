@@ -5,15 +5,17 @@ import {
 } from "@/hooks/useAcademicOptions";
 import { Subject } from "@/types/database";
 
+type SummaryFormData = {
+  title: string;
+  subject: string;
+  year: string;
+  department: string;
+  content: string;
+};
+
 interface SummaryFormFieldsProps {
-  formData: {
-    title: string;
-    subject: string;
-    year: string;
-    department: string;
-    content: string;
-  };
-  setFormData: (data: any) => void;
+  formData: SummaryFormData;
+  setFormData: React.Dispatch<React.SetStateAction<SummaryFormData>>;
   levels: AcademicLevelOption[];
   availableDepartments: DepartmentOption[];
   subjects: Subject[];
@@ -41,7 +43,7 @@ export function SummaryFormFields({
           required
           value={formData.title}
           onChange={(e) =>
-            setFormData((prev: any) => ({ ...prev, title: e.target.value }))
+            setFormData((prev) => ({ ...prev, title: e.target.value }))
           }
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
@@ -56,7 +58,7 @@ export function SummaryFormFields({
             required
             value={formData.year}
             onChange={(e) =>
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 year: e.target.value,
                 department: "",
@@ -84,7 +86,7 @@ export function SummaryFormFields({
             onChange={(e) => {
               const next = Number(e.target.value);
               setSemester(next);
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 department: "",
                 subject: "",
@@ -106,7 +108,7 @@ export function SummaryFormFields({
             required
             value={formData.department}
             onChange={(e) =>
-              setFormData((prev: any) => ({
+              setFormData((prev) => ({
                 ...prev,
                 department: e.target.value,
               }))
@@ -132,7 +134,7 @@ export function SummaryFormFields({
           required
           value={formData.subject}
           onChange={(e) =>
-            setFormData((prev: any) => ({ ...prev, subject: e.target.value }))
+            setFormData((prev) => ({ ...prev, subject: e.target.value }))
           }
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
@@ -153,7 +155,7 @@ export function SummaryFormFields({
           required
           value={formData.content}
           onChange={(e) =>
-            setFormData((prev: any) => ({ ...prev, content: e.target.value }))
+            setFormData((prev) => ({ ...prev, content: e.target.value }))
           }
           rows={10}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"

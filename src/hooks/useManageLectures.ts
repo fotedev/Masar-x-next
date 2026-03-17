@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
+import { logger } from "@/lib/logger";
+import { toast } from "@/hooks/useToast";
+// TODO: Add 'subject_lectures' to Database type in src/types/database.ts to allow strict typing here
+
 
 interface UseManageLecturesProps {
   show: boolean;
@@ -9,12 +13,21 @@ interface UseManageLecturesProps {
   standardizedSubject: string;
 }
 
+interface SubjectLecture {
+  id: string;
+  subject: string;
+  lecture_label: string;
+  lecture_key: string;
+  order_index: number;
+  created_at: string;
+}
+
 export function useManageLectures({
   show,
   subjectName,
   standardizedSubject,
 }: UseManageLecturesProps) {
-  const [lectures, setLectures] = useState<any[]>([]);
+  const [lectures, setLectures] = useState<SubjectLecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newLecture, setNewLecture] = useState({ title: "", orderIndex: "" });
@@ -41,7 +54,7 @@ export function useManageLectures({
       if (error) throw error;
       setLectures(data || []);
     } catch (error) {
-      console.error("Error fetching lectures:", error);
+      logger.error("Error fetching lectures", error, { subjectName });
     } finally {
       setLoading(false);
     }
@@ -68,7 +81,9 @@ export function useManageLectures({
       .maybeSingle();
 
     if (!admin) {
-      console.error("Unauthorized: Only admins can add lectures");
+      const errorMsg = "Unauthorized: Only admins can add lectures";
+      logger.error(errorMsg, null, { userId: user.id });
+      toast.error("غير مصرح لك بإضافة محاضرات");
       return;
     }
 
@@ -91,8 +106,10 @@ export function useManageLectures({
 
       setNewLecture({ title: "", orderIndex: "" });
       fetchLectures();
+      toast.success("تمت إضافة المحاضرة بنجاح");
     } catch (error) {
-      console.error("Error adding lecture:", error);
+      logger.error("Error adding lecture", error, { subjectName, lectureTitle: newLecture.title });
+      toast.error("حدث خطأ أثناء إضافة المحاضرة");
     } finally {
       setLoading(false);
     }
@@ -115,12 +132,14 @@ export function useManageLectures({
       queryCache.invalidate(cacheKeys.subjectLectures(subjectName));
 
       fetchLectures();
+      toast.success("تم حذف المحاضرة");
     } catch (error) {
-      console.error("Error deleting lecture:", error);
+      logger.error("Error deleting lecture", error, { id });
+      toast.error("حدث خطأ أثناء حذف المحاضرة");
     }
   };
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleUpdate = async (id: string, updates: Partial<SubjectLecture>) => {
     try {
       const { error } = await supabase
         .from("subject_lectures")
@@ -133,8 +152,10 @@ export function useManageLectures({
 
       setEditingId(null);
       fetchLectures();
+      toast.success("تم تحديث المحاضرة");
     } catch (error) {
-      console.error("Error updating lecture:", error);
+      logger.error("Error updating lecture", error, { id, updates });
+      toast.error("حدث خطأ أثناء تحديث المحاضرة");
     }
   };
 

@@ -9,6 +9,7 @@ import {
   isProbablyMobileDevice,
 } from "@/lib/puter";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface PuterSettingsModalProps {
   isOpen: boolean;
@@ -92,14 +93,14 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
           setWaitingForAuth(false);
         })
         .catch((error) => {
-          console.error("Sign in error:", error);
+          logger.error("Sign in error", error);
           toast.error("فشل تفعيل الوضع المتقدم", {
             description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
           });
           setWaitingForAuth(false);
         });
     } catch (error) {
-      console.error("Sign in error:", error);
+      logger.error("Sign in error", error);
       toast.error("فشل تفعيل الوضع المتقدم", {
         description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
       });

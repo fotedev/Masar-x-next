@@ -9,7 +9,7 @@ interface UseEditSummaryProps {
   summary: Summary | SummaryWithRatings | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (id: string, updates: any) => Promise<void>;
+  onSave: (id: string, updates: Partial<Summary>) => Promise<void>;
 }
 
 export function useEditSummary({

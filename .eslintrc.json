@@ -9,5 +9,15 @@
     "prefer-const": "warn",
     "react-hooks/exhaustive-deps": "warn",
     "no-console": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/lib/logger.ts"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }

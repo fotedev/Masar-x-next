@@ -1,20 +1,27 @@
 import React from "react";
 import { AcademicLevelOption } from "@/hooks/useAcademicOptions";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
+type NewsDraftTargeting = {
+  year: string | null;
+  department: string | null;
+  subject: string | null;
+};
+
+type NamedOption = { id: string; name: string; is_active?: boolean };
+
 interface NewsTargetFiltersProps {
-  newNews: {
-    year: string | null;
-    department: string | null;
-    subject: string | null;
-  };
-  onSetNewNews: (news: any) => void;
+  newNews: NewsDraftTargeting;
+  onSetNewNews: (news: NewsDraftTargeting) => void;
   semester: number;
   setSemester: (sem: number) => void;
   levels: AcademicLevelOption[];
-  availableDepartments: any[];
-  subjects: any[];
+  availableDepartments: NamedOption[];
+  subjects: NamedOption[];
   subjectsLoading: boolean;
-  t: any;
+  t: TranslationFn;
 }
 
 export function NewsTargetFilters({
@@ -119,9 +126,7 @@ export function NewsTargetFilters({
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-60"
         >
           <option value="">
-            {subjectsLoading
-              ? t("newsSubjectLoading")
-              : t("newsSubjectAll")}
+            {subjectsLoading ? t("newsSubjectLoading") : t("newsSubjectAll")}
           </option>
           {subjects.map((s) => (
             <option key={s.id} value={s.name}>

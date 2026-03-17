@@ -7,7 +7,7 @@ interface TrackedLinkProps {
   children: React.ReactNode;
   contentType: string; // e.g., 'course_link', 'pdf_link', 'exam_info'
   contentId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   className?: string;
   target?: "_blank" | "_self";
 }

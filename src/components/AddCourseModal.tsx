@@ -1,18 +1,24 @@
 import { Loader2, Save, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/Button";
 import { Textarea } from "./ui/Textarea";
+import { useCourses } from "../hooks/useCourses";
+import { toast } from "sonner";
+import { CourseInsert } from "@/types/database";
 
 interface AddCourseModalProps {
   showAddCourse: boolean;
-  editingCourse: any;
+  editingCourse: {
+    id: string;
+    title?: string | null;
+    description?: string | null;
+    price?: number | null;
+    is_academic?: boolean | null;
+  } | null;
   onClose: () => void;
   onSave: () => void;
 }
-
-import { toast } from "sonner";
 
 export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   showAddCourse,
@@ -21,6 +27,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
   onSave,
 }) => {
   const { user } = useAuth();
+  const { addCourse, updateCourse } = useCourses();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -52,42 +59,27 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
     try {
       setSaving(true);
 
-      const courseData: any = {
+      if (!user) return;
+
+      const courseData: CourseInsert = {
         title: title.trim(),
         description: description.trim(),
         price: price ? parseFloat(price) : 0,
         is_academic: isAcademic,
-        is_published: false, // New courses start as unpublished
+        is_published: false,
+        instructor_id: user.id,
       };
 
-      if (!editingCourse && user) {
-        courseData.instructor_id = user.id;
-      }
-
       if (editingCourse) {
-        const { error } = await supabase
-          .from("courses")
-          .update(courseData)
-          .eq("id", editingCourse.id);
-
-        if (error) throw error;
+        await updateCourse(editingCourse.id, courseData);
       } else {
-        const { error } = await supabase.from("courses").insert(courseData);
-
-        if (error) throw error;
+        await addCourse(courseData);
       }
 
       onSave();
       onClose();
-      toast.success("تم الحفظ بنجاح", {
-        description: editingCourse
-          ? "تم تحديث الكورس بنجاح"
-          : "تم إنشاء الكورس بنجاح",
-      });
     } catch {
-      toast.error("خطأ في الحفظ", {
-        description: "فشل في حفظ الكورس، يرجى المحاولة مرة أخرى",
-      });
+      // toast is handled in useCourses
     } finally {
       setSaving(false);
     }

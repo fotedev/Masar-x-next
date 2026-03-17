@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { logger } from "@/lib/logger";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useAuth } from "../contexts/AuthContext";
@@ -51,16 +52,16 @@ export function AcademicOnboardingGate() {
         ) {
           // Final check: if still no academic data AND still not admin, redirect
           if (
-            !isAdmin &&
+            academic.department_id === null &&
             academic.level === null &&
             academic.semester === null
           ) {
-            console.log(
+            logger.info(
               "[AcademicOnboardingGate] Redirecting after 1s grace period",
               {
                 level: academic.level,
                 semester: academic.semester,
-                isAdmin,
+                dept: academic.department_id,
               },
             );
             hasRedirected.current = true;
@@ -72,11 +73,13 @@ export function AcademicOnboardingGate() {
       return () => clearTimeout(timer);
     }
   }, [
+    academic.department_id,
     academic.level,
     academic.semester,
     academicLoading,
     authLoading,
     isAdmin,
+    locale,
     pathname,
     router,
     user,

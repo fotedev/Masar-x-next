@@ -2,12 +2,15 @@ import React from "react";
 import { Trash } from "lucide-react";
 import { News } from "../../types/database";
 
+type TranslationValues = Record<string, string | number | Date>;
+type TranslationFn = (key: string, values?: TranslationValues) => string;
+
 interface NewsCardProps {
   item: News;
   isAdmin: boolean;
   onToggleStatus: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
-  t: any;
+  t: TranslationFn;
 }
 
 export function NewsCard({

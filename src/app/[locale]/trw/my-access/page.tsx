@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRWMembership } from "@/hooks/trw/useTRWHooks";
+import useTRWMembership from "@/hooks/trw/useTRWMembership";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import {
   Card,

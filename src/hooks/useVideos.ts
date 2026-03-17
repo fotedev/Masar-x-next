@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
-import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
+import { logger } from "../lib/logger";
+import { useQuery } from "@tanstack/react-query";
 
 interface Video {
   id: string;
@@ -15,60 +15,30 @@ interface Video {
 }
 
 export function useVideos(subject?: string) {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: videos = [], isLoading: loading, refetch: fetchVideos } = useQuery({
+    queryKey: ['videos', subject],
+    enabled: !!subject,
+    staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("videos")
+          .select("*")
+          .eq("subject", subject)
+          .order("created_at", { ascending: false });
 
-  const fetchVideos = useCallback(async (skipCache = false) => {
-    if (!subject) {
-      setVideos([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const cacheKeyBase = cacheKeys.videos ? cacheKeys.videos() : "videos";
-      const cacheKey = `${cacheKeyBase}:subject:${subject}`;
-
-      // Check cache first
-      if (!skipCache && queryCache.get) {
-        const cached = queryCache.get<Video[]>(cacheKey);
-        if (cached) {
-          setVideos(cached);
-          setLoading(false);
-          return;
-        }
+        if (error) throw error;
+        return (data as Video[]) || [];
+      } catch (error) {
+        logger.error("Failed to fetch videos", error, { subject });
+        return [];
       }
-
-      const { data, error } = await supabase
-        .from("videos")
-        .select("*")
-        .eq("subject", subject)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const videoData: Video[] = data || [];
-      setVideos(videoData);
-
-      // Cache the result
-      if (queryCache.set) {
-        queryCache.set(cacheKey, videoData, cacheTTL.videos);
-      }
-    } catch {
-      setVideos([]);
-    } finally {
-      setLoading(false);
     }
-  }, [subject]);
-
-  useEffect(() => {
-    fetchVideos();
-  }, [fetchVideos]);
+  });
 
   return {
     videos,
     loading,
-    fetchVideos,
+    fetchVideos: () => fetchVideos(),
   };
 }

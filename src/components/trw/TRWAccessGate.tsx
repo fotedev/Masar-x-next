@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useTRWMembership } from "@/hooks/trw/useTRWHooks";
+import useTRWMembership from "@/hooks/trw/useTRWMembership";
 import { Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

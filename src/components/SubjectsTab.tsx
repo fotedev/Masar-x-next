@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { GraduationCap } from "lucide-react";
 import { Subject } from "../types/database";
 import { supabase } from "../lib/supabase";
@@ -7,6 +7,7 @@ import { confirmToast } from "../lib/confirmToast";
 import { useTranslations } from "next-intl";
 import { SubjectFilters } from "./subjects-admin/SubjectFilters";
 import { SubjectCard } from "./subjects-admin/SubjectCard";
+import { logger } from "../lib/logger";
 
 interface SubjectsTabProps {
   subjects: Subject[];
@@ -39,38 +40,41 @@ export function SubjectsTab({
     });
   }, [subjects, searchTerm, statusFilter]);
 
-  const handleUpdateStatus = async (
-    id: string,
-    status: "approved" | "rejected",
-  ) => {
-    try {
-      const { error } = await supabase
-        .from("subjects")
-        .update({ status })
-        .eq("id", id);
-      if (error) throw error;
-      onRefresh();
-    } catch (error) {
-      console.error("Error updating subject status:", error);
-      toast.error(tSubjectsTab("updateStatusError"));
-    }
-  };
+  const handleUpdateStatus = useCallback(
+    async (id: string, status: "approved" | "rejected") => {
+      try {
+        const { error } = await supabase
+          .from("subjects")
+          .update({ status })
+          .eq("id", id);
+        if (error) throw error;
+        onRefresh();
+      } catch (error) {
+        logger.error("Error updating subject status", error, { id, status });
+        toast.error(tSubjectsTab("updateStatusError"));
+      }
+    },
+    [onRefresh, tSubjectsTab],
+  );
 
-  const handleDelete = async (id: string) => {
-    const confirmed = await confirmToast(tSubjectsTab("confirmDelete"), {
-      confirmLabel: tSubjectsTab("delete"),
-      cancelLabel: tSubjectsTab("cancel"),
-    });
-    if (!confirmed) return;
-    try {
-      const { error } = await supabase.from("subjects").delete().eq("id", id);
-      if (error) throw error;
-      onRefresh();
-    } catch (error) {
-      console.error("Error deleting subject:", error);
-      toast.error(tSubjectsTab("deleteError"));
-    }
-  };
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const confirmed = await confirmToast(tSubjectsTab("confirmDelete"), {
+        confirmLabel: tSubjectsTab("delete"),
+        cancelLabel: tSubjectsTab("cancel"),
+      });
+      if (!confirmed) return;
+      try {
+        const { error } = await supabase.from("subjects").delete().eq("id", id);
+        if (error) throw error;
+        onRefresh();
+      } catch (error) {
+        logger.error("Error deleting subject", error, { id });
+        toast.error(tSubjectsTab("deleteError"));
+      }
+    },
+    [onRefresh, tSubjectsTab],
+  );
 
   return (
     <div className="space-y-6">
