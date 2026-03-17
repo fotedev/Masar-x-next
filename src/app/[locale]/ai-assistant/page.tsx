@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,11 +11,17 @@ import { useQuizzes } from "@/hooks/useQuizzes";
 import { ChatHeader } from "@/components/ai/ChatHeader";
 import { ChatContainer } from "@/components/ai/ChatContainer";
 import { ChatInput } from "@/components/ai/ChatInput";
-import PuterSettingsModal from "@/components/ai/PuterSettingsModal";
-import { LocalQuizPreviewModal } from "@/components/ai/LocalQuizPreviewModal";
 import { aiAssistant } from "@/lib/ai-assistant";
 import { toast } from "react-hot-toast";
 import { useRouter } from "@/i18n/routing";
+
+const PuterSettingsModal = dynamic(() => import("@/components/ai/PuterSettingsModal"), {
+  ssr: false,
+});
+
+const LocalQuizPreviewModal = dynamic(() => import("@/components/ai/LocalQuizPreviewModal").then(mod => mod.LocalQuizPreviewModal), {
+  ssr: false,
+});
 
 type LocalGeneratedQuiz = {
   id?: string;
