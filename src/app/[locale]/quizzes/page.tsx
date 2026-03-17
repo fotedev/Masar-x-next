@@ -11,8 +11,6 @@ import type { Quiz } from "@/types/database";
 import { toast } from "sonner";
 import { QuizDashboardHeader } from "@/components/quizzes/QuizDashboardHeader";
 import { QuizDashboardFilters } from "@/components/quizzes/QuizDashboardFilters";
-import { QuizImportModal } from "@/components/quizzes/QuizImportModal";
-import { QuizFormModal } from "@/components/quizzes/QuizFormModal";
 import { useQuizzesData } from "./_hooks/useQuizzesData";
 import { useQuizzesFilters } from "./_hooks/useQuizzesFilters";
 import { useQuizzesModals } from "./_hooks/useQuizzesModals";
@@ -20,9 +18,20 @@ import { useQuizFormState } from "./_hooks/useQuizFormState";
 import { useQuizImport } from "./_hooks/useQuizImport";
 import { QuizzesList } from "./_components/QuizzesList";
 import { QuizzesEmptyState } from "./_components/QuizzesEmptyState";
-import { QuizDeleteDialog } from "./_components/QuizDeleteDialog";
 import { PreviousExamsButton } from "./_components/PreviousExamsButton";
 import { QuizzesLoading } from "./_components/QuizzesLoading";
+
+const QuizImportModal = dynamic(() => import("@/components/quizzes/QuizImportModal").then(mod => mod.QuizImportModal), {
+  ssr: false,
+});
+
+const QuizFormModal = dynamic(() => import("@/components/quizzes/QuizFormModal").then(mod => mod.QuizFormModal), {
+  ssr: false,
+});
+
+const QuizDeleteDialog = dynamic(() => import("./_components/QuizDeleteDialog").then(mod => mod.QuizDeleteDialog), {
+  ssr: false,
+});
 
 const getErrorMessage = (err: unknown): string | null => {
   if (err && typeof err === "object" && "message" in err) {
