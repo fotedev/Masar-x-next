@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -20,6 +20,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useNews } from "@/hooks/useNews";
 import { News, Database } from "@/types/database";
+import { NewsSchema } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 import { AppealFormModal } from "@/components/AppealFormModal";
 import { AddNewsModal } from "@/components/AddNewsModal";
 
@@ -74,8 +76,17 @@ function NewsPage() {
     },
   ];
 
-  const filterNews = useCallback(() => {
-    let filtered = news;
+  useEffect(() => {
+    const validatedNews = news.map((item) => {
+      const validation = NewsSchema.safeParse(item);
+      if (!validation.success) {
+        logger.error(`Validation failed for news item ${item.id}:`, validation.error.format());
+        return item as NewsItem;
+      }
+      return validation.data as NewsItem;
+    });
+
+    let filtered = validatedNews;
 
     if (selectedCategory !== "all") {
       filtered = filtered.filter((item) => item.type === selectedCategory);
@@ -90,11 +101,7 @@ function NewsPage() {
     }
 
     setFilteredNews(filtered);
-  }, [news, selectedCategory, searchTerm]);
-
-  useEffect(() => {
-    filterNews();
-  }, [filterNews]);
+  }, [news, selectedCategory, searchTerm, NewsSchema, logger]);
 
   const getCategoryColor = (category: string) => {
     const categoryConfig = categories.find((cat) => cat.id === category);
