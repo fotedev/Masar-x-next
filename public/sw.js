@@ -56,6 +56,7 @@ self.addEventListener('fetch', (event) => {
   // تخطي API calls - خليهم يروحوا للشبكة
   if (url.pathname.startsWith('/api/') ||
     url.hostname.includes('supabase') ||
+    url.hostname.includes('puter.com') ||
     event.request.method !== 'GET') {
     return;
   }
@@ -113,8 +114,11 @@ self.addEventListener('fetch', (event) => {
             if (event.request.destination === 'document') {
               return caches.match('/');
             }
-            // For other resources, return undefined to let browser handle
-            return undefined;
+            // For other resources, return a clean error response
+            return new Response('', {
+              status: 504,
+              statusText: 'Gateway Timeout'
+            });
           });
 
         // Return cached version immediately if available, otherwise wait for network
@@ -126,7 +130,10 @@ self.addEventListener('fetch', (event) => {
         if (event.request.destination === 'document') {
           return caches.match('/');
         }
-        return undefined;
+        return new Response('', {
+          status: 504,
+          statusText: 'Gateway Timeout'
+        });
       })
   );
 });
