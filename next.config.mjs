@@ -62,16 +62,18 @@ const nextConfig = {
     async headers() {
         const csp = [
             "default-src 'self' https://*.youtube.com https://*.googlevideo.com",
-            // Next currently injects inline scripts (theme + JSON-LD). We keep 'unsafe-inline' for compatibility.
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' https: data: https://*.ytimg.com https://www.transparenttextures.com",
-            "font-src 'self' data:",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://res.cloudinary.com https://www.transparenttextures.com https://raw.githubusercontent.com https://*.youtube.com https://*.googlevideo.com https://*.google.com https://api.puter.com wss://api.puter.com ws://localhost:* https://cdn.jsdelivr.net https://lottie.host",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://masar-x.vercel.app https://masarx.vercel.app https://www.youtube.com https://s.ytimg.com",
+            "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' data: https://masar-x.vercel.app https://masarx.vercel.app https://www.youtube.com https://s.ytimg.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://masar-x.vercel.app https://masarx.vercel.app",
+            "img-src 'self' data: https: blob: https://www.google.com https://masar-x.vercel.app https://masarx.vercel.app https://*.ytimg.com https://www.transparenttextures.com",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.googleusercontent.com https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://www.google-analytics.com https://masar-x.vercel.app https://masarx.vercel.app https://res.cloudinary.com https://*.youtube.com https://*.googlevideo.com https://api.puter.com wss://api.puter.com https://*.puter.com https://lottie.host https://cdn.jsdelivr.net",
+            "font-src 'self' https://fonts.gstatic.com data:",
             "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
             "frame-ancestors 'self'",
+            "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
+            "upgrade-insecure-requests",
         ].join('; ');
 
         return [
