@@ -136,3 +136,4 @@ vite.config.ts.timestamp-*.mjs
 /cloc-2.08.exe
 /hjkllllllllllllllllllllllllllllllllllllllllllllllhhjkhjhjkhjhjkhjk.txt
 /SQL_FIX_VIDEOS_RATINGS.sql
+__pycache__
