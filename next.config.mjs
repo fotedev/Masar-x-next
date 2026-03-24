@@ -66,7 +66,7 @@ const nextConfig = {
             "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' data: https://masar-x.vercel.app https://masarx.vercel.app https://www.youtube.com https://s.ytimg.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://masar-x.vercel.app https://masarx.vercel.app",
             "img-src 'self' data: https: blob: https://www.google.com https://masar-x.vercel.app https://masarx.vercel.app https://*.ytimg.com https://www.transparenttextures.com",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.googleusercontent.com https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://www.google-analytics.com https://masar-x.vercel.app https://masarx.vercel.app https://res.cloudinary.com https://*.youtube.com https://*.googlevideo.com https://*.puter.com wss://*.puter.com https://lottie.host https://cdn.jsdelivr.net",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.googleapis.com https://*.googleusercontent.com https://fonts.googleapis.com https://fonts.gstatic.com https://raw.githubusercontent.com https://www.google-analytics.com https://masar-x.vercel.app https://masarx.vercel.app https://res.cloudinary.com https://*.youtube.com https://*.googlevideo.com https://api.puter.com wss://api.puter.com https://*.puter.com wss://*.puter.com https://lottie.host https://cdn.jsdelivr.net",
             "font-src 'self' https://fonts.gstatic.com data:",
             "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
             "worker-src 'self' blob: https://masar-x.vercel.app https://masarx.vercel.app",
