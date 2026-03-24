@@ -43,6 +43,8 @@ export function QuestionItem({
         )}
       </div>
       <input
+        id={`question-${idx}`}
+        name={`question-${idx}`}
         value={question.question}
         onChange={(e) =>
           setExamFormData((p) => ({
@@ -59,6 +61,8 @@ export function QuestionItem({
         {question.options.map((opt, optIdx) => (
           <input
             key={optIdx}
+            id={`question-${idx}-option-${optIdx}`}
+            name={`question-${idx}-option-${optIdx}`}
             value={opt}
             onChange={(e) =>
               setExamFormData((p) => ({
@@ -82,6 +86,8 @@ export function QuestionItem({
       </div>
       <div className="mt-4 flex gap-4">
         <select
+          id={`question-${idx}-correct`}
+          name={`question-${idx}-correct`}
           value={question.correctAnswer}
           onChange={(e) =>
             setExamFormData((p) => ({

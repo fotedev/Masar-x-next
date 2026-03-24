@@ -28,7 +28,9 @@ export function ReviewItem({
               src={review.reviewer_avatar}
               alt={review.reviewer_name || "User"}
               fill
+              sizes="48px"
               className="rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-sm"
+              unoptimized
             />
           </div>
         ) : (

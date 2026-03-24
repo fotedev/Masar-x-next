@@ -38,10 +38,15 @@ export function NewsTargetFilters({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-target-level"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsLevel")} ({t("newsOptional")})
         </label>
         <select
+          id="news-target-level"
+          name="year"
           value={newNews.year || ""}
           onChange={(e) =>
             onSetNewNews({
@@ -63,10 +68,15 @@ export function NewsTargetFilters({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-target-semester"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsSemesterLabel")}
         </label>
         <select
+          id="news-target-semester"
+          name="semester"
           value={semester}
           onChange={(e) => {
             const next = Number(e.target.value);
@@ -86,10 +96,15 @@ export function NewsTargetFilters({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-target-department"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsDepartment")} ({t("newsOptional")})
         </label>
         <select
+          id="news-target-department"
+          name="department"
           value={newNews.department || ""}
           onChange={(e) =>
             onSetNewNews({
@@ -111,10 +126,15 @@ export function NewsTargetFilters({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-target-subject"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsSubject")} ({t("newsOptional")})
         </label>
         <select
+          id="news-target-subject"
+          name="subject"
           value={newNews.subject || ""}
           onChange={(e) =>
             onSetNewNews({

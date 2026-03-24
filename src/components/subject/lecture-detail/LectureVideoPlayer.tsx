@@ -32,12 +32,16 @@ export function LectureVideoPlayer(props: {
         hidden: { opacity: 0 },
         show: { opacity: 1 },
       }}
-      className={`w-full ${isTheatreMode ? "max-w-none" : ""}`}
+      className={`w-full ${
+        isTheatreMode
+          ? "fixed inset-0 z-[100] bg-black flex flex-col"
+          : "relative"
+      }`}
     >
       <div
         className={`bg-white dark:bg-slate-900 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col ${
           isTheatreMode
-            ? "flex-1 border-none rounded-none"
+            ? "flex-1 border-none rounded-none h-full"
             : "rounded-3xl sm:rounded-[2.5rem]"
         }`}
       >
@@ -84,18 +88,20 @@ export function LectureVideoPlayer(props: {
             <iframe
               src={`https://www.youtube.com/embed/${getYouTubeId(
                 activeVideoUrl,
-              )}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1`}
+              )}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1&enablejsapi=1`}
               className="absolute inset-0 w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
+              referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
           ) : (
             <video
               src={activeVideoUrl}
               controls
               autoPlay
-              className="absolute inset-0 w-full h-full"
+              playsInline
+              webkit-playsinline="true"
+              className="absolute inset-0 w-full h-full object-contain"
             ></video>
           )}
         </div>

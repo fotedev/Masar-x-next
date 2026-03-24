@@ -97,105 +97,71 @@ export default function HomePage() {
     return sortedVideos.slice(0, 10);
   }, [topVideos, subjects, activeSemester]);
 
-  useEffect(() => {
-    const normalizeSubjectName = (value: string) =>
-      (value || "").trim().replace(/\s+/g, " ");
+  const normalizeSubjectName = useMemo(() => (value: string) =>
+    (value || "").trim().replace(/\s+/g, " "), []);
 
-    const visibleSubjectNames = (subjects as Subject[])
+  const visibleSubjectSet = useMemo(() => {
+    const names = (subjects as Subject[])
       .filter(
         (s) =>
           s.show_on_home &&
           (!s.semester || Number(s.semester) === activeSemester),
       )
-      .map((s) => s.name);
-    const visibleSubjectSet = new Set(
-      visibleSubjectNames
-        .map((n: string) => normalizeSubjectName(n))
-        .filter(Boolean),
-    );
+      .map((s) => normalizeSubjectName(s.name));
+    return new Set(names.filter(Boolean));
+  }, [subjects, activeSemester, normalizeSubjectName]);
 
+  useEffect(() => {
     if (subjectsLoading) return;
 
     const loadQuizzes = async () => {
       try {
         setQuizzesLoading(true);
 
-        // Check cache first
         const cacheKey = `home_quizzes_approved`;
         const cached = queryCache.get<Quiz[]>(cacheKey);
+        
+        let rows: Quiz[] = [];
         if (cached) {
-          const visibleSubjectNames = (subjects as Subject[])
-            .filter(
-              (s) =>
-                s.show_on_home &&
-                (!s.semester || Number(s.semester) === activeSemester),
-            )
-            .map((s) => s.name);
-          const visibleSubjectSet = new Set(
-            visibleSubjectNames
-              .map((n: string) => normalizeSubjectName(n))
-              .filter(Boolean),
-          );
+          rows = cached;
+        } else {
+          const { data, error } = await supabase
+            .from("quizzes")
+            .select("*")
+            .eq("status", "approved")
+            .order("created_at", { ascending: false })
+            .limit(200);
 
-          const filtered = cached.filter((q: Quiz) => {
-            let subject = (q.subject || "").toString();
-            if (!subject) {
-              try {
-                const parsed = JSON.parse(q.description || "{}");
-                if (typeof parsed?.subject === "string") {
-                  subject = parsed.subject;
-                }
-              } catch {
-                /* ignore */
-              }
-            }
-            const normalizedQuizSubject = normalizeSubjectName(subject);
-            return (
-              normalizedQuizSubject &&
-              visibleSubjectSet.has(normalizedQuizSubject)
-            );
-          });
-
-          setDisplayQuizzes(filtered.slice(0, 10));
-          setQuizzesLoading(false);
-          return;
+          if (error) throw error;
+          rows = (data || []) as Quiz[];
+          queryCache.set(cacheKey, rows, cacheTTL.quizzes);
         }
-
-        const { data, error } = await supabase
-          .from("quizzes")
-          .select("*")
-          .eq("status", "approved")
-          .order("created_at", { ascending: false })
-          .limit(200);
-
-        if (error) throw error;
-
-        const rows = (data || []) as Quiz[];
-
-        // Cache the raw approved quizzes
-        queryCache.set(cacheKey, rows, cacheTTL.quizzes);
 
         const filtered = rows.filter((q) => {
           let subject = (q.subject || "").toString();
-
           if (!subject) {
             try {
               const parsed = JSON.parse(q.description || "{}");
               if (typeof parsed?.subject === "string") {
                 subject = parsed.subject;
               }
-            } catch {
-              // ignore
-            }
+            } catch { /* ignore */ }
           }
-
           const normalizedQuizSubject = normalizeSubjectName(subject);
-          if (!normalizedQuizSubject) return false;
-          return visibleSubjectSet.has(normalizedQuizSubject);
+          return normalizedQuizSubject && visibleSubjectSet.has(normalizedQuizSubject);
         });
 
-        setDisplayQuizzes(filtered.slice(0, 10)); // Limit to top 10 for Home page
-      } catch {
+        const limited = filtered.slice(0, 10);
+        
+        setDisplayQuizzes(prev => {
+          if (prev.length === limited.length && 
+              prev.every((q, i) => q.id === limited[i].id)) {
+            return prev;
+          }
+          return limited;
+        });
+      } catch (err) {
+        console.error("Failed to load quizzes:", err);
         setDisplayQuizzes([]);
       } finally {
         setQuizzesLoading(false);
@@ -203,7 +169,7 @@ export default function HomePage() {
     };
 
     loadQuizzes();
-  }, [subjects, subjectsLoading, activeSemester]);
+  }, [subjectsLoading, visibleSubjectSet, normalizeSubjectName]);
 
   const handleEditSummary = (summary: SummaryWithRatings) => {
     setEditingSummary(summary);

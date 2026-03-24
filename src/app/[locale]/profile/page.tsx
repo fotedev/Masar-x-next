@@ -44,9 +44,10 @@ export default function ProfilePage() {
     departments,
     loading: academicLoading,
     optionsLoading,
-    setUserAcademic,
   } = useUserAcademic();
+  const { setUserAcademic } = useUserAcademic();
 
+  const [mounted, setMounted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState(displayName || "");
   const [isSaving, setIsSaving] = useState(false);
@@ -83,6 +84,10 @@ export default function ProfilePage() {
     if (hours > 0) return t("cooldownWithHours", { hours, minutes });
     return t("cooldownWithMinutes", { minutes });
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -227,7 +232,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (authLoading) {
+  if (!mounted || authLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-brand-navy flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

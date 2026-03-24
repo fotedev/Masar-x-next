@@ -15,10 +15,16 @@ export function QuizDashboardHeader({
   return (
     <div className="flex justify-between items-center mb-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 
+          className="text-3xl font-bold text-gray-900 dark:text-white"
+          dir="auto"
+        >
           {isAdmin ? t("manageExams") : t("exams")}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <p 
+          className="text-gray-600 dark:text-gray-400 mt-2"
+          dir="auto"
+        >
           {isAdmin ? t("manageExamsDesc") : t("browseExamsDesc")}
         </p>
       </div>

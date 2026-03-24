@@ -105,10 +105,15 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label 
+                htmlFor="course-title"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 عنوان الكورس *
               </label>
               <input
+                id="course-title"
+                name="title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -119,10 +124,15 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label 
+                htmlFor="course-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 وصف الكورس *
               </label>
               <Textarea
+                id="course-description"
+                name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full"
@@ -133,10 +143,15 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label 
+                htmlFor="course-price"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 السعر (بالجنيه المصري)
               </label>
               <input
+                id="course-price"
+                name="price"
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
@@ -154,6 +169,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
               <input
                 type="checkbox"
                 id="is_academic_course"
+                name="is_academic"
                 checked={isAcademic}
                 onChange={(e) => setIsAcademic(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"

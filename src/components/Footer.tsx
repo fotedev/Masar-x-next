@@ -48,9 +48,13 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-500">
             <span className="text-brand-blue font-bold">Aboalayoun</span>
-            <span>{tFooter("by")}</span>
+            <span lang="en" dir="ltr" className="bidi-ltr">
+              {tFooter("by")}
+            </span>
             <Heart className="w-3 h-3 text-white fill-white animate-pulse" />
-            <span>{tFooter("madeWith")}</span>
+            <span lang="en" dir="ltr" className="bidi-ltr">
+              {tFooter("madeWith")}
+            </span>
           </div>
         </div>
       </div>

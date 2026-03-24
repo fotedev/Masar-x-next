@@ -71,10 +71,15 @@ export function AddLectureModal(props: {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
+                <label 
+                  htmlFor="lecture-title"
+                  className="block text-sm font-bold text-slate-500 mb-2"
+                >
                   {tSubjectPage("lectureForm.titleLabel")}
                 </label>
                 <input
+                  id="lecture-title"
+                  name="title"
                   type="text"
                   value={lectureFormData.title}
                   onChange={(e) =>
@@ -92,10 +97,15 @@ export function AddLectureModal(props: {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
+                <label 
+                  htmlFor="lecture-label"
+                  className="block text-sm font-bold text-slate-500 mb-2"
+                >
                   {tSubjectPage("lectureForm.labelLabel")}
                 </label>
                 <input
+                  id="lecture-label"
+                  name="label"
                   type="text"
                   value={lectureFormData.label}
                   onChange={(e) =>
@@ -109,10 +119,15 @@ export function AddLectureModal(props: {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-500 mb-2">
+                <label 
+                  htmlFor="lecture-order"
+                  className="block text-sm font-bold text-slate-500 mb-2"
+                >
                   {tSubjectPage("orderOptional")}
                 </label>
                 <input
+                  id="lecture-order"
+                  name="orderIndex"
                   type="number"
                   value={lectureFormData.orderIndex}
                   onChange={(e) =>

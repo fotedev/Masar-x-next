@@ -56,9 +56,18 @@ export function useReviews(contentId: string, contentType: "summary" | "quiz" | 
                     review,
                 });
             }
-            const { error } = await supabase
-                .from("reviews")
-                .insert(review);
+
+            const { comment, ...rest } = review as ReviewInsert & {
+                comment?: string | null;
+                content?: string | null;
+            };
+
+            const insertPayload = {
+                ...rest,
+                content: (review as { content?: string | null }).content ?? comment ?? null,
+            };
+
+            const { error } = await supabase.from("reviews").insert(insertPayload);
 
             if (error) {
                 if (isDev) {

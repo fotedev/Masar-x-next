@@ -68,7 +68,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
     if (t === "page") return "صفحة";
     if (t === "login") return "تسجيل دخول";
     if (t === "logout") return "تسجيل خروج";
-    if (t === "ai_assistant") return "المساعد الذكي";
+    if (t === "ai_assistant") return "ZANE AI";
     if (t === "unknown") return "غير معروف";
     return contentType || "غير مححدد";
   };

@@ -14,26 +14,14 @@ import { useLectureContent } from "@/hooks/useLectureContent";
 import { useManageLectures } from "@/hooks/useManageLectures";
 import { toast } from "react-hot-toast";
 import { logger } from "@/lib/logger";
-import type { ContentItem } from "@/components/subject/lecture-detail/types";
+import type { ContentItem, LectureIndexItem } from "@/components/subject/lecture-detail/types";
 
-type SubjectLecture = {
+interface SubjectLecture {
   id: string;
   lecture_key: string;
   lecture_label: string;
   order_index: number;
-};
-
-type LectureIndexItem = {
-  key: string;
-  label: string;
-  order: number;
-  counts: {
-    summaries: number;
-    videos: number;
-    files: number;
-    exams: number;
-  };
-};
+}
 
 export default function SubjectPage() {
   const params = useParams();
@@ -42,6 +30,7 @@ export default function SubjectPage() {
   const { user, isAdmin } = useAuth();
   const locale = params.locale as string;
   const isRTL = locale === "ar";
+  const lectureIdParam = params.lectureId as string | undefined;
 
   const {
     lectureFormData,
@@ -170,7 +159,26 @@ export default function SubjectPage() {
           .order("order_index", { ascending: true });
 
         if (lecturesError) throw lecturesError;
-        setSubjectLectures((lectures || []) as SubjectLecture[]);
+        const fetchedLectures = (lectures || []) as SubjectLecture[];
+        setSubjectLectures(fetchedLectures);
+
+        // If lectureIdParam is present, select that lecture automatically
+        if (lectureIdParam) {
+          const targetLec = fetchedLectures.find(l => l.lecture_key === lectureIdParam);
+          if (targetLec) {
+            setSelectedLecture({
+              key: targetLec.lecture_key,
+              label: targetLec.lecture_label,
+              order: targetLec.order_index,
+              counts: { summaries: 0, videos: 0, files: 0, exams: 0 }
+            });
+            setSelectedLectureForContent({
+              id: targetLec.id,
+              lecture_key: targetLec.lecture_key,
+              lecture_label: targetLec.lecture_label,
+            });
+          }
+        }
       }
     } catch (error) {
       logger.error("Error fetching subject data", error);
@@ -178,11 +186,36 @@ export default function SubjectPage() {
     } finally {
       setLoading(false);
     }
-  }, [normalizedSubjectName, t]);
+  }, [normalizedSubjectName, t, lectureIdParam]);
 
   useEffect(() => {
     fetchSubjectData();
   }, [fetchSubjectData]);
+
+  // Sync selected lecture when lectureIdParam changes (for browser back/forward)
+  useEffect(() => {
+    if (subjectLectures.length > 0) {
+      if (lectureIdParam) {
+        const targetLec = subjectLectures.find(l => l.lecture_key === lectureIdParam);
+        if (targetLec && selectedLecture?.key !== lectureIdParam) {
+          setSelectedLecture({
+            key: targetLec.lecture_key,
+            label: targetLec.lecture_label,
+            order: targetLec.order_index,
+            counts: { summaries: 0, videos: 0, files: 0, exams: 0 }
+          });
+          setSelectedLectureForContent({
+            id: targetLec.id,
+            lecture_key: targetLec.lecture_key,
+            lecture_label: targetLec.lecture_label,
+          });
+        }
+      } else {
+        setSelectedLecture(null);
+        setSelectedLectureForContent(null);
+      }
+    }
+  }, [lectureIdParam, subjectLectures]);
 
   const totalPossibleItems = useMemo(() => {
     return lectureIndex.length;
@@ -191,9 +224,9 @@ export default function SubjectPage() {
   // YouTube Utility
   const getYouTubeId = useCallback((url: string) => {
     const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      /^.*(?:youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
     const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
+    return match && match[1].length === 11 ? match[1] : null;
   }, []);
 
   // Fetch User Progress
@@ -368,8 +401,8 @@ export default function SubjectPage() {
             key: lectureFormData.key,
             orderIndex: lectureFormData.orderIndex,
           }}
-          setLectureFormData={(updater) => setLectureFormData(updater)}
-          getLectureInfoFromTitle={(title) => ({
+          setLectureFormData={(updater: any) => setLectureFormData(updater)}
+          getLectureInfoFromTitle={(title: string) => ({
             key:
               inferLectureKeyFromTitle(
                 title,
