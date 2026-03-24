@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import { ChevronLeft, FileText, Video, Trophy, Clock } from "lucide-react";
-import { Link } from "@/navigation";
-import { useParams } from "next/navigation";
 
 interface LectureCardProps {
   lec: {
@@ -22,12 +20,13 @@ export function LectureCard({
   lec,
   idx,
   tSubjectPage,
-}: Omit<LectureCardProps, "onSelectLecture">) {
-  const params = useParams();
-  const subject = params.subject as string;
-
+  onSelectLecture,
+}: LectureCardProps) {
   return (
-    <Link href={`/subjects/${subject}/lectures/${lec.key}`}>
+    <div 
+      onClick={() => onSelectLecture(lec.key)}
+      className="cursor-pointer"
+    >
       <motion.div
         variants={{
           hidden: { opacity: 0, scale: 0.95 },
@@ -85,6 +84,6 @@ export function LectureCard({
           </span>
         </div>
       </motion.div>
-    </Link>
+    </div>
   );
 }
