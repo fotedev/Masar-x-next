@@ -56,6 +56,7 @@ self.addEventListener('fetch', (event) => {
   // تخطي API calls - خليهم يروحوا للشبكة
   if (url.pathname.startsWith('/api/') ||
     url.hostname.includes('supabase') ||
+    url.hostname.includes('puter.com') ||
     event.request.method !== 'GET') {
     return;
   }
