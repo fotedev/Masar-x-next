@@ -160,8 +160,7 @@ export default function HomePage() {
           }
           return limited;
         });
-      } catch (err) {
-        console.error("Failed to load quizzes:", err);
+      } catch {
         setDisplayQuizzes([]);
       } finally {
         setQuizzesLoading(false);
