@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useLocale } from "next-intl";
 import { Bot, User } from "lucide-react";
 import { LatexRenderer } from "@/components/LatexRenderer";
 
@@ -18,6 +19,8 @@ interface ChatMessageItemProps {
 export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
 }) => {
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const isUser = message.type === "user";
 
   const normalizeLatexDelimiters = (text: string) => {
@@ -72,16 +75,20 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     );
   };
 
+  const alignmentClass = (isUser !== isRTL) ? "justify-end" : "justify-start";
+  const directionClass = (isUser !== isRTL) ? "flex-row-reverse" : "flex-row";
+  const roundedClass = isUser 
+    ? (isRTL ? "rounded-tr-sm" : "rounded-tl-sm")
+    : (isRTL ? "rounded-tl-sm" : "rounded-tr-sm");
+  
+  const timestampAlignmentClass = (isUser !== isRTL) ? "text-right" : "text-left";
+
   return (
     <div
-      className={`flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300 ${
-        isUser ? "justify-start" : "justify-end"
-      }`}
+      className={`flex w-full animate-in fade-in slide-in-from-bottom-2 duration-300 ${alignmentClass}`}
     >
       <div
-        className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${
-          isUser ? "flex-row" : "flex-row-reverse"
-        }`}
+        className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${directionClass}`}
       >
         <div
           className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-sm ${
@@ -100,8 +107,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           <div
             className={`px-5 py-3.5 rounded-3xl text-[15px] leading-relaxed shadow-sm ${
               isUser
-                ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700/60 rounded-tl-sm"
-                : "bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 rounded-tr-sm"
+                ? `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700/60 ${roundedClass}`
+                : `bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
             }`}
           >
             {isUser ? (
@@ -111,9 +118,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             )}
           </div>
           <div
-            className={`text-[11px] px-2 font-medium opacity-60 ${
-              isUser ? "text-slate-500 text-left" : "text-slate-500 text-right"
-            }`}
+            className={`text-[11px] px-2 font-medium opacity-60 text-slate-500 ${timestampAlignmentClass}`}
           >
             {message.timestamp.toLocaleTimeString([], {
               hour: "2-digit",
