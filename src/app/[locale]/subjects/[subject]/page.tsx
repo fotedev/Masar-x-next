@@ -401,7 +401,7 @@ export default function SubjectPage() {
             key: lectureFormData.key,
             orderIndex: lectureFormData.orderIndex,
           }}
-          setLectureFormData={(updater: (prev: any) => any) => setLectureFormData(updater)}
+          setLectureFormData={(updater: (prev: typeof lectureFormData) => typeof lectureFormData) => setLectureFormData(updater)}
           getLectureInfoFromTitle={(title: string) => ({
             key:
               inferLectureKeyFromTitle(
