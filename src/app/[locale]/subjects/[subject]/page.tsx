@@ -215,7 +215,7 @@ export default function SubjectPage() {
         setSelectedLectureForContent(null);
       }
     }
-  }, [lectureIdParam, subjectLectures]);
+  }, [lectureIdParam, subjectLectures, selectedLecture?.key]);
 
   const totalPossibleItems = useMemo(() => {
     return lectureIndex.length;
@@ -401,7 +401,7 @@ export default function SubjectPage() {
             key: lectureFormData.key,
             orderIndex: lectureFormData.orderIndex,
           }}
-          setLectureFormData={(updater: any) => setLectureFormData(updater)}
+          setLectureFormData={(updater: (prev: any) => any) => setLectureFormData(updater)}
           getLectureInfoFromTitle={(title: string) => ({
             key:
               inferLectureKeyFromTitle(
