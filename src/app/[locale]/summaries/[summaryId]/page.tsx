@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -221,12 +222,15 @@ export default function SummaryDetailPage() {
                         src={summary.profiles.avatar_url}
                         alt="Contributor Avatar"
                         fill
+                        sizes="32px"
                         className="rounded-full object-cover border border-white/20"
                         unoptimized
                       />
                     </div>
                   ) : (
-                    <User className="w-5 h-5 text-brand-sky" />
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
                   )}
                   <span>{summary.contributor_name}</span>
                 </div>
@@ -280,7 +284,7 @@ export default function SummaryDetailPage() {
               </div>
               <button
                 onClick={() =>
-                  router.push(`/quiz-play?quizId=${linkedQuiz.id}`)
+                  router.push(`/quiz-play/${linkedQuiz.id}`)
                 }
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-600/25 transition-all duration-300"
               >

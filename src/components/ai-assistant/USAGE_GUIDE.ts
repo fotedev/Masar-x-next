@@ -1,5 +1,5 @@
 /**
- * AI Assistant Components Usage Guide
+ * ZANE AI Components Usage Guide
  */
 
 export const COMPARISON = {

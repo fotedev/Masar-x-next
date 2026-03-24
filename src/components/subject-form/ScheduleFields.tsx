@@ -18,10 +18,15 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
   return (
     <>
       <div>
-        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+        <label 
+          htmlFor="subject-schedule"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+        >
           الجدول الدراسي
         </label>
         <input
+          id="subject-schedule"
+          name="schedule"
           type="text"
           value={formData.schedule || ""}
           onChange={(e) =>
@@ -35,10 +40,15 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+        <label 
+          htmlFor="subject-location"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+        >
           موقع المحاضرة
         </label>
         <input
+          id="subject-location"
+          name="location"
           type="text"
           value={formData.location || ""}
           onChange={(e) =>
@@ -52,10 +62,15 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+        <label 
+          htmlFor="subject-description"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+        >
           نبذة عن المادة
         </label>
         <textarea
+          id="subject-description"
+          name="description"
           value={formData.description || ""}
           onChange={(e) =>
             setFormData(

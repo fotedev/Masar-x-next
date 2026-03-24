@@ -34,6 +34,7 @@ export function AttachmentSection({
         <div className="flex flex-col sm:flex-row gap-4">
           <label className="flex items-center cursor-pointer">
             <input
+              id="attachment-type-file"
               type="radio"
               name="attachmentType"
               value="file"
@@ -47,6 +48,7 @@ export function AttachmentSection({
           </label>
           <label className="flex items-center cursor-pointer">
             <input
+              id="attachment-type-link"
               type="radio"
               name="attachmentType"
               value="link"
@@ -107,10 +109,15 @@ export function AttachmentSection({
 
       {attachmentType === "link" && (
         <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+          <label 
+            htmlFor="drive-link"
+            className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2"
+          >
             رابط Google Drive
           </label>
           <input
+            id="drive-link"
+            name="driveLink"
             type="url"
             value={driveLink}
             onChange={(e) => setDriveLink(e.target.value)}

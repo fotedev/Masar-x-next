@@ -174,6 +174,7 @@ export function LectureDetailView(props: {
             liveTag={tSubjectPage("liveTag")}
             markLessonAsCompletedLabel={tSubjectPage("markLessonAsCompleted")}
             unmarkLessonCompletedLabel={tSubjectPage("unmarkLessonCompleted")}
+            mustLoginErrorLabel={tSubjectPage("errors.mustLogin")}
           />
 
           <LectureHomeworkSection

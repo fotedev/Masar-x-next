@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubjects } from "@/hooks/useSubjects";
@@ -21,17 +21,35 @@ import { QuizzesEmptyState } from "./_components/QuizzesEmptyState";
 import { PreviousExamsButton } from "./_components/PreviousExamsButton";
 import { QuizzesLoading } from "./_components/QuizzesLoading";
 
-const QuizImportModal = dynamic(() => import("@/components/quizzes/QuizImportModal").then(mod => mod.QuizImportModal), {
-  ssr: false,
-});
+const QuizImportModal = dynamic(
+  () =>
+    import("@/components/quizzes/QuizImportModal").then(
+      (mod) => mod.QuizImportModal,
+    ),
+  {
+    ssr: false,
+  },
+);
 
-const QuizFormModal = dynamic(() => import("@/components/quizzes/QuizFormModal").then(mod => mod.QuizFormModal), {
-  ssr: false,
-});
+const QuizFormModal = dynamic(
+  () =>
+    import("@/components/quizzes/QuizFormModal").then(
+      (mod) => mod.QuizFormModal,
+    ),
+  {
+    ssr: false,
+  },
+);
 
-const QuizDeleteDialog = dynamic(() => import("./_components/QuizDeleteDialog").then(mod => mod.QuizDeleteDialog), {
-  ssr: false,
-});
+const QuizDeleteDialog = dynamic(
+  () =>
+    import("./_components/QuizDeleteDialog").then(
+      (mod) => mod.QuizDeleteDialog,
+    ),
+  {
+    ssr: false,
+  },
+);
 
 const getErrorMessage = (err: unknown): string | null => {
   if (err && typeof err === "object" && "message" in err) {
@@ -299,7 +317,7 @@ function QuizDashboardInternal() {
         quizzesWithMeta={quizzesWithMeta}
         isAdmin={isAdmin}
         t={t}
-        onPlay={(q) => router.push(`/quiz-play?quizId=${q.id}`)}
+        onPlay={(q) => router.push(`/quiz-play/${q.id}`)}
         onEdit={handleEditQuiz}
         onDelete={handleDeleteQuiz}
         onViewSummary={(id) => router.push(`/summaries/${id}`)}

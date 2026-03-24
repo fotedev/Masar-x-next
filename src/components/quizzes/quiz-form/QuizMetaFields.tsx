@@ -51,10 +51,15 @@ export function QuizMetaFields(props: {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="quiz-title"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("examTitle")}
         </label>
         <input
+          id="quiz-title"
+          name="title"
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -64,10 +69,15 @@ export function QuizMetaFields(props: {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="quiz-duration"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("examDurationMinutes")}
         </label>
         <input
+          id="quiz-duration"
+          name="durationMinutes"
           type="number"
           min={1}
           value={formData.durationMinutes}
@@ -81,11 +91,16 @@ export function QuizMetaFields(props: {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="quiz-year"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             {onboardingT("academicLevel")}{" "}
             <span className="text-red-500">*</span>
           </label>
           <select
+            id="quiz-year"
+            name="year"
             required
             value={formData.year}
             onChange={(e) =>
@@ -110,10 +125,15 @@ export function QuizMetaFields(props: {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="quiz-semester"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             {t("selectSemester")} <span className="text-red-500">*</span>
           </label>
           <select
+            id="quiz-semester"
+            name="semester"
             required
             value={formData.semester}
             onChange={(e) =>
@@ -135,10 +155,15 @@ export function QuizMetaFields(props: {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="quiz-department"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             {onboardingT("department")} <span className="text-red-500">*</span>
           </label>
           <select
+            id="quiz-department"
+            name="department"
             required
             value={formData.department}
             onChange={(e) =>
@@ -166,10 +191,15 @@ export function QuizMetaFields(props: {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="quiz-subject"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             {t("selectSubject")} <span className="text-red-500">*</span>
           </label>
           <select
+            id="quiz-subject"
+            name="subject"
             required
             value={formData.subject}
             onChange={(e) =>
@@ -197,10 +227,15 @@ export function QuizMetaFields(props: {
 
         {summaries.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label 
+              htmlFor="quiz-summary"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               {t("linkSummary")}
             </label>
             <select
+              id="quiz-summary"
+              name="summaryId"
               value={formData.summaryId}
               onChange={(e) =>
                 setFormData({ ...formData, summaryId: e.target.value })
@@ -219,10 +254,15 @@ export function QuizMetaFields(props: {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="quiz-description"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("examDescription")}
         </label>
         <textarea
+          id="quiz-description"
+          name="description"
           value={formData.description}
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })

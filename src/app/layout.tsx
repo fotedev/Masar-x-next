@@ -1,6 +1,6 @@
 import { Inter, Almarai } from "next/font/google";
 import "../index.css";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 const almarai = Almarai({
@@ -12,6 +12,7 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://masarx.vercel.app";
 
 import { getTranslations } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 
 type Locale = "ar" | "en";
 
@@ -42,14 +43,35 @@ export async function generateMetadata({
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const requestLocale = headers().get("x-next-intl-locale");
-  const locale =
-    requestLocale === "en" || requestLocale === "ar" ? requestLocale : "ar";
+  const headerLocale = headers().get("x-next-intl-locale");
+  const cookieLocale = cookies().get("NEXT_LOCALE")?.value;
+  const normalizeLocale = (value: string | null | undefined): Locale | null =>
+    value === "en" || value === "ar" ? value : null;
+
+  const localeFromRequest = async (): Promise<Locale> => {
+    try {
+      const intlLocale = await getLocale();
+      return (
+        normalizeLocale(intlLocale) ??
+        normalizeLocale(headerLocale) ??
+        normalizeLocale(cookieLocale) ??
+        "ar"
+      );
+    } catch {
+      return (
+        normalizeLocale(headerLocale) ??
+        normalizeLocale(cookieLocale) ??
+        "ar"
+      );
+    }
+  };
+
+  const locale = await localeFromRequest();
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -70,7 +92,7 @@ export default function RootLayout({
               name: "MasarX",
               url: SITE_URL,
               description:
-                "Study summaries, quizzes, courses, and AI assistant platform",
+                "Study summaries, quizzes, courses, and ZANE AI assistant platform",
             }),
           }}
         />

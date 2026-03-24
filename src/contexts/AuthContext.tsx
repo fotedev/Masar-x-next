@@ -316,40 +316,37 @@ export function AuthProvider({
         setDisplayName(nameFromSession);
 
         if (currentUser) {
-          // 1. Initial fallback to metadata (fast)
-          const metadata = currentUser.user_metadata as {
-            custom_avatar?: string;
-            avatar_url?: string;
-          };
-          const metadataAvatar =
-            metadata?.custom_avatar || metadata?.avatar_url;
-          if (metadataAvatar) {
-            setAvatarUrl(metadataAvatar);
-          }
+          // Fetch Source of Truth from the profiles table
+          const fetchProfileAvatar = async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from("profiles")
+                .select("avatar_url")
+                .eq("id", currentUser.id)
+                .maybeSingle();
 
-          // 2. Fetch the "Source of Truth" from the profiles table
-          supabase
-            .from("profiles")
-            .select("avatar_url")
-            .eq("id", currentUser.id)
-            .maybeSingle()
-            .then(
-              ({
-                data: profileData,
-                error,
-              }: {
-                data: { avatar_url: string | null } | null;
-                error: unknown;
-              }) => {
-                // If we have a database entry, it MUST override the metadata (Google/OAuth)
-                if (!error && profileData?.avatar_url) {
-                  setAvatarUrl(profileData.avatar_url);
-                }
-              },
-              () => {
-                /* ignore */
-              },
-            );
+              if (!error && profileData?.avatar_url) {
+                setAvatarUrl(profileData.avatar_url);
+              } else {
+                // Fallback to metadata ONLY if database has no custom avatar
+                const metadata = currentUser.user_metadata as {
+                  custom_avatar?: string;
+                  avatar_url?: string;
+                };
+                setAvatarUrl(metadata?.custom_avatar || metadata?.avatar_url || null);
+              }
+            } catch (err) {
+              logger.error("Error fetching profile avatar", err);
+              // Safe fallback
+              const metadata = currentUser.user_metadata as {
+                custom_avatar?: string;
+                avatar_url?: string;
+              };
+              setAvatarUrl(metadata?.custom_avatar || metadata?.avatar_url || null);
+            }
+          };
+
+          fetchProfileAvatar();
         } else {
           setAvatarUrl(null);
         }
@@ -443,40 +440,35 @@ export function AuthProvider({
         }
 
         if (currentUser) {
-          // 1. Initial fallback to metadata
-          const metadata = currentUser.user_metadata as {
-            custom_avatar?: string;
-            avatar_url?: string;
-          };
-          const metadataAvatar =
-            metadata?.custom_avatar || metadata?.avatar_url;
-          if (metadataAvatar) {
-            setAvatarUrl(metadataAvatar);
-          }
+          // Fetch Source of Truth from database
+          const fetchProfileAvatar = async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from("profiles")
+                .select("avatar_url")
+                .eq("id", currentUser.id)
+                .maybeSingle();
 
-          // 2. Fetch Source of Truth from database
-          supabase
-            .from("profiles")
-            .select("avatar_url")
-            .eq("id", currentUser.id)
-            .maybeSingle()
-            .then(
-              ({
-                data: profileData,
-                error,
-              }: {
-                data: { avatar_url: string | null } | null;
-                error: unknown;
-              }) => {
-                // Database always wins over OAuth metadata
-                if (!error && profileData?.avatar_url) {
-                  setAvatarUrl(profileData.avatar_url);
-                }
-              },
-              () => {
-                /* ignore */
-              },
-            );
+              if (!error && profileData?.avatar_url) {
+                setAvatarUrl(profileData.avatar_url);
+              } else {
+                const metadata = currentUser.user_metadata as {
+                  custom_avatar?: string;
+                  avatar_url?: string;
+                };
+                setAvatarUrl(metadata?.custom_avatar || metadata?.avatar_url || null);
+              }
+            } catch (err) {
+              logger.error("Error fetching profile avatar on change", err);
+              const metadata = currentUser.user_metadata as {
+                custom_avatar?: string;
+                avatar_url?: string;
+              };
+              setAvatarUrl(metadata?.custom_avatar || metadata?.avatar_url || null);
+            }
+          };
+
+          fetchProfileAvatar();
 
           if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
             verifyAdminStatus(currentUser);

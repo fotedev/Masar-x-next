@@ -1,8 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/navigation";
 import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { quizService } from "../../../lib/quiz";
@@ -44,8 +44,11 @@ type AttemptAnswerWithQuestion = AttemptAnswer & {
 export default function QuizAttemptsPage() {
   const t = useTranslations("quizAttempts");
   const commonT = useTranslations("common");
+  const locale = useLocale();
   const { user } = useAuth();
   const router = useRouter();
+
+  const dateLocale = locale === "en" || locale === "ar" ? locale : "ar";
 
   const [loading, setLoading] = useState(true);
   const [attempts, setAttempts] = useState<AttemptRecord[]>([]);
@@ -245,7 +248,7 @@ export default function QuizAttemptsPage() {
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {a.created_at
-                        ? new Date(a.created_at).toLocaleString(t("locale"))
+                        ? new Date(a.created_at).toLocaleString(dateLocale)
                         : ""}
                     </div>
                   </div>
@@ -333,7 +336,7 @@ export default function QuizAttemptsPage() {
                         </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {a._startedAt
-                            ? a._startedAt.toLocaleString(t("locale"))
+                            ? a._startedAt.toLocaleString(dateLocale)
                             : "-"}
                         </div>
                       </div>
