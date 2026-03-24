@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { LanguageToggle } from "./LanguageToggle";
 import { logger } from "@/lib/logger";
 
@@ -18,6 +18,8 @@ import { SecretAccessGate } from "./header/SecretAccessGate";
 export const Header = React.memo(function Header() {
   const tNav = useTranslations("nav");
   const tHeader = useTranslations("header");
+  const locale = useLocale();
+  const dir = locale === "ar" ? "rtl" : "ltr";
   const { user, loading, isAdmin, isAdminLoading, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -339,6 +341,7 @@ export const Header = React.memo(function Header() {
       />
 
       <header
+        dir={dir}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           hasEntered
             ? "translate-y-0 opacity-100"

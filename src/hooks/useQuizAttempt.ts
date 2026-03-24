@@ -16,6 +16,7 @@ interface UseQuizAttemptProps {
     userId: string | undefined;
     totalQuestions: number;
     quizTitle?: string;
+    localOnly?: boolean;
 }
 
 interface DatabaseAnswer {
@@ -41,7 +42,7 @@ interface QuizHistoryEntry {
     quizzes: { title: string };
 }
 
-export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: UseQuizAttemptProps) {
+export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, localOnly = false }: UseQuizAttemptProps) {
     const [attemptId, setAttemptId] = useState<string | null>(null);
     const [answers, setAnswers] = useState<Record<string, Answer>>({}); // Map questionId -> Answer
     const [loading, setLoading] = useState(true);
@@ -51,6 +52,11 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
 
     // Initialize attempt
     useEffect(() => {
+        if (localOnly) {
+            setLoading(false);
+            return;
+        }
+
         if (!userId || !quizId) {
             setLoading(false);
             return;
@@ -105,7 +111,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         };
 
         initAttempt();
-    }, [quizId, userId]);
+    }, [quizId, userId, localOnly]);
 
     // Save answer
     const saveAnswer = useCallback(async (questionId: string, selectedOption: number, isCorrect: boolean) => {
@@ -127,7 +133,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
             return next;
         });
 
-        if (!attemptId || !userId) {
+        if (localOnly || !attemptId || !userId) {
             return;
         }
 
@@ -142,7 +148,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         } finally {
             setSaving(false);
         }
-    }, [attemptId, userId, quizId]);
+    }, [attemptId, userId, quizId, localOnly]);
 
     // Finish attempt
     const finishAttempt = useCallback(async (score: number, timeTakenSeconds?: number) => {
@@ -185,7 +191,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
         }
 
         // If logged in and have attemptId, sync to DB
-        if (attemptId && userId) {
+        if (!localOnly && attemptId && userId) {
             try {
                 setSaving(true);
                 const answersJson: Json[] = answersArray.map((a) => ({
@@ -205,7 +211,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle }: Us
                 setSaving(false);
             }
         }
-    }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle]);
+    }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle, localOnly]);
 
     return {
         attemptId,

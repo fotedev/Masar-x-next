@@ -32,11 +32,16 @@ export function QuizQuestionEditor(props: {
     <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label 
+            htmlFor={`question-type-${questionIndex}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             {t("questionIndex", { number: questionIndex + 1 })}
           </label>
           <div className="flex items-center gap-2">
             <select
+              id={`question-type-${questionIndex}`}
+              name={`question-type-${questionIndex}`}
               value={question.type}
               onChange={(e) =>
                 onUpdateQuestion(questionIndex, "type", e.target.value)
@@ -56,6 +61,8 @@ export function QuizQuestionEditor(props: {
           </div>
         </div>
         <input
+          id={`question-text-${questionIndex}`}
+          name={`question-text-${questionIndex}`}
           type="text"
           value={question.question}
           onChange={(e) =>
@@ -79,7 +86,10 @@ export function QuizQuestionEditor(props: {
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor={`question-image-${questionIndex}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("questionImage")}
         </label>
         <div className="flex items-start gap-4">
@@ -102,7 +112,10 @@ export function QuizQuestionEditor(props: {
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+            <label 
+              htmlFor={`question-image-${questionIndex}`}
+              className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+            >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <Upload className="w-6 h-6 text-gray-400 mb-2" />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -110,6 +123,8 @@ export function QuizQuestionEditor(props: {
                 </p>
               </div>
               <input
+                id={`question-image-${questionIndex}`}
+                name={`question-image-${questionIndex}`}
                 type="file"
                 className="hidden"
                 accept="image/*"
@@ -139,6 +154,7 @@ export function QuizQuestionEditor(props: {
                 }`}
               >
                 <input
+                  id={`correct-${questionIndex}-option-${optionIndex}`}
                   type="radio"
                   name={`correct-${questionIndex}`}
                   checked={question.correctAnswer === optionIndex}
@@ -159,6 +175,7 @@ export function QuizQuestionEditor(props: {
               <div key={optionIndex} className="flex flex-col gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <input
+                    id={`correct-${questionIndex}-radio-${optionIndex}`}
                     type="radio"
                     name={`correct-${questionIndex}`}
                     checked={question.correctAnswer === optionIndex}
@@ -168,6 +185,8 @@ export function QuizQuestionEditor(props: {
                     className="text-blue-600"
                   />
                   <input
+                    id={`question-${questionIndex}-option-${optionIndex}`}
+                    name={`question-${questionIndex}-option-${optionIndex}`}
                     type="text"
                     value={option}
                     onChange={(e) =>
@@ -189,10 +208,15 @@ export function QuizQuestionEditor(props: {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor={`question-explanation-${questionIndex}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("answerExplanation")}
         </label>
         <input
+          id={`question-explanation-${questionIndex}`}
+          name={`question-explanation-${questionIndex}`}
           type="text"
           value={question.explanation}
           onChange={(e) =>

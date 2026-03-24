@@ -24,6 +24,10 @@ interface QuizPlayerProps {
   };
   onComplete?: (score: number) => void;
   onClose?: () => void;
+  forceLocalAttempt?: boolean;
+  showSubmitForReview?: boolean;
+  onSubmitForReview?: () => void | Promise<void>;
+  isSubmittingForReview?: boolean;
 }
 
 export function QuizPlayer({
@@ -31,11 +35,15 @@ export function QuizPlayer({
   quizData,
   onComplete,
   onClose,
+  forceLocalAttempt = false,
+  showSubmitForReview = false,
+  onSubmitForReview,
+  isSubmittingForReview = false,
 }: QuizPlayerProps) {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
-  const t = useTranslations("quiz");
-
+  const tQuizzes = useTranslations("quizzes");
+  
   const { loading, quiz, questions, loadQuiz } = useQuizPlayerData({
     quizId,
     quizData,
@@ -53,9 +61,10 @@ export function QuizPlayer({
     error: attemptError,
   } = useQuizAttempt({
     quizId: quizId ?? "local",
-    userId: user?.id || "guest",
+    userId: forceLocalAttempt ? undefined : user?.id || "guest",
     totalQuestions: questions.length,
     quizTitle: quiz?.title || "Quiz",
+    localOnly: forceLocalAttempt,
   });
 
   const score = useMemo(
@@ -84,7 +93,7 @@ export function QuizPlayer({
           <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
         </div>
         <p className="text-gray-500 dark:text-gray-400 animate-pulse font-medium">
-          {t("preparing")}
+          {tQuizzes("preparing")}
         </p>
       </div>
     );
@@ -95,16 +104,16 @@ export function QuizPlayer({
       <div className="text-center p-12 bg-red-50 dark:bg-red-900/10 rounded-2xl border-2 border-dashed border-red-200 dark:border-red-800">
         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-xl font-bold text-red-700 dark:text-red-400 mb-2">
-          {t("failed")}
+          {tQuizzes("failed")}
         </h3>
         <p className="text-red-600/70 dark:text-red-400/70 mb-6">
-          {t("failedDesc")}
+          {tQuizzes("failedDesc")}
         </p>
         <button
           onClick={loadQuiz}
           className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all active:scale-95"
         >
-          {t("retry")}
+          {tQuizzes("retry")}
         </button>
       </div>
     );
@@ -127,7 +136,10 @@ export function QuizPlayer({
         timeTakenSeconds={timeTaken}
         isGuest={isGuest}
         onClose={onClose}
-        t={t}
+        t={tQuizzes}
+        showSubmitForReview={showSubmitForReview}
+        onSubmitForReview={onSubmitForReview}
+        isSubmittingForReview={isSubmittingForReview}
       />
     );
   }
@@ -140,7 +152,7 @@ export function QuizPlayer({
         durationMinutes={runtime.durationMinutes}
         onStart={runtime.startQuiz}
         onClose={onClose}
-        t={t}
+        t={tQuizzes}
       />
     );
   }
@@ -164,7 +176,7 @@ export function QuizPlayer({
       onSubmitAnswer={runtime.handleSubmitAnswer}
       onNextQuestion={runtime.handleNextQuestion}
       onPreviousQuestion={runtime.handlePreviousQuestion}
-      t={t}
+      t={tQuizzes}
     />
   );
 }

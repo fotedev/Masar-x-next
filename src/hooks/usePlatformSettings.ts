@@ -100,7 +100,7 @@ export function usePlatformSettings() {
   }, []);
 
   useEffect(() => {
-    fetchSettings();
+    void fetchSettings();
 
     // Listen for changes from other components/tabs
     const handleCustomEvent = (e: Event) => {
@@ -126,6 +126,8 @@ export function usePlatformSettings() {
     }
 
     // Optional: Realtime subscription to Supabase changes
+    // In dev, Fast Refresh can mount/unmount quickly which may cause noisy websocket logs during teardown.
+    let isActive = true;
     const channel = supabase
       .channel('platform_settings_changes')
       .on(
@@ -137,6 +139,7 @@ export function usePlatformSettings() {
           filter: 'key=eq.active_semester'
         },
         (payload: { new: { value?: { semester?: number } } } | null) => {
+          if (!isActive) return;
           if (!payload) return;
           if (payload.new && payload.new.value) {
             const rawVal = payload.new.value.semester;
@@ -155,11 +158,24 @@ export function usePlatformSettings() {
       .subscribe();
 
     return () => {
+      isActive = false;
       if (typeof window !== 'undefined') {
         window.removeEventListener('activeSemesterChanged', handleCustomEvent);
         window.removeEventListener('storage', handleStorageChange);
       }
-      supabase.removeChannel(channel);
+
+      // Best-effort cleanup to avoid dev-time websocket spam during Fast Refresh.
+      try {
+        channel.unsubscribe();
+      } catch {
+        // ignore
+      }
+
+      try {
+        void supabase.removeChannel(channel);
+      } catch {
+        // ignore
+      }
     };
   }, [fetchSettings]);
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/navigation";
 
 type Translator = (
   key: string,

@@ -1,5 +1,22 @@
-import React from "react";
-import { Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import type { KeyboardEvent, RefObject } from "react";
+import { Brain, Send } from "lucide-react";
+
+import { motion } from "framer-motion";
+import { QuickQuizFromTextModal } from "@/components/ai/QuickQuizFromTextModal";
+import { QuickQuizPlayerModal } from "@/components/ai/QuickQuizPlayerModal";
+import { useLocale } from "next-intl";
+
+type LocalQuizData = {
+  title: string;
+  description?: string;
+  questions: Array<{
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    explanation?: string;
+  }>;
+};
 
 interface ChatInputProps {
   inputMessage: string;
@@ -8,8 +25,10 @@ interface ChatInputProps {
   onSendMessage: () => void;
   suggestions: string[];
   onSuggestionClick: (suggestion: string) => void;
-  inputRef: React.RefObject<HTMLTextAreaElement>;
+  inputRef: RefObject<HTMLTextAreaElement>;
   t: (key: string) => string;
+  isInitialState?: boolean;
+  user?: { id: string } | null;
 }
 
 export function ChatInput({
@@ -17,70 +36,149 @@ export function ChatInput({
   setInputMessage,
   isLoading,
   onSendMessage,
-  suggestions,
-  onSuggestionClick,
   inputRef,
   t,
-}: ChatInputProps) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  isInitialState = false,
+  user = null,
+}: Omit<ChatInputProps, "suggestions" | "onSuggestionClick">) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  const [isQuickQuizOpen, setIsQuickQuizOpen] = useState(false);
+  const [isQuickQuizPlayerOpen, setIsQuickQuizPlayerOpen] = useState(false);
+  const [quickQuizData, setQuickQuizData] = useState<LocalQuizData | null>(null);
+  const [quickQuizSourceText, setQuickQuizSourceText] = useState("");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // 640px is Tailwind's 'sm' breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       onSendMessage();
     }
   };
 
-  return (
-    <div className="shrink-0 p-4 sm:p-6 bg-white dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-700/50">
-      <div className="max-w-4xl mx-auto space-y-4">
-        {/* Suggestions */}
-        {inputMessage.length === 0 && suggestions.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => onSuggestionClick(suggestion)}
-                className="whitespace-nowrap px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-xl transition-all border border-slate-200/50 dark:border-slate-700/50"
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        )}
+  const placeholder = isMobile ? t("inputPlaceholderMobile") : t("inputPlaceholder");
 
+  return (
+    <div className={`shrink-0 p-4 sm:p-6 transition-all duration-500 ${
+      isInitialState 
+        ? "bg-transparent border-t-0 w-full max-w-2xl mx-auto" 
+        : "bg-white dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-700/50"
+    }`}>
+      <div className={`mx-auto space-y-4 ${isInitialState ? "w-full" : "max-w-4xl"}`}>
         {/* Input area */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 dark:from-indigo-500/5 dark:to-blue-500/5 rounded-2xl blur-xl transition-all group-focus-within:blur-2xl opacity-0 group-focus-within:opacity-100" />
-          <div className="relative flex items-end gap-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-2 transition-all focus-within:border-indigo-500/50 dark:focus-within:border-indigo-500/50 shadow-sm">
-            <textarea
-              ref={inputRef}
-              rows={1}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("inputPlaceholder")}
-              className="flex-1 max-h-32 min-h-[44px] bg-transparent border-0 focus:ring-0 resize-none text-slate-900 dark:text-white py-2.5 px-3 text-sm sm:text-base leading-relaxed"
-            />
-            <button
-              onClick={onSendMessage}
-              disabled={!inputMessage.trim() || isLoading}
-              className={`p-2.5 rounded-xl transition-all shrink-0 ${
-                !inputMessage.trim() || isLoading
-                  ? "text-slate-300 dark:text-slate-600"
-                  : "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 active:scale-95"
-              }`}
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
-            </button>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+          className={`relative group flex items-stretch gap-2 sm:gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+        >
+          {/* Brain Button (Opposite side) */}
+          <button
+            onClick={() => setIsQuickQuizOpen(true)}
+            disabled={isLoading}
+            title="اختبار سريع من نص"
+            className={`rounded-2xl transition-all duration-300 shrink-0 flex items-center justify-center border backdrop-blur-md self-stretch ${
+              isInitialState ? "w-14 sm:w-[68px]" : "w-11 sm:w-12"
+            } ${
+              isLoading
+                ? "text-slate-300 dark:text-slate-600 bg-white/5 dark:bg-slate-800/5 border-slate-200/30 dark:border-slate-700/30"
+                : "bg-white/40 dark:bg-slate-800/40 text-cyan-600 dark:text-cyan-400 border-slate-200/50 dark:border-slate-700/50 hover:bg-white/60 dark:hover:bg-slate-700/60 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 active:scale-95"
+            }`}
+            type="button"
+            aria-label="اختبار سريع من نص"
+          >
+            <Brain className={isInitialState ? "w-6 h-6" : "w-5 h-5"} />
+          </button>
+
+          <div className="relative flex-1 group/input">
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/5 to-cyan-500/10 dark:from-cyan-500/5 dark:via-blue-500/2 dark:to-cyan-500/5 rounded-[2.5rem] blur-2xl transition-all duration-500 group-focus-within/input:blur-3xl opacity-0 group-focus-within/input:opacity-100" />
+            <div className={`relative flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 border-2 transition-all duration-300 backdrop-blur-md shadow-sm h-full ${isRTL ? "flex-row-reverse" : ""} ${
+              isInitialState 
+                ? "rounded-[2rem] p-3 border-slate-200/50 dark:border-slate-700/40 focus-within:border-cyan-500/40 focus-within:shadow-[0_0_20px_rgba(34,211,238,0.15)]" 
+                : "rounded-2xl p-2 border-slate-200/80 dark:border-slate-700/60 focus-within:border-cyan-500/50"
+            }`}>
+              <textarea
+                ref={inputRef}
+                rows={1}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                dir="auto"
+                className={`flex-1 max-h-32 bg-transparent border-0 focus:ring-0 resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 ${isRTL ? "text-right placeholder:text-right" : "text-left placeholder:text-left"} ${
+                  isInitialState 
+                    ? "min-h-[60px] py-4 px-6 text-base sm:text-lg" 
+                    : "min-h-[44px] py-2.5 px-3 text-sm sm:text-base"
+                }`}
+              />
+
+              <button
+                onClick={onSendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+                className={`rounded-2xl transition-all duration-300 shrink-0 flex items-center justify-center backdrop-blur-sm self-stretch ${
+                  isInitialState ? "w-14 h-14" : "w-11 h-11"
+                } ${
+                  !inputMessage.trim() || isLoading
+                    ? "text-slate-300 dark:text-slate-600 bg-white/5 dark:bg-slate-800/5 border border-slate-200/20 dark:border-slate-700/20"
+                    : "bg-gradient-to-r from-cyan-600/90 to-blue-600/90 text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-600 hover:to-blue-600 hover:shadow-cyan-500/40 active:scale-95"
+                }`}
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <Send className={`${isInitialState ? "w-6 h-6" : "w-5 h-5"} ${isRTL ? "rotate-180" : ""}`} />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-        <p className="text-[10px] sm:text-xs text-center text-slate-400 dark:text-slate-500 font-medium">
+        </motion.div>
+        
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          dir="auto"
+          className={`text-center text-slate-400 dark:text-slate-500 font-medium transition-all ${
+            isInitialState ? "text-xs sm:text-sm mt-6" : "text-[10px] sm:text-xs"
+          }`}
+        >
           {t("aiDisclaimer")}
-        </p>
+        </motion.p>
       </div>
+
+      <QuickQuizFromTextModal
+        isOpen={isQuickQuizOpen}
+        onClose={() => setIsQuickQuizOpen(false)}
+        onGenerated={(data, sourceText) => {
+          setQuickQuizData(data);
+          setQuickQuizSourceText(sourceText);
+          setIsQuickQuizOpen(false);
+          setIsQuickQuizPlayerOpen(true);
+        }}
+      />
+
+      <QuickQuizPlayerModal
+        isOpen={isQuickQuizPlayerOpen}
+        quizData={quickQuizData}
+        sourceText={quickQuizSourceText}
+        user={user}
+        onClose={() => {
+          setIsQuickQuizPlayerOpen(false);
+          setQuickQuizData(null);
+          setQuickQuizSourceText("");
+        }}
+      />
     </div>
   );
 }

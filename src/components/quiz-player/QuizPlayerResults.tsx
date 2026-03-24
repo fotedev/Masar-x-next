@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AlertCircle,
   RefreshCw,
@@ -6,6 +5,7 @@ import {
   Target,
   Timer,
   Trophy,
+  UploadCloud,
 } from "lucide-react";
 import { ReviewSection } from "../ReviewSection";
 
@@ -18,6 +18,9 @@ export function QuizPlayerResults(props: {
   isGuest: boolean;
   onClose?: () => void;
   t: (key: string, values?: Record<string, string | number | Date>) => string;
+  showSubmitForReview?: boolean;
+  onSubmitForReview?: () => void | Promise<void>;
+  isSubmittingForReview?: boolean;
 }) {
   const {
     quizId,
@@ -28,6 +31,9 @@ export function QuizPlayerResults(props: {
     isGuest,
     onClose,
     t,
+    showSubmitForReview = false,
+    onSubmitForReview,
+    isSubmittingForReview = false,
   } = props;
 
   const percentage = Math.round((score / totalQuestions) * 100);
@@ -121,6 +127,31 @@ export function QuizPlayerResults(props: {
           <RefreshCw className="w-5 h-5" />
           {t("retry")}
         </button>
+
+        {showSubmitForReview && (
+          <button
+            onClick={onSubmitForReview}
+            disabled={!onSubmitForReview || isSubmittingForReview}
+            className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 ${
+              !onSubmitForReview || isSubmittingForReview
+                ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
+                : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/30"
+            }`}
+          >
+            {isSubmittingForReview ? (
+              <>
+                <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                جاري الإرسال
+              </>
+            ) : (
+              <>
+                <UploadCloud className="w-5 h-5" />
+                إرسال للمراجعة
+              </>
+            )}
+          </button>
+        )}
+
         <button
           onClick={onClose}
           className="px-8 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"

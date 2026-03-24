@@ -108,7 +108,8 @@ export function LectureSelect({
               <input
                 type="text"
                 autoFocus
-                className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-900 border-none rounded-md focus:ring-1 focus:ring-blue-500 dark:text-white"
+                dir="auto"
+                className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-900 border-none rounded-md focus:ring-1 focus:ring-blue-500 dark:text-white placeholder:text-start"
                 placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

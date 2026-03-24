@@ -1,8 +1,8 @@
 /**
- * AI Assistant Components
- * مكونات مساعد الذكاء الاصطناعي
+ * ZANE AI Components
+ * مكونات ZANE AI
  *
- * يتم استيراد جميع مكونات المساعد من هنا
+ * يتم استيراد جميع مكونات ZANE من هنا
  */
 
 export { AssistantHeader } from "./AssistantHeader";
