@@ -27,10 +27,15 @@ export function NewsFormFields({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-title"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsTitle")}
         </label>
         <input
+          id="news-title"
+          name="title"
           type="text"
           value={newNews.title}
           onChange={(e) => onSetNewNews({ ...newNews, title: e.target.value })}
@@ -40,10 +45,15 @@ export function NewsFormFields({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-type"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsType")}
         </label>
         <select
+          id="news-type"
+          name="type"
           value={newNews.type}
           onChange={(e) =>
             onSetNewNews({
@@ -62,10 +72,15 @@ export function NewsFormFields({
 
       {newNews.type === "custom" && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="news-custom-category"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             {t("newsCustomCategory")}
           </label>
           <input
+            id="news-custom-category"
+            name="customCategory"
             type="text"
             value={customCategory}
             onChange={(e) => setCustomCategory(e.target.value)}
@@ -76,10 +91,15 @@ export function NewsFormFields({
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="news-content"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           {t("newsContent")}
         </label>
         <textarea
+          id="news-content"
+          name="content"
           value={newNews.content}
           onChange={(e) =>
             onSetNewNews({ ...newNews, content: e.target.value })

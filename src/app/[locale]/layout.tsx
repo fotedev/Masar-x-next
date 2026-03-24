@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { AppProviders } from "@/components/AppProviders";
+import { notFound } from "next/navigation";
 
 type Locale = "ar" | "en";
 
@@ -11,17 +11,22 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }>) {
-  const locale = params.locale as Locale;
+  const { locale } = params;
+  const typedLocale = locale as Locale;
 
-  if (locale !== "ar" && locale !== "en") {
+  if (typedLocale !== "ar" && typedLocale !== "en") {
     notFound();
   }
 
-  const messages = (await import(`@/messages/${locale}.json`)).default;
-  const dir = locale === "ar" ? "rtl" : "ltr";
+  const messages = (await import(`@/messages/${typedLocale}.json`)).default;
+  const dir = typedLocale === "ar" ? "rtl" : "ltr";
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider 
+      locale={typedLocale} 
+      messages={messages} 
+      timeZone="Africa/Cairo"
+    >
       <AppProviders dir={dir}>{children}</AppProviders>
     </NextIntlClientProvider>
   );

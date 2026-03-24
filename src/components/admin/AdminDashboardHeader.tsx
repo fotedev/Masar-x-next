@@ -50,6 +50,8 @@ export const AdminDashboardHeader: React.FC<AdminDashboardHeaderProps> = ({
           </div>
 
           <select
+            id="admin-filter-year"
+            name="year"
             value={globalFilters.year}
             onChange={(e) =>
               setGlobalFilters((prev) => ({
@@ -69,6 +71,8 @@ export const AdminDashboardHeader: React.FC<AdminDashboardHeaderProps> = ({
           </select>
 
           <select
+            id="admin-filter-department"
+            name="department"
             value={globalFilters.department}
             onChange={(e) =>
               setGlobalFilters((prev) => ({
@@ -88,6 +92,8 @@ export const AdminDashboardHeader: React.FC<AdminDashboardHeaderProps> = ({
           </select>
 
           <select
+            id="admin-filter-subject"
+            name="subject"
             value={globalFilters.subject}
             onChange={(e) =>
               setGlobalFilters((prev) => ({

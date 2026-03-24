@@ -49,6 +49,8 @@ export default function AiAssistantPage() {
     setStudentSelectedSubject,
   } = useAiChat(user, trackEvent);
 
+  const isInitialState = messages.length === 0;
+
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");
   const { quizzes: studentQuizzes, loading: studentQuizzesLoading } =
@@ -65,8 +67,19 @@ export default function AiAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Check if the user is already at the bottom of the internal container
+    const isAtBottom = 
+      container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+
+    if (isAtBottom || isLoading) {
+      // Direct scroll on the container element itself to avoid page-level jumping
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth"
+      });
     }
   }, [messages, isLoading]);
 
@@ -94,7 +107,7 @@ export default function AiAssistantPage() {
 
   const handleStartQuiz = () => {
     if (studentSelectedQuizId) {
-      router.push(`/quiz-play?quizId=${studentSelectedQuizId}`);
+      router.push(`/quiz-play/${studentSelectedQuizId}`);
     }
   };
 
@@ -107,35 +120,33 @@ export default function AiAssistantPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] max-w-5xl mx-auto px-4 py-4">
-      <ChatHeader
-        mode={mode}
-        toggleMode={() =>
-          setMode((prev) =>
-            prev === "cs_assistant"
-              ? "student_agent"
-              : prev === "student_agent"
-                ? "group_rag"
-                : "cs_assistant",
-          )
-        }
-        studentSelectedSubject={studentSelectedSubject}
-        setStudentSelectedSubject={setStudentSelectedSubject}
-        studentSubjects={studentSubjects}
-        studentSelectedQuizId={studentSelectedQuizId}
-        setStudentSelectedQuizId={setStudentSelectedQuizId}
-        studentQuizzes={studentQuizzes}
-        studentQuizzesLoading={studentQuizzesLoading}
-        onStartQuiz={handleStartQuiz}
-        onSummarizeChat={handleSummarizeChat}
-        onClearChat={clearChat}
-        isSummarizing={isSummarizing}
-        hasChatData={messages.length > 0}
-        generatedQuiz={generatedQuiz}
-        onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
-        safeLocalGeneratedQuizzesCount={0}
-        t={t}
-      />
+    <div className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
+      isInitialState 
+        ? "h-screen justify-center items-center px-4 py-4" 
+        : "h-[100dvh] pt-0 pb-2 px-0 sm:px-4"
+    }`}>
+      {!isInitialState && (
+        <ChatHeader
+          mode={mode}
+          setMode={setMode}
+          studentSelectedSubject={studentSelectedSubject}
+          setStudentSelectedSubject={setStudentSelectedSubject}
+          studentSubjects={studentSubjects}
+          studentSelectedQuizId={studentSelectedQuizId}
+          setStudentSelectedQuizId={setStudentSelectedQuizId}
+          studentQuizzes={studentQuizzes}
+          studentQuizzesLoading={studentQuizzesLoading}
+          onStartQuiz={handleStartQuiz}
+          onSummarizeChat={handleSummarizeChat}
+          onClearChat={clearChat}
+          isSummarizing={isSummarizing}
+          hasChatData={messages.length > 0}
+          generatedQuiz={generatedQuiz}
+          onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
+          safeLocalGeneratedQuizzesCount={0}
+          t={t}
+        />
+      )}
 
       <ChatContainer
         messages={messages}
@@ -143,6 +154,9 @@ export default function AiAssistantPage() {
         messagesContainerRef={messagesContainerRef}
         messagesEndRef={messagesEndRef}
         t={t}
+        isInitialState={isInitialState}
+        mode={mode}
+        setMode={setMode}
       />
 
       <ChatInput
@@ -150,13 +164,10 @@ export default function AiAssistantPage() {
         setInputMessage={setInputMessage}
         isLoading={isLoading}
         onSendMessage={handleSendMessage}
-        suggestions={[]}
-        onSuggestionClick={(s: string) => {
-          setInputMessage(s);
-          inputRef.current?.focus();
-        }}
         inputRef={inputRef}
         t={t}
+        isInitialState={isInitialState}
+        user={user}
       />
 
       {showPuterSettings && (
@@ -174,7 +185,7 @@ export default function AiAssistantPage() {
           resetLocalQuizPlayer={() => {}}
           onOpenLocalQuiz={() => {
             if (generatedQuiz?.id) {
-              router.push(`/quiz-play?quizId=${generatedQuiz.id}`);
+              router.push(`/quiz-play/${generatedQuiz.id}`);
             }
           }}
           onClose={() => setShowGeneratedQuizModal(false)}

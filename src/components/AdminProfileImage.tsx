@@ -77,7 +77,7 @@ export function AdminProfileImage({
   };
 
   return (
-    <div className={`relative ${sizeClasses[size]} rounded-full ${className}`}>
+    <div className={`relative ${sizeClasses[size]} rounded-full ${className} bg-slate-100 dark:bg-slate-800`}>
       <FileDropzone
         disabled={!editable || isUploading}
         onFileSelect={(files) => {
@@ -90,27 +90,29 @@ export function AdminProfileImage({
         }}
         accept="image/*"
         className="w-full h-full rounded-full"
+        id={`avatar-upload-${size}`}
       >
         <div
           className={`w-full h-full rounded-full flex items-center justify-center relative overflow-hidden ${
             isAdmin
-              ? "bg-gradient-to-br from-blue-500 to-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.6)] border-2 border-blue-400 animate-pulse ring-2 ring-blue-400/50"
-              : "bg-gray-300 dark:bg-gray-600"
+              ? "bg-gradient-to-br from-brand-blue to-brand-sky shadow-[0_0_15px_rgba(var(--brand-blue),0.6)] border-2 border-white/20"
+              : "bg-slate-200 dark:bg-slate-700"
           } ${
-            editable ? "cursor-pointer hover:opacity-80 transition-opacity" : ""
+            editable ? "cursor-pointer hover:opacity-90 transition-opacity" : ""
           }`}
         >
           {avatarUrl ? (
             <Image
               src={avatarUrl}
-              alt="Profile"
+              alt=""
               fill
               className="object-cover rounded-full"
               unoptimized
+              priority={size === "xl"}
             />
           ) : (
             showIcon && (
-              <User className={`${iconSizeClasses[size]} text-white`} />
+              <User className={`${iconSizeClasses[size]} text-slate-400 dark:text-slate-500`} />
             )
           )}
 

@@ -35,17 +35,22 @@ export function QuizDashboardFilters({
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <input
-          type="text"
-          value={filters.search}
-          onChange={(e) =>
-            setFilters((p) => ({ ...p, search: e.target.value }))
-          }
-          placeholder={t("searchPlaceholder")}
-          className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white"
-        />
+          <input
+            id="quiz-search"
+            name="search"
+            type="text"
+            dir="auto"
+            value={filters.search}
+            onChange={(e) =>
+              setFilters((p) => ({ ...p, search: e.target.value }))
+            }
+            placeholder={t("searchPlaceholder")}
+            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg dark:bg-gray-900 dark:text-white placeholder:text-start"
+          />
 
         <select
+          id="quiz-filter-year"
+          name="year"
           value={filters.year}
           onChange={(e) =>
             setFilters((p) => ({
@@ -67,6 +72,8 @@ export function QuizDashboardFilters({
         </select>
 
         <select
+          id="quiz-filter-semester"
+          name="semester"
           value={filters.semester}
           onChange={(e) =>
             setFilters((p) => ({
@@ -85,6 +92,8 @@ export function QuizDashboardFilters({
         </select>
 
         <select
+          id="quiz-filter-department"
+          name="department"
           value={filters.department}
           onChange={(e) =>
             setFilters((p) => ({
@@ -105,6 +114,8 @@ export function QuizDashboardFilters({
         </select>
 
         <select
+          id="quiz-filter-subject"
+          name="subject"
           value={filters.subject}
           onChange={(e) =>
             setFilters((p) => ({ ...p, subject: e.target.value }))

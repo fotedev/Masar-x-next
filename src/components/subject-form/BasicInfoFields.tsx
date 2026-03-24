@@ -23,10 +23,15 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
   return (
     <>
       <div>
-        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+        <label 
+          htmlFor="subject-name"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+        >
           اسم المادة
         </label>
         <input
+          id="subject-name"
+          name="name"
           type="text"
           required
           value={formData.name}
@@ -41,10 +46,15 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+        <label 
+          htmlFor="subject-professor"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+        >
           اسم المحاضر
         </label>
         <input
+          id="subject-professor"
+          name="professor"
           type="text"
           value={formData.professor || ""}
           onChange={(e) =>
@@ -64,6 +74,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
+              id="professor-gender-male"
               type="radio"
               name="professor_gender"
               value="male"
@@ -82,6 +93,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
+              id="professor-gender-female"
               type="radio"
               name="professor_gender"
               value="female"

@@ -1,5 +1,6 @@
 import { CheckCircle, FileText, Plus, Video } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import type { ContentItem } from "./types";
 
 export function LectureExplanationSection(props: {
@@ -23,6 +24,7 @@ export function LectureExplanationSection(props: {
   liveTag: string;
   markLessonAsCompletedLabel: string;
   unmarkLessonCompletedLabel: string;
+  mustLoginErrorLabel: string;
 }) {
   const {
     explanationItems,
@@ -44,6 +46,7 @@ export function LectureExplanationSection(props: {
     contentTypeFileLabel,
     unmarkLessonCompletedLabel,
     markLessonAsCompletedLabel,
+    mustLoginErrorLabel,
   } = props;
 
   return (
@@ -147,20 +150,24 @@ export function LectureExplanationSection(props: {
                 </div>
               </div>
               <div className="flex items-center gap-2 relative z-10 w-full sm:w-auto">
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     const contentId = item.id || item.url || item.file_url;
                     if (user && contentId) {
                       onToggleProgress(contentId);
+                    } else if (!user) {
+                      toast.error(mustLoginErrorLabel);
                     }
                   }}
-                  className={`p-2.5 rounded-xl transition-all duration-300 relative group/btn shrink-0 ${
+                  className={`p-2.5 rounded-xl transition-all duration-150 relative group/btn shrink-0 ${
                     completedContent.has(item.id || item.url || item.file_url || "")
-                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 scale-110 animate-bounce"
-                      : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-105 active:scale-95"
+                      ? "bg-emerald-500 text-white shadow-xl shadow-emerald-500/40"
+                      : "bg-slate-100 text-slate-400 dark:bg-slate-800 hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-500/10"
                   }`}
                   title={
                     completedContent.has(item.id || item.url || item.file_url || "")
@@ -168,14 +175,33 @@ export function LectureExplanationSection(props: {
                       : markLessonAsCompletedLabel
                   }
                 >
-                  <CheckCircle
-                    className={`w-5 h-5 transition-all duration-500 ${
-                      completedContent.has(item.id || item.url || item.file_url || "")
-                        ? "scale-110"
-                        : "group-hover/btn:rotate-12"
-                    }`}
-                  />
-                </button>
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      rotate: completedContent.has(item.id || item.url || item.file_url || "") ? [0, -10, 10, 0] : 0,
+                      scale: completedContent.has(item.id || item.url || item.file_url || "") ? [1, 1.15, 1] : 1
+                    }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <CheckCircle
+                      className={`w-5 h-5 transition-all duration-150 ${
+                        completedContent.has(item.id || item.url || item.file_url || "")
+                          ? "fill-white/20"
+                          : "group-hover/btn:rotate-12"
+                      }`}
+                    />
+                  </motion.div>
+                  
+                  {completedContent.has(item.id || item.url || item.file_url || "") && (
+                    <motion.div
+                      layoutId={`sparkle-${item.id || idx}`}
+                      className="absolute inset-0 rounded-xl bg-emerald-400/20"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1.4, opacity: 0 }}
+                      transition={{ duration: 0.4, repeat: Infinity }}
+                    />
+                  )}
+                </motion.button>
                 <button
                   onClick={() => onViewContent(item)}
                   className="flex-1 sm:flex-none px-6 sm:px-8 py-3 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-black text-sm hover:bg-brand-blue transition-all"

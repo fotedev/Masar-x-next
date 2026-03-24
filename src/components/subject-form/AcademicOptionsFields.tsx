@@ -30,10 +30,15 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
     <>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+          <label 
+            htmlFor="academic-level"
+            className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+          >
             المستوى
           </label>
           <select
+            id="academic-level"
+            name="level"
             value={formData.level || 1}
             onChange={(e) =>
               setFormData(
@@ -71,10 +76,15 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+          <label 
+            htmlFor="academic-semester"
+            className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
+          >
             الترم
           </label>
           <select
+            id="academic-semester"
+            name="semester"
             value={formData.semester || 1}
             onChange={(e) =>
               setFormData(
@@ -97,6 +107,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
         <input
           type="checkbox"
           id="is_academic"
+          name="is_academic"
           checked={formData.is_academic ?? true}
           onChange={(e) =>
             setFormData(
@@ -121,6 +132,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
         <input
           type="checkbox"
           id="show_on_home"
+          name="show_on_home"
           checked={formData.show_on_home ?? true}
           onChange={(e) =>
             setFormData(

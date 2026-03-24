@@ -11,8 +11,8 @@
     "setup-subjects": "node setup-subjects.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@heyputer/puter.js": "^2.2.10",
+    "@lottiefiles/dotlottie-react": "^0.18.7",
     "@radix-ui/react-switch": "^1.2.6",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",

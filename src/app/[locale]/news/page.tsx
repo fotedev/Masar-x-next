@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -43,7 +43,6 @@ function NewsPage() {
     deleteNews,
     addNews,
   } = useNews();
-  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [appealModal, setAppealModal] = useState<{
@@ -76,7 +75,7 @@ function NewsPage() {
     },
   ];
 
-  useEffect(() => {
+  const filteredNews = useMemo(() => {
     const validatedNews = news.map((item) => {
       const validation = NewsSchema.safeParse(item);
       if (!validation.success) {
@@ -100,8 +99,8 @@ function NewsPage() {
       );
     }
 
-    setFilteredNews(filtered);
-  }, [news, selectedCategory, searchTerm, NewsSchema, logger]);
+    return filtered;
+  }, [news, selectedCategory, searchTerm]);
 
   const getCategoryColor = (category: string) => {
     const categoryConfig = categories.find((cat) => cat.id === category);

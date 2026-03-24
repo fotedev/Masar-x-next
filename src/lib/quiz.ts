@@ -18,6 +18,45 @@ export interface QuizData {
 }
 
 export class QuizService {
+    async submitQuickQuizForReview(userId: string, quizData: QuizData) {
+        try {
+            const { data: quiz, error: quizError } = await supabase
+                .from('quizzes')
+                .insert({
+                    title: quizData.title,
+                    description: quizData.description ?? null,
+                    user_id: userId,
+                    source_type: 'quick_quiz_submission',
+                    status: 'pending',
+                    summary_id: quizData.summary_id ?? null,
+                })
+                .select('id')
+                .single();
+
+            if (quizError) throw quizError;
+            const quizId = (quiz as { id: string }).id;
+
+            const questionsToInsert = quizData.questions.map((q, index) => ({
+                quiz_id: quizId,
+                question: q.question,
+                options: q.options,
+                correct_answer: q.correctAnswer,
+                explanation: q.explanation,
+                image_url: q.imageUrl,
+                order_index: index,
+            }));
+
+            const { error: questionsError } = await supabase
+                .from('quiz_questions')
+                .insert(questionsToInsert);
+
+            if (questionsError) throw questionsError;
+            return quizId;
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async saveAiGeneratedDraft(userId: string, quizData: QuizData) {
         try {
             const quizId = quizData.id || crypto.randomUUID();
@@ -36,7 +75,7 @@ export class QuizService {
                     content: JSON.stringify(quizData.questions),
                     summary_id: quizData.summary_id ?? null,
                     user_id: userId,
-                    subject: 'AI Assistant',
+                    subject: 'ZANE AI',
                     level: 0,
                     semester: 1,
                     status: 'draft',

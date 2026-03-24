@@ -9,8 +9,8 @@ interface FooterBrandProps {
 
 export function FooterBrand({ t }: FooterBrandProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4 rtl:text-right">
+      <div className="flex items-center gap-3 rtl:flex-row-reverse">
         <Image
           src="/logo.png"
           alt="Masar X Logo"
@@ -22,7 +22,10 @@ export function FooterBrand({ t }: FooterBrandProps) {
           {t("brandTitle")}
         </span>
       </div>
-      <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs">
+      <p 
+        className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs rtl:mr-0 rtl:ml-auto"
+        dir="auto"
+      >
         {t("brandDescription")}
       </p>
     </div>

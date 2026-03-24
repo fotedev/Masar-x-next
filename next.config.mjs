@@ -8,6 +8,7 @@ const nextConfig = {
     reactStrictMode: true,
     swcMinify: true,
     images: {
+        unoptimized: process.env.NODE_ENV !== 'production',
         remotePatterns: [
             {
                 protocol: 'https',
@@ -66,7 +67,7 @@ const nextConfig = {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' https: data: https://*.ytimg.com https://www.transparenttextures.com",
             "font-src 'self' data:",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://res.cloudinary.com https://www.transparenttextures.com https://raw.githubusercontent.com https://*.youtube.com https://*.googlevideo.com https://*.google.com ws://localhost:*",
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://res.cloudinary.com https://www.transparenttextures.com https://raw.githubusercontent.com https://*.youtube.com https://*.googlevideo.com https://*.google.com https://api.puter.com wss://api.puter.com ws://localhost:* https://cdn.jsdelivr.net https://lottie.host",
             "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
             "frame-ancestors 'self'",
             "base-uri 'self'",

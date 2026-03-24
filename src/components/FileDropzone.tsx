@@ -9,6 +9,7 @@ interface FileDropzoneProps {
   children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  id?: string;
 }
 
 export function FileDropzone({
@@ -18,9 +19,11 @@ export function FileDropzone({
   children,
   className = "",
   disabled = false,
+  id,
 }: FileDropzoneProps) {
   const t = useTranslations("fileDropzone");
   const [isDragActive, setIsDragActive] = useState(false);
+  const inputId = id || "file-upload-input";
 
   const handleDragEnter = useCallback(
     (e: React.DragEvent) => {
@@ -103,6 +106,7 @@ export function FileDropzone({
       className={`relative ${className}`}
     >
       <label
+        htmlFor={inputId}
         className={`cursor-pointer block w-full h-full transition-colors ${
           isDragActive
             ? "bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400"
@@ -110,6 +114,8 @@ export function FileDropzone({
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <input
+          id={inputId}
+          name={inputId}
           type="file"
           className="hidden"
           multiple={multiple}

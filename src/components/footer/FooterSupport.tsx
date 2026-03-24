@@ -8,7 +8,7 @@ interface FooterSupportProps {
 
 export function FooterSupport({ tFooter, whatsappUrl }: FooterSupportProps) {
   return (
-    <div>
+    <div className="rtl:text-right rtl:flex rtl:flex-col rtl:items-end">
       <h3 className="text-slate-900 dark:text-white font-bold mb-4 text-lg">
         {tFooter("support")}
       </h3>
@@ -20,7 +20,7 @@ export function FooterSupport({ tFooter, whatsappUrl }: FooterSupportProps) {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 px-6 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-2xl transition-all duration-300 font-bold text-sm shadow-lg shadow-green-500/20 group"
+          className="inline-flex items-center gap-3 px-6 py-3 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-2xl transition-all duration-300 font-bold text-sm shadow-lg shadow-green-500/20 group rtl:flex-row-reverse"
         >
           <svg
             width="20"

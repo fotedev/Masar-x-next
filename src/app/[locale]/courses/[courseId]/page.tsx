@@ -338,7 +338,7 @@ export default function CourseDetailPage() {
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageSquare className="w-4 h-4 ml-2" />
-              بدء المساعد الذكي
+              بدء ZANE AI
             </Button>
             <Button
               variant="outline"

@@ -35,10 +35,15 @@ export function SummaryFormFields({
   return (
     <>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="summary-title"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           عنوان الملخص <span className="text-red-500">*</span>
         </label>
         <input
+          id="summary-title"
+          name="title"
           type="text"
           required
           value={formData.title}
@@ -51,10 +56,15 @@ export function SummaryFormFields({
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="summary-year"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             المستوى الدراسي <span className="text-red-500">*</span>
           </label>
           <select
+            id="summary-year"
+            name="year"
             required
             value={formData.year}
             onChange={(e) =>
@@ -77,10 +87,15 @@ export function SummaryFormFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="summary-semester"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             الترم <span className="text-red-500">*</span>
           </label>
           <select
+            id="summary-semester"
+            name="semester"
             required
             value={semester}
             onChange={(e) => {
@@ -101,10 +116,15 @@ export function SummaryFormFields({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label 
+            htmlFor="summary-department"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             التخصص <span className="text-red-500">*</span>
           </label>
           <select
+            id="summary-department"
+            name="department"
             required
             value={formData.department}
             onChange={(e) =>
@@ -127,10 +147,15 @@ export function SummaryFormFields({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="summary-subject"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           اسم المادة <span className="text-red-500">*</span>
         </label>
         <select
+          id="summary-subject"
+          name="subject"
           required
           value={formData.subject}
           onChange={(e) =>
@@ -148,10 +173,15 @@ export function SummaryFormFields({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label 
+          htmlFor="summary-content"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
           محتوى الملخص <span className="text-red-500">*</span>
         </label>
         <textarea
+          id="summary-content"
+          name="content"
           required
           value={formData.content}
           onChange={(e) =>

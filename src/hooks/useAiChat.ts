@@ -30,7 +30,15 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
   const [isPuterSignedIn, setIsPuterSignedIn] = useState(false);
-  const [mode, setModeState] = useState<AiAssistantMode>('cs_assistant');
+  const [mode, setModeState] = useState<AiAssistantMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("zane_ai_last_mode");
+      if (saved === "cs_assistant" || saved === "student_agent" || saved === "group_rag") {
+        return saved as AiAssistantMode;
+      }
+    }
+    return "cs_assistant";
+  });
   const storageKey = `${CHAT_STORAGE_KEY_PREFIX}_${mode}`;
 
   const { academic } = useUserAcademic();
@@ -256,7 +264,11 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   }, [user, mode, storageKey]);
 
   const setMode = useCallback((next: AiAssistantMode | ((prev: AiAssistantMode) => AiAssistantMode)) => {
-    setModeState(next);
+    setModeState((prev) => {
+      const actualNext = typeof next === "function" ? next(prev) : next;
+      localStorage.setItem("zane_ai_last_mode", actualNext);
+      return actualNext;
+    });
   }, []);
 
   return {

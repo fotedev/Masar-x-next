@@ -27,10 +27,15 @@ export function BasicExamInfo({
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-bold text-slate-500 mb-2">
+          <label 
+            htmlFor="exam-title"
+            className="block text-sm font-bold text-slate-500 mb-2"
+          >
             {tSubjectPage("exam.titleLabel")}
           </label>
           <input
+            id="exam-title"
+            name="title"
             value={examFormData.title}
             onChange={(e) =>
               setExamFormData((p) => ({ ...p, title: e.target.value }))
@@ -39,10 +44,15 @@ export function BasicExamInfo({
           />
         </div>
         <div>
-          <label className="block text-sm font-bold text-slate-500 mb-2">
+          <label 
+            htmlFor="exam-duration"
+            className="block text-sm font-bold text-slate-500 mb-2"
+          >
             {tSubjectPage("exam.durationMinutesLabel")}
           </label>
           <input
+            id="exam-duration"
+            name="durationMinutes"
             type="number"
             value={examFormData.durationMinutes}
             onChange={(e) =>
@@ -58,10 +68,15 @@ export function BasicExamInfo({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-bold text-slate-500 mb-2">
+          <label 
+            htmlFor="exam-department"
+            className="block text-sm font-bold text-slate-500 mb-2"
+          >
             {tSubjectPage("exam.departmentLabel")}
           </label>
           <select
+            id="exam-department"
+            name="department"
             value={examFormData.department}
             onChange={(e) =>
               setExamFormData((p) => ({
@@ -87,10 +102,15 @@ export function BasicExamInfo({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-slate-500 mb-2">
+          <label 
+            htmlFor="exam-year"
+            className="block text-sm font-bold text-slate-500 mb-2"
+          >
             {tSubjectPage("year")}
           </label>
           <select
+            id="exam-year"
+            name="year"
             value={examFormData.year}
             onChange={(e) =>
               setExamFormData((p) => ({
