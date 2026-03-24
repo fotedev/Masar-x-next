@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocale } from "next-intl";
 import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
@@ -34,6 +35,8 @@ export function ChatContainer({
   setMode,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const locale = useLocale();
+  const isRTL = locale === "ar";
 
   const modes: { id: AiAssistantMode; icon: LucideIcon; label: string }[] = [
     { id: "cs_assistant", icon: Bot, label: t("assistantProgramming") },
@@ -170,8 +173,8 @@ export function ChatContainer({
             <ChatMessageItem key={message.id} message={message} />
           ))}
           {isLoading && (
-            <div className="flex justify-start animate-in slide-in-from-left-2 duration-300">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl rounded-tr-none px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div className={`flex ${isRTL ? "justify-end" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}>
+              <div className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700`}>
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
