@@ -116,7 +116,7 @@ export function ChatInput({
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 dir="auto"
-                className={`flex-1 max-h-32 bg-transparent border-0 focus:ring-0 resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-500 ${isRTL ? "text-right placeholder:text-right" : "text-left placeholder:text-left"} ${
+                className={`flex-1 max-h-32 bg-transparent border-0 focus:ring-0 resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium ${isRTL ? "text-right placeholder:text-right" : "text-left placeholder:text-left"} ${
                   isInitialState 
                     ? "min-h-[60px] py-4 px-6 text-base sm:text-lg" 
                     : "min-h-[44px] py-2.5 px-3 text-sm sm:text-base"
