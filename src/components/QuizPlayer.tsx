@@ -40,11 +40,11 @@ export function QuizPlayer({
   onSubmitForReview,
   isSubmittingForReview = false,
 }: QuizPlayerProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { trackEvent } = useAnalytics();
   const tQuizzes = useTranslations("quizzes");
   
-  const { loading, quiz, questions, loadQuiz } = useQuizPlayerData({
+  const { loading: quizLoading, quiz, questions, loadQuiz } = useQuizPlayerData({
     quizId,
     quizData,
     trackEvent,
@@ -85,7 +85,7 @@ export function QuizPlayer({
     onComplete,
   });
 
-  if (loading) {
+  if (authLoading || quizLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-4">
         <div className="relative w-16 h-16">

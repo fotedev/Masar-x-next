@@ -44,8 +44,8 @@ export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) 
       >
         <div className="relative group text-center bg-transparent">
           {/* Main "ZANE" Text with Ice-Metallic Shimmer & Clean Glow */}
-          <h1 className="text-7xl sm:text-[10rem] font-black tracking-tighter leading-none bg-transparent"
-              style={{ filter: "drop-shadow(0 0 30px rgba(125, 211, 252, 0.2))" }}>
+          <h1 className="text-5xl sm:text-7xl font-black tracking-tighter leading-none bg-transparent"
+              style={{ filter: "drop-shadow(0 0 20px rgba(125, 211, 252, 0.2))" }}>
             <span 
               className="inline-block bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer"
               style={{
@@ -62,8 +62,8 @@ export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) 
           {/* "AI NINDROID" Subtext with Pulse & Letter Spacing Expansion */}
           <motion.div
             animate={{
-              letterSpacing: ["0.4em", "0.8em", "0.4em"],
-              opacity: [0.6, 1, 0.6],
+              letterSpacing: ["0.2em", "0.4em", "0.2em"],
+              opacity: [0.6, 0.9, 0.6],
               scale: [0.98, 1.02, 0.98],
             }}
             transition={{
@@ -71,7 +71,7 @@ export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) 
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="text-[10px] sm:text-xs font-black uppercase text-cyan-400 mt-2 sm:mt-[-1rem] tracking-[0.4em] drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+            className="text-[10px] sm:text-xs font-black uppercase text-slate-400 dark:text-slate-500 mt-2 sm:mt-1 tracking-[0.2em]"
           >
             AI NINDROID
           </motion.div>

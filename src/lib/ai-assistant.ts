@@ -7,7 +7,7 @@ type PuterClientLike = {
     isSignedIn: () => boolean;
   };
   ai: {
-    chat: (prompt: string, options?: { model?: string }) => Promise<unknown>;
+    chat: (prompt: string, options?: { model?: string; stream?: boolean }) => Promise<unknown>;
   };
 };
 
@@ -131,6 +131,7 @@ export class AiAssistant {
     options?: {
       chatHistory?: AiChatHistoryTurn[];
       platformContext?: string;
+      model?: string;
     },
   ): Promise<string> {
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
@@ -157,7 +158,10 @@ ${platformContext}
 
     const puter = await getPuterClient();
     if (!puter) throw new Error('Puter client not available');
-    const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+    const response = await puter.ai.chat(prompt, { 
+      model: options?.model || 'gpt-4o',
+      stream: false 
+    });
     return String(response);
   }
 
@@ -313,9 +317,11 @@ ${platformContext}
       mode?: AiAssistantMode;
       chatHistory?: AiChatHistoryTurn[];
       platformContext?: string;
+      model?: string;
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
+    const selectedModel = options?.model || 'gpt-4o';
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const relevantChunks = mode === 'group_rag' ? this.searchRelevantChunks(query, 8) : [];
 
@@ -337,7 +343,10 @@ ${platformContext}
 
         const puter = await getPuterClient();
         if (!puter) throw new Error('Puter client not available');
-        const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+        const response = await puter.ai.chat(prompt, { 
+          model: selectedModel,
+          stream: false // Socket.io works better with non-streaming for short tasks
+        });
         return String(response);
       }
 
@@ -372,7 +381,10 @@ ${context}
       // Use Puter.js AI Chat
       const puter = await getPuterClient();
       if (!puter) throw new Error('Puter client not available');
-      const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+      const response = await puter.ai.chat(prompt, { 
+        model: selectedModel,
+        stream: false
+      });
       return String(response);
 
     } catch (error: unknown) {
@@ -572,7 +584,10 @@ ${context}
       // Use Puter.js AI Chat for quiz generation
       const puter = await getPuterClient();
       if (!puter) throw new Error('Puter client not available');
-      const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+      const response = await puter.ai.chat(prompt, { 
+        model: 'gpt-4o',
+        stream: false
+      });
       let jsonStr = String(response);
 
       // Clean up markdown if present
@@ -672,7 +687,10 @@ ${context}
       // 4. Call Puter.js
       const puter = await getPuterClient();
       if (!puter) throw new Error('Puter client not available');
-      const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+      const response = await puter.ai.chat(prompt, { 
+        model: 'gpt-4o',
+        stream: false
+      });
       let jsonStr = String(response);
 
       // Clean up markdown
@@ -779,7 +797,10 @@ ${context}
     try {
       const puter = await getPuterClient();
       if (!puter) throw new Error('Puter client not available');
-      const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
+      const response = await puter.ai.chat(prompt, { 
+        model: 'gpt-4o',
+        stream: false
+      });
       let jsonStr = String(response);
 
       jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -796,8 +817,83 @@ ${context}
       throw error;
     }
   }
-}
+  async summarizeCurrentChat(messages: { role: string; content: string }[]): Promise<SummarizeChatAnalysis> {
+    if (!messages || messages.length === 0) {
+      throw new Error('No messages to summarize');
+    }
 
+    const recentMessages = messages.slice(-50);
+    const conversationText = recentMessages
+      .map(msg => `${msg.role === 'user' ? 'المستخدم' : 'المساعد'}: ${msg.content}`)
+      .join('\n');
+
+    const prompt = `
+      قم بتحليل المحادثة الحالية بين المستخدم والمساعد البرمجي وأعد ملخصاً تقنياً مركزاً.
+      
+      المحادثة:
+      ${conversationText}
+
+      يرجى تقديم النتيجة بتنسيق JSON:
+      {
+        "summary": "ملخص تقني للمواضيع البرمجية التي تم نقاشها والحلول المقترحة",
+        "important_messages": []
+      }
+    `;
+
+    try {
+      const puter = await getPuterClient();
+      if (!puter) throw new Error('Puter client not available');
+      const response = await puter.ai.chat(prompt, { 
+        model: 'gpt-4o',
+        stream: false
+      });
+      let jsonStr = String(response);
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+      const firstOpenBrace = jsonStr.indexOf('{');
+      const lastCloseBrace = jsonStr.lastIndexOf('}');
+      if (firstOpenBrace !== -1 && lastCloseBrace !== -1) {
+        jsonStr = jsonStr.substring(firstOpenBrace, lastCloseBrace + 1);
+      }
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async summarizeAcademicContext(subject: string, context: string): Promise<SummarizeChatAnalysis> {
+    const prompt = `
+      أنت خبير أكاديمي. قم بتلخيص المحتوى الدراسي التالي لمادة (${subject}) بشكل منظم ومنهجي.
+      
+      المحتوى:
+      ${context}
+
+      يرجى تقديم النتيجة بتنسيق JSON:
+      {
+        "summary": "ملخص أكاديمي شامل يغطي أهم المفاهيم والقوانين أو النقاط الدراسية",
+        "important_messages": []
+      }
+    `;
+
+    try {
+      const puter = await getPuterClient();
+      if (!puter) throw new Error('Puter client not available');
+      const response = await puter.ai.chat(prompt, { 
+        model: 'gpt-4o',
+        stream: false
+      });
+      let jsonStr = String(response);
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+      const firstOpenBrace = jsonStr.indexOf('{');
+      const lastCloseBrace = jsonStr.lastIndexOf('}');
+      if (firstOpenBrace !== -1 && lastCloseBrace !== -1) {
+        jsonStr = jsonStr.substring(firstOpenBrace, lastCloseBrace + 1);
+      }
+      return JSON.parse(jsonStr);
+    } catch (error) {
+      throw error;
+    }
+  }
+}
 
 // Export singleton instance
 export const aiAssistant = new AiAssistant();

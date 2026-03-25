@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { quizService } from '../lib/quiz';
 import type { Json } from '@/types/database';
-
+import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
 
 interface Answer {
@@ -43,6 +43,7 @@ interface QuizHistoryEntry {
 }
 
 export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, localOnly = false }: UseQuizAttemptProps) {
+    const { loading: authLoading } = useAuth();
     const [attemptId, setAttemptId] = useState<string | null>(null);
     const [answers, setAnswers] = useState<Record<string, Answer>>({}); // Map questionId -> Answer
     const [loading, setLoading] = useState(true);
@@ -222,6 +223,6 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
         startTime,
         saveAnswer,
         finishAttempt,
-        isGuest: !userId
+        isGuest: !authLoading && !userId
     };
 }

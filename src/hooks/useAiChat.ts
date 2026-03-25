@@ -143,7 +143,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     }
   }, [messages, user, storageKey]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, modelOverride?: string) => {
     if (!content.trim() || isLoading) return;
 
     if (mode === 'student_agent' && !studentSelectedSubject) {
@@ -180,7 +180,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       }).then();
     }
 
-    trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn });
+    trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn, model: modelOverride });
 
     try {
       const historyTurns: AiChatHistoryTurn[] = [...messages, userMsg]
@@ -214,6 +214,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         mode,
         chatHistory: historyTurns,
         platformContext,
+        model: modelOverride,
       });
 
       // Avoid setting state if another request was started or mode changed
