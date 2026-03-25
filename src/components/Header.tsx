@@ -342,7 +342,7 @@ export const Header = React.memo(function Header() {
 
       <header
         dir={dir}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-[72px] ${
           hasEntered
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0"
@@ -352,12 +352,12 @@ export const Header = React.memo(function Header() {
             : "bg-transparent border-b border-transparent"
         }`}
       >
-        <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8">
+        <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8 pt-[env(safe-area-inset-top)]">
           <div className="flex items-center justify-between h-full">
             <div className="relative flex items-center gap-3">
               <button
                 onClick={handleLogoClick}
-                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0"
+                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0 p-1 -ml-1"
                 type="button"
               >
                 <Image

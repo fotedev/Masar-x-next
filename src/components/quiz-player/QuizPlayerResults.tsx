@@ -107,10 +107,16 @@ export function QuizPlayerResults(props: {
         <div className="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl flex items-start gap-3 text-start">
           <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-yellow-800 dark:text-yellow-300">
+            <p 
+              dir="auto"
+              className="text-sm font-bold text-yellow-800 dark:text-yellow-300 text-start"
+            >
               {t("guestMode")}
             </p>
-            <p className="text-xs text-yellow-700 dark:text-yellow-400/80 mt-1">
+            <p 
+              dir="auto"
+              className="text-xs text-yellow-700 dark:text-yellow-400/80 mt-1 text-start"
+            >
               {t("guestNotice")}
             </p>
           </div>

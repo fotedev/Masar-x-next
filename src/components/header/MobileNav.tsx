@@ -43,7 +43,7 @@ export function MobileNav({
 }: MobileNavProps) {
   return (
     <div
-      className={`lg:hidden fixed inset-0 z-[51] ${
+      className={`lg:hidden fixed inset-0 z-[90] ${
         isMounted && isMobileMenuOpen
           ? "pointer-events-auto"
           : "pointer-events-none"
@@ -53,6 +53,8 @@ export function MobileNav({
         ref={mobileBackdropRef}
         className={`absolute inset-0 bg-[rgba(0,0,0,0.85)] backdrop-blur-[12px] transition-opacity duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           isMounted && isMobileMenuOpen ? "opacity-100" : "opacity-0"
+        } ${
+          isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""
         }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -65,9 +67,9 @@ export function MobileNav({
         id="mobile-nav-drawer"
         role="dialog"
         aria-modal="true"
-        className={`absolute top-0 bottom-0 right-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        className={`absolute top-0 bottom-0 right-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[95] ${
           isMounted && isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
       >
         <div className="pt-[80px] px-4 md:px-6 pb-6 overflow-y-auto max-h-[100vh] bg-[#020617]">
           <nav className="flex flex-col gap-4">
