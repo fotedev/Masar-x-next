@@ -49,7 +49,23 @@ export default function AiAssistantPage() {
     setStudentSelectedSubject,
   } = useAiChat(user, trackEvent);
 
+  const [selectedModel, setSelectedModel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("zane_ai_selected_model") || "gpt-4o";
+    }
+    return "gpt-4o";
+  });
+
+  const handleModelChange = (model: string) => {
+    setSelectedModel(model);
+    localStorage.setItem("zane_ai_selected_model", model);
+  };
+
   const isInitialState = messages.length === 0;
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    await sendMessage(suggestion, selectedModel);
+  };
 
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");
@@ -90,15 +106,42 @@ export default function AiAssistantPage() {
     if (!inputMessage.trim()) return;
     const content = inputMessage;
     setInputMessage("");
-    await sendMessage(content);
+    await sendMessage(content, selectedModel);
   };
 
   const handleSummarizeChat = async () => {
     try {
       setIsSummarizing(true);
-      await aiAssistant.summarizeLoadedData();
-      toast.success(t("chatSummarized"));
-    } catch {
+      
+      let analysis;
+      if (mode === "student_agent") {
+        if (!studentSelectedSubject) {
+          toast.error("يرجى اختيار مادة أولاً لتلخيص محتواها الأكاديمي.");
+          return;
+        }
+        // Use the messages as context for student agent too if relevant, 
+        // but the method expects subject + context. 
+        // For now, let's use the current chat as context for the academic summary.
+        const context = messages.map(m => m.content).join('\n');
+        analysis = await aiAssistant.summarizeAcademicContext(studentSelectedSubject, context);
+      } else if (mode === "cs_assistant") {
+        const formattedMessages = messages.map(m => ({
+          role: m.type === "assistant" ? "assistant" as const : "user" as const,
+          content: m.content
+        }));
+        analysis = await aiAssistant.summarizeCurrentChat(formattedMessages);
+      } else {
+        // group_rag
+        analysis = await aiAssistant.summarizeLoadedData();
+      }
+
+      if (analysis?.summary) {
+        toast.success(t("chatSummarized"));
+        // Optional: show the summary in a toast or special message
+        // For now, just a success toast as per existing logic
+      }
+    } catch (error) {
+      console.error("Summary error:", error);
       toast.error(t("summarizeError"));
     } finally {
       setIsSummarizing(false);
@@ -129,6 +172,8 @@ export default function AiAssistantPage() {
         <ChatHeader
           mode={mode}
           setMode={setMode}
+          selectedModel={selectedModel}
+          setSelectedModel={handleModelChange}
           studentSelectedSubject={studentSelectedSubject}
           setStudentSelectedSubject={setStudentSelectedSubject}
           studentSubjects={studentSubjects}
@@ -157,6 +202,7 @@ export default function AiAssistantPage() {
         isInitialState={isInitialState}
         mode={mode}
         setMode={setMode}
+        onSuggestionClick={handleSuggestionClick}
       />
 
       <ChatInput

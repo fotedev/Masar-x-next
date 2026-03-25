@@ -83,7 +83,10 @@ export function QuizPlayerQuestion(props: {
         {isGuest && (
           <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex items-center gap-3">
             <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <p className="text-xs font-medium text-blue-700 dark:text-blue-300">
+            <p 
+              dir="auto"
+              className="text-xs font-medium text-blue-700 dark:text-blue-300 text-start"
+            >
               {t("guestAttemptNotice")}
             </p>
           </div>
@@ -232,7 +235,7 @@ export function QuizPlayerQuestion(props: {
               disabled={currentQuestionIndex === 0}
               className="group flex items-center gap-2 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
             >
-              <ArrowRight className="w-5 h-5 rotate-180 group-hover:translate-x-[4px] transition-transform" />
+              <ArrowRight className="w-5 h-5 rtl:rotate-0 ltr:rotate-180 group-hover:rtl:translate-x-[4px] group-hover:ltr:translate-x-[-4px] transition-transform" />
               <span>{t("previous")}</span>
             </button>
 
@@ -254,7 +257,7 @@ export function QuizPlayerQuestion(props: {
                     ? t("showResults")
                     : t("nextQuestion")}
                 </span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-[-4px] transition-transform" />
+                <ArrowRight className="w-5 h-5 ltr:rotate-0 rtl:rotate-180 group-hover:ltr:translate-x-[4px] group-hover:rtl:translate-x-[-4px] transition-transform" />
               </button>
             )}
           </div>

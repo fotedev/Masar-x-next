@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
-import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon } from "lucide-react";
+import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ interface ChatContainerProps {
   isInitialState?: boolean;
   mode?: AiAssistantMode;
   setMode?: (mode: AiAssistantMode) => void;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export function ChatContainer({
@@ -33,6 +34,7 @@ export function ChatContainer({
   isInitialState = false,
   mode = "cs_assistant",
   setMode,
+  onSuggestionClick,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const locale = useLocale();
@@ -49,7 +51,7 @@ export function ChatContainer({
   return (
     <div
       ref={messagesContainerRef}
-      className={`flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth transition-all duration-500 ${
+      className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth transition-all duration-500 ${
         isInitialState 
           ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4" 
           : "scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800"
@@ -79,7 +81,7 @@ export function ChatContainer({
             }}
             className="w-full flex items-center justify-center overflow-visible"
           >
-            <NeuralEnergyEntity className="scale-[0.7] sm:scale-100" />
+            <NeuralEnergyEntity className="scale-[0.6] sm:scale-100 -my-8 sm:my-0" />
           </motion.div>
           
           {/* Title with Zane Ice Gradient */}
@@ -108,10 +110,10 @@ export function ChatContainer({
           >
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/50 rounded-2xl border-2 transition-all duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-sm ${
+              className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/40 rounded-2xl border-2 transition-all duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-md ${
                 isDropdownOpen 
-                  ? "border-cyan-400/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]" 
-                  : "border-slate-200 dark:border-slate-700/50 hover:border-cyan-400/30"
+                  ? "border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]" 
+                  : "border-slate-200/60 dark:border-slate-700/40 hover:border-cyan-500/30"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -133,7 +135,7 @@ export function ChatContainer({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white/90 dark:bg-slate-800/90 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-md"
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-xl"
                   >
                     <div className="p-1.5 space-y-1">
                       {modes.map((m) => {
@@ -148,8 +150,8 @@ export function ChatContainer({
                             }}
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                               isActive
-                                ? "bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400"
-                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-200"
+                                ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -165,6 +167,39 @@ export function ChatContainer({
                 </>
               )}
             </AnimatePresence>
+          </motion.div>
+
+          {/* Suggested Prompt Cards Grid */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { 
+                opacity: 1, 
+                y: 0,
+                transition: { delay: 0.4, staggerChildren: 0.1 } 
+              }
+            }}
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 w-full mt-6 sm:mt-8"
+          >
+            {[
+              { id: "summarize", icon: BookOpen, title: "لخص لي مادة", desc: "احصل على ملخص شامل لأي مادة أكاديمية", prompt: "لخص لي مادة" },
+              { id: "code", icon: Code, title: "اشرح لي كود", desc: "فهم المنطق البرمجي وحل المشكلات التقنية", prompt: "اشرح لي كود" },
+              { id: "plan", icon: Calendar, title: "خطة دراسية", desc: "تنظيم وقتك ومسارك التعليمي بذكاء", prompt: "خطة دراسية" },
+              { id: "whatsapp", icon: MessageCircle, title: "محادثات الواتساب", desc: "تحليل وتلخيص ملفات الدردشة الجماعية", prompt: "محادثات الواتساب" }
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onSuggestionClick?.(item.prompt)}
+                className="group relative flex flex-col items-center p-3 sm:p-4 bg-white/5 hover:bg-white/10 dark:bg-slate-800/20 dark:hover:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/5 text-center min-h-[110px] sm:min-h-[130px] justify-center"
+              >
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">
+                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500" />
+                </div>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
+                <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight line-clamp-2 hidden sm:block">{item.desc}</p>
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-cyan-500/20 transition-all duration-300 pointer-events-none" />
+              </button>
+            ))}
           </motion.div>
         </motion.div>
       ) : (
