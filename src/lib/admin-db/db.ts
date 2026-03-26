@@ -14,6 +14,9 @@ const getDatabaseUrl = (): string => {
 };
 
 let pool: Pool | null = null;
+let adminDb:
+  | ReturnType<typeof drizzle<typeof schema>>
+  | null = null;
 
 const getPool = (): Pool => {
   if (pool) return pool;
@@ -28,4 +31,8 @@ const getPool = (): Pool => {
   return pool;
 };
 
-export const adminDb = drizzle(getPool(), { schema });
+export const getAdminDb = () => {
+  if (adminDb) return adminDb;
+  adminDb = drizzle(getPool(), { schema });
+  return adminDb;
+};
