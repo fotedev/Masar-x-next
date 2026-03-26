@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bot, Brain, Trash2, MessagesSquare, ChevronDown, Check, BookOpen, MessageSquareCode, Users } from "lucide-react";
+import { Bot, Brain, Trash2, MessagesSquare, ChevronDown, Check, BookOpen, MessageSquareCode, Users, Settings } from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,6 +28,7 @@ interface ChatHeaderProps {
   t: (key: string) => string;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
+  onOpenPuterSettings: () => void;
 }
 
 export function ChatHeader({
@@ -51,6 +52,7 @@ export function ChatHeader({
   t,
   selectedModel,
   setSelectedModel,
+  onOpenPuterSettings,
 }: ChatHeaderProps) {
   const [isDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
@@ -249,6 +251,16 @@ export function ChatHeader({
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
+        <button
+          type="button"
+          onClick={onOpenPuterSettings}
+          className="px-3 py-2 text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 shadow-sm transition-colors"
+          title="Puter"
+        >
+          <Settings className="w-4 h-4" />
+          <span>وضع Puter</span>
+        </button>
+
         {mode === "student_agent" && (
           <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             <select
