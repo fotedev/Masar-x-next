@@ -149,7 +149,13 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
       <div className="w-full max-w-lg modern-card overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         {/* Decorative Header Background */}
         <div className="h-24 bg-gradient-to-r from-indigo-600 to-purple-600 relative">
-          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(45deg, rgba(255,255,255,0.18) 0, rgba(255,255,255,0.18) 1px, transparent 1px, transparent 12px)",
+            }}
+          />
           <button
             onClick={onClose}
             className="absolute top-4 left-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-all z-10"

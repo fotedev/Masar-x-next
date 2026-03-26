@@ -43,6 +43,7 @@ export default function AiAssistantPage() {
     isReady,
     sendMessage,
     clearChat,
+    isPuterSignedIn,
     mode,
     setMode,
     studentSelectedSubject,
@@ -204,6 +205,8 @@ export default function AiAssistantPage() {
         mode={mode}
         setMode={setMode}
         onSuggestionClick={handleSuggestionClick}
+        onOpenPuterSettings={() => setShowPuterSettings(true)}
+        isPuterSignedIn={isPuterSignedIn}
       />
 
       <ChatInput
