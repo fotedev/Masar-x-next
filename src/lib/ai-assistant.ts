@@ -7,12 +7,29 @@ type PuterClientLike = {
     isSignedIn: () => boolean;
   };
   ai: {
-    chat: (prompt: string, options?: { model?: string; stream?: boolean }) => Promise<unknown>;
+    chat: (
+      prompt: string,
+      options?: {
+        model?: string;
+        stream?: boolean;
+        max_tokens?: number;
+        temperature?: number;
+      },
+    ) => Promise<unknown>;
+    listModels?: (provider?: string | null) => Promise<unknown>;
   };
 };
 
 let cachedPuterClient: PuterClientLike | null = null;
 let cachedPuterImport: Promise<PuterClientLike> | null = null;
+let cachedPuterModels: Promise<Set<string>> | null = null;
+
+type PuterModelEntry = {
+  id: string;
+  provider: string;
+  name?: string;
+  aliases?: string[];
+};
 
 const getPuterClient = async (): Promise<PuterClientLike | null> => {
   if (typeof window === 'undefined') return null;
@@ -23,6 +40,95 @@ const getPuterClient = async (): Promise<PuterClientLike | null> => {
   cachedPuterClient = await cachedPuterImport;
   return cachedPuterClient;
 };
+
+const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
+  if (!value) return false;
+  if (typeof value !== 'object') return false;
+  return Symbol.asyncIterator in (value as Record<string, unknown>);
+};
+
+const extractPuterChatText = async (response: unknown): Promise<string> => {
+  if (typeof response === 'string') return response;
+
+  // Non-streaming: Puter returns a ChatResponse with { message: { content: string } }
+  if (isRecord(response)) {
+    const message = response.message;
+    if (isRecord(message) && typeof message.content === 'string') {
+      return message.content;
+    }
+  }
+
+  // Streaming (future-proof): async iterable of chunks with { text: string }
+  if (hasAsyncIterator(response)) {
+    let out = '';
+    for await (const chunk of response) {
+      if (isRecord(chunk) && typeof chunk.text === 'string') {
+        out += chunk.text;
+      } else {
+        out += String(chunk ?? '');
+      }
+    }
+    return out;
+  }
+
+  return String(response);
+};
+
+const getAvailablePuterModelIds = async (puter: PuterClientLike): Promise<Set<string>> => {
+  if (cachedPuterModels) return cachedPuterModels;
+
+  cachedPuterModels = (async () => {
+    const ids = new Set<string>();
+    if (!puter.ai?.listModels) return ids;
+    const models = await puter.ai.listModels(null);
+    if (!Array.isArray(models)) return ids;
+
+    for (const m of models) {
+      if (!isRecord(m)) continue;
+      if (typeof m.id !== 'string') continue;
+      ids.add(m.id);
+      const aliases = (m as PuterModelEntry).aliases;
+      if (Array.isArray(aliases)) {
+        for (const a of aliases) {
+          if (typeof a === 'string') ids.add(a);
+        }
+      }
+    }
+    return ids;
+  })();
+
+  return cachedPuterModels;
+};
+
+const resolvePuterModel = async (puter: PuterClientLike, requestedModel?: string) => {
+  const fallback = 'gpt-5-nano';
+  const desired = (requestedModel || '').trim();
+  if (!desired) return fallback;
+
+  try {
+    const available = await getAvailablePuterModelIds(puter);
+    if (available.size === 0) return desired;
+    if (available.has(desired)) return desired;
+    return fallback;
+  } catch {
+    return desired;
+  }
+};
+
+function assertPuterSignedIn(
+  puter: PuterClientLike | null,
+): asserts puter is PuterClientLike {
+  if (!puter) throw new Error('Puter client not available');
+  let signedIn = false;
+  try {
+    signedIn = Boolean(puter.auth?.isSignedIn?.());
+  } catch {
+    signedIn = false;
+  }
+  if (!signedIn) {
+    throw new Error('Puter not signed in');
+  }
+}
 
 // Note: Switching from Gemini to Puter.js for AI capabilities
 // Puter.js provides a unified interface for multiple AI models (GPT-4o, Claude, etc.)
@@ -157,12 +263,13 @@ ${platformContext}
 سؤال المستخدم: ${query}${historyContext}`;
 
     const puter = await getPuterClient();
-    if (!puter) throw new Error('Puter client not available');
-    const response = await puter.ai.chat(prompt, { 
-      model: options?.model || 'gpt-4o',
-      stream: false 
+    assertPuterSignedIn(puter);
+    const model = await resolvePuterModel(puter, options?.model || 'gpt-5-nano');
+    const response = await puter.ai.chat(prompt, {
+      model,
+      stream: false,
     });
-    return String(response);
+    return await extractPuterChatText(response);
   }
 
   // Parse chat export text
@@ -321,7 +428,7 @@ ${platformContext}
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
-    const selectedModel = options?.model || 'gpt-4o';
+    const selectedModel = options?.model || 'gpt-5-nano';
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const relevantChunks = mode === 'group_rag' ? this.searchRelevantChunks(query, 8) : [];
 
@@ -342,12 +449,13 @@ ${platformContext}
 سؤال المستخدم: ${query}${historyContext}`;
 
         const puter = await getPuterClient();
-        if (!puter) throw new Error('Puter client not available');
-        const response = await puter.ai.chat(prompt, { 
-          model: selectedModel,
-          stream: false // Socket.io works better with non-streaming for short tasks
+        assertPuterSignedIn(puter);
+        const model = await resolvePuterModel(puter, selectedModel);
+        const response = await puter.ai.chat(prompt, {
+          model,
+          stream: false,
         });
-        return String(response);
+        return await extractPuterChatText(response);
       }
 
       if (mode === 'student_agent') {
@@ -380,12 +488,13 @@ ${context}
 
       // Use Puter.js AI Chat
       const puter = await getPuterClient();
-      if (!puter) throw new Error('Puter client not available');
-      const response = await puter.ai.chat(prompt, { 
-        model: selectedModel,
-        stream: false
+      assertPuterSignedIn(puter);
+      const model = await resolvePuterModel(puter, selectedModel);
+      const response = await puter.ai.chat(prompt, {
+        model,
+        stream: false,
       });
-      return String(response);
+      return await extractPuterChatText(response);
 
     } catch (error: unknown) {
       const context = relevantChunks
@@ -393,8 +502,12 @@ ${context}
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
         .join('\n\n');
 
-      logger.error('Puter AI error:', error);
+      logger.error('Puter AI error', error, { mode });
       if (mode === 'cs_assistant') {
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.toLowerCase().includes('not signed in')) {
+          return `⚠️ تحتاج لتسجيل الدخول لتفعيل وضع Puter المتقدم.\n\nافتح الإعدادات من زر Puter وسجّل الدخول ثم أعد المحاولة.`;
+        }
         return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
       }
       return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\nبناءً على المحادثات المتاحة، إليك المعلومات ذات الصلة:\n\n${context}\n\n💡 جرب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
@@ -437,13 +550,22 @@ ${context}
       };
     }
 
+    // Prefer SDK truth when possible to avoid UI thinking we're signed in while SDK isn't.
+    let sdkSignedIn = false;
+    try {
+      const client = cachedPuterClient;
+      sdkSignedIn = Boolean(client?.auth?.isSignedIn?.());
+    } catch {
+      sdkSignedIn = false;
+    }
+
     const explicitSignedIn =
       typeof localStorage !== 'undefined' &&
       localStorage.getItem('puter_signed_in') === '1';
 
     return {
       isAIWorking,
-      isSignedIn: explicitSignedIn,
+      isSignedIn: sdkSignedIn || explicitSignedIn,
       status: 'puter_js',
     };
   }
