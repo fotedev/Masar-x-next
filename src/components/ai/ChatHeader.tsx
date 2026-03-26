@@ -62,6 +62,7 @@ export function ChatHeader({
   ];
 
   const models = [
+    { id: "gpt-5-nano", label: "GPT-5 nano", provider: "OpenAI" },
     { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
     { id: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet", provider: "Anthropic" },
     { id: "o1-mini", label: "o1-mini", provider: "OpenAI" },

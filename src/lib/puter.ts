@@ -4,14 +4,14 @@
  * Puter.js initialization and helper functions
  */
 
-import Puter from '@heyputer/puter.js';
+import { puter as Puter } from '@heyputer/puter.js';
 
 type PuterClient = {
   auth: {
     isSignedIn: () => boolean;
     signIn: (options?: unknown) => Promise<unknown>;
     signOut: () => void;
-    user: () => unknown;
+    getUser: () => Promise<unknown>;
   };
   ai: {
     chat: (...args: unknown[]) => unknown;
@@ -38,7 +38,7 @@ if (!puter) {
       isSignedIn: () => false,
       signIn: async () => null,
       signOut: () => { },
-      user: () => null,
+      getUser: async () => null,
     },
     ai: {
       chat: async () => "AI capabilities are only available in the browser.",
@@ -59,14 +59,22 @@ export const getPuterStatus = () => {
   if (typeof window === 'undefined') {
     return { isReady: false, isSignedIn: false };
   }
-  const explicitSignedIn = localStorage.getItem(PUTER_SIGNED_IN_KEY) === "1";
 
-  // If localStorage says signed in but Puter SDK says no (token expired),
-  // still treat as signed in — the actual AI call will re-trigger auth if needed.
-  // This prevents the limit message from flashing for Puter users with expired tokens.
+  const explicitSignedIn = localStorage.getItem(PUTER_SIGNED_IN_KEY) === "1";
+  let sdkSignedIn = false;
+  try {
+    sdkSignedIn = Boolean(puter.auth?.isSignedIn?.());
+  } catch {
+    sdkSignedIn = false;
+  }
+
+  // Prefer the SDK's truth when available (prevents unauthenticated socket.io calls).
+  // Keep localStorage as a fallback for UI hints if the SDK hasn't initialized yet.
+  const isSignedIn = sdkSignedIn || explicitSignedIn;
+
   return {
     isReady: isPuterReady,
-    isSignedIn: explicitSignedIn,
+    isSignedIn,
   };
 };
 

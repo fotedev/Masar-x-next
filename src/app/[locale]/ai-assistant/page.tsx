@@ -51,9 +51,9 @@ export default function AiAssistantPage() {
 
   const [selectedModel, setSelectedModel] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("zane_ai_selected_model") || "gpt-4o";
+      return localStorage.getItem("zane_ai_selected_model") || "gpt-5-nano";
     }
-    return "gpt-4o";
+    return "gpt-5-nano";
   });
 
   const handleModelChange = (model: string) => {
@@ -141,7 +141,7 @@ export default function AiAssistantPage() {
         // For now, just a success toast as per existing logic
       }
     } catch (error) {
-      console.error("Summary error:", error);
+      void error;
       toast.error(t("summarizeError"));
     } finally {
       setIsSummarizing(false);

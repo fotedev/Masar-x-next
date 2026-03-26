@@ -43,7 +43,7 @@ export function MobileNav({
 }: MobileNavProps) {
   return (
     <div
-      className={`lg:hidden fixed inset-0 z-[90] ${
+      className={`lg:hidden fixed inset-0 z-[90] overflow-hidden ${
         isMounted && isMobileMenuOpen
           ? "pointer-events-auto"
           : "pointer-events-none"
