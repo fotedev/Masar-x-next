@@ -7,6 +7,7 @@ import {
   signOutFromPuter,
   getPuterStatus,
   isProbablyMobileDevice,
+  warmupPuterAuth,
 } from "@/lib/puter";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -24,12 +25,27 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
   const [status, setStatus] = useState(() => getPuterStatus());
   const [waitingForAuth, setWaitingForAuth] = useState(false);
   const [authStartedAt, setAuthStartedAt] = useState<number | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
 
   const isMobile = useMemo(() => isProbablyMobileDevice(), []);
 
   useEffect(() => {
     if (!isOpen) return;
     setStatus(getPuterStatus());
+    void warmupPuterAuth()
+      .then((res) => {
+        setStatus((prev) => ({ ...prev, isSignedIn: res.isSignedIn }));
+      })
+      .catch(() => {
+        // ignore
+      });
+    try {
+      const raw = localStorage.getItem("puter_unavailable_until");
+      const n = raw ? Number(raw) : 0;
+      setCooldownUntil(Number.isFinite(n) ? n : 0);
+    } catch {
+      setCooldownUntil(0);
+    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -80,6 +96,12 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
   if (!isOpen) return null;
 
   const handleSignIn = async () => {
+    if (cooldownUntil > Date.now()) {
+      toast.error("خدمة Puter غير متاحة مؤقتاً", {
+        description: "⚠️ AI service is temporarily unavailable. Please try again later.",
+      });
+      return;
+    }
     setIsLoading(true);
     setWaitingForAuth(true);
     setAuthStartedAt(Date.now());
@@ -169,7 +191,7 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
             <div className="space-y-6">
               <button
                 onClick={handleSignIn}
-                disabled={isLoading || waitingForAuth}
+                disabled={isLoading || waitingForAuth || cooldownUntil > Date.now()}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 {isLoading ? (
@@ -178,7 +200,9 @@ const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
                   <span>
                     {waitingForAuth
                       ? "جاري انتظار تسجيل الدخول..."
-                      : "تسجيل الدخول"}
+                      : cooldownUntil > Date.now()
+                        ? "غير متاح مؤقتاً"
+                        : "تسجيل الدخول"}
                   </span>
                 )}
               </button>
