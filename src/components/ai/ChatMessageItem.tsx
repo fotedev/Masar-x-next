@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
-import { Bot, User, Copy, Check, Code, Eye } from "lucide-react";
+import { Bot, User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { LatexRenderer } from "@/components/LatexRenderer";
+import { signInToPuter } from "@/lib/puter";
 
 interface ChatMessage {
   id: string;
@@ -25,6 +26,14 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const isRTL = locale === "ar";
   const isUser = message.type === "user";
   const [isRawView, setIsRawView] = useState(false);
+  const [isPuterSigningIn, setIsPuterSigningIn] = useState(false);
+
+  const PUTER_AUTH_MARKER = "__PUTER_AUTH_REQUIRED__";
+  const isPuterAuthRequiredMessage =
+    !isUser && typeof message.content === "string" && message.content.startsWith(PUTER_AUTH_MARKER);
+  const displayContent = isPuterAuthRequiredMessage
+    ? message.content.replace(PUTER_AUTH_MARKER, "").trim()
+    : message.content;
 
   type MarkdownCodeProps = React.HTMLAttributes<HTMLElement> & {
     inline?: boolean;
@@ -268,14 +277,14 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 : `bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
             }`}
           >
-            <div className={`absolute -top-3 ${isUser ? (isRTL ? "right-4" : "left-4") : (isRTL ? "left-4" : "right-4")} flex gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
+            <div className={`absolute -top-3 ${isUser ? (isRTL ? "right-4" : "left-4") : (isRTL ? "left-4" : "right-4")} flex gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}> 
               {/* Global Copy Button for all messages */}
               <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity duration-200 pointer-events-none group-hover/bubble:pointer-events-auto">
-                <CopyButton content={message.content} />
+                <CopyButton content={displayContent} />
               </div>
 
               {/* Source Toggle for Assistant messages with Markdown */}
-              {!isUser && hasMarkdownContent(message.content) && (
+              {!isUser && hasMarkdownContent(displayContent) && (
                 <button
                   onClick={() => setIsRawView(!isRawView)}
                   className="p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
@@ -289,7 +298,30 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             {isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
             ) : (
-              renderAssistantContent(message.content)
+              <div className="space-y-3">
+                {renderAssistantContent(displayContent)}
+                {isPuterAuthRequiredMessage && (
+                  <div className={`flex ${isRTL ? "justify-end" : "justify-start"}`}>
+                    <button
+                      type="button"
+                      disabled={isPuterSigningIn}
+                      onClick={async () => {
+                        if (isPuterSigningIn) return;
+                        setIsPuterSigningIn(true);
+                        try {
+                          await signInToPuter();
+                        } finally {
+                          setIsPuterSigningIn(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>{isPuterSigningIn ? "جاري فتح تسجيل الدخول..." : "تسجيل الدخول"}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           <div

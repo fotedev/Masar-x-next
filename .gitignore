@@ -139,3 +139,5 @@ vite.config.ts.timestamp-*.mjs
 __pycache__
 .agents
 scripts/row-preview-notgoodforhtml.txt
+.vercel
+AGENTS.md
