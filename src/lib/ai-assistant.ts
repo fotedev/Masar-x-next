@@ -21,7 +21,7 @@ type PuterClientLike = {
 };
 
 let cachedPuterClient: PuterClientLike | null = null;
-let cachedPuterImport: Promise<PuterClientLike> | null = null;
+let cachedPuterImport: Promise<PuterClientLike | null> | null = null;
 let cachedPuterModels: Promise<Set<string>> | null = null;
 
 let cachedPuterWarmup: Promise<void> | null = null;
@@ -244,6 +244,38 @@ const notePuterTransportFailure = (error: unknown) => {
 
 const getPuterUnavailableMessage = () => `${PUTER_UNAVAILABLE_MESSAGE_AR}\n\n${PUTER_UNAVAILABLE_MESSAGE_EN}`;
 
+/**
+ * Fallback: Call server-side AI endpoint when Puter is unavailable
+ */
+const tryServerSideFallback = async (
+  prompt: string,
+  mode: AiAssistantMode = 'group_rag',
+): Promise<string | null> => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        mode,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn('[AI Fallback] Server responded with status:', response.status);
+      return null;
+    }
+
+    const data = await response.json() as { message?: string };
+    return data.message || null;
+  } catch (error) {
+    console.warn('[AI Fallback] Error calling server endpoint:', error instanceof Error ? error.message : String(error));
+    return null;
+  }
+};
+
 type PuterModelEntry = {
   id: string;
   provider: string;
@@ -255,10 +287,20 @@ const getPuterClient = async (): Promise<PuterClientLike | null> => {
   if (typeof window === 'undefined') return null;
   if (cachedPuterClient) return cachedPuterClient;
   if (!cachedPuterImport) {
-    cachedPuterImport = import('./puter').then((m) => m.default as unknown as PuterClientLike);
+    cachedPuterImport = import('./puter')
+      .then((m) => m.default as unknown as PuterClientLike)
+      .catch((error) => {
+        console.warn('[AI Assistant] Failed to import Puter client:', error instanceof Error ? error.message : String(error));
+        // Mark Puter as unavailable for 45 seconds
+        notePuterTransportFailure(new Error('Socket.io transport initialization failed'));
+        return null;
+      });
   }
-  cachedPuterClient = await cachedPuterImport;
-  return cachedPuterClient;
+  const client = await cachedPuterImport;
+  if (client) {
+    cachedPuterClient = client;
+  }
+  return client;
 };
 
 const warmupPuterClient = async (): Promise<void> => {
@@ -800,9 +842,19 @@ ${ZANE_UI_INSTRUCTION}`;
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
         .join('\n\n');
 
+      // Log non-transport errors
       if (!isPuterTransportError(error) && !isPuterAuthError(error)) {
         logger.error('Puter AI error', error, { mode });
       }
+
+      // Try server-side fallback if Puter failed
+      if (isPuterTransportError(error)) {
+        const fallbackResponse = await tryServerSideFallback(query, mode);
+        if (fallbackResponse) {
+          return fallbackResponse;
+        }
+      }
+
       if (mode === 'cs_assistant') {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.toLowerCase().includes('not signed in')) {
