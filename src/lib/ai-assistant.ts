@@ -24,6 +24,94 @@ let cachedPuterClient: PuterClientLike | null = null;
 let cachedPuterImport: Promise<PuterClientLike> | null = null;
 let cachedPuterModels: Promise<Set<string>> | null = null;
 
+let cachedPuterWarmup: Promise<void> | null = null;
+
+const PUTER_UNAVAILABLE_UNTIL_KEY = 'puter_unavailable_until';
+
+const PUTER_UNAVAILABLE_MESSAGE_AR = '⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً. حاول لاحقاً.';
+const PUTER_UNAVAILABLE_MESSAGE_EN = '⚠️ AI service is temporarily unavailable. Please try again later.';
+
+let puterCircuitOpenUntilMs = 0;
+let puterTransportFailureCount = 0;
+let puterLastTransportFailureAtMs = 0;
+let puterLastCircuitLogAtMs = 0;
+
+const isPuterCircuitOpen = () => Date.now() < puterCircuitOpenUntilMs;
+
+const asErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+};
+
+const isPuterAuthError = (error: unknown) => {
+  const msg = asErrorMessage(error).toLowerCase();
+  return msg.includes('not signed in') || msg.includes('not signed') || msg.includes('signed in');
+};
+
+const isPuterTransportError = (error: unknown) => {
+  const msg = asErrorMessage(error).toLowerCase();
+  return (
+    msg.includes('socket.io') ||
+    msg.includes('engine.io') ||
+    msg.includes('transport') ||
+    msg.includes('websocket') ||
+    msg.includes('polling') ||
+    msg.includes('400') ||
+    msg.includes('bad request') ||
+    msg.includes('network')
+  );
+};
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const withPuterRetry = async <T>(
+  fn: () => Promise<T>,
+  opts?: { maxAttempts?: number; baseDelayMs?: number },
+): Promise<T> => {
+  const maxAttempts = Math.max(1, Math.min(5, opts?.maxAttempts ?? 3));
+  const baseDelayMs = Math.max(200, opts?.baseDelayMs ?? 500);
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fn();
+      puterTransportFailureCount = 0;
+      puterLastTransportFailureAtMs = 0;
+      return res;
+    } catch (e) {
+      lastError = e;
+      if (!isPuterTransportError(e) || attempt >= maxAttempts) break;
+      const delay = baseDelayMs * Math.pow(2, attempt - 1);
+      await sleep(delay);
+    }
+  }
+
+  throw lastError;
+};
+
+const notePuterTransportFailure = (error: unknown) => {
+  if (!isPuterTransportError(error)) return;
+
+  const now = Date.now();
+  const sinceLast = now - (puterLastTransportFailureAtMs || 0);
+  const withinWindow = sinceLast >= 0 && sinceLast < 60_000;
+  puterTransportFailureCount = withinWindow ? puterTransportFailureCount + 1 : 1;
+  puterLastTransportFailureAtMs = now;
+
+  if (puterTransportFailureCount >= 2) {
+    puterCircuitOpenUntilMs = now + 45_000;
+    if (now - puterLastCircuitLogAtMs > 45_000) {
+      puterLastCircuitLogAtMs = now;
+      logger.warn('Puter transport unavailable; opening circuit breaker', {
+        openUntil: new Date(puterCircuitOpenUntilMs).toISOString(),
+        error: asErrorMessage(error),
+      });
+    }
+  }
+};
+
+const getPuterUnavailableMessage = () => `${PUTER_UNAVAILABLE_MESSAGE_AR}\n\n${PUTER_UNAVAILABLE_MESSAGE_EN}`;
+
 type PuterModelEntry = {
   id: string;
   provider: string;
@@ -39,6 +127,28 @@ const getPuterClient = async (): Promise<PuterClientLike | null> => {
   }
   cachedPuterClient = await cachedPuterImport;
   return cachedPuterClient;
+};
+
+const warmupPuterClient = async (): Promise<void> => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(PUTER_UNAVAILABLE_UNTIL_KEY);
+    const until = raw ? Number(raw) : 0;
+    if (Number.isFinite(until) && until > Date.now()) return;
+  } catch {
+    // ignore
+  }
+  if (cachedPuterWarmup) return cachedPuterWarmup;
+  cachedPuterWarmup = import('./puter')
+    .then(async (m) => {
+      if (typeof m.warmupPuterAuth === 'function') {
+        await m.warmupPuterAuth();
+      }
+    })
+    .catch(() => {
+      // ignore; transport errors are handled inside warmupPuterAuth when available
+    });
+  return cachedPuterWarmup;
 };
 
 const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
@@ -126,6 +236,13 @@ function assertPuterSignedIn(
     signedIn = false;
   }
   if (!signedIn) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('puter_signed_in');
+      }
+    } catch {
+      // ignore
+    }
     throw new Error('Puter not signed in');
   }
 }
@@ -262,14 +379,26 @@ ${platformContext}
 
 سؤال المستخدم: ${query}${historyContext}`;
 
+    if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
     const puter = await getPuterClient();
+    await warmupPuterClient();
     assertPuterSignedIn(puter);
     const model = await resolvePuterModel(puter, options?.model || 'gpt-5-nano');
-    const response = await puter.ai.chat(prompt, {
-      model,
-      stream: false,
-    });
-    return await extractPuterChatText(response);
+    try {
+      const response = await withPuterRetry(
+        () =>
+          puter.ai.chat(prompt, {
+            model,
+            stream: false,
+          }),
+        { maxAttempts: 3, baseDelayMs: 500 },
+      );
+      return await extractPuterChatText(response);
+    } catch (error) {
+      notePuterTransportFailure(error);
+      if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
+      throw error;
+    }
   }
 
   // Parse chat export text
@@ -448,14 +577,26 @@ ${platformContext}
 
 سؤال المستخدم: ${query}${historyContext}`;
 
+        if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
         const puter = await getPuterClient();
+        await warmupPuterClient();
         assertPuterSignedIn(puter);
         const model = await resolvePuterModel(puter, selectedModel);
-        const response = await puter.ai.chat(prompt, {
-          model,
-          stream: false,
-        });
-        return await extractPuterChatText(response);
+        try {
+          const response = await withPuterRetry(
+            () =>
+              puter.ai.chat(prompt, {
+                model,
+                stream: false,
+              }),
+            { maxAttempts: 3, baseDelayMs: 500 },
+          );
+          return await extractPuterChatText(response);
+        } catch (error) {
+          notePuterTransportFailure(error);
+          if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
+          throw error;
+        }
       }
 
       if (mode === 'student_agent') {
@@ -487,14 +628,26 @@ ${context}
 8. استخدم لغة عربية فصحى واضحة ومهنية`;
 
       // Use Puter.js AI Chat
+      if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
       const puter = await getPuterClient();
+      await warmupPuterClient();
       assertPuterSignedIn(puter);
       const model = await resolvePuterModel(puter, selectedModel);
-      const response = await puter.ai.chat(prompt, {
-        model,
-        stream: false,
-      });
-      return await extractPuterChatText(response);
+      try {
+        const response = await withPuterRetry(
+          () =>
+            puter.ai.chat(prompt, {
+              model,
+              stream: false,
+            }),
+          { maxAttempts: 3, baseDelayMs: 500 },
+        );
+        return await extractPuterChatText(response);
+      } catch (error) {
+        notePuterTransportFailure(error);
+        if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
+        throw error;
+      }
 
     } catch (error: unknown) {
       const context = relevantChunks
@@ -502,7 +655,9 @@ ${context}
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
         .join('\n\n');
 
-      logger.error('Puter AI error', error, { mode });
+      if (!isPuterTransportError(error) && !isPuterAuthError(error)) {
+        logger.error('Puter AI error', error, { mode });
+      }
       if (mode === 'cs_assistant') {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.toLowerCase().includes('not signed in')) {

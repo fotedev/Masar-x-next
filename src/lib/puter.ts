@@ -4,8 +4,6 @@
  * Puter.js initialization and helper functions
  */
 
-import { puter as Puter } from '@heyputer/puter.js';
-
 type PuterClient = {
   auth: {
     isSignedIn: () => boolean;
@@ -27,25 +25,134 @@ export type PuterSignInResult =
       error?: unknown;
     };
 
-let puter: PuterClient = Puter as unknown as PuterClient;
+let realPuterClient: PuterClient | null = null;
+let puterImportPromise: Promise<PuterClient> | null = null;
+
+let puterWarmupPromise: Promise<boolean> | null = null;
 
 const PUTER_SIGNED_IN_KEY = "puter_signed_in";
+const PUTER_UNAVAILABLE_UNTIL_KEY = "puter_unavailable_until";
 
-// Ensure puter object exists even if load failed or on server
-if (!puter) {
-  puter = {
-    auth: {
-      isSignedIn: () => false,
-      signIn: async () => null,
-      signOut: () => { },
-      getUser: async () => null,
+const isPuterTransportError = (error: unknown) => {
+  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    msg.includes('socket.io') ||
+    msg.includes('engine.io') ||
+    msg.includes('websocket') ||
+    msg.includes('polling') ||
+    msg.includes('transport') ||
+    msg.includes('400') ||
+    msg.includes('bad request')
+  );
+};
+
+export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
+  if (typeof window === 'undefined') return { isSignedIn: false };
+
+  const unavailableUntil = getUnavailableUntil();
+  if (unavailableUntil > Date.now()) return { isSignedIn: false };
+
+  if (!puterWarmupPromise) {
+    puterWarmupPromise = (async () => {
+      try {
+        const client = await loadRealPuterClient();
+        const signedIn = Boolean(client?.auth?.isSignedIn?.());
+        try {
+          if (signedIn) {
+            localStorage.setItem(PUTER_SIGNED_IN_KEY, '1');
+          } else {
+            localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+          }
+        } catch {
+          // ignore
+        }
+        return signedIn;
+      } catch (error) {
+        if (isPuterTransportError(error)) {
+          setUnavailableCooldown(45_000);
+        }
+        try {
+          localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+        } catch {
+          // ignore
+        }
+        return false;
+      }
+    })();
+  }
+
+  const isSignedIn = await puterWarmupPromise;
+  return { isSignedIn };
+};
+
+const getUnavailableUntil = () => {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = localStorage.getItem(PUTER_UNAVAILABLE_UNTIL_KEY);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const setUnavailableCooldown = (msFromNow: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PUTER_UNAVAILABLE_UNTIL_KEY, String(Date.now() + msFromNow));
+  } catch {
+    // ignore
+  }
+};
+
+const loadRealPuterClient = async (): Promise<PuterClient> => {
+  if (typeof window === 'undefined') {
+    throw new Error('Puter SDK can only be loaded in the browser');
+  }
+  if (realPuterClient) return realPuterClient;
+  if (!puterImportPromise) {
+    puterImportPromise = import('@heyputer/puter.js').then((m) => {
+      const client = (m.puter as unknown as PuterClient) ?? null;
+      if (!client) throw new Error('Failed to initialize Puter client');
+      realPuterClient = client;
+      return client;
+    });
+  }
+  return puterImportPromise;
+};
+
+const puter: PuterClient = {
+  auth: {
+    isSignedIn: () => {
+      try {
+        return Boolean(realPuterClient?.auth?.isSignedIn?.());
+      } catch {
+        return false;
+      }
     },
-    ai: {
-      chat: async () => "AI capabilities are only available in the browser.",
+    signIn: async (options?: unknown) => {
+      const client = await loadRealPuterClient();
+      return client.auth?.signIn?.(options);
     },
-    // Add other mocks as needed
-  };
-}
+    signOut: () => {
+      try {
+        realPuterClient?.auth?.signOut?.();
+      } catch {
+        // ignore
+      }
+    },
+    getUser: async () => {
+      const client = await loadRealPuterClient();
+      return client.auth?.getUser?.();
+    },
+  },
+  ai: {
+    chat: async (...args: unknown[]) => {
+      const client = await loadRealPuterClient();
+      return client.ai?.chat?.(...args);
+    },
+  },
+};
 
 // Initialize Puter.js status
 let isPuterReady = false;
@@ -60,10 +167,15 @@ export const getPuterStatus = () => {
     return { isReady: false, isSignedIn: false };
   }
 
+  const unavailableUntil = getUnavailableUntil();
+  if (unavailableUntil > Date.now()) {
+    return { isReady: false, isSignedIn: false };
+  }
+
   const explicitSignedIn = localStorage.getItem(PUTER_SIGNED_IN_KEY) === "1";
   let sdkSignedIn = false;
   try {
-    sdkSignedIn = Boolean(puter.auth?.isSignedIn?.());
+    sdkSignedIn = Boolean(realPuterClient?.auth?.isSignedIn?.());
   } catch {
     sdkSignedIn = false;
   }
@@ -93,14 +205,22 @@ export const signInToPuter = async (options?: {
   attemptTempUserCreation?: boolean;
 }): Promise<PuterSignInResult> => {
   if (typeof window === 'undefined') return { ok: false, signedIn: false, reason: "unknown" };
+
+  const unavailableUntil = getUnavailableUntil();
+  if (unavailableUntil > Date.now()) {
+    return { ok: false, signedIn: false, reason: "unknown" };
+  }
+
+  puterWarmupPromise = null;
+
   try {
     const signInOptions = options?.attemptTempUserCreation
       ? ({ attempt_temp_user_creation: true } as const)
       : undefined;
 
-    await puter.auth?.signIn?.(signInOptions);
+    await puter.auth.signIn(signInOptions);
 
-    const isSignedInNow = Boolean(puter.auth?.isSignedIn?.());
+    const isSignedInNow = Boolean(puter.auth.isSignedIn());
     if (!isSignedInNow) {
       try {
         localStorage.removeItem(PUTER_SIGNED_IN_KEY);
@@ -118,6 +238,9 @@ export const signInToPuter = async (options?: {
     return { ok: true, signedIn: true };
   } catch (error) {
     void error;
+    if (isPuterTransportError(error)) {
+      setUnavailableCooldown(45_000);
+    }
     try {
       localStorage.removeItem(PUTER_SIGNED_IN_KEY);
     } catch {
@@ -131,8 +254,10 @@ export const signOutFromPuter = () => {
   if (typeof window === 'undefined') return;
   try {
     puter.auth.signOut();
+    puterWarmupPromise = null;
     try {
       localStorage.removeItem(PUTER_SIGNED_IN_KEY);
+      localStorage.removeItem(PUTER_UNAVAILABLE_UNTIL_KEY);
     } catch {
       // ignore
     }
