@@ -38,6 +38,14 @@ let puterLastCircuitLogAtMs = 0;
 
 const isPuterCircuitOpen = () => Date.now() < puterCircuitOpenUntilMs;
 
+const BREVITY_INSTRUCTION = `
+
+إرشادات الإيجاز (مهم):
+- كن مختصراً ومباشراً افتراضياً.
+- إذا كانت رسالة المستخدم قصيرة جداً (مثل: hi / ok / ?) رد بتحية قصيرة ثم سؤال توضيحي واحد فقط.
+- لا تكتب ردود طويلة أو أمثلة إلا إذا طلب المستخدم ذلك أو كانت ضرورية لفهم الحل.
+`;
+
 const asErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
   return String(error);
@@ -46,6 +54,16 @@ const asErrorMessage = (error: unknown) => {
 const isPuterAuthError = (error: unknown) => {
   const msg = asErrorMessage(error).toLowerCase();
   return msg.includes('not signed in') || msg.includes('not signed') || msg.includes('signed in');
+};
+
+const isClaudeLikeModel = (model?: string) => {
+  const m = (model || '').toLowerCase();
+  return m.includes('claude');
+};
+
+const formatPuterNeedsLoginMessage = (model?: string) => {
+  const modelLabel = model ? ` (${model})` : '';
+  return `__PUTER_AUTH_REQUIRED__\n⚠️ يلزم تسجيل الدخول إلى Puter لتفعيل هذا النموذج${modelLabel}.\n\nاضغط زر "تسجيل الدخول" بالأسفل ثم أعد المحاولة.`;
 };
 
 const isPuterTransportError = (error: unknown) => {
@@ -558,6 +576,7 @@ ${platformContext}
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
     const selectedModel = options?.model || 'gpt-5-nano';
+    const requiresPuterAuth = isClaudeLikeModel(selectedModel);
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const relevantChunks = mode === 'group_rag' ? this.searchRelevantChunks(query, 8) : [];
 
@@ -575,12 +594,15 @@ ${platformContext}
 4) عند شرح خوارزمية: اذكر الفكرة، التعقيد، وحالات الحافة.
 5) إذا طلب المستخدم مساعدة في واجب/مشروع: ساعده على الفهم ولا تكتفي بالحل النهائي إن أمكن.
 
+${BREVITY_INSTRUCTION}
+
 سؤال المستخدم: ${query}${historyContext}`;
 
         if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
         const puter = await getPuterClient();
         await warmupPuterClient();
-        assertPuterSignedIn(puter);
+        if (!puter) return getPuterUnavailableMessage();
+        if (requiresPuterAuth) assertPuterSignedIn(puter);
         const model = await resolvePuterModel(puter, selectedModel);
         try {
           const response = await withPuterRetry(
@@ -625,13 +647,16 @@ ${context}
 5. كن دقيقاً ومباشراً في الإجابات - خاصة للمواعيد والتفاصيل
 6. أشر إلى المصدر عند الإمكان (مثل: "حسب ما ذكره [الاسم]")
 7. تجاهل أي محتوى غير تعليمي أو هزلي في السياق
-8. استخدم لغة عربية فصحى واضحة ومهنية`;
+8. استخدم لغة عربية فصحى واضحة ومهنية
+
+${BREVITY_INSTRUCTION}`;
 
       // Use Puter.js AI Chat
       if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
       const puter = await getPuterClient();
       await warmupPuterClient();
-      assertPuterSignedIn(puter);
+      if (!puter) return getPuterUnavailableMessage();
+      if (requiresPuterAuth) assertPuterSignedIn(puter);
       const model = await resolvePuterModel(puter, selectedModel);
       try {
         const response = await withPuterRetry(
@@ -661,7 +686,7 @@ ${context}
       if (mode === 'cs_assistant') {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.toLowerCase().includes('not signed in')) {
-          return `⚠️ تحتاج لتسجيل الدخول لتفعيل وضع Puter المتقدم.\n\nافتح الإعدادات من زر Puter وسجّل الدخول ثم أعد المحاولة.`;
+          return formatPuterNeedsLoginMessage(isClaudeLikeModel(selectedModel) ? selectedModel : undefined);
         }
         return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
       }
