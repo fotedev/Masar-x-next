@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
-import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle } from "lucide-react";
+import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle, LogIn, Settings } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,8 @@ interface ChatContainerProps {
   mode?: AiAssistantMode;
   setMode?: (mode: AiAssistantMode) => void;
   onSuggestionClick?: (suggestion: string) => void;
+  onOpenPuterSettings?: () => void;
+  isPuterSignedIn?: boolean;
 }
 
 export function ChatContainer({
@@ -35,6 +37,8 @@ export function ChatContainer({
   mode = "cs_assistant",
   setMode,
   onSuggestionClick,
+  onOpenPuterSettings,
+  isPuterSignedIn = false,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const locale = useLocale();
@@ -201,6 +205,26 @@ export function ChatContainer({
               </button>
             ))}
           </motion.div>
+
+          {/* Puter CTA (visible in initial state as well) */}
+          {typeof onOpenPuterSettings === "function" && (
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { delay: 0.55 } },
+              }}
+              className="w-full flex items-center justify-center"
+            >
+              <button
+                type="button"
+                onClick={onOpenPuterSettings}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/40 backdrop-blur-md text-slate-800 dark:text-slate-100 font-extrabold shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+              >
+                {isPuterSignedIn ? <Settings className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+                <span>{isPuterSignedIn ? "إعدادات Puter" : "تفعيل Puter"}</span>
+              </button>
+            </motion.div>
+          )}
         </motion.div>
       ) : (
         <>
