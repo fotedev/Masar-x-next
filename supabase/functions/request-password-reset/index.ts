@@ -35,11 +35,7 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
   const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://masarx.vercel.app";
   const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-  console.log(`[AUTH-DEBUG-v5] Preparing to send email to ${email}`);
-  console.log(`[AUTH-DEBUG-v5] BREVO_API_KEY present: ${!!BREVO_API_KEY}`);
-  if (BREVO_API_KEY) {
-    console.log(`[AUTH-DEBUG-v5] BREVO_API_KEY starts with: ${BREVO_API_KEY.substring(0, 10)}...`);
-  }
+  console.log(`[AUTH] Preparing password reset email for: ${email}`);
 
   if (!BREVO_API_KEY) {
     throw new Error("BREVO_API_KEY is missing in environment variables");
@@ -127,8 +123,6 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
     subject: subject,
     htmlContent: htmlContent,
   };
-
-  console.log(`[AUTH-DEBUG-v5] Sending payload to Brevo:`, JSON.stringify(payload, null, 2));
 
   const response = await fetch(BREVO_API_URL, {
     method: "POST",
@@ -264,10 +258,10 @@ serve(async (req) => {
         console.warn('[AUTH] Rate limit exception:', rlEx);
       }
 
+      console.log(`[AUTH] Generating reset token for user: ${user.id}`);
+
       const resetToken = nanoid(32);
       const tokenHash = await sha256(resetToken);
-
-      console.log(`[AUTH] Generating reset token for user: ${user.id}`);
 
       const tokenData = {
         user_id: user.id,
@@ -277,11 +271,10 @@ serve(async (req) => {
         expires_at: new Date(Date.now() + 86400000).toISOString(),
       };
       
-      console.log(`[AUTH-DEBUG-v4] Attempting DB insert into password_reset_tokens:`, JSON.stringify(tokenData));
+      console.log(`[AUTH] Inserting password reset token for user: ${user.id}`);
 
       // Use direct REST API with service role key to bypass RLS and library issues
       const restUrl = `${supabaseUrl}/rest/v1/password_reset_tokens`;
-      console.log(`[AUTH-DEBUG-v4] REST API URL: ${restUrl}`);
       
       const restResponse = await fetch(restUrl, {
         method: 'POST',
@@ -296,23 +289,21 @@ serve(async (req) => {
 
       const restStatus = restResponse.status;
       const responseText = await restResponse.text();
-      console.log(`[AUTH-DEBUG-v4] REST API Response Status: ${restStatus}`);
-      console.log(`[AUTH-DEBUG-v4] REST API Raw Response: ${responseText}`);
 
       if (!restResponse.ok) {
-        console.error(`[AUTH-DEBUG-v4] REST API insert error: Status ${restStatus}`, responseText);
-        // We will continue to see if email can still be sent for testing purposes, 
-        // but in production this should probably fail.
-      } else {
-        console.log(`[AUTH-DEBUG-v4] Insert successful via REST`);
+        console.error(`[AUTH] REST API insert failed: Status ${restStatus}`, responseText);
+        // CRITICAL: Do not send email if database insert failed
+        throw new Error(`Failed to save password reset token in database: ${restStatus} ${responseText}`);
       }
       
-      console.log(`[AUTH-DEBUG-v4] Sending email via Brevo to: ${email}`);
+      console.log(`[AUTH] Password reset token inserted successfully for email: ${email}`);
+      
+      console.log(`[AUTH] Sending password reset email to: ${email}`);
       try {
         await sendPasswordResetEmail(email, resetToken);
-        console.log(`[AUTH-DEBUG-v4] Email sending function completed successfully`);
+        console.log(`[AUTH] Password reset email sent successfully to: ${email}`);
       } catch (emailErr) {
-        console.error(`[AUTH-DEBUG-v4] Email sending function FAILED:`, emailErr);
+        console.error(`[AUTH] Failed to send password reset email:`, emailErr);
         throw emailErr;
       }
 

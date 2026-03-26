@@ -138,3 +138,4 @@ vite.config.ts.timestamp-*.mjs
 /SQL_FIX_VIDEOS_RATINGS.sql
 __pycache__
 .agents
+scripts/row-preview-notgoodforhtml.txt
