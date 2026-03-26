@@ -42,9 +42,111 @@ const BREVITY_INSTRUCTION = `
 
 إرشادات الإيجاز (مهم):
 - كن مختصراً ومباشراً افتراضياً.
-- إذا كانت رسالة المستخدم قصيرة جداً (مثل: hi / ok / ?) رد بتحية قصيرة ثم سؤال توضيحي واحد فقط.
+- لا تبدأ كل رد بتحية. ابدأ مباشرة بالإجابة.
+- فقط إذا بدأ المستخدم بتحية (hi/hello/السلام عليكم/أهلاً) أو كانت أول رسالة في المحادثة: رد بتحية قصيرة مرة واحدة.
+- إذا كانت رسالة المستخدم قصيرة جداً (مثل: hi / ok / ?) اسأل من 1 إلى 3 أسئلة توضيحية قصيرة كحد أقصى.
 - لا تكتب ردود طويلة أو أمثلة إلا إذا طلب المستخدم ذلك أو كانت ضرورية لفهم الحل.
 `;
+
+const userMessageLooksLikeGreeting = (query: string) => {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) return false;
+  return (
+    q === 'hi' ||
+    q === 'hello' ||
+    q.startsWith('hi ') ||
+    q.startsWith('hello ') ||
+    q.includes('السلام عليكم') ||
+    q.includes('سلام عليكم') ||
+    q.includes('اهلا') ||
+    q.includes('أهلا') ||
+    q.includes('أهلاً') ||
+    q.includes('مرحبا') ||
+    q.includes('مرحباً') ||
+    q.includes('مرحبًا')
+  );
+};
+
+const stripOpeningGreeting = (text: string) => {
+  const raw = String(text ?? '');
+  const trimmedStart = raw.replace(/^\s+/, '');
+
+  const patterns: RegExp[] = [
+    /^((?:أهلاً|أهلا|اهلا|مرحباً|مرحبًا|مرحبا|السلام عليكم|سلام عليكم)(?:\s+بك|\s+وسهلاً|\s+وسهلا)?)\s*[!！\.،,:؛\-–—]*\s*/i,
+    /^(hi|hello|hey)\s*[!！\.，,:;\-–—]*\s*/i,
+  ];
+
+  for (const p of patterns) {
+    if (p.test(trimmedStart)) {
+      const next = trimmedStart.replace(p, '');
+      return next.replace(/^\s+/, '');
+    }
+  }
+
+  return raw;
+};
+
+const enforceFencedCodeBlocks = (text: string) => {
+  const raw = String(text ?? '');
+  if (raw.includes('```')) return raw;
+
+  const lines = raw.split(/\r?\n/);
+  const isCodeLine = (line: string) => {
+    if (/^\s{4,}\S/.test(line) || /^\t+\S/.test(line)) return true;
+    if (/^\s*(def|class)\s+\w+/.test(line)) return true;
+    if (/^\s*(function|const|let|var)\s+/.test(line)) return true;
+    if (/^\s*import\s+/.test(line)) return true;
+    if (/^\s*if\s*\(.*\)\s*\{?\s*$/.test(line)) return true;
+    if (/^\s*return\s+/.test(line)) return true;
+    if (/^\s*#include\s+/.test(line)) return true;
+    return false;
+  };
+
+  let bestStart = -1;
+  let bestEnd = -1;
+  let currentStart = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const code = isCodeLine(lines[i]);
+    if (code && currentStart === -1) currentStart = i;
+    if (!code && currentStart !== -1) {
+      const end = i - 1;
+      if (end - currentStart + 1 >= 2 && end - currentStart > bestEnd - bestStart) {
+        bestStart = currentStart;
+        bestEnd = end;
+      }
+      currentStart = -1;
+    }
+  }
+  if (currentStart !== -1) {
+    const end = lines.length - 1;
+    if (end - currentStart + 1 >= 2 && end - currentStart > bestEnd - bestStart) {
+      bestStart = currentStart;
+      bestEnd = end;
+    }
+  }
+
+  if (bestStart === -1) return raw;
+
+  const before = lines.slice(0, bestStart).join('\n').replace(/\s+$/, '');
+  const codeBlock = lines.slice(bestStart, bestEnd + 1).join('\n').replace(/^\s+\n+/, '').replace(/\n+\s+$/, '');
+  const after = lines.slice(bestEnd + 1).join('\n').replace(/^\s+/, '');
+
+  const wrapped = `${before}${before ? '\n\n' : ''}\
+\`\`\`\n${codeBlock}\n\`\`\`\n${after}`;
+  return wrapped.replace(/\n{3,}/g, '\n\n').trim();
+};
+
+const sanitizeAssistantReply = (query: string, reply: string) => {
+  let out = String(reply ?? '');
+  if (!out) return out;
+
+  if (!userMessageLooksLikeGreeting(query)) {
+    out = stripOpeningGreeting(out);
+  }
+  out = enforceFencedCodeBlocks(out);
+  return out;
+};
 
 const asErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
@@ -65,6 +167,18 @@ const formatPuterNeedsLoginMessage = (model?: string) => {
   const modelLabel = model ? ` (${model})` : '';
   return `__PUTER_AUTH_REQUIRED__\n⚠️ يلزم تسجيل الدخول إلى Puter لتفعيل هذا النموذج${modelLabel}.\n\nاضغط زر "تسجيل الدخول" بالأسفل ثم أعد المحاولة.`;
 };
+
+const ZANE_UI_INSTRUCTION = `
+تعليمات واجهة تفاعلية (zane-ui) عند الحاجة (مهم):
+- إذا احتجت توضيح قبل المتابعة، اسأل من 1 إلى 3 أسئلة قصيرة كحد أقصى.
+- ثم أضف بلوك JSON واحد داخل كود بلوك بصيغة:
+\n\n\`\`\`zane-ui
+{"type":"buttons","title":"...","buttons":[{"label":"...","message":"..."}]}
+\`\`\`
+- اجعل الأزرار 2 إلى 4 فقط.
+- قيمة message هي النص الذي سيتم إرساله عند الضغط.
+- لا تضع أكثر من بلوك zane-ui واحد في الرد.
+`;
 
 const isPuterTransportError = (error: unknown) => {
   const msg = asErrorMessage(error).toLowerCase();
@@ -596,6 +710,8 @@ ${platformContext}
 
 ${BREVITY_INSTRUCTION}
 
+${ZANE_UI_INSTRUCTION}
+
 سؤال المستخدم: ${query}${historyContext}`;
 
         if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
@@ -613,7 +729,8 @@ ${BREVITY_INSTRUCTION}
               }),
             { maxAttempts: 3, baseDelayMs: 500 },
           );
-          return await extractPuterChatText(response);
+          const text = await extractPuterChatText(response);
+          return sanitizeAssistantReply(query, text);
         } catch (error) {
           notePuterTransportFailure(error);
           if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
@@ -649,7 +766,9 @@ ${context}
 7. تجاهل أي محتوى غير تعليمي أو هزلي في السياق
 8. استخدم لغة عربية فصحى واضحة ومهنية
 
-${BREVITY_INSTRUCTION}`;
+${BREVITY_INSTRUCTION}
+
+${ZANE_UI_INSTRUCTION}`;
 
       // Use Puter.js AI Chat
       if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
@@ -667,7 +786,8 @@ ${BREVITY_INSTRUCTION}`;
             }),
           { maxAttempts: 3, baseDelayMs: 500 },
         );
-        return await extractPuterChatText(response);
+        const text = await extractPuterChatText(response);
+        return sanitizeAssistantReply(query, text);
       } catch (error) {
         notePuterTransportFailure(error);
         if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();

@@ -25,6 +25,7 @@ interface ChatContainerProps {
   onSuggestionClick?: (suggestion: string) => void;
   onOpenPuterSettings?: () => void;
   isPuterSignedIn?: boolean;
+  onUiMessage?: (message: string) => void;
 }
 
 export function ChatContainer({
@@ -39,6 +40,7 @@ export function ChatContainer({
   onSuggestionClick,
   onOpenPuterSettings,
   isPuterSignedIn = false,
+  onUiMessage,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const locale = useLocale();
@@ -229,7 +231,7 @@ export function ChatContainer({
       ) : (
         <>
           {messages.map((message) => (
-            <ChatMessageItem key={message.id} message={message} />
+            <ChatMessageItem key={message.id} message={message} onUiMessage={onUiMessage} />
           ))}
           {isLoading && (
             <div className={`flex ${isRTL ? "justify-end" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}>
