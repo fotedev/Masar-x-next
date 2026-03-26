@@ -4,7 +4,6 @@ import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
 import { logger } from "@/lib/logger";
 import { toast } from "@/hooks/useToast";
-// TODO: Add 'subject_lectures' to Database type in src/types/database.ts to allow strict typing here
 
 
 interface UseManageLecturesProps {

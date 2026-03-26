@@ -174,6 +174,7 @@ export default function AiAssistantPage() {
           setMode={setMode}
           selectedModel={selectedModel}
           setSelectedModel={handleModelChange}
+          onOpenPuterSettings={() => setShowPuterSettings(true)}
           studentSelectedSubject={studentSelectedSubject}
           setStudentSelectedSubject={setStudentSelectedSubject}
           studentSubjects={studentSubjects}

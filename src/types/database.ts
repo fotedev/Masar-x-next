@@ -303,6 +303,35 @@ export interface Database {
           status?: string | null
         }
       }
+      subject_lectures: {
+        Row: {
+          id: string
+          subject: string
+          lecture_key: string
+          lecture_label: string
+          order_index: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          subject: string
+          lecture_key: string
+          lecture_label: string
+          order_index?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          subject?: string
+          lecture_key?: string
+          lecture_label?: string
+          order_index?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
       appeals: {
         Row: {
           id: string
