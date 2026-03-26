@@ -50,13 +50,18 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
   if (typeof window === 'undefined') return { isSignedIn: false };
 
   const unavailableUntil = getUnavailableUntil();
-  if (unavailableUntil > Date.now()) return { isSignedIn: false };
+  if (unavailableUntil > Date.now()) {
+    console.debug('[Puter] Warmup skipped - service in cooldown until', new Date(unavailableUntil).toISOString());
+    return { isSignedIn: false };
+  }
 
   if (!puterWarmupPromise) {
     puterWarmupPromise = (async () => {
       try {
+        console.debug('[Puter] Starting auth warmup...');
         const client = await loadRealPuterClient();
         const signedIn = Boolean(client?.auth?.isSignedIn?.());
+        console.debug('[Puter] Auth warmup complete - signed in:', signedIn);
         try {
           if (signedIn) {
             localStorage.setItem(PUTER_SIGNED_IN_KEY, '1');
@@ -68,7 +73,10 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
         }
         return signedIn;
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.warn('[Puter] Auth warmup failed:', errorMsg);
         if (isPuterTransportError(error)) {
+          console.warn('[Puter] Transport error detected - setting cooldown');
           setUnavailableCooldown(45_000);
         }
         try {
@@ -111,12 +119,20 @@ const loadRealPuterClient = async (): Promise<PuterClient> => {
   }
   if (realPuterClient) return realPuterClient;
   if (!puterImportPromise) {
-    puterImportPromise = import('@heyputer/puter.js').then((m) => {
-      const client = (m.puter as unknown as PuterClient) ?? null;
-      if (!client) throw new Error('Failed to initialize Puter client');
-      realPuterClient = client;
-      return client;
-    });
+    puterImportPromise = (async () => {
+      try {
+        const m = await import('@heyputer/puter.js');
+        const client = (m.puter as unknown as PuterClient) ?? null;
+        if (!client) throw new Error('Failed to initialize Puter client');
+        realPuterClient = client;
+        return client;
+      } catch (error) {
+        // Log initialization errors for debugging
+        console.warn('[Puter] Initialization error:', error instanceof Error ? error.message : String(error));
+        // Re-throw so the caller can handle it appropriately
+        throw error;
+      }
+    })();
   }
   return puterImportPromise;
 };
@@ -160,6 +176,24 @@ let isPuterReady = false;
 if (typeof window !== 'undefined') {
   // Check if we are in the browser
   isPuterReady = true;
+
+  // Suppress socket.io errors globally during Puter initialization
+  // to prevent console spam on unavailable infrastructure
+  const errorPatterns = [/socket\.io/i, /engine\.io/i, /websocket/i, /polling/i];
+  
+  let errorSuppressUntil = 0;
+  window.addEventListener('error', (event: ErrorEvent) => {
+    const msg = event.message.toLowerCase();
+    if (errorPatterns.some(p => p.test(msg))) {
+      const now = Date.now();
+      if (now < errorSuppressUntil) {
+        event.preventDefault(); // Suppress the error event
+      } else {
+        // Allow one error through every 5 seconds for monitoring
+        errorSuppressUntil = now + 5000;
+      }
+    }
+  }, true);
 }
 
 export const getPuterStatus = () => {
