@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
 import { Bot, User, Copy, Check, Code, Eye } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { LatexRenderer } from "@/components/LatexRenderer";
 
@@ -25,6 +25,12 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const isRTL = locale === "ar";
   const isUser = message.type === "user";
   const [isRawView, setIsRawView] = useState(false);
+
+  type MarkdownCodeProps = React.HTMLAttributes<HTMLElement> & {
+    inline?: boolean;
+    className?: string;
+    children?: React.ReactNode;
+  };
 
   const hasMarkdownContent = (text: string): boolean => {
     const raw = String(text ?? "");
@@ -53,13 +59,20 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   };
 
   const flattenChildren = (children: React.ReactNode): string => {
-    return React.Children.toArray(children).reduce((text: string, child: any) => {
+    return React.Children.toArray(children).reduce<string>((text, child) => {
       if (typeof child === "string" || typeof child === "number") {
         return text + child;
       }
-      if (child?.props?.children) {
-        return text + flattenChildren(child.props.children);
+
+      if (React.isValidElement(child)) {
+        const childChildren = (child.props as { children?: React.ReactNode })
+          .children;
+
+        if (childChildren) {
+          return text + flattenChildren(childChildren);
+        }
       }
+
       return text;
     }, "");
   };
@@ -72,8 +85,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         await navigator.clipboard.writeText(content);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
-      } catch (err) {
-        console.error("Failed to copy text: ", err);
+      } catch {
+        setIsCopied(false);
       }
     };
 
@@ -96,16 +109,93 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     const raw = String(content ?? "");
     const normalized = normalizeLatexDelimiters(raw);
 
-    const flattenChildren = (children: React.ReactNode): string => {
-      return React.Children.toArray(children).reduce((text: string, child: any) => {
-        if (typeof child === "string" || typeof child === "number") {
-          return text + child;
+    const markdownComponents: Components = {
+      h1: ({ children }: { children?: React.ReactNode }) => (
+        <h1 className="text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
+          <LatexRenderer text={flattenChildren(children)} />
+        </h1>
+      ),
+      h2: ({ children }: { children?: React.ReactNode }) => (
+        <h2 className="text-lg sm:text-xl font-bold mt-5 mb-3 text-slate-800 dark:text-slate-100 tracking-tight">
+          <LatexRenderer text={flattenChildren(children)} />
+        </h2>
+      ),
+      h3: ({ children }: { children?: React.ReactNode }) => (
+        <h3 className="text-base sm:text-lg font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200">
+          <LatexRenderer text={flattenChildren(children)} />
+        </h3>
+      ),
+      p: ({ children }: { children?: React.ReactNode }) => (
+        <div className="mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
+          <LatexRenderer text={flattenChildren(children)} />
+        </div>
+      ),
+      ul: ({ children }: { children?: React.ReactNode }) => (
+        <ul className="space-y-2 my-4 list-none p-0">
+          {children}
+        </ul>
+      ),
+      li: ({ children }: { children?: React.ReactNode }) => (
+        <li className="flex gap-2 items-start group">
+          <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
+          <div className="flex-1 text-slate-700 dark:text-slate-300">
+            <LatexRenderer text={flattenChildren(children)} />
+          </div>
+        </li>
+      ),
+      strong: ({ children }: { children?: React.ReactNode }) => (
+        <strong className="font-bold text-slate-900 dark:text-white">{children}</strong>
+      ),
+      em: ({ children }: { children?: React.ReactNode }) => (
+        <em className="italic opacity-90">{children}</em>
+      ),
+      code: ({ inline, className, children, ...props }: MarkdownCodeProps) => {
+        if (inline) {
+          return (
+            <code
+              className="bg-slate-100 dark:bg-slate-900/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono font-medium border border-slate-200/50 dark:border-slate-700/50"
+              {...props}
+            >
+              {children}
+            </code>
+          );
         }
-        if (child?.props?.children) {
-          return text + flattenChildren(child.props.children);
+
+        const match = /language-([\w-]+)/.exec(className || "");
+        const lang = (match?.[1] || "").toLowerCase();
+        if (lang === "markdown" || lang === "md") {
+          const inner = normalizeLatexDelimiters(flattenChildren(children));
+          return (
+            <div className="my-4">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {inner}
+              </ReactMarkdown>
+            </div>
+          );
         }
-        return text;
-      }, "");
+
+        return (
+          <div className="relative group my-4">
+            <pre
+              dir="ltr"
+              className="w-full overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-950 p-4 text-[13px] leading-relaxed shadow-lg transition-all duration-200 group-hover:border-slate-500/50"
+            >
+              <code
+                className="block text-slate-100/95 font-mono"
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere",
+                }}
+                {...props}
+              >
+                {children}
+              </code>
+            </pre>
+          </div>
+        );
+      },
+      pre: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
     };
 
     if (isRawView) {
@@ -134,76 +224,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       <div className="prose prose-slate dark:prose-invert max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          components={{
-            h1: ({ children }) => (
-              <h1 className="text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
-                <LatexRenderer text={flattenChildren(children)} />
-              </h1>
-            ),
-            h2: ({ children }) => (
-              <h2 className="text-lg sm:text-xl font-bold mt-5 mb-3 text-slate-800 dark:text-slate-100 tracking-tight">
-                <LatexRenderer text={flattenChildren(children)} />
-              </h2>
-            ),
-            h3: ({ children }) => (
-              <h3 className="text-base sm:text-lg font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200">
-                <LatexRenderer text={flattenChildren(children)} />
-              </h3>
-            ),
-            p: ({ children }) => (
-              <div className="mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
-                <LatexRenderer text={flattenChildren(children)} />
-              </div>
-            ),
-            ul: ({ children }) => (
-              <ul className="space-y-2 my-4 list-none p-0">
-                {children}
-              </ul>
-            ),
-            li: ({ children }) => (
-              <li className="flex gap-2 items-start group">
-                <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
-                <div className="flex-1 text-slate-700 dark:text-slate-300">
-                  <LatexRenderer text={flattenChildren(children)} />
-                </div>
-              </li>
-            ),
-            strong: ({ children }) => <strong className="font-bold text-slate-900 dark:text-white">{children}</strong>,
-            em: ({ children }) => <em className="italic opacity-90">{children}</em>,
-            code: ({ node, inline, className, children, ...props }: any) => {
-              if (inline) {
-                return (
-                  <code
-                    className="bg-slate-100 dark:bg-slate-900/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono font-medium border border-slate-200/50 dark:border-slate-700/50"
-                    {...props}
-                  >
-                    {children}
-                  </code>
-                );
-              }
-              return (
-                <div className="relative group my-4">
-                  <pre
-                    dir="ltr"
-                    className="w-full overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-950 p-4 text-[13px] leading-relaxed shadow-lg transition-all duration-200 group-hover:border-slate-500/50"
-                  >
-                    <code 
-                      className="block text-slate-100/95 font-mono"
-                      style={{ 
-                        whiteSpace: 'pre-wrap', 
-                        wordBreak: 'break-word', 
-                        overflowWrap: 'anywhere' 
-                      }}
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  </pre>
-                </div>
-              );
-            },
-            pre: ({ children }) => <>{children}</>,
-          }}
+          components={markdownComponents}
         >
           {normalized}
         </ReactMarkdown>
