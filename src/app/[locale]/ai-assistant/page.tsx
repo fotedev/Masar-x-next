@@ -68,6 +68,10 @@ export default function AiAssistantPage() {
     await sendMessage(suggestion, selectedModel);
   };
 
+  const handleUiMessage = async (content: string) => {
+    await sendMessage(content, selectedModel);
+  };
+
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");
   const { quizzes: studentQuizzes, loading: studentQuizzesLoading } =
@@ -207,6 +211,7 @@ export default function AiAssistantPage() {
         onSuggestionClick={handleSuggestionClick}
         onOpenPuterSettings={() => setShowPuterSettings(true)}
         isPuterSignedIn={isPuterSignedIn}
+        onUiMessage={handleUiMessage}
       />
 
       <ChatInput

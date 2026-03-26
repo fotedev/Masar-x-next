@@ -17,10 +17,12 @@ interface ChatMessage {
 
 interface ChatMessageItemProps {
   message: ChatMessage;
+  onUiMessage?: (message: string) => void;
 }
 
 export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
+  onUiMessage,
 }) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -28,12 +30,40 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const [isRawView, setIsRawView] = useState(false);
   const [isPuterSigningIn, setIsPuterSigningIn] = useState(false);
 
+  type ZaneUiButton = { label: string; message: string };
+  type ZaneUiPayload = { type: "buttons"; title?: string; buttons: ZaneUiButton[] };
+
   const PUTER_AUTH_MARKER = "__PUTER_AUTH_REQUIRED__";
   const isPuterAuthRequiredMessage =
     !isUser && typeof message.content === "string" && message.content.startsWith(PUTER_AUTH_MARKER);
-  const displayContent = isPuterAuthRequiredMessage
+
+  const extractZaneUiBlocks = (text: string): { cleaned: string; ui: ZaneUiPayload[] } => {
+    const raw = String(text ?? "");
+    const ui: ZaneUiPayload[] = [];
+    const cleaned = raw.replace(/```zane-ui\s*([\s\S]*?)```/g, (_m, json) => {
+      try {
+        const parsed = JSON.parse(String(json ?? "").trim()) as unknown;
+        if (
+          parsed &&
+          typeof parsed === "object" &&
+          (parsed as { type?: unknown }).type === "buttons" &&
+          Array.isArray((parsed as { buttons?: unknown }).buttons)
+        ) {
+          ui.push(parsed as ZaneUiPayload);
+        }
+      } catch {
+        // ignore invalid blocks
+      }
+      return "";
+    });
+    return { cleaned: cleaned.trim(), ui };
+  };
+
+  const withoutPuterMarker = isPuterAuthRequiredMessage
     ? message.content.replace(PUTER_AUTH_MARKER, "").trim()
     : message.content;
+
+  const { cleaned: displayContent, ui: zaneUiBlocks } = extractZaneUiBlocks(withoutPuterMarker);
 
   type MarkdownCodeProps = React.HTMLAttributes<HTMLElement> & {
     inline?: boolean;
@@ -300,6 +330,33 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             ) : (
               <div className="space-y-3">
                 {renderAssistantContent(displayContent)}
+
+                {zaneUiBlocks.length > 0 && (
+                  <div className="space-y-2">
+                    {zaneUiBlocks.map((block, idx) => (
+                      <div key={`zane_ui_${idx}`} className="space-y-2">
+                        {block.title && (
+                          <div className="text-[13px] font-bold text-slate-800 dark:text-slate-200" dir="auto">
+                            {block.title}
+                          </div>
+                        )}
+                        <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
+                          {block.buttons.map((b, bIdx) => (
+                            <button
+                              key={`zane_btn_${idx}_${bIdx}`}
+                              type="button"
+                              onClick={() => onUiMessage?.(b.message)}
+                              className="px-3 py-2 rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white/70 dark:bg-slate-900/30 text-slate-800 dark:text-slate-100 font-extrabold text-sm hover:bg-white dark:hover:bg-slate-800/50 transition-all active:scale-[0.98]"
+                            >
+                              {b.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {isPuterAuthRequiredMessage && (
                   <div className={`flex ${isRTL ? "justify-end" : "justify-start"}`}>
                     <button
