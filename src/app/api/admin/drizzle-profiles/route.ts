@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-import { adminDb } from '@/lib/admin-db';
+import { getAdminDb } from '@/lib/admin-db';
 import { profiles } from '@/lib/admin-db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +29,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const adminDb = getAdminDb();
   const rows = await adminDb
     .select({
       id: profiles.id,
