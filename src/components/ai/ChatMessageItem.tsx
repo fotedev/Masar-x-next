@@ -3,10 +3,9 @@
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
 import { Bot, User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
-import ReactMarkdown, { type Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { LatexRenderer } from "@/components/LatexRenderer";
-import { signInToPuter } from "@/lib/puter";
+import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
+import { initPuterDiagnostics, signInToPuter } from "@/lib/puter";
 
 interface ChatMessage {
   id: string;
@@ -148,7 +147,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     const raw = String(content ?? "");
     const normalized = normalizeLatexDelimiters(raw);
 
-    const markdownComponents: Components = {
+    const markdownComponents = {
       h1: ({ children }: { children?: React.ReactNode }) => (
         <h1 className="text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
           <LatexRenderer text={flattenChildren(children)} />
@@ -206,9 +205,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           const inner = normalizeLatexDelimiters(flattenChildren(children));
           return (
             <div className="my-4">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {inner}
-              </ReactMarkdown>
+              <LazyMarkdown content={inner} components={markdownComponents} />
             </div>
           );
         }
@@ -261,12 +258,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
     return (
       <div className="prose prose-slate dark:prose-invert max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={markdownComponents}
-        >
-          {normalized}
-        </ReactMarkdown>
+        <LazyMarkdown content={normalized} components={markdownComponents} />
       </div>
     );
   };
@@ -366,6 +358,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         if (isPuterSigningIn) return;
                         setIsPuterSigningIn(true);
                         try {
+                          initPuterDiagnostics();
                           await signInToPuter();
                         } finally {
                           setIsPuterSigningIn(false);

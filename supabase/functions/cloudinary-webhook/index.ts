@@ -3,6 +3,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from "../_shared/cors.ts";
 
+type AdminRow = {
+  user_id: string;
+};
+
 function getClientIp(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0].trim();
@@ -102,7 +106,7 @@ serve(async (req: Request) => {
         .select('user_id')
 
       if (admins && admins.length > 0) {
-        const notifications = admins.map((admin: any) => ({
+        const notifications = (admins as AdminRow[]).map((admin) => ({
           user_id: admin.user_id,
           title: "ملف جديد مرفوع ",
           message: `تم رفع "${payload.public_id}" وينتظر المراجعة`,
@@ -126,10 +130,11 @@ serve(async (req: Request) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Webhook error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

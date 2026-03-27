@@ -1,0 +1,13 @@
+{
+  "home": "Home",
+  "news": "News",
+  "subjects": "Subjects",
+  "courses": "Courses",
+  "quizzes": "Quizzes",
+  "assistant": "ZANE",
+  "login": "Log in",
+  "signup": "Sign up",
+  "logout": "Log out",
+  "admin": "Admin",
+  "profile": "Profile"
+}

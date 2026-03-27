@@ -1,0 +1,19 @@
+{
+  "pageTitle": "الكورسات المتاحة",
+  "pageDescription": "اختر الكورس المناسب لك من بين مجموعة متنوعة من الكورسات المتميزة",
+  "searchPlaceholder": "البحث في الكورسات...",
+  "filterAll": "الكل",
+  "filterFree": "مجاني",
+  "filterPaid": "مدفوع",
+  "noCourses": "لا توجد كورسات متاحة",
+  "noCoursesDescription": "جرب تغيير معايير البحث أو الفلترة",
+  "noCoursesSoon": "سيتم إضافة كورسات جديدة قريباً",
+  "courseCount": "{count} كورس متاح",
+  "freeCourseCount": "{count} كورس مجاني",
+  "studentCount": "{count} طالب مسجل",
+  "instructor": "مدرب",
+  "viewDetails": "عرض التفاصيل",
+  "student": "طالب",
+  "currency": "جنيه",
+  "free": "مجاني"
+}

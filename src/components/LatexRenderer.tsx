@@ -1,9 +1,7 @@
 "use client";
 
-import React from "react";
-// import "katex/dist/katex.min.css";
-import "katex/dist/katex.min.css";
-import { InlineMath, BlockMath } from "react-katex";
+import dynamic from "next/dynamic";
+import React, { useMemo } from "react";
 
 interface LatexRendererProps {
   text: string;
@@ -14,64 +12,29 @@ export const LatexRenderer: React.FC<LatexRendererProps> = ({
   text,
   className = "",
 }) => {
-  const parts: Array<
-    | { type: "text"; value: string }
-    | { type: "inline"; value: string }
-    | { type: "block"; value: string }
-  > = [];
-
   const input = String(text ?? "");
-  const blockRegex = /\$\$([\s\S]+?)\$\$/g;
-  let lastIndex = 0;
 
-  for (const match of input.matchAll(blockRegex)) {
-    const start = match.index ?? 0;
-    const end = start + match[0].length;
-    const before = input.slice(lastIndex, start);
-    if (before) parts.push({ type: "text", value: before });
-    parts.push({ type: "block", value: match[1] ?? "" });
-    lastIndex = end;
+  const hasLatex = useMemo(() => {
+    // Detect common math delimiters: $$...$$ or $...$.
+    // Keep this cheap; the heavy renderer will do the full parse.
+    if (!input) return false;
+    if (input.includes("$$")) return true;
+    return /\$[^$\n]+?\$/.test(input);
+  }, [input]);
+
+  const HeavyLatexRenderer = useMemo(
+    () =>
+      dynamic(() => import("./HeavyLatexRenderer"), {
+        ssr: false,
+        loading: () => <span className={className}>{input}</span>,
+      }),
+    // Keep className and input in deps so loading fallback matches latest text.
+    [className, input],
+  );
+
+  if (!hasLatex) {
+    return <span className={className}>{input}</span>;
   }
 
-  const remaining = input.slice(lastIndex);
-  if (remaining) parts.push({ type: "text", value: remaining });
-
-  const renderInline = (value: string) => {
-    const inlineParts: Array<
-      { type: "text"; value: string } | { type: "inline"; value: string }
-    > = [];
-
-    const inlineRegex = /\$([^$\n]+?)\$/g;
-    let iLast = 0;
-    for (const m of value.matchAll(inlineRegex)) {
-      const s = m.index ?? 0;
-      const e = s + m[0].length;
-      const b = value.slice(iLast, s);
-      if (b) inlineParts.push({ type: "text", value: b });
-      inlineParts.push({ type: "inline", value: m[1] ?? "" });
-      iLast = e;
-    }
-    const rem = value.slice(iLast);
-    if (rem) inlineParts.push({ type: "text", value: rem });
-
-    return inlineParts.map((p, idx) => {
-      if (p.type === "inline") {
-        return <InlineMath key={idx} math={p.value} />;
-      }
-      return <React.Fragment key={idx}>{p.value}</React.Fragment>;
-    });
-  };
-
-  return (
-    <span className={className}>
-      {parts.map((p, idx) => {
-        if (p.type === "block") {
-          return <BlockMath key={idx} math={p.value} />;
-        }
-        return (
-          <React.Fragment key={idx}>{renderInline(p.value)}</React.Fragment>
-        );
-      })}
-    </span>
-  );
+  return <HeavyLatexRenderer text={input} className={className} />;
 };

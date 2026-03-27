@@ -8,6 +8,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { quizService } from "../../../lib/quiz";
 import MathDisplay from "../../../components/MathDisplay";
 import { confirmToast } from "../../../lib/confirmToast";
+import { PreloadKatex } from "@/components/quiz/PreloadKatex";
 
 type AttemptAnswer = {
   question_id?: string;
@@ -56,6 +57,7 @@ export default function QuizAttemptsPage() {
   const [expandedQuizQuestions, setExpandedQuizQuestions] = useState<
     QuizQuestionRecord[] | null
   >(null);
+
 
   useEffect(() => {
     const load = async () => {
@@ -171,6 +173,7 @@ export default function QuizAttemptsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-almarai">
+      <PreloadKatex />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">

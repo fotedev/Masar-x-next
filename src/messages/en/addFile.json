@@ -1,0 +1,21 @@
+{
+  "title": "Add New File",
+  "subtitle": "Add a new PDF file or summary to the lecture",
+  "fileTitle": "File Title",
+  "fileTitlePlaceholder": "Example: Lecture 1 Summary",
+  "subject": "Subject Name",
+  "lecture": "Related Lecture",
+  "description": "File Description (Optional)",
+  "descriptionPlaceholder": "Enter content description...",
+  "uploadFile": "Upload File",
+  "submit": "Add File",
+  "submitting": "Adding...",
+  "success": "File added successfully",
+  "error": "An error occurred while adding the file",
+  "selectFile": "Please select a file",
+  "selectLectureFirst": "Please select a lecture first",
+  "adminOnly": "This page is only available to administrators",
+  "lectureNotFound": "Lecture \"{lectureKey}\" not found in subject \"{subject}\"",
+  "lectureMismatch": "This lecture does not belong to the selected subject",
+  "uploading": "Uploading... ({progress}%)"
+}

@@ -1,0 +1,14 @@
+{
+  "optionsLoading": "جاري التحميل...",
+  "professorGender": "نوع المحاضر",
+  "male": "ذكر (دكتور)",
+  "female": "أنثى (دكتورة)",
+  "editSubject": "تعديل مادة",
+  "addSubject": "إضافة مادة جديدة",
+  "saveSubject": "حفظ المادة",
+  "saving": "جاري الحفظ...",
+  "cancel": "إلغاء",
+  "levelOption": "المستوى {level}",
+  "semester1": "الترم الأول",
+  "semester2": "الترم الثاني"
+}

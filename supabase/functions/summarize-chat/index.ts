@@ -13,6 +13,12 @@ interface ImportantMessage {
   context: string;
 }
 
+type AiImportantMessage = {
+  content?: string;
+  sender_name?: string;
+  context?: string;
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -160,14 +166,20 @@ serve(async (req) => {
     }
 
     // Prepare important messages with full context
-    const importantMessages: ImportantMessage[] = aiAnalysis.important_messages?.map((msg: any) => {
+    const importantMessages: ImportantMessage[] = aiAnalysis.important_messages?.map((msg: unknown) => {
+      const msgObj = (typeof msg === 'object' && msg !== null)
+        ? (msg as AiImportantMessage)
+        : null
+      if (!msgObj || typeof msgObj.content !== 'string' || typeof msgObj.sender_name !== 'string') {
+        return null
+      }
       // Find the original message to get full details
       const originalMessage = chronologicalMessages.find(m => {
         const senderName = m.sender?.raw_user_meta_data?.display_name ||
           m.sender?.raw_user_meta_data?.name ||
           m.sender?.email?.split('@')[0] ||
           'مستخدم'
-        return m.content === msg.content && senderName === msg.sender_name
+        return m.content === msgObj.content && senderName === msgObj.sender_name
       })
 
       if (originalMessage) {
@@ -175,9 +187,9 @@ serve(async (req) => {
           id: originalMessage.id,
           content: originalMessage.content,
           sender_id: originalMessage.sender_id,
-          sender_name: msg.sender_name,
+          sender_name: msgObj.sender_name,
           created_at: originalMessage.created_at,
-          context: msg.context || originalMessage.content
+          context: (typeof msgObj.context === 'string' && msgObj.context.trim() !== '' ? msgObj.context : originalMessage.content)
         }
       }
 
