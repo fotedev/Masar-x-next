@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useParams } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -108,6 +109,8 @@ export default function CourseDetailPage() {
   const courseId = params?.courseId as string;
   const { user, adminRole } = useAuth();
   const router = useRouter();
+  const locale = useLocale();
+  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
 
   const [course, setCourse] = useState<Course | null>(null);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
@@ -338,7 +341,7 @@ export default function CourseDetailPage() {
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageSquare className="w-4 h-4 ml-2" />
-              بدء ZANE AI
+              {locale.toLowerCase().startsWith("ar") ? `بدء ${assistantName} AI` : `Start ${assistantName} AI`}
             </Button>
             <Button
               variant="outline"
