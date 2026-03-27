@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Sparkles, Trash2, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LatexRenderer } from "@/components/LatexRenderer";
+import { PreloadKatex } from "@/components/quiz/PreloadKatex";
 import type { QuizQuestion } from "./types";
 
 export function QuizQuestionEditor(props: {
@@ -30,6 +31,7 @@ export function QuizQuestionEditor(props: {
 
   return (
     <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
+      <PreloadKatex />
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <label 

@@ -1,0 +1,14 @@
+{
+  "optionsLoading": "Loading...",
+  "professorGender": "Professor Gender",
+  "male": "Male (Dr.)",
+  "female": "Female (Dr.)",
+  "editSubject": "Edit Subject",
+  "addSubject": "Add New Subject",
+  "saveSubject": "Save Subject",
+  "saving": "Saving...",
+  "cancel": "Cancel",
+  "levelOption": "Level {level}",
+  "semester1": "First semester",
+  "semester2": "Second semester"
+}
