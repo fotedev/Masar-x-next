@@ -14,6 +14,7 @@ import { ChatInput } from "@/components/ai/ChatInput";
 import { aiAssistant } from "@/lib/ai-assistant";
 import { toast } from "react-hot-toast";
 import { useRouter } from "@/i18n/routing";
+import { initPuterDiagnostics } from "@/lib/puter";
 
 const PuterSettingsModal = dynamic(() => import("@/components/ai/PuterSettingsModal"), {
   ssr: false,
@@ -58,6 +59,14 @@ export default function AiAssistantPage() {
   });
 
   const handleModelChange = (model: string) => {
+    const isPuterBackedModel = model.startsWith("claude");
+    if (isPuterBackedModel && typeof window !== "undefined") {
+      const key = "puter_diagnostics_initialized";
+      if (sessionStorage.getItem(key) !== "1") {
+        initPuterDiagnostics();
+        sessionStorage.setItem(key, "1");
+      }
+    }
     setSelectedModel(model);
     localStorage.setItem("zane_ai_selected_model", model);
   };
@@ -179,7 +188,10 @@ export default function AiAssistantPage() {
           setMode={setMode}
           selectedModel={selectedModel}
           setSelectedModel={handleModelChange}
-          onOpenPuterSettings={() => setShowPuterSettings(true)}
+          onOpenPuterSettings={() => {
+            initPuterDiagnostics();
+            setShowPuterSettings(true);
+          }}
           studentSelectedSubject={studentSelectedSubject}
           setStudentSelectedSubject={setStudentSelectedSubject}
           studentSubjects={studentSubjects}
@@ -209,7 +221,10 @@ export default function AiAssistantPage() {
         mode={mode}
         setMode={setMode}
         onSuggestionClick={handleSuggestionClick}
-        onOpenPuterSettings={() => setShowPuterSettings(true)}
+        onOpenPuterSettings={() => {
+          initPuterDiagnostics();
+          setShowPuterSettings(true);
+        }}
         isPuterSignedIn={isPuterSignedIn}
         onUiMessage={handleUiMessage}
       />

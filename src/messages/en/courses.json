@@ -1,0 +1,19 @@
+{
+  "pageTitle": "Available Courses",
+  "pageDescription": "Choose the right course for you from a variety of distinguished courses",
+  "searchPlaceholder": "Search in courses...",
+  "filterAll": "All",
+  "filterFree": "Free",
+  "filterPaid": "Paid",
+  "noCourses": "No courses available",
+  "noCoursesDescription": "Try changing your search criteria or filtering",
+  "noCoursesSoon": "New courses will be added soon",
+  "courseCount": "{count} Available Course",
+  "freeCourseCount": "{count} Free Course",
+  "studentCount": "{count} Registered Student",
+  "instructor": "Instructor",
+  "viewDetails": "View Details",
+  "student": "Student",
+  "currency": "EGP",
+  "free": "Free"
+}

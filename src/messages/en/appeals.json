@@ -1,0 +1,42 @@
+{
+  "manageTitle": "Appeals Management",
+  "noAppeals": "No appeals found",
+  "noAppealsDesc": "No appeals have been submitted yet",
+  "noResults": "No results found",
+  "noResultsDesc": "No appeals match your search criteria",
+  "reasons": {
+    "inaccurate_content": "Inaccurate Content",
+    "copyright_violation": "Copyright Violation",
+    "inappropriate_content": "Inappropriate Content",
+    "spam": "Spam or Advertising",
+    "other": "Other Reason"
+  },
+  "filters": {
+    "title": "Appeals & Reports Management",
+    "of": "of",
+    "searchLabel": "Search appeals",
+    "searchPlaceholder": "Search in appeal reason, content type, or username...",
+    "statusLabel": "Filter by status",
+    "statusAll": "All Statuses",
+    "statusPending": "Under Review",
+    "statusReviewed": "Reviewed",
+    "statusClosed": "Closed"
+  },
+  "card": {
+    "on": "Appeal on",
+    "summary": "Summary",
+    "news": "News",
+    "statusPending": "Under Review",
+    "statusAccepted": "Accepted",
+    "statusRejected": "Rejected",
+    "by": "By",
+    "anonymous": "Anonymous user",
+    "contentId": "Content ID",
+    "reviewedBy": "Reviewed by",
+    "accept": "Accept",
+    "reject": "Reject",
+    "delete": "Delete",
+    "submittedAt": "Submitted at",
+    "unknown": "Unknown"
+  }
+}
