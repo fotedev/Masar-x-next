@@ -74,9 +74,9 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
         return signedIn;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
-        console.warn('[Puter] Auth warmup failed:', errorMsg);
+        console.debug('[Puter] Auth warmup failed:', errorMsg);
         if (isPuterTransportError(error)) {
-          console.warn('[Puter] Transport error detected - setting cooldown');
+          console.debug('[Puter] Transport error detected - setting cooldown');
           setUnavailableCooldown(45_000);
         }
         try {
@@ -128,7 +128,7 @@ const loadRealPuterClient = async (): Promise<PuterClient> => {
         return client;
       } catch (error) {
         // Log initialization errors for debugging
-        console.warn('[Puter] Initialization error:', error instanceof Error ? error.message : String(error));
+        console.debug('[Puter] Initialization error:', error instanceof Error ? error.message : String(error));
         // Re-throw so the caller can handle it appropriately
         throw error;
       }
@@ -177,21 +177,54 @@ if (typeof window !== 'undefined') {
   // Check if we are in the browser
   isPuterReady = true;
 
-  // Suppress socket.io errors globally during Puter initialization
-  // to prevent console spam on unavailable infrastructure
-  const errorPatterns = [/socket\.io/i, /engine\.io/i, /websocket/i, /polling/i];
+  // Suppress socket.io/transport errors globally as they typically indicate 
+  // unavailable infrastructure and can spam console with duplicate errors
+  const errorPatterns = [/socket\.io/i, /engine\.io/i, /websocket/i, /polling/i, /transport/i];
   
   let errorSuppressUntil = 0;
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+  
+  // Override console methods to suppress repetitive transport errors
+  console.error = function(...args: any[]) {
+    const msg = String(args[0] || '').toLowerCase();
+    if (errorPatterns.some(p => p.test(msg))) {
+      const now = Date.now();
+      if (now >= errorSuppressUntil) {
+        originalConsoleError.apply(console, args);
+        errorSuppressUntil = now + 10000; // Log once per 10 seconds
+      }
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+  
+  console.warn = function(...args: any[]) {
+    const msg = String(args[0] || '').toLowerCase();
+    if (errorPatterns.some(p => p.test(msg))) {
+      const now = Date.now();
+      if (now >= errorSuppressUntil) {
+        originalConsoleWarn.apply(console, args);
+        errorSuppressUntil = now + 10000; // Log once per 10 seconds
+      }
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+
+  // Also suppress global error events
   window.addEventListener('error', (event: ErrorEvent) => {
     const msg = event.message.toLowerCase();
     if (errorPatterns.some(p => p.test(msg))) {
-      const now = Date.now();
-      if (now < errorSuppressUntil) {
-        event.preventDefault(); // Suppress the error event
-      } else {
-        // Allow one error through every 5 seconds for monitoring
-        errorSuppressUntil = now + 5000;
-      }
+      event.preventDefault();
+    }
+  }, true);
+
+  // Suppress unhandled rejection events for transport errors
+  window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+    const msg = String(event.reason || '').toLowerCase();
+    if (errorPatterns.some(p => p.test(msg))) {
+      event.preventDefault();
     }
   }, true);
 }
@@ -252,7 +285,13 @@ export const signInToPuter = async (options?: {
       ? ({ attempt_temp_user_creation: true } as const)
       : undefined;
 
-    await puter.auth.signIn(signInOptions);
+    // Set a timeout to prevent hanging on unresponsive socket.io
+    const signInPromise = puter.auth.signIn(signInOptions);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Puter sign-in timeout')), 15000)
+    );
+    
+    await Promise.race([signInPromise, timeoutPromise]);
 
     const isSignedInNow = Boolean(puter.auth.isSignedIn());
     if (!isSignedInNow) {

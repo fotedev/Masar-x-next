@@ -462,8 +462,8 @@ if (typeof window !== 'undefined') {
 export interface ChatChunk {
   id: string;
   content: string;
-  timestamp?: string;
   author?: string;
+  timestamp?: string;
 }
 
 export type AiAssistantMode = 'group_rag' | 'cs_assistant' | 'student_agent';
@@ -472,6 +472,10 @@ export interface AiChatHistoryTurn {
   role: 'user' | 'assistant';
   content: string;
 }
+
+const getAssistantPersonaName = (locale?: string): string => {
+  return locale?.toLowerCase().startsWith('ar') ? 'زين' : 'ZANE';
+};
 
 type GeneratedQuizQuestion = {
   question: string;
@@ -728,6 +732,7 @@ ${platformContext}
       chatHistory?: AiChatHistoryTurn[];
       platformContext?: string;
       model?: string;
+      locale?: string;
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
@@ -735,6 +740,7 @@ ${platformContext}
     const requiresPuterAuth = isClaudeLikeModel(selectedModel);
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const relevantChunks = mode === 'group_rag' ? this.searchRelevantChunks(query, 8) : [];
+    const assistantPersonaName = getAssistantPersonaName(options?.locale);
 
     if (mode === 'group_rag' && relevantChunks.length === 0) {
       const totalMessages = this.getStats().totalMessages;
@@ -791,7 +797,7 @@ ${ZANE_UI_INSTRUCTION}
         .map(chunk => `[${chunk.timestamp || 'Unknown time'}] ${chunk.author || 'Unknown'}: ${chunk.content}`)
         .join('\n\n');
 
-      const prompt = `أنت ZANE، مساعد ذكي متطور (Nindroid) متخصص في المحتوى التعليمي الجامعي. مهمتك هي الإجابة على أسئلة الطلاب بناءً على محادثات مجموعة واتساب جامعية باللغة العربية. تمتاز بشخصية هادئة، ذكية، ومخلصة.
+      const prompt = `أنت ${assistantPersonaName}، مساعد ذكي متطور (Nindroid) متخصص في المحتوى التعليمي الجامعي. مهمتك هي الإجابة على أسئلة الطلاب بناءً على محادثات مجموعة واتساب جامعية باللغة العربية. تمتاز بشخصية هادئة، ذكية، ومخلصة.
 
 السياق من محادثات المجموعة:
 ${context}
