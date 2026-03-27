@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { analyticsHelpers } from "@/lib/analyticsHelpers";
 
@@ -26,6 +27,8 @@ interface AnalyticsSummary {
 export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
   onNavigate,
 }) => {
+  const locale = useLocale();
+  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
   const { isAdmin, isAdminLoading } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +71,7 @@ export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
     if (t === "page") return "صفحة";
     if (t === "login") return "تسجيل دخول";
     if (t === "logout") return "تسجيل خروج";
-    if (t === "ai_assistant") return "ZANE AI";
+    if (t === "ai_assistant") return `${assistantName} AI`;
     if (t === "unknown") return "غير معروف";
     return contentType || "غير مححدد";
   };

@@ -1,11 +1,17 @@
+"use client";
+
 import React from "react";
 import { motion } from "framer-motion";
+import { useLocale } from "next-intl";
 
 interface NeuralEnergyEntityProps {
   className?: string;
 }
 
 export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) {
+  const locale = useLocale();
+  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
+
   return (
     <div className={`relative flex items-center justify-center p-20 sm:p-32 bg-transparent overflow-visible ${className}`}>
       {/* 1. Nindroid Ice-Blue Aura - Absolute Background Layer */}
@@ -55,7 +61,7 @@ export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) 
                 willChange: "background-position",
               }}
             >
-              ZANE
+              {assistantName}
             </span>
           </h1>
 

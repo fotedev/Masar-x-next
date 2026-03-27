@@ -72,6 +72,7 @@ export default async function RootLayout({
   };
 
   const locale = await localeFromRequest();
+  const assistantName = locale === "ar" ? "زين" : "ZANE";
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -92,7 +93,7 @@ export default async function RootLayout({
               name: "MasarX",
               url: SITE_URL,
               description:
-                "Study summaries, quizzes, courses, and ZANE AI assistant platform",
+                `Study summaries, quizzes, courses, and ${assistantName} AI assistant platform`,
             }),
           }}
         />

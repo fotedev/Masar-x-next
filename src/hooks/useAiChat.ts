@@ -2,6 +2,7 @@
 
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
@@ -26,6 +27,7 @@ interface SupabaseChatMessage {
 }
 
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
+  const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
@@ -215,6 +217,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         chatHistory: historyTurns,
         platformContext,
         model: modelOverride,
+        locale,
       });
 
       // Avoid setting state if another request was started or mode changed
@@ -249,7 +252,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     } finally {
       setIsLoading(false);
     }
-  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id]);
+  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id, locale]);
 
   const clearChat = useCallback(async () => {
     setMessages([]);
