@@ -203,7 +203,7 @@ Deno.serve(async (req: Request) => {
         }
 
         if (!cloudinaryResponse.ok) {
-            let errorData: any
+            let errorData: unknown
             let errorText: string = ''
             try {
                 errorText = await cloudinaryResponse.text()
@@ -217,6 +217,19 @@ Deno.serve(async (req: Request) => {
                 errorData = { message: 'Failed to parse error response' }
             }
 
+            const errorDataObj = (typeof errorData === 'object' && errorData !== null)
+                ? (errorData as Record<string, unknown>)
+                : null
+            const nestedError = (errorDataObj && typeof errorDataObj.error === 'object' && errorDataObj.error !== null)
+                ? (errorDataObj.error as Record<string, unknown>)
+                : null
+            const errorMessage =
+                (errorDataObj && typeof errorDataObj.message === 'string' && errorDataObj.message.trim() !== ''
+                    ? errorDataObj.message
+                    : (nestedError && typeof nestedError.message === 'string' && nestedError.message.trim() !== ''
+                        ? nestedError.message
+                        : 'Unknown error'))
+
             console.error('Cloudinary upload failed:', {
                 status: cloudinaryResponse.status,
                 statusText: cloudinaryResponse.statusText,
@@ -229,7 +242,7 @@ Deno.serve(async (req: Request) => {
                     error: 'Upload failed',
                     details: errorData,
                     status: cloudinaryResponse.status,
-                    message: errorData.message || errorData.error?.message || 'Unknown error'
+                    message: errorMessage
                 }),
                 {
                     status: 500,
@@ -238,7 +251,7 @@ Deno.serve(async (req: Request) => {
             )
         }
 
-        let cloudinaryData: any
+        let cloudinaryData: unknown
         try {
             cloudinaryData = await cloudinaryResponse.json()
         } catch (parseError) {
@@ -252,18 +265,26 @@ Deno.serve(async (req: Request) => {
             )
         }
 
+        const cloudinaryObj = (typeof cloudinaryData === 'object' && cloudinaryData !== null)
+            ? (cloudinaryData as Record<string, unknown>)
+            : null
+        const secureUrl = cloudinaryObj && typeof cloudinaryObj.secure_url === 'string' ? cloudinaryObj.secure_url : ''
+        const publicId = cloudinaryObj && typeof cloudinaryObj.public_id === 'string' ? cloudinaryObj.public_id : ''
+        const bytes = cloudinaryObj && typeof cloudinaryObj.bytes === 'number' ? cloudinaryObj.bytes : undefined
+        const format = cloudinaryObj && typeof cloudinaryObj.format === 'string' ? cloudinaryObj.format : undefined
+
         console.log('Upload successful:', {
-            url: cloudinaryData.secure_url,
-            public_id: cloudinaryData.public_id,
-            bytes: cloudinaryData.bytes,
-            format: cloudinaryData.format
+            url: secureUrl,
+            public_id: publicId,
+            bytes,
+            format
         })
 
         return new Response(
             JSON.stringify({
                 success: true,
-                url: cloudinaryData.secure_url,
-                public_id: cloudinaryData.public_id,
+                url: secureUrl,
+                public_id: publicId,
                 message: 'File uploaded successfully'
             }),
             {
@@ -272,20 +293,24 @@ Deno.serve(async (req: Request) => {
             }
         )
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'An unexpected error occurred'
+        const name = error instanceof Error ? error.name : 'Error'
+        const stack = error instanceof Error ? error.stack : undefined
+        const cause = error instanceof Error ? (error as Error & { cause?: unknown }).cause : undefined
         console.error('Upload error:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-            cause: error.cause
+            message,
+            stack,
+            name,
+            cause
         })
 
         return new Response(
             JSON.stringify({
                 error: 'Internal server error',
-                details: error.message || 'An unexpected error occurred',
+                details: message,
                 timestamp: new Date().toISOString(),
-                type: error.name || 'Error'
+                type: name
             }),
             {
                 status: 500,

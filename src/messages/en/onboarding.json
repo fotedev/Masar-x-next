@@ -1,0 +1,15 @@
+{
+  "welcome": "Welcome to the Platform! 🎓",
+  "subtitle": "Please complete your profile to enjoy all features",
+  "academicLevel": "Academic Level",
+  "semesterLabel": "Semester {semester}",
+  "department": "Department",
+  "selectLevel": "Select academic level",
+  "selectDepartment": "Select department",
+  "comingSoon": "Soon",
+  "otherLevelsNotice": "Other levels will be available soon",
+  "saving": "Saving...",
+  "continue": "Continue",
+  "changeLaterNotice": "You can change these details later from profile settings",
+  "error": "An error occurred while saving. Please try again."
+}

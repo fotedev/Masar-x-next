@@ -152,10 +152,11 @@ Deno.serve(async (req: Request) => {
       }
     )
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: message }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

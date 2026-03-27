@@ -2,6 +2,7 @@
 
 import { useRouter } from "@/i18n/routing";
 import { QuizPlayer } from "@/components/QuizPlayer";
+import { PreloadKatex } from "@/components/quiz/PreloadKatex";
 
 export default function QuizPlayPage({
   params,
@@ -12,9 +13,9 @@ export default function QuizPlayPage({
   const { quizId } = params;
 
   return (
-    <QuizPlayer 
-      quizId={quizId} 
-      onClose={() => router.push("/quizzes")} 
-    />
+    <>
+      <PreloadKatex />
+      <QuizPlayer quizId={quizId} onClose={() => router.push("/quizzes")} />
+    </>
   );
 }

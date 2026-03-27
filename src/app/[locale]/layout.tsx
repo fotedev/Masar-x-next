@@ -1,4 +1,5 @@
 import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 import { AppProviders } from "@/components/AppProviders";
 import { notFound } from "next/navigation";
 
@@ -18,7 +19,7 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = (await import(`@/messages/${typedLocale}.json`)).default;
+  const messages = await getMessages({ locale: typedLocale });
   const dir = typedLocale === "ar" ? "rtl" : "ltr";
 
   return (

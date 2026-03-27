@@ -171,63 +171,69 @@ const puter: PuterClient = {
 };
 
 // Initialize Puter.js status
-let isPuterReady = false;
+let isPuterReady = typeof window !== 'undefined';
 
-if (typeof window !== 'undefined') {
-  // Check if we are in the browser
-  isPuterReady = true;
+let puterDiagnosticsInitialized = false;
 
-  // Suppress socket.io/transport errors globally as they typically indicate 
-  // unavailable infrastructure and can spam console with duplicate errors
+export const initPuterDiagnostics = () => {
+  if (puterDiagnosticsInitialized) return;
+  if (typeof window === 'undefined') return;
+  puterDiagnosticsInitialized = true;
+
   const errorPatterns = [/socket\.io/i, /engine\.io/i, /websocket/i, /polling/i, /transport/i];
-  
+
   let errorSuppressUntil = 0;
   const originalConsoleError = console.error;
   const originalConsoleWarn = console.warn;
-  
-  // Override console methods to suppress repetitive transport errors
-  console.error = function(...args: any[]) {
+
+  console.error = function (...args: unknown[]) {
     const msg = String(args[0] || '').toLowerCase();
-    if (errorPatterns.some(p => p.test(msg))) {
+    if (errorPatterns.some((p) => p.test(msg))) {
       const now = Date.now();
       if (now >= errorSuppressUntil) {
         originalConsoleError.apply(console, args);
-        errorSuppressUntil = now + 10000; // Log once per 10 seconds
+        errorSuppressUntil = now + 10000;
       }
       return;
     }
     originalConsoleError.apply(console, args);
   };
-  
-  console.warn = function(...args: any[]) {
+
+  console.warn = function (...args: unknown[]) {
     const msg = String(args[0] || '').toLowerCase();
-    if (errorPatterns.some(p => p.test(msg))) {
+    if (errorPatterns.some((p) => p.test(msg))) {
       const now = Date.now();
       if (now >= errorSuppressUntil) {
         originalConsoleWarn.apply(console, args);
-        errorSuppressUntil = now + 10000; // Log once per 10 seconds
+        errorSuppressUntil = now + 10000;
       }
       return;
     }
     originalConsoleWarn.apply(console, args);
   };
 
-  // Also suppress global error events
-  window.addEventListener('error', (event: ErrorEvent) => {
-    const msg = event.message.toLowerCase();
-    if (errorPatterns.some(p => p.test(msg))) {
-      event.preventDefault();
-    }
-  }, true);
+  window.addEventListener(
+    'error',
+    (event: ErrorEvent) => {
+      const msg = event.message.toLowerCase();
+      if (errorPatterns.some((p) => p.test(msg))) {
+        event.preventDefault();
+      }
+    },
+    true,
+  );
 
-  // Suppress unhandled rejection events for transport errors
-  window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-    const msg = String(event.reason || '').toLowerCase();
-    if (errorPatterns.some(p => p.test(msg))) {
-      event.preventDefault();
-    }
-  }, true);
-}
+  window.addEventListener(
+    'unhandledrejection',
+    (event: PromiseRejectionEvent) => {
+      const msg = String(event.reason || '').toLowerCase();
+      if (errorPatterns.some((p) => p.test(msg))) {
+        event.preventDefault();
+      }
+    },
+    true,
+  );
+};
 
 export const getPuterStatus = () => {
   if (typeof window === 'undefined') {
@@ -281,6 +287,8 @@ export const signInToPuter = async (options?: {
   puterWarmupPromise = null;
 
   try {
+    initPuterDiagnostics();
+
     const signInOptions = options?.attemptTempUserCreation
       ? ({ attempt_temp_user_creation: true } as const)
       : undefined;

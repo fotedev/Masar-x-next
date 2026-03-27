@@ -1,0 +1,74 @@
+{
+  "title": "Details of Collected Information",
+  "subtitle": "A detailed explanation of each type of information we collect and the reasons for collecting it",
+  "backToPolicy": "Back to Privacy Policy",
+  "collectionPurpose": "Purpose of Collection",
+  "detailsExplanation": "Details and Explanation",
+  "dataTypes": {
+    "auth": {
+      "title": "Full Name and Email Address upon Registration",
+      "purpose": "Authentication and Communication",
+      "details": {
+        "0": "The full name is used to display your identity in your profile and in interactions with content",
+        "1": "The email address is necessary for account authentication and sending important notifications",
+        "2": "All data is encrypted and stored securely in the database"
+      },
+      "necessity": "Essential for Authentication"
+    },
+    "academic": {
+      "title": "Academic Level and Department",
+      "purpose": "Customizing the Academic Experience",
+      "details": {
+        "0": "Helps in displaying content appropriate for your academic level",
+        "1": "Makes it easier to find summaries and materials related to your department",
+        "2": "Improves the accuracy of suggestions and recommended content"
+      },
+      "necessity": "Useful for Customization"
+    },
+    "summaries": {
+      "title": "Summaries and Academic Resources You Upload",
+      "purpose": "Sharing Knowledge and Educational Content",
+      "details": {
+        "0": "The content you upload is saved to be shared with other students",
+        "1": "Helps in building a comprehensive and useful study library",
+        "2": "The quality of content is verified before being published to everyone"
+      },
+      "necessity": "Essential for Functionality"
+    },
+    "interactions": {
+      "title": "Comments, Ratings, and Interactions with Content",
+      "purpose": "Improving Content Quality and Interaction",
+      "details": {
+        "0": "Helps in understanding user opinions and improving content",
+        "1": "Builds an interactive and useful study community",
+        "2": "Helps in identifying the highest quality and most useful content"
+      },
+      "necessity": "Useful for Improvement"
+    },
+    "performance": {
+      "title": "Performance Data in Tests and Exams",
+      "purpose": "Tracking Academic Progress and Improving Learning",
+      "details": {
+        "0": "Helps in analyzing strengths and weaknesses in different subjects",
+        "1": "Provides useful statistics to improve study habits",
+        "2": "Maintains the confidentiality of results and is not shared with others"
+      },
+      "necessity": "Useful for Tracking"
+    },
+    "profileImage": {
+      "title": "Profile Picture (if added to your profile)",
+      "purpose": "Enhancing Personal Interaction",
+      "details": {
+        "0": "Your picture appears in your profile and in comments and interactions",
+        "1": "Helps in building a reliable personal identity in the study community",
+        "2": "Can be deleted or changed at any time from profile settings"
+      },
+      "necessity": "Optional"
+    }
+  },
+  "commitment": {
+    "title": "Our Commitment to Security and Privacy",
+    "content1": "All collected information is protected by the latest encryption and security technologies. We do not use your data for commercial purposes or share it with third parties.",
+    "content2": "You can request the deletion of your data or modify privacy settings at any time through your profile page."
+  }
+}
