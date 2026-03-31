@@ -1,10 +1,10 @@
 {
   "best": "Top",
-  "viewSubjects": "View subjects",
-  "goToSubjects": "Go to subjects",
+  "goToSubjects": "View subjects",
+  "goToSubjectsDescription": "Go to subjects",
   "exams": "Exams",
-  "viewExams": "View exams",
-  "goToExams": "Go to exams",
+  "goToExams": "View exams",
+  "goToExamsDescription": "Go to exams",
   "editSummary": "Edit summary",
   "topLectures": "Top Lectures"
 }

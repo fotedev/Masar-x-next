@@ -1,17 +1,19 @@
+import { type ReactNode } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata({
   params,
 }: {
-  params: { subject: string; locale: string };
+  params: Promise<{ subject: string; locale: string }>;
 }): Promise<Metadata> {
+  const { locale: rawLocale, subject: rawSubject } = await params;
   const locale =
-    params.locale === "en" || params.locale === "ar" ? params.locale : "ar";
+    rawLocale === "en" || rawLocale === "ar" ? rawLocale : "ar";
   const t = await getTranslations({ locale, namespace: "subjectMetadata" });
-  const subjectName = decodeURIComponent(params.subject || "").trim();
+  const subjectName = decodeURIComponent(rawSubject || "").trim();
   const title = subjectName || t("fallbackTitle");
-  const canonicalPath = `/${locale}/subjects/${encodeURIComponent(params.subject || "")}`;
+  const canonicalPath = `/${locale}/subjects/${encodeURIComponent(rawSubject || "")}`;
 
   const description = subjectName
     ? t("descriptionWithSubject", { subject: subjectName })
@@ -38,7 +40,7 @@ export async function generateMetadata({
 export default function SubjectLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return children;
 }

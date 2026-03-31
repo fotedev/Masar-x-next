@@ -1,6 +1,6 @@
 import createNextIntlPlugin from 'next-intl/plugin';
-
 import bundleAnalyzer from '@next/bundle-analyzer';
+// import { withSentryConfig } from "@sentry/nextjs";
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -12,7 +12,12 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
     // Force cache invalidation: 2026-02-14T04:30:00
     reactStrictMode: true,
-    swcMinify: true,
+    transpilePackages: ['next-intl'], // Removed @sentry/nextjs
+    compiler: {
+        removeConsole: {
+            exclude: ['error', 'warn'],
+        },
+    },
     images: {
         unoptimized: process.env.NODE_ENV !== 'production',
         remotePatterns: [
@@ -97,5 +102,45 @@ const nextConfig = {
         ];
     },
 };
+
+/*
+const configWithSentry = withSentryConfig(
+    withNextIntl(withBundleAnalyzer(nextConfig)),
+    {
+        // For all available options, see:
+        // https://github.com/getsentry/sentry-javascript/blob/master/packages/nextjs/src/config/types.ts
+
+        org: "aboalayoun",
+        project: "javascript-nextjs",
+
+        // Only print logs for uploading source maps in CI
+        silent: !process.env.CI,
+
+        // For all available options, see:
+        // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+        // Automatically tree-shake Sentry logger statements to reduce bundle size
+        widenClientFileUpload: true,
+
+        // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+        // This can increase your server load as well as your hosting bill.
+        // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-side errors will fail.
+        tunnelRoute: "/monitoring",
+
+        // Hides source maps from visitors
+        hideSourceMaps: true,
+
+        // Fixes deprecation warnings by moving options into the webpack object
+        webpack: {
+            treeshake: {
+                removeDebugLogging: true,
+            },
+            automaticVercelMonitors: true,
+        },
+    }
+);
+
+export default configWithSentry;
+*/
 
 export default withNextIntl(withBundleAnalyzer(nextConfig));

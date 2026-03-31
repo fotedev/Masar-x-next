@@ -1,10 +1,12 @@
-import React from "react";
+import { type ReactNode } from "react";
+import { type FC } from "react";
+
 import { ExternalLink } from "lucide-react";
 import { useAnalytics } from "../hooks/useAnalytics";
 
 interface TrackedLinkProps {
   href: string;
-  children: React.ReactNode;
+  children: ReactNode;
   contentType: string; // e.g., 'course_link', 'pdf_link', 'exam_info'
   contentId?: string;
   metadata?: Record<string, unknown>;
@@ -12,7 +14,7 @@ interface TrackedLinkProps {
   target?: "_blank" | "_self";
 }
 
-export const TrackedLink: React.FC<TrackedLinkProps> = ({
+export const TrackedLink: FC<TrackedLinkProps> = ({
   href,
   children,
   contentType,

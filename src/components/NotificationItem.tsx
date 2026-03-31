@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { useTranslations } from "next-intl";
 import type { Notification } from "../types/database";
 import {
@@ -24,7 +24,7 @@ export function NotificationItem({
   const isHighlighted = shouldHighlightNotification(notification);
   const tNotifications = useTranslations("notifications");
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDelete = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsDeleting(true);
     try {

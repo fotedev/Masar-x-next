@@ -141,3 +141,5 @@ __pycache__
 scripts/row-preview-notgoodforhtml.txt
 .vercel
 AGENTS.md
+localhost-profile.log
+skills-lock.json

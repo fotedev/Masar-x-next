@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
 import { useTranslations } from "next-intl";
 import { Download } from "lucide-react";
 import type {
@@ -12,7 +13,7 @@ import type {
 export function QuizMetaFields(props: {
   editingQuiz: { id: string } | null;
   formData: QuizFormData;
-  setFormData: React.Dispatch<React.SetStateAction<QuizFormData>>;
+  setFormData: Dispatch<SetStateAction<QuizFormData>>;
   academicLevels: AcademicLevelOption[];
   getDepartmentsForLevelName: (level: string) => DepartmentOption[];
   filteredSubjectsForForm: SubjectOption[];
@@ -37,192 +38,200 @@ export function QuizMetaFields(props: {
 
   return (
     <>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
           {editingQuiz ? t("editQuiz") : t("newExam")}
         </h2>
         <button
           onClick={onOpenImport}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm shrink-0"
         >
           <Download className="w-4 h-4" />
           {t("import")}
         </button>
       </div>
 
-      <div>
-        <label 
-          htmlFor="quiz-title"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          {t("examTitle")}
-        </label>
-        <input
-          id="quiz-title"
-          name="title"
-          type="text"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-          placeholder={t("examTitlePlaceholder")}
-        />
-      </div>
-
-      <div>
-        <label 
-          htmlFor="quiz-duration"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          {t("examDurationMinutes")}
-        </label>
-        <input
-          id="quiz-duration"
-          name="durationMinutes"
-          type="number"
-          min={1}
-          value={formData.durationMinutes}
-          onChange={(e) =>
-            setFormData({ ...formData, durationMinutes: e.target.value })
-          }
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-          placeholder={t("durationPlaceholder")}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="space-y-4">
         <div>
           <label 
-            htmlFor="quiz-year"
+            htmlFor="quiz-title"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            {onboardingT("academicLevel")}{" "}
-            <span className="text-red-500">*</span>
+            {t("examTitle")}
           </label>
-          <select
-            id="quiz-year"
-            name="year"
-            required
-            value={formData.year}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                year: e.target.value,
-                department: "",
-                semester: "",
-                subject: "",
-                summaryId: "",
-              })
-            }
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="">{onboardingT("selectLevel")}</option>
-            {academicLevels.map((lvl) => (
-              <option key={lvl.id} value={lvl.name}>
-                {lvl.name}
-              </option>
-            ))}
-          </select>
+          <input
+            id="quiz-title"
+            name="title"
+            type="text"
+            dir="auto"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            placeholder={t("examTitlePlaceholder")}
+          />
         </div>
 
         <div>
           <label 
-            htmlFor="quiz-semester"
+            htmlFor="quiz-duration"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            {t("selectSemester")} <span className="text-red-500">*</span>
+            {t("examDurationMinutes")}
           </label>
-          <select
-            id="quiz-semester"
-            name="semester"
-            required
-            value={formData.semester}
+          <input
+            id="quiz-duration"
+            name="durationMinutes"
+            type="number"
+            min={1}
+            dir="auto"
+            value={formData.durationMinutes}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                semester: e.target.value,
-                department: "",
-                subject: "",
-                summaryId: "",
-              })
+              setFormData({ ...formData, durationMinutes: e.target.value })
             }
-            disabled={!formData.year}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
-          >
-            <option value="">{t("selectSemester")}</option>
-            <option value="1">{t("semester1")}</option>
-            <option value="2">{t("semester2")}</option>
-          </select>
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            placeholder={t("durationPlaceholder")}
+          />
         </div>
 
-        <div>
-          <label 
-            htmlFor="quiz-department"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            {onboardingT("department")} <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="quiz-department"
-            name="department"
-            required
-            value={formData.department}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                department: e.target.value,
-                subject: "",
-                summaryId: "",
-              })
-            }
-            disabled={
-              !formData.year ||
-              !formData.semester ||
-              getDepartmentsForLevelName(formData.year).length === 0
-            }
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
-          >
-            <option value="">{onboardingT("selectDepartment")}</option>
-            {getDepartmentsForLevelName(formData.year).map((dep) => (
-              <option key={dep.id} value={dep.name}>
-                {dep.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label 
-            htmlFor="quiz-subject"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            {t("selectSubject")} <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="quiz-subject"
-            name="subject"
-            required
-            value={formData.subject}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                subject: e.target.value,
-                summaryId: "",
-              })
-            }
-            disabled={
-              !formData.year || !formData.semester || !formData.department
-            }
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          >
-            <option value="">{t("selectSubject")}</option>
-            {(formData.year ? filteredSubjectsForForm : allSubjects).map(
-              (subject) => (
-                <option key={subject.id} value={subject.name}>
-                  {subject.name}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label 
+              htmlFor="quiz-year"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {onboardingT("academicLevel")}{" "}
+              <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="quiz-year"
+              name="year"
+              required
+              dir="auto"
+              value={formData.year}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  year: e.target.value,
+                  department: "",
+                  semester: "",
+                  subject: "",
+                  summaryId: "",
+                })
+              }
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">{onboardingT("selectLevel")}</option>
+              {academicLevels.map((lvl) => (
+                <option key={lvl.id} value={lvl.name}>
+                  {lvl.name}
                 </option>
-              ),
-            )}
-          </select>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label 
+              htmlFor="quiz-semester"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {t("selectSemester")} <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="quiz-semester"
+              name="semester"
+              required
+              dir="auto"
+              value={formData.semester}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  semester: e.target.value,
+                  department: "",
+                  subject: "",
+                  summaryId: "",
+                })
+              }
+              disabled={!formData.year}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+            >
+              <option value="">{t("selectSemester")}</option>
+              <option value="1">{t("semester1")}</option>
+              <option value="2">{t("semester2")}</option>
+            </select>
+          </div>
+
+          <div>
+            <label 
+              htmlFor="quiz-department"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {onboardingT("department")} <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="quiz-department"
+              name="department"
+              required
+              dir="auto"
+              value={formData.department}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  department: e.target.value,
+                  subject: "",
+                  summaryId: "",
+                })
+              }
+              disabled={
+                !formData.year ||
+                !formData.semester ||
+                getDepartmentsForLevelName(formData.year).length === 0
+              }
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
+            >
+              <option value="">{onboardingT("selectDepartment")}</option>
+              {getDepartmentsForLevelName(formData.year).map((dep) => (
+                <option key={dep.id} value={dep.name}>
+                  {dep.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label 
+              htmlFor="quiz-subject"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {t("selectSubject")} <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="quiz-subject"
+              name="subject"
+              required
+              dir="auto"
+              value={formData.subject}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  subject: e.target.value,
+                  summaryId: "",
+                })
+              }
+              disabled={
+                !formData.year || !formData.semester || !formData.department
+              }
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">{t("selectSubject")}</option>
+              {(formData.year ? filteredSubjectsForForm : allSubjects).map(
+                (subject) => (
+                  <option key={subject.id} value={subject.name}>
+                    {subject.name}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
         </div>
 
         {summaries.length > 0 && (
@@ -236,6 +245,7 @@ export function QuizMetaFields(props: {
             <select
               id="quiz-summary"
               name="summaryId"
+              dir="auto"
               value={formData.summaryId}
               onChange={(e) =>
                 setFormData({ ...formData, summaryId: e.target.value })
@@ -251,26 +261,27 @@ export function QuizMetaFields(props: {
             </select>
           </div>
         )}
-      </div>
 
-      <div>
-        <label 
-          htmlFor="quiz-description"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          {t("examDescription")}
-        </label>
-        <textarea
-          id="quiz-description"
-          name="description"
-          value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-          rows={3}
-          placeholder={t("descriptionPlaceholder")}
-        />
+        <div>
+          <label 
+            htmlFor="quiz-description"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            {t("examDescription")}
+          </label>
+          <textarea
+            id="quiz-description"
+            name="description"
+            dir="auto"
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            rows={3}
+            placeholder={t("descriptionPlaceholder")}
+          />
+        </div>
       </div>
     </>
   );

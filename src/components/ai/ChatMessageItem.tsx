@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
 import { useLocale } from "next-intl";
 import { Bot, User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
 import { LatexRenderer } from "@/components/LatexRenderer";
@@ -19,10 +19,7 @@ interface ChatMessageItemProps {
   onUiMessage?: (message: string) => void;
 }
 
-export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
-  message,
-  onUiMessage,
-}) => {
+export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMessage }) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const isUser = message.type === "user";
@@ -64,10 +61,10 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
   const { cleaned: displayContent, ui: zaneUiBlocks } = extractZaneUiBlocks(withoutPuterMarker);
 
-  type MarkdownCodeProps = React.HTMLAttributes<HTMLElement> & {
+  type MarkdownCodeProps = HTMLAttributes<HTMLElement> & {
     inline?: boolean;
     className?: string;
-    children?: React.ReactNode;
+    children?: ReactNode;
   };
 
   const hasMarkdownContent = (text: string): boolean => {
@@ -96,14 +93,14 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       .replace(/\\\(([\s\S]*?)\\\)/g, "$$1$");
   };
 
-  const flattenChildren = (children: React.ReactNode): string => {
-    return React.Children.toArray(children).reduce<string>((text, child) => {
+  const flattenChildren = (children: ReactNode): string => {
+    return Children.toArray(children).reduce<string>((text, child) => {
       if (typeof child === "string" || typeof child === "number") {
         return text + child;
       }
 
-      if (React.isValidElement(child)) {
-        const childChildren = (child.props as { children?: React.ReactNode })
+      if (isValidElement(child)) {
+        const childChildren = (child.props as { children?: ReactNode })
           .children;
 
         if (childChildren) {
@@ -148,32 +145,32 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     const normalized = normalizeLatexDelimiters(raw);
 
     const markdownComponents = {
-      h1: ({ children }: { children?: React.ReactNode }) => (
+      h1: ({ children }: { children?: ReactNode }) => (
         <h1 className="text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
           <LatexRenderer text={flattenChildren(children)} />
         </h1>
       ),
-      h2: ({ children }: { children?: React.ReactNode }) => (
+      h2: ({ children }: { children?: ReactNode }) => (
         <h2 className="text-lg sm:text-xl font-bold mt-5 mb-3 text-slate-800 dark:text-slate-100 tracking-tight">
           <LatexRenderer text={flattenChildren(children)} />
         </h2>
       ),
-      h3: ({ children }: { children?: React.ReactNode }) => (
+      h3: ({ children }: { children?: ReactNode }) => (
         <h3 className="text-base sm:text-lg font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200">
           <LatexRenderer text={flattenChildren(children)} />
         </h3>
       ),
-      p: ({ children }: { children?: React.ReactNode }) => (
+      p: ({ children }: { children?: ReactNode }) => (
         <div className="mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
           <LatexRenderer text={flattenChildren(children)} />
         </div>
       ),
-      ul: ({ children }: { children?: React.ReactNode }) => (
+      ul: ({ children }: { children?: ReactNode }) => (
         <ul className="space-y-2 my-4 list-none p-0">
           {children}
         </ul>
       ),
-      li: ({ children }: { children?: React.ReactNode }) => (
+      li: ({ children }: { children?: ReactNode }) => (
         <li className="flex gap-2 items-start group">
           <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
           <div className="flex-1 text-slate-700 dark:text-slate-300">
@@ -181,10 +178,10 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           </div>
         </li>
       ),
-      strong: ({ children }: { children?: React.ReactNode }) => (
+      strong: ({ children }: { children?: ReactNode }) => (
         <strong className="font-bold text-slate-900 dark:text-white">{children}</strong>
       ),
-      em: ({ children }: { children?: React.ReactNode }) => (
+      em: ({ children }: { children?: ReactNode }) => (
         <em className="italic opacity-90">{children}</em>
       ),
       code: ({ inline, className, children, ...props }: MarkdownCodeProps) => {
@@ -231,7 +228,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           </div>
         );
       },
-      pre: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+      pre: ({ children }: { children?: ReactNode }) => <>{children}</>,
     };
 
     if (isRawView) {
@@ -386,4 +383,4 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       </div>
     </div>
   );
-};
+});

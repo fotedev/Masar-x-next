@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Check, X, Trash } from "lucide-react";
 import { Appeal } from "../../types/database";
 

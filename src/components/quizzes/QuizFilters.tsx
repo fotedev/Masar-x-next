@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Search, SortAsc, SortDesc } from "lucide-react";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -45,7 +45,7 @@ export function QuizFilters({
               <label htmlFor="quizzes-tab-search" className="sr-only">
                 {t("searchLabel")}
               </label>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 id="quizzes-tab-search"
                 name="quizzesTabSearch"
@@ -54,7 +54,7 @@ export function QuizFilters({
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 placeholder:text-start"
+                className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 placeholder:text-start"
               />
             </div>
           </div>

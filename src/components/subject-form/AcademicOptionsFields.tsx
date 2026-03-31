@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
 import { AcademicLevelOption } from "@/hooks/useAcademicOptions";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -13,7 +14,7 @@ type AcademicOptionsShape = {
 
 interface AcademicOptionsFieldsProps<TFormData extends AcademicOptionsShape> {
   formData: TFormData;
-  setFormData: React.Dispatch<React.SetStateAction<TFormData>>;
+  setFormData: Dispatch<SetStateAction<TFormData>>;
   levels: AcademicLevelOption[];
   optionsLoading: boolean;
   t: TranslationFn;

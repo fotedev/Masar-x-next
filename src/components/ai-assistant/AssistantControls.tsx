@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useTranslations } from "next-intl";
 import { Brain, FileText, Trash2 } from "lucide-react";
 import {

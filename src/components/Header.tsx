@@ -1,7 +1,6 @@
 "use client";
 
-import React, { Fragment, useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { Fragment, useState, useEffect, useRef, memo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useRouter, usePathname } from "@/i18n/routing";
 import { toast } from "sonner";
@@ -10,12 +9,13 @@ import { useTranslations, useLocale } from "next-intl";
 import { LanguageToggle } from "./LanguageToggle";
 import { logger } from "@/lib/logger";
 
+import { DynamicLogo } from "./DynamicLogo";
 import { DesktopNav } from "./header/DesktopNav";
 import { MobileNav } from "./header/MobileNav";
 import { UserMenu } from "./header/UserMenu";
 import { SecretAccessGate } from "./header/SecretAccessGate";
 
-export const Header = React.memo(function Header() {
+export const Header = memo(function Header() {
   const tNav = useTranslations("nav");
   const tHeader = useTranslations("header");
   const locale = useLocale();
@@ -43,8 +43,8 @@ export const Header = React.memo(function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const mobileBackdropRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null!);
+  const mobileBackdropRef = useRef<HTMLDivElement>(null!);
 
   const effectivePathname = isMounted ? (pathname ?? "/") : "/";
 
@@ -353,16 +353,14 @@ export const Header = React.memo(function Header() {
         }`}
       >
         <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8 pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center justify-between h-full">
-            <div className="relative flex items-center gap-3">
+          <div className="flex items-center justify-between h-full gap-x-8">
+            <div className="flex-1 flex items-center justify-start min-w-0">
               <button
                 onClick={handleLogoClick}
-                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0 p-1 -ml-1"
+                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0 p-1"
                 type="button"
               >
-                <Image
-                  src="/logo.png"
-                  alt="Masar X Logo"
+                <DynamicLogo
                   width={48}
                   height={48}
                   className="object-contain w-10 h-10 sm:w-12 sm:h-12"
@@ -371,15 +369,17 @@ export const Header = React.memo(function Header() {
               </button>
             </div>
 
-            <DesktopNav
-              primaryNavItems={primaryNavItems}
-              handleNavigate={handleNavigate}
-              isTRWVisible={isTRWVisible}
-              currentPage={currentPage}
-            />
+            <div className="flex-[2] hidden lg:flex items-center justify-center min-w-0">
+              <DesktopNav
+                primaryNavItems={primaryNavItems}
+                handleNavigate={handleNavigate}
+                isTRWVisible={isTRWVisible}
+                currentPage={currentPage}
+              />
+            </div>
 
-            <div className="flex items-center gap-2">
-              <div className="hidden lg:flex items-center gap-2">
+            <div className="flex-1 flex items-center justify-end gap-x-2 min-w-0">
+              <div className="hidden lg:flex items-center gap-x-2">
                 <LanguageToggle />
 
                 <UserMenu

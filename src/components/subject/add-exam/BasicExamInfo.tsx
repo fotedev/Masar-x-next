@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { DepartmentOption, LevelOption, SetExamFormData } from "./types";
 
 interface BasicExamInfoProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useParams } from "next/navigation";
 import { useLocale } from "next-intl";

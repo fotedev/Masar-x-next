@@ -1,11 +1,13 @@
-import React from "react";
+import { forwardRef } from "react";
+import { type HTMLAttributes, type ReactNode } from "react";
 
-interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+
+interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "secondary" | "destructive" | "outline";
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+export const Badge = forwardRef<HTMLDivElement, BadgeProps>(
   ({ className = "", variant = "default", children, ...props }, ref) => {
     const baseClasses =
       "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";

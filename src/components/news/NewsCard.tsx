@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Trash } from "lucide-react";
 import { News } from "../../types/database";
 

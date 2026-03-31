@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
 
 type TranslationValues = Record<string, string | number | Date>;
 type TranslationFn = (key: string, values?: TranslationValues) => string;
@@ -11,7 +12,7 @@ type BasicInfoShape = {
 
 interface BasicInfoFieldsProps<TFormData extends BasicInfoShape> {
   formData: TFormData;
-  setFormData: React.Dispatch<React.SetStateAction<TFormData>>;
+  setFormData: Dispatch<SetStateAction<TFormData>>;
   t: TranslationFn;
 }
 

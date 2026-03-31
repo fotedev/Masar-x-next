@@ -1,14 +1,12 @@
 "use client";
 
-import React from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
-type ComponentsLike = Record<string, React.ComponentType<any>>;
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function MarkdownRendererHeavy(props: {
   content: string;
-  components?: ComponentsLike;
+  components?: Components;
   className?: string;
 }) {
   const { content, components, className } = props;

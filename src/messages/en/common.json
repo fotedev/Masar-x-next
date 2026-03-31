@@ -2,5 +2,9 @@
   "loading": "Loading...",
   "error": "Something went wrong",
   "redirectingToPrivacyPolicy": "Redirecting to the Privacy Policy...",
-  "of": "of"
+  "of": "of",
+  "cancel": "Cancel",
+  "save": "Save",
+  "back": "Back",
+  "notSpecified": "Not specified"
 }

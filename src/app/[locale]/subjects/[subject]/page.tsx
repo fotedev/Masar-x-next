@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +14,10 @@ import { useLectureContent } from "@/hooks/useLectureContent";
 import { useManageLectures } from "@/hooks/useManageLectures";
 import { toast } from "react-hot-toast";
 import { logger } from "@/lib/logger";
-import type { ContentItem, LectureIndexItem } from "@/components/subject/lecture-detail/types";
+import type {
+  ContentItem,
+  LectureIndexItem,
+} from "@/components/subject/lecture-detail/types";
 
 interface SubjectLecture {
   id: string;
@@ -164,13 +167,15 @@ export default function SubjectPage() {
 
         // If lectureIdParam is present, select that lecture automatically
         if (lectureIdParam) {
-          const targetLec = fetchedLectures.find(l => l.lecture_key === lectureIdParam);
+          const targetLec = fetchedLectures.find(
+            (l) => l.lecture_key === lectureIdParam,
+          );
           if (targetLec) {
             setSelectedLecture({
               key: targetLec.lecture_key,
               label: targetLec.lecture_label,
               order: targetLec.order_index,
-              counts: { summaries: 0, videos: 0, files: 0, exams: 0 }
+              counts: { summaries: 0, videos: 0, files: 0, exams: 0 },
             });
             setSelectedLectureForContent({
               id: targetLec.id,
@@ -196,13 +201,15 @@ export default function SubjectPage() {
   useEffect(() => {
     if (subjectLectures.length > 0) {
       if (lectureIdParam) {
-        const targetLec = subjectLectures.find(l => l.lecture_key === lectureIdParam);
+        const targetLec = subjectLectures.find(
+          (l) => l.lecture_key === lectureIdParam,
+        );
         if (targetLec && selectedLecture?.key !== lectureIdParam) {
           setSelectedLecture({
             key: targetLec.lecture_key,
             label: targetLec.lecture_label,
             order: targetLec.order_index,
-            counts: { summaries: 0, videos: 0, files: 0, exams: 0 }
+            counts: { summaries: 0, videos: 0, files: 0, exams: 0 },
           });
           setSelectedLectureForContent({
             id: targetLec.id,
@@ -326,8 +333,11 @@ export default function SubjectPage() {
           completedContent={completedContent}
           tSubjectPage={t}
           getYouTubeId={getYouTubeId}
-          onBackToSubjects={() => router.push("/subjects")}
+          onBackToSubjects={() => router.push(`/${locale}/subjects`)}
           onBackToLectures={() => {
+            router.push(`/${locale}/subjects/${rawSubjectName}`, {
+              scroll: false,
+            });
             setSelectedLecture(null);
             setActiveVideoUrl(null);
           }}
@@ -338,21 +348,21 @@ export default function SubjectPage() {
           onAddVideo={() => {
             if (isAdmin) {
               router.push(
-                `/subjects/${rawSubjectName}/admin?action=add-video&lecture=${selectedLecture?.key}`,
+                `/${locale}/subjects/${rawSubjectName}/admin?action=add-video&lecture=${selectedLecture?.key}`,
               );
             }
           }}
           onAddFile={() => {
             if (isAdmin) {
               router.push(
-                `/subjects/${rawSubjectName}/admin?action=add-file&lecture=${selectedLecture?.key}`,
+                `/${locale}/subjects/${rawSubjectName}/admin?action=add-file&lecture=${selectedLecture?.key}`,
               );
             }
           }}
           onAddExam={() => {
             if (isAdmin) {
               router.push(
-                `/subjects/${rawSubjectName}/admin?action=add-exam&lecture=${selectedLecture?.key}`,
+                `/${locale}/subjects/${rawSubjectName}/admin?action=add-exam&lecture=${selectedLecture?.key}`,
               );
             }
           }}
@@ -370,7 +380,7 @@ export default function SubjectPage() {
           lectureIndex={lectureIndex}
           totalPossibleItems={totalPossibleItems}
           tSubjectPage={t}
-          onBackToSubjects={() => router.push("/subjects")}
+          onBackToSubjects={() => router.push(`/${locale}/subjects`)}
           onEditSubject={() => {}} // Handle edit subject
           onAddLecture={() => setShowAddLectureForm(true)}
           onSelectLecture={(key) => {
@@ -378,6 +388,13 @@ export default function SubjectPage() {
             if (!lecUi) return;
             const lecDb = subjectLectures.find((l) => l.lecture_key === key);
             if (!lecDb) return;
+
+            // Update URL to include the lecture ID for persistence and proper routing
+            router.push(
+              `/${locale}/subjects/${rawSubjectName}/lectures/${key}`,
+              { scroll: false },
+            );
+
             setSelectedLecture(lecUi);
             setSelectedLectureForContent({
               id: lecDb.id,
@@ -401,7 +418,9 @@ export default function SubjectPage() {
             key: lectureFormData.key,
             orderIndex: lectureFormData.orderIndex,
           }}
-          setLectureFormData={(updater: (prev: typeof lectureFormData) => typeof lectureFormData) => setLectureFormData(updater)}
+          setLectureFormData={(
+            updater: (prev: typeof lectureFormData) => typeof lectureFormData,
+          ) => setLectureFormData(updater)}
           getLectureInfoFromTitle={(title: string) => ({
             key:
               inferLectureKeyFromTitle(

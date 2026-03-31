@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Plus } from "lucide-react";
 import { QuestionItem } from "./QuestionItem";
 import type { ExamQuestion, SetExamFormData } from "./types";

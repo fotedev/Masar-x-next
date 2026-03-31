@@ -1,4 +1,5 @@
-import React from "react";
+import { type FC } from "react";
+
 import { 
   GraduationCap, 
   School, 
@@ -17,7 +18,7 @@ interface AdminDashboardTabsProps {
   adminRole: string | null;
 }
 
-export const AdminDashboardTabs: React.FC<AdminDashboardTabsProps> = ({
+export const AdminDashboardTabs: FC<AdminDashboardTabsProps> = ({
   activeTab,
   setActiveTab,
   adminRole,
