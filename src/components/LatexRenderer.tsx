@@ -1,14 +1,15 @@
+import { type FC } from "react";
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 
 interface LatexRendererProps {
   text: string;
   className?: string;
 }
 
-export const LatexRenderer: React.FC<LatexRendererProps> = ({
+export const LatexRenderer: FC<LatexRendererProps> = ({
   text,
   className = "",
 }) => {

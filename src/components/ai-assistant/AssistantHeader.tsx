@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Bot } from "lucide-react";
 import {

@@ -1,3 +1,4 @@
+import { type FormEvent } from "react";
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -62,7 +63,7 @@ export default function AcademicOnboardingPage() {
     setSemester(initialSemester);
   }, [initialSemester]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 

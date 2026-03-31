@@ -1,4 +1,4 @@
-import React from "react";
+
 import { BookOpen, Video, FileText, Layout, Plus } from "lucide-react";
 import { Button } from "@/components/ui";
 

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Upload } from "lucide-react";
 import { FileDropzone } from "../FileDropzone";
 

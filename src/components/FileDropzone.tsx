@@ -1,4 +1,6 @@
-import React, { useCallback, useState } from "react";
+import { type ReactNode } from "react";
+import { useState, useCallback, type DragEvent, type ChangeEvent } from "react";
+
 import { Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -6,7 +8,7 @@ interface FileDropzoneProps {
   onFileSelect: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
   className?: string;
   disabled?: boolean;
   id?: string;
@@ -26,9 +28,8 @@ export function FileDropzone({
   const inputId = id || "file-upload-input";
 
   const handleDragEnter = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      e.stopPropagation();
       if (!disabled) {
         setIsDragActive(true);
       }
@@ -36,16 +37,17 @@ export function FileDropzone({
     [disabled],
   );
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragActive(false);
-  }, []);
+  const handleDragLeave = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragActive(false);
+    },
+    [],
+  );
 
   const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      e.stopPropagation();
       if (!disabled) {
         setIsDragActive(true);
       }
@@ -70,26 +72,26 @@ export function FileDropzone({
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
-      e.stopPropagation();
       setIsDragActive(false);
 
       if (disabled) return;
 
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        validateAndPassFiles(files);
+      if (e.dataTransfer) {
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+          validateAndPassFiles(files);
+        }
       }
     },
     [disabled, validateAndPassFiles],
   );
 
   const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
-      if (files.length > 0) {
-        validateAndPassFiles(files);
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        validateAndPassFiles(Array.from(e.target.files));
       }
       // Reset input value to allow selecting the same file again
       e.target.value = "";

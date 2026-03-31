@@ -1,4 +1,5 @@
-import React from "react";
+import { type ReactNode } from "react";
+
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 
@@ -10,7 +11,7 @@ interface CourseHeroProps {
     description: string;
   };
   enrollmentStatus: string;
-  renderActionButton: () => React.ReactNode;
+  renderActionButton: () => ReactNode;
 }
 
 export function CourseHero({ course, enrollmentStatus, renderActionButton }: CourseHeroProps) {

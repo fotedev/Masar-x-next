@@ -1,3 +1,4 @@
+import { type FormEvent } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
@@ -58,7 +59,7 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
     }
   }, [formData.academic_level, formData.department, availableDepartments]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 

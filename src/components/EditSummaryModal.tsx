@@ -1,4 +1,4 @@
-import React from "react";
+
 import { X, Save } from "lucide-react";
 import type {
   Summary,

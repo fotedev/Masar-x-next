@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
 
 interface TabsContextType {
   value: string;
@@ -11,7 +12,7 @@ interface TabsProps {
   defaultValue: string;
   value?: string;
   onValueChange?: (value: string) => void;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 
@@ -34,11 +35,11 @@ export const Tabs = ({
   );
 };
 
-interface TabsListProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
+interface TabsListProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
 }
 
-export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
+export const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
   ({ className = "", children, ...props }, ref) => {
     return (
       <div
@@ -55,12 +56,12 @@ export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
 TabsList.displayName = "TabsList";
 
 interface TabsTriggerProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const TabsTrigger = React.forwardRef<
+export const TabsTrigger = forwardRef<
   HTMLButtonElement,
   TabsTriggerProps
 >(({ className = "", value, children, ...props }, ref) => {
@@ -87,12 +88,12 @@ export const TabsTrigger = React.forwardRef<
 
 TabsTrigger.displayName = "TabsTrigger";
 
-interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
+interface TabsContentProps extends HTMLAttributes<HTMLDivElement> {
   value: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
+export const TabsContent = forwardRef<HTMLDivElement, TabsContentProps>(
   ({ className = "", value, children, ...props }, ref) => {
     const context = useContext(TabsContext);
     if (!context) throw new Error("TabsContent must be used within Tabs");

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from "react";
+import { type FC } from "react";
+import { useEffect, useRef } from "react";
 import { Download, Eye, Edit } from "lucide-react";
 import { useAnalytics } from "../hooks/useAnalytics";
 
@@ -18,7 +19,7 @@ interface SummaryCardProps {
   className?: string;
 }
 
-export const SummaryCard: React.FC<SummaryCardProps> = ({
+export const SummaryCard: FC<SummaryCardProps> = ({
   id,
   title,
   description,

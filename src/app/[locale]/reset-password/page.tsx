@@ -1,6 +1,7 @@
+import { type FormEvent } from "react";
 "use client";
 
-import React, { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -39,7 +40,7 @@ function ResetPasswordContent() {
     setIsValidSession(true);
   }, [searchParams, onNavigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");

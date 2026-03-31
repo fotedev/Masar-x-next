@@ -1,4 +1,4 @@
-import React from "react";
+
 import { AcademicLevelOption } from "@/hooks/useAcademicOptions";
 
 type TranslationValues = Record<string, string | number | Date>;

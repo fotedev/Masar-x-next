@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Search } from "lucide-react";
 
 type TranslationValues = Record<string, string | number | Date>;

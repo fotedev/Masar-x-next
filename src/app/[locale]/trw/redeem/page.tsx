@@ -1,7 +1,7 @@
 "use client";
 
 import useRedeemAccessCode from "@/hooks/trw/useRedeemAccessCode";
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import {
   Card,
   CardContent,
@@ -81,7 +81,7 @@ export default function RedeemPage() {
             <Input
               placeholder={t("placeholder")}
               value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setCode(e.target.value.toUpperCase())}
               disabled={isPending}
               className="text-center font-mono text-lg tracking-widest bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10"
             />

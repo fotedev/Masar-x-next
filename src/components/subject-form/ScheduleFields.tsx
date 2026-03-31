@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
 
 type ScheduleShape = {
   schedule: string;
@@ -8,7 +9,7 @@ type ScheduleShape = {
 
 interface ScheduleFieldsProps<TFormData extends ScheduleShape> {
   formData: TFormData;
-  setFormData: React.Dispatch<React.SetStateAction<TFormData>>;
+  setFormData: Dispatch<SetStateAction<TFormData>>;
 }
 
 export function ScheduleFields<TFormData extends ScheduleShape>({

@@ -1,4 +1,5 @@
-import React from "react";
+import { Fragment } from "react";
+
 import Image from "next/image";
 import { Sparkles, Trash2, Upload, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -66,6 +67,7 @@ export function QuizQuestionEditor(props: {
           id={`question-text-${questionIndex}`}
           name={`question-text-${questionIndex}`}
           type="text"
+          dir="auto"
           value={question.question}
           onChange={(e) =>
             onUpdateQuestion(questionIndex, "question", e.target.value)
@@ -172,7 +174,7 @@ export function QuizQuestionEditor(props: {
             ))}
           </div>
         ) : (
-          <React.Fragment>
+          <Fragment>
             {question.options.map((option, optionIndex) => (
               <div key={optionIndex} className="flex flex-col gap-2 mb-2">
                 <div className="flex items-center gap-2">
@@ -186,17 +188,18 @@ export function QuizQuestionEditor(props: {
                     }
                     className="text-blue-600"
                   />
-                  <input
-                    id={`question-${questionIndex}-option-${optionIndex}`}
-                    name={`question-${questionIndex}-option-${optionIndex}`}
-                    type="text"
-                    value={option}
-                    onChange={(e) =>
-                      onUpdateOption(questionIndex, optionIndex, e.target.value)
-                    }
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder={t("optionChoice", { number: optionIndex + 1 })}
-                  />
+                    <input
+                      id={`question-${questionIndex}-option-${optionIndex}`}
+                      name={`question-${questionIndex}-option-${optionIndex}`}
+                      type="text"
+                      dir="auto"
+                      value={option}
+                      onChange={(e) =>
+                        onUpdateOption(questionIndex, optionIndex, e.target.value)
+                      }
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder={t("optionChoice", { number: optionIndex + 1 })}
+                    />
                 </div>
                 {option && (
                   <div className="mr-8 text-sm p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100/30 dark:border-blue-800/30">
@@ -205,7 +208,7 @@ export function QuizQuestionEditor(props: {
                 )}
               </div>
             ))}
-          </React.Fragment>
+          </Fragment>
         )}
       </div>
 
@@ -220,6 +223,7 @@ export function QuizQuestionEditor(props: {
           id={`question-explanation-${questionIndex}`}
           name={`question-explanation-${questionIndex}`}
           type="text"
+          dir="auto"
           value={question.explanation}
           onChange={(e) =>
             onUpdateQuestion(questionIndex, "explanation", e.target.value)

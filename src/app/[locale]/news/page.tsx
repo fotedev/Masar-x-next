@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { Trash } from "lucide-react";
 import {
@@ -30,6 +30,7 @@ type NewsItem = News & { summary?: string };
 
 function NewsPage() {
   const t = useTranslations("news");
+  const locale = useLocale();
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { notifyAdmins, notifyAllUsers } = useNotifications();
@@ -171,38 +172,40 @@ function NewsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="bg-gradient-to-r from-brand-navy to-brand-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-white/10">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-4 text-center sm:text-right">
-          <Newspaper className="w-12 h-12 flex-shrink-0" />
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              {t("pageTitle")}
-            </h1>
-            <p className="text-blue-100 text-sm sm:text-base">
-              {t("pageDescription")}
-            </p>
+        <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-start">
+            <Newspaper className="w-12 h-12 flex-shrink-0" />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                {t("pageTitle")}
+              </h1>
+              <p className="text-blue-100 text-sm sm:text-base">
+                {t("pageDescription")}
+              </p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4 mt-6">
-          {user ? (
-            <button
-              onClick={() => setShowAddNews(true)}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{t("addNews")}</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => router.push("/login")}
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
-            >
-              {t("loginToAddNews")}
-            </button>
-          )}
+          <div className="flex items-center gap-4 shrink-0">
+            {user ? (
+              <button
+                onClick={() => setShowAddNews(true)}
+                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2.5 rounded-xl transition-colors font-bold shadow-lg backdrop-blur-md border border-white/10"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{t("addNews")}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push("/login")}
+                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2.5 rounded-xl transition-colors font-bold shadow-lg backdrop-blur-md border border-white/10"
+              >
+                {t("loginToAddNews")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -213,7 +216,7 @@ function NewsPage() {
             <label htmlFor="news-search" className="sr-only">
               {t("searchLabel")}
             </label>
-            <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <Search className={`absolute ${locale === 'ar' ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5`} />
             <input
               id="news-search"
               name="newsSearch"
@@ -221,7 +224,7 @@ function NewsPage() {
               placeholder={t("searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pr-12 pl-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
+              className={`w-full ${locale === 'ar' ? 'pr-12 pl-5' : 'pl-12 pr-5'} py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all`}
             />
           </div>
         </div>
@@ -258,8 +261,8 @@ function NewsPage() {
 
       {/* News Items */}
       {filteredNews.length === 0 ? (
-        <div className="text-center py-12">
-          <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <div className="text-center py-12 modern-card border-dashed border-2 border-slate-200 dark:border-slate-800 min-h-[400px] flex flex-col items-center justify-center">
+          <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4 opacity-50" />
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t("noNews")}
           </h2>

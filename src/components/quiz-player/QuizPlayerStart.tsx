@@ -1,4 +1,4 @@
-import React from "react";
+
 import { ArrowRight, Play, Target, Timer } from "lucide-react";
 
 type Quiz = {

@@ -1,4 +1,4 @@
-import React from "react";
+
 import Image from "next/image";
 import { User, Trash2 } from "lucide-react";
 import { StarDisplay } from "./StarRating";

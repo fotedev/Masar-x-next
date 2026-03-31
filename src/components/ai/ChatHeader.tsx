@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Bot, Brain, Trash2, MessagesSquare, ChevronDown, Check, BookOpen, MessageSquareCode, Users, Settings } from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
@@ -14,11 +14,14 @@ import { useSubjects } from "@/hooks/useSubjects";
 import type { SummaryInsert } from "@/types/database";
 import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import { getLogoPath } from "@/components/DynamicLogo";
+import { useLocale } from "next-intl";
 
 export default function AddSummaryPage() {
   const t = useTranslations("addSummary");
   const commonT = useTranslations("common");
   const onboardingT = useTranslations("onboarding");
+  const locale = useLocale();
   const router = useRouter();
   const [lectureKeyFromQuery, setLectureKeyFromQuery] = useState("");
   const { user, displayName } = useAuth();
@@ -89,7 +92,7 @@ export default function AddSummaryPage() {
     }
   }, [availableDepartments, formData.department, formData.year]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -273,7 +276,7 @@ export default function AddSummaryPage() {
 
       sendNotification(t("submitSuccessTitle"), {
         body: notificationMessage,
-        icon: "/logo.png",
+        icon: getLogoPath(locale),
         tag: "summary-submitted",
       });
 
