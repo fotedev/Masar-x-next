@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Trash2, Star } from "lucide-react";
 import { QuizWithRatings } from "../../types/database";
 

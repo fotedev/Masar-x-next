@@ -171,7 +171,7 @@ const puter: PuterClient = {
 };
 
 // Initialize Puter.js status
-let isPuterReady = typeof window !== 'undefined';
+const isPuterReady = typeof window !== 'undefined';
 
 let puterDiagnosticsInitialized = false;
 

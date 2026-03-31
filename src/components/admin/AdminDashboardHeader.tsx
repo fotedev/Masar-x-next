@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction, type FC } from "react";
+
 import { Filter, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AcademicLevelOption, DepartmentOption } from "../../hooks/useAcademicOptions";
@@ -10,7 +11,7 @@ interface AdminDashboardHeaderProps {
     department: string;
     year: string;
   };
-  setGlobalFilters: React.Dispatch<React.SetStateAction<{
+  setGlobalFilters: Dispatch<SetStateAction<{
     subject: string;
     department: string;
     year: string;
@@ -21,7 +22,7 @@ interface AdminDashboardHeaderProps {
   onClearFilters: () => void;
 }
 
-export const AdminDashboardHeader: React.FC<AdminDashboardHeaderProps> = ({
+export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
   globalFilters,
   setGlobalFilters,
   levels,

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Send, CheckCircle, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import { LectureSelect } from "@/components/lectures/LectureSelect";
 
 export function AddFileForm() {
   const t = useTranslations("addFile");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAdmin, isAdminLoading } = useAuth();
@@ -22,12 +23,12 @@ export function AddFileForm() {
     const subject = searchParams.get("subject") || "";
     const lecture = searchParams.get("lecture") || "";
     if (subject) {
-      const url = `/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+      const url = `/${locale}/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
       router.push(url);
       return;
     }
     router.back();
-  }, [router, searchParams]);
+  }, [router, searchParams, locale]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -73,7 +74,7 @@ export function AddFileForm() {
     }
   }, [isAdmin, isAdminLoading, handleClose]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const currentLectureKey = (searchParams.get("lecture") || "").trim();
@@ -173,7 +174,7 @@ export function AddFileForm() {
 
       setTimeout(() => {
         const lecture = searchParams.get("lecture") || "";
-        const url = `/subjects/${encodeURIComponent(formData.subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+        const url = `/${locale}/subjects/${encodeURIComponent(formData.subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
         router.push(url);
       }, 2000);
     } catch {

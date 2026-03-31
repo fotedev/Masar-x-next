@@ -1,13 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useMemo } from "react";
-
-type ComponentsLike = Record<string, React.ComponentType<any>>;
+import { useMemo } from "react";
+import { type Components } from "react-markdown";
 
 export function LazyMarkdown(props: {
   content: string;
-  components?: ComponentsLike;
+  components?: Components;
   className?: string;
 }) {
   const { content, components, className } = props;

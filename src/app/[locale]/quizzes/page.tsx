@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";

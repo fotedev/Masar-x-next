@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCcw, Home } from "lucide-react";
 import { useTranslations } from "next-intl";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { X, LogOut, CheckCircle2, Brain } from "lucide-react";
 import {
   signInToPuter,
@@ -17,7 +17,7 @@ interface PuterSettingsModalProps {
   onClose: () => void;
 }
 
-const PuterSettingsModal: React.FC<PuterSettingsModalProps> = ({
+const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
   isOpen,
   onClose,
 }) => {

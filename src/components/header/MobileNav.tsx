@@ -1,3 +1,4 @@
+import { type RefObject } from "react";
 import { LanguageToggle } from "../LanguageToggle";
 import { Shield, User, LogOut, LogIn, UserPlus } from "lucide-react";
 
@@ -12,7 +13,7 @@ interface MobileNavProps {
   isMounted: boolean;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
-  mobileBackdropRef: React.RefObject<HTMLDivElement>;
+  mobileBackdropRef: RefObject<HTMLDivElement>;
   primaryNavItems: readonly NavItem[];
   handleNavigate: (page: string) => void;
   isTRWVisible: boolean;
@@ -67,8 +68,8 @@ export function MobileNav({
         id="mobile-nav-drawer"
         role="dialog"
         aria-modal="true"
-        className={`absolute top-0 bottom-0 right-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[95] ${
-          isMounted && isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        className={`absolute top-0 bottom-0 start-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[95] ${
+          isMounted && isMobileMenuOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
         } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
       >
         <div className="pt-[80px] px-4 md:px-6 pb-6 overflow-y-auto max-h-[100vh] bg-[#020617]">

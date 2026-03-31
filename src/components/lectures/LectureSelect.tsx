@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";

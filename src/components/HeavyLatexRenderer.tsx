@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-// import "katex/dist/katex.min.css";
+
+import { Fragment, useMemo } from "react";
 import "katex/dist/katex.min.css";
 import { InlineMath, BlockMath } from "react-katex";
 
@@ -14,27 +14,31 @@ export default function HeavyLatexRenderer({
   text,
   className = "",
 }: HeavyLatexRendererProps) {
-  const parts: Array<
-    | { type: "text"; value: string }
-    | { type: "inline"; value: string }
-    | { type: "block"; value: string }
-  > = [];
+  const parts = useMemo(() => {
+    const segments: Array<
+      | { type: "text"; value: string }
+      | { type: "inline"; value: string }
+      | { type: "block"; value: string }
+    > = [];
 
-  const input = String(text ?? "");
-  const blockRegex = /\$\$([\s\S]+?)\$\$/g;
-  let lastIndex = 0;
+    const input = String(text ?? "");
+    const blockRegex = /\$\$([\s\S]+?)\$\$/g;
+    let lastIndex = 0;
 
-  for (const match of input.matchAll(blockRegex)) {
-    const start = match.index ?? 0;
-    const end = start + match[0].length;
-    const before = input.slice(lastIndex, start);
-    if (before) parts.push({ type: "text", value: before });
-    parts.push({ type: "block", value: match[1] ?? "" });
-    lastIndex = end;
-  }
+    for (const match of input.matchAll(blockRegex)) {
+      const start = match.index ?? 0;
+      const end = start + match[0].length;
+      const before = input.slice(lastIndex, start);
+      if (before) segments.push({ type: "text", value: before });
+      segments.push({ type: "block", value: match[1] ?? "" });
+      lastIndex = end;
+    }
 
-  const remaining = input.slice(lastIndex);
-  if (remaining) parts.push({ type: "text", value: remaining });
+    const remaining = input.slice(lastIndex);
+    if (remaining) segments.push({ type: "text", value: remaining });
+
+    return segments;
+  }, [text]);
 
   const renderInline = (value: string) => {
     const inlineParts: Array<
@@ -58,7 +62,7 @@ export default function HeavyLatexRenderer({
       if (p.type === "inline") {
         return <InlineMath key={idx} math={p.value} />;
       }
-      return <React.Fragment key={idx}>{p.value}</React.Fragment>;
+      return <Fragment key={idx}>{p.value}</Fragment>;
     });
   };
 
@@ -68,8 +72,9 @@ export default function HeavyLatexRenderer({
         if (p.type === "block") {
           return <BlockMath key={idx} math={p.value} />;
         }
-        return <React.Fragment key={idx}>{renderInline(p.value)}</React.Fragment>;
+        return <Fragment key={idx}>{renderInline(p.value)}</Fragment>;
       })}
     </span>
   );
 }
+

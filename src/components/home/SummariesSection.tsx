@@ -3,6 +3,7 @@
 import { FileText, BookOpen, Calendar, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { SummaryWithRatings } from "@/types/database";
+import { useLocale } from "next-intl";
 
 interface SummariesSectionProps {
   loading: boolean;
@@ -43,8 +44,9 @@ export function SummariesSection({
   isAdmin,
   onEditSummary,
 }: SummariesSectionProps) {
+  const locale = useLocale();
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="auto">
       <div className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
           {tHome("best")}
@@ -53,8 +55,8 @@ export function SummariesSection({
           onClick={() => onNavigate("subjects")}
           className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
         >
-          {tHome("viewSubjects")}
-          <span className="text-lg">←</span>
+          {tHome("goToSubjects")}
+          <span className={`text-lg transition-transform ${locale === 'ar' ? 'rotate-180' : ''}`}>←</span>
         </button>
       </div>
       {loading || subjectsLoading ? (
@@ -78,7 +80,7 @@ export function SummariesSection({
         <div className="modern-card p-12 text-center">
           <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {tHome("goToSubjects")}
+            {tHome("goToSubjectsDescription")}
           </p>
         </div>
       ) : (

@@ -1,4 +1,5 @@
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+
 import {
   AcademicLevelOption,
   DepartmentOption,
@@ -15,7 +16,7 @@ type SummaryFormData = {
 
 interface SummaryFormFieldsProps {
   formData: SummaryFormData;
-  setFormData: React.Dispatch<React.SetStateAction<SummaryFormData>>;
+  setFormData: Dispatch<SetStateAction<SummaryFormData>>;
   levels: AcademicLevelOption[];
   availableDepartments: DepartmentOption[];
   subjects: Subject[];

@@ -1,5 +1,5 @@
+import { type FC, type ChangeEvent, useState, useEffect } from "react";
 import { Loader2, Save, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/Button";
 import { Textarea } from "./ui/Textarea";
@@ -20,7 +20,7 @@ interface AddCourseModalProps {
   onSave: () => void;
 }
 
-export const AddCourseModal: React.FC<AddCourseModalProps> = ({
+export const AddCourseModal: FC<AddCourseModalProps> = ({
   showAddCourse,
   editingCourse,
   onClose,
@@ -116,7 +116,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
                 name="title"
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 placeholder="أدخل عنوان الكورس"
                 required
@@ -134,7 +134,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
                 id="course-description"
                 name="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 className="w-full"
                 rows={4}
                 placeholder="أدخل وصف مفصل للكورس"
@@ -154,7 +154,7 @@ export const AddCourseModal: React.FC<AddCourseModalProps> = ({
                 name="price"
                 type="number"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 placeholder="اتركه فارغاً للكورس المجاني"
                 min="0"

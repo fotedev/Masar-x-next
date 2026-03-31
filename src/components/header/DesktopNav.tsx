@@ -19,8 +19,8 @@ export function DesktopNav({
   currentPage,
 }: DesktopNavProps) {
   return (
-    <div className="hidden lg:flex items-center justify-center flex-1 px-6">
-      <nav className="flex items-center gap-8">
+    <div className="hidden lg:flex items-center justify-center flex-1 px-3">
+      <nav className="flex items-center gap-x-6">
         {primaryNavItems.map((item) => {
           const active = item.isActive();
           return (

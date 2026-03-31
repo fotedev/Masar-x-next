@@ -1,5 +1,6 @@
-import { useTranslations } from "next-intl";
-import React from "react";
+import { type Dispatch, type SetStateAction } from "react";
+import { useLocale, useTranslations } from "next-intl";
+
 import { QuizMetaFields } from "./quiz-form/QuizMetaFields";
 import { QuizQuestionsSection } from "./quiz-form/QuizQuestionsSection";
 import type {
@@ -14,7 +15,7 @@ import type {
 interface QuizFormModalProps {
   editingQuiz: { id: string } | null;
   formData: QuizFormData;
-  setFormData: React.Dispatch<React.SetStateAction<QuizFormData>>;
+  setFormData: Dispatch<SetStateAction<QuizFormData>>;
   academicLevels: AcademicLevelOption[];
   getDepartmentsForLevelName: (level: string) => DepartmentOption[];
   filteredSubjectsForForm: SubjectOption[];
@@ -54,10 +55,11 @@ export function QuizFormModal({
 }: QuizFormModalProps) {
   const t = useTranslations("quizzes");
   const commonT = useTranslations("common");
+  const locale = useLocale();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
-      <div className="space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="space-y-6" dir="auto">
         <QuizMetaFields
           editingQuiz={editingQuiz}
           formData={formData}

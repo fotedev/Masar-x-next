@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -11,11 +11,14 @@ import { useNotifications as useBrowserNotifications } from "@/components/Notifi
 import { useSubjects } from "@/hooks/useSubjects";
 import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
+import { getLogoPath } from "@/components/DynamicLogo";
+import { useLocale } from "next-intl";
 
 function EditSummaryContent() {
   const t = useTranslations("editSummary");
   const commonT = useTranslations("common");
   const onboardingT = useTranslations("onboarding");
+  const locale = useLocale();
   const params = useParams();
   const searchParams = useSearchParams();
   const summaryId =
@@ -116,7 +119,7 @@ function EditSummaryContent() {
     fetchSummary();
   }, [summaryId, user, isAdmin, t]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -156,12 +159,12 @@ function EditSummaryContent() {
 
       sendNotification(t("updateSuccessTitle"), {
         body: t("updateSuccessDesc", { title: formData.title }),
-        icon: "/logo.png",
+        icon: getLogoPath(locale),
         tag: "summary-updated",
       });
 
       setTimeout(() => {
-        router.push(`/summaries/${summaryId}`);
+        router.push(`/${locale}/summaries/${summaryId}`);
       }, 2000);
     } catch {
       setError(t("updateError"));
@@ -203,7 +206,7 @@ function EditSummaryContent() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => router.push(`/summaries/${summaryId}`)}
+            onClick={() => router.push(`/${locale}/summaries/${summaryId}`)}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
           >
             <ArrowRight className="w-6 h-6 text-gray-600 dark:text-gray-400" />

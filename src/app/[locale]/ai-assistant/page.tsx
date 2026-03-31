@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -93,8 +93,8 @@ export default function AiAssistantPage() {
     null,
   );
 
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null!);
+  const messagesEndRef = useRef<HTMLDivElement>(null!);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -114,7 +114,7 @@ export default function AiAssistantPage() {
   }, [messages, isLoading]);
 
   const [inputMessage, setInputMessage] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null!);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;

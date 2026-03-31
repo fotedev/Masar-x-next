@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Search, Plus } from "lucide-react";
 
 interface SubjectFiltersProps {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle, LogIn, Settings } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
@@ -16,8 +16,8 @@ interface ChatMessage {
 interface ChatContainerProps {
   messages: ChatMessage[];
   isLoading: boolean;
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  messagesContainerRef: RefObject<HTMLDivElement>;
+  messagesEndRef: RefObject<HTMLDivElement>;
   t: (key: string) => string;
   isInitialState?: boolean;
   mode?: AiAssistantMode;

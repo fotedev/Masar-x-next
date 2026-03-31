@@ -12,9 +12,11 @@ function detectFromHeader(acceptLanguage: string | null): "ar" | "en" | null {
   return null;
 }
 
-export default function Page() {
-  const cookieLocale = cookies().get("NEXT_LOCALE")?.value;
-  const acceptLanguage = headers().get("accept-language");
+export default async function Page() {
+  const cookieStore = await cookies();
+  const headersList = await headers();
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
+  const acceptLanguage = headersList.get("accept-language");
   const detected = detectFromHeader(acceptLanguage);
   const locale =
     (cookieLocale === "ar" || cookieLocale === "en" ? cookieLocale : null) ??

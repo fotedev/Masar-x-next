@@ -1,13 +1,18 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { analytics, SystemLog } from '../lib/analytics';
 
 export const useAnalytics = () => {
   const pathname = usePathname();
+  const lastTrackedPath = useRef<string | null>(null);
 
   // Track page views automatically when location changes
   useEffect(() => {
+    // Prevent duplicate tracking for the same pathname in the same mount cycle
+    if (lastTrackedPath.current === pathname) return;
+    
     analytics.trackPageView();
+    lastTrackedPath.current = pathname;
   }, [pathname]);
 
   const trackEvent = useCallback((eventName: string, metadata?: Record<string, unknown>) => {

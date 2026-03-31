@@ -1,14 +1,15 @@
+import { type ReactNode } from "react";
 "use client";
 
-import React from "react";
+
 import useTRWMembership from "@/hooks/trw/useTRWMembership";
 import { Loader2, Lock } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface TRWAccessGateProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 export function TRWAccessGate({ children, fallback }: TRWAccessGateProps) {

@@ -1,4 +1,4 @@
-import React from "react";
+import { type FC } from "react";
 import { GraduationCap, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "./ui/Button";
@@ -11,7 +11,7 @@ interface CoursesTabProps {
   onEditCourse?: (course: CourseWithInstructor) => void;
 }
 
-export const CoursesTab: React.FC<CoursesTabProps> = ({
+export const CoursesTab: FC<CoursesTabProps> = ({
   onCreateCourse,
   onEditCourse,
 }) => {

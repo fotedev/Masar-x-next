@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, type FC } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +24,7 @@ interface AnalyticsSummary {
   }>;
 }
 
-export const AdminAnalyticsPage: React.FC<AdminAnalyticsPageProps> = ({
+export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
   onNavigate,
 }) => {
   const locale = useLocale();

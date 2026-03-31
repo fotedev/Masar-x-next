@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import type { Quiz } from "@/types/database";
 import { QuizGridItem } from "@/components/quizzes/QuizGridItem";
 

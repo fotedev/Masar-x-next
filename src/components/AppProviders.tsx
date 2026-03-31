@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 "use client";
 
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -8,7 +9,7 @@ import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/QueryProvider";
 
 type Props = {
-  children: React.ReactNode;
+  children: ReactNode;
   dir: "rtl" | "ltr";
 };
 

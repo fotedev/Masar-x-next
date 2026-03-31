@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { memo, useState, useRef, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useNotifications } from "../hooks/useNotifications";
@@ -11,7 +11,7 @@ import {
 import type { Notification } from "../types/database";
 import { logger } from "@/lib/logger";
 
-export const NotificationDropdown = React.memo(function NotificationDropdown() {
+export const NotificationDropdown = memo(function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

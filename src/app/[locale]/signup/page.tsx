@@ -1,9 +1,10 @@
+import { type FormEvent } from "react";
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useRouter } from "@/navigation";
-import Image from "next/image";
+import { DynamicLogo } from "@/components/DynamicLogo";
 import { AuthError, useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "next-intl";
 
@@ -63,7 +64,7 @@ export default function SignUpPage() {
     }
   }, [lockoutTime]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -150,9 +151,7 @@ export default function SignUpPage() {
       <div className="modern-card p-8 sm:p-10">
         <div className="text-center mb-10">
           <div className="bg-brand-blue/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-blue/5">
-            <Image
-              src="/logo.png"
-              alt="Masar X Logo"
+            <DynamicLogo
               width={56}
               height={56}
               className="object-contain w-14 h-14"

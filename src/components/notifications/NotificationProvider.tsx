@@ -1,12 +1,11 @@
-"use client";
-
 import {
   useState,
   useEffect,
   createContext,
   useContext,
-  ReactNode,
+  type ReactNode,
 } from "react";
+import { getLogoPath } from "../DynamicLogo";
 
 interface NotificationContextType {
   permission: NotificationPermission;
@@ -105,8 +104,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
     const defaultOptions: NotificationOptions = {
       body: "إشعار جديد من Masar X",
-      icon: "/logo.png",
-      badge: "/logo.png",
+      icon: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
+      badge: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
       tag: "masarx-notification",
       requireInteraction: false,
       ...options,
