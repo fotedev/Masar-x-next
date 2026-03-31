@@ -49,7 +49,7 @@ export function AuthProvider({
   children,
 }: {
   children: ReactNode;
-}): JSX.Element {
+}) {
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
     try {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import * as Switch from "@radix-ui/react-switch";
 import { useEffect, useState, useMemo } from "react";
@@ -23,11 +24,14 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
+  const params = useParams();
+  const locale = (params?.locale as string) || "ar";
   const t = useTranslations("profile");
   const commonT = useTranslations("common");
   const authT = useTranslations("auth");
   const academicT = useTranslations("onboarding"); // Reusing onboarding for level/department translations
   const router = useRouter();
+  const dir = locale === "ar" ? "rtl" : "ltr";
   const {
     user,
     displayName,
@@ -269,8 +273,8 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8 text-right"
-      dir="rtl"
+      className={`max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}
+      dir={dir}
     >
       <div className="modern-card overflow-hidden sm:rounded-3xl border-0 sm:border">
         {/* Header Section */}
@@ -278,8 +282,8 @@ export default function ProfilePage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-sky/10 rounded-full -ml-24 -mb-24 blur-2xl" />
 
-          <div className="relative z-10 flex flex-col sm:flex-row items-center text-center sm:text-right gap-6 sm:gap-8">
-            <div className="relative group">
+          <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+            <div className="relative group shrink-0">
               <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-white/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
               <AdminProfileImage
                 size="xl"
@@ -287,8 +291,8 @@ export default function ProfilePage() {
                 editable={true}
               />
             </div>
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-sm">
+            <div className="flex flex-col gap-2 min-w-0 flex-1">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-sm truncate">
                 {displayName}
               </h1>
               <div className="flex items-center justify-center sm:justify-start gap-3">
@@ -353,7 +357,8 @@ export default function ProfilePage() {
                             id="profile-display-name"
                             value={newDisplayName}
                             onChange={(e) => setNewDisplayName(e.target.value)}
-                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg text-right"
+                            dir="auto"
+                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg"
                             maxLength={50}
                             autoFocus
                           />
@@ -470,7 +475,7 @@ export default function ProfilePage() {
                     <select
                       value={level}
                       onChange={(e) => setLevel(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none disabled:opacity-50"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
                       disabled={optionsLoading}
                     >
                       {optionsLoading ? (
@@ -491,7 +496,7 @@ export default function ProfilePage() {
                     <select
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none disabled:opacity-50"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
                       disabled={optionsLoading}
                     >
                       <option value="">
@@ -524,7 +529,7 @@ export default function ProfilePage() {
                     <select
                       value={semester}
                       onChange={(e) => setSemester(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-right font-bold outline-none"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none"
                     >
                       <option value={1}>{t("semester1")}</option>
                       <option value={2}>{t("semester2")}</option>
@@ -594,7 +599,7 @@ export default function ProfilePage() {
                         checked={showExtraAssets}
                         onCheckedChange={handleToggleExtraAssets}
                         disabled={isSaving || isCooldownActive}
-                        dir="rtl"
+                        dir={dir}
                         className={`
                           group relative h-8 w-14 rounded-full outline-none
                           transition-all duration-300 ease-in-out
@@ -665,7 +670,7 @@ export default function ProfilePage() {
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.created_at
                     ? new Date(user.created_at).toLocaleDateString(
-                        t("locale"),
+                        locale === "ar" ? "ar-EG" : "en-US",
                         {
                           year: "numeric",
                           month: "long",
@@ -682,7 +687,7 @@ export default function ProfilePage() {
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.last_sign_in_at
                     ? new Date(user.last_sign_in_at).toLocaleDateString(
-                        t("locale"),
+                        locale === "ar" ? "ar-EG" : "en-US",
                         {
                           year: "numeric",
                           month: "long",

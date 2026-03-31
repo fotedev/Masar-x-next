@@ -1,4 +1,4 @@
-import React from "react";
+
 import { MessageSquare } from "lucide-react";
 import { useReviews } from "../hooks/useReviews";
 import { useAuth } from "../contexts/AuthContext";

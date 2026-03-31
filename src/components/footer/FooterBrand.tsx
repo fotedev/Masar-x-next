@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { DynamicLogo } from "../DynamicLogo";
 
 type TranslationValues = Record<string, string | number | Date>;
 type TranslationFn = (key: string, values?: TranslationValues) => string;
@@ -9,11 +9,9 @@ interface FooterBrandProps {
 
 export function FooterBrand({ t }: FooterBrandProps) {
   return (
-    <div className="space-y-4 rtl:text-right">
-      <div className="flex items-center gap-3 rtl:flex-row-reverse">
-        <Image
-          src="/logo.png"
-          alt="Masar X Logo"
+    <div className="space-y-4 text-start">
+      <div className="flex items-center gap-x-3">
+        <DynamicLogo
           width={40}
           height={40}
           className="object-contain w-10 h-10"
@@ -23,7 +21,7 @@ export function FooterBrand({ t }: FooterBrandProps) {
         </span>
       </div>
       <p 
-        className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs rtl:mr-0 rtl:ml-auto"
+        className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-xs"
         dir="auto"
       >
         {t("brandDescription")}

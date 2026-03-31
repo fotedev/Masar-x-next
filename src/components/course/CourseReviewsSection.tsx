@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
 import { Star } from "lucide-react";
 import type { Review, EnrollmentStatus } from "./types";

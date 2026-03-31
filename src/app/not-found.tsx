@@ -1,40 +1,52 @@
 import Link from "next/link";
-import { headers } from "next/headers";
-import ar from "@/messages/ar.json";
-import en from "@/messages/en.json";
+import { headers, cookies } from "next/headers";
+import { getLocale } from "next-intl/server";
+
+import arMessages from "@/messages/ar/notFound.json";
+import enMessages from "@/messages/en/notFound.json";
+
+type Locale = "en" | "ar";
+
+async function getDetectedLocale(): Promise<Locale> {
+  const headersList = await headers();
+  const requestLocale = headersList.get("x-next-intl-locale");
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
+  const acceptLanguage = headersList.get("accept-language")?.toLowerCase() || "";
+
+  if (requestLocale === "en" || requestLocale === "ar") return requestLocale as Locale;
+  if (cookieLocale === "en" || cookieLocale === "ar") return cookieLocale as Locale;
+  
+  try {
+    const intlLocale = await getLocale();
+    if (intlLocale === "en" || intlLocale === "ar") return intlLocale as Locale;
+  } catch {
+    // Fallback to headers
+  }
+
+  return acceptLanguage.includes("en") ? "en" : "ar";
+}
 
 export async function generateMetadata() {
-  const headersList = headers();
-  const acceptLanguage =
-    headersList.get("accept-language")?.toLowerCase() || "";
-  const requestLocale = headersList.get("x-next-intl-locale");
-
-  const locale =
-    requestLocale === "en" || acceptLanguage.includes("en") ? "en" : "ar";
-
-  const messages = locale === "en" ? en : ar;
-  const t = messages.notFound;
-
+  const locale = await getDetectedLocale();
+  const messages = locale === "ar" ? arMessages : enMessages;
   return {
-    title: t.pageTitle,
+    title: messages.pageTitle,
   };
 }
 
-export default function NotFound() {
-  const headersList = headers();
-  const acceptLanguage =
-    headersList.get("accept-language")?.toLowerCase() || "";
-  const requestLocale = headersList.get("x-next-intl-locale");
-
-  const locale =
-    requestLocale === "en" || acceptLanguage.includes("en") ? "en" : "ar";
-
-  const messages = locale === "en" ? en : ar;
-  const t = messages.notFound;
+export default async function NotFound() {
+  const locale = await getDetectedLocale();
+  const messages = locale === "ar" ? arMessages : enMessages;
+  const t = messages;
+  const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50 dark:bg-slate-900 font-sans">
-      <div className="text-center">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 bg-gray-50 dark:bg-slate-900 font-sans"
+      dir={dir}
+    >
+      <div className="text-center relative">
         <h1 className="text-9xl font-black text-blue-600/20 dark:text-blue-500/10 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none">
           404
         </h1>
@@ -42,7 +54,10 @@ export default function NotFound() {
           <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-4">
             {t.title}
           </h2>
-          <p className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+          <p 
+            className="text-xl font-bold text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto leading-relaxed"
+            style={{ unicodeBidi: "plaintext" }}
+          >
             {t.message}
           </p>
           <Link

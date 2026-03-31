@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
 import { Video, Plus, Edit, Trash2, Play } from "lucide-react";
 import type { CourseVideo } from "./types";

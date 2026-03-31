@@ -3,6 +3,7 @@
 import { FileText, BookOpen, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { Quiz } from "@/types/database";
+import { useLocale } from "next-intl";
 
 interface QuizzesSectionProps {
   loading: boolean;
@@ -35,8 +36,9 @@ export function QuizzesSection({
   tHome,
   onNavigate,
 }: QuizzesSectionProps) {
+  const locale = useLocale();
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="auto">
       <div className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
           {tHome("exams")}
@@ -45,8 +47,8 @@ export function QuizzesSection({
           onClick={() => onNavigate("quizzes")}
           className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
         >
-          {tHome("viewExams")}
-          <span className="text-lg">←</span>
+          {tHome("goToExams")}
+          <span className={`text-lg transition-transform ${locale === 'ar' ? 'rotate-180' : ''}`}>←</span>
         </button>
       </div>
 
@@ -69,7 +71,7 @@ export function QuizzesSection({
         <div className="modern-card p-12 text-center">
           <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {tHome("goToExams")}
+            {tHome("goToExamsDescription")}
           </p>
         </div>
       ) : (

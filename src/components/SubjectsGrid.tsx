@@ -68,7 +68,7 @@ export function SubjectsGrid({
             },
           },
         }}
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        className="flex flex-wrap justify-center gap-4 sm:gap-6"
       >
         {filteredSubjects.map((subject) => {
           const IconComponent = SUBJECT_ICONS[subject.name] || BookOpen;
@@ -86,13 +86,13 @@ export function SubjectsGrid({
               whileHover={{ scale: 1.05, translateY: -4 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onSubjectClick?.(subject.name)}
-              className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
+              className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px]"
             >
-              <div className="text-center">
-                <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-blue/20 group-hover:scale-110 transition-all duration-300">
+              <div className="text-center flex flex-col items-center justify-center h-full w-full">
+                <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-blue/20 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2">
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2 text-center mt-auto">
                   {displayName}
                 </h3>
               </div>

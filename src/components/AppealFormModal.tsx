@@ -1,3 +1,4 @@
+import { type FormEvent } from "react";
 import { useState } from "react";
 import { Flag, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -40,7 +41,7 @@ export function AppealFormModal({
     { value: "other", label: t("reasons.other") },
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!reason.trim() || !user) {

@@ -3,14 +3,15 @@
 import { useRouter } from "@/i18n/routing";
 import { QuizPlayer } from "@/components/QuizPlayer";
 import { PreloadKatex } from "@/components/quiz/PreloadKatex";
+import { use } from "react";
 
 export default function QuizPlayPage({
   params,
 }: {
-  params: { locale: string; quizId: string };
+  params: Promise<{ locale: string; quizId: string }>;
 }) {
   const router = useRouter();
-  const { quizId } = params;
+  const { quizId } = use(params);
 
   return (
     <>

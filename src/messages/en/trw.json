@@ -1,0 +1,13 @@
+{
+  "title": "Redeem access code",
+  "description": "Enter your access code below to unlock premium content.",
+  "placeholder": "Enter code (e.g., TRW-XXXX-XXXX)",
+  "submitting": "Redeeming...",
+  "submit": "Redeem access",
+  "success": "Subscription activated successfully on plan {plan}.",
+  "failed": "Failed to redeem code.",
+  "invalidOrExpired": "The code is invalid, expired, or has exceeded the allowed number of uses.",
+  "alreadyRedeemed": "You have already redeemed this code.",
+  "notAuthenticated": "You must log in first.",
+  "connectionError": "A connection error occurred."
+}

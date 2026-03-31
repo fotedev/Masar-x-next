@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { type FormEvent } from "react";
+import { useState } from "react";
 import { Send } from "lucide-react";
 import { StarRatingInput } from "./StarRating";
 
@@ -13,7 +14,7 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
   const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user || !newReview.trim() || submitting) return;
 

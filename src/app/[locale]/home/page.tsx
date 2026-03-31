@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 
 type Props = {
-  params: { locale: string };
+  params: Promise<{
+    locale: string;
+  }>;
 };
 
-export default function HomeAliasPage({ params }: Props) {
-  const locale = params.locale;
+export default async function HomeAliasPage({ params }: Props) {
+  const { locale } = await params;
 
   if (locale === "en") {
     redirect("/en");

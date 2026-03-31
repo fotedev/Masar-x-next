@@ -1,4 +1,4 @@
-import React from "react";
+
 import {
   Edit,
   Trash2,
@@ -30,10 +30,10 @@ export function SubjectCard({
   const IconComponent = SUBJECT_ICONS[subject.name] || BookOpenIcon;
 
   return (
-    <div className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-500/50 hover:shadow-xl transition-all duration-300">
+    <div className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-500/50 hover:shadow-xl transition-all duration-300 text-start flex flex-col h-full">
       <div className="flex justify-between items-start mb-4">
         <div
-          className={`p-3 rounded-2xl ${
+          className={`p-3 rounded-2xl flex items-center justify-center transition-all duration-300 ${
             subject.status === "approved"
               ? "bg-green-100 text-green-600 dark:bg-green-900/30"
               : subject.status === "rejected"
@@ -59,10 +59,10 @@ export function SubjectCard({
         </div>
       </div>
 
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 text-start line-clamp-2 min-h-[3.5rem] flex items-center">
         {subject.name}
       </h3>
-      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="flex items-center gap-x-2 text-sm text-gray-500 dark:text-gray-400 mb-4 text-start">
         <GraduationCap className="w-4 h-4" />
         {(() => {
           const profName = subject.professor || "";
@@ -88,12 +88,12 @@ export function SubjectCard({
         {t("manageLectures")}
       </button>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-4 text-start mt-auto">
         {subject.description || t("noDescription")}
       </p>
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
-        <div className="flex gap-2">
+        <div className="flex gap-x-2">
           <span className="text-xs font-bold px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
             {t("levelLabel", {
               level: subject.level ?? 0,

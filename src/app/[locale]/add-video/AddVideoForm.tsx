@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Send, CheckCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
@@ -11,6 +11,7 @@ import { LectureSelect } from "@/components/lectures/LectureSelect";
 
 export function AddVideoForm() {
   const t = useTranslations("addVideo");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAdmin, isAdminLoading } = useAuth();
@@ -20,7 +21,7 @@ export function AddVideoForm() {
     const subject = searchParams.get("subject") || "";
     const lecture = searchParams.get("lecture") || "";
     if (subject) {
-      const url = `/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
+      const url = `/${locale}/subjects/${encodeURIComponent(subject)}${lecture ? `?lecture=${encodeURIComponent(lecture)}` : ""}`;
       router.push(url);
       return;
     }
@@ -59,7 +60,7 @@ export function AddVideoForm() {
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const currentLectureKey = (searchParams.get("lecture") || "").trim();

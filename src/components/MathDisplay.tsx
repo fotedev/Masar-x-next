@@ -1,11 +1,11 @@
-import React from 'react';
+import { type FC } from "react";
 import { LatexRenderer } from './LatexRenderer';
 
 interface MathDisplayProps {
   latex: string;
 }
 
-const MathDisplay: React.FC<MathDisplayProps> = ({ latex }) => {
+const MathDisplay: FC<MathDisplayProps> = ({ latex }) => {
   return <LatexRenderer text={latex} />;
 };
 

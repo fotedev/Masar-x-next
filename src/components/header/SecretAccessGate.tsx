@@ -1,4 +1,4 @@
-import React from "react";
+import { type FC, Fragment } from "react";
 import { Lock } from "lucide-react";
 
 interface SecretAccessGateProps {
@@ -10,7 +10,7 @@ interface SecretAccessGateProps {
   setShowAccessInput: (val: boolean) => void;
 }
 
-export const SecretAccessGate: React.FC<SecretAccessGateProps> = ({
+export const SecretAccessGate: FC<SecretAccessGateProps> = ({
   isMatrixActive,
   showAccessInput,
   accessKey,
@@ -21,7 +21,7 @@ export const SecretAccessGate: React.FC<SecretAccessGateProps> = ({
   if (!isMatrixActive && !showAccessInput) return null;
 
   return (
-    <React.Fragment>
+    <Fragment>
       {/* Matrix Entry Animation Overlay */}
       {isMatrixActive && (
         <div
@@ -114,6 +114,6 @@ export const SecretAccessGate: React.FC<SecretAccessGateProps> = ({
           </button>
         </div>
       )}
-    </React.Fragment>
+    </Fragment>
   );
 };

@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 
 type Props = {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 };
 
-export default function AdminCompatibilityRedirectPage({ params }: Props) {
-  redirect(`/${params.locale}/admin-dashboard`);
+export default async function AdminCompatibilityRedirectPage({ params }: Props) {
+  const { locale } = await params;
+  redirect(`/${locale}/admin-dashboard`);
 }

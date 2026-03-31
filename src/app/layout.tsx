@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { Inter, Almarai } from "next/font/google";
 import "../index.css";
 import { cookies, headers } from "next/headers";
@@ -19,9 +20,10 @@ type Locale = "ar" | "en";
 export async function generateMetadata({
   params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const locale = params.locale as Locale;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
   const t = await getTranslations({ locale, namespace: "metadata" });
 
   return {
@@ -46,10 +48,12 @@ export async function generateMetadata({
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
-  const headerLocale = headers().get("x-next-intl-locale");
-  const cookieLocale = cookies().get("NEXT_LOCALE")?.value;
+  const headersList = await headers();
+  const cookieStore = await cookies();
+  const headerLocale = headersList.get("x-next-intl-locale");
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value;
   const normalizeLocale = (value: string | null | undefined): Locale | null =>
     value === "en" || value === "ar" ? value : null;
 
