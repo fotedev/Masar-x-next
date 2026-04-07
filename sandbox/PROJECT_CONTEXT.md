@@ -7,25 +7,26 @@ Masar X هو منصة تعليمية شاملة مبنية بـ Next.js (React/T
 - **نظام TRW (The Road Within)**: نظام دورات مدفوع مع إدارة اشتراكات وخطط وصول (Free/Full/Money).
 - **منصة التلخيصات**: نظام crowdsourced لمشاركة وتنظيم التلخيصات الأكاديمية.
 - **الدورات التفاعلية**: إدارة دورات كاملة مع التسجيل وتتبع التقدم ونظام مراجعات متطور.
-- **مساعد AI**: مدعوم بـ Puter.js لتجاوز حدود الاستخدام ودعم RAG.
+- **مساعد AI**: مدعوم بـ Puter.js و **GPT-5 nano** مع دعم Markdown و LaTeX و RAG.
 - **الاختبارات**: نظام اختبارات تفاعلي يدعم المسودات، التوقيت، والتحقق من الصلاحيات.
 - **نظام الأدوار المتعدد**: أدوار Student/Instructor/Admin مع إدارة صلاحيات شاملة (RLS).
 - **نظام التهيئة الأكاديمية (Academic Onboarding)**: إجبار الطلاب على اختيار تخصصهم لمرة واحدة مع caching متقدم ومنع Flicker.
-- **التدويل (Localization)**: دعم كامل للغتين العربية والإنجليزية (ar/en) باستخدام `next-intl`.
+- **التدويل (Localization)**: دعم كامل للغتين العربية والإنجليزية (ar/en) باستخدام `next-intl` مع نظام ملفات JSON في `src/messages/`.
 
 ---
 
 ## هيكل المشروع (Architecture)
 
 ### Frontend Stack
-- **Next.js 14.2.x** مع App Router للتطبيقات الحديثة
-- **React 18** مع TypeScript صارم
+- **Next.js 16.2.x** مع App Router ودعم i18n
+- **React 19** مع TypeScript صارم
 - **Tailwind CSS** مع PostCSS للتصميم
 - **Context API** لإدارة الحالة العامة
 - **Supabase SSR (@supabase/ssr)** لدعم تكامل Supabase مع App Router (cookies/session)
 - **TanStack Query (React Query)** لإدارة جلب البيانات والتخزين المؤقت (Caching)
+- **Drizzle ORM** للتعامل مع قاعدة البيانات بأنواع صارمة
 - **Framer Motion** للتحريكات وتجربة المستخدم السلسة
-- **Next-Intl** لإدارة الترجمة والتدويل (Localization)
+- **Next-Intl** لإدارة الترجمة والتدويل (Localization) عبر `src/app/[locale]`
 
 ### Backend Stack
 - **Supabase** (PostgreSQL + Auth + Storage + Edge Functions)
@@ -47,11 +48,15 @@ Masar X هو منصة تعليمية شاملة مبنية بـ Next.js (React/T
 
 ### `/src` - الكود الأساسي
 
-#### `/app` - صفحات Next.js App Router
-- **layout.tsx**: التخطيط الجذر للتطبيق
-- **page.tsx**: الصفحة الرئيسية
+#### `/app/[locale]` - صفحات Next.js App Router (i18n)
+- **layout.tsx**: التخطيط الجذر للتطبيق مع دعم اللغة
+- **page.tsx**: الصفحة الرئيسية لكل لغة
 - **loading.tsx** & **error.tsx**: معالجة الحالات الخاصة
-- **ملاحظة**: ملف `middleware.ts` موجود في جذر المشروع (وليس داخل `/src/app`) لمعالجة المصادقة/التحكم بالطلبات.
+- **ملاحظة**: ملف `middleware.ts` موجود في `src/lib/supabase/middleware.ts` لمعالجة المصادقة/التحكم بالطلبات.
+
+#### `/messages` - ملفات الترجمة (JSON)
+- `ar/`: ملفات الترجمة العربية
+- `en/`: ملفات الترجمة الإنجليزية
 
 #### `/contexts` - إدارة الحالة العامة
 - `AuthContext.tsx`: نظام المصادقة المتقدم
@@ -374,8 +379,16 @@ npx supabase db remote commit  # للإنتاج
 
 ---
 
-*آخر تحديث: 12 مارس 2026*
+*آخر تحديث: 04 أبريل 2026*
 *المطور: فريق تطوير Masar X*
+
+## Recent edits (April 2026)
+- **Next.js 16 Upgrade**: الترقية إلى Next.js 16.2.1 و React 19.2.4 لتحسين الأداء واستخدام الميزات الحديثة.
+- **i18n Restructuring**: إعادة هيكلة نظام التدويل ليعتمد على المسارات المبنية على اللغة (`src/app/[locale]`) وتوحيد ملفات الترجمة في `src/messages/`.
+- **AI Model Upgrade**: تحديث المساعد الذكي لاستخدام **GPT-5 nano** مع تحسين عرض الرسائل (Markdown/LaTeX) ودعم النسخ والعرض الخام.
+- **Drizzle ORM Integration**: إضافة Drizzle ORM للتعامل مع قاعدة البيانات بشكل أكثر أماناً وكفاءة.
+- **Middleware Relocation**: نقل `middleware.ts` إلى `src/lib/supabase/middleware.ts` لتحسين تنظيم الكود.
+- **Bug Investigation**: تدقيق شامل لنظام المحاضرات وتحديد 13 خطأ مع خطط الإصلاح.
 
 ## Recent edits (March 2026)
 - **Bug Investigation**: Comprehensive audit of lecture system identifying 13 bugs (3 critical, 6 medium, 4 minor) with detailed reports (BUG_REPORT_LECTURES.md, FIXES_PLAN.md).
@@ -390,8 +403,6 @@ npx supabase db remote commit  # للإنتاج
 - **Hydration Strategy**: تطبيق فحص `isMounted` في جميع نماذج الإدخال (Forms) لضمان استقرار الواجهة.
 - **Form Refactoring**: إعادة هيكلة `AddFileForm` و `AddVideoForm` لتحسين الأداء والتحقق من البيانات.
 - **UI Optimization**: تحسين استجابة القوائم في `Header` و `MobileNav` وتحسين أداء صفحة الكورسات.
-- **Bug Investigation**: تدقيق شامل لنظام المحاضرات وتحديد 13 خطأ مع خطط الإصلاح.
-
 ## Recent edits (21 Feb 2026)
 - Frontend pages and components updated across `src/app/`
 - New/backup Supabase migration SQL files added

@@ -30,10 +30,10 @@ export function SubjectCard({
   const IconComponent = SUBJECT_ICONS[subject.name] || BookOpenIcon;
 
   return (
-    <div className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-500/50 hover:shadow-xl transition-all duration-300 text-start flex flex-col h-full">
+    <div className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:border-blue-500/50 hover:shadow-xl transition-colors transition-shadow duration-300 text-start flex flex-col h-full">
       <div className="flex justify-between items-start mb-4">
         <div
-          className={`p-3 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+          className={`p-3 rounded-2xl flex items-center justify-center transition-colors duration-300 ${
             subject.status === "approved"
               ? "bg-green-100 text-green-600 dark:bg-green-900/30"
               : subject.status === "rejected"
@@ -47,12 +47,16 @@ export function SubjectCard({
           <button
             onClick={() => onEdit(subject)}
             className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
+            aria-label="تعديل"
+            type="button"
           >
             <Edit className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(subject.id)}
             className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
+            aria-label="حذف"
+            type="button"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -82,7 +86,8 @@ export function SubjectCard({
 
       <button
         onClick={() => onManageLectures(subject)}
-        className="w-full mb-4 flex items-center justify-center gap-2 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition-all text-sm border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
+        className="w-full mb-4 flex items-center justify-center gap-2 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition-colors text-sm border border-transparent hover:border-blue-200 dark:hover:border-blue-800"
+        type="button"
       >
         <BookOpenIcon className="w-4 h-4" />
         {t("manageLectures")}
@@ -110,15 +115,19 @@ export function SubjectCard({
           <div className="flex gap-2">
             <button
               onClick={() => onUpdateStatus(subject.id, "approved")}
-              className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-all"
+              className="p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors"
               title={t("approve")}
+              aria-label={t("approve")}
+              type="button"
             >
               <CheckCircle className="w-5 h-5" />
             </button>
             <button
               onClick={() => onUpdateStatus(subject.id, "rejected")}
-              className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-all"
+              className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
               title={t("reject")}
+              aria-label={t("reject")}
+              type="button"
             >
               <XCircle className="w-5 h-5" />
             </button>

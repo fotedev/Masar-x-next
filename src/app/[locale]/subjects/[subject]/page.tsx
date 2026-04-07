@@ -28,12 +28,14 @@ interface SubjectLecture {
 
 export default function SubjectPage() {
   const params = useParams();
+  const rawSubjectName = (params?.subject as string) || "";
+  const locale = (params?.locale as string) || "ar";
+  const lectureIdParam = params?.lectureId as string | undefined;
+
   const router = useRouter();
   const t = useTranslations("subjectPage");
   const { user, isAdmin } = useAuth();
-  const locale = params.locale as string;
   const isRTL = locale === "ar";
-  const lectureIdParam = params.lectureId as string | undefined;
 
   const {
     lectureFormData,
@@ -42,7 +44,6 @@ export default function SubjectPage() {
     setShowAddLectureForm,
   } = useSubjectModals();
 
-  const rawSubjectName = params.subject as string;
   const normalizedSubjectName = decodeURIComponent(rawSubjectName).replace(
     /-/g,
     " ",

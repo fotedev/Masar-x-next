@@ -1,6 +1,6 @@
-import { type FormEvent } from "react";
 "use client";
 
+import { type FormEvent } from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "../../../../contexts/AuthContext";

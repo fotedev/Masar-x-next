@@ -58,6 +58,8 @@ export function QuizQuestionEditor(props: {
               onClick={() => onDeleteQuestion(questionIndex)}
               className="text-red-600 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               title={t("deleteQuestion")}
+              aria-label={t("deleteQuestion")}
+              type="button"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -103,6 +105,7 @@ export function QuizQuestionEditor(props: {
                 src={question.imageUrl}
                 alt="Question"
                 fill
+                sizes="128px"
                 className="object-cover"
                 unoptimized
               />
@@ -111,6 +114,7 @@ export function QuizQuestionEditor(props: {
                 onClick={() => onUpdateQuestion(questionIndex, "imageUrl", "")}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors"
                 title={t("removeImage")}
+                aria-label={t("removeImage")}
               >
                 <X className="w-3 h-3" />
               </button>

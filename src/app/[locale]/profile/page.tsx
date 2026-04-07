@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import * as Switch from "@radix-ui/react-switch";
+import { Root as SwitchRoot, Thumb as SwitchThumb } from "@radix-ui/react-switch";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "@/i18n/routing";
 import {
@@ -595,7 +595,7 @@ export default function ProfilePage() {
                         </div>
                       )}
 
-                      <Switch.Root
+                      <SwitchRoot
                         checked={showExtraAssets}
                         onCheckedChange={handleToggleExtraAssets}
                         disabled={isSaving || isCooldownActive}
@@ -612,7 +612,7 @@ export default function ProfilePage() {
                           }
                         `}
                       >
-                        <Switch.Thumb
+                        <SwitchThumb
                           className={`
                             absolute top-1 h-6 w-6 rounded-full
                             transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
@@ -628,7 +628,7 @@ export default function ProfilePage() {
                             group-active:scale-75
                           `}
                         />
-                      </Switch.Root>
+                      </SwitchRoot>
                     </div>
                   </div>
                 </div>

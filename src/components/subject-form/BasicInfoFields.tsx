@@ -41,7 +41,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
               (prev) => ({ ...prev, name: e.target.value }) as TFormData,
             )
           }
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
           placeholder="مثال: رياضيات 2"
         />
       </div>
@@ -63,7 +63,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
               (prev) => ({ ...prev, professor: e.target.value }) as TFormData,
             )
           }
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
           placeholder="مثال: د. أحمد"
         />
       </div>

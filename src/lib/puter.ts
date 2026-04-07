@@ -42,7 +42,10 @@ const isPuterTransportError = (error: unknown) => {
     msg.includes('polling') ||
     msg.includes('transport') ||
     msg.includes('400') ||
-    msg.includes('bad request')
+    msg.includes('bad request') ||
+    msg.includes('closed before the connection') ||
+    msg.includes('websocket is closed') ||
+    msg.includes('failed to fetch')
   );
 };
 
@@ -60,7 +63,11 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
       try {
         console.debug('[Puter] Starting auth warmup...');
         const client = await loadRealPuterClient();
-        const signedIn = Boolean(client?.auth?.isSignedIn?.());
+        
+        // Ensure client is healthy before proceeding
+        if (!client?.auth) throw new Error('Puter auth sub-module not ready');
+        
+        const signedIn = Boolean(client.auth.isSignedIn?.());
         console.debug('[Puter] Auth warmup complete - signed in:', signedIn);
         try {
           if (signedIn) {
@@ -73,11 +80,12 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
         }
         return signedIn;
       } catch (error) {
+        puterWarmupPromise = null; // Reset on failure so we can retry
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.debug('[Puter] Auth warmup failed:', errorMsg);
         if (isPuterTransportError(error)) {
           console.debug('[Puter] Transport error detected - setting cooldown');
-          setUnavailableCooldown(45_000);
+          setUnavailableCooldown(30_000); // Reduced from 45s for better UX
         }
         try {
           localStorage.removeItem(PUTER_SIGNED_IN_KEY);
@@ -175,10 +183,29 @@ const isPuterReady = typeof window !== 'undefined';
 
 let puterDiagnosticsInitialized = false;
 
+const isPuterDebugEnabled = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('puterDebug') === '1') return true;
+  } catch {
+    // ignore
+  }
+  try {
+    return localStorage.getItem('puter_debug') === '1';
+  } catch {
+    return false;
+  }
+};
+
 export const initPuterDiagnostics = () => {
   if (puterDiagnosticsInitialized) return;
   if (typeof window === 'undefined') return;
   puterDiagnosticsInitialized = true;
+
+  if (isPuterDebugEnabled()) {
+    return;
+  }
 
   const errorPatterns = [/socket\.io/i, /engine\.io/i, /websocket/i, /polling/i, /transport/i];
 
@@ -188,11 +215,13 @@ export const initPuterDiagnostics = () => {
 
   console.error = function (...args: unknown[]) {
     const msg = String(args[0] || '').toLowerCase();
-    if (errorPatterns.some((p) => p.test(msg))) {
+    const stack = String(new Error().stack).toLowerCase();
+    
+    if (errorPatterns.some((p) => p.test(msg)) || errorPatterns.some((p) => p.test(stack))) {
       const now = Date.now();
       if (now >= errorSuppressUntil) {
         originalConsoleError.apply(console, args);
-        errorSuppressUntil = now + 10000;
+        errorSuppressUntil = now + 15000;
       }
       return;
     }
@@ -201,11 +230,13 @@ export const initPuterDiagnostics = () => {
 
   console.warn = function (...args: unknown[]) {
     const msg = String(args[0] || '').toLowerCase();
-    if (errorPatterns.some((p) => p.test(msg))) {
+    const stack = String(new Error().stack).toLowerCase();
+
+    if (errorPatterns.some((p) => p.test(msg)) || errorPatterns.some((p) => p.test(stack))) {
       const now = Date.now();
       if (now >= errorSuppressUntil) {
         originalConsoleWarn.apply(console, args);
-        errorSuppressUntil = now + 10000;
+        errorSuppressUntil = now + 15000;
       }
       return;
     }

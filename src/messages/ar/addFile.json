@@ -14,5 +14,8 @@
   "error": "حدث خطأ أثناء إضافة الملف",
   "selectFile": "يرجى اختيار ملف",
   "selectLectureFirst": "يرجى اختيار محاضرة أولاً",
-  "adminOnly": "هذه الصفحة متاحة للمشرفين فقط"
+  "adminOnly": "هذه الصفحة متاحة للمشرفين فقط",
+  "lectureNotFound": "المحاضرة \"{lectureKey}\" غير موجودة في المادة \"{subject}\"",
+  "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة",
+  "uploading": "جاري الرفع... ({progress}%)"
 }

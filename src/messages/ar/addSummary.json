@@ -45,5 +45,9 @@
   "submitError": "حدث خطأ أثناء إرسال الملخص. يرجى المحاولة مجدداً.",
   "close": "إغلاق",
   "pdfOnlyError": "يرجى اختيار ملف PDF فقط",
-  "invalidImagesError": "بعض الملفات المختارة ليست صور صحيحة (JPEG, PNG, GIF, WebP فقط)"
+  "invalidImagesError": "بعض الملفات المختارة ليست صور صحيحة (JPEG, PNG, GIF, WebP فقط)",
+  "aiOcrButton": "استخراج النص بالذكاء الاصطناعي",
+  "aiOcrProcessing": "جاري استخراج النص...",
+  "aiOcrSuccess": "تم استخراج النص بنجاح!",
+  "aiOcrError": "فشل استخراج النص من الملف. تأكد من أن الملف صالح."
 }

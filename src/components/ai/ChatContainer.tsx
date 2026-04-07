@@ -1,4 +1,4 @@
-import { useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle, LogIn, Settings } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
@@ -43,6 +43,7 @@ export function ChatContainer({
   onUiMessage,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const menuId = "chat-initial-mode-menu";
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -54,10 +55,23 @@ export function ChatContainer({
 
   const currentMode = modes.find((m) => m.id === mode) || modes[0];
 
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isDropdownOpen]);
+
   return (
     <div
       ref={messagesContainerRef}
-      className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth transition-all duration-500 ${
+      className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth transition-[background-color,border-color] duration-500 ${
         isInitialState 
           ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4" 
           : "scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800"
@@ -116,11 +130,14 @@ export function ChatContainer({
           >
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/40 rounded-2xl border-2 transition-all duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-md ${
+              className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/40 rounded-2xl border-2 transition-[colors,box-shadow,border-color] duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-md ${
                 isDropdownOpen 
                   ? "border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]" 
                   : "border-slate-200/60 dark:border-slate-700/40 hover:border-cyan-500/30"
               }`}
+              aria-expanded={isDropdownOpen}
+              aria-controls={menuId}
+              type="button"
             >
               <div className="flex items-center gap-3">
                 <currentMode.icon className={`w-5 h-5 transition-colors duration-300 ${isDropdownOpen ? "text-cyan-500" : "text-cyan-500"}`} />
@@ -142,6 +159,8 @@ export function ChatContainer({
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
                     className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-xl"
+                    id={menuId}
+                    role="menu"
                   >
                     <div className="p-1.5 space-y-1">
                       {modes.map((m) => {
@@ -154,11 +173,13 @@ export function ChatContainer({
                               setMode?.(m.id);
                               setIsDropdownOpen(false);
                             }}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-[colors,opacity,transform] ${
                               isActive
                                 ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
                                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
                             }`}
+                            role="menuitem"
+                            type="button"
                           >
                             <div className="flex items-center gap-3">
                               <Icon className={`w-4 h-4 ${isActive ? "text-cyan-500" : ""}`} />
@@ -196,14 +217,15 @@ export function ChatContainer({
               <button
                 key={item.id}
                 onClick={() => onSuggestionClick?.(item.prompt)}
-                className="group relative flex flex-col items-center p-3 sm:p-4 bg-white/5 hover:bg-white/10 dark:bg-slate-800/20 dark:hover:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/5 text-center min-h-[110px] sm:min-h-[130px] justify-center"
+                className="group relative flex flex-col items-center p-3 sm:p-4 bg-white/5 hover:bg-white/10 dark:bg-slate-800/20 dark:hover:bg-slate-800/40 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl transition-[colors,transform,box-shadow,border-color] duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-cyan-500/5 text-center min-h-[110px] sm:min-h-[130px] justify-center focus-visible:ring-2 focus-visible:ring-cyan-500/30 outline-none"
+                type="button"
               >
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">
                   <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500" />
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
                 <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight line-clamp-2 hidden sm:block">{item.desc}</p>
-                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-cyan-500/20 transition-all duration-300 pointer-events-none" />
+                <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-cyan-500/20 transition-colors duration-300 pointer-events-none" />
               </button>
             ))}
           </motion.div>
@@ -220,7 +242,7 @@ export function ChatContainer({
               <button
                 type="button"
                 onClick={onOpenPuterSettings}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/40 backdrop-blur-md text-slate-800 dark:text-slate-100 font-extrabold shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/40 backdrop-blur-md text-slate-800 dark:text-slate-100 font-extrabold shadow-sm hover:shadow-md transition-shadow transition-transform active:scale-[0.98]"
               >
                 {isPuterSignedIn ? <Settings className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
                 <span>{isPuterSignedIn ? "إعدادات Puter" : "تفعيل Puter"}</span>

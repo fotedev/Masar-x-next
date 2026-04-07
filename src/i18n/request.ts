@@ -1,6 +1,8 @@
 import { getRequestConfig } from "next-intl/server";
-import { headers } from "next/headers";
 import { routing, type Locale } from "@/i18n/routing";
+
+import { readFile } from "fs/promises";
+import path from "path";
 
 type Messages = Record<string, unknown>;
 
@@ -93,8 +95,23 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     trwRedeem: () => import("@/messages/en/trwRedeem.json"),
   },
 };
+const namespaceCache = new Map<string, Messages>();
 
-const namespaceCache = new Map<string, Promise<Messages>>();
+async function readNamespaceFromDisk(locale: string, namespace: string): Promise<Messages> {
+  if (process.env.NEXT_RUNTIME === "edge") return {};
+
+  const filePath = path.join(process.cwd(), "src", "messages", locale, `${namespace}.json`);
+
+  try {
+    const raw = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed as Messages;
+  } catch {
+    return {};
+  }
+}
 
 async function safeImportNamespace(
   locale: string,
@@ -102,206 +119,45 @@ async function safeImportNamespace(
 ): Promise<Messages> {
   const cacheKey = `${locale}:${namespace}`;
   const cached = namespaceCache.get(cacheKey);
-  if (cached) return cached;
-
-  const promise = (async () => {
-    // 1) Attempt the dynamic import first (works in some Next builds).
-    try {
-      const loader = MESSAGE_LOADERS[locale]?.[namespace];
-      if (!loader) throw new Error(`No loader for ${locale}/${namespace}`);
-      
-      if (process.env.NODE_ENV === "development") {
-        console.debug(`[i18n] Loading ${locale}/${namespace}...`);
-      }
-
-      const mod = await loader();
-      const messages = mod.default;
-
-      if (messages && typeof messages === "object" && Object.keys(messages).length > 0) {
-        if (process.env.NODE_ENV === "development") {
-          console.debug(`[i18n] Successfully loaded ${locale}/${namespace} (${Object.keys(messages).length} keys)`);
-        }
-        return messages;
-      }
-      throw new Error(`Empty messages for ${locale}/${namespace}`);
-    } catch (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn(`[i18n] Dynamic import failed for ${locale}/${namespace}:`, error instanceof Error ? error.message : String(error));
-      }
-    }
-
-    // 2) Fallback: read the JSON file directly from disk.
-    // This is needed for cases where webpack doesn't include the JSON module for a namespace.
-    try {
-      throw new Error("Message loader not available");
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error(`[i18n] CRITICAL: Failed to load ${locale}/${namespace} - messages will be MISSING!`);
-      console.error(`[i18n] Error details:`, errorMsg);
-
-      if (locale !== "en") {
-        try {
-          const fallback = await safeImportNamespace("en", namespace);
-          if (fallback && Object.keys(fallback).length > 0) return fallback;
-        } catch {
-          // ignore
-        }
-      }
-
-      return {};
-    }
-  })();
-
-  namespaceCache.set(cacheKey, promise);
-  return promise;
-}
-
-function stripLocalePrefix(pathname: string) {
-  const locales = (routing.locales as readonly string[]).join("|");
-  const regex = new RegExp(`^\\/(${locales})(\\/|$)`);
-  const match = pathname.match(regex);
-  const prefix = match ? `/${match[1]}` : "";
-  let stripped = prefix ? pathname.slice(prefix.length) || "/" : pathname || "/";
-  // Ensure the path always starts with / and doesn't have duplicate slashes
-  stripped = stripped.startsWith("/") ? stripped : `/${stripped}`;
-  
-  // Normalized path for matching (e.g., /ar/news -> /news, /ar -> /)
-  const normalized = stripped === "/" ? stripped : stripped.replace(/\/+$/, "");
-  return normalized;
-}
-
-function safePathnameFromHeaderValue(value: string | null): string | null {
-  if (!value) return null;
-
-  const trimmed = value.trim();
-  if (!trimmed || trimmed === "null") return null;
+  if (cached && Object.keys(cached).length > 0) return cached;
 
   try {
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return new URL(trimmed).pathname;
-    }
-  } catch {
-    // ignore
-  }
+    const loader = MESSAGE_LOADERS[locale]?.[namespace];
+    if (!loader) throw new Error(`No loader for ${locale}/${namespace}`);
 
-  if (trimmed.startsWith("/")) return trimmed;
+    const mod = await loader();
+    const messages = mod.default;
 
-  try {
-    return new URL(`http://local${trimmed.startsWith("/") ? "" : "/"}${trimmed}`).pathname;
-  } catch {
-    return null;
-  }
-}
-
-function resolvePathnameFromHeaders(headersList: Headers): string | null {
-  const candidates = [
-    headersList.get("x-pathname"),
-    headersList.get("next-url"),
-    headersList.get("x-next-url"),
-    headersList.get("x-invoke-path"),
-    headersList.get("x-original-url"),
-  ];
-
-  for (const candidate of candidates) {
-    const pathname = safePathnameFromHeaderValue(candidate);
-    if (pathname) return pathname;
-  }
-
-  const referer = headersList.get("referer");
-  const refererPath = safePathnameFromHeaderValue(referer);
-  if (refererPath) return refererPath;
-
-  return null;
-}
-
-const STATIC_PATH_NAMESPACES: Record<string, string[]> = {
-  "/": ["home"],
-  "/privacy": ["common"],
-  "/privacy-policy": ["privacyPolicy"],
-  "/privacy-details": ["privacyDetails"],
-  "/login": ["authPages", "auth"],
-  "/signup": ["authPages", "auth"],
-  "/reset-password": ["authPages", "auth"],
-  "/news": ["news", "appeals"],
-  "/subjects": ["subjects", "subjectsTab", "appeals"],
-  "/courses": ["courses"],
-};
-
-const PREFIX_PATH_NAMESPACES: Array<{ prefix: string; namespaces: string[] }> = [
-  { prefix: "/ai-assistant", namespaces: ["aiAssistant"] },
-  { prefix: "/quizzes", namespaces: ["quizzes"] },
-  { prefix: "/quiz-play", namespaces: ["quizzes"] },
-  { prefix: "/quiz-attempts", namespaces: ["quizzes"] },
-  { prefix: "/courses", namespaces: ["courses"] },
-  { prefix: "/news", namespaces: ["news", "appeals"] },
-  { prefix: "/subjects", namespaces: ["subjectPage", "subjects", "subjectsTab", "appeals", "subjectMetadata"] },
-  { prefix: "/profile", namespaces: ["profile", "auth", "onboarding", "appeals"] },
-  { prefix: "/summaries", namespaces: ["subjects", "appeals"] },
-  { prefix: "/add-summary", namespaces: ["addSummary", "onboarding", "subjects"] },
-  { prefix: "/edit-summary", namespaces: ["editSummary", "onboarding", "subjects"] },
-  { prefix: "/add-file", namespaces: ["addFile", "subjects"] },
-  { prefix: "/add-video", namespaces: ["addVideo", "subjects"] },
-  { prefix: "/trw", namespaces: ["trw", "trwRedeem"] },
-  { prefix: "/admin", namespaces: ["adminDashboard", "news", "subjects", "courses", "quizzes"] },
-  { prefix: "/admin-dashboard", namespaces: ["adminDashboard", "news", "subjects", "courses", "quizzes"] },
-];
-
-function namespacesForPath(pathname: string): string[] {
-  const path = stripLocalePrefix(pathname);
-
-  const namespaces = new Set<string>([
-    "common",
-    "nav",
-    "footer",
-    "metadata",
-    "header",
-    "pwa",
-    "notifications",
-    "notFound",
-  ]);
-
-  // Handle news and appeals which are globally used in modals or shared sections
-  if (path.includes("/news") || path === "/") {
-    namespaces.add("news");
-    namespaces.add("appeals");
-  }
-
-    // Handle subjects, summaries, and courses
-    if (path.includes("/subjects") || path.includes("/summaries") || path.includes("/courses")) {
-      ["subjectPage", "subjects", "subjectsTab", "summaries", "subjectMetadata", "appeals", "courses", "courseDetail"].forEach((ns) => namespaces.add(ns));
+    if (messages && typeof messages === "object" && Object.keys(messages).length > 0) {
+      namespaceCache.set(cacheKey, messages);
+      return messages;
     }
 
-  // Handle quizzes
-  if (path.includes("/quizzes") || path.includes("/quiz-play") || path.includes("/quiz-attempts") || path.includes("/admin")) {
-    ["quizzes", "trw", "trwRedeem", "onboarding"].forEach((ns) => namespaces.add(ns));
-  }
-
-  // Handle auth and profile
-  if (path.includes("/login") || path.includes("/signup") || path.includes("/profile") || path.includes("/reset-password")) {
-    ["auth", "authPages", "profile", "onboarding"].forEach((ns) => namespaces.add(ns));
-  }
-
-  // Handle home specific
-  if (path === "/" || path === "") {
-    namespaces.add("home");
-    namespaces.add("subjects"); // Home page uses SubjectsGrid
-    namespaces.add("subjectsTab");
-    namespaces.add("summaries");
-  }
-
-  // Handle exact matches
-  if (STATIC_PATH_NAMESPACES[path]) {
-    STATIC_PATH_NAMESPACES[path].forEach((ns) => namespaces.add(ns));
-  }
-
-  // Handle prefix matches
-  for (const item of PREFIX_PATH_NAMESPACES) {
-    if (path === item.prefix || path.startsWith(item.prefix + "/")) {
-      item.namespaces.forEach((ns) => namespaces.add(ns));
+    throw new Error(`Empty messages for ${locale}/${namespace}`);
+  } catch (error) {
+    // Fallback: Read the JSON directly from disk (Node runtime only).
+    try {
+      const fromDisk = await readNamespaceFromDisk(locale, namespace);
+      if (fromDisk && typeof fromDisk === "object" && Object.keys(fromDisk).length > 0) {
+        namespaceCache.set(cacheKey, fromDisk);
+        return fromDisk;
+      }
+    } catch {
+      // ignore
     }
-  }
 
-  return Array.from(namespaces);
+    // Secondary fallback: Try English version of the same namespace
+    if (locale !== "en") {
+      try {
+        const fallback = await safeImportNamespace("en", namespace);
+        if (fallback && Object.keys(fallback).length > 0) return fallback;
+      } catch {
+        // ignore
+      }
+    }
+
+    return {};
+  }
 }
 
 export default getRequestConfig(
@@ -311,42 +167,21 @@ export default getRequestConfig(
       ? (requested as Locale)
       : routing.defaultLocale;
 
-    const headersList = await headers();
-    let pathname = resolvePathnameFromHeaders(headersList) ?? "/";
-
-    const namespaces = namespacesForPath(pathname || "/");
-    // Only log in development to keep production logs clean
-    if (process.env.NODE_ENV === "development") {
-      console.info(`[i18n] Path: "${pathname}", Resolved namespaces: ${namespaces.join(", ")}`);
-    }
+    // LOAD ALL NAMESPACES for the locale to prevent stale provider issues during SPA navigation
+    const localeLoaders = MESSAGE_LOADERS[locale] || {};
+    const allNamespaces = Object.keys(localeLoaders);
 
     const loaded = await Promise.all(
-      namespaces.map(async (ns) => [ns, await safeImportNamespace(locale, ns)] as const),
+      allNamespaces.map(async (ns: string) => {
+        const msg = await safeImportNamespace(locale, ns);
+        return [ns, msg] as const;
+      }),
     );
 
     const messages = Object.fromEntries(loaded) as Record<string, Messages>;
 
-    // FINAL ROBUST CHECK: Ensure specific routes have their essential namespaces.
-    // This catches cases where path detection is slightly off but the route is clear.
-    const normalizedPath = stripLocalePrefix(pathname || "/");
-    const forceLoad = async (ns: string) => {
-      if (!messages[ns]) {
-        messages[ns] = await safeImportNamespace(locale, ns);
-      }
-    };
-
-    if (normalizedPath.includes("/courses")) {
-      await forceLoad("courses");
-      await forceLoad("courseDetail");
-      await forceLoad("subjects");
-    } else if (normalizedPath.includes("/subjects") || normalizedPath.includes("/summaries")) {
-      await forceLoad("subjects");
-      await forceLoad("subjectPage");
-    } else if (normalizedPath.includes("/quizzes") || normalizedPath.includes("/quiz-play") || normalizedPath.includes("/quiz-attempts")) {
-      await forceLoad("quizzes");
-      await forceLoad("onboarding");
-    } else if (normalizedPath === "/") {
-      await forceLoad("home");
+    if (process.env.NODE_ENV === "development") {
+      console.log(`[i18n-request] Loaded all ${Object.keys(messages).length} namespaces for locale "${locale}"`);
     }
 
     return {

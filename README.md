@@ -1,6 +1,13 @@
 # Masar X - Comprehensive Learning Platform
 
-Last updated: 12 March 2026
+Last updated: 04 April 2026
+
+## Recent edits (04 Apr 2026)
+- **Next.js 16 Upgrade**: Successfully migrated the platform to Next.js 16.2.1 and React 19.2.4 for enhanced performance and modern features.
+- **i18n Restructuring**: Refactored the application to use locale-based routing (`src/app/[locale]`) and centralized translation files in `src/messages/`.
+- **AI Model Upgrade**: Updated AI assistant to use **GPT-5 nano** with enhanced chat rendering, including Markdown, LaTeX support, and RTL-aligned chat bubbles.
+- **Drizzle ORM Integration**: Added Drizzle ORM for improved database interactions and type safety.
+- **Middleware Relocation**: Moved Supabase middleware to `src/lib/supabase/middleware.ts` for better architecture alignment.
 
 ## Recent edits (12 Mar 2026)
 - **Localization Completion**: Finalized localization for Admin Dashboard tabs, filters, and Appeals system reasons in English and Arabic.
@@ -135,7 +142,7 @@ npm run start
 - **Study Summaries**: Crowdsourced platform for sharing and organizing academic summaries with PDF uploads
 - **TRW (The Road Within)**: Advanced course system with membership plans, access codes, and progress tracking
 - **Interactive Courses**: Complete course management with enrollment, reviews, and progress tracking
-- **AI Assistant**: Powered by Puter.js for extended usage and smart study assistance
+- **AI Assistant**: Powered by Puter.js and GPT-5 nano for extended usage and smart study assistance with LaTeX and Markdown support.
 - **Quizzes & Assessments**: Interactive quiz system with draft support and role-based permissions
 - **Academic Onboarding**: Mandatory specialization setup to personalize the learning experience
 - **Multi-Role System**: Student, Instructor, and Admin roles with comprehensive RLS security
@@ -181,16 +188,16 @@ npm run start
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 + React 18 + TypeScript
-- **State & Data**: TanStack Query (React Query) + React Context + Custom Hooks
+- **Frontend**: Next.js 16 + React 19 + TypeScript + Drizzle ORM
+- **State & Data**: TanStack Query (React Query) + React Context + Custom Hooks + Drizzle
 - **Styling**: Tailwind CSS + Framer Motion for animations
 - **Icons**: Lucide React
 - **Backend**: Supabase (Database + Auth + Storage + Edge Functions)
-- **Database**: PostgreSQL with 20+ migrations and advanced RLS policies
-- **AI Integration**: Puter.js SDK for intelligent chat and content generation
+- **Database**: PostgreSQL with Drizzle ORM and advanced RLS policies
+- **AI Integration**: Puter.js SDK with GPT-5 nano for intelligent chat and content generation
 - **Email Services**: Brevo (Sendinblue) via Supabase Edge Functions
-- **Math Rendering**: KaTeX for mathematical expressions
-- **Deployment**: Vercel with native `sitemap.ts` and hardened CSP
+- **Math Rendering**: KaTeX + React-Markdown for mathematical expressions and rich text
+- **Deployment**: Vercel with native `sitemap.ts`, hardened CSP, and Next.js 16 optimizations
 
 ## Getting Started
 
@@ -211,9 +218,9 @@ npm run start
 
 2. Install dependencies:
    ```bash
-   npm install
-   # or
    pnpm install
+   # or
+   npm install
    ```
 
 3. Set up environment variables:

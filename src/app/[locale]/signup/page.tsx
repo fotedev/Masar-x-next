@@ -1,6 +1,6 @@
-import { type FormEvent } from "react";
 "use client";
 
+import { type FormEvent } from "react";
 import { useState, useEffect } from "react";
 import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useRouter } from "@/navigation";

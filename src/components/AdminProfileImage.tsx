@@ -104,8 +104,17 @@ export function AdminProfileImage({
           {avatarUrl ? (
             <Image
               src={avatarUrl}
-              alt=""
+              alt="الصورة الشخصية"
               fill
+              sizes={
+                size === "sm"
+                  ? "32px"
+                  : size === "md"
+                    ? "48px"
+                    : size === "lg"
+                      ? "64px"
+                      : "80px"
+              }
               className="object-cover rounded-full"
               unoptimized
               priority={size === "xl"}

@@ -23,10 +23,21 @@ export function DynamicLogo({ alt = "Masar X Logo", ...props }: DynamicLogoProps
   const locale = useLocale();
   const src = getLogoPath(locale);
 
+  const eagerLoadingProps: Partial<ImageProps> = props.priority
+    ? { loading: "eager" }
+    : {};
+
+  const fetchPriorityProps: Partial<ImageProps> =
+    props.priority && typeof props.fetchPriority === "undefined"
+      ? { fetchPriority: "high" }
+      : {};
+
   return (
     <Image
       src={src}
       alt={alt}
+      {...eagerLoadingProps}
+      {...fetchPriorityProps}
       {...props}
     />
   );

@@ -1,5 +1,6 @@
-import { type FC } from "react";
 "use client";
+
+import { type FC } from "react";
 
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
