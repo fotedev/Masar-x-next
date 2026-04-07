@@ -11,6 +11,7 @@
   "courseCount": "{count} Available Course",
   "freeCourseCount": "{count} Free Course",
   "studentCount": "{count} Registered Student",
+  "totalStudents": "{count} Total Students",
   "instructor": "Instructor",
   "viewDetails": "View Details",
   "student": "Student",

@@ -99,7 +99,47 @@
     "mergeWarningTitle": "محاضرة موجودة بالفعل",
     "mergeWarningDesc": "هذا العنوان سيقوم بتحديث المحاضرة الموجودة حالياً. هل أنت متأكد؟",
     "confirmMerge": "نعم، تحديث",
-    "cancelMerge": "تراجع"
+    "cancelMerge": "تراجع",
+    "reasons": {
+      "inaccurate_content": "محتوى غير دقيق",
+      "copyright_violation": "انتهاك حقوق الطبع والنشر",
+      "inappropriate_content": "محتوى غير لائق",
+      "spam": "سبام أو إعلانات",
+      "other": "سبب آخر"
+    },
+    "manageTitle": "إدارة البلاغات",
+    "noAppeals": "لا توجد بلاغات",
+    "noAppealsDesc": "لم يتم تقديم أي بلاغات بعد",
+    "noResults": "لا توجد نتائج",
+    "noResultsDesc": "لا توجد بلاغات تطابق معايير البحث",
+    "filters": {
+      "title": "إدارة البلاغات والتقارير",
+      "of": "من",
+      "searchLabel": "البحث في البلاغات",
+      "searchPlaceholder": "بحث في سبب البلاغ، نوع المحتوى، أو اسم المستخدم...",
+      "statusLabel": "تصفية حسب الحالة",
+      "statusAll": "جميع الحالات",
+      "statusPending": "قيد المراجعة",
+      "statusReviewed": "تمت المراجعة",
+      "statusClosed": "مغلق"
+    },
+    "card": {
+      "on": "بلاغ على",
+      "summary": "ملخص",
+      "news": "خبر",
+      "statusPending": "قيد المراجعة",
+      "statusAccepted": "مقبول",
+      "statusRejected": "مرفوض",
+      "by": "بواسطة",
+      "anonymous": "مستخدم مجهول",
+      "contentId": "معرف المحتوى",
+      "reviewedBy": "تمت المراجعة بواسطة",
+      "accept": "قبول",
+      "reject": "رفض",
+      "delete": "حذف",
+      "submittedAt": "تم التقديم في",
+      "unknown": "غير معروف"
+    }
   },
   "noLecturesYet": "لا توجد محاضرات بعد",
   "summary": "ملخص",

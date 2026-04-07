@@ -3,7 +3,6 @@
 import { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { PWAInstallPrompt } from "./PWAInstallPrompt";
 import { NotificationPrompt } from "./NotificationManager";
@@ -12,6 +11,13 @@ import { AcademicOnboardingGate } from "./AcademicOnboardingGate";
 interface LayoutProps {
   children: ReactNode;
 }
+
+const Header = dynamic(() => import("./Header").then((mod) => mod.Header), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[72px] w-full bg-transparent fixed top-0 inset-x-0 z-50 border-b border-transparent transition-colors duration-300" />
+  ),
+});
 
 const PageTransition = dynamic(
   () => import("./PageTransition").then((m) => m.PageTransition),

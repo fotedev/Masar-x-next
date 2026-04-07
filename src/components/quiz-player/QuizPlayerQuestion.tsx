@@ -61,7 +61,7 @@ export function QuizPlayerQuestion(props: {
     <div className="backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/30 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="h-2.5 bg-gray-100 dark:bg-gray-700/50 relative">
         <div
-          className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-700 ease-out relative"
+          className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-[width] duration-700 ease-out relative"
           style={{
             width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`,
           }}
@@ -145,6 +145,7 @@ export function QuizPlayerQuestion(props: {
               src={currentQuestion.image_url}
               alt="Question illustration"
               fill
+              sizes="(max-width: 640px) 100vw, 800px"
               className="object-contain bg-white dark:bg-gray-900/50"
             />
           </div>
@@ -153,7 +154,7 @@ export function QuizPlayerQuestion(props: {
         <div className="space-y-4 mb-10">
           {currentQuestion.options.map((option, index) => {
             let optionClass =
-              "w-full text-start p-5 rounded-2xl border-2 transition-all duration-300 relative group ";
+              "w-full text-start p-5 rounded-2xl border-2 transition-colors transition-shadow transition-transform duration-300 relative group ";
 
             if (isAnswered) {
               if (index === currentQuestion.correct_answer) {
@@ -233,7 +234,8 @@ export function QuizPlayerQuestion(props: {
             <button
               onClick={onPreviousQuestion}
               disabled={currentQuestionIndex === 0}
-              className="group flex items-center gap-2 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+              className="group flex items-center gap-2 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors transition-transform active:scale-95"
+              type="button"
             >
               <ArrowRight className="w-5 h-5 rtl:rotate-0 ltr:rotate-180 group-hover:rtl:translate-x-[4px] group-hover:ltr:translate-x-[-4px] transition-transform" />
               <span>{t("previous")}</span>
@@ -243,14 +245,16 @@ export function QuizPlayerQuestion(props: {
               <button
                 onClick={onSubmitAnswer}
                 disabled={selectedOption === null}
-                className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+                className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-shadow transition-transform hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+                type="button"
               >
                 {t("confirmAnswer")}
               </button>
             ) : (
               <button
                 onClick={onNextQuestion}
-                className="group flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:bg-black dark:hover:bg-gray-100 transition-all hover:shadow-xl active:scale-95"
+                className="group flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:bg-black dark:hover:bg-gray-100 transition-colors transition-shadow transition-transform hover:shadow-xl active:scale-95"
+                type="button"
               >
                 <span>
                   {currentQuestionIndex === totalQuestions - 1

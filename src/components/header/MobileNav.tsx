@@ -10,6 +10,7 @@ interface NavItem {
 }
 
 interface MobileNavProps {
+  dir: "rtl" | "ltr";
   isMounted: boolean;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -27,6 +28,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({
+  dir,
   isMounted,
   isMobileMenuOpen,
   setIsMobileMenuOpen,
@@ -69,7 +71,11 @@ export function MobileNav({
         role="dialog"
         aria-modal="true"
         className={`absolute top-0 bottom-0 start-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[95] ${
-          isMounted && isMobileMenuOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
+          isMounted && isMobileMenuOpen
+            ? "translate-x-0"
+            : dir === "rtl"
+            ? "translate-x-full"
+            : "-translate-x-full"
         } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
       >
         <div className="pt-[80px] px-4 md:px-6 pb-6 overflow-y-auto max-h-[100vh] bg-[#020617]">

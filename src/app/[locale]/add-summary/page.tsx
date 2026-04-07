@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, Send, CheckCircle, X } from "lucide-react";
+import { Upload, Send, CheckCircle, X, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,6 +68,7 @@ export default function AddSummaryPage() {
   const [attachmentType, setAttachmentType] = useState<"file" | "link">("file");
   const [driveLink, setDriveLink] = useState<string>("");
   const [youtubeLink, setYoutubeLink] = useState<string>("");
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
@@ -313,6 +314,62 @@ export default function AddSummaryPage() {
     }
   };
 
+  const handleAiOcr = async () => {
+    if (!pdfFile && !driveLink) return;
+    
+    setIsOcrLoading(true);
+    setError("");
+
+    try {
+      let finalPdfUrl = "";
+
+      if (attachmentType === "file" && pdfFile) {
+        // We need to upload to Cloudinary first if not already uploaded
+        // Or we can just use the uploadToCloudinary logic
+        setUploadStage(t("uploadingPdf"));
+        const cloudinaryResult = await uploadToCloudinary(pdfFile, {
+          folder: "masarx-summaries-ocr-temp",
+          onProgress: (progress) => {
+            setUploadProgress((prev) => ({ ...prev, pdf: progress }));
+          },
+        });
+        finalPdfUrl = cloudinaryResult.url;
+      } else {
+        finalPdfUrl = driveLink;
+      }
+
+      if (!finalPdfUrl) {
+        throw new Error("No PDF URL available");
+      }
+
+      // Call the Edge Function
+      const { data, error: ocrError } = await supabase.functions.invoke("process-pdf", {
+        body: { pdfUrl: finalPdfUrl },
+      });
+
+      if (ocrError) throw ocrError;
+      if (!data.success) throw new Error(data.error || "OCR failed");
+
+      setFormData((prev) => ({
+        ...prev,
+        content: prev.content 
+          ? `${prev.content}\n\n---\n\n${data.text}`
+          : data.text,
+      }));
+      
+      sendNotification(t("aiOcrSuccess"), {
+        icon: getLogoPath(locale),
+      });
+    } catch (err) {
+      console.error("OCR Error:", err);
+      setError(t("aiOcrError"));
+    } finally {
+      setIsOcrLoading(false);
+      setUploadStage("");
+      setUploadProgress({});
+    }
+  };
+
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
@@ -543,6 +600,29 @@ export default function AddSummaryPage() {
               className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
               placeholder={t("summaryContentPlaceholder")}
             />
+            
+            {(pdfFile || (attachmentType === "link" && driveLink)) && (
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleAiOcr}
+                  disabled={isOcrLoading || loading}
+                  className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
+                >
+                  {isOcrLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {t("aiOcrProcessing")}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      {t("aiOcrButton")}
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           <div>

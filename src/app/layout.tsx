@@ -1,13 +1,7 @@
 import { type ReactNode } from "react";
-import { Inter, Almarai } from "next/font/google";
 import "../index.css";
 import { cookies, headers } from "next/headers";
-
-const inter = Inter({ subsets: ["latin"] });
-const almarai = Almarai({
-  subsets: ["arabic"],
-  weight: ["300", "400", "700", "800"],
-});
+import ThemeScript from "@/components/ThemeScript";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://masarx.vercel.app";
@@ -78,6 +72,11 @@ export default async function RootLayout({
   const locale = await localeFromRequest();
   const assistantName = locale === "ar" ? "زين" : "ZANE";
 
+  const fontClassName =
+    locale === "ar"
+      ? (await import("@/lib/fonts/almaraiFont")).almaraiClassName
+      : (await import("@/lib/fonts/interFont")).interClassName;
+
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
@@ -88,38 +87,10 @@ export default async function RootLayout({
       style={{ overflowX: "clip" }}
     >
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "MasarX",
-              url: SITE_URL,
-              description:
-                `Study summaries, quizzes, courses, and ${assistantName} AI assistant platform`,
-            }),
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('theme');
-                  var supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-                  if (!theme && supportDarkMode) theme = 'dark';
-                  if (!theme) theme = 'light';
-                  document.documentElement.classList.toggle('dark', theme === 'dark');
-                  document.documentElement.style.colorScheme = theme;
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
+        <ThemeScript siteUrl={SITE_URL} assistantName={assistantName} />
       </head>
       <body
-        className={`${inter.className} ${almarai.className} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
+        className={`${fontClassName} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
         suppressHydrationWarning
       >
         {children}

@@ -15,5 +15,6 @@
   "viewDetails": "عرض التفاصيل",
   "student": "طالب",
   "currency": "جنيه",
-  "free": "مجاني"
+  "free": "مجاني",
+  "totalStudents": "{count} طالب مسجل"
 }

@@ -21,9 +21,10 @@ export function NotificationHeader({
       <div className="flex items-center justify-between flex-row-reverse">
         <button
           onClick={onClose}
-          className="p-2.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-2xl transition-all duration-300 text-gray-400 hover:text-gray-900 dark:hover:text-white group"
+          className="p-2.5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-2xl transition-[background-color,color,transform] duration-300 text-gray-400 hover:text-gray-900 dark:hover:text-white group outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
           title={tNotifications("closeButton")}
           aria-label={tNotifications("closeButton")}
+          type="button"
         >
           <X className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
         </button>
@@ -33,7 +34,7 @@ export function NotificationHeader({
             <button
               onClick={onMarkAllAsRead}
               disabled={isMarkingAll}
-              className={`text-[13px] font-bold transition-all duration-300 rounded-xl px-4 py-2 flex items-center gap-2 ${
+              className={`text-[13px] font-bold transition-[background-color,color,transform,box-shadow] duration-300 rounded-xl px-4 py-2 flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 ${
                 isMarkingAll
                   ? "text-gray-400 cursor-not-allowed bg-gray-100 dark:bg-white/5"
                   : "text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-500/10 hover:bg-blue-600 dark:hover:bg-blue-500 hover:text-white dark:hover:text-white shadow-sm hover:shadow-blue-500/25 active:scale-95"
@@ -54,20 +55,20 @@ export function NotificationHeader({
             </button>
           )}
         </div>
+      </div>
 
-        <div className="flex flex-col">
-          <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            {tNotifications("title")}
-            {unreadCount > 0 && (
-              <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-bold text-white shadow-lg shadow-blue-500/30">
-                {unreadCount}
-              </span>
-            )}
-          </h3>
-          <p className="text-[12px] text-gray-500 dark:text-gray-400 font-medium">
-            {tNotifications("subtitle", { count: unreadCount })}
-          </p>
-        </div>
+      <div className="flex flex-col mt-4">
+        <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+          {tNotifications("title")}
+          {unreadCount > 0 && (
+            <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[11px] font-bold text-white shadow-lg shadow-blue-500/30">
+              {unreadCount}
+            </span>
+          )}
+        </h3>
+        <p className="text-[12px] text-gray-500 dark:text-gray-400 font-medium">
+          {tNotifications("subtitle", { count: unreadCount })}
+        </p>
       </div>
     </div>
   );
