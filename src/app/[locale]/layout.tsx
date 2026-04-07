@@ -13,9 +13,13 @@ export default async function LocaleLayout({
   params,
 }: Readonly<{
   children: ReactNode;
-  params: { locale: string } | Promise<{ locale: string }>;
+  params?: Promise<{ locale: string }>;
 }>) {
-  const { locale } = await Promise.resolve(params);
+  const resolvedParams = await params;
+  const locale = resolvedParams?.locale;
+  if (!locale) {
+    notFound();
+  }
   const typedLocale = locale as Locale;
 
   if (typedLocale !== "ar" && typedLocale !== "en") {
@@ -23,6 +27,7 @@ export default async function LocaleLayout({
   }
 
   const messages = await getMessages({ locale: typedLocale });
+  
   const dir = typedLocale === "ar" ? "rtl" : "ltr";
 
   return (

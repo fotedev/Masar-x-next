@@ -77,7 +77,7 @@ export function SubjectsGrid({
             locale === "en" && subject.name_en ? subject.name_en : subject.name;
 
           return (
-            <motion.div
+            <motion.button
               key={subject.id}
               variants={{
                 hidden: { opacity: 0 },
@@ -86,17 +86,18 @@ export function SubjectsGrid({
               whileHover={{ scale: 1.05, translateY: -4 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onSubjectClick?.(subject.name)}
-              className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px]"
+              className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-[colors,transform,box-shadow,border-color] duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+              type="button"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
-                <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-blue/20 group-hover:scale-110 transition-all duration-300 flex-shrink-0">
+                <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-blue/20 group-hover:scale-110 transition-colors transition-transform duration-300 flex-shrink-0">
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2 text-center mt-auto">
                   {displayName}
                 </h3>
               </div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </motion.div>

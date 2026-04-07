@@ -45,7 +45,7 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
               </div>
               <div className="flex-grow h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-brand-orange rounded-full transition-all duration-1000"
+                  className="h-full bg-brand-orange rounded-full transition-[width] duration-1000"
                   style={{ width: `${data.percentage}%` }}
                 />
               </div>

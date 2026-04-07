@@ -45,5 +45,9 @@
   "submitError": "An error occurred while submitting the summary. Please try again.",
   "close": "Close",
   "pdfOnlyError": "Please select a PDF file only",
-  "invalidImagesError": "Some selected files are not valid images (JPEG, PNG, GIF, WebP only)"
+  "invalidImagesError": "Some selected files are not valid images (JPEG, PNG, GIF, WebP only)",
+  "aiOcrButton": "Extract Text with AI",
+  "aiOcrProcessing": "Extracting text...",
+  "aiOcrSuccess": "Text extracted successfully!",
+  "aiOcrError": "Failed to extract text from the file. Make sure the file is valid."
 }

@@ -74,7 +74,7 @@ export function PageManagementTab() {
             placeholder="البحث عن مادة..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] outline-none"
           />
         </div>
       </div>
@@ -83,7 +83,7 @@ export function PageManagementTab() {
         {filteredSubjects.map((subject) => (
           <div
             key={subject.id}
-            className={`p-5 rounded-xl border transition-all duration-300 ${
+            className={`p-5 rounded-xl border transition-[background-color,border-color,opacity,box-shadow] duration-300 ${
               subject.show_on_home
                 ? "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
                 : "bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 opacity-75"
@@ -122,7 +122,7 @@ export function PageManagementTab() {
                 onClick={() =>
                   updateSubjectVisibility(subject.id, !subject.show_on_home)
                 }
-                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-[background-color,color,transform,box-shadow] ${
                   subject.show_on_home
                     ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
                     : "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20"

@@ -18,6 +18,8 @@
   "backToHome": "العودة للرئيسية",
   "questionsCount": "أسئلة",
   "minutes": "دقيقة",
+  "minutes_label": "دقائق",
+  "openTime": "مفتوح",
   "startNow": "ابدأ الآن",
   "cancel": "إلغاء",
   "guestAttemptNotice": "أنت تعمل في وضع الضيف. سيتم حفظ نتيجتك محلياً فقط.",

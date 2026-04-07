@@ -67,6 +67,16 @@ const userMessageLooksLikeGreeting = (query: string) => {
   );
 };
 
+const isPuterModelNotAvailableError = (error: unknown) => {
+  const msg = asErrorMessage(error).toLowerCase();
+  return (
+    (msg.includes('model') && msg.includes('does not exist')) ||
+    msg.includes('you do not have access to it') ||
+    msg.includes('error_400_from_delegate') ||
+    (msg.includes('delegate') && msg.includes('404'))
+  );
+};
+
 const stripOpeningGreeting = (text: string) => {
   const raw = String(text ?? '');
   const trimmedStart = raw.replace(/^\s+/, '');
@@ -149,18 +159,79 @@ const sanitizeAssistantReply = (query: string, reply: string) => {
 };
 
 const asErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    return error.message || error.name || 'Error';
+  }
+
+  if (typeof error === 'string') return error;
+
+  if (error && typeof error === 'object') {
+    const rec = error as Record<string, unknown>;
+    const parts: string[] = [];
+
+    const pushIfString = (v: unknown) => {
+      if (typeof v === 'string' && v.trim()) parts.push(v);
+    };
+
+    pushIfString(rec.message);
+    pushIfString(rec.reason);
+    pushIfString(rec.error);
+    pushIfString(rec.type);
+    pushIfString(rec.code);
+
+    // Some libraries nest the real error at `error` or `data`
+    if (rec.error && typeof rec.error === 'object') {
+      const inner = rec.error as Record<string, unknown>;
+      pushIfString(inner.message);
+      pushIfString(inner.reason);
+      pushIfString(inner.code);
+      pushIfString(inner.type);
+    }
+    if (rec.data && typeof rec.data === 'object') {
+      const inner = rec.data as Record<string, unknown>;
+      pushIfString(inner.message);
+      pushIfString(inner.reason);
+      pushIfString(inner.code);
+      pushIfString(inner.type);
+    }
+
+    if (parts.length > 0) return parts.join(' | ');
+
+    // Last resort: safe JSON preview (avoids [object Object])
+    try {
+      const json = JSON.stringify(error);
+      if (typeof json === 'string' && json.length > 0) return json.slice(0, 500);
+    } catch {
+      // ignore
+    }
+  }
+
   return String(error);
 };
 
 const isPuterAuthError = (error: unknown) => {
   const msg = asErrorMessage(error).toLowerCase();
-  return msg.includes('not signed in') || msg.includes('not signed') || msg.includes('signed in');
+  return (
+    msg.includes('not signed in') ||
+    msg.includes('not signed') ||
+    msg.includes('signed in') ||
+    msg.includes('unauthorized') ||
+    msg.includes('forbidden') ||
+    msg.includes('auth')
+  );
 };
 
 const isClaudeLikeModel = (model?: string) => {
   const m = (model || '').toLowerCase();
-  return m.includes('claude');
+  return (
+    m.includes('claude') ||
+    m.includes('opus') ||
+    m.includes('sonnet') ||
+    m.includes('haiku') ||
+    m.includes('o1-') ||
+    m.includes('o3-') ||
+    m.includes('gpt-4o')
+  );
 };
 
 const formatPuterNeedsLoginMessage = (model?: string) => {
@@ -182,15 +253,23 @@ const ZANE_UI_INSTRUCTION = `
 
 const isPuterTransportError = (error: unknown) => {
   const msg = asErrorMessage(error).toLowerCase();
+
+  if (isPuterModelNotAvailableError(error)) return false;
+
   return (
     msg.includes('socket.io') ||
     msg.includes('engine.io') ||
     msg.includes('transport') ||
     msg.includes('websocket') ||
     msg.includes('polling') ||
-    msg.includes('400') ||
-    msg.includes('bad request') ||
-    msg.includes('network')
+    msg.includes('eio=') ||
+    msg.includes('websocket is closed') ||
+    msg.includes('network') ||
+    msg.includes('closed before the connection') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('connection error') ||
+    msg.includes('timeout') ||
+    msg.includes('disconnected')
   );
 };
 
@@ -198,7 +277,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 const withPuterRetry = async <T>(
   fn: () => Promise<T>,
-  opts?: { maxAttempts?: number; baseDelayMs?: number },
+  opts?: { maxAttempts?: number; baseDelayMs?: number; onRetry?: (error: unknown, attempt: number) => void },
 ): Promise<T> => {
   const maxAttempts = Math.max(1, Math.min(5, opts?.maxAttempts ?? 3));
   const baseDelayMs = Math.max(200, opts?.baseDelayMs ?? 500);
@@ -212,7 +291,13 @@ const withPuterRetry = async <T>(
       return res;
     } catch (e) {
       lastError = e;
+      if (isPuterModelNotAvailableError(e)) break;
       if (!isPuterTransportError(e) || attempt >= maxAttempts) break;
+      
+      if (opts?.onRetry) {
+        opts.onRetry(e, attempt);
+      }
+      
       const delay = baseDelayMs * Math.pow(2, attempt - 1);
       await sleep(delay);
     }
@@ -385,14 +470,31 @@ const getAvailablePuterModelIds = async (puter: PuterClientLike): Promise<Set<st
 };
 
 const resolvePuterModel = async (puter: PuterClientLike, requestedModel?: string) => {
-  const fallback = 'gpt-5-nano';
-  const desired = (requestedModel || '').trim();
+  const fallback = 'gpt-5.4-nano';
+  let desired = (requestedModel || '').trim();
+  
+  // Map friendly names to exact Puter IDs based on logs and docs
+  if (desired === 'GPT-4o') desired = 'gpt-4o';
+  if (desired === 'o1-mini') desired = 'o1-mini';
+  if (desired === 'Claude 3.5 Sonnet' || desired === 'claude-3.5-sonnet') desired = 'claude-3-5-sonnet';
+  
   if (!desired) return fallback;
 
   try {
     const available = await getAvailablePuterModelIds(puter);
     if (available.size === 0) return desired;
     if (available.has(desired)) return desired;
+    
+    // Fuzzy match as last resort
+    const availableArray = Array.from(available);
+    
+    // Exact match case-insensitive
+    const exactCaseMatch = availableArray.find(m => m.toLowerCase() === desired.toLowerCase());
+    if (exactCaseMatch) return exactCaseMatch;
+
+    const fuzzyMatch = availableArray.find(m => m.toLowerCase().includes(desired.toLowerCase()));
+    if (fuzzyMatch) return fuzzyMatch;
+    
     return fallback;
   } catch {
     return desired;
@@ -558,19 +660,40 @@ ${platformContext}
 سؤال المستخدم: ${query}${historyContext}`;
 
     if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
-    const puter = await getPuterClient();
-    await warmupPuterClient();
-    assertPuterSignedIn(puter);
-    const model = await resolvePuterModel(puter, options?.model || 'gpt-5-nano');
+    
+    const executeWithPuter = async () => {
+      const puter = await getPuterClient();
+      await warmupPuterClient();
+      if (!puter) throw new Error('Puter client not available');
+      const selectedModel = options?.model || 'gpt-5.4-nano';
+      if (isClaudeLikeModel(selectedModel)) assertPuterSignedIn(puter);
+      const model = await resolvePuterModel(puter, selectedModel);
+      
+      try {
+        return await withPuterRetry(
+          () => puter.ai.chat(prompt, { model, stream: false }),
+          { 
+            maxAttempts: 3, 
+            baseDelayMs: 800,
+            onRetry: (err) => {
+              if (isPuterTransportError(err)) {
+                cachedPuterClient = null;
+                cachedPuterImport = null;
+                cachedPuterWarmup = null;
+              }
+            }
+          }
+        );
+      } catch (err) {
+        if (isPuterModelNotAvailableError(err) && model !== 'gpt-5.4-nano') {
+          return puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false });
+        }
+        throw err;
+      }
+    };
+
     try {
-      const response = await withPuterRetry(
-        () =>
-          puter.ai.chat(prompt, {
-            model,
-            stream: false,
-          }),
-        { maxAttempts: 3, baseDelayMs: 500 },
-      );
+      const response = await executeWithPuter();
       return await extractPuterChatText(response);
     } catch (error) {
       notePuterTransportFailure(error);
@@ -736,8 +859,7 @@ ${platformContext}
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
-    const selectedModel = options?.model || 'gpt-5-nano';
-    const requiresPuterAuth = isClaudeLikeModel(selectedModel);
+    const selectedModel = options?.model || 'gpt-5.4-nano';
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const relevantChunks = mode === 'group_rag' ? this.searchRelevantChunks(query, 8) : [];
     const assistantPersonaName = getAssistantPersonaName(options?.locale);
@@ -746,6 +868,69 @@ ${platformContext}
       const totalMessages = this.getStats().totalMessages;
       return `لم أجد معلومات ذات صلة في محادثات المجموعة (${totalMessages} رسائل متاحة) للإجابة على سؤالك. يرجى:\n\n1. إعادة صياغة السؤال بطريقة مختلفة\n2. التأكد من أن المحادثات تحتوي على معلومات حول هذا الموضوع\n3. تحميل بيانات أكثر شمولاً إذا لزم الأمر.\n\n💡 أو بدّل لوضع "مساعد برمجي" من أعلى الصفحة للحصول على مساعدة عامة في البرمجة.`;
     }
+
+    const executeWithPuter = async (prompt: string, model: string) => {
+      if (isPuterCircuitOpen()) return null;
+      
+      const puter = await getPuterClient();
+      await warmupPuterClient();
+      if (!puter) return null;
+      
+      const resolvedModel = await resolvePuterModel(puter, model);
+      const isPremium = isClaudeLikeModel(resolvedModel);
+
+      const getAuthSnapshot = () => {
+        let signedIn = false;
+        try {
+          signedIn = Boolean(puter.auth?.isSignedIn?.());
+        } catch {
+          signedIn = false;
+        }
+        return { signedIn };
+      };
+      
+      if (isPremium) {
+        // Late-binding auth check for premium models
+        let signedIn = getAuthSnapshot().signedIn;
+        
+        if (!signedIn) {
+          // Re-warmup specifically for auth state
+          await warmupPuterClient();
+          try {
+            signedIn = Boolean(puter.auth?.isSignedIn?.());
+          } catch {
+            signedIn = false;
+          }
+        }
+        
+        if (!signedIn) {
+          throw new Error('Puter not signed in');
+        }
+      }
+
+      try {
+        return await withPuterRetry(
+          () => puter.ai.chat(prompt, { model: resolvedModel, stream: false }),
+          { 
+            maxAttempts: 3, 
+            baseDelayMs: 1000,
+            onRetry: (err, attempt) => {
+              console.warn(`[Puter] Retry attempt ${attempt} due to error:`, asErrorMessage(err));
+              if (isPuterTransportError(err)) {
+                cachedPuterClient = null;
+                cachedPuterImport = null;
+                cachedPuterWarmup = null;
+              }
+            }
+          }
+        );
+      } catch (err) {
+        if (isPuterModelNotAvailableError(err) && resolvedModel !== 'gpt-5.4-nano') {
+          return puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false });
+        }
+        throw err;
+      }
+    };
 
     try {
       if (mode === 'cs_assistant') {
@@ -762,34 +947,18 @@ ${ZANE_UI_INSTRUCTION}
 
 سؤال المستخدم: ${query}${historyContext}`;
 
-        if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
-        const puter = await getPuterClient();
-        await warmupPuterClient();
-        if (!puter) return getPuterUnavailableMessage();
-        if (requiresPuterAuth) assertPuterSignedIn(puter);
-        const model = await resolvePuterModel(puter, selectedModel);
-        try {
-          const response = await withPuterRetry(
-            () =>
-              puter.ai.chat(prompt, {
-                model,
-                stream: false,
-              }),
-            { maxAttempts: 3, baseDelayMs: 500 },
-          );
-          const text = await extractPuterChatText(response);
-          return sanitizeAssistantReply(query, text);
-        } catch (error) {
-          notePuterTransportFailure(error);
-          if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
-          throw error;
-        }
+        const response = await executeWithPuter(prompt, selectedModel);
+        if (response === null) return getPuterUnavailableMessage();
+        
+        const text = await extractPuterChatText(response);
+        return sanitizeAssistantReply(query, text);
       }
 
       if (mode === 'student_agent') {
         return await this.generateStudentAgentResponse(query, {
           chatHistory: options?.chatHistory,
           platformContext: options?.platformContext,
+          model: selectedModel
         });
       }
 
@@ -818,29 +987,11 @@ ${BREVITY_INSTRUCTION}
 
 ${ZANE_UI_INSTRUCTION}`;
 
-      // Use Puter.js AI Chat
-      if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
-      const puter = await getPuterClient();
-      await warmupPuterClient();
-      if (!puter) return getPuterUnavailableMessage();
-      if (requiresPuterAuth) assertPuterSignedIn(puter);
-      const model = await resolvePuterModel(puter, selectedModel);
-      try {
-        const response = await withPuterRetry(
-          () =>
-            puter.ai.chat(prompt, {
-              model,
-              stream: false,
-            }),
-          { maxAttempts: 3, baseDelayMs: 500 },
-        );
-        const text = await extractPuterChatText(response);
-        return sanitizeAssistantReply(query, text);
-      } catch (error) {
-        notePuterTransportFailure(error);
-        if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
-        throw error;
-      }
+      const response = await executeWithPuter(prompt, selectedModel);
+      if (response === null) return getPuterUnavailableMessage();
+
+      const text = await extractPuterChatText(response);
+      return sanitizeAssistantReply(query, text);
 
     } catch (error: unknown) {
       const context = relevantChunks
@@ -851,6 +1002,15 @@ ${ZANE_UI_INSTRUCTION}`;
       // Log non-transport errors
       if (!isPuterTransportError(error) && !isPuterAuthError(error)) {
         logger.error('Puter AI error', error, { mode });
+      }
+
+      if (isPuterTransportError(error)) {
+        logger.warn('Puter transport error', {
+          mode,
+          selectedModel,
+          circuitOpen: isPuterCircuitOpen(),
+          error: asErrorMessage(error),
+        });
       }
 
       // Try server-side fallback if Puter failed

@@ -1,6 +1,6 @@
-import { type FormEvent } from "react";
 "use client";
 
+import { type FormEvent } from "react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";

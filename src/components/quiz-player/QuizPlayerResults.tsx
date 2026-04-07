@@ -128,7 +128,7 @@ export function QuizPlayerResults(props: {
           onClick={() => {
             window.location.reload();
           }}
-          className="flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all hover:shadow-lg hover:shadow-blue-500/30 active:scale-95"
+          className="flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-[background-color,transform,box-shadow] hover:shadow-lg hover:shadow-blue-500/30 active:scale-95"
         >
           <RefreshCw className="w-5 h-5" />
           {t("retry")}
@@ -138,7 +138,7 @@ export function QuizPlayerResults(props: {
           <button
             onClick={onSubmitForReview}
             disabled={!onSubmitForReview || isSubmittingForReview}
-            className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-[background-color,transform,box-shadow,color] active:scale-95 ${
               !onSubmitForReview || isSubmittingForReview
                 ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
                 : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/30"
@@ -160,7 +160,7 @@ export function QuizPlayerResults(props: {
 
         <button
           onClick={onClose}
-          className="px-8 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+          className="px-8 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 transition-[background-color,transform] active:scale-95"
         >
           {t("backToHome")}
         </button>

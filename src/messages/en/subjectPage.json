@@ -61,7 +61,8 @@
     "updateSuccessTitle": "Updated successfully",
     "updateSuccessDescription": "Subject details were updated and saved.",
     "updateErrorTitle": "Update failed",
-    "updateErrorDescription": "An error occurred while updating the subject."
+    "updateErrorDescription": "An error occurred while updating the subject.",
+    "subject": "Subject"
   },
   "backToSubjects": "Back to subjects",
   "subjectLabel": "Subject",

@@ -111,7 +111,7 @@ export function QuizPlayer({
         </p>
         <button
           onClick={loadQuiz}
-          className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all active:scale-95"
+          className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-[background-color,transform] active:scale-95"
         >
           {tQuizzes("retry")}
         </button>

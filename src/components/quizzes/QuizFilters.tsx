@@ -54,7 +54,7 @@ export function QuizFilters({
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 placeholder:text-start"
+                className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-start outline-none"
               />
             </div>
           </div>
@@ -63,7 +63,7 @@ export function QuizFilters({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "date" | "title")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 outline-none"
             >
               <option value="date">{t("dateOrder")}</option>
               <option value="title">{t("titleOrder")}</option>

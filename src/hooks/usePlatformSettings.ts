@@ -1,12 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { usePlatformSettingsContext } from "@/contexts/PlatformSettingsContext";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
-type PlatformSettings = {
-  active_semester?: number;
-};
-
 export function usePlatformSettings() {
+  let context: ReturnType<typeof usePlatformSettingsContext> | undefined;
+  
+  try {
+    context = usePlatformSettingsContext();
+  } catch (err) {
+    // Context not found, fallback to independent hook logic
+    context = undefined;
+  }
+
+  // Independent logic (identical to the old hook, used if Context fails or is missing)
   const getInitialSemester = () => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('activeSemester');
@@ -15,20 +22,18 @@ export function usePlatformSettings() {
     return 1;
   };
 
-  const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<PlatformSettings>({ active_semester: getInitialSemester() });
+  const [localLoading, setLocalLoading] = useState(true);
+  const [localSettings, setLocalSettings] = useState<{ active_semester: number }>({ active_semester: getInitialSemester() });
 
   const fetchSettings = useCallback(async (skipCache = false) => {
     try {
-      setLoading(true);
-      
+      setLocalLoading(true);
       const cacheKey = cacheKeys.settings();
-      
       if (!skipCache) {
-        const cached = queryCache.get<PlatformSettings>(cacheKey);
+        const cached = queryCache.get<{ active_semester: number }>(cacheKey);
         if (cached) {
-          setSettings(cached);
-          setLoading(false);
+          setLocalSettings(cached);
+          setLocalLoading(false);
           return;
         }
       }
@@ -40,151 +45,72 @@ export function usePlatformSettings() {
         .limit(1)
         .single();
 
-      if (error && error.code !== "PGRST116" && error.code !== "PGRST205") {
-        throw error;
-      }
+      if (error && error.code !== "PGRST116" && error.code !== "PGRST205") throw error;
 
       let newSemester = 1;
-      if (data && data.value) {
-        const v = data.value as unknown;
-        const semesterValue =
-          typeof v === 'object' && v !== null && 'semester' in v
-            ? (v as { semester?: unknown }).semester
-            : undefined;
-        newSemester = Number(semesterValue ?? 1);
+      if (data?.value && typeof data.value === 'object' && 'semester' in (data.value as any)) {
+        newSemester = Number((data.value as any).semester ?? 1);
       }
 
       const updatedSettings = { active_semester: newSemester };
-      setSettings(updatedSettings);
-      
-      // Cache the result
+      setLocalSettings(updatedSettings);
       queryCache.set(cacheKey, updatedSettings, cacheTTL.settings);
-
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeSemester', newSemester.toString());
       }
     } catch {
       // ignore
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   }, []);
 
   const setActiveSemester = useCallback(async (semester: number) => {
     try {
-      setLoading(true);
-      const payload = { semester };
+      setLocalLoading(true);
       const { error } = await supabase
         .from("platform_settings")
-        .upsert({ key: "active_semester", value: payload, updated_at: new Date().toISOString() }, { onConflict: "key" });
+        .upsert({ key: "active_semester", value: { semester }, updated_at: new Date().toISOString() }, { onConflict: "key" });
 
       if (error) throw error;
-      
-      const updatedSettings = { active_semester: semester };
-      setSettings(updatedSettings);
-      
-      // Invalidate cache
+      setLocalSettings({ active_semester: semester });
       queryCache.delete(cacheKeys.settings());
-
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeSemester', semester.toString());
-        // Dispatch custom event to notify other parts of the UI
         window.dispatchEvent(new CustomEvent('activeSemesterChanged', { detail: semester }));
       }
       return true;
     } catch {
       return false;
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void fetchSettings();
-
-    // Listen for changes from other components/tabs
-    const handleCustomEvent = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const newVal = Number(customEvent.detail);
-      if (!isNaN(newVal)) {
-        setSettings({ active_semester: newVal });
-      }
-    };
-    
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'activeSemester' && e.newValue) {
-        const newVal = Number(e.newValue);
-        if (!isNaN(newVal)) {
-          setSettings({ active_semester: newVal });
-        }
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('activeSemesterChanged', handleCustomEvent);
-      window.addEventListener('storage', handleStorageChange);
+    if (!context) {
+      void fetchSettings();
     }
+  }, [context, fetchSettings]);
 
-    // Optional: Realtime subscription to Supabase changes
-    // In dev, Fast Refresh can mount/unmount quickly which may cause noisy websocket logs during teardown.
-    let isActive = true;
-    const channel = supabase
-      .channel('platform_settings_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'platform_settings',
-          filter: 'key=eq.active_semester'
-        },
-        (payload: { new: { value?: { semester?: number } } } | null) => {
-          if (!isActive) return;
-          if (!payload) return;
-          if (payload.new && payload.new.value) {
-            const rawVal = payload.new.value.semester;
-            const newVal = Number(rawVal);
-            if (!isNaN(newVal)) {
-              setSettings({ active_semester: newVal });
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('activeSemester', newVal.toString());
-                // Force a custom event to notify other hooks that might not be using Supabase Realtime
-                window.dispatchEvent(new CustomEvent('activeSemesterChanged', { detail: newVal }));
-              }
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      isActive = false;
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('activeSemesterChanged', handleCustomEvent);
-        window.removeEventListener('storage', handleStorageChange);
-      }
-
-      // Best-effort cleanup to avoid dev-time websocket spam during Fast Refresh.
-      try {
-        channel.unsubscribe();
-      } catch {
-        // ignore
-      }
-
-      try {
-        void supabase.removeChannel(channel);
-      } catch {
-        // ignore
-      }
+  // If context is available, use it. Otherwise, use local fallback logic.
+  if (context) {
+    return {
+      loading: context.loading,
+      settings: context.settings,
+      activeSemester: context.activeSemester,
+      fetchSettings: context.fetchSettings,
+      setActiveSemester: context.setActiveSemester,
+      isFallback: false,
     };
-  }, [fetchSettings]);
+  }
 
   return {
-    loading,
-    settings,
-    activeSemester: settings.active_semester || 1,
+    loading: localLoading,
+    settings: localSettings,
+    activeSemester: localSettings.active_semester || 1,
     fetchSettings,
     setActiveSemester,
+    isFallback: true,
   };
 }
-
