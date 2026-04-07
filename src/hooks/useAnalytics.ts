@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { analytics, SystemLog } from '../lib/analytics';

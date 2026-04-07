@@ -24,7 +24,7 @@ export function LanguageToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-all duration-200"
       aria-label={ariaLabel}
       title={ariaLabel}
       type="button"

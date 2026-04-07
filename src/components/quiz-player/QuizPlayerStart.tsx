@@ -82,7 +82,7 @@ export function QuizPlayerStart(props: {
       <div className="flex flex-col gap-4">
         <button
           onClick={onStart}
-          className="flex items-center justify-center gap-3 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl hover:bg-blue-700 transition-all hover:shadow-2xl hover:shadow-blue-500/40 active:scale-95 group"
+          className="flex items-center justify-center gap-3 px-10 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl hover:bg-blue-700 transition-[background-color,transform,box-shadow] hover:shadow-2xl hover:shadow-blue-500/40 active:scale-95 group"
         >
           <span>{t("startNow")}</span>
           <ArrowRight className="w-6 h-6 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />

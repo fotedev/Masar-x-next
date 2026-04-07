@@ -54,12 +54,12 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
           value={newReview}
           onChange={(e) => setNewReview(e.target.value)}
           placeholder="شاركنا رأيك..."
-          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 pr-12 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all resize-none min-h-[120px] text-slate-900 dark:text-white"
+          className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 pr-12 focus-visible:ring-2 focus-visible:ring-brand-blue/20 focus-visible:border-brand-blue transition-[border-color,box-shadow] outline-none resize-none min-h-[120px] text-slate-900 dark:text-white"
         />
         <button
           type="submit"
           disabled={!newReview.trim() || submitting}
-          className="bg-brand-blue text-white px-6 py-2 rounded-xl hover:bg-brand-sky disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-brand-blue/20 flex items-center gap-2 font-bold"
+          className="bg-brand-blue text-white px-6 py-2 rounded-xl hover:bg-brand-sky disabled:opacity-50 disabled:cursor-not-allowed transition-[background-color,transform,box-shadow] shadow-lg shadow-brand-blue/20 flex items-center gap-2 font-bold"
         >
           {submitting ? (
             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -75,7 +75,7 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
             type="button"
             onClick={onCancel}
             disabled={submitting}
-            className="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-200 transition-all font-bold"
+            className="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-200 transition-[background-color,transform] font-bold"
           >
             إلغاء
           </button>

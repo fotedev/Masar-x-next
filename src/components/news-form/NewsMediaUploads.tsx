@@ -1,6 +1,7 @@
 
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useMemo, useRef } from "react";
 import { FileDropzone } from "../FileDropzone";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -23,6 +24,40 @@ export function NewsMediaUploads({
   setError,
   t,
 }: NewsMediaUploadsProps) {
+  const objectUrlMapRef = useRef<Map<string, string>>(new Map());
+
+  const imagePreviews = useMemo(() => {
+    return imageFiles.map((file) => {
+      const key = `${file.name}:${file.size}:${file.lastModified}`;
+      const existing = objectUrlMapRef.current.get(key);
+      if (existing) return { key, url: existing };
+
+      const url = URL.createObjectURL(file);
+      objectUrlMapRef.current.set(key, url);
+      return { key, url };
+    });
+  }, [imageFiles]);
+
+  useEffect(() => {
+    const currentKeys = new Set(
+      imageFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
+    );
+
+    for (const [key, url] of objectUrlMapRef.current.entries()) {
+      if (!currentKeys.has(key)) {
+        URL.revokeObjectURL(url);
+        objectUrlMapRef.current.delete(key);
+      }
+    }
+
+    return () => {
+      for (const url of objectUrlMapRef.current.values()) {
+        URL.revokeObjectURL(url);
+      }
+      objectUrlMapRef.current.clear();
+    };
+  }, [imageFiles]);
+
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
   };
@@ -121,13 +156,14 @@ export function NewsMediaUploads({
 
         {imageFiles.length > 0 && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {imageFiles.map((file, index) => (
-              <div key={index} className="relative group">
+            {imagePreviews.map((preview, index) => (
+              <div key={preview.key} className="relative group">
                 <div className="w-full h-24 relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
                   <Image
-                    src={URL.createObjectURL(file)}
+                    src={preview.url}
                     alt={`Preview ${index + 1}`}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                     className="object-cover"
                     unoptimized
                   />
@@ -137,6 +173,7 @@ export function NewsMediaUploads({
                   onClick={() => removeImage(index)}
                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   title="إزالة الصورة"
+                  aria-label="إزالة الصورة"
                 >
                   <X className="w-3 h-3" />
                 </button>

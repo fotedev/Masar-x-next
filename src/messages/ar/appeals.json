@@ -4,6 +4,7 @@
   "contentTypeLabel": "نوع المحتوى",
   "summary": "ملخص",
   "news": "خبر",
+  "newsTitle": "عنوان الخبر",
   "noticeTitle": "ملاحظة",
   "noticeName": "الطعن سيُرسل باسم",
   "reasonLabel": "سبب الطعن",

@@ -12,7 +12,7 @@ function isRedirectResponse(response: NextResponse | null | undefined) {
   return [301, 302, 303, 307, 308].includes(response.status);
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const sessionResponse = await updateSession(request);
   const intlResponse = intlMiddleware(request);
 

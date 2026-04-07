@@ -44,5 +44,6 @@
   "guestExamNotice": "As a guest: You can solve it locally. To submit for review and publishing, you must log in.",
   "userExamNotice": "You can solve it locally or submit it for review and publishing (it will appear to administration with your name).",
   "loadingExams": "Loading exams...",
-  "start": "Start"
+  "start": "Start",
+  "send": "Send"
 }

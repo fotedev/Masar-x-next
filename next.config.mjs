@@ -1,6 +1,10 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import bundleAnalyzer from '@next/bundle-analyzer';
-// import { withSentryConfig } from "@sentry/nextjs";
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -12,7 +16,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
     // Force cache invalidation: 2026-02-14T04:30:00
     reactStrictMode: true,
-    transpilePackages: ['next-intl'], // Removed @sentry/nextjs
+    transpilePackages: ['next-intl'],
     compiler: {
         removeConsole: {
             exclude: ['error', 'warn'],
@@ -27,6 +31,10 @@ const nextConfig = {
             },
             {
                 protocol: 'https',
+                hostname: 'framerusercontent.com',
+            },
+            {
+                protocol: 'https',
                 hostname: 'lh3.googleusercontent.com',
             },
             {
@@ -35,24 +43,24 @@ const nextConfig = {
             },
         ],
     },
-    webpack: (config) => {
-        // Suppress next-intl build dependency warnings
-        config.ignoreWarnings = [
-            (warning) => {
-                const message = warning.message || '';
-                return (
-                    message.includes('next-intl') && 
-                    (message.includes('Parsing of') || message.includes('import(t)'))
-                );
-            }
-        ];
-        
-        // Also suppress via infrastructure logging for terminal output
-        if (config.infrastructureLogging) {
-            config.infrastructureLogging.level = 'error';
-        } else {
-            config.infrastructureLogging = { level: 'error' };
-        }
+    webpack: (config, { isServer }) => {
+        // Fix next-intl resolution for Next.js 16
+        const nextIntlEsm = path.resolve(__dirname, 'node_modules/next-intl/dist/esm/production');
+
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            'next-intl/server$': isServer 
+                ? path.join(nextIntlEsm, 'server.react-server.js')
+                : path.join(nextIntlEsm, 'server.react-client.js'),
+            'next-intl/navigation$': isServer
+                ? path.join(nextIntlEsm, 'navigation.react-server.js')
+                : path.join(nextIntlEsm, 'navigation.react-client.js'),
+            'next-intl/routing$': path.join(nextIntlEsm, 'routing.js'),
+            'next-intl/middleware$': path.join(nextIntlEsm, 'middleware.js'),
+            'next-intl$': isServer
+                ? path.join(nextIntlEsm, 'index.react-server.js')
+                : path.join(nextIntlEsm, 'index.react-client.js'),
+        };
 
         return config;
     },
@@ -102,45 +110,5 @@ const nextConfig = {
         ];
     },
 };
-
-/*
-const configWithSentry = withSentryConfig(
-    withNextIntl(withBundleAnalyzer(nextConfig)),
-    {
-        // For all available options, see:
-        // https://github.com/getsentry/sentry-javascript/blob/master/packages/nextjs/src/config/types.ts
-
-        org: "aboalayoun",
-        project: "javascript-nextjs",
-
-        // Only print logs for uploading source maps in CI
-        silent: !process.env.CI,
-
-        // For all available options, see:
-        // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-        // Automatically tree-shake Sentry logger statements to reduce bundle size
-        widenClientFileUpload: true,
-
-        // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-        // This can increase your server load as well as your hosting bill.
-        // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-side errors will fail.
-        tunnelRoute: "/monitoring",
-
-        // Hides source maps from visitors
-        hideSourceMaps: true,
-
-        // Fixes deprecation warnings by moving options into the webpack object
-        webpack: {
-            treeshake: {
-                removeDebugLogging: true,
-            },
-            automaticVercelMonitors: true,
-        },
-    }
-);
-
-export default configWithSentry;
-*/
 
 export default withNextIntl(withBundleAnalyzer(nextConfig));

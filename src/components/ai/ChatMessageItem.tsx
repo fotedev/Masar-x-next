@@ -231,9 +231,16 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
       pre: ({ children }: { children?: ReactNode }) => <>{children}</>,
     };
 
-    if (isRawView) {
-      return (
-        <div className="relative group">
+    return (
+      <div className="relative overflow-hidden min-h-[1.5em]">
+        {/* Raw View */}
+        <div 
+          className={`transition-all duration-300 ease-in-out ${
+            isRawView 
+              ? "opacity-100 translate-y-0 relative" 
+              : "opacity-0 translate-y-2 absolute inset-0 pointer-events-none"
+          }`}
+        >
           <pre
             dir="ltr"
             className="w-full my-2 overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-950 p-4 text-[13px] leading-relaxed shadow-inner"
@@ -250,12 +257,19 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
             </code>
           </pre>
         </div>
-      );
-    }
 
-    return (
-      <div className="prose prose-slate dark:prose-invert max-w-none">
-        <LazyMarkdown content={normalized} components={markdownComponents} />
+        {/* Rendered View */}
+        <div 
+          className={`transition-all duration-300 ease-in-out ${
+            !isRawView 
+              ? "opacity-100 translate-y-0 relative" 
+              : "opacity-0 -translate-y-2 absolute inset-0 pointer-events-none"
+          }`}
+        >
+          <div className="prose prose-slate dark:prose-invert max-w-none">
+            <LazyMarkdown content={normalized} components={markdownComponents} />
+          </div>
+        </div>
       </div>
     );
   };

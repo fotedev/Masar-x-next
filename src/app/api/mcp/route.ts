@@ -1,15 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
-// Initialize Sentry-wrapped MCP Server
-const server = Sentry.wrapMcpServerWithSentry(
-  new McpServer({
-    name: "masarx-mcp-server",
-    version: "1.0.0",
-  })
-);
+// Initialize MCP Server
+const server = new McpServer({
+  name: "masarx-mcp-server",
+  version: "1.0.0",
+});
 
 // Register a sample tool to verify monitoring
 server.tool(
@@ -21,7 +18,7 @@ server.tool(
   async ({ topic }) => {
     if (topic === "tech-stack") {
       return {
-        content: [{ type: "text", text: "Next.js 14, Supabase, Tailwind CSS, Sentry" }],
+        content: [{ type: "text", text: "Next.js 16, Supabase, Tailwind CSS" }],
       };
     }
     return {

@@ -42,7 +42,7 @@ export function SummaryFilters({
               placeholder={t("searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200 placeholder:text-start"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200 placeholder:text-start"
             />
           </div>
         </div>
@@ -61,7 +61,7 @@ export function SummaryFilters({
                 e.target.value as "all" | "pending" | "approved" | "rejected",
               )
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
           >
             <option value="all">{t("statusAll")}</option>
             <option value="pending">{t("statusPending")}</option>
@@ -82,7 +82,7 @@ export function SummaryFilters({
             onChange={(e) =>
               setSortBy(e.target.value as "date" | "title" | "subject")
             }
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors duration-200"
           >
             <option value="date">{t("sortByDate")}</option>
             <option value="title">{t("sortByTitle")}</option>
@@ -94,7 +94,9 @@ export function SummaryFilters({
         <button
           onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
           className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          aria-label={sortOrder === "asc" ? t("sortAsc") : t("sortDesc")}
           title={sortOrder === "asc" ? t("sortAsc") : t("sortDesc")}
+          type="button"
         >
           {sortOrder === "asc" ? (
             <SortAsc className="w-4 h-4" />

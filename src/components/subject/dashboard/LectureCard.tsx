@@ -23,9 +23,10 @@ export function LectureCard({
   onSelectLecture,
 }: LectureCardProps) {
   return (
-    <div 
+    <button
       onClick={() => onSelectLecture(lec.key)}
-      className="cursor-pointer"
+      className="cursor-pointer text-start w-full group/btn focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none rounded-[2.5rem]"
+      type="button"
     >
       <motion.div
         variants={{
@@ -34,15 +35,15 @@ export function LectureCard({
         }}
         whileHover={{ scale: 1.02, translateY: -4 }}
         whileTap={{ scale: 0.98 }}
-        className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 hover:shadow-2xl hover:shadow-brand-blue/10 text-right h-full"
+        className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-[colors,box-shadow,border-color] duration-500 hover:shadow-2xl hover:shadow-brand-blue/10 text-right h-full"
       >
         <div className="flex justify-between items-start mb-6 w-full">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-all duration-500 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shadow-sm">
             <span className="text-xl font-black text-slate-400 dark:text-slate-500 group-hover:text-white transition-colors">
               {(idx + 1).toString().padStart(2, "0")}
             </span>
           </div>
-          <div className="w-10 h-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center group-hover:border-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-all duration-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0">
+          <div className="w-10 h-10 rounded-full border-2 border-slate-50 dark:border-slate-800 flex items-center justify-center group-hover:border-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors transition-transform duration-500 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0">
             <ChevronLeft className="w-5 h-5" />
           </div>
         </div>
@@ -84,6 +85,6 @@ export function LectureCard({
           </span>
         </div>
       </motion.div>
-    </div>
+    </button>
   );
 }

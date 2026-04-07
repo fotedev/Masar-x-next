@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect, useRef, memo } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useRouter, usePathname } from "@/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { useTranslations, useLocale } from "next-intl";
@@ -342,7 +342,7 @@ export const Header = memo(function Header() {
 
       <header
         dir={dir}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-[72px] ${
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 h-[72px] ${
           hasEntered
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0"
@@ -353,11 +353,11 @@ export const Header = memo(function Header() {
         }`}
       >
         <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8 pt-[env(safe-area-inset-top)]">
-          <div className="flex items-center justify-between h-full gap-x-8">
-            <div className="flex-1 flex items-center justify-start min-w-0">
+          <div className="flex items-center h-full gap-3 lg:gap-6">
+            <div className="flex shrink-0 items-center justify-start min-w-0">
               <button
                 onClick={handleLogoClick}
-                className="flex items-center text-white hover:opacity-80 transition-opacity flex-shrink-0 p-1"
+                className="flex items-center text-white hover:opacity-80 transition-opacity p-1"
                 type="button"
               >
                 <DynamicLogo
@@ -369,7 +369,7 @@ export const Header = memo(function Header() {
               </button>
             </div>
 
-            <div className="flex-[2] hidden lg:flex items-center justify-center min-w-0">
+            <div className="hidden lg:flex flex-1 min-w-0 items-center justify-center">
               <DesktopNav
                 primaryNavItems={primaryNavItems}
                 handleNavigate={handleNavigate}
@@ -378,8 +378,8 @@ export const Header = memo(function Header() {
               />
             </div>
 
-            <div className="flex-1 flex items-center justify-end gap-x-2 min-w-0">
-              <div className="hidden lg:flex items-center gap-x-2">
+            <div className="flex items-center ms-auto shrink-0 gap-2">
+              <div className="hidden lg:flex items-center gap-2 xl:gap-3">
                 <LanguageToggle />
 
                 <UserMenu
@@ -432,6 +432,7 @@ export const Header = memo(function Header() {
         </div>
 
         <MobileNav
+          dir={dir}
           isMounted={isMounted}
           isMobileMenuOpen={isMobileMenuOpen}
           setIsMobileMenuOpen={setIsMobileMenuOpen}

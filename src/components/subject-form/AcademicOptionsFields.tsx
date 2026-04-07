@@ -51,7 +51,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
               )
             }
             disabled={optionsLoading}
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-50"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none disabled:opacity-50"
           >
             {optionsLoading ? (
               <option>{t("optionsLoading")}</option>
@@ -96,7 +96,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
                   }) as TFormData,
               )
             }
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
           >
             <option value={1}>{t("semester1")}</option>
             <option value={2}>{t("semester2")}</option>

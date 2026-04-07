@@ -84,7 +84,7 @@ export function NotificationToggle() {
     <button
       onClick={handleToggle}
       disabled={isLoading}
-      className={`p-2 rounded-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
+      className={`p-2 rounded-md transition-[background-color,color,box-shadow] duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 ${
         permission === "granted"
           ? "hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400"
           : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
