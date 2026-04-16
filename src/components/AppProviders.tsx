@@ -9,15 +9,24 @@ import { NotificationProvider } from "@/components/NotificationManager";
 import { Layout } from "@/components/Layout";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/QueryProvider";
+import { User } from "@supabase/supabase-js";
+import { ProfileRow } from "@/lib/admin-db/schema";
 
 type Props = {
   children: ReactNode;
   dir: "rtl" | "ltr";
+  user: User | null;
+  profile: ProfileRow | null;
+  isAdmin: boolean;
 };
 
-export function AppProviders({ children, dir }: Props) {
+export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
   return (
-    <AuthProvider>
+    <AuthProvider 
+      initialUser={user} 
+      initialProfile={profile} 
+      initialIsAdmin={isAdmin}
+    >
       <QueryProvider>
         <PlatformSettingsProvider>
           <ThemeProvider>

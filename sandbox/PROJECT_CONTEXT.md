@@ -335,10 +335,10 @@ Masar X هو منصة تعليمية شاملة مبنية بـ Next.js (React/T
 
 ### البيئة المحلية
 ```bash
-npm install
-npm run dev  # تطوير (http://localhost:3000)
-npm run build  # بناء للإنتاج
-npm run start  # تشغيل الإنتاج محلياً
+pnpm install
+pnpm dev  # تطوير (http://localhost:3000)
+pnpm build  # بناء للإنتاج
+pnpm start  # تشغيل الإنتاج محلياً
 ```
 
 ### قاعدة البيانات
@@ -379,10 +379,11 @@ npx supabase db remote commit  # للإنتاج
 
 ---
 
-*آخر تحديث: 04 أبريل 2026*
+*آخر تحديث: 07 أبريل 2026*
 *المطور: فريق تطوير Masar X*
 
 ## Recent edits (April 2026)
+- **Staging & Infra Updates**: تحديثات للتبعيات والإعدادات وإضافة/تحديث مكونات البنية التحتية (Sentry config, MCP route, UI components).
 - **Next.js 16 Upgrade**: الترقية إلى Next.js 16.2.1 و React 19.2.4 لتحسين الأداء واستخدام الميزات الحديثة.
 - **i18n Restructuring**: إعادة هيكلة نظام التدويل ليعتمد على المسارات المبنية على اللغة (`src/app/[locale]`) وتوحيد ملفات الترجمة في `src/messages/`.
 - **AI Model Upgrade**: تحديث المساعد الذكي لاستخدام **GPT-5 nano** مع تحسين عرض الرسائل (Markdown/LaTeX) ودعم النسخ والعرض الخام.
@@ -417,6 +418,7 @@ npx supabase db remote commit  # للإنتاج
 - Platform active semester is managed via `usePlatformSettings` with DB + localStorage fallback.
 
 ## Recent edits (21 Feb 2026)
-- Update project context to reflect current dependencies (`next@14.2.35`, `@supabase/supabase-js@2.97.x`, `@supabase/ssr@0.8.x`, `react@18.3.x`).
+- Update project context to reflect current dependencies.
 - Deployment hardening notes synced with `vercel.json` (CSP + security headers) and `next.config.mjs` (restricted `next/image` remotePatterns + redirects `/admin` -> `/admin-dashboard`).
 - Documented current auth email delivery path via Supabase Edge Function `supabase/functions/auth-hook-email` using **Brevo**.
+

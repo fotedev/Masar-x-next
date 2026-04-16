@@ -12,7 +12,8 @@ export function Footer() {
   const tFooter = useTranslations("footer");
   const tNav = useTranslations("nav");
   const locale = useLocale();
-  const { displayName } = useAuth();
+  const { user, profile } = useAuth();
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "";
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
   const trwWhatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(

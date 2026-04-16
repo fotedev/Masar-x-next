@@ -6,6 +6,9 @@ import { FileDropzone } from "./FileDropzone";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { supabase } from "@/lib/supabase";
+
 interface AdminProfileImageProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
@@ -19,8 +22,20 @@ export function AdminProfileImage({
   showIcon = true,
   editable = false,
 }: AdminProfileImageProps) {
-  const { isAdmin, avatarUrl, updateAvatar } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
+  const avatarUrl = profile?.avatarUrl || user?.user_metadata?.avatar_url;
+
+  const updateAvatar = async (file: File) => {
+    if (!user) return;
+    const res = await uploadToCloudinary(file, { folder: "avatars" });
+    const { error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: res.url })
+      .eq("id", user.id);
+    if (error) throw error;
+    window.dispatchEvent(new CustomEvent("profileUpdate", { detail: { avatar_url: res.url } }));
+  };
 
   // Safety effect: reset isUploading if avatarUrl changes, or after a timeout
   useEffect(() => {

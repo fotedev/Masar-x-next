@@ -12,6 +12,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Skeleton,
 } from "@/components/ui";
 import { EnrollmentsTab } from "@/components/EnrollmentsTab";
 import { Users, Star, Clock, TrendingUp, BookOpen } from "lucide-react";
@@ -118,12 +119,45 @@ export default function InstructorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            جاري تحميل لوحة التحكم...
-          </p>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header Skeleton */}
+        <div className="text-center mb-8">
+          <Skeleton className="h-10 w-64 mx-auto mb-2 rounded-lg" />
+          <Skeleton className="h-4 w-48 mx-auto rounded-md" />
+        </div>
+
+        {/* Stats Overview Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Skeleton className="h-12 w-12 rounded-xl" />
+                  <div className="mr-4 flex-1">
+                    <Skeleton className="h-4 w-20 mb-2 rounded-md" />
+                    <Skeleton className="h-8 w-12 rounded-lg" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-8">
+                <Skeleton className="h-6 w-48 mb-4 rounded-lg" />
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );

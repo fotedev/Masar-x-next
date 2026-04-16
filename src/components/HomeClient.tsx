@@ -21,6 +21,14 @@ import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";
 import { queryCache, cacheTTL } from "@/lib/queryCache";
+import { 
+  Sparkles, 
+  History, 
+  ArrowRight,
+  BookOpen,
+  PlayCircle,
+  FileText
+} from "lucide-react";
 
 export default function HomeClient() {
   const tHome = useTranslations("home");
@@ -167,7 +175,76 @@ export default function HomeClient() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      {/* Quick Actions & Navigation Hub */}
+      <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* ZANE AI Shortcut */}
+        <div 
+          onClick={() => onNavigate("ai-assistant")}
+          className="md:col-span-5 relative group cursor-pointer overflow-hidden rounded-[32px] p-8 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-500 border border-white/10"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-colors" />
+          <div className="relative z-10 h-full flex flex-col">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/20 group-hover:scale-110 transition-transform">
+              <Sparkles className="w-8 h-8 text-cyan-300" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black mb-3 tracking-tight">
+              اسأل زين AI
+            </h2>
+            <p className="text-blue-100/90 font-medium mb-8 leading-relaxed text-sm sm:text-base">
+              هل تواجه صعوبة في فهم موضوع معين؟ زين هنا لمساعدتك في المذاكرة وتلخيص المواد.
+            </p>
+            <div className="mt-auto flex items-center gap-2 font-bold text-sm bg-white/10 self-start px-4 py-2 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors">
+              <span>ابدأ المحادثة الآن</span>
+              <ArrowRight className={`w-4 h-4 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Grid */}
+        <div className="md:col-span-7 grid grid-cols-2 gap-4">
+          <div 
+            onClick={() => onNavigate("subjects")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-all active:scale-95"
+          >
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
+              <BookOpen className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
+            </div>
+            <span className="font-bold text-slate-900 dark:text-white">المواد الدراسية</span>
+          </div>
+
+          <div 
+            onClick={() => onNavigate("quizzes")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-all active:scale-95"
+          >
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-600 transition-colors">
+              <PlayCircle className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
+            </div>
+            <span className="font-bold text-slate-900 dark:text-white">بنك الاختبارات</span>
+          </div>
+
+          <div 
+            onClick={() => onNavigate("news")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-all active:scale-95"
+          >
+            <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors">
+              <FileText className="w-6 h-6 text-brand-orange group-hover:text-white transition-colors" />
+            </div>
+            <span className="font-bold text-slate-900 dark:text-white">آخر الأخبار</span>
+          </div>
+
+          <div 
+            onClick={() => onNavigate("profile")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-all active:scale-95"
+          >
+            <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 transition-colors">
+              <History className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
+            </div>
+            <span className="font-bold text-slate-900 dark:text-white">نشاطك الأخير</span>
+          </div>
+        </div>
+      </section>
+
       <SummariesSection
         loading={summariesLoading}
         subjectsLoading={subjectsLoading}

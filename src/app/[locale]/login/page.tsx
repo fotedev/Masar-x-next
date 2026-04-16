@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "@/navigation";
 import { DynamicLogo } from "@/components/DynamicLogo";
-import { AuthError, useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
@@ -107,7 +107,11 @@ export default function LoginPage() {
           t("lockoutRepeated", { seconds: Math.ceil(lockoutDuration / 1000) }),
         );
       } else {
-        if (err instanceof AuthError && err.code === "INVALID_CREDENTIALS") {
+        const isAuthError = (e: unknown): e is { code: string } => {
+          return typeof e === "object" && e !== null && "code" in e;
+        };
+
+        if (isAuthError(err) && err.code === "INVALID_CREDENTIALS") {
           setError(t("invalidCredentials"));
         } else {
           setError(t("loginGenericError"));

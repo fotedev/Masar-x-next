@@ -25,7 +25,7 @@ interface ChatHeaderProps {
   generatedQuiz: LocalGeneratedQuiz | null;
   onShowGeneratedQuizModal: () => void;
   safeLocalGeneratedQuizzesCount: number;
-  t: (key: string) => string;
+  t: (key: any) => string;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   onOpenPuterSettings: () => void;
@@ -68,7 +68,7 @@ export function ChatHeader({
   const models = [
     { id: "gpt-5-nano", label: "GPT-5 nano", provider: "OpenAI" },
     { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-    { id: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet", provider: "Anthropic" },
+    { id: "claude-sonnet-4-6", label: "Claude 4.6 Sonnet", provider: "Anthropic" },
     { id: "o1-mini", label: "o1-mini", provider: "OpenAI" },
   ];
 
@@ -190,12 +190,8 @@ export function ChatHeader({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                <span className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {mode === "group_rag"
-                    ? t("assistantGroupChat")
-                    : mode === "student_agent"
-                      ? t("responseFromPlatform")
-                      : t("generalCsAssistant")}
+                <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
+                  {t("onlineReady")}
                 </span>
               </div>
               

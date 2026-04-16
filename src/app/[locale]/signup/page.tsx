@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useRouter } from "@/navigation";
 import { DynamicLogo } from "@/components/DynamicLogo";
-import { AuthError, useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "next-intl";
 
 export default function SignUpPage() {
@@ -119,10 +119,11 @@ export default function SignUpPage() {
           t("lockoutRepeated", { seconds: Math.ceil(lockoutDuration / 1000) }),
         );
       } else {
-        if (
-          err instanceof AuthError &&
-          err.code === "EMAIL_ALREADY_REGISTERED"
-        ) {
+        const isAuthError = (e: unknown): e is { code: string } => {
+          return typeof e === "object" && e !== null && "code" in e;
+        };
+
+        if (isAuthError(err) && err.code === "EMAIL_ALREADY_REGISTERED") {
           setError(t("signupEmailAlreadyRegistered"));
         } else {
           setError(t("signupGenericError"));

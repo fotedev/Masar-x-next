@@ -45,7 +45,12 @@ const isPuterTransportError = (error: unknown) => {
     msg.includes('bad request') ||
     msg.includes('closed before the connection') ||
     msg.includes('websocket is closed') ||
-    msg.includes('failed to fetch')
+    msg.includes('failed to fetch') ||
+    msg.includes('network error') ||
+    msg.includes('connection refused') ||
+    msg.includes('timeout') ||
+    msg.includes('eio=') ||
+    msg.includes('disconnect')
   );
 };
 
@@ -84,8 +89,8 @@ export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.debug('[Puter] Auth warmup failed:', errorMsg);
         if (isPuterTransportError(error)) {
-          console.debug('[Puter] Transport error detected - setting cooldown');
-          setUnavailableCooldown(30_000); // Reduced from 45s for better UX
+          console.warn('[Puter] Transport error detected - setting cooldown:', error instanceof Error ? error.message : String(error));
+          setUnavailableCooldown(60_000); // Increased to 60s for WebSocket failures
         }
         try {
           localStorage.removeItem(PUTER_SIGNED_IN_KEY);
@@ -351,7 +356,8 @@ export const signInToPuter = async (options?: {
   } catch (error) {
     void error;
     if (isPuterTransportError(error)) {
-      setUnavailableCooldown(45_000);
+      console.warn('[Puter] Sign-in transport error - setting cooldown:', error instanceof Error ? error.message : String(error));
+      setUnavailableCooldown(90_000); // Longer cooldown for sign-in failures
     }
     try {
       localStorage.removeItem(PUTER_SIGNED_IN_KEY);

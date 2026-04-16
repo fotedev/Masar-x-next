@@ -3,6 +3,7 @@
 import { useState, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
 import { useLocale } from "next-intl";
 import { Bot, User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
+import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
 import { initPuterDiagnostics, signInToPuter } from "@/lib/puter";
@@ -304,11 +305,12 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
         </div>
         <div className="flex flex-col gap-1">
           <div
-            className={`px-5 py-3.5 rounded-3xl text-[15px] leading-relaxed shadow-sm relative group/bubble ${
+            className={`px-4 sm:px-5 py-3.5 rounded-3xl text-[15px] leading-relaxed shadow-sm relative group/bubble ${
               isUser
                 ? `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700/60 ${roundedClass}`
                 : `bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
             }`}
+            dir={getTextDirection(displayContent)}
           >
             <div className={`absolute -top-3 ${isUser ? (isRTL ? "right-4" : "left-4") : (isRTL ? "left-4" : "right-4")} flex gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}> 
               {/* Global Copy Button for all messages */}

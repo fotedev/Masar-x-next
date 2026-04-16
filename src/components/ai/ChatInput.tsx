@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { KeyboardEvent, RefObject } from "react";
 import { Brain, Send } from "lucide-react";
+import { getTextDirection } from "@/utils/textDirection";
 
 import { motion } from "framer-motion";
 import { QuickQuizFromTextModal } from "@/components/ai/QuickQuizFromTextModal";
@@ -67,7 +68,16 @@ export function ChatInput({
     }
   };
 
-  const placeholder = isMobile ? t("inputPlaceholderMobile") : t("inputPlaceholder");
+  const getInputPlaceholder = () => {
+    const inputDir = getTextDirection(inputMessage);
+
+    if (inputDir === "rtl") {
+      return t("inputPlaceholderAr");
+    }
+    return isMobile ? t("inputPlaceholderMobile") : t("inputPlaceholder");
+  };
+
+  const placeholder = getInputPlaceholder();
 
   return (
     <div className={`shrink-0 p-4 sm:p-6 transition-[background-color,border-color] duration-500 ${

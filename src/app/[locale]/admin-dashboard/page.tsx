@@ -68,7 +68,8 @@ function AdminDashboard() {
   const t = useTranslations("adminDashboard");
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAdmin, isAdminLoading, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const isAdminLoading = false; // AuthContext handles admin state within the main loading state
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -119,7 +120,8 @@ function AdminDashboard() {
 function AdminDashboardContent() {
   const t = useTranslations("adminDashboard");
   const router = useRouter();
-  const { adminRole } = useAuth();
+  const { user } = useAuth();
+  const adminRole = user?.app_metadata?.role;
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

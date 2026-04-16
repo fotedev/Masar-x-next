@@ -9,8 +9,9 @@
     "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "next lint",
-    "setup-subjects": "node setup-subjects.js"
+    "lint": "eslint . --max-warnings=0",
+    "setup-subjects": "node setup-subjects.js",
+    "check:auth-routes": "node scripts/auth-route-check.mjs"
   },
   "dependencies": {
     "@heyputer/puter.js": "^2.2.10",

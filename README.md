@@ -1,8 +1,9 @@
 # Masar X - Comprehensive Learning Platform
 
-Last updated: 04 April 2026
+Last updated: 07 April 2026
 
-## Recent edits (04 Apr 2026)
+## Recent edits (07 Apr 2026)
+- **Staging & Infra Updates**: Updated dependencies/configs and introduced infrastructure updates (Sentry config, MCP route, and new/updated UI components).
 - **Next.js 16 Upgrade**: Successfully migrated the platform to Next.js 16.2.1 and React 19.2.4 for enhanced performance and modern features.
 - **i18n Restructuring**: Refactored the application to use locale-based routing (`src/app/[locale]`) and centralized translation files in `src/messages/`.
 - **AI Model Upgrade**: Updated AI assistant to use **GPT-5 nano** with enhanced chat rendering, including Markdown, LaTeX support, and RTL-aligned chat bubbles.
@@ -182,7 +183,7 @@ npm run start
 - **Performance Optimized**: Fast loading with modern web technologies and PWA support
 - **SEO-Friendly**: Proper meta tags and semantic HTML structure
 - **File Management**: Secure file uploads with Cloudinary integration
-- **Email Integration**: EmailJS for notifications and password reset
+- **Email Integration**: Brevo (Sendinblue) via Supabase Edge Functions for auth and system emails
 - **Error Handling**: Advanced ErrorBoundary component with Arabic error messages
 - **Content Organization**: Structured course content with ordering and categorization
 
@@ -206,7 +207,7 @@ npm run start
 - Node.js 18+ and npm/pnpm
 - Supabase account and project
 - Puter.js Integration (for AI features)
-- EmailJS account (for email notifications)
+- Brevo account (Sendinblue) for auth and system emails
 
 ### Installation
 
@@ -229,9 +230,7 @@ npm run start
    NEXT_PUBLIC_SUPABASE_URL=https://jcufigozkhxazjbwhjjm.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
-   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
-   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+   BREVO_API_KEY=your_brevo_api_key
    CLOUDINARY_API_KEY=your_cloudinary_api_key
    CLOUDINARY_API_SECRET=your_cloudinary_secret
    CLOUDINARY_URL=your_cloudinary_url
@@ -258,19 +257,19 @@ Masar X is designed as a customizable template, so it does not come with pre-def
 
 Start the development server:
 ```bash
-npm run dev
-# or
 pnpm dev
+# or
+npm run dev
 ```
 
 The application will be available at `http://localhost:3000`
 
 ### Available Scripts
 
-- `npm run dev` - Start Next.js development server
-- `npm run build` - Build the application for production
-- `npm run start` - Start the production server
-- `npm run lint` - Run ESLint for code quality checks
+- `pnpm dev` / `npm run dev` - Start Next.js development server
+- `pnpm build` / `npm run build` - Build the application for production
+- `pnpm start` / `npm run start` - Start the production server
+- `pnpm lint` / `npm run lint` - Run ESLint for code quality checks
 
 ### Deployment
 
@@ -588,7 +587,7 @@ For support, feature requests, or bug reports:
 
 ## Acknowledgments
 
-- **Built with Modern Web Technologies**: Next.js 14, React 18, TypeScript, and Tailwind CSS for educational excellence
+- **Built with Modern Web Technologies**: Next.js 16, React 19, TypeScript, and Tailwind CSS for educational excellence
 - **Designed for Arabic-Speaking Community**: Full RTL support and localized user experience
 - **Powered by Leading Services**: Supabase backend, Puter.js AI, and Cloudinary media processing
 - **Production-Ready Platform**: Serving real users with enterprise-grade security and performance

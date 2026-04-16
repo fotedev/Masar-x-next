@@ -34,14 +34,30 @@ export default function ProfilePage() {
   const dir = locale === "ar" ? "rtl" : "ltr";
   const {
     user,
-    displayName,
+    profile,
     isAdmin,
     loading: authLoading,
-    isAdminLoading,
-    adminRole,
-    updateDisplayName,
-    refreshAdminStatus,
   } = useAuth();
+  
+  const updateDisplayName = async (name: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: name })
+      .eq("id", user.id);
+    if (error) throw error;
+    // Trigger profile update event for other components
+    window.dispatchEvent(new CustomEvent("profileUpdate", { detail: { full_name: name } }));
+  };
+
+  const refreshAdminStatus = async () => {
+    // In current context, role is in app_metadata which is refreshed on session refresh
+    await supabase.auth.refreshSession();
+  };
+
+  const isAdminLoading = false; // AuthContext handles admin state within the main loading state
+  const adminRole = user?.app_metadata?.role;
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "";
   const {
     academic,
     levels,
