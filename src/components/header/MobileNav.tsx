@@ -46,31 +46,28 @@ export function MobileNav({
 }: MobileNavProps) {
   return (
     <div
-      className={`lg:hidden fixed inset-0 z-[90] overflow-hidden ${
+      className={`lg:hidden fixed inset-0 z-[100] transition-visibility duration-300 ${
         isMounted && isMobileMenuOpen
-          ? "pointer-events-auto"
-          : "pointer-events-none"
+          ? "visible"
+          : "invisible pointer-events-none"
       }`}
     >
       <div
         ref={mobileBackdropRef}
-        className={`absolute inset-0 bg-[rgba(0,0,0,0.85)] backdrop-blur-[12px] transition-opacity duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+        aria-hidden="true"
+        className={`absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-opacity duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
           isMounted && isMobileMenuOpen ? "opacity-100" : "opacity-0"
         } ${
           isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""
         }`}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setIsMobileMenuOpen(false);
-          }
-        }}
+        onClick={() => setIsMobileMenuOpen(false)}
       />
 
       <div
         id="mobile-nav-drawer"
         role="dialog"
         aria-modal="true"
-        className={`absolute top-0 bottom-0 start-0 w-full md:w-[320px] bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[95] ${
+        className={`absolute top-0 bottom-0 start-0 w-[280px] sm:w-[320px] bg-white dark:bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[101] ${
           isMounted && isMobileMenuOpen
             ? "translate-x-0"
             : dir === "rtl"
@@ -78,7 +75,7 @@ export function MobileNav({
             : "-translate-x-full"
         } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
       >
-        <div className="pt-[80px] px-4 md:px-6 pb-6 overflow-y-auto max-h-[100vh] bg-[#020617]">
+        <div className="flex flex-col h-full pt-[72px] px-4 md:px-6 pb-6 overflow-y-auto bg-inherit">
           <nav className="flex flex-col gap-4">
             {primaryNavItems.map((item) => {
               const active = item.isActive();

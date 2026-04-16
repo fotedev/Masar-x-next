@@ -71,7 +71,7 @@ export function ChatContainer({
   return (
     <div
       ref={messagesContainerRef}
-      className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth transition-[background-color,border-color] duration-500 ${
+      className={`flex-1 overflow-y-auto p-4 sm:p-6 pb-8 sm:pb-12 space-y-4 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
         isInitialState 
           ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4" 
           : "scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800"

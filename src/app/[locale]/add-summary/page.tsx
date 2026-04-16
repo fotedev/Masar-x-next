@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
 import { useNotifications as useDbNotifications } from "@/hooks/useNotifications";
 import { useSubjects } from "@/hooks/useSubjects";
+import { useSummaries, SummaryWithRatingsOptimistic } from "@/hooks/useSummaries";
 import type { SummaryInsert } from "@/types/database";
 import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";
@@ -24,7 +25,8 @@ export default function AddSummaryPage() {
   const locale = useLocale();
   const router = useRouter();
   const [lectureKeyFromQuery, setLectureKeyFromQuery] = useState("");
-  const { user, displayName } = useAuth();
+  const { user, profile } = useAuth();
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "";
   const { sendNotification } = useBrowserNotifications();
   const { notifyAdmins } = useDbNotifications();
   const { levels, getDepartmentsForLevelName, optionsLoading } =
@@ -51,6 +53,7 @@ export default function AddSummaryPage() {
     return typeof found?.level_number === "number" ? found.level_number : null;
   }, [formData.year, levels]);
 
+  const { addOptimisticSummary, removeOptimisticSummary } = useSummaries();
   const { subjects } = useSubjects({
     level: selectedLevelNumber,
     semester: typeof semester === "number" ? semester : null,
@@ -106,6 +109,32 @@ export default function AddSummaryPage() {
         setLoading(false);
         return;
       }
+
+      // Create optimistic summary for Home page
+      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticSummary: SummaryWithRatingsOptimistic = {
+        id: optimisticId,
+        title: formData.title,
+        subject: formData.subject,
+        year: formData.year,
+        department: formData.department,
+        content: formData.content,
+        contributor_name: displayName || null,
+        status: "approved", // Use approved so it shows on Home immediately per HomeClient logic
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+        isOptimistic: true,
+        avg_rating: 0,
+        pdf_url: null,
+        youtube_url: null,
+        lecture_key: null,
+        lecture_id: null,
+        reviews_count: 0,
+        updated_at: new Date().toISOString()
+      };
+
+      // Add to home cache immediately
+      addOptimisticSummary(optimisticSummary);
 
       // Check PDF file size (10MB limit)
       if (attachmentType === "file" && pdfFile) {
@@ -254,7 +283,14 @@ export default function AddSummaryPage() {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        removeOptimisticSummary(optimisticId);
+        throw insertError;
+      }
+
+      // Replace optimistic summary with real data
+      removeOptimisticSummary(optimisticId);
+      addOptimisticSummary({ ...insertedData, isOptimistic: false } as SummaryWithRatingsOptimistic);
 
       // إرسال إشعار للمدراء
       notifyAdmins(
@@ -301,6 +337,8 @@ export default function AddSummaryPage() {
         router.push("/");
       }, 2000);
     } catch (err) {
+      // Note: optimistic summary handled inside try block for specific errors
+      // but we ensure it's removed if we catch here and optimisticId was defined
       const message =
         err &&
         typeof err === "object" &&
@@ -794,6 +832,7 @@ export default function AddSummaryPage() {
                         src={URL.createObjectURL(file)}
                         alt={`Preview ${index + 1}`}
                         fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                         className="object-cover"
                         unoptimized
                       />

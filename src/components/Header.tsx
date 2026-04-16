@@ -20,10 +20,9 @@ export const Header = memo(function Header() {
   const tHeader = useTranslations("header");
   const locale = useLocale();
   const dir = locale === "ar" ? "rtl" : "ltr";
-  const { user, loading, isAdmin, isAdminLoading, signOut } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [hasEntered, setHasEntered] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Visibility Logic (Obfuscated)
@@ -50,10 +49,6 @@ export const Header = memo(function Header() {
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    setHasEntered(true);
   }, []);
 
   useEffect(() => {
@@ -342,14 +337,10 @@ export const Header = memo(function Header() {
 
       <header
         dir={dir}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 h-[72px] ${
-          hasEntered
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-full opacity-0"
-        } ${
+        className={`fixed top-0 inset-x-0 z-header transition-all duration-300 h-[72px] ${
           isScrolled
-            ? "bg-[#020617] border-b border-white/10 shadow-xl"
-            : "bg-transparent border-b border-transparent"
+            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm"
+            : "bg-transparent"
         }`}
       >
         <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8 pt-[env(safe-area-inset-top)]">
@@ -387,7 +378,7 @@ export const Header = memo(function Header() {
                   loading={loading}
                   user={user}
                   isAdmin={isAdmin}
-                  isAdminLoading={isAdminLoading}
+                  isAdminLoading={false}
                   handleNavigate={handleNavigate}
                   handleSignOut={handleSignOut}
                   tNav={tNav}
@@ -401,25 +392,25 @@ export const Header = memo(function Header() {
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-nav-drawer"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className="lg:hidden flex flex-col items-center justify-center w-[40px] h-[40px] z-[100] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
+                className="lg:hidden flex flex-col items-center justify-center w-[40px] h-[40px] z-[110] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
               >
                 <div className="relative flex flex-col items-center justify-center w-[24px] h-[18px]">
                   <span
-                    className={`absolute block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    className={`absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                       isMobileMenuOpen
                         ? "top-[8px] rotate-45"
                         : "top-0 rotate-0"
                     }`}
                   />
                   <span
-                    className={`absolute top-[8px] block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    className={`absolute top-[8px] block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                       isMobileMenuOpen
                         ? "opacity-0 translate-x-[10px]"
                         : "opacity-100 translate-x-0"
                     }`}
                   />
                   <span
-                    className={`absolute block w-[24px] h-[2px] bg-[#ffffff] rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    className={`absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                       isMobileMenuOpen
                         ? "bottom-[8px] -rotate-45"
                         : "bottom-0 rotate-0"
@@ -444,7 +435,7 @@ export const Header = memo(function Header() {
           loading={loading}
           user={user}
           isAdmin={isAdmin}
-          isAdminLoading={isAdminLoading}
+          isAdminLoading={false}
           handleSignOut={handleSignOut}
           tNav={tNav}
         />

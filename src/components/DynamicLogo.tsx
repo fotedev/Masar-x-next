@@ -27,8 +27,8 @@ export function DynamicLogo({ alt = "Masar X Logo", ...props }: DynamicLogoProps
     ? { loading: "eager" }
     : {};
 
-  const fetchPriorityProps: Partial<ImageProps> =
-    props.priority && typeof props.fetchPriority === "undefined"
+  const fetchPriorityProps: any =
+    props.priority && typeof (props as any).fetchPriority === "undefined"
       ? { fetchPriority: "high" }
       : {};
 

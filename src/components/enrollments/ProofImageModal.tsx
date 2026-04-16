@@ -9,9 +9,8 @@ interface ProofImageModalProps {
 }
 
 export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
-  if (!imageUrl) return null;
-
   useEffect(() => {
+    if (!imageUrl) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -20,7 +19,9 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [imageUrl, onClose]);
+
+  if (!imageUrl) return null;
 
   return (
     <div

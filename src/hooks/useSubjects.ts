@@ -1,10 +1,14 @@
 import { supabase } from "../lib/supabase";
-import { Subject } from "../types/database";
+import { Subject as DBSubject } from "@/types/database";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
 import { usePlatformSettings } from "./usePlatformSettings";
 import { logger } from "../lib/logger";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+export interface Subject extends DBSubject {
+    isOptimistic?: boolean;
+}
 
 type UseSubjectsParams = {
     level?: number | null;
@@ -85,11 +89,24 @@ export function useSubjects(params: UseSubjectsParams = {}) {
 
             if (error) throw error;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['subjects'] });
+        onMutate: async ({ id, showOnHome }) => {
+            await queryClient.cancelQueries({ queryKey: ['subjects'] });
+            const previousSubjects = queryClient.getQueryData(['subjects']);
+            
+            queryClient.setQueriesData({ queryKey: ['subjects'] }, (old: Subject[] | undefined) => {
+                return old?.map(s => s.id === id ? { ...s, show_on_home: showOnHome } : s);
+            });
+
+            return { previousSubjects };
         },
-        onError: (error) => {
+        onError: (error, _variables, context) => {
+            if (context?.previousSubjects) {
+                queryClient.setQueriesData({ queryKey: ['subjects'] }, context.previousSubjects);
+            }
             logger.error("Failed to update subject visibility", error);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['subjects'] });
         }
     });
 
@@ -98,17 +115,71 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             const { error } = await supabase.from("subjects").update(data).eq("id", id);
             if (error) throw error;
         },
-        onSuccess: () => {
+        onMutate: async ({ id, data }) => {
+            await queryClient.cancelQueries({ queryKey: ['subjects'] });
+            const previousSubjects = queryClient.getQueryData(['subjects']);
+            
+            queryClient.setQueriesData({ queryKey: ['subjects'] }, (old: Subject[] | undefined) => {
+                return old?.map(s => s.id === id ? { ...s, ...data } : s);
+            });
+
+            return { previousSubjects };
+        },
+        onError: (error, _variables, context) => {
+            if (context?.previousSubjects) {
+                queryClient.setQueriesData({ queryKey: ['subjects'] }, context.previousSubjects);
+            }
+            logger.error("Failed to update subject", error);
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["subjects"] });
         },
     });
 
     const createSubjectMutation = useMutation({
         mutationFn: async (data: Partial<Subject>) => {
-            const { error } = await supabase.from("subjects").insert([data]);
+            const { data: inserted, error } = await supabase.from("subjects").insert([data]).select().single();
             if (error) throw error;
+            return inserted;
         },
-        onSuccess: () => {
+        onMutate: async (newSubject) => {
+            await queryClient.cancelQueries({ queryKey: ['subjects'] });
+            const previousSubjects = queryClient.getQueryData(['subjects']);
+            
+            const optimisticSubject: Subject = {
+                id: `optimistic-${Date.now()}`,
+                name: newSubject.name || "",
+                name_en: newSubject.name_en || "",
+                is_academic: newSubject.is_academic ?? true,
+                semester: newSubject.semester || 1,
+                level: newSubject.level || 1,
+                show_on_home: newSubject.show_on_home ?? true,
+                created_at: new Date().toISOString(),
+                status: "approved",
+                isOptimistic: true,
+                professor: newSubject.professor || null,
+                professor_ar: null,
+                professor_gender: null,
+                description: newSubject.description || null,
+                description_ar: null,
+                schedule: newSubject.schedule || null,
+                location: newSubject.location || null,
+                ...newSubject
+            };
+
+            queryClient.setQueriesData({ queryKey: ['subjects'] }, (old: Subject[] | undefined) => {
+                return old ? [optimisticSubject, ...old] : [optimisticSubject];
+            });
+
+            return { previousSubjects };
+        },
+        onError: (error, _variables, context) => {
+            if (context?.previousSubjects) {
+                queryClient.setQueriesData({ queryKey: ['subjects'] }, context.previousSubjects);
+            }
+            logger.error("Failed to create subject", error);
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["subjects"] });
         },
     });
@@ -118,7 +189,23 @@ export function useSubjects(params: UseSubjectsParams = {}) {
             const { error } = await supabase.from("subjects").delete().eq("id", id);
             if (error) throw error;
         },
-        onSuccess: () => {
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ['subjects'] });
+            const previousSubjects = queryClient.getQueryData(['subjects']);
+            
+            queryClient.setQueriesData({ queryKey: ['subjects'] }, (old: Subject[] | undefined) => {
+                return old?.filter(s => s.id !== id);
+            });
+
+            return { previousSubjects };
+        },
+        onError: (error, _variables, context) => {
+            if (context?.previousSubjects) {
+                queryClient.setQueriesData({ queryKey: ['subjects'] }, context.previousSubjects);
+            }
+            logger.error("Failed to delete subject", error);
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["subjects"] });
         },
     });

@@ -259,9 +259,9 @@ const isPuterTransportError = (error: unknown) => {
   return (
     msg.includes('socket.io') ||
     msg.includes('engine.io') ||
-    msg.includes('transport') ||
     msg.includes('websocket') ||
     msg.includes('polling') ||
+    msg.includes('transport') ||
     msg.includes('eio=') ||
     msg.includes('websocket is closed') ||
     msg.includes('network') ||
@@ -269,11 +269,90 @@ const isPuterTransportError = (error: unknown) => {
     msg.includes('failed to fetch') ||
     msg.includes('connection error') ||
     msg.includes('timeout') ||
+    msg.includes('timed out') ||
     msg.includes('disconnected')
   );
 };
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const extractTextFromContentArray = (content: unknown): string => {
+  if (Array.isArray(content)) {
+    return content
+      .filter(item => isRecord(item) && item.type === 'text' && typeof item.text === 'string')
+      .map(item => (item as { text: string }).text)
+      .join('');
+  }
+  return '';
+};
+
+const safeStringify = (value: unknown): string => {
+  try {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    
+    // Handle objects that might have problematic toString methods
+    if (typeof value === 'object') {
+      // Check if it's a plain object or array
+      if (Array.isArray(value)) {
+        // Handle Claude 4.6 content arrays
+        const textContent = extractTextFromContentArray(value);
+        if (textContent) return textContent;
+        return JSON.stringify(value);
+      }
+      
+      // Try to get constructor name for debugging
+      const constructor = value?.constructor?.name || 'Object';
+      
+      // Try JSON.stringify first
+      try {
+        const json = JSON.stringify(value);
+        if (json && json !== '{}') return json;
+      } catch {
+        // JSON.stringify failed, continue to fallback
+      }
+      
+      // Fallback: try to extract common properties
+      if (typeof value === 'object' && value !== null) {
+        const obj = value as Record<string, unknown>;
+        
+        // Handle Claude 4.6 message structure
+        if (obj.content) {
+          const textContent = extractTextFromContentArray(obj.content);
+          if (textContent) return textContent;
+          if (typeof obj.content === 'string') return obj.content;
+        }
+        
+        const content = obj.message || obj.text || obj.data;
+        if (typeof content === 'string') return content;
+        if (typeof content === 'object') {
+          return safeStringify(content);
+        }
+      }
+      
+      // Last resort: return object type for debugging
+      return `[${constructor} object]`;
+    }
+    
+    return String(value);
+  } catch (error) {
+    console.warn('[AI] Failed to convert value to string:', error, value);
+    return '[Conversion Error]';
+  }
+};
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number = 30000,
+  timeoutMessage: string = 'Request timed out'
+): Promise<T> => {
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]);
+};
 
 const withPuterRetry = async <T>(
   fn: () => Promise<T>,
@@ -419,28 +498,52 @@ const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
 const extractPuterChatText = async (response: unknown): Promise<string> => {
   if (typeof response === 'string') return response;
 
-  // Non-streaming: Puter returns a ChatResponse with { message: { content: string } }
+  // Non-streaming: Puter returns a ChatResponse with { message: { content: string|array } }
   if (isRecord(response)) {
     const message = response.message;
-    if (isRecord(message) && typeof message.content === 'string') {
-      return message.content;
+    if (isRecord(message)) {
+      // Handle Claude 4.6 content array format
+      if (Array.isArray(message.content)) {
+        return extractTextFromContentArray(message.content);
+      }
+      // Handle traditional string content format
+      if (typeof message.content === 'string') {
+        return message.content;
+      }
+    }
+    
+    // Try to extract content from error responses
+    if (isRecord(response)) {
+      const error = response.error || response.message;
+      if (typeof error === 'string') {
+        return error;
+      }
+      if (isRecord(error) && typeof error.message === 'string') {
+        return error.message;
+      }
     }
   }
 
   // Streaming (future-proof): async iterable of chunks with { text: string }
   if (hasAsyncIterator(response)) {
     let out = '';
-    for await (const chunk of response) {
-      if (isRecord(chunk) && typeof chunk.text === 'string') {
-        out += chunk.text;
-      } else {
-        out += String(chunk ?? '');
+    try {
+      for await (const chunk of response) {
+        if (isRecord(chunk) && typeof chunk.text === 'string') {
+          out += chunk.text;
+        } else {
+          out += safeStringify(chunk);
+        }
       }
+      return out;
+    } catch (error) {
+      console.warn('[AI] Error during streaming response extraction:', error);
+      return out || safeStringify(response);
     }
-    return out;
   }
 
-  return String(response);
+  // Use safe string conversion for problematic objects
+  return safeStringify(response);
 };
 
 const getAvailablePuterModelIds = async (puter: PuterClientLike): Promise<Set<string>> => {
@@ -476,7 +579,10 @@ const resolvePuterModel = async (puter: PuterClientLike, requestedModel?: string
   // Map friendly names to exact Puter IDs based on logs and docs
   if (desired === 'GPT-4o') desired = 'gpt-4o';
   if (desired === 'o1-mini') desired = 'o1-mini';
-  if (desired === 'Claude 3.5 Sonnet' || desired === 'claude-3.5-sonnet') desired = 'claude-3-5-sonnet';
+  if (desired === 'Claude 3.5 Sonnet' || desired === 'claude-3-5-sonnet') desired = 'claude-sonnet-4-6';
+  if (desired === 'Claude 4.6 Sonnet' || desired === 'claude-sonnet-4-6') desired = 'claude-sonnet-4-6';
+  if (desired === 'Claude 4.6 Opus' || desired === 'claude-opus-4-6') desired = 'claude-opus-4-6';
+  if (desired === 'Claude 4.5 Haiku' || desired === 'claude-haiku-4-5') desired = 'claude-haiku-4-5';
   
   if (!desired) return fallback;
 
@@ -910,7 +1016,11 @@ ${platformContext}
 
       try {
         return await withPuterRetry(
-          () => puter.ai.chat(prompt, { model: resolvedModel, stream: false }),
+          () => withTimeout(
+            puter.ai.chat(prompt, { model: resolvedModel, stream: false }),
+            isPremium ? 25000 : 30000, // Shorter timeout for premium models
+            `AI request timed out using model: ${resolvedModel}`
+          ),
           { 
             maxAttempts: 3, 
             baseDelayMs: 1000,
@@ -925,8 +1035,21 @@ ${platformContext}
           }
         );
       } catch (err) {
+        // Auto-fallback to GPT model for premium model failures
+        if (isClaudeLikeModel(resolvedModel) && (isPuterTransportError(err) || asErrorMessage(err).includes('timed out'))) {
+          console.warn(`[Puter] Auto-falling back from ${resolvedModel} to gpt-5.4-nano due to error:`, asErrorMessage(err));
+          return await withTimeout(
+            puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false }),
+            30000,
+            'Fallback AI request timed out'
+          );
+        }
         if (isPuterModelNotAvailableError(err) && resolvedModel !== 'gpt-5.4-nano') {
-          return puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false });
+          return await withTimeout(
+            puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false }),
+            30000,
+            'Fallback AI request timed out'
+          );
         }
         throw err;
       }
@@ -999,11 +1122,7 @@ ${ZANE_UI_INSTRUCTION}`;
         .map(chunk => `${chunk.author || 'مستخدم'}: ${chunk.content}`)
         .join('\n\n');
 
-      // Log non-transport errors
-      if (!isPuterTransportError(error) && !isPuterAuthError(error)) {
-        logger.error('Puter AI error', error, { mode });
-      }
-
+      // Log all errors with appropriate levels
       if (isPuterTransportError(error)) {
         logger.warn('Puter transport error', {
           mode,
@@ -1011,6 +1130,14 @@ ${ZANE_UI_INSTRUCTION}`;
           circuitOpen: isPuterCircuitOpen(),
           error: asErrorMessage(error),
         });
+      } else if (isPuterAuthError(error)) {
+        logger.info('Puter auth error', {
+          mode,
+          selectedModel,
+          error: asErrorMessage(error),
+        });
+      } else {
+        logger.error('Puter AI error', error, { mode, selectedModel });
       }
 
       // Try server-side fallback if Puter failed
@@ -1026,9 +1153,25 @@ ${ZANE_UI_INSTRUCTION}`;
         if (msg.toLowerCase().includes('not signed in')) {
           return formatPuterNeedsLoginMessage(isClaudeLikeModel(selectedModel) ? selectedModel : undefined);
         }
-        return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
+        if (isPuterTransportError(error)) {
+          const isClaudeModel = isClaudeLikeModel(selectedModel);
+          if (isClaudeModel) {
+            return `⚠️ تم التبديل تلقائياً إلى نموذج GPT-5 nano بسبب مشاكل في اتصال Claude.\n\nالإجابة التالية ستكون من GPT-5 nano:\n\n💡 للحصول على إجابات من Claude، حاول مرة أخرى بعد بضع دقائق أو تحقق من اتصالك بالإنترنت.`;
+          }
+          return `⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب مشاكل في الاتصال.\n\n💡 الحلول المقترحة:\n1. انتظر بضع دقائق ثم حاول مرة أخرى\n2. تحقق من اتصالك بالإنترنت\n\nسيتم حل المشكلة تلقائياً خلال فترة قصيرة.`;
+        }
+        return `⚠️ حدث خطأ في خدمة الذكاء الاصطناعي.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
       }
-      return `⚠️ مشكلة في خدمة الذكاء الاصطناعي (Puter) حالياً.\n\nبناءً على المحادثات المتاحة، إليك المعلومات ذات الصلة:\n\n${context}\n\n💡 جرب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
+      
+      if (isPuterTransportError(error)) {
+        const isClaudeModel = isClaudeLikeModel(selectedModel);
+        if (isClaudeModel) {
+          return `⚠️ تم التبديل تلقائياً إلى نموذج GPT-5 nano بسبب مشاكل في اتصال Claude.\n\nبناءً على المحادثات المتاحة، إليك المعلومات ذات الصلة:\n\n${context}\n\n💡 للحصول على إجابات من Claude، حاول مرة أخرى بعد بضع دقائق.`;
+        }
+        return `⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب مشاكل في الاتصال.\n\nبناءً على المحادثات المتاحة، إليك المعلومات ذات الصلة:\n\n${context}\n\n💡 انتظر بضع دقائق ثم حاول مرة أخرى، أو جرّب استخدام نموذج مختلف.`;
+      }
+      
+      return `⚠️ حدث خطأ في خدمة الذكاء الاصطناعي.\n\nبناءً على المحادثات المتاحة، إليك المعلومات ذات الصلة:\n\n${context}\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
     }
   }
 

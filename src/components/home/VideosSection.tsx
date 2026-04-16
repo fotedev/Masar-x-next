@@ -1,9 +1,10 @@
 "use client";
 
-import { BookOpen, Calendar, Star, Play } from "lucide-react";
+import { Play, BookOpen, Calendar, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { VideoWithRatings } from "@/types/database";
 import { useLocale } from "next-intl";
+import { Skeleton } from "../ui/Skeleton";
 
 interface VideosSectionProps {
   loading: boolean;
@@ -55,24 +56,38 @@ export function VideosSection({
       {loading || subjectsLoading ? (
         <div className="summary-grid">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="modern-card p-5 animate-pulse">
-              <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3"></div>
+            <div key={i} className="modern-card p-5">
+              <div className="flex justify-between items-start mb-3">
+                <Skeleton className="h-6 w-3/4 rounded-lg" />
+              </div>
               <div className="space-y-3 mb-4">
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-4 w-1/2 rounded-md" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-4 w-1/3 rounded-md" />
+                </div>
               </div>
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
+                <Skeleton className="h-10 w-full rounded-xl" />
               </div>
             </div>
           ))}
         </div>
       ) : displayVideos.length === 0 ? (
-        <div className="modern-card p-12 text-center">
-          <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
+        <div className="modern-card p-12 text-center flex flex-col items-center">
+          <Play className="w-16 h-16 text-slate-200 dark:text-slate-800 mb-4 opacity-20" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium mb-6">
             {tHome("goToSubjectsDescription")}
           </p>
+          <button
+            onClick={() => onNavigate("subjects")}
+            className="px-6 py-2.5 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-all duration-300"
+          >
+            {tHome("goToSubjects")}
+          </button>
         </div>
       ) : (
         <motion.div

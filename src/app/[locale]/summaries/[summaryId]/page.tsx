@@ -338,6 +338,7 @@ export default function SummaryDetailPage() {
                         src={imageUrl}
                         alt={`صورة ${index + 1}`}
                         fill
+                        sizes="(max-width: 640px) 100vw, 50vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
                         onClick={() => window.open(imageUrl, "_blank")}
                         unoptimized
