@@ -107,7 +107,8 @@ interface CourseFile {
 export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
-  const { user, adminRole } = useAuth();
+  const { user } = useAuth();
+  const adminRole = user?.app_metadata?.role;
   const router = useRouter();
   const locale = useLocale();
   const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";

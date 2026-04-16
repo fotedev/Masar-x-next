@@ -22,7 +22,8 @@ export function AppealFormModal({
   contentType,
   contentTitle,
 }: AppealFormModalProps) {
-  const { user, displayName } = useAuth();
+  const { user, profile } = useAuth();
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "";
   const { notifyAdmins } = useNotifications();
   const { addAppeal } = useAppeals();
   const t = useTranslations("appeals");

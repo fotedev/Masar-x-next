@@ -2,12 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font variables */
+:root {
+  --font-inter: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-almarai: "Almarai", "Cairo", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 /* Base font family */
 @layer base {
   body {
-    font-family: "Cairo", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font-inter);
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+  }
+  
+  html[dir="rtl"] body {
+    font-family: var(--font-almarai);
   }
 }
 
@@ -493,4 +503,28 @@
     width: 100%;
     height: calc(100vh - 64px); /* Adjust based on header height */
   }
+}
+
+/* AI Assistant Chat Scrollbar Styling */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3); /* slate-400/30 */
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5); /* slate-400/50 */
+}
+
+/* For Firefox */
+.chat-messages {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+  scrollbar-width: thin;
 }

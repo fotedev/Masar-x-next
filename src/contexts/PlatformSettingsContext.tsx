@@ -278,3 +278,7 @@ export function usePlatformSettingsContext() {
   }
   return context;
 }
+
+export function useOptionalPlatformSettingsContext() {
+  return useContext(PlatformSettingsContext);
+}

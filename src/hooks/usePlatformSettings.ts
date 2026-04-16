@@ -1,17 +1,10 @@
-import { usePlatformSettingsContext } from "@/contexts/PlatformSettingsContext";
+import { useOptionalPlatformSettingsContext } from "@/contexts/PlatformSettingsContext";
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
 export function usePlatformSettings() {
-  let context: ReturnType<typeof usePlatformSettingsContext> | undefined;
-  
-  try {
-    context = usePlatformSettingsContext();
-  } catch (err) {
-    // Context not found, fallback to independent hook logic
-    context = undefined;
-  }
+  const context = useOptionalPlatformSettingsContext();
 
   // Independent logic (identical to the old hook, used if Context fails or is missing)
   const getInitialSemester = () => {

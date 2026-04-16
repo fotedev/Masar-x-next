@@ -11,6 +11,7 @@ import { useQuizzes } from "@/hooks/useQuizzes";
 import { ChatHeader } from "@/components/ai/ChatHeader";
 import { ChatContainer } from "@/components/ai/ChatContainer";
 import { ChatInput } from "@/components/ai/ChatInput";
+import { AIErrorBoundary } from "@/components/AIErrorBoundary";
 import { aiAssistant } from "@/lib/ai-assistant";
 import { toast } from "react-hot-toast";
 import { useRouter } from "@/i18n/routing";
@@ -53,9 +54,9 @@ export default function AiAssistantPage() {
 
   const [selectedModel, setSelectedModel] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem("zane_ai_selected_model") || "gpt-5-nano";
+      return localStorage.getItem("zane_ai_selected_model") || "claude-sonnet-4-6";
     }
-    return "gpt-5-nano";
+    return "claude-sonnet-4-6";
   });
 
   const handleModelChange = (model: string) => {
@@ -177,92 +178,94 @@ export default function AiAssistantPage() {
   }
 
   return (
-    <div className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
-      isInitialState 
-        ? "h-screen justify-center items-center px-4 py-4" 
-        : "h-[100dvh] pt-0 pb-2 px-0 sm:px-4"
-    }`}>
-      {!isInitialState && (
-        <ChatHeader
+    <AIErrorBoundary>
+      <div className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
+        isInitialState 
+          ? "h-screen justify-center items-center px-4 py-4" 
+          : "h-[100dvh] pt-0 pb-2 px-0 sm:px-4"
+      }`}>
+        {!isInitialState && (
+          <ChatHeader
+            mode={mode}
+            setMode={setMode}
+            selectedModel={selectedModel}
+            setSelectedModel={handleModelChange}
+            onOpenPuterSettings={() => {
+              initPuterDiagnostics();
+              setShowPuterSettings(true);
+            }}
+            studentSelectedSubject={studentSelectedSubject}
+            setStudentSelectedSubject={setStudentSelectedSubject}
+            studentSubjects={studentSubjects}
+            studentSelectedQuizId={studentSelectedQuizId}
+            setStudentSelectedQuizId={setStudentSelectedQuizId}
+            studentQuizzes={studentQuizzes}
+            studentQuizzesLoading={studentQuizzesLoading}
+            onStartQuiz={handleStartQuiz}
+            onSummarizeChat={handleSummarizeChat}
+            onClearChat={clearChat}
+            isSummarizing={isSummarizing}
+            hasChatData={messages.length > 0}
+            generatedQuiz={generatedQuiz}
+            onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
+            safeLocalGeneratedQuizzesCount={0}
+            t={t}
+          />
+        )}
+
+        <ChatContainer
+          messages={messages}
+          isLoading={isLoading}
+          messagesContainerRef={messagesContainerRef}
+          messagesEndRef={messagesEndRef}
+          t={t}
+          isInitialState={isInitialState}
           mode={mode}
           setMode={setMode}
-          selectedModel={selectedModel}
-          setSelectedModel={handleModelChange}
+          onSuggestionClick={handleSuggestionClick}
           onOpenPuterSettings={() => {
             initPuterDiagnostics();
             setShowPuterSettings(true);
           }}
-          studentSelectedSubject={studentSelectedSubject}
-          setStudentSelectedSubject={setStudentSelectedSubject}
-          studentSubjects={studentSubjects}
-          studentSelectedQuizId={studentSelectedQuizId}
-          setStudentSelectedQuizId={setStudentSelectedQuizId}
-          studentQuizzes={studentQuizzes}
-          studentQuizzesLoading={studentQuizzesLoading}
-          onStartQuiz={handleStartQuiz}
-          onSummarizeChat={handleSummarizeChat}
-          onClearChat={clearChat}
-          isSummarizing={isSummarizing}
-          hasChatData={messages.length > 0}
-          generatedQuiz={generatedQuiz}
-          onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
-          safeLocalGeneratedQuizzesCount={0}
+          isPuterSignedIn={isPuterSignedIn}
+          onUiMessage={handleUiMessage}
+        />
+
+        <ChatInput
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          isLoading={isLoading}
+          onSendMessage={handleSendMessage}
+          inputRef={inputRef}
           t={t}
-        />
-      )}
-
-      <ChatContainer
-        messages={messages}
-        isLoading={isLoading}
-        messagesContainerRef={messagesContainerRef}
-        messagesEndRef={messagesEndRef}
-        t={t}
-        isInitialState={isInitialState}
-        mode={mode}
-        setMode={setMode}
-        onSuggestionClick={handleSuggestionClick}
-        onOpenPuterSettings={() => {
-          initPuterDiagnostics();
-          setShowPuterSettings(true);
-        }}
-        isPuterSignedIn={isPuterSignedIn}
-        onUiMessage={handleUiMessage}
-      />
-
-      <ChatInput
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        isLoading={isLoading}
-        onSendMessage={handleSendMessage}
-        inputRef={inputRef}
-        t={t}
-        isInitialState={isInitialState}
-        user={user}
-      />
-
-      {showPuterSettings && (
-        <PuterSettingsModal
-          isOpen={showPuterSettings}
-          onClose={() => setShowPuterSettings(false)}
-        />
-      )}
-
-      {showGeneratedQuizModal && generatedQuiz && (
-        <LocalQuizPreviewModal
-          generatedQuiz={generatedQuiz}
-          safeLocalGeneratedQuizzes={[]}
-          setGeneratedQuiz={setGeneratedQuiz}
-          resetLocalQuizPlayer={() => {}}
-          onOpenLocalQuiz={() => {
-            if (generatedQuiz?.id) {
-              router.push(`/quiz-play/${generatedQuiz.id}`);
-            }
-          }}
-          onClose={() => setShowGeneratedQuizModal(false)}
+          isInitialState={isInitialState}
           user={user}
-          t={t}
         />
-      )}
-    </div>
+
+        {showPuterSettings && (
+          <PuterSettingsModal
+            isOpen={showPuterSettings}
+            onClose={() => setShowPuterSettings(false)}
+          />
+        )}
+
+        {showGeneratedQuizModal && generatedQuiz && (
+          <LocalQuizPreviewModal
+            generatedQuiz={generatedQuiz}
+            safeLocalGeneratedQuizzes={[]}
+            setGeneratedQuiz={setGeneratedQuiz}
+            resetLocalQuizPlayer={() => {}}
+            onOpenLocalQuiz={() => {
+              if (generatedQuiz?.id) {
+                router.push(`/quiz-play/${generatedQuiz.id}`);
+              }
+            }}
+            onClose={() => setShowGeneratedQuizModal(false)}
+            user={user}
+            t={t}
+          />
+        )}
+      </div>
+    </AIErrorBoundary>
   );
 }
