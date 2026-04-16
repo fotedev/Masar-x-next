@@ -164,6 +164,7 @@ export default function CourseDetailsPage() {
                         src={thumbnailUrl}
                         alt={title}
                         fill
+                        sizes="(max-width: 1024px) 100vw, 33vw"
                         className="rounded-lg shadow-sm object-cover"
                       />
                     </div>

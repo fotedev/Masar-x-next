@@ -72,7 +72,7 @@ export default async function RootLayout({
   const locale = await localeFromRequest();
   const assistantName = locale === "ar" ? "زين" : "ZANE";
 
-  const fontClassName =
+  const fontVariable =
     locale === "ar"
       ? (await import("@/lib/fonts/almaraiFont")).almaraiClassName
       : (await import("@/lib/fonts/interFont")).interClassName;
@@ -90,7 +90,7 @@ export default async function RootLayout({
         <ThemeScript siteUrl={SITE_URL} assistantName={assistantName} />
       </head>
       <body
-        className={`${fontClassName} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
+        className={`${fontVariable} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
         suppressHydrationWarning
       >
         {children}

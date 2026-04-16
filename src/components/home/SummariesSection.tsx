@@ -3,12 +3,14 @@
 import { FileText, BookOpen, Calendar, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { SummaryWithRatings } from "@/types/database";
+import { SummaryWithRatingsOptimistic } from "@/hooks/useSummaries";
 import { useLocale } from "next-intl";
+import { Skeleton } from "../ui/Skeleton";
 
 interface SummariesSectionProps {
   loading: boolean;
   subjectsLoading: boolean;
-  displaySummaries: SummaryWithRatings[];
+  displaySummaries: SummaryWithRatingsOptimistic[];
   tHome: (key: string) => string;
   onNavigate: (page: string, id?: string) => void;
   trackSummaryClick: (id: string, action: string) => void;
@@ -45,6 +47,7 @@ export function SummariesSection({
   onEditSummary,
 }: SummariesSectionProps) {
   const locale = useLocale();
+  const isRTL = locale === "ar";
   return (
     <div className="space-y-6" dir="auto">
       <div className="flex items-center justify-between">
@@ -62,26 +65,43 @@ export function SummariesSection({
       {loading || subjectsLoading ? (
         <div className="summary-grid">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="modern-card p-5 animate-pulse">
+            <div key={i} className="modern-card p-5 h-[180px]">
               <div className="flex justify-between items-start mb-3">
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+                <Skeleton className="h-6 w-3/4 rounded-lg" />
               </div>
               <div className="space-y-3 mb-4">
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-4 w-1/2 rounded-md" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-4 w-1/3 rounded-md" />
+                </div>
               </div>
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full"></div>
+                <Skeleton className="h-4 w-full rounded-md" />
               </div>
             </div>
           ))}
         </div>
       ) : displaySummaries.length === 0 ? (
-        <div className="modern-card p-12 text-center">
-          <FileText className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4 opacity-20" />
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {tHome("goToSubjectsDescription")}
+        <div className="modern-card p-10 sm:p-12 text-center flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/20 border-dashed border-2 border-slate-200 dark:border-slate-800 rounded-[32px]">
+          <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl shadow-sm flex items-center justify-center mb-6 ring-8 ring-slate-50 dark:ring-slate-900/50">
+            <FileText className="w-10 h-10 text-brand-blue opacity-40" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-relaxed">
+            {isRTL ? "لا توجد ملخصات مفضلة بعد" : "No favorite summaries yet"}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 max-w-[280px] mx-auto text-sm leading-relaxed">
+            {isRTL ? "ابدأ باستكشاف المواد وأضف ملخصاتك المفضلة لتظهر هنا!" : tHome("goToSubjectsDescription")}
           </p>
+          <button
+            onClick={() => onNavigate("subjects")}
+            className="px-8 py-3 bg-brand-blue text-white rounded-2xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-all duration-300 active:scale-95"
+          >
+            {tHome("goToSubjects")}
+          </button>
         </div>
       ) : (
         <motion.div
@@ -90,25 +110,36 @@ export function SummariesSection({
           animate="show"
           className="summary-grid"
         >
-          {displaySummaries.map((summary: SummaryWithRatings) => {
+          {displaySummaries.map((summary: SummaryWithRatingsOptimistic) => {
             const canEdit = user && (isAdmin || summary.user_id === user.id);
 
             return (
               <motion.div
                 key={summary.id}
                 variants={itemVariants}
-                whileHover={{ y: -4 }}
-                className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
+                whileHover={!summary.isOptimistic ? { y: -4 } : {}}
+                className={`modern-card p-5 transition-all duration-300
+                  ${summary.isOptimistic 
+                    ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
+                    : "cursor-pointer group hover:border-brand-blue/50"
+                  }`}
                 onClick={() => {
+                  if (summary.isOptimistic) return;
                   trackSummaryClick(summary.id, "trending_click");
                   onNavigate("summaries", summary.id);
                 }}
               >
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-brand-blue transition-colors">
+                  <h3 className={`text-base font-bold line-clamp-2 transition-colors
+                    ${summary.isOptimistic ? "text-slate-400" : "text-slate-900 dark:text-white group-hover:text-brand-blue"}`}>
                     {summary.title}
+                    {summary.isOptimistic && (
+                      <span className="block text-[10px] mt-1 font-medium animate-pulse">
+                        جاري الرفع...
+                      </span>
+                    )}
                   </h3>
-                  {canEdit && (
+                  {canEdit && !summary.isOptimistic && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -156,8 +187,9 @@ export function SummariesSection({
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                <div className={`pt-4 border-t border-slate-100 dark:border-slate-800
+                  ${isRTL ? 'leading-relaxed' : 'leading-normal'}`}>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
                     {summary.content}
                   </p>
                 </div>

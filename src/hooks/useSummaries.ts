@@ -3,6 +3,10 @@ import { SummaryWithRatings, SummaryUpdate } from "../types/database";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "../lib/logger";
 
+export interface SummaryWithRatingsOptimistic extends SummaryWithRatings {
+  isOptimistic?: boolean;
+}
+
 export function useSummaries() {
   const queryClient = useQueryClient();
 
@@ -26,6 +30,18 @@ export function useSummaries() {
       }
     }
   });
+
+  const addOptimisticSummary = (summary: SummaryWithRatingsOptimistic) => {
+    queryClient.setQueryData(['summaries'], (old: SummaryWithRatingsOptimistic[] | undefined) => {
+      return old ? [summary, ...old] : [summary];
+    });
+  };
+
+  const removeOptimisticSummary = (id: string) => {
+    queryClient.setQueryData(['summaries'], (old: SummaryWithRatingsOptimistic[] | undefined) => {
+      return old?.filter(s => s.id !== id);
+    });
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: "approved" | "rejected" }) => {
@@ -70,11 +86,24 @@ export function useSummaries() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['summaries'] });
+      const previousSummaries = queryClient.getQueryData(['summaries']);
+      
+      queryClient.setQueryData(['summaries'], (old: SummaryWithRatings[] | undefined) => {
+        return old?.filter(s => s.id !== id);
+      });
+
+      return { previousSummaries };
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousSummaries) {
+        queryClient.setQueryData(['summaries'], context.previousSummaries);
+      }
       logger.error("Failed to delete summary", error);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
     }
   });
 
@@ -109,6 +138,8 @@ export function useSummaries() {
     summaries,
     loading,
     fetchSummaries: () => fetchSummaries(),
+    addOptimisticSummary,
+    removeOptimisticSummary,
     updateStatus: (id: string, status: "approved" | "rejected") => 
       updateStatusMutation.mutateAsync({ id, status }),
     editSummary: (id: string, updates: Partial<SummaryUpdate>) => 

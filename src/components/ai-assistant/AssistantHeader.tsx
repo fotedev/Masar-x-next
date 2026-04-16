@@ -22,7 +22,7 @@ export function AssistantHeader({
   children,
 }: AssistantHeaderProps) {
   const t = useTranslations("assistant");
-  const defaultSubtitle = subtitle ?? t("responseFromPlatform");
+  const defaultSubtitle = subtitle ?? (isOnline ? t("onlineReady") : t("offline"));
   return (
     <div className={ASSISTANT_HEADER.container}>
       <div className={ASSISTANT_HEADER.leftSection}>
@@ -39,12 +39,10 @@ export function AssistantHeader({
           <div className={ASSISTANT_TITLE.statusBadge}>
             {/* Online Indicator */}
             {isOnline && (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className={ASSISTANT_TITLE.statusDot}></span>
-                  <span className={ASSISTANT_TITLE.statusDotStatic}></span>
-                </span>
-              </>
+              <span className="relative flex h-2 w-2">
+                <span className={ASSISTANT_TITLE.statusDot}></span>
+                <span className={ASSISTANT_TITLE.statusDotStatic}></span>
+              </span>
             )}
             <span className={ASSISTANT_TITLE.statusText}>{defaultSubtitle}</span>
           </div>

@@ -40,12 +40,12 @@ export function SubjectsGrid({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="modern-card p-6">
-            <div className="text-center">
-              <Skeleton className="w-14 h-14 rounded-2xl mx-auto mb-4" />
-              <Skeleton className="h-5 rounded-lg mx-auto w-3/4" />
+          <div key={index} className="modern-card p-6 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] min-h-[160px] flex flex-col items-center justify-center">
+            <div className="text-center flex flex-col items-center justify-center h-full w-full">
+              <Skeleton className="w-14 h-14 rounded-2xl mb-4" />
+              <Skeleton className="h-5 rounded-lg w-3/4 mt-auto" />
             </div>
           </div>
         ))}
@@ -83,18 +83,29 @@ export function SubjectsGrid({
                 hidden: { opacity: 0 },
                 show: { opacity: 1 },
               }}
-              whileHover={{ scale: 1.05, translateY: -4 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onSubjectClick?.(subject.name)}
-              className="modern-card p-6 cursor-pointer group hover:border-brand-blue/50 transition-[colors,transform,box-shadow,border-color] duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+              whileHover={!subject.isOptimistic ? { scale: 1.05, translateY: -4 } : {}}
+              whileTap={!subject.isOptimistic ? { scale: 0.95 } : {}}
+              onClick={() => !subject.isOptimistic && onSubjectClick?.(subject.name)}
+              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color] duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none
+                ${subject.isOptimistic 
+                  ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
+                  : "cursor-pointer group hover:border-brand-blue/50"
+                }`}
               type="button"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
-                <div className="w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-blue/20 group-hover:scale-110 transition-colors transition-transform duration-300 flex-shrink-0">
+                <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors transition-transform duration-300 flex-shrink-0
+                  ${!subject.isOptimistic ? "group-hover:bg-brand-blue/20 group-hover:scale-110" : ""}`}>
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-blue transition-colors line-clamp-2 text-center mt-auto">
+                <h3 className={`text-sm sm:text-base font-bold transition-colors line-clamp-2 text-center mt-auto
+                  ${subject.isOptimistic ? "text-slate-400" : "text-slate-900 dark:text-white group-hover:text-brand-blue"}`}>
                   {displayName}
+                  {subject.isOptimistic && (
+                    <span className="block text-[10px] mt-1 font-medium animate-pulse">
+                      جاري الحفظ...
+                    </span>
+                  )}
                 </h3>
               </div>
             </motion.button>
@@ -103,28 +114,40 @@ export function SubjectsGrid({
       </motion.div>
 
       {filteredSubjects.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-16 flex flex-col items-center">
           {is_academic ? (
-            <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6">
+              <BookOpen className="w-10 h-10 text-slate-400" />
+            </div>
           ) : (
-            <Image
-              src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
-              alt="TRW Logo"
-              width={96}
-              height={96}
-              className="w-24 h-24 object-contain mx-auto mb-4 grayscale opacity-50"
-            />
+            <div className="relative w-24 h-24 mb-6 grayscale opacity-50">
+              <Image
+                src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
+                alt="TRW Logo"
+                fill
+                sizes="96px"
+                className="object-contain"
+              />
+            </div>
           )}
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
             {is_academic
               ? tSubjects("emptyAcademicTitle")
               : tSubjects("emptyNonAcademicTitle")}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-8">
             {is_academic
               ? tSubjects("emptyAcademicDescription")
               : tSubjects("emptyNonAcademicDescription")}
           </p>
+          {is_academic && (
+            <button
+              onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
+              className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
+            >
+              ابدأ المذاكرة مع زين AI
+            </button>
+          )}
         </div>
       )}
     </div>
