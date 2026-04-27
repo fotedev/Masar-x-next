@@ -12,7 +12,7 @@ import { inferLectureKeyFromTitle } from "@/utils/lecture-inference";
 import { useSubjectModals } from "@/hooks/useSubjectModals";
 import { useLectureContent } from "@/hooks/useLectureContent";
 import { useManageLectures } from "@/hooks/useManageLectures";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import type {
   ContentItem,

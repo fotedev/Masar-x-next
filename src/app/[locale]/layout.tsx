@@ -8,8 +8,8 @@ import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { type ReactNode } from "react";
-
-export const dynamic = "force-dynamic";
+import { isAdminRole } from "@/lib/auth/roles";
+import { logger } from "@/lib/logger";
 
 type Locale = "ar" | "en";
 
@@ -24,7 +24,7 @@ const getProfile = cache(async (userId: string) => {
       .limit(1);
     return profile || null;
   } catch (error) {
-    console.error("Error fetching profile in layout:", error);
+    logger.error("Error fetching profile in layout", error);
     return null;
   }
 });
@@ -48,33 +48,30 @@ export default async function LocaleLayout({
   }
 
   const messages = await getMessages({ locale: typedLocale });
-  
+
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   let profile = null;
   let isAdmin = false;
 
   if (user) {
     profile = await getProfile(user.id);
     const role = user.app_metadata?.role;
-    isAdmin = role === 'admin' || role === 'doctor' || role === 'student_admin';
+    isAdmin = isAdminRole(role);
   }
 
   const dir = typedLocale === "ar" ? "rtl" : "ltr";
 
   return (
-    <NextIntlClientProvider 
-      locale={typedLocale} 
-      messages={messages} 
+    <NextIntlClientProvider
+      locale={typedLocale}
+      messages={messages}
       timeZone="Africa/Cairo"
     >
-      <AppProviders 
-        dir={dir} 
-        user={user} 
-        profile={profile} 
-        isAdmin={isAdmin}
-      >
+      <AppProviders dir={dir} user={user} profile={profile} isAdmin={isAdmin}>
         {children}
       </AppProviders>
     </NextIntlClientProvider>

@@ -5,14 +5,20 @@ import Script from "next/script";
 interface ThemeScriptProps {
   siteUrl: string;
   assistantName: string;
+  nonce?: string;
 }
 
-export default function ThemeScript({ siteUrl, assistantName }: ThemeScriptProps) {
+export default function ThemeScript({
+  siteUrl,
+  assistantName,
+  nonce,
+}: ThemeScriptProps) {
   return (
     <>
       <Script
         id="schema-org"
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
@@ -26,6 +32,7 @@ export default function ThemeScript({ siteUrl, assistantName }: ThemeScriptProps
       <Script
         id="theme-initializer"
         strategy="afterInteractive"
+        nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `
             (function() {

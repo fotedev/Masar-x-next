@@ -12,6 +12,7 @@ import { ProfileRow } from "@/lib/admin-db/schema";
 import { supabase } from "../lib/supabase";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
 import { logger } from "../lib/logger";
+import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
 
 interface AuthContextType {
   user: User | null;
@@ -46,6 +47,9 @@ export function AuthProvider({
 
   useEffect(() => {
     let mounted = true;
+
+    // T034: Cleanup old localStorage keys migrated to sessionStorage
+    cleanupOldLocalStorage();
 
     const initializeAuth = async () => {
       try {

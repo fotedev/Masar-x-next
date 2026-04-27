@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 interface Enrollment {
   id: string;

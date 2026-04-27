@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "./ui";
 import { Users } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { useEnrollments } from "@/hooks/useEnrollments";
 import { EnrollmentFilters } from "./enrollments/EnrollmentFilters";
 import { EnrollmentCard } from "./enrollments/EnrollmentCard";
