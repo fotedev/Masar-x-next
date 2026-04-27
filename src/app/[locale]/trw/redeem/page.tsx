@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { toast } from "@/hooks/useToast";
+import { toast } from "sonner";
 import { Loader2, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -81,7 +81,9 @@ export default function RedeemPage() {
             <Input
               placeholder={t("placeholder")}
               value={code}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setCode(e.target.value.toUpperCase())}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCode(e.target.value.toUpperCase())
+              }
               disabled={isPending}
               className="text-center font-mono text-lg tracking-widest bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10"
             />

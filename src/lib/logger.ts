@@ -1,4 +1,4 @@
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV !== "production";
 
 const normalizeError = (error: unknown) => {
   if (error instanceof Error) {
@@ -11,13 +11,14 @@ const normalizeError = (error: unknown) => {
     };
   }
 
-  if (typeof error === 'string') return { message: error };
-  if (error && typeof error === 'object') {
+  if (typeof error === "string") return { message: error };
+  if (error && typeof error === "object") {
     try {
       const asRec = error as Record<string, unknown>;
-      const message = typeof asRec.message === 'string' ? asRec.message : undefined;
-      const name = typeof asRec.name === 'string' ? asRec.name : undefined;
-      const stack = typeof asRec.stack === 'string' ? asRec.stack : undefined;
+      const message =
+        typeof asRec.message === "string" ? asRec.message : undefined;
+      const name = typeof asRec.name === "string" ? asRec.name : undefined;
+      const stack = typeof asRec.stack === "string" ? asRec.stack : undefined;
       return { name, message, stack, raw: asRec };
     } catch {
       return { raw: error };
@@ -27,24 +28,27 @@ const normalizeError = (error: unknown) => {
   return { message: String(error) };
 };
 
+// TODO: Wire up a real monitoring service here (e.g. Sentry, Logtail, Axiom).
+// import * as Sentry from '@sentry/nextjs';
+// const sendToMonitoring = (level, message, error, context) => Sentry.captureException(error, { extra: context });
+
 export const logger = {
-  error: (message: string, error?: unknown, context?: Record<string, unknown>) => {
-    if (isDev) {
-      console.error(`[ERROR] ${message}`, {
-        error: normalizeError(error),
-        ...context,
-        timestamp: new Date().toISOString(),
-      });
-    }
-    // In production, we could send this to a service like Sentry or LogSnag
+  error: (
+    message: string,
+    error?: unknown,
+    context?: Record<string, unknown>,
+  ) => {
+    console.error(`[ERROR] ${message}`, {
+      error: normalizeError(error),
+      ...context,
+      timestamp: new Date().toISOString(),
+    });
   },
   warn: (message: string, context?: Record<string, unknown>) => {
-    if (isDev) {
-      console.warn(`[WARN] ${message}`, {
-        ...context,
-        timestamp: new Date().toISOString(),
-      });
-    }
+    console.warn(`[WARN] ${message}`, {
+      ...context,
+      timestamp: new Date().toISOString(),
+    });
   },
   info: (message: string, context?: Record<string, unknown>) => {
     if (isDev) {

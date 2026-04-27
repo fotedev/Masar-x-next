@@ -67,14 +67,23 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
     setError("");
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          academic_level: formData.academic_level,
-          department: formData.department,
-        },
+      const selectedLevel = levels.find(
+        (l) => l.name === formData.academic_level,
+      );
+      const selectedDepartment = availableDepartments.find(
+        (d) => d.name === formData.department,
+      );
+
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        level: selectedLevel?.level_number ?? null,
+        department_id: selectedDepartment?.id ?? null,
+        updated_at: new Date().toISOString(),
       });
 
       if (error) throw error;
+
+      await supabase.auth.refreshSession();
 
       onComplete();
     } catch {

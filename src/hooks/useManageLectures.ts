@@ -3,8 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
 import { logger } from "@/lib/logger";
-import { toast } from "@/hooks/useToast";
-
+import { toast } from "sonner";
 
 interface UseManageLecturesProps {
   show: boolean;
@@ -107,7 +106,10 @@ export function useManageLectures({
       fetchLectures();
       toast.success("تمت إضافة المحاضرة بنجاح");
     } catch (error) {
-      logger.error("Error adding lecture", error, { subjectName, lectureTitle: newLecture.title });
+      logger.error("Error adding lecture", error, {
+        subjectName,
+        lectureTitle: newLecture.title,
+      });
       toast.error("حدث خطأ أثناء إضافة المحاضرة");
     } finally {
       setLoading(false);

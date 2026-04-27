@@ -1,7 +1,9 @@
 import { type ReactNode } from "react";
+import type { Metadata } from "next";
 import "../index.css";
 import { cookies, headers } from "next/headers";
 import ThemeScript from "@/components/ThemeScript";
+import "@/styles/html-clip.css";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://masarx.vercel.app";
@@ -15,7 +17,7 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
-}) {
+}): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const t = await getTranslations({ locale, namespace: "metadata" });
@@ -62,9 +64,7 @@ export default async function RootLayout({
       );
     } catch {
       return (
-        normalizeLocale(headerLocale) ??
-        normalizeLocale(cookieLocale) ??
-        "ar"
+        normalizeLocale(headerLocale) ?? normalizeLocale(cookieLocale) ?? "ar"
       );
     }
   };
@@ -84,10 +84,14 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      style={{ overflowX: "clip" }}
+      className="html-overflow-clip"
     >
       <head>
-        <ThemeScript siteUrl={SITE_URL} assistantName={assistantName} />
+        <ThemeScript
+          siteUrl={SITE_URL}
+          assistantName={assistantName}
+          nonce={headersList.get("x-nonce") ?? undefined}
+        />
       </head>
       <body
         className={`${fontVariable} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
