@@ -32,12 +32,14 @@ export const DEFAULT_ACADEMIC: UserAcademic = {
 };
 
 export const academicCache = {
-  getUserAcademic: (userId: string): UserAcademic | null => {
+  getUserAcademic: (_userId: string): UserAcademic | null => {
     try {
-      const cached = localStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+      // T030: Using sessionStorage instead of localStorage for PII protection
+      const cached = sessionStorage.getItem(USER_ACADEMIC_CACHE_KEY);
       if (!cached) return null;
       const parsed = JSON.parse(cached);
-      if (parsed.userId !== userId) return null;
+      // T030: Removed userId from cache to avoid PII in storage
+      // We rely on sessionStorage being per-tab/session instead
       if (Date.now() - parsed.timestamp > CACHE_TTL) return null;
       return parsed.data;
     } catch {
@@ -45,14 +47,15 @@ export const academicCache = {
     }
   },
 
-  setUserAcademic: (userId: string, data: UserAcademic) => {
+  setUserAcademic: (_userId: string, data: UserAcademic) => {
     try {
-      localStorage.setItem(
+      // T030: Using sessionStorage instead of localStorage for PII protection
+      // T030: Removed userId from stored data to avoid PII in client storage
+      sessionStorage.setItem(
         USER_ACADEMIC_CACHE_KEY,
         JSON.stringify({
           data,
           timestamp: Date.now(),
-          userId,
         })
       );
       if (typeof window !== "undefined") {

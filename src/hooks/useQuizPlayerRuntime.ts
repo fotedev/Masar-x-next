@@ -58,6 +58,9 @@ export function useQuizPlayerRuntime(props: {
 
   const endTimeMsRef = useRef<number | null>(null);
   const finishingRef = useRef(false);
+  // T038: Use ref for score to avoid recreating finishQuiz callback on every score change
+  const scoreRef = useRef(score);
+  scoreRef.current = score;
 
   const currentQuestion = useMemo(
     () => questions[currentQuestionIndex] ?? null,
@@ -81,20 +84,23 @@ export function useQuizPlayerRuntime(props: {
       setTimeTakenSeconds(takenSeconds);
       setShowResults(true);
 
+      // T038: Use current score from ref to avoid dependency issues
+      const currentScore = scoreRef.current;
+
       try {
-        await saveFinishAttempt(score, takenSeconds);
+        await saveFinishAttempt(currentScore, takenSeconds);
       } catch {
         // ignore
       }
 
       trackEvent("quiz_completed", {
         quiz_id: quizId,
-        score,
+        score: currentScore,
         total: questions.length,
         ended_by_timeout: timeout,
       });
 
-      if (onComplete) onComplete(score);
+      if (onComplete) onComplete(currentScore);
     },
     [
       attemptStartTime,
@@ -102,7 +108,7 @@ export function useQuizPlayerRuntime(props: {
       questions.length,
       quizId,
       saveFinishAttempt,
-      score,
+      // T038: Removed score from dependencies to prevent timer reset bug
       trackEvent,
     ],
   );

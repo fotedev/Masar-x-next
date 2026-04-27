@@ -7,14 +7,15 @@ import { profiles } from '@/lib/admin-db/schema';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // Verify that user is authenticated and is an admin
+  // Verify that user is authenticated and is an admin using getUser() for JWT verification
   const supabase = await createClient();
-  
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  if (!session) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -22,7 +23,7 @@ export async function GET() {
   const { data: admin } = await supabase
     .from('admins')
     .select('id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .maybeSingle();
 
   if (!admin) {

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
 
 /**
  * Server-side AI chat API endpoint
  * Used as fallback when Puter.js is unavailable
+ * Protected: Requires authentication + rate limiting
  */
 
 type ChatRequest = {
@@ -43,8 +46,38 @@ function generateFallbackResponse(prompt: string, mode: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // T021: Authenticate user using getUser() for JWT verification
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Valid authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // T022: Check rate limit (10 req/min per user)
+    const rateLimitResult = checkAIChatRateLimit(user.id);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too Many Requests',
+          message: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfter} seconds.`,
+          retryAfter: rateLimitResult.retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimitResult.retryAfter)
+          }
+        }
+      );
+    }
+
     const body = await request.json() as ChatRequest;
-    
+
+    // T023: Validate prompt
     if (!body.prompt || typeof body.prompt !== 'string') {
       return NextResponse.json(
         { error: 'Missing or invalid prompt' },
@@ -59,6 +92,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Record this request for rate limiting
+    recordAIChatRequest(user.id);
 
     // For now, return a graceful fallback message
     // In the future, this can be enhanced with actual LLM integration

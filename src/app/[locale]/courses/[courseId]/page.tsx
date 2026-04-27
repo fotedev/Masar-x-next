@@ -15,7 +15,7 @@ import {
 } from "@/components/ui";
 import { Star, MessageSquare, Clock, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { confirmToast } from "@/lib/confirmToast";
 import { useReviews } from "@/hooks/useReviews";
 import { ReviewForm } from "@/components/reviews/ReviewForm";
@@ -342,7 +342,9 @@ export default function CourseDetailPage() {
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageSquare className="w-4 h-4 ml-2" />
-              {locale.toLowerCase().startsWith("ar") ? `بدء ${assistantName} AI` : `Start ${assistantName} AI`}
+              {locale.toLowerCase().startsWith("ar")
+                ? `بدء ${assistantName} AI`
+                : `Start ${assistantName} AI`}
             </Button>
             <Button
               variant="outline"

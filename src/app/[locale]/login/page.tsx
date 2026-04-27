@@ -47,7 +47,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("login_attempts");
+      // T031: Using sessionStorage instead of localStorage for brute-force protection
+      const stored = sessionStorage.getItem("login_attempts");
       if (stored) {
         const { count, timestamp } = JSON.parse(stored);
         const timeDiff = Date.now() - timestamp;
@@ -57,7 +58,7 @@ export default function LoginPage() {
           setAttempts(count);
           setLockoutTime(lockoutDuration - timeDiff);
         } else {
-          localStorage.removeItem("login_attempts");
+          sessionStorage.removeItem("login_attempts");
         }
       }
     } catch {
@@ -97,9 +98,9 @@ export default function LoginPage() {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       const lockoutDuration = Math.min(newAttempts * 30000, 300000);
-      localStorage.setItem(
+      sessionStorage.setItem(
         "login_attempts",
-        JSON.stringify({ count: newAttempts, timestamp: Date.now() }),
+        JSON.stringify({ count: newAttempts, timestamp: Date.now() })
       );
       if (newAttempts >= 20) {
         setLockoutTime(lockoutDuration);

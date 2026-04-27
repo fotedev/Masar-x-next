@@ -7,22 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-const noOpLock = async <T>(
-  _name: string,
-  _acquireTimeout: number,
-  fn: () => Promise<T>,
-): Promise<T> => {
-  return await fn();
-};
-
 export const supabase = createBrowserClient(
   supabaseUrl!,
-  supabaseAnonKey!,
-  {
-    auth: {
-      lock: typeof window === 'undefined' ? undefined : noOpLock,
-    },
-  },
+  supabaseAnonKey!
 )
 
 // Remove re-export to avoid circular dependency

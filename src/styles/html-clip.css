@@ -1,0 +1,5 @@
+/* Prevents horizontal overflow at the root level.
+   Applied via className on <html> to avoid inline-style CSP violations. */
+.html-overflow-clip {
+  overflow-x: clip;
+}
