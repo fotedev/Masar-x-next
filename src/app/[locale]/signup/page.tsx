@@ -32,10 +32,10 @@ export default function SignUpPage() {
     }
   };
 
-  // Load attempts from localStorage on mount
+  // Load attempts from sessionStorage on mount (T032: migrated from localStorage)
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("signup_attempts");
+      const stored = sessionStorage.getItem("signup_attempts");
       if (stored) {
         const { count, timestamp } = JSON.parse(stored);
         const timeDiff = Date.now() - timestamp;
@@ -46,7 +46,7 @@ export default function SignUpPage() {
           setLockoutTime(lockoutDuration - timeDiff);
         } else {
           // Reset if lockout expired
-          localStorage.removeItem("signup_attempts");
+          sessionStorage.removeItem("signup_attempts");
         }
       }
     } catch {
@@ -94,18 +94,18 @@ export default function SignUpPage() {
       setPassword("");
       setConfirmPassword("");
 
-      // Reset attempts on successful signup
+      // Reset attempts on successful signup (T032: using sessionStorage)
       setAttempts(0);
       setLockoutTime(0);
-      localStorage.removeItem("signup_attempts");
+      sessionStorage.removeItem("signup_attempts");
     } catch (err: unknown) {
       // Increment attempts and set lockout
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
 
-      // Store in localStorage for persistence
+      // T032: Store in sessionStorage for persistence (migrated from localStorage)
       const lockoutDuration = Math.min(newAttempts * 30000, 300000); // Max 5 minutes
-      localStorage.setItem(
+      sessionStorage.setItem(
         "signup_attempts",
         JSON.stringify({
           count: newAttempts,

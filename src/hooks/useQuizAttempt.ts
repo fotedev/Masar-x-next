@@ -82,9 +82,9 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
                     };
                 });
 
-                // Merge with localStorage intelligently
+                // Merge with sessionStorage intelligently (T029: migrated from localStorage for PII protection)
                 const localKey = `quiz_attempt_${quizId}_${userId}`;
-                const localData = localStorage.getItem(localKey);
+                const localData = sessionStorage.getItem(localKey);
                 if (localData) {
                     try {
                         const parsed: Record<string, Answer> = JSON.parse(localData);
@@ -95,8 +95,8 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
                                 answersMap[qId] = localAns;
                             }
                         });
-                        // Sync back merged state to localStorage
-                        localStorage.setItem(localKey, JSON.stringify(answersMap));
+                        // Sync back merged state to sessionStorage
+                        sessionStorage.setItem(localKey, JSON.stringify(answersMap));
                     } catch (e) {
                         logger.error('Error parsing local quiz data:', e);
                     }
@@ -127,9 +127,9 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
         // Optimistic update - ALWAYS update local state first
         setAnswers(prev => {
             const next = { ...prev, [questionId]: newAnswer };
-            // Save to local storage
+            // Save to session storage (T029: migrated from localStorage for PII protection)
             if (userId) {
-                localStorage.setItem(`quiz_attempt_${quizId}_${userId}`, JSON.stringify(next));
+                sessionStorage.setItem(`quiz_attempt_${quizId}_${userId}`, JSON.stringify(next));
             }
             return next;
         });
@@ -173,22 +173,22 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
             quizzes: { title: quizTitle || 'امتحان' } // Mock the relation for history page
         };
 
-        // Always save to local history first
+        // Always save to session history first (T029: migrated from localStorage for PII protection)
         try {
-            const localHistoryStr = localStorage.getItem('quiz_history');
+            const localHistoryStr = sessionStorage.getItem('quiz_history');
             const localHistory: QuizHistoryEntry[] = localHistoryStr ? JSON.parse(localHistoryStr) : [];
             // Avoid duplicates if attemptId exists
             const filteredHistory = localHistory.filter((h: QuizHistoryEntry) => h.id !== attemptId);
-            localStorage.setItem('quiz_history', JSON.stringify([historyEntry, ...filteredHistory]));
+            sessionStorage.setItem('quiz_history', JSON.stringify([historyEntry, ...filteredHistory]));
         } catch {
             // ignore
         }
 
         // Clear current attempt progress
         if (userId) {
-            localStorage.removeItem(`quiz_attempt_${quizId}_${userId}`);
+            sessionStorage.removeItem(`quiz_attempt_${quizId}_${userId}`);
         } else {
-            localStorage.removeItem(`quiz_attempt_${quizId}_guest`);
+            sessionStorage.removeItem(`quiz_attempt_${quizId}_guest`);
         }
 
         // If logged in and have attemptId, sync to DB

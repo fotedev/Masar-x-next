@@ -211,12 +211,16 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
 
 /**
  * Generate Cloudinary URL with transformations
+ * Uses NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME from environment variables
  */
 export const getCloudinaryUrl = (
   publicId: string,
   transformations: Record<string, string | number> = {}
 ): string => {
-  const cloudName = 'de3emq8l3'
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) {
+    throw new Error('Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME environment variable');
+  }
   const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`
 
   const transformationString = Object.entries(transformations)

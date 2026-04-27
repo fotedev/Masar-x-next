@@ -1,47 +1,80 @@
-'use server';
+"use server";
 
-import { createClient } from '@/lib/supabase/server';
-import { getAdminDb } from '@/lib/admin-db';
-import { profiles } from '@/lib/admin-db/schema';
-import { eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { createClient } from "@/lib/supabase/server";
+import { getAdminDb } from "@/lib/admin-db";
+import { profiles } from "@/lib/admin-db/schema";
+import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { ProfileSchema } from "@/lib/validation/profile";
+import { logger } from "@/lib/logger";
 
 /**
  * Updates a user's profile information.
  * Uses Drizzle for type-safe database mutations.
  */
-export async function updateProfile(_prevState: any, formData: FormData) {
+export async function updateProfile(_prevState: unknown, formData: FormData) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!user) return { success: false, error: 'Not authenticated' };
+  if (!user) return { success: false, error: "Not authenticated" };
 
   try {
-    const fullName = formData.get('fullName') as string;
-    const username = formData.get('username') as string;
-    const website = formData.get('website') as string;
-    const avatarUrl = formData.get('avatarUrl') as string;
+    const fullName = formData.get("fullName") as string;
+    const username = formData.get("username") as string;
+    const website = formData.get("website") as string;
+    const avatarUrl = formData.get("avatarUrl") as string;
+
+    // T025: Validate input using ProfileSchema
+    const validationResult = ProfileSchema.safeParse({
+      fullName,
+      username,
+      website,
+      avatarUrl,
+    });
+
+    if (!validationResult.success) {
+      // T026: Return structured validation errors
+      const fieldErrors: Record<string, string[]> = {};
+      validationResult.error.issues.forEach((issue) => {
+        const path = issue.path[0] as string;
+        if (!fieldErrors[path]) {
+          fieldErrors[path] = [];
+        }
+        fieldErrors[path].push(issue.message);
+      });
+
+      return {
+        success: false,
+        error: "Validation failed",
+        fieldErrors,
+      };
+    }
 
     const adminDb = getAdminDb();
-    
+
     // Perform upsert (onConflictDoUpdate pattern)
-    await adminDb.insert(profiles).values({
-      id: user.id,
-      fullName: fullName || null,
-      username: username || null,
-      website: website || null,
-      avatarUrl: avatarUrl || null,
-      updatedAt: new Date().toISOString(),
-    }).onConflictDoUpdate({
-      target: profiles.id,
-      set: {
+    await adminDb
+      .insert(profiles)
+      .values({
+        id: user.id,
         fullName: fullName || null,
         username: username || null,
         website: website || null,
         avatarUrl: avatarUrl || null,
         updatedAt: new Date().toISOString(),
-      }
-    });
+      })
+      .onConflictDoUpdate({
+        target: profiles.id,
+        set: {
+          fullName: fullName || null,
+          username: username || null,
+          website: website || null,
+          avatarUrl: avatarUrl || null,
+          updatedAt: new Date().toISOString(),
+        },
+      });
 
     // Optionally sync with auth metadata (not required, but helpful for client-side use)
     await supabase.auth.updateUser({
@@ -50,14 +83,14 @@ export async function updateProfile(_prevState: any, formData: FormData) {
         display_name: fullName,
         avatar_url: avatarUrl,
         custom_avatar: avatarUrl,
-      }
+      },
     });
 
-    revalidatePath('/', 'layout');
-    return { success: true, message: 'Profile updated successfully' };
+    revalidatePath("/", "layout");
+    return { success: true, message: "Profile updated successfully" };
   } catch (error) {
-    console.error('Error updating user profile:', error);
-    return { success: false, error: 'Internal server error' };
+    logger.error("Error updating user profile", error);
+    return { success: false, error: "Internal server error" };
   }
 }
 
@@ -66,29 +99,42 @@ export async function updateProfile(_prevState: any, formData: FormData) {
  */
 export async function updateAvatar(avatarUrl: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!user) return { success: false, error: 'Not authenticated' };
+  if (!user) return { success: false, error: "Not authenticated" };
 
   try {
+    // Validate avatarUrl
+    const validationResult = ProfileSchema.shape.avatarUrl.safeParse(avatarUrl);
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error:
+          validationResult.error.issues[0]?.message || "Invalid avatar URL",
+      };
+    }
+
     const adminDb = getAdminDb();
-    
-    await adminDb.update(profiles)
+
+    await adminDb
+      .update(profiles)
       .set({ avatarUrl, updatedAt: new Date().toISOString() })
       .where(eq(profiles.id, user.id));
 
     // Keep auth metadata in sync to prevent flickering (fallback source)
     await supabase.auth.updateUser({
-      data: { 
+      data: {
         avatar_url: avatarUrl,
-        custom_avatar: avatarUrl 
-      }
+        custom_avatar: avatarUrl,
+      },
     });
 
-    revalidatePath('/', 'layout');
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (error) {
-    console.error('Error updating avatar:', error);
-    return { success: false, error: 'Internal server error' };
+    logger.error("Error updating avatar", error);
+    return { success: false, error: "Internal server error" };
   }
 }
