@@ -5,7 +5,9 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   ReactNode,
+  useCallback,
 } from "react";
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { ProfileRow } from "@/lib/admin-db/schema";
@@ -44,6 +46,42 @@ export function AuthProvider({
   const [profile, setProfile] = useState<ProfileRow | null>(initialProfile);
   const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
   const [loading, setLoading] = useState(!initialUser);
+  
+  // T005: Sync guards
+  const syncInProgress = useRef<boolean>(false);
+  const lastSyncTime = useRef<number>(0);
+  const SYNC_COOLDOWN = 10000; // 10 seconds cooldown between syncs
+
+  const triggerSync = useCallback(async (userId: string, force: boolean = false) => {
+    const now = Date.now();
+    if (!force && now - lastSyncTime.current < SYNC_COOLDOWN) {
+      return;
+    }
+
+    if (syncInProgress.current) {
+      return;
+    }
+
+    syncInProgress.current = true;
+    try {
+      const response = await fetch('/api/auth/sync', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.error || 'Sync failed');
+      }
+      
+      lastSyncTime.current = Date.now();
+      logger.info(`[auth] Successfully synced profile for ${userId}`);
+    } catch (err) {
+      logger.error(`[auth] Profile sync failed for ${userId}:`, err);
+    } finally {
+      syncInProgress.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -64,7 +102,7 @@ export function AuthProvider({
 
         // If we have an initial session on mount, trigger a sync to be safe
         if (initialSession?.user) {
-          fetch('/api/auth/sync', { method: 'POST' }).catch(() => {});
+          triggerSync(initialSession.user.id);
         }
       } catch (e) {
         logger.error("Auth initialization failed:", e);
@@ -98,9 +136,7 @@ export function AuthProvider({
 
         if (event === "SIGNED_IN" && currentUser) {
           // Trigger profile sync after sign-in
-          fetch('/api/auth/sync', { method: 'POST' }).catch(err => 
-            logger.error("Failed to trigger profile sync:", err)
-          );
+          triggerSync(currentUser.id, true); // Force sync on explicit sign-in
 
           analyticsHelpers
             .recordAnalytics({
