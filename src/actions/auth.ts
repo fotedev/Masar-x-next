@@ -5,6 +5,7 @@ import { getAdminDb } from '@/lib/admin-db';
 import { profiles } from '@/lib/admin-db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { logger } from '@/lib/logger';
 
 /**
  * Synchronizes the user profile with the database.
@@ -12,9 +13,17 @@ import { revalidatePath } from 'next/cache';
  */
 export async function syncUserProfile() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!user) return { success: false, error: 'Not authenticated' };
+  if (authError) {
+    logger.error('[auth/sync] Supabase auth error:', authError);
+    return { success: false, error: 'Authentication failed' };
+  }
+
+  if (!user) {
+    logger.warn('[auth/sync] No user session found');
+    return { success: false, error: 'Not authenticated' };
+  }
 
   try {
     const adminDb = getAdminDb();
@@ -27,6 +36,7 @@ export async function syncUserProfile() {
       .limit(1);
 
     if (!existingProfile) {
+      logger.info(`[auth/sync] Creating new profile for user ${user.id}`);
       // 2. Create profile if it doesn't exist (First sign-in)
       await adminDb.insert(profiles).values({
         id: user.id,
@@ -45,6 +55,7 @@ export async function syncUserProfile() {
       }
 
       if (Object.keys(updates).length > 0) {
+        logger.info(`[auth/sync] Updating existing profile for user ${user.id}`, updates);
         await adminDb
           .update(profiles)
           .set({ ...updates, updatedAt: new Date().toISOString() })
@@ -54,8 +65,17 @@ export async function syncUserProfile() {
 
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (error) {
-    console.error('Error syncing user profile:', error);
-    return { success: false, error: 'Internal server error' };
+  } catch (error: any) {
+    logger.error('[auth/sync] Database sync failed:', {
+      error: error.message,
+      code: error.code,
+      userId: user.id
+    });
+    
+    // Check for specific connectivity issues to provide better feedback in development
+    const isDev = process.env.NODE_ENV === 'development';
+    const errorMessage = isDev ? `Sync failed: ${error.message}` : 'Internal server error';
+    
+    return { success: false, error: errorMessage };
   }
 }

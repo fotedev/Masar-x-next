@@ -3,9 +3,18 @@
 
 const CACHE_NAME = 'masarx-v3';
 
+// Simple environment check helper for SW
+const isDev = (url) => {
+  return url.hostname === 'localhost' || 
+         url.hostname === '127.0.0.1' || 
+         url.hostname.endsWith('.local');
+};
+
 // تثبيت Service Worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing.');
+  if (isDev(new URL(self.location.href))) {
+    console.log('Service Worker installing.');
+  }
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       // Use addAll with only essential files that should exist
@@ -32,7 +41,9 @@ self.addEventListener('install', (event) => {
 
 // تفعيل Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating.');
+  if (isDev(new URL(self.location.href))) {
+    console.log('Service Worker activating.');
+  }
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -106,7 +117,9 @@ self.addEventListener('fetch', (event) => {
           })
           .catch((error) => {
             // Network request failed, return cached response if available
-            console.warn('Fetch failed for:', event.request.url, error.message);
+            if (isDev(url)) {
+              console.warn('Fetch failed for:', event.request.url, error.message);
+            }
             if (cachedResponse) {
               return cachedResponse;
             }
@@ -125,7 +138,9 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse || fetchPromise;
       })
       .catch((error) => {
-        console.warn('Cache match failed:', error.message);
+        if (isDev(url)) {
+          console.warn('Cache match failed:', error.message);
+        }
         // Offline fallback
         if (event.request.destination === 'document') {
           return caches.match('/');

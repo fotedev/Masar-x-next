@@ -18,24 +18,26 @@ const getDatabaseUrl = (): string => {
     );
   }
 
-  // Warn at startup when a direct connection URL is used on an IPv4-only host.
+  // Warn when a direct connection URL is used.
   // The direct host (db.PROJECT.supabase.co) is IPv6-only; the Session Pooler
   // (aws-0-REGION.pooler.supabase.com:5432) is IPv4-compatible.
-  if (!process.env.DATABASE_URL_IPV4) {
+  if (!process.env.DATABASE_URL_IPV4 && url) {
     try {
       const { hostname } = new URL(url);
       if (hostname.startsWith("db.") && hostname.endsWith(".supabase.co")) {
+        const isProduction = process.env.NODE_ENV === "production";
+        const warnPrefix = isProduction ? "[CRITICAL/admin-db] PRODUCTION WARNING: " : "[admin-db] ";
+        
         logger.warn(
-          "[admin-db] DATABASE_URL points to the Supabase direct connection " +
-            `(${hostname}), which is IPv6-only. If you are on an IPv4-only network ` +
-            "(e.g. WSL2 on Windows), queries will fail with ENETUNREACH. " +
-            "Fix: set DATABASE_URL_IPV4 in .env.local to the Session Pooler URI " +
-            "(Supabase Dashboard → Settings → Database → Connection Pooling, port 5432).",
-          { hostname },
+          `${warnPrefix}DATABASE_URL points to the Supabase direct connection ` +
+            `(${hostname}), which is IPv6-only. This WILL fail on IPv4-only networks ` +
+            "(like Vercel, WSL2, or many cloud providers) with ENETUNREACH. " +
+            "Fix: use the Session Pooler URI (port 5432) and set it as DATABASE_URL_IPV4.",
+          { hostname, environment: process.env.NODE_ENV },
         );
       }
     } catch {
-      // URL parse failed — getDatabaseUrl will throw below when the pool tries to connect
+      // URL parse failed
     }
   }
 
@@ -80,21 +82,23 @@ const getPool = (): Pool => {
   });
 
   pool.on("error", (err: NodeJS.ErrnoException) => {
+    const isProduction = process.env.NODE_ENV === "production";
+    const logPrefix = isProduction ? "[CRITICAL/admin-db] " : "[admin-db] ";
+
     if (err.code === "ENETUNREACH") {
       logger.error(
-        "[admin-db] ENETUNREACH — cannot reach the database host. " +
+        `${logPrefix}ENETUNREACH — cannot reach the database host. ` +
           "The direct connection (db.*.supabase.co:5432) is IPv6-only. " +
-          "Set DATABASE_URL_IPV4 in .env.local to the Session Pooler URI " +
-          "(Supabase Dashboard → Settings → Database → Connection Pooling, Session Mode, port 5432).",
+          "ACTION REQUIRED: Use the Session Pooler URI (port 5432) in DATABASE_URL_IPV4.",
         err,
         {
-          address: (err as NodeJS.ErrnoException & { address?: string })
-            .address,
+          address: (err as NodeJS.ErrnoException & { address?: string }).address,
           port: (err as NodeJS.ErrnoException & { port?: number }).port,
+          isProduction
         },
       );
     } else {
-      logger.error("[admin-db] Unexpected error on idle client", err);
+      logger.error(`${logPrefix}Unexpected error on idle client`, err);
     }
   });
 

@@ -98,6 +98,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              aria-label="إغلاق"
             >
               <X className="w-6 h-6" />
             </button>
@@ -159,8 +160,12 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 placeholder="اتركه فارغاً للكورس المجاني"
                 min="0"
                 step="0.01"
+                aria-describedby="course-price-helper"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p 
+                id="course-price-helper"
+                className="text-xs text-gray-500 dark:text-gray-400 mt-1"
+              >
                 اتركه فارغاً أو 0 لجعل الكورس مجاني
               </p>
             </div>
