@@ -20,7 +20,9 @@ function generateNonce(): string {
 }
 
 function getCspHeader(nonce: string): string {
-  const isDev = process.env.NODE_ENV !== "production";
+  // Use a more robust check for production environment at the edge
+  const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+  const isDev = !isProd;
 
   const cspDirectives = [
     // Allow YouTube and Google Video in default-src to cover media/workers
