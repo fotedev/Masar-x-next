@@ -125,10 +125,15 @@ export default function AcademicOnboardingPage() {
 
         <form onSubmit={onSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1">
+            <label 
+              htmlFor="onboarding-level"
+              className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
+            >
               المستوى
             </label>
             <select
+              id="onboarding-level"
+              name="level"
               value={level}
               onChange={(e) => setLevel(Number(e.target.value))}
               className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
@@ -141,10 +146,15 @@ export default function AcademicOnboardingPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1">
+            <label 
+              htmlFor="onboarding-semester"
+              className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
+            >
               الترم
             </label>
             <select
+              id="onboarding-semester"
+              name="semester"
               value={semester}
               onChange={(e) => setSemester(Number(e.target.value))}
               className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
