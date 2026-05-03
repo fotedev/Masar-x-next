@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, BookOpen, Calendar } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Quiz } from "@/types/database";
 import { useLocale } from "next-intl";
 import { Skeleton } from "../ui/Skeleton";
@@ -38,6 +38,7 @@ export function QuizzesSection({
   onNavigate,
 }: QuizzesSectionProps) {
   const locale = useLocale();
+  const shouldReduceMotion = useReducedMotion();
   return (
     <div className="space-y-6" dir="auto">
       <div className="flex items-center justify-between">
@@ -91,7 +92,11 @@ export function QuizzesSection({
         </div>
       ) : (
         <motion.div
-          variants={containerVariants}
+          variants={
+            shouldReduceMotion
+              ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+              : containerVariants
+          }
           initial="hidden"
           animate="show"
           className="summary-grid"
@@ -99,9 +104,9 @@ export function QuizzesSection({
           {displayQuizzes.map((quiz) => (
             <motion.div
               key={quiz.id}
-              variants={itemVariants}
-              whileHover={{ y: -4 }}
-              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-all duration-300"
+              variants={shouldReduceMotion ? { hidden: {}, show: {} } : itemVariants}
+              whileHover={!shouldReduceMotion ? { y: -4 } : {}}
+              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-[colors,transform,box-shadow,border-color] duration-300"
               onClick={() => onNavigate("quiz-play", quiz.id)}
             >
               <div className="flex justify-between items-start mb-3">

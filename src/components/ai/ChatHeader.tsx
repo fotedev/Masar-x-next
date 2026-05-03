@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { Bot, Brain, Trash2, MessagesSquare, ChevronDown, Check, BookOpen, MessageSquareCode, Users, Settings } from "lucide-react";
+import {
+  Bot,
+  Brain,
+  Trash2,
+  MessagesSquare,
+  ChevronDown,
+  Check,
+  BookOpen,
+  MessageSquareCode,
+  Users,
+  Settings,
+} from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -68,7 +79,11 @@ export function ChatHeader({
   const models = [
     { id: "gpt-5-nano", label: "GPT-5 nano", provider: "OpenAI" },
     { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-    { id: "claude-sonnet-4-6", label: "Claude 4.6 Sonnet", provider: "Anthropic" },
+    {
+      id: "claude-sonnet-4-6",
+      label: "Claude 4.6 Sonnet",
+      provider: "Anthropic",
+    },
     { id: "o1-mini", label: "o1-mini", provider: "OpenAI" },
   ];
 
@@ -130,17 +145,19 @@ export function ChatHeader({
                 aria-controls={modeMenuId}
                 type="button"
               >
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white">
+                <span className="text-slate-900 dark:text-white">
                   {currentMode.label}
                 </span>
-                <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""} text-cyan-500`} />
+                <ChevronDown
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${isDropdownOpen ? "rotate-180" : ""} text-cyan-500`}
+                />
               </button>
 
               <AnimatePresence>
                 {isDropdownOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-30" 
+                    <div
+                      className="fixed inset-0 z-30"
                       onClick={() => setIsMobileDropdownOpen(false)}
                     />
                     <motion.div
@@ -162,7 +179,7 @@ export function ChatHeader({
                                 setMode(m.id as AiAssistantMode);
                                 setIsMobileDropdownOpen(false);
                               }}
-              className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-[colors,opacity,transform] ${
+                              className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-[colors,opacity,transform] ${
                                 isActive
                                   ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-200"
@@ -172,7 +189,9 @@ export function ChatHeader({
                             >
                               <div className="flex items-center gap-3">
                                 <Icon className="w-6 h-6" />
-                                <span className="font-bold text-sm sm:text-base">{m.label}</span>
+                                <span className="font-bold text-sm sm:text-base">
+                                  {m.label}
+                                </span>
                               </div>
                               {isActive && <Check className="w-5 h-5" />}
                             </button>
@@ -194,25 +213,30 @@ export function ChatHeader({
                   {t("onlineReady")}
                 </span>
               </div>
-              
+
               <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-1"></div>
-              
+
               <div className="relative">
                 <button
                   onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                className="text-[11px] sm:text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:opacity-80 flex items-center gap-1 transition-[opacity,colors] py-1.5 px-2 bg-cyan-500/5 dark:bg-cyan-500/10 rounded-lg border border-cyan-500/10"
+                  className="text-[11px] sm:text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:opacity-80 flex items-center gap-1 transition-[opacity,colors] py-1.5 px-2 bg-cyan-500/5 dark:bg-cyan-500/10 rounded-lg border border-cyan-500/10"
                   aria-expanded={isModelDropdownOpen}
                   aria-controls={modelMenuId}
                   type="button"
                 >
                   {currentModel.label}
-                  <ChevronDown className={`w-3 h-3 transition-transform ${isModelDropdownOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${isModelDropdownOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
 
                 <AnimatePresence>
                   {isModelDropdownOpen && (
                     <>
-                      <div className="fixed inset-0 z-30" onClick={() => setIsModelDropdownOpen(false)} />
+                      <div
+                        className="fixed inset-0 z-30"
+                        onClick={() => setIsModelDropdownOpen(false)}
+                      />
                       <motion.div
                         initial={{ opacity: 0, y: 5, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -237,7 +261,9 @@ export function ChatHeader({
                             type="button"
                           >
                             <span className="font-bold text-sm">{m.label}</span>
-                            {selectedModel === m.id && <Check className="w-4 h-4" />}
+                            {selectedModel === m.id && (
+                              <Check className="w-4 h-4" />
+                            )}
                           </button>
                         ))}
                       </motion.div>
@@ -254,7 +280,7 @@ export function ChatHeader({
           <button
             onClick={onSummarizeChat}
             disabled={isSummarizing || !hasChatData}
-              className={`p-3 rounded-xl transition-[colors,border-color,transform] border ${
+            className={`p-3 rounded-xl transition-[colors,border-color,transform] border ${
               isSummarizing || !hasChatData
                 ? "text-slate-300 border-slate-100 dark:border-slate-800"
                 : "text-slate-400 border-slate-200/50 dark:border-slate-700/50 hover:text-purple-600 hover:bg-white dark:hover:bg-slate-700"

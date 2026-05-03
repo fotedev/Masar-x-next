@@ -177,11 +177,12 @@ export default function HomeClient() {
   return (
     <div className="space-y-10">
       {/* Quick Actions & Navigation Hub */}
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
         {/* ZANE AI Shortcut */}
-        <div 
+        <button
+          type="button"
           onClick={() => onNavigate("ai-assistant")}
-          className="md:col-span-5 relative group cursor-pointer overflow-hidden rounded-[32px] p-8 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-500 border border-white/10"
+          className="md:col-span-5 relative group cursor-pointer overflow-hidden rounded-[32px] p-8 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-[colors,transform,box-shadow] duration-300 border border-white/10 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none text-left"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-colors" />
           <div className="relative z-10 h-full flex flex-col">
@@ -199,49 +200,53 @@ export default function HomeClient() {
               <ArrowRight className={`w-4 h-4 ${locale === 'ar' ? 'rotate-180' : ''}`} />
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Action Grid */}
         <div className="md:col-span-7 grid grid-cols-2 gap-4">
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate("subjects")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-all active:scale-95"
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
           >
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
               <BookOpen className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
             </div>
             <span className="font-bold text-slate-900 dark:text-white">المواد الدراسية</span>
-          </div>
+          </button>
 
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate("quizzes")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-all active:scale-95"
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
           >
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-600 transition-colors">
               <PlayCircle className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
             </div>
             <span className="font-bold text-slate-900 dark:text-white">بنك الاختبارات</span>
-          </div>
+          </button>
 
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate("news")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-all active:scale-95"
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
           >
             <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors">
               <FileText className="w-6 h-6 text-brand-orange group-hover:text-white transition-colors" />
             </div>
             <span className="font-bold text-slate-900 dark:text-white">آخر الأخبار</span>
-          </div>
+          </button>
 
-          <div 
+          <button
+            type="button"
             onClick={() => onNavigate("profile")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-all active:scale-95"
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
           >
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 transition-colors">
               <History className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
             </div>
             <span className="font-bold text-slate-900 dark:text-white">نشاطك الأخير</span>
-          </div>
+          </button>
         </div>
       </section>
 
