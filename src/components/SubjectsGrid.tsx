@@ -7,7 +7,7 @@ import { Skeleton } from "./ui/Skeleton";
 
 import { usePlatformSettings } from "../hooks/usePlatformSettings";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
@@ -21,6 +21,7 @@ export function SubjectsGrid({
   is_academic = true,
 }: SubjectsGridProps) {
   const locale = useLocale();
+  const shouldReduceMotion = useReducedMotion();
   const tSubjects = useTranslations("subjects");
   const { activeSemester } = usePlatformSettings();
   const { subjects, loading } = useSubjects({ is_academic });
@@ -40,9 +41,9 @@ export function SubjectsGrid({
 
   if (loading) {
     return (
-      <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="modern-card p-6 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] min-h-[160px] flex flex-col items-center justify-center">
+          <div key={index} className="modern-card p-6 w-full min-h-[160px] flex flex-col items-center justify-center">
             <div className="text-center flex flex-col items-center justify-center h-full w-full">
               <Skeleton className="w-14 h-14 rounded-2xl mb-4" />
               <Skeleton className="h-5 rounded-lg w-3/4 mt-auto" />
@@ -58,17 +59,21 @@ export function SubjectsGrid({
       <motion.div
         initial="hidden"
         animate="show"
-        variants={{
-          hidden: { opacity: 0 },
-          show: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.05,
-              delayChildren: 0.1,
-            },
-          },
-        }}
-        className="flex flex-wrap justify-center gap-4 sm:gap-6"
+        variants={
+          shouldReduceMotion
+            ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+            : {
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.05,
+                    delayChildren: 0.1,
+                  },
+                },
+              }
+        }
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
       >
         {filteredSubjects.map((subject) => {
           const IconComponent = SUBJECT_ICONS[subject.name] || BookOpen;
@@ -79,14 +84,19 @@ export function SubjectsGrid({
           return (
             <motion.button
               key={subject.id}
-              variants={{
-                hidden: { opacity: 0 },
-                show: { opacity: 1 },
-              }}
-              whileHover={!subject.isOptimistic ? { scale: 1.05, translateY: -4 } : {}}
+              variants={
+                shouldReduceMotion
+                  ? { hidden: {}, show: {} }
+                  : { hidden: { opacity: 0 }, show: { opacity: 1 } }
+              }
+              whileHover={
+                !shouldReduceMotion && !subject.isOptimistic
+                  ? { scale: 1.05, translateY: -4 }
+                  : {}
+              }
               whileTap={!subject.isOptimistic ? { scale: 0.95 } : {}}
               onClick={() => !subject.isOptimistic && onSubjectClick?.(subject.name)}
-              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color] duration-300 w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none
+              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color] duration-300 w-full flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none
                 ${subject.isOptimistic 
                   ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
                   : "cursor-pointer group hover:border-brand-blue/50"
