@@ -1,9 +1,22 @@
 import { useEffect, useState, type RefObject } from "react";
 import { useLocale } from "next-intl";
-import { Bot, Brain, MessagesSquare, ChevronDown, Check, type LucideIcon, BookOpen, Code, Calendar, MessageCircle, LogIn, Settings } from "lucide-react";
+import {
+  Bot,
+  Brain,
+  MessagesSquare,
+  ChevronDown,
+  Check,
+  type LucideIcon,
+  BookOpen,
+  Code,
+  Calendar,
+  MessageCircle,
+  LogIn,
+  Settings,
+} from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { NeuralEnergyEntity } from "./NeuralEnergyEntity";
 
 interface ChatMessage {
@@ -43,6 +56,7 @@ export function ChatContainer({
   onUiMessage,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
   const menuId = "chat-initial-mode-menu";
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -72,48 +86,54 @@ export function ChatContainer({
     <div
       ref={messagesContainerRef}
       className={`flex-1 overflow-y-auto p-4 sm:p-6 pb-8 sm:pb-12 space-y-4 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
-        isInitialState 
-          ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4" 
+        isInitialState
+          ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4"
           : "scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800"
       }`}
     >
       {messages.length === 0 ? (
-        <motion.div 
+        <motion.div
           initial="hidden"
           animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.15,
-                delayChildren: 0.2
-              }
-            }
-          }}
+          variants={
+            shouldReduceMotion
+              ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+              : {
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.15,
+                      delayChildren: 0.2,
+                    },
+                  },
+                }
+          }
           className="flex flex-col items-center justify-center h-full text-center space-y-12 sm:space-y-16 max-w-2xl px-4 overflow-visible"
         >
           {/* Neural Network Energy Entity (Integrated) */}
-          <motion.div 
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              visible: { y: 0, opacity: 1 }
-            }}
+          <motion.div
+            variants={
+              shouldReduceMotion
+                ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                : { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
+            }
             className="w-full flex items-center justify-center overflow-visible"
           >
-            <NeuralEnergyEntity className="scale-[0.6] sm:scale-100 -my-8 sm:my-0" />
+            {!shouldReduceMotion && <NeuralEnergyEntity className="scale-[0.6] sm:scale-100 -my-8 sm:my-0" />}
           </motion.div>
-          
+
           {/* Title with Zane Ice Gradient */}
-          <motion.div 
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              visible: { y: 0, opacity: 1 }
-            }}
+          <motion.div
+            variants={
+              shouldReduceMotion
+                ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                : { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
+            }
             className="space-y-3 sm:space-y-4"
           >
-            <h2 
-              className="text-3xl sm:text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 drop-shadow-sm"
+            <h2
+              className="text-3xl sm:text-5xl font-black tracking-tight text-sky-500 dark:text-sky-400"
               dir="auto"
             >
               {t("welcomeTitle")}
@@ -121,18 +141,19 @@ export function ChatContainer({
           </motion.div>
 
           {/* Refined Dropdown with Cyan Inset/Border Glow */}
-          <motion.div 
-            variants={{
-              hidden: { y: 20, opacity: 0 },
-              visible: { y: 0, opacity: 1 }
-            }}
+          <motion.div
+            variants={
+              shouldReduceMotion
+                ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                : { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
+            }
             className="relative mt-2"
           >
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/40 rounded-2xl border-2 transition-[colors,box-shadow,border-color] duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-md ${
-                isDropdownOpen 
-                  ? "border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]" 
+                isDropdownOpen
+                  ? "border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
                   : "border-slate-200/60 dark:border-slate-700/40 hover:border-cyan-500/30"
               }`}
               aria-expanded={isDropdownOpen}
@@ -140,17 +161,23 @@ export function ChatContainer({
               type="button"
             >
               <div className="flex items-center gap-3">
-                <currentMode.icon className={`w-5 h-5 transition-colors duration-300 ${isDropdownOpen ? "text-cyan-500" : "text-cyan-500"}`} />
-                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">{currentMode.label}</span>
+                <currentMode.icon
+                  className={`w-5 h-5 transition-colors duration-300 ${isDropdownOpen ? "text-cyan-500" : "text-cyan-500"}`}
+                />
+                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                  {currentMode.label}
+                </span>
               </div>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-cyan-500" : ""}`} />
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-cyan-500" : ""}`}
+              />
             </button>
 
             <AnimatePresence>
               {isDropdownOpen && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-30" 
+                  <div
+                    className="fixed inset-0 z-30"
                     onClick={() => setIsDropdownOpen(false)}
                   />
                   <motion.div
@@ -182,8 +209,12 @@ export function ChatContainer({
                             type="button"
                           >
                             <div className="flex items-center gap-3">
-                              <Icon className={`w-4 h-4 ${isActive ? "text-cyan-500" : ""}`} />
-                              <span className="font-bold text-xs sm:text-sm">{m.label}</span>
+                              <Icon
+                                className={`w-4 h-4 ${isActive ? "text-cyan-500" : ""}`}
+                              />
+                              <span className="font-bold text-xs sm:text-sm">
+                                {m.label}
+                              </span>
                             </div>
                             {isActive && <Check className="w-3.5 h-3.5" />}
                           </button>
@@ -198,21 +229,49 @@ export function ChatContainer({
 
           {/* Suggested Prompt Cards Grid */}
           <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { 
-                opacity: 1, 
-                y: 0,
-                transition: { delay: 0.4, staggerChildren: 0.1 } 
-              }
-            }}
+            variants={
+              shouldReduceMotion
+                ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                : {
+                    hidden: { opacity: 0, y: 20 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { delay: 0.4, staggerChildren: 0.1 },
+                    },
+                  }
+            }
             className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 w-full mt-6 sm:mt-8"
           >
             {[
-              { id: "summarize", icon: BookOpen, title: "لخص لي مادة", desc: "احصل على ملخص شامل لأي مادة أكاديمية", prompt: "لخص لي مادة" },
-              { id: "code", icon: Code, title: "اشرح لي كود", desc: "فهم المنطق البرمجي وحل المشكلات التقنية", prompt: "اشرح لي كود" },
-              { id: "plan", icon: Calendar, title: "خطة دراسية", desc: "تنظيم وقتك ومسارك التعليمي بذكاء", prompt: "خطة دراسية" },
-              { id: "whatsapp", icon: MessageCircle, title: "محادثات الواتساب", desc: "تحليل وتلخيص ملفات الدردشة الجماعية", prompt: "محادثات الواتساب" }
+              {
+                id: "summarize",
+                icon: BookOpen,
+                title: "لخص لي مادة",
+                desc: "احصل على ملخص شامل لأي مادة أكاديمية",
+                prompt: "لخص لي مادة",
+              },
+              {
+                id: "code",
+                icon: Code,
+                title: "اشرح لي كود",
+                desc: "فهم المنطق البرمجي وحل المشكلات التقنية",
+                prompt: "اشرح لي كود",
+              },
+              {
+                id: "plan",
+                icon: Calendar,
+                title: "خطة دراسية",
+                desc: "تنظيم وقتك ومسارك التعليمي بذكاء",
+                prompt: "خطة دراسية",
+              },
+              {
+                id: "whatsapp",
+                icon: MessageCircle,
+                title: "محادثات الواتساب",
+                desc: "تحليل وتلخيص ملفات الدردشة الجماعية",
+                prompt: "محادثات الواتساب",
+              },
             ].map((item) => (
               <button
                 key={item.id}
@@ -223,8 +282,12 @@ export function ChatContainer({
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">
                   <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500" />
                 </div>
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
-                <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight line-clamp-2 hidden sm:block">{item.desc}</p>
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white mb-1 line-clamp-1">
+                  {item.title}
+                </h3>
+                <p className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-tight line-clamp-2 hidden sm:block">
+                  {item.desc}
+                </p>
                 <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-cyan-500/20 transition-colors duration-300 pointer-events-none" />
               </button>
             ))}
@@ -233,10 +296,11 @@ export function ChatContainer({
           {/* Puter CTA (visible in initial state as well) */}
           {typeof onOpenPuterSettings === "function" && (
             <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { delay: 0.55 } },
-              }}
+              variants={
+                shouldReduceMotion
+                  ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
+                  : { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { delay: 0.55 } } }
+              }
               className="w-full flex items-center justify-center"
             >
               <button
@@ -244,7 +308,11 @@ export function ChatContainer({
                 onClick={onOpenPuterSettings}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/40 backdrop-blur-md text-slate-800 dark:text-slate-100 font-extrabold shadow-sm hover:shadow-md transition-shadow transition-transform active:scale-[0.98]"
               >
-                {isPuterSignedIn ? <Settings className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+                {isPuterSignedIn ? (
+                  <Settings className="w-4 h-4" />
+                ) : (
+                  <LogIn className="w-4 h-4" />
+                )}
                 <span>{isPuterSignedIn ? "إعدادات Puter" : "تفعيل Puter"}</span>
               </button>
             </motion.div>
@@ -253,11 +321,19 @@ export function ChatContainer({
       ) : (
         <>
           {messages.map((message) => (
-            <ChatMessageItem key={message.id} message={message} onUiMessage={onUiMessage} />
+            <ChatMessageItem
+              key={message.id}
+              message={message}
+              onUiMessage={onUiMessage}
+            />
           ))}
           {isLoading && (
-            <div className={`flex ${isRTL ? "justify-end" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}>
-              <div className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700`}>
+            <div
+              className={`flex ${isRTL ? "justify-end" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}
+            >
+              <div
+                className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700`}
+              >
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
