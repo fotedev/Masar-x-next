@@ -1,6 +1,12 @@
 import { type ReactNode } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "../index.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 import { cookies, headers } from "next/headers";
 import ThemeScript from "@/components/ThemeScript";
 import "@/styles/html-clip.css";

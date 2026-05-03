@@ -198,8 +198,8 @@ export default function AiAssistantPage() {
       <div
         className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
           isInitialState
-            ? "h-screen justify-center items-center px-4 py-4"
-            : "h-[100dvh] pt-0 pb-2 px-0 sm:px-4"
+            ? "h-dvh justify-center items-center px-4 py-4"
+            : "h-dvh pt-0 pb-2 px-0 sm:px-4"
         }`}
       >
         {!isInitialState && (

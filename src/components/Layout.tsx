@@ -43,10 +43,10 @@ export function Layout({ children }: LayoutProps) {
     pathWithoutLocale === "/reset-password";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[72px]">
+    <div className="min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]">
       <Header />
       <AcademicOnboardingGate />
-      <main className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative">
         {isLightRoute ? (
           <div className="w-full">{children}</div>
         ) : (

@@ -67,7 +67,7 @@ export function MobileNav({
         id="mobile-nav-drawer"
         role="dialog"
         aria-modal="true"
-        className={`absolute top-0 bottom-0 start-0 w-[280px] sm:w-[320px] bg-white dark:bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[101] ${
+        className={`absolute top-0 bottom-0 start-0 w-[min(320px,85vw)] bg-white dark:bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[101] ${
           isMounted && isMobileMenuOpen
             ? "translate-x-0"
             : dir === "rtl"
@@ -75,7 +75,7 @@ export function MobileNav({
             : "-translate-x-full"
         } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
       >
-        <div className="flex flex-col h-full pt-[72px] px-4 md:px-6 pb-6 overflow-y-auto bg-inherit">
+        <div className="flex flex-col h-full pt-[72px] px-4 md:px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] overflow-y-auto bg-inherit">
           <nav className="flex flex-col gap-4">
             {primaryNavItems.map((item) => {
               const active = item.isActive();
@@ -85,8 +85,8 @@ export function MobileNav({
                   onClick={() => handleNavigate(item.page)}
                   className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
                     active
-                      ? "text-white bg-[rgba(255,255,255,0.12)]"
-                      : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                      ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12"
+                      : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
                   } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
                   type="button"
                 >
@@ -100,8 +100,8 @@ export function MobileNav({
                 onClick={() => handleNavigate("non-academic")}
                 className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
                   isMounted && currentPage === "non-academic"
-                    ? "text-white bg-[rgba(255,255,255,0.12)]"
-                    : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                    ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12"
+                    : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
                 } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
                 type="button"
               >
