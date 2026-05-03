@@ -337,13 +337,13 @@ export const Header = memo(function Header() {
 
       <header
         dir={dir}
-        className={`fixed top-0 inset-x-0 z-header transition-all duration-300 h-[72px] ${
+        className={`fixed top-0 inset-x-0 z-header transition-all duration-300 h-[72px] pt-[env(safe-area-inset-top)] ${
           isScrolled
             ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm"
             : "bg-transparent"
         }`}
       >
-        <div className="max-w-[1280px] mx-auto h-full px-4 md:px-6 lg:px-8 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-7xl mx-auto h-full px-4 md:px-6 lg:px-8">
           <div className="flex items-center h-full gap-3 lg:gap-6">
             <div className="flex shrink-0 items-center justify-start min-w-0">
               <button
@@ -392,7 +392,7 @@ export const Header = memo(function Header() {
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-nav-drawer"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className="lg:hidden flex flex-col items-center justify-center w-[40px] h-[40px] z-[110] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
+                className="lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
               >
                 <div className="relative flex flex-col items-center justify-center w-[24px] h-[18px]">
                   <span
