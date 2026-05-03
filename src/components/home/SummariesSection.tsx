@@ -1,7 +1,7 @@
 "use client";
 
 import { FileText, BookOpen, Calendar, Star } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { SummaryWithRatings } from "@/types/database";
 import { SummaryWithRatingsOptimistic } from "@/hooks/useSummaries";
 import { useLocale } from "next-intl";
@@ -47,6 +47,7 @@ export function SummariesSection({
   onEditSummary,
 }: SummariesSectionProps) {
   const locale = useLocale();
+  const shouldReduceMotion = useReducedMotion();
   const isRTL = locale === "ar";
   return (
     <div className="space-y-6" dir="auto">
@@ -105,7 +106,11 @@ export function SummariesSection({
         </div>
       ) : (
         <motion.div
-          variants={containerVariants}
+          variants={
+            shouldReduceMotion
+              ? { hidden: { opacity: 0 }, show: { opacity: 1 } }
+              : containerVariants
+          }
           initial="hidden"
           animate="show"
           className="summary-grid"
@@ -116,9 +121,11 @@ export function SummariesSection({
             return (
               <motion.div
                 key={summary.id}
-                variants={itemVariants}
-                whileHover={!summary.isOptimistic ? { y: -4 } : {}}
-                className={`modern-card p-5 transition-all duration-300
+                variants={shouldReduceMotion ? { hidden: {}, show: {} } : itemVariants}
+                whileHover={
+                  !shouldReduceMotion && !summary.isOptimistic ? { y: -4 } : {}
+                }
+                className={`modern-card p-5 transition-[colors,transform,box-shadow,border-color] duration-300
                   ${summary.isOptimistic 
                     ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
                     : "cursor-pointer group hover:border-brand-blue/50"
