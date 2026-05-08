@@ -12,6 +12,12 @@ import { logger } from '@/lib/logger';
  * Merges OAuth metadata on first sign-in but preserves custom database changes.
  */
 export async function syncUserProfile() {
+  // Validate database configuration before attempting sync
+  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_IPV4) {
+    logger.error('[auth/sync] Database not configured: DATABASE_URL or DATABASE_URL_IPV4 is required');
+    return { success: false, error: 'Database not configured' };
+  }
+
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
