@@ -22,7 +22,7 @@ self.addEventListener('install', (event) => {
       const essentialFiles = [
         '/',
         '/manifest.json',
-        '/logo.png'
+        '/favicon.svg'
       ];
 
       // Try to cache essential files, but don't fail if some are missing
@@ -160,8 +160,8 @@ self.addEventListener('message', (event) => {
 
     self.registration.showNotification(title, {
       body: body,
-      icon: icon || '/logo.png',
-      badge: '/logo.png',
+      icon: icon || '/favicon.svg',
+      badge: '/favicon.svg',
       tag: tag || 'masarx-notification',
       requireInteraction: false,
       silent: false,
@@ -226,8 +226,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
       body: data.body || 'إشعار جديد من Masar X',
-      icon: data.icon || '/logo.png',
-      badge: '/logo.png',
+      icon: data.icon || '/favicon.svg',
+      badge: '/favicon.svg',
       tag: data.tag || 'masarx-push',
       requireInteraction: data.requireInteraction || false,
       data: data.data || {},

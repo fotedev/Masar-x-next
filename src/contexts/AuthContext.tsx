@@ -71,6 +71,11 @@ export function AuthProvider({
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        // Handle 503 Service Unavailable (database not configured) - don't throw, just warn
+        if (response.status === 503) {
+          logger.warn(`[auth] Profile sync unavailable - database not configured for user ${userId}`);
+          return;
+        }
         throw new Error(errorData.detail || errorData.error || 'Sync failed');
       }
       
