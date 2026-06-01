@@ -17,6 +17,7 @@ import {
   Subject,
 } from "@/types/database";
 import { useRouter, useParams } from "next/navigation";
+import { Link } from "@/i18n/routing";
 import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";
@@ -179,10 +180,10 @@ export default function HomeClient() {
       {/* Quick Actions & Navigation Hub */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
         {/* ZANE AI Shortcut */}
-        <button
-          type="button"
-          onClick={() => onNavigate("ai-assistant")}
-          className="md:col-span-5 relative group cursor-pointer overflow-hidden rounded-[32px] p-8 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-[colors,transform,box-shadow] duration-300 border border-white/10 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none text-left"
+        <Link
+          href="/ai-assistant"
+          aria-label={tHome("aiCardTitle")}
+          className="lg:col-span-5 relative group cursor-pointer overflow-hidden rounded-[32px] p-8 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-white shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-[colors,transform,box-shadow] duration-300 border border-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none text-left"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-colors" />
           <div className="relative z-10 h-full flex flex-col">
@@ -190,63 +191,63 @@ export default function HomeClient() {
               <Sparkles className="w-8 h-8 text-cyan-300" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black mb-3 tracking-tight">
-              اسأل زين AI
+              {tHome("aiCardTitle")}
             </h2>
             <p className="text-blue-100/90 font-medium mb-8 leading-relaxed text-sm sm:text-base">
-              هل تواجه صعوبة في فهم موضوع معين؟ زين هنا لمساعدتك في المذاكرة وتلخيص المواد.
+              {tHome("aiCardDescription")}
             </p>
             <div className="mt-auto flex items-center gap-2 font-bold text-sm bg-white/10 self-start px-4 py-2 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors">
-              <span>ابدأ المحادثة الآن</span>
+              <span>{tHome("aiCardCta")}</span>
               <ArrowRight className={`w-4 h-4 ${locale === 'ar' ? 'rotate-180' : ''}`} />
             </div>
           </div>
-        </button>
+        </Link>
 
         {/* Action Grid */}
-        <div className="md:col-span-7 grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => onNavigate("subjects")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+        <div className="lg:col-span-7 grid grid-cols-2 gap-4">
+          <Link
+            href="/subjects"
+            aria-label={tHome("actionSubjects")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
           >
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 transition-colors">
               <BookOpen className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white">المواد الدراسية</span>
-          </button>
+            <span className="font-bold text-slate-900 dark:text-white">{tHome("actionSubjects")}</span>
+          </Link>
 
-          <button
-            type="button"
-            onClick={() => onNavigate("quizzes")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+          <Link
+            href="/quizzes"
+            aria-label={tHome("actionQuizzes")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
           >
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-600 transition-colors">
               <PlayCircle className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white">بنك الاختبارات</span>
-          </button>
+            <span className="font-bold text-slate-900 dark:text-white">{tHome("actionQuizzes")}</span>
+          </Link>
 
-          <button
-            type="button"
-            onClick={() => onNavigate("news")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+          <Link
+            href="/news"
+            aria-label={tHome("actionNews")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
           >
             <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-brand-orange transition-colors">
               <FileText className="w-6 h-6 text-brand-orange group-hover:text-white transition-colors" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white">آخر الأخبار</span>
-          </button>
+            <span className="font-bold text-slate-900 dark:text-white">{tHome("actionNews")}</span>
+          </Link>
 
-          <button
-            type="button"
-            onClick={() => onNavigate("profile")}
-            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-[colors,transform,box-shadow] duration-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none"
+          <Link
+            href="/profile"
+            aria-label={tHome("actionActivity")}
+            className="modern-card p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900"
           >
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 transition-colors">
               <History className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />
             </div>
-            <span className="font-bold text-slate-900 dark:text-white">نشاطك الأخير</span>
-          </button>
+            <span className="font-bold text-slate-900 dark:text-white">{tHome("actionActivity")}</span>
+          </Link>
         </div>
       </section>
 

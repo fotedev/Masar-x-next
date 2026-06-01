@@ -1,7 +1,9 @@
 import { Bell } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useNotifications } from "./NotificationProvider";
 
 export function NotificationPrompt() {
+  const t = useTranslations("notifications");
   const {
     showNotificationPrompt,
     requestPermission,
@@ -28,10 +30,10 @@ export function NotificationPrompt() {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-              تفعيل الإشعارات
+              {t("promptTitle")}
             </h3>
             <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              احصل على إشعارات عندما تكون هناك ملخصات أو أخبار جديدة
+              {t("promptBody")}
             </p>
           </div>
         </div>
@@ -40,13 +42,13 @@ export function NotificationPrompt() {
             onClick={handleAllow}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors"
           >
-            تفعيل
+            {t("promptAllow")}
           </button>
           <button
             onClick={handleDeny}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium py-2 px-4"
+            className="flex-1 text-blue-700 dark:text-blue-300 text-sm font-medium py-2 px-4 rounded-md border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-colors"
           >
-            لاحقاً
+            {t("promptLater")}
           </button>
         </div>
       </div>

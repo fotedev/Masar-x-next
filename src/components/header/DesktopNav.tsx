@@ -3,6 +3,8 @@ interface NavItem {
   page: string;
   label: string;
   isActive: () => boolean;
+  activeText: string;
+  activeUnderline: string;
 }
 
 interface DesktopNavProps {
@@ -27,14 +29,18 @@ export function DesktopNav({
             <button
               key={item.key}
               onClick={() => handleNavigate(item.page)}
+              aria-current={active ? "page" : undefined}
               className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
                 active
-                  ? "text-white bg-[rgba(255,255,255,0.12)]"
-                  : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                  ? `${item.activeText} font-semibold`
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
               type="button"
             >
               {item.label}
+              {active && (
+                <span className={`absolute left-2 right-2 -bottom-0.5 h-0.5 rounded-full ${item.activeUnderline}`} />
+              )}
             </button>
           );
         })}
@@ -44,12 +50,15 @@ export function DesktopNav({
             onClick={() => handleNavigate("non-academic")}
             className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96] ${
               currentPage === "non-academic"
-                ? "text-white bg-[rgba(255,255,255,0.12)]"
-                : "text-[#a1a1aa] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                ? "text-slate-900 dark:text-slate-100 font-semibold"
+                : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
             type="button"
           >
             <span>The Real World</span>
+            {currentPage === "non-academic" && (
+              <span className="absolute left-2 right-2 -bottom-0.5 h-0.5 rounded-full bg-slate-900 dark:bg-slate-100" />
+            )}
           </button>
         )}
       </nav>
