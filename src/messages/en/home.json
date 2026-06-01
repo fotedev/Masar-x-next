@@ -6,5 +6,12 @@
   "goToExams": "View exams",
   "goToExamsDescription": "Go to exams",
   "editSummary": "Edit summary",
-  "topLectures": "Top Lectures"
+  "topLectures": "Top Lectures",
+  "aiCardTitle": "Ask ZANE AI",
+  "aiCardDescription": "Struggling to understand a topic? ZANE is here to help you study and summarize your material.",
+  "aiCardCta": "Start chatting now",
+  "actionSubjects": "Study materials",
+  "actionQuizzes": "Quiz bank",
+  "actionNews": "Latest news",
+  "actionActivity": "Recent activity"
 }

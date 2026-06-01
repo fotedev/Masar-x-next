@@ -1,7 +1,15 @@
 {
-  "integration": "windsurf",
-  "version": "0.5.1.dev0",
-  "scripts": {
-    "update-context": ".specify/integrations/windsurf/scripts/update-context.sh"
-  }
+  "version": "0.8.19.dev0",
+  "integration_state_schema": 1,
+  "installed_integrations": [
+    "copilot"
+  ],
+  "integration_settings": {
+    "copilot": {
+      "script": "ps",
+      "invoke_separator": "."
+    }
+  },
+  "integration": "copilot",
+  "default_integration": "copilot"
 }

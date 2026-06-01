@@ -152,3 +152,12 @@ files.txt
 arena.txt
 dev.log
 temp-prompt.txt
+models
+compare.md
+.github
+.opencode
+.specify
+/.specify
+/.specify/integrations
+/.specify/init-options.json
+/.specify/integration.json
