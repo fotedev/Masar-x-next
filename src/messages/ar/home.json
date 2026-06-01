@@ -6,5 +6,12 @@
   "goToExams": "عرض الامتحانات",
   "goToExamsDescription": "اذهب للامتحانات",
   "editSummary": "تعديل الملخص",
-  "topLectures": "أفضل المحاضرات"
+  "topLectures": "أفضل المحاضرات",
+  "aiCardTitle": "اسأل زين AI",
+  "aiCardDescription": "هل تواجه صعوبة في فهم موضوع معين؟ زين هنا لمساعدتك في المذاكرة وتلخيص المواد.",
+  "aiCardCta": "ابدأ المحادثة الآن",
+  "actionSubjects": "المواد الدراسية",
+  "actionQuizzes": "بنك الاختبارات",
+  "actionNews": "آخر الأخبار",
+  "actionActivity": "نشاطك الأخير"
 }

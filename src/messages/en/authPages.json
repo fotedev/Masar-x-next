@@ -37,5 +37,7 @@
   "emailRequiredForReset": "Please enter your email first",
   "resetRequestFailed": "An error occurred while sending the reset link. Please try again.",
   "signupEmailAlreadyRegistered": "This email is already registered. Try logging in instead.",
-  "signupGenericError": "An error occurred during sign up. Please try again."
+  "signupGenericError": "An error occurred during sign up. Please try again.",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password"
 }

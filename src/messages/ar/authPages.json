@@ -37,5 +37,7 @@
   "passwordMismatch": "كلمة المرور غير متطابقة",
   "passwordMinLength": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
   "signupEmailAlreadyRegistered": "هذا البريد الإلكتروني مسجل بالفعل. جرب تسجيل الدخول بدلاً من ذلك.",
-  "signupGenericError": "حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى."
+  "signupGenericError": "حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.",
+  "showPassword": "إظهار كلمة المرور",
+  "hidePassword": "إخفاء كلمة المرور"
 }
