@@ -52,7 +52,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         "notification-prompt-dismissed",
       );
       if (Notification.permission === "default" && !hasDismissed) {
-        setShowPrompt(true);
+        // Defer prompt by 20 seconds to avoid interrupting first impression
+        const timeoutId = setTimeout(() => setShowPrompt(true), 20000);
+        return () => clearTimeout(timeoutId);
       }
 
       if (

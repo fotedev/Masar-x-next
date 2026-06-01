@@ -19,5 +19,9 @@
   "closeFooter": "إغلاق النافذة",
   "title": "الإشعارات",
   "subtitle": "لديك {count} إشعارات غير مقروءة",
-  "unknownTime": "غير معروف"
+  "unknownTime": "غير معروف",
+  "promptTitle": "تفعيل الإشعارات",
+  "promptBody": "احصل على إشعارات عندما تكون هناك ملخصات أو أخبار جديدة",
+  "promptAllow": "تفعيل",
+  "promptLater": "لاحقاً"
 }

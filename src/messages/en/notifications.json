@@ -19,5 +19,9 @@
   "closeFooter": "Close",
   "title": "Notifications",
   "subtitle": "You have {count} unread notifications",
-  "unknownTime": "Unknown"
+  "unknownTime": "Unknown",
+  "promptTitle": "Enable notifications",
+  "promptBody": "Get notified when new summaries or news are available.",
+  "promptAllow": "Enable",
+  "promptLater": "Later"
 }
