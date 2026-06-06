@@ -1,9 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
+import { defineRouting } from "next-intl/routing";
 
-import { routing } from "./i18n/routing";
 import { updateSession } from "./lib/supabase/middleware";
 import { logger } from "./lib/logger";
+
+const routing = defineRouting({
+  locales: ["ar", "en"],
+  defaultLocale: "ar",
+  localePrefix: "always",
+  localeDetection: true,
+});
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -177,5 +184,7 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };
