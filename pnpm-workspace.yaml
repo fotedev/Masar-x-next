@@ -1,7 +1,8 @@
-allowBuilds:
-  '@parcel/watcher': false
-  '@sentry/cli': false
-  '@swc/core': false
-  esbuild: false
-  sharp: false
-  unrs-resolver: false
+# This project is a single package, NOT a monorepo.
+# `onlyBuiltDependencies` is the valid pnpm 9 key for controlling post-install
+# build scripts (replaces the invalid `allowBuilds` key).
+packages:
+  - .
+ 
+onlyBuiltDependencies:
+  - sharp
