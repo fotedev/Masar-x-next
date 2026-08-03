@@ -12,6 +12,7 @@ export default [
       "node_modules/**",
       "supabase/**",
       "sandbox/**",
+      "backup/**",
     ],
   },
   {
