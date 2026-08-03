@@ -174,3 +174,5 @@ backup
 /docs
 /context_output
 /.context
+/files.txt
+/SQL_FIX_VIDEOS_RATINGS.sql
