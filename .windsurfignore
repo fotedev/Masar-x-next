@@ -1,0 +1,46 @@
+# Dependencies & Build Outputs
+node_modules/
+.next/
+.vercel/
+.turbo/
+.cache/
+*.tsbuildinfo
+
+# Heavy Dumps & Lockfiles
+pnpm-lock.yaml
+pnpm-list.json
+
+# Local Data & Experiments
+sandbox/
+models/
+supabase/.temp/
+supabase/migrations.old/
+supabase/blackbox/
+supabase/audited-files/
+
+# AI Editor Internals
+.cursor/
+.windsurf/
+.opencode/
+.agents/
+.specify/
+.vscode/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+.env.local.bak
+
+# Transient Reports & Token Bloat
+audit_log.md
+MASAR_X_AUDIT_REPORT.md
+BRANCH_ANALYSIS.md
+structure.txt
+files.txt
+temp-prompt.txt
+compare.md
+SQL_FIX_VIDEOS_RATINGS.sql
+vite.config.ts.timestamp-*.mjs
+analyze_branches.ps1
+*.bak
