@@ -3,6 +3,13 @@
 # build scripts (replaces the invalid `allowBuilds` key).
 packages:
   - .
- 
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
 onlyBuiltDependencies:
   - sharp
