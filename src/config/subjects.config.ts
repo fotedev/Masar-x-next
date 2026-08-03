@@ -29,8 +29,8 @@ export interface SubjectIconMap {
 export const COLLEGE_CONFIG = {
     name: "جامعة مسار", // Change to your college name
     // Add your college logo path here if needed
-    logo_ar: "/logo_AR.png",
-    logo_en: "/logo_EN.png",
+    logo_ar: "/logo_AR.webp",
+    logo_en: "/logo_EN.webp",
 };
 
 // Semester 1 subjects

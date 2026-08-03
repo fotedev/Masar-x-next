@@ -52,7 +52,6 @@ lerna-debug.log*
 .parcel-cache
 .turbo
 .node_repl_history
-*.tsbuildinfo
 pids
 *.pid
 *.seed
@@ -66,9 +65,8 @@ coverage/
 # Database and Supabase
 supabase/.temp/
 supabase/migrations.backup/
-supabase/schema_dump.sql
-/supabase/schema_dump.sql
 *.sql
+!supabase/migrations/**/*.sql
 
 # Scripts and Tools
 notebooklm_extractor.js
@@ -115,7 +113,6 @@ PROJECT_CONTEXT.md
 # Assets
 public/logo_alt*.png
 public/logo_alt*.svg
-vite.config.ts.timestamp-*.mjs
 /exam_resaults_example_styles.css
 /exam_resaults_example.html
 /exam_resaults.html
@@ -130,35 +127,50 @@ vite.config.ts.timestamp-*.mjs
 /scripts/setup-subjects.js
 /scripts/generate-sitemap.js
 /scripts/test-request-password-reset.sh
-/.windsurf
+/.windsurf/plans/
 /src/messages/ar.json.bak
 /src/messages/en.json.bak
 /cloc-2.08.exe
 /hjkllllllllllllllllllllllllllllllllllllllllllllllhhjkhjhjkhjhjkhjk.txt
-/SQL_FIX_VIDEOS_RATINGS.sql
-__pycache__
+/__pycache__
 .agents
 scripts/row-preview-notgoodforhtml.txt
 .vercel
 AGENTS.md
 localhost-profile.log
 skills-lock.json
-PLAN_INDEX.md
-PLAN_SUMMARY.md
-DAILY_CHECKLIST.md
-UIUX_IMPROVEMENT_PLAN.md
+
+# === Added by Reorganization Plan ===
+
+# Heavy transient files
+pnpm-list.json
+audit_log.md
+MASAR_X_AUDIT_REPORT.md
+BRANCH_ANALYSIS.md
+*.tsbuildinfo
+*.bak
+vite.config.ts.timestamp-*.mjs
+temp-prompt.txt
 structure.txt
 files.txt
 arena.txt
-dev.log
-temp-prompt.txt
-models
 compare.md
-.github
+vizvibe.mmd
+SQL_FIX_VIDEOS_RATINGS.sql
+
+# Heavy local data
+/models/
+/sandbox/
+/supabase/blackbox/
+/supabase/migrations.old/
+
+# Env backups
+.env.local.bak
 .opencode
+.github
 .specify
-/.specify
-/.specify/integrations
-/.specify/init-options.json
-/.specify/integration.json
-/temp.md
+.windsurf
+backup
+/docs
+/context_output
+/.context
