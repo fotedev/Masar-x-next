@@ -65,7 +65,6 @@ coverage/
 # Database and Supabase
 supabase/.temp/
 supabase/migrations.backup/
-/supabase/schema_dump.sql
 *.sql
 !supabase/migrations/**/*.sql
 
