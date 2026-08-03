@@ -12,7 +12,7 @@ interface DynamicLogoProps extends Omit<ImageProps, "src" | "alt"> {
  * Useful for non-component contexts like notifications or server-side logic.
  */
 export function getLogoPath(locale: string) {
-  return locale === "ar" ? "/logo_AR.png" : "/logo_EN.png";
+  return locale === "ar" ? "/logo_AR.webp" : "/logo_EN.webp";
 }
 
 /**
