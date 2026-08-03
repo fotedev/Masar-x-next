@@ -1,13 +1,72 @@
 const isDev = process.env.NODE_ENV !== "production";
 
+type PgErrorLike = {
+  code?: string;
+  message?: string;
+  detail?: string;
+  hint?: string;
+  position?: string;
+  severity?: string;
+  schema?: string;
+  table?: string;
+  column?: string;
+  dataType?: string;
+  constraint?: string;
+  routine?: string;
+};
+
+const extractPgError = (cause: unknown): PgErrorLike | null => {
+  if (!cause || typeof cause !== "object") return null;
+  const c = cause as Record<string, unknown>;
+  // pg driver / Drizzle cause shape: { code, message, detail, hint, ... }
+  if (typeof c.code === "string" && /^[0-9A-Z]{5}$/.test(c.code)) {
+    return {
+      code: c.code,
+      message: typeof c.message === "string" ? c.message : undefined,
+      detail: typeof c.detail === "string" ? c.detail : undefined,
+      hint: typeof c.hint === "string" ? c.hint : undefined,
+      severity: typeof c.severity === "string" ? c.severity : undefined,
+      schema: typeof c.schema === "string" ? c.schema : undefined,
+      table: typeof c.table === "string" ? c.table : undefined,
+      column: typeof c.column === "string" ? c.column : undefined,
+      dataType: typeof c.dataType === "string" ? c.dataType : undefined,
+      constraint: typeof c.constraint === "string" ? c.constraint : undefined,
+      routine: typeof c.routine === "string" ? c.routine : undefined,
+    };
+  }
+  return null;
+};
+
+const summarizeError = (label: string, error: unknown): string | null => {
+  if (error instanceof Error) {
+    const anyErr = error as Error & { cause?: unknown };
+    const pg = extractPgError(anyErr.cause);
+    if (pg) {
+      const parts = [`${label}: ${error.message}`];
+      if (pg.message && pg.message !== error.message) parts.push(`cause: ${pg.message}`);
+      if (pg.detail) parts.push(`detail: ${pg.detail}`);
+      if (pg.hint) parts.push(`hint: ${pg.hint}`);
+      if (pg.code) parts.push(`[${pg.code}]`);
+      if (pg.table) parts.push(`table=${pg.schema ?? "public"}.${pg.table}`);
+      if (pg.column) parts.push(`column=${pg.column}`);
+      return parts.join(" | ");
+    }
+    return `${label}: ${error.message}`;
+  }
+  return null;
+};
+
 const normalizeError = (error: unknown) => {
   if (error instanceof Error) {
     const anyErr = error as Error & { cause?: unknown };
+    const pg = extractPgError(anyErr.cause);
     return {
       name: error.name,
       message: error.message,
       stack: error.stack,
       cause: anyErr.cause,
+      // Flattened PG error fields for at-a-glance debugging without expanding nested objects
+      pg: pg ?? undefined,
     };
   }
 
@@ -38,7 +97,8 @@ export const logger = {
     error?: unknown,
     context?: Record<string, unknown>,
   ) => {
-    console.error(`[ERROR] ${message}`, {
+    const summary = summarizeError(message, error);
+    console.error(`[ERROR] ${summary ?? message}`, {
       error: normalizeError(error),
       ...context,
       timestamp: new Date().toISOString(),
