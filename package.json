@@ -12,7 +12,8 @@
     "lint": "eslint . --max-warnings=300",
     "lint:strict": "eslint . --max-warnings=0",
     "setup-subjects": "node setup-subjects.js",
-    "check:auth-routes": "node scripts/auth-route-check.mjs"
+    "check:auth-routes": "node scripts/auth-route-check.mjs",
+    "db:diagnose": "node scripts/db-diagnose.cjs"
   },
   "dependencies": {
     "@heyputer/puter.js": "^2.2.10",
