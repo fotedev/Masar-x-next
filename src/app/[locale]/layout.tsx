@@ -24,7 +24,12 @@ const getProfile = cache(async (userId: string) => {
       .limit(1);
     return profile || null;
   } catch (error) {
-    logger.error("Error fetching profile in layout", error);
+    // Inline the message so the root cause is visible in the console line
+    // instead of being buried inside a collapsed `{}` in DevTools.
+    const message = error instanceof Error ? error.message : String(error);
+    const code = (error as { code?: string })?.code;
+    const codeSuffix = code ? ` [code: ${code}]` : '';
+    logger.error(`[layout] Error fetching profile for ${userId}${codeSuffix}: ${message}`);
     return null;
   }
 });
