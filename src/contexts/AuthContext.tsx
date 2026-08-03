@@ -70,19 +70,29 @@ export function AuthProvider({
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({} as Record<string, unknown>));
         // Handle 503 Service Unavailable (database not configured) - don't throw, just warn
         if (response.status === 503) {
           logger.warn(`[auth] Profile sync unavailable - database not configured for user ${userId}`);
           return;
         }
-        throw new Error(errorData.detail || errorData.error || 'Sync failed');
+        const detail = typeof errorData.detail === 'string'
+          ? errorData.detail
+          : (typeof errorData.error === 'string' ? errorData.error : 'Sync failed');
+        const err = new Error(`HTTP ${response.status}: ${detail}`) as Error & { status?: number };
+        err.status = response.status;
+        throw err;
       }
-      
+
       lastSyncTime.current = Date.now();
       logger.info(`[auth] Successfully synced profile for ${userId}`);
     } catch (err) {
-      logger.error(`[auth] Profile sync failed for ${userId}:`, err);
+      // Extract a readable message so the root cause shows up in the console line itself,
+      // not buried inside a collapsed object in DevTools.
+      const message = err instanceof Error ? err.message : String(err);
+      const status = (err as { status?: number })?.status;
+      const suffix = status ? ` (status ${status})` : '';
+      logger.error(`[auth] Profile sync failed for ${userId}${suffix}: ${message}`);
     } finally {
       syncInProgress.current = false;
     }
