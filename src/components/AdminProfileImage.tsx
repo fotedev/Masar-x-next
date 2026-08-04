@@ -118,6 +118,7 @@ export function AdminProfileImage({
         >
           {avatarUrl ? (
             <Image
+              key={avatarUrl}
               src={avatarUrl}
               alt="الصورة الشخصية"
               fill
