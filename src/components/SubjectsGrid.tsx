@@ -96,9 +96,9 @@ export function SubjectsGrid({
               }
               whileTap={!subject.isOptimistic ? { scale: 0.95 } : {}}
               onClick={() => !subject.isOptimistic && onSubjectClick?.(subject.name)}
-              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color] duration-300 w-full flex flex-col items-center justify-center min-h-[160px] focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none
-                ${subject.isOptimistic 
-                  ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
+              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color,outline-color] duration-300 w-full flex flex-col items-center justify-center min-h-[160px] outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 focus-visible:border-brand-blue/60
+                ${subject.isOptimistic
+                  ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse"
                   : "cursor-pointer group hover:border-brand-blue/50"
                 }`}
               type="button"

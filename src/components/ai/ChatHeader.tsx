@@ -157,14 +157,14 @@ export function ChatHeader({
                 {isDropdownOpen && (
                   <>
                     <div
-                      className="fixed inset-0 z-30"
+                      className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
                       onClick={() => setIsMobileDropdownOpen(false)}
                     />
                     <motion.div
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-40"
+                      className="absolute top-full start-0 rtl:start-0 ltr:end-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden z-40"
                       id={modeMenuId}
                       role="menu"
                     >
@@ -181,8 +181,8 @@ export function ChatHeader({
                               }}
                               className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-[colors,opacity,transform] ${
                                 isActive
-                                  ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-200"
+                                  ? "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-bold"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
                               }`}
                               role="menuitem"
                               type="button"
@@ -193,7 +193,7 @@ export function ChatHeader({
                                   {m.label}
                                 </span>
                               </div>
-                              {isActive && <Check className="w-5 h-5" />}
+                              {isActive && <Check className="w-5 h-5 text-cyan-500" />}
                             </button>
                           );
                         })}
@@ -234,14 +234,14 @@ export function ChatHeader({
                   {isModelDropdownOpen && (
                     <>
                       <div
-                        className="fixed inset-0 z-30"
+                        className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
                         onClick={() => setIsModelDropdownOpen(false)}
                       />
                       <motion.div
                         initial={{ opacity: 0, y: 5, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-40 p-1.5"
+                        className="absolute top-full start-0 rtl:start-0 ltr:end-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden z-40 p-1.5"
                         id={modelMenuId}
                         role="menu"
                       >
@@ -254,15 +254,15 @@ export function ChatHeader({
                             }}
                             className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                               selectedModel === m.id
-                                ? "bg-cyan-50 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400"
-                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-200"
+                                ? "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-bold"
+                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
                             }`}
                             role="menuitem"
                             type="button"
                           >
                             <span className="font-bold text-sm">{m.label}</span>
                             {selectedModel === m.id && (
-                              <Check className="w-4 h-4" />
+                              <Check className="w-4 h-4 text-cyan-500" />
                             )}
                           </button>
                         ))}
