@@ -1,9 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getAdminDb } from '@/lib/admin-db';
-import { files, videos, subjectLectures, subjects } from '@/lib/admin-db/schema';
-import { eq, and } from 'drizzle-orm';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -34,13 +32,51 @@ async function ensureAdmin() {
 
   const role = user.app_metadata?.role;
   const isAdmin = role === 'admin' || role === 'doctor' || role === 'student_admin';
-  
+
   if (!isAdmin) return { user, error: 'Not authorized' };
   return { user, error: null };
 }
 
 /**
+ * Resolves the subject UUID and (optionally) the lecture UUID for a given
+ * subject name + lecture key combo. Returns nulls if not found.
+ *
+ * Casts results to `never` + explicit shape because Supabase JS v2.97's
+ * generic inference resolves the admin client result to `never`.
+ */
+async function resolveSubjectAndLecture(
+  subjectName: string,
+  lectureKey: string | undefined,
+): Promise<{ subjectId: string | null; lectureId: string | null }> {
+  const admin = getSupabaseAdmin();
+
+  const { data: subjectRows } = await admin
+    .from('subjects')
+    .select('id')
+    .eq('name', subjectName)
+    .limit(1);
+
+  const subjectId = (subjectRows as { id: string }[] | null)?.[0]?.id ?? null;
+
+  if (!lectureKey || !subjectId) {
+    return { subjectId, lectureId: null };
+  }
+
+  const { data: lectureRows } = await admin
+    .from('subject_lectures')
+    .select('id')
+    .eq('subject', subjectName)
+    .eq('lecture_key', lectureKey)
+    .limit(1);
+
+  const lectureId = (lectureRows as { id: string }[] | null)?.[0]?.id ?? null;
+  return { subjectId, lectureId };
+}
+
+/**
  * Adds a new file to a subject/lecture.
+ *
+ * Migrated from pg + Drizzle to Supabase JS service-role client.
  */
 export async function addFile(_prevState: any, formData: FormData) {
   const { user, error: authError } = await ensureAdmin();
@@ -60,36 +96,29 @@ export async function addFile(_prevState: any, formData: FormData) {
   }
 
   try {
-    const adminDb = getAdminDb();
-    
-    // 1. Resolve subject and lecture IDs
-    const [subject] = await adminDb.select().from(subjects).where(eq(subjects.name, validated.data.subject)).limit(1);
-    let lectureId = null;
-    
-    if (validated.data.lectureKey && subject) {
-      const [lecture] = await adminDb.select().from(subjectLectures).where(
-        and(
-          eq(subjectLectures.subject, validated.data.subject),
-          eq(subjectLectures.lectureKey, validated.data.lectureKey)
-        )
-      ).limit(1);
-      lectureId = lecture?.id || null;
-    }
+    const admin = getSupabaseAdmin();
+    const { subjectId, lectureId } = await resolveSubjectAndLecture(
+      validated.data.subject,
+      validated.data.lectureKey,
+    );
 
-    // 2. Insert record
-    await adminDb.insert(files).values({
-      id: crypto.randomUUID(),
-      title: validated.data.title,
-      subject: validated.data.subject,
-      subjectId: subject?.id || null,
-      fileUrl: validated.data.fileUrl,
-      description: validated.data.description || null,
-      userId: user!.id,
-      lectureKey: validated.data.lectureKey || null,
-      lectureId: lectureId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    const { error: insertError } = await admin
+      .from('files')
+      .insert({
+        id: crypto.randomUUID(),
+        title: validated.data.title,
+        subject: validated.data.subject,
+        subject_id: subjectId,
+        file_url: validated.data.fileUrl,
+        description: validated.data.description || null,
+        user_id: user!.id,
+        lecture_key: validated.data.lectureKey || null,
+        lecture_id: lectureId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as never);
+
+    if (insertError) throw insertError;
 
     revalidatePath(`/[locale]/subjects/${encodeURIComponent(validated.data.subject)}`, 'page');
     return { success: true, message: 'File added successfully' };
@@ -120,34 +149,29 @@ export async function addVideo(_prevState: any, formData: FormData) {
   }
 
   try {
-    const adminDb = getAdminDb();
-    
-    const [subject] = await adminDb.select().from(subjects).where(eq(subjects.name, validated.data.subject)).limit(1);
-    let lectureId = null;
-    
-    if (validated.data.lectureKey && subject) {
-      const [lecture] = await adminDb.select().from(subjectLectures).where(
-        and(
-          eq(subjectLectures.subject, validated.data.subject),
-          eq(subjectLectures.lectureKey, validated.data.lectureKey)
-        )
-      ).limit(1);
-      lectureId = lecture?.id || null;
-    }
+    const admin = getSupabaseAdmin();
+    const { subjectId, lectureId } = await resolveSubjectAndLecture(
+      validated.data.subject,
+      validated.data.lectureKey,
+    );
 
-    await adminDb.insert(videos).values({
-      id: crypto.randomUUID(),
-      title: validated.data.title,
-      subject: validated.data.subject,
-      subjectId: subject?.id || null,
-      url: validated.data.url,
-      language: validated.data.language,
-      userId: user!.id,
-      lectureKey: validated.data.lectureKey || null,
-      lectureId: lectureId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    const { error: insertError } = await admin
+      .from('videos')
+      .insert({
+        id: crypto.randomUUID(),
+        title: validated.data.title,
+        subject: validated.data.subject,
+        subject_id: subjectId,
+        url: validated.data.url,
+        language: validated.data.language,
+        user_id: user!.id,
+        lecture_key: validated.data.lectureKey || null,
+        lecture_id: lectureId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as never);
+
+    if (insertError) throw insertError;
 
     revalidatePath(`/[locale]/subjects/${encodeURIComponent(validated.data.subject)}`, 'page');
     return { success: true, message: 'Video added successfully' };

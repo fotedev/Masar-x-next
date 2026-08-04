@@ -1,20 +1,22 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getAdminDb } from '@/lib/admin-db';
-import { profiles } from '@/lib/admin-db/schema';
-import { eq } from 'drizzle-orm';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/lib/logger';
 
 /**
  * Synchronizes the user profile with the database.
  * Merges OAuth metadata on first sign-in but preserves custom database changes.
+ *
+ * Uses the Supabase JS service-role client instead of pg + Drizzle,
+ * because the pg driver's native TLS module is not reliably externalized
+ * by Next.js 16 dev (webpack) on Windows — the connection fails with
+ * `There was an error establishing an SSL connection`.
  */
 export async function syncUserProfile() {
-  // Validate database configuration before attempting sync
-  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_IPV4) {
-    logger.error('[auth/sync] Database not configured: DATABASE_URL or DATABASE_URL_IPV4 is required');
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    logger.error('[auth/sync] Supabase not configured: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing');
     return { success: false, error: 'Database not configured' };
   }
 
@@ -32,56 +34,74 @@ export async function syncUserProfile() {
   }
 
   try {
-    const adminDb = getAdminDb();
-    
+    const admin = getSupabaseAdmin();
+
     // 1. Check if profile exists
-    const [existingProfile] = await adminDb
-      .select()
-      .from(profiles)
-      .where(eq(profiles.id, user.id))
-      .limit(1);
+    const { data: existingProfileRaw, error: selectError } = await admin
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (selectError) {
+      throw selectError;
+    }
+
+    // Cast to a concrete shape — Supabase JS v2.97's generic inference
+    // resolves the untyped admin client result to `never`.
+    const existingProfile = existingProfileRaw as {
+      id: string;
+      full_name: string | null;
+      avatar_url: string | null;
+    } | null;
 
     if (!existingProfile) {
       logger.info(`[auth/sync] Creating new profile for user ${user.id}`);
-      // 2. Create profile if it doesn't exist (First sign-in)
-      await adminDb.insert(profiles).values({
-        id: user.id,
-        fullName: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        avatarUrl: user.user_metadata?.avatar_url || null,
-        updatedAt: new Date().toISOString(),
-      });
+      // Cast payload to `never` to bypass Supabase JS v2.97's broken generic
+      // inference on insert. The runtime contract is unchanged.
+      const { error: insertError } = await admin
+        .from('profiles')
+        .insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+        } as never);
+      if (insertError) throw insertError;
     } else {
       // 3. Selective sync: Only update if fields are empty to avoid overwriting custom edits
-      const updates: any = {};
-      if (!existingProfile.fullName && (user.user_metadata?.full_name || user.user_metadata?.name)) {
-        updates.fullName = user.user_metadata?.full_name || user.user_metadata?.name;
+      const updates: Record<string, string> = {};
+      const oauthFullName = user.user_metadata?.full_name || user.user_metadata?.name;
+      if (!existingProfile.full_name && oauthFullName) {
+        updates.full_name = oauthFullName;
       }
-      if (!existingProfile.avatarUrl && user.user_metadata?.avatar_url) {
-        updates.avatarUrl = user.user_metadata?.avatar_url;
+      if (!existingProfile.avatar_url && user.user_metadata?.avatar_url) {
+        updates.avatar_url = user.user_metadata?.avatar_url;
       }
 
       if (Object.keys(updates).length > 0) {
         logger.info(`[auth/sync] Updating existing profile for user ${user.id}`, updates);
-        await adminDb
-          .update(profiles)
-          .set({ ...updates, updatedAt: new Date().toISOString() })
-          .where(eq(profiles.id, user.id));
+        const { error: updateError } = await admin
+          .from('profiles')
+          .update(updates as never)
+          .eq('id', user.id);
+        if (updateError) throw updateError;
       }
     }
 
     revalidatePath('/', 'layout');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = (error as { code?: string })?.code;
     logger.error('[auth/sync] Database sync failed:', {
-      error: error.message,
-      code: error.code,
-      userId: user.id
+      error: message,
+      code,
+      userId: user.id,
     });
-    
-    // Check for specific connectivity issues to provide better feedback in development
+
     const isDev = process.env.NODE_ENV === 'development';
-    const errorMessage = isDev ? `Sync failed: ${error.message}` : 'Internal server error';
-    
+    const errorMessage = isDev ? `Sync failed: ${message}` : 'Internal server error';
+
     return { success: false, error: errorMessage };
   }
 }

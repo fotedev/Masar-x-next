@@ -17,6 +17,7 @@ const nextConfig = {
   // Force cache invalidation: 2026-02-14T04:30:00
   reactStrictMode: true,
   transpilePackages: ["next-intl"],
+  serverExternalPackages: ["pg"],
   compiler: {
     removeConsole: {
       exclude: ["error", "warn"],
