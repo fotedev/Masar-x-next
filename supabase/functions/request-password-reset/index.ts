@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { nanoid } from "https://esm.sh/nanoid@3";
-import { corsHeaders } from "../_shared/cors.ts";
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 // =====================
 // Brevo configuration
@@ -157,13 +157,13 @@ function getClientIp(req: Request): string {
 // =====================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: buildCorsHeaders(req) });
   }
 
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -175,7 +175,7 @@ serve(async (req) => {
       if (!email) {
         return new Response(JSON.stringify({ error: "Email is required" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
@@ -211,7 +211,7 @@ serve(async (req) => {
               }),
               {
                 status: 200,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
               }
             );
           }
@@ -226,7 +226,7 @@ serve(async (req) => {
         }),
         {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
 
@@ -251,7 +251,7 @@ serve(async (req) => {
           console.warn(`[AUTH] Rate limit exceeded for email: ${email}`);
           return new Response(
             JSON.stringify({ error: 'Too many requests. Try again later.' }),
-            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 429, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
           );
         }
       } catch (rlEx) {
@@ -312,7 +312,7 @@ serve(async (req) => {
       console.error("[AUTH] request-password-reset error:", err);
       return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 });
