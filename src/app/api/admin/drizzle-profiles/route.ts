@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-import { getAdminDb } from '@/lib/admin-db';
-import { profiles } from '@/lib/admin-db/schema';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,26 +18,41 @@ export async function GET() {
   }
 
   // Check if user is admin
-  const { data: admin } = await supabase
+  const { data: adminRow } = await supabase
     .from('admins')
     .select('id')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!admin) {
+  if (!adminRow) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const adminDb = getAdminDb();
-  const rows = await adminDb
-    .select({
-      id: profiles.id,
-      username: profiles.username,
-      fullName: profiles.fullName,
-      updatedAt: profiles.updatedAt,
-    })
-    .from(profiles)
+  const admin = getSupabaseAdmin();
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id, username, full_name, updated_at')
     .limit(5);
+
+  if (error) {
+    return NextResponse.json(
+      { error: 'Failed to fetch profiles', detail: error.message },
+      { status: 500 },
+    );
+  }
+
+  // Map snake_case → camelCase for the admin dashboard consumer.
+  const rows = ((data as Array<{
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    updated_at: string | null;
+  }> | null) ?? []).map((r) => ({
+    id: r.id,
+    username: r.username,
+    fullName: r.full_name,
+    updatedAt: r.updated_at,
+  }));
 
   return NextResponse.json({ count: rows.length, rows });
 }
