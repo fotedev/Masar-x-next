@@ -1,7 +1,7 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 function getClientIp(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
@@ -16,7 +16,7 @@ function getClientIp(req: Request): string {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: buildCorsHeaders(req) });
   }
 
   try {
@@ -28,7 +28,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Token and new password are required" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -59,7 +59,7 @@ serve(async (req) => {
       if (allowed === false) {
         return new Response(
           JSON.stringify({ error: 'Too many requests. Try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
     } catch {
@@ -78,7 +78,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Invalid or expired reset token" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -88,7 +88,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Token has already been used" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -98,7 +98,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Token has expired" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -112,7 +112,7 @@ serve(async (req) => {
           JSON.stringify({ error: "Failed to find user" }),
           {
             status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
           }
         );
       }
@@ -124,7 +124,7 @@ serve(async (req) => {
         JSON.stringify({ error: "User not found" }),
         {
           status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -140,7 +140,7 @@ serve(async (req) => {
         JSON.stringify({ error: "Failed to update password" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -159,7 +159,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, message: "تم تحديث كلمة المرور بنجاح" }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
 
@@ -169,7 +169,7 @@ serve(async (req) => {
       JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
