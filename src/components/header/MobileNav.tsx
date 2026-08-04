@@ -1,6 +1,26 @@
 import { type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { LanguageToggle } from "../LanguageToggle";
-import { Shield, User, LogOut, LogIn, UserPlus } from "lucide-react";
+import { DynamicLogo } from "../DynamicLogo";
+import {
+  Home,
+  Newspaper,
+  BookOpen,
+  GraduationCap,
+  Brain,
+  Sparkles,
+  Globe,
+  Shield,
+  User,
+  LogOut,
+  LogIn,
+  UserPlus,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 
 interface NavItem {
   key: string;
@@ -20,12 +40,21 @@ interface MobileNavProps {
   isTRWVisible: boolean;
   currentPage: string;
   loading: boolean;
-  user: { id: string } | null;
+  user: { id: string; email?: string; user_metadata?: { full_name?: string } } | null;
   isAdmin: boolean;
   isAdminLoading: boolean;
   handleSignOut: () => void;
   tNav: (key: string) => string;
 }
+
+const NAV_ICONS: Record<string, LucideIcon> = {
+  home: Home,
+  news: Newspaper,
+  subjects: BookOpen,
+  courses: GraduationCap,
+  quizzes: Brain,
+  assistant: Sparkles,
+};
 
 export function MobileNav({
   dir,
@@ -44,136 +73,278 @@ export function MobileNav({
   handleSignOut,
   tNav,
 }: MobileNavProps) {
-  return (
-    <div
-      className={`lg:hidden fixed inset-0 z-[100] transition-visibility duration-300 ${
-        isMounted && isMobileMenuOpen
-          ? "visible"
-          : "invisible pointer-events-none"
-      }`}
-    >
-      <div
-        ref={mobileBackdropRef}
-        aria-hidden="true"
-        className={`absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md transition-opacity duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          isMounted && isMobileMenuOpen ? "opacity-100" : "opacity-0"
-        } ${
-          isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""
-        }`}
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
+  const isRTL = dir === "rtl";
+  const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
 
-      <div
-        id="mobile-nav-drawer"
-        role="dialog"
-        aria-modal="true"
-        className={`absolute top-0 bottom-0 start-0 w-[min(320px,85vw)] bg-white dark:bg-[#020617] shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] z-[101] ${
-          isMounted && isMobileMenuOpen
-            ? "translate-x-0"
-            : dir === "rtl"
-            ? "translate-x-full"
-            : "-translate-x-full"
-        } ${isMounted && isMobileMenuOpen ? "touch-none overscroll-contain" : ""}`}
-      >
-        <div className="flex flex-col h-full pt-[72px] px-4 md:px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] overflow-y-auto bg-inherit">
-          <nav className="flex flex-col gap-4">
-            {primaryNavItems.map((item) => {
-              const active = item.isActive();
-              return (
-                <button
-                  key={item.key}
-                  onClick={() => handleNavigate(item.page)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
-                    active
-                      ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12"
-                      : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
-                  } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
-                  type="button"
-                >
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+  const drawerVariants = {
+    closed: {
+      x: isRTL ? "100%" : "-100%",
+      transition: { type: "spring" as const, stiffness: 320, damping: 32 },
+    },
+    open: {
+      x: "0%",
+      transition: {
+        type: "spring" as const,
+        stiffness: 320,
+        damping: 32,
+        staggerChildren: 0.04,
+        delayChildren: 0.08,
+      },
+    },
+  };
 
-            {isTRWVisible && (
+  const itemVariants = {
+    closed: { opacity: 0, x: isRTL ? 15 : -15 },
+    open: { opacity: 1, x: 0 },
+  };
+
+  if (!isMounted) return null;
+
+  const drawerContent = (
+    <AnimatePresence>
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-[9999] pointer-events-auto">
+          {/* Backdrop overlay */}
+          <motion.div
+            ref={mobileBackdropRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            aria-hidden="true"
+            className="fixed inset-0 bg-slate-950/70 dark:bg-black/85 backdrop-blur-md touch-none overscroll-none"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* Mobile Navigation Drawer - Uses fixed viewport positioning to prevent clipped headers on scroll */}
+          <motion.div
+            id="mobile-nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={drawerVariants}
+            className="fixed inset-y-0 start-0 w-[min(340px,88vw)] h-[100dvh] bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-2xl z-[10000] flex flex-col border-e border-slate-200/80 dark:border-slate-800/80 overflow-hidden"
+          >
+            {/* Header section with logo & close button */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <DynamicLogo
+                  width={36}
+                  height={36}
+                  className="object-contain w-9 h-9"
+                  priority
+                />
+                <div className="flex flex-col">
+                  <span className="text-lg font-black tracking-tight bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 dark:from-blue-400 dark:via-cyan-300 dark:to-sky-300 bg-clip-text text-transparent">
+                    مسار X
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                    MASAR X PLATFORM
+                  </span>
+                </div>
+              </div>
+
               <button
-                onClick={() => handleNavigate("non-academic")}
-                className={`flex items-center justify-between px-4 py-3 rounded-[6px] text-[18px] font-medium tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
-                  isMounted && currentPage === "non-academic"
-                    ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12"
-                    : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
-                } hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96]`}
+                onClick={() => setIsMobileMenuOpen(false)}
                 type="button"
+                aria-label={isRTL ? "إغلاق القائمة" : "Close menu"}
+                className="flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all focus:outline-none"
               >
-                <span>The Real World</span>
-              </button>
-            )}
-          </nav>
-
-          <div className="h-px bg-[rgba(255,255,255,0.08)] my-4" />
-
-          <div className="flex items-center justify-between">
-            <LanguageToggle />
-          </div>
-
-          <div className="h-px bg-[rgba(255,255,255,0.08)] my-4" />
-
-          {!isMounted || loading ? (
-            <div className="flex flex-col gap-2">
-              <div className="h-11 rounded-xl bg-white/10 animate-pulse" />
-              <div className="h-11 rounded-xl bg-white/10 animate-pulse" />
-            </div>
-          ) : user ? (
-            <div className="flex flex-col gap-2">
-              {!isAdminLoading && isAdmin && (
-                <button
-                  onClick={() => handleNavigate("admin-dashboard")}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-brand-orange hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
-                  type="button"
-                >
-                  <Shield className="w-5 h-5" />
-                  <span>Admin</span>
-                </button>
-              )}
-              <button
-                onClick={() => handleNavigate("profile")}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
-                type="button"
-              >
-                <User className="w-5 h-5" />
-                <span>{tNav("profile")}</span>
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-red-600 hover:bg-red-50/70 dark:hover:bg-white/5 transition-colors"
-                type="button"
-              >
-                <LogOut className="w-5 h-5" />
-                <span>{tNav("logout")}</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => handleNavigate("signup")}
-                className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-base font-bold bg-brand-blue text-white hover:opacity-90 transition-opacity"
-                type="button"
-              >
-                <UserPlus className="w-5 h-5" />
-                <span>{tNav("signup")}</span>
-              </button>
-              <button
-                onClick={() => handleNavigate("login")}
-                className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-base font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 transition-colors"
-                type="button"
-              >
-                <LogIn className="w-5 h-5" />
-                <span>{tNav("login")}</span>
-              </button>
+
+            {/* Scrollable Body Content */}
+            <div className="flex flex-col flex-1 min-h-0 px-4 py-4 overflow-y-auto custom-scrollbar space-y-5">
+              {/* User Profile / Greeting Card */}
+              <motion.div variants={itemVariants}>
+                {user ? (
+                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-900/80 dark:to-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
+                      <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-950 flex items-center justify-center text-blue-600 dark:text-cyan-400 font-black text-lg">
+                        {user.email?.[0]?.toUpperCase() || "U"}
+                      </div>
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-black text-slate-900 dark:text-white truncate">
+                        {user.user_metadata?.full_name || user.email?.split("@")[0] || "مستخدم مسار X"}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                        {isAdmin ? "مسؤول النظام ⚡" : "طالب أكاديمي"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-600/10 via-cyan-500/5 to-transparent border border-cyan-500/20 dark:border-cyan-500/10">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1">
+                      مرحباً بك في مسار X 👋
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      سجل الدخول للوصول الكامل إلى المواد والاختبارات التفاعلية.
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Primary Navigation Links */}
+              <div className="space-y-1.5">
+                <span className="px-3 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {isRTL ? "التنقل الرئيسي" : "Main Navigation"}
+                </span>
+
+                <nav className="flex flex-col gap-1.5 pt-1">
+                  {primaryNavItems.map((item) => {
+                    const active = item.isActive();
+                    const IconComponent = NAV_ICONS[item.key] || BookOpen;
+
+                    return (
+                      <motion.button
+                        key={item.key}
+                        variants={itemVariants}
+                        onClick={() => handleNavigate(item.page)}
+                        className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
+                          active
+                            ? "bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-transparent text-cyan-600 dark:text-cyan-400 border-s-4 border-cyan-500 dark:border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+                            : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-900/60"
+                        } active:scale-[0.98]`}
+                        type="button"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                              active
+                                ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                                : "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 group-hover:bg-cyan-500/10"
+                            }`}
+                          >
+                            <IconComponent className="w-4 h-4" />
+                          </div>
+                          <span>{item.label}</span>
+                        </div>
+
+                        {active ? (
+                          <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                        ) : (
+                          <ArrowIcon className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity text-slate-400" />
+                        )}
+                      </motion.button>
+                    );
+                  })}
+
+                  {/* Special TRW Option */}
+                  {isTRWVisible && (
+                    <motion.button
+                      variants={itemVariants}
+                      onClick={() => handleNavigate("non-academic")}
+                      className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
+                        isMounted && currentPage === "non-academic"
+                          ? "bg-gradient-to-r from-purple-500/15 to-transparent text-purple-600 dark:text-purple-400 border-s-4 border-purple-500 font-black"
+                          : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-900/60"
+                      } active:scale-[0.98]`}
+                      type="button"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                          <Globe className="w-4 h-4" />
+                        </div>
+                        <span>The Real World</span>
+                      </div>
+                      <ArrowIcon className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity text-slate-400" />
+                    </motion.button>
+                  )}
+                </nav>
+              </div>
+
+              <div className="h-px bg-slate-200/80 dark:bg-slate-800/80" />
+
+              {/* Language Switcher */}
+              <motion.div variants={itemVariants} className="px-1">
+                <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">
+                    {isRTL ? "اللغة" : "Language"}
+                  </span>
+                  <LanguageToggle />
+                </div>
+              </motion.div>
+
+              <div className="h-px bg-slate-200/80 dark:bg-slate-800/80" />
+
+              {/* Account Actions */}
+              <motion.div variants={itemVariants} className="space-y-2 pb-2">
+                {!isMounted || loading ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="h-11 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 animate-pulse" />
+                    <div className="h-11 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 animate-pulse" />
+                  </div>
+                ) : user ? (
+                  <div className="flex flex-col gap-2">
+                    {!isAdminLoading && isAdmin && (
+                      <button
+                        onClick={() => handleNavigate("admin-dashboard")}
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-all"
+                        type="button"
+                      >
+                        <Shield className="w-5 h-5" />
+                        <span>لوحة التحكم (Admin)</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => handleNavigate("profile")}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/70 transition-all"
+                      type="button"
+                    >
+                      <User className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <span>{tNav("profile")}</span>
+                    </button>
+
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-all"
+                      type="button"
+                    >
+                      <LogOut className="w-5 h-5 text-red-500" />
+                      <span>{tNav("logout")}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      onClick={() => handleNavigate("signup")}
+                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-black bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:opacity-95 active:scale-[0.98] transition-all"
+                      type="button"
+                    >
+                      <UserPlus className="w-5 h-5" />
+                      <span>{tNav("signup")}</span>
+                    </button>
+                    <button
+                      onClick={() => handleNavigate("login")}
+                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-extrabold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-all"
+                      type="button"
+                    >
+                      <LogIn className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                      <span>{tNav("login")}</span>
+                    </button>
+                  </div>
+                )}
+              </motion.div>
             </div>
-          )}
+
+            {/* Footer status badge */}
+            <div className="px-5 py-3 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
+              <span>مسار X v0.5.6</span>
+              <span className="flex items-center gap-1.5 text-emerald-500 dark:text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                متصل
+              </span>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
+
+  return createPortal(drawerContent, document.body);
 }
