@@ -127,7 +127,23 @@ export const uploadToCloudinary = async (
     }
 
     xhr.onerror = () => {
-      resolve({ data: null, error: { message: 'Upload failed: Network error' } })
+      // `xhr.onerror` fires for CORS rejections, DNS failures, network drops,
+      // and aborted requests. The native `xhr` object exposes very little
+      // context here, so we surface the request URL + status to make
+      // debugging possible from the browser console.
+      console.error('[uploadToCloudinary] XHR network error', {
+        url: xhr.responseURL || `${supabaseUrl}/functions/v1/upload-file`,
+        status: xhr.status,
+        statusText: xhr.statusText,
+        readyState: xhr.readyState,
+        withCredentials: xhr.withCredentials,
+      });
+      resolve({
+        data: null,
+        error: {
+          message: `Upload failed: Network error (status: ${xhr.status} ${xhr.statusText || 'unknown'})`,
+        },
+      });
     }
 
     xhr.ontimeout = () => {
