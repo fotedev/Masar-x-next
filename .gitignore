@@ -156,7 +156,6 @@ files.txt
 arena.txt
 compare.md
 vizvibe.mmd
-SQL_FIX_VIDEOS_RATINGS.sql
 
 # Heavy local data
 /models/
@@ -175,4 +174,3 @@ backup
 /context_output
 /.context
 /files.txt
-/SQL_FIX_VIDEOS_RATINGS.sql
