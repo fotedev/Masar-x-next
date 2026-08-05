@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 interface DeleteRequest {
     publicId: string
@@ -10,7 +10,7 @@ interface DeleteRequest {
 Deno.serve(async (req: Request) => {
     // Handle CORS
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', { headers: buildCorsHeaders(req) })
     }
 
     try {
@@ -35,7 +35,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Unauthorized' }),
                 {
                     status: 401,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Missing publicId parameter' }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Forbidden' }),
                 {
                     status: 403,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -75,7 +75,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Server configuration error' }),
                 {
                     status: 500,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -114,7 +114,7 @@ Deno.serve(async (req: Request) => {
                 }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -126,7 +126,7 @@ Deno.serve(async (req: Request) => {
             }),
             {
                 status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
             }
         )
 
@@ -137,7 +137,7 @@ Deno.serve(async (req: Request) => {
             JSON.stringify({ error: 'Internal server error', details: message }),
             {
                 status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
             }
         )
     }

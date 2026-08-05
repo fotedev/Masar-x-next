@@ -80,7 +80,7 @@ export function ChatInput({
   const placeholder = getInputPlaceholder();
 
   return (
-    <div className={`shrink-0 p-4 sm:p-6 transition-[background-color,border-color] duration-500 ${
+    <div className={`shrink-0 p-4 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] transition-[background-color,border-color] duration-500 ${
       isInitialState 
         ? "bg-transparent border-t-0 w-full max-w-2xl mx-auto" 
         : "bg-white dark:bg-slate-900 border-t border-slate-200/50 dark:border-slate-700/50"
@@ -161,7 +161,7 @@ export function ChatInput({
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.5 }}
           dir="auto"
-          className={`text-center text-slate-400 dark:text-slate-500 font-medium transition-[colors,opacity] ${
+          className={`text-center text-slate-500 dark:text-slate-400 font-medium transition-[colors,opacity] ${
             isInitialState ? "text-xs sm:text-sm mt-6" : "text-[10px] sm:text-xs"
           }`}
         >

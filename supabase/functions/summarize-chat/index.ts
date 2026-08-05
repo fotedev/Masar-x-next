@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1"
-import { corsHeaders } from "../_shared/cors.ts";
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 interface ImportantMessage {
   id: string;
@@ -22,7 +22,7 @@ type AiImportantMessage = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: buildCorsHeaders(req) })
   }
 
   try {
@@ -86,7 +86,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ message: 'No messages to summarize' }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
           status: 200,
         }
       )
@@ -221,7 +221,7 @@ serve(async (req) => {
         message: 'تم إنشاء ملخص الذكاء الاصطناعي بنجاح'
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
         status: 200,
       }
     )
@@ -234,7 +234,7 @@ serve(async (req) => {
         success: false
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
         status: 500,
       }
     )

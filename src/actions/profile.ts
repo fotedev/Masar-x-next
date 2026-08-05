@@ -1,16 +1,17 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { getAdminDb } from "@/lib/admin-db";
-import { profiles } from "@/lib/admin-db/schema";
-import { eq } from "drizzle-orm";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { ProfileSchema } from "@/lib/validation/profile";
 import { logger } from "@/lib/logger";
 
 /**
  * Updates a user's profile information.
- * Uses Drizzle for type-safe database mutations.
+ *
+ * Migrated from pg + Drizzle to Supabase JS service-role client because
+ * the pg driver's native TLS module is not reliably externalized by
+ * Next.js 16 dev (webpack) on Windows.
  */
 export async function updateProfile(_prevState: unknown, formData: FormData) {
   const supabase = await createClient();
@@ -26,7 +27,6 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
     const website = formData.get("website") as string;
     const avatarUrl = formData.get("avatarUrl") as string;
 
-    // T025: Validate input using ProfileSchema
     const validationResult = ProfileSchema.safeParse({
       fullName,
       username,
@@ -35,7 +35,6 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
     });
 
     if (!validationResult.success) {
-      // T026: Return structured validation errors
       const fieldErrors: Record<string, string[]> = {};
       validationResult.error.issues.forEach((issue) => {
         const path = issue.path[0] as string;
@@ -52,29 +51,25 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
       };
     }
 
-    const adminDb = getAdminDb();
+    const admin = getSupabaseAdmin();
 
-    // Perform upsert (onConflictDoUpdate pattern)
-    await adminDb
-      .insert(profiles)
-      .values({
-        id: user.id,
-        fullName: fullName || null,
-        username: username || null,
-        website: website || null,
-        avatarUrl: avatarUrl || null,
-        updatedAt: new Date().toISOString(),
-      })
-      .onConflictDoUpdate({
-        target: profiles.id,
-        set: {
-          fullName: fullName || null,
+    // Upsert pattern: try insert, fall back to update on conflict.
+    // Cast `as never` to bypass Supabase JS v2.97 generic inference bug.
+    const { error: upsertError } = await admin
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          full_name: fullName || null,
           username: username || null,
           website: website || null,
-          avatarUrl: avatarUrl || null,
-          updatedAt: new Date().toISOString(),
-        },
-      });
+          avatar_url: avatarUrl || null,
+          updated_at: new Date().toISOString(),
+        } as never,
+        { onConflict: "id" },
+      );
+
+    if (upsertError) throw upsertError;
 
     // Optionally sync with auth metadata (not required, but helpful for client-side use)
     await supabase.auth.updateUser({
@@ -116,12 +111,17 @@ export async function updateAvatar(avatarUrl: string) {
       };
     }
 
-    const adminDb = getAdminDb();
+    const admin = getSupabaseAdmin();
 
-    await adminDb
-      .update(profiles)
-      .set({ avatarUrl, updatedAt: new Date().toISOString() })
-      .where(eq(profiles.id, user.id));
+    const { error: updateError } = await admin
+      .from("profiles")
+      .update({
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      } as never)
+      .eq("id", user.id);
+
+    if (updateError) throw updateError;
 
     // Keep auth metadata in sync to prevent flickering (fallback source)
     await supabase.auth.updateUser({
