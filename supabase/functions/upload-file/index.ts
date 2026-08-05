@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { buildCorsHeaders } from '../_shared/cors.ts'
 
 interface UploadRequest {
     file: string // base64 encoded file
@@ -13,7 +13,7 @@ interface UploadRequest {
 Deno.serve(async (req: Request) => {
     // Handle CORS
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', { headers: buildCorsHeaders(req) })
     }
 
     try {
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Unauthorized' }),
                 {
                     status: 401,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Invalid JSON in request body' }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -84,7 +84,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Missing required fields: file, fileName, contentType' }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -94,6 +94,10 @@ Deno.serve(async (req: Request) => {
             'image/png',
             'image/jpeg',
             'image/webp',
+            'image/gif',
+            'image/avif',
+            'image/tiff',
+            'image/bmp',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-powerpoint',
@@ -107,7 +111,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Unsupported file type' }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -119,7 +123,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'File too large. Maximum size is 50MB.' }),
                 {
                     status: 400,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -144,7 +148,7 @@ Deno.serve(async (req: Request) => {
                 }),
                 {
                     status: 500,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -197,7 +201,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Upload failed: Network or timeout error' }),
                 {
                     status: 500,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -246,7 +250,7 @@ Deno.serve(async (req: Request) => {
                 }),
                 {
                     status: 500,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -260,7 +264,7 @@ Deno.serve(async (req: Request) => {
                 JSON.stringify({ error: 'Upload succeeded but failed to parse response' }),
                 {
                     status: 500,
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                    headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
                 }
             )
         }
@@ -270,13 +274,13 @@ Deno.serve(async (req: Request) => {
             : null
         const secureUrl = cloudinaryObj && typeof cloudinaryObj.secure_url === 'string' ? cloudinaryObj.secure_url : ''
         const publicId = cloudinaryObj && typeof cloudinaryObj.public_id === 'string' ? cloudinaryObj.public_id : ''
-        const bytes = cloudinaryObj && typeof cloudinaryObj.bytes === 'number' ? cloudinaryObj.bytes : undefined
+        const uploadedBytes = cloudinaryObj && typeof cloudinaryObj.bytes === 'number' ? cloudinaryObj.bytes : undefined
         const format = cloudinaryObj && typeof cloudinaryObj.format === 'string' ? cloudinaryObj.format : undefined
 
         console.log('Upload successful:', {
             url: secureUrl,
             public_id: publicId,
-            bytes,
+            bytes: uploadedBytes,
             format
         })
 
@@ -289,7 +293,7 @@ Deno.serve(async (req: Request) => {
             }),
             {
                 status: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
             }
         )
 
@@ -314,7 +318,7 @@ Deno.serve(async (req: Request) => {
             }),
             {
                 status: 500,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
             }
         )
     }

@@ -1,7 +1,7 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from "../_shared/cors.ts";
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 type AdminRow = {
   user_id: string;
@@ -20,7 +20,7 @@ function getClientIp(req: Request): string {
 serve(async (req: Request) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: buildCorsHeaders(req) })
   }
 
   try {
@@ -30,7 +30,7 @@ serve(async (req: Request) => {
     if (!supabaseUrl || !serviceRoleKey) {
       return new Response(
         JSON.stringify({ error: 'Missing Supabase environment variables' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -48,14 +48,14 @@ serve(async (req: Request) => {
     if (!expectedKey) {
       return new Response(
         JSON.stringify({ error: 'Server misconfigured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
     if (webhookKey !== expectedKey) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -72,7 +72,7 @@ serve(async (req: Request) => {
       if (allowed === false) {
         return new Response(
           JSON.stringify({ error: 'Too many requests' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
         )
       }
     } catch {
@@ -121,13 +121,13 @@ serve(async (req: Request) => {
 
       return new Response(
         JSON.stringify({ success: true, summary_id: summary.id }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
     return new Response(
       JSON.stringify({ message: 'Webhook processed successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
 
   } catch (error: unknown) {
@@ -137,7 +137,7 @@ serve(async (req: Request) => {
       JSON.stringify({ error: message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
       }
     )
   }

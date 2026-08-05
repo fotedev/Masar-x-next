@@ -1,7 +1,7 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0"
-import { corsHeaders } from "../_shared/cors.ts";
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 interface OCRRequest {
   pdfUrl: string;
@@ -10,7 +10,7 @@ interface OCRRequest {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: buildCorsHeaders(req) })
   }
 
   try {
@@ -67,7 +67,7 @@ serve(async (req) => {
         text: text.trim() 
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
         status: 200,
       }
     )
@@ -80,7 +80,7 @@ serve(async (req) => {
         error: error.message || 'حدث خطأ في معالجة الملف'
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
         status: 500,
       }
     )

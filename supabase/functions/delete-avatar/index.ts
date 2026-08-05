@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import { buildCorsHeaders } from '../_shared/cors.ts';
 
 interface DeleteRequest {
   publicId: string
@@ -8,7 +8,7 @@ interface DeleteRequest {
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: buildCorsHeaders(req) })
   }
 
   try {
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Unauthorized' }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
         }
       )
     }
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Missing publicId parameter' }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
         }
       )
     }
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Server configuration error' }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
         }
       )
     }
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Failed to update profile' }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
         }
       )
     }
@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
       }
     )
 
@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
       }
     )
   }
