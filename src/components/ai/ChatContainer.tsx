@@ -247,30 +247,30 @@ export function ChatContainer({
               {
                 id: "summarize",
                 icon: BookOpen,
-                title: "لخص لي مادة",
-                desc: "احصل على ملخص شامل لأي مادة أكاديمية",
-                prompt: "لخص لي مادة",
+                title: t("summarizeSubject"),
+                desc: t("summarizeSubjectDesc"),
+                prompt: t("summarizeSubject"),
               },
               {
                 id: "code",
                 icon: Code,
-                title: "اشرح لي كود",
-                desc: "فهم المنطق البرمجي وحل المشكلات التقنية",
-                prompt: "اشرح لي كود",
+                title: t("explainCode"),
+                desc: t("explainCodeDesc"),
+                prompt: t("explainCode"),
               },
               {
                 id: "plan",
                 icon: Calendar,
-                title: "خطة دراسية",
-                desc: "تنظيم وقتك ومسارك التعليمي بذكاء",
-                prompt: "خطة دراسية",
+                title: t("studyPlan"),
+                desc: t("studyPlanDesc"),
+                prompt: t("studyPlan"),
               },
               {
                 id: "whatsapp",
                 icon: MessageCircle,
-                title: "محادثات الواتساب",
-                desc: "تحليل وتلخيص ملفات الدردشة الجماعية",
-                prompt: "محادثات الواتساب",
+                title: t("whatsappChat"),
+                desc: t("whatsappChatDesc"),
+                prompt: t("whatsappChat"),
               },
             ].map((item) => (
               <button
@@ -313,7 +313,7 @@ export function ChatContainer({
                 ) : (
                   <LogIn className="w-4 h-4" />
                 )}
-                <span>{isPuterSignedIn ? "إعدادات Puter" : "تفعيل Puter"}</span>
+                <span>{isPuterSignedIn ? t("puterSettings") : t("puterEnable")}</span>
               </button>
             </motion.div>
           )}

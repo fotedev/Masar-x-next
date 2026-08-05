@@ -76,7 +76,8 @@ export default async function RootLayout({
   };
 
   const locale = await localeFromRequest();
-  const assistantName = locale === "ar" ? "زين" : "ZANE";
+  const tNav = await getTranslations({ locale, namespace: "nav" });
+  const assistantName = tNav("assistant");
 
   const fontVariable =
     locale === "ar"

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, AnimatePresence } from "framer-motion";
+import type { useTranslations } from "next-intl";
 
 type StudentSubjectOption = { id: string; name: string };
 type StudentQuizOption = { id: string; title: string };
@@ -36,7 +37,7 @@ interface ChatHeaderProps {
   generatedQuiz: LocalGeneratedQuiz | null;
   onShowGeneratedQuizModal: () => void;
   safeLocalGeneratedQuizzesCount: number;
-  t: (key: any) => string;
+  t: ReturnType<typeof useTranslations<"aiAssistant">>;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   onOpenPuterSettings: () => void;
@@ -95,18 +96,18 @@ export function ChatHeader({
       case "student_agent":
         return {
           icon: BookOpen,
-          title: "تلخيص المواد الأكاديمية",
+          title: t("summarizeAcademicSubjects"),
         };
       case "cs_assistant":
         return {
           icon: MessageSquareCode,
-          title: "تلخيص المحادثة البرمجية الحالية",
+          title: t("summarizeCsChat"),
         };
       case "group_rag":
       default:
         return {
           icon: Users,
-          title: "تلخيص محادثات المجموعة (الواتساب)",
+          title: t("summarizeGroupChat"),
         };
     }
   };
@@ -298,7 +299,7 @@ export function ChatHeader({
           <button
             onClick={onClearChat}
             className="p-3 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-[colors,border-color,transform] border border-slate-200/50 dark:border-slate-700/50"
-            aria-label="مسح المحادثة"
+            aria-label={t("clearChat")}
             type="button"
           >
             <Trash2 className="w-5 h-5" />
@@ -311,10 +312,10 @@ export function ChatHeader({
           type="button"
           onClick={onOpenPuterSettings}
           className="px-3 py-2 text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 shadow-sm transition-colors"
-          title="Puter"
+          title={t("puterMode")}
         >
           <Settings className="w-4 h-4" />
-          <span>وضع Puter</span>
+          <span>{t("puterMode")}</span>
         </button>
 
         {mode === "student_agent" && (
@@ -401,8 +402,8 @@ export function ChatHeader({
           <button
             onClick={onClearChat}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded-xl transition-[colors,opacity,transform]"
-            title="مسح المحادثة"
-            aria-label="مسح المحادثة"
+            title={t("clearChat")}
+            aria-label={t("clearChat")}
             type="button"
           >
             <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -415,10 +416,10 @@ export function ChatHeader({
             <button
               onClick={onShowGeneratedQuizModal}
               className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 transition-[colors,background-color] text-[10px] sm:text-sm font-bold whitespace-nowrap"
-              title={`آخر اختبار مولّد: ${generatedQuiz.data.title}`}
+              title={t("lastGeneratedQuizTooltip", { title: generatedQuiz.data.title ?? "" })}
               type="button"
             >
-              آخر اختبار
+              {t("lastExam")}
               {safeLocalGeneratedQuizzesCount > 1
                 ? ` (${safeLocalGeneratedQuizzesCount})`
                 : ""}

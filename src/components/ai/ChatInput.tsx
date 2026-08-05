@@ -97,7 +97,7 @@ export function ChatInput({
           <button
             onClick={() => setIsQuickQuizOpen(true)}
             disabled={isLoading}
-            title="اختبار سريع من نص"
+            title={t("quickQuizFromText")}
             className={`rounded-2xl transition-[colors,transform,box-shadow,border-color] duration-300 shrink-0 flex items-center justify-center border backdrop-blur-md self-stretch ${
               isInitialState ? "w-14 sm:w-[68px]" : "w-11 sm:w-12"
             } ${
@@ -106,7 +106,7 @@ export function ChatInput({
                 : "bg-white/40 dark:bg-slate-800/40 text-cyan-600 dark:text-cyan-400 border-slate-200/50 dark:border-slate-700/50 hover:bg-white/60 dark:hover:bg-slate-700/60 hover:border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 active:scale-95"
             }`}
             type="button"
-            aria-label="اختبار سريع من نص"
+            aria-label={t("quickQuizFromText")}
           >
             <Brain className={isInitialState ? "w-6 h-6" : "w-5 h-5"} />
           </button>
