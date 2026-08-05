@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Brain, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { aiAssistant } from "@/lib/ai-assistant";
 
 type LocalQuizData = {
@@ -19,6 +20,8 @@ export function QuickQuizFromTextModal(props: {
   onGenerated: (quizData: LocalQuizData, sourceText: string) => void;
 }) {
   const { isOpen, onClose, onGenerated } = props;
+  const tAi = useTranslations("aiAssistant");
+  const tCommon = useTranslations("common");
 
   const [text, setText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -34,7 +37,7 @@ export function QuickQuizFromTextModal(props: {
       const result = await aiAssistant.generateQuiz(text);
 
       const normalized: LocalQuizData = {
-        title: result.title || "اختبار سريع",
+        title: result.title || tAi("defaultQuizTitle"),
         description: undefined,
         questions: (result.questions || []).map((q) => ({
           question: q.question,
@@ -58,12 +61,12 @@ export function QuickQuizFromTextModal(props: {
             <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
               <Brain className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
             </div>
-            <div className="font-black text-slate-900 dark:text-white">اختبار سريع من نص</div>
+            <div className="font-black text-slate-900 dark:text-white">{tAi("quickQuizFromText")}</div>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-            aria-label="إغلاق"
+            aria-label={tAi("close")}
             type="button"
           >
             <X className="w-5 h-5 text-slate-500" />
@@ -72,13 +75,13 @@ export function QuickQuizFromTextModal(props: {
 
         <div className="p-5 sm:p-6 space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300" dir="auto">
-            الصق نص المحاضرة/الملخص هنا، وسأحوّله لاختبار تفاعلي.
+            {tAi("pasteTextInstructions")}
           </p>
 
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="الصق النص هنا..."
+            placeholder={tAi("pasteTextPlaceholder")}
             className="w-full h-56 sm:h-64 px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/50 bg-white/70 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/40 font-medium leading-relaxed"
             dir="auto"
           />
@@ -89,7 +92,7 @@ export function QuickQuizFromTextModal(props: {
               className="px-5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
               type="button"
             >
-              إلغاء
+              {tCommon("cancel")}
             </button>
 
             <button
@@ -105,10 +108,10 @@ export function QuickQuizFromTextModal(props: {
               {isGenerating ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  جاري التوليد
+                  {tAi("generatingQuiz")}
                 </span>
               ) : (
-                "توليد الاختبار"
+                tAi("generateQuiz")
               )}
             </button>
           </div>

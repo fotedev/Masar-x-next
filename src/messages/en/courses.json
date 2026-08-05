@@ -16,5 +16,20 @@
   "viewDetails": "View Details",
   "student": "Student",
   "currency": "EGP",
-  "free": "Free"
+  "free": "Free",
+  "incompleteDataTitle": "Incomplete data",
+  "incompleteDataDesc": "Please fill all required fields",
+  "editCourseHeading": "Edit course",
+  "createCourseHeading": "Create new course",
+  "courseTitleLabel": "Course title *",
+  "courseTitlePlaceholder": "Enter course title",
+  "courseDescriptionLabel": "Course description *",
+  "courseDescriptionPlaceholder": "Enter a detailed course description",
+  "coursePriceLabel": "Price (in Egyptian Pounds)",
+  "coursePricePlaceholder": "Leave empty for a free course",
+  "coursePriceHelper": "Leave empty or 0 to make the course free",
+  "academicCourseLabel": "Academic course (linked to study materials)",
+  "savingInProgress": "Saving in progress...",
+  "update": "Update",
+  "create": "Create"
 }

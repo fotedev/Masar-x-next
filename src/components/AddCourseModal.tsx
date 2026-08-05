@@ -1,5 +1,6 @@
 import { type FC, type ChangeEvent, useState, useEffect } from "react";
 import { Loader2, Save, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "./ui/Button";
 import { Textarea } from "./ui/Textarea";
@@ -28,6 +29,9 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { addCourse, updateCourse } = useCourses();
+  const tCourses = useTranslations("courses");
+  const tAi = useTranslations("aiAssistant");
+  const tCommon = useTranslations("common");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -50,8 +54,8 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
 
   const handleSave = async () => {
     if (!title.trim() || !description.trim()) {
-      toast.error("بيانات ناقصة", {
-        description: "يرجى ملء جميع الحقول المطلوبة",
+      toast.error(tCourses("incompleteDataTitle"), {
+        description: tCourses("incompleteDataDesc"),
       });
       return;
     }
@@ -93,12 +97,12 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {editingCourse ? "تعديل الكورس" : "إنشاء كورس جديد"}
+              {editingCourse ? tCourses("editCourseHeading") : tCourses("createCourseHeading")}
             </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              aria-label="إغلاق"
+              aria-label={tAi("close")}
             >
               <X className="w-6 h-6" />
             </button>
@@ -110,7 +114,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 htmlFor="course-title"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                عنوان الكورس *
+                {tCourses("courseTitleLabel")}
               </label>
               <input
                 id="course-title"
@@ -119,7 +123,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 value={title}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="أدخل عنوان الكورس"
+                placeholder={tCourses("courseTitlePlaceholder")}
                 required
               />
             </div>
@@ -129,7 +133,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 htmlFor="course-description"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                وصف الكورس *
+                {tCourses("courseDescriptionLabel")}
               </label>
               <Textarea
                 id="course-description"
@@ -138,7 +142,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 className="w-full"
                 rows={4}
-                placeholder="أدخل وصف مفصل للكورس"
+                placeholder={tCourses("courseDescriptionPlaceholder")}
                 required
               />
             </div>
@@ -148,7 +152,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 htmlFor="course-price"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                السعر (بالجنيه المصري)
+                {tCourses("coursePriceLabel")}
               </label>
               <input
                 id="course-price"
@@ -157,7 +161,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 value={price}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="اتركه فارغاً للكورس المجاني"
+                placeholder={tCourses("coursePricePlaceholder")}
                 min="0"
                 step="0.01"
                 aria-describedby="course-price-helper"
@@ -166,7 +170,7 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 id="course-price-helper"
                 className="text-xs text-gray-500 dark:text-gray-400 mt-1"
               >
-                اتركه فارغاً أو 0 لجعل الكورس مجاني
+                {tCourses("coursePriceHelper")}
               </p>
             </div>
 
@@ -183,25 +187,25 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
                 htmlFor="is_academic_course"
                 className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                كورس أكاديمي (مرتبط بالمواد الدراسية)
+                {tCourses("academicCourseLabel")}
               </label>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
             <Button variant="outline" onClick={onClose} disabled={saving}>
-              إلغاء
+              {tCommon("cancel")}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  جاري الحفظ...
+                  {tCourses("savingInProgress")}
                 </>
               ) : (
                 <>
                   <Save className="w-4 h-4 mr-2" />
-                  {editingCourse ? "تحديث" : "إنشاء"}
+                  {editingCourse ? tCourses("update") : tCourses("create")}
                 </>
               )}
             </Button>
