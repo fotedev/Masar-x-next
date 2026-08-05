@@ -45,6 +45,7 @@ interface MobileNavProps {
   isAdminLoading: boolean;
   handleSignOut: () => void;
   tNav: (key: string) => string;
+  tMobileNav: (key: string, values?: Record<string, string | number>) => string;
 }
 
 const NAV_ICONS: Record<string, LucideIcon> = {
@@ -72,6 +73,7 @@ export function MobileNav({
   isAdminLoading,
   handleSignOut,
   tNav,
+  tMobileNav,
 }: MobileNavProps) {
   const isRTL = dir === "rtl";
   const ArrowIcon = isRTL ? ChevronLeft : ChevronRight;
@@ -138,10 +140,10 @@ export function MobileNav({
                 />
                 <div className="flex flex-col">
                   <span className="text-lg font-black tracking-tight bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 dark:from-blue-400 dark:via-cyan-300 dark:to-sky-300 bg-clip-text text-transparent">
-                    مسار X
+                    {tMobileNav("brand")}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                    MASAR X PLATFORM
+                    {tMobileNav("platformSubtitle")}
                   </span>
                 </div>
               </div>
@@ -149,7 +151,7 @@ export function MobileNav({
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 type="button"
-                aria-label={isRTL ? "إغلاق القائمة" : "Close menu"}
+                aria-label={tMobileNav("closeMenuAriaLabel")}
                 className="flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all focus:outline-none"
               >
                 <X className="w-5 h-5" />
@@ -169,20 +171,20 @@ export function MobileNav({
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-sm font-black text-slate-900 dark:text-white truncate">
-                        {user.user_metadata?.full_name || user.email?.split("@")[0] || "مستخدم مسار X"}
+                        {user.user_metadata?.full_name || user.email?.split("@")[0] || tMobileNav("defaultUserName")}
                       </span>
                       <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
-                        {isAdmin ? "مسؤول النظام ⚡" : "طالب أكاديمي"}
+                        {isAdmin ? tMobileNav("adminLabel") : tMobileNav("studentLabel")}
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-600/10 via-cyan-500/5 to-transparent border border-cyan-500/20 dark:border-cyan-500/10">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1">
-                      مرحباً بك في مسار X 👋
+                      {tMobileNav("welcomeHeading")}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      سجل الدخول للوصول الكامل إلى المواد والاختبارات التفاعلية.
+                      {tMobileNav("welcomeMessage")}
                     </p>
                   </div>
                 )}
@@ -191,7 +193,7 @@ export function MobileNav({
               {/* Primary Navigation Links */}
               <div className="space-y-1.5">
                 <span className="px-3 text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  {isRTL ? "التنقل الرئيسي" : "Main Navigation"}
+                  {tMobileNav("mainNavigation")}
                 </span>
 
                 <nav className="flex flex-col gap-1.5 pt-1">
@@ -249,7 +251,7 @@ export function MobileNav({
                         <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
                           <Globe className="w-4 h-4" />
                         </div>
-                        <span>The Real World</span>
+                        <span>{tMobileNav("theRealWorld")}</span>
                       </div>
                       <ArrowIcon className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity text-slate-400" />
                     </motion.button>
@@ -263,7 +265,7 @@ export function MobileNav({
               <motion.div variants={itemVariants} className="px-1">
                 <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">
-                    {isRTL ? "اللغة" : "Language"}
+                    {tMobileNav("language")}
                   </span>
                   <LanguageToggle />
                 </div>
@@ -287,7 +289,7 @@ export function MobileNav({
                         type="button"
                       >
                         <Shield className="w-5 h-5" />
-                        <span>لوحة التحكم (Admin)</span>
+                        <span>{tMobileNav("adminPanel")}</span>
                       </button>
                     )}
 
@@ -334,10 +336,10 @@ export function MobileNav({
 
             {/* Footer status badge */}
             <div className="px-5 py-3 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
-              <span>مسار X v0.5.6</span>
+              <span>{tMobileNav("version", { version: "0.5.6" })}</span>
               <span className="flex items-center gap-1.5 text-emerald-500 dark:text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                متصل
+                {tMobileNav("online")}
               </span>
             </div>
           </motion.div>

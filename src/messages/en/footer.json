@@ -11,6 +11,8 @@
   "trwCaption": "Contact us on WhatsApp to join the non-academic section",
   "links": "Quick Links",
   "trwDesc": "Join the special non-academic path for skill building.",
+  "trwWhatsappMessage": "I am the student: {name}, I want to join the TRW section",
+  "guestName": "Guest",
   "joinNow": "Join Now",
   "whatsapp": "WhatsApp Support",
   "availableNow": "We are online",

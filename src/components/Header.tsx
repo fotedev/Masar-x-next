@@ -18,6 +18,7 @@ import { SecretAccessGate } from "./header/SecretAccessGate";
 export const Header = memo(function Header() {
   const tNav = useTranslations("nav");
   const tHeader = useTranslations("header");
+  const tMobileNav = useTranslations("mobileNav");
   const locale = useLocale();
   const dir = locale === "ar" ? "rtl" : "ltr";
   const { user, loading, isAdmin, signOut } = useAuth();
@@ -436,6 +437,7 @@ export const Header = memo(function Header() {
         isAdminLoading={false}
         handleSignOut={handleSignOut}
         tNav={tNav}
+        tMobileNav={tMobileNav}
       />
     </Fragment>
   );

@@ -16,5 +16,20 @@
   "student": "طالب",
   "currency": "جنيه",
   "free": "مجاني",
-  "totalStudents": "{count} طالب مسجل"
+  "totalStudents": "{count} طالب مسجل",
+  "incompleteDataTitle": "بيانات ناقصة",
+  "incompleteDataDesc": "يرجى ملء جميع الحقول المطلوبة",
+  "editCourseHeading": "تعديل الكورس",
+  "createCourseHeading": "إنشاء كورس جديد",
+  "courseTitleLabel": "عنوان الكورس *",
+  "courseTitlePlaceholder": "أدخل عنوان الكورس",
+  "courseDescriptionLabel": "وصف الكورس *",
+  "courseDescriptionPlaceholder": "أدخل وصف مفصل للكورس",
+  "coursePriceLabel": "السعر (بالجنيه المصري)",
+  "coursePricePlaceholder": "اتركه فارغاً للكورس المجاني",
+  "coursePriceHelper": "اتركه فارغاً أو 0 لجعل الكورس مجاني",
+  "academicCourseLabel": "كورس أكاديمي (مرتبط بالمواد الدراسية)",
+  "savingInProgress": "جاري الحفظ...",
+  "update": "تحديث",
+  "create": "إنشاء"
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { QuizPlayer } from "@/components/QuizPlayer";
 import { quizService } from "@/lib/quiz";
@@ -23,6 +24,7 @@ export function QuickQuizPlayerModal(props: {
   onClose: () => void;
 }) {
   const { isOpen, quizData, sourceText, user, onClose } = props;
+  const tAi = useTranslations("aiAssistant");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => Boolean(user?.id) && Boolean(quizData) && !isSubmitting, [user?.id, quizData, isSubmitting]);
@@ -31,7 +33,7 @@ export function QuickQuizPlayerModal(props: {
 
   const handleSubmitForReview = async () => {
     if (!canSubmit || !user?.id) {
-      toast.error("سجل دخولك لإرسال الاختبار للمراجعة");
+      toast.error(tAi("signInToSubmit"));
       return;
     }
 
@@ -42,9 +44,9 @@ export function QuickQuizPlayerModal(props: {
         description: sourceText,
         questions: quizData.questions,
       });
-      toast.success("رائع! اختبارك الآن قيد المراجعة، وسيتم نشره باسمك قريباً.");
+      toast.success(tAi("quizSubmittedForReview"));
     } catch {
-      toast.error("حدث خطأ أثناء الإرسال", { description: "حاول مرة أخرى." });
+      toast.error(tAi("submitForReviewError"), { description: tAi("submitForReviewErrorDesc") });
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +63,7 @@ export function QuickQuizPlayerModal(props: {
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-            aria-label="إغلاق"
+            aria-label={tAi("close")}
             type="button"
           >
             <X className="w-5 h-5 text-slate-500" />

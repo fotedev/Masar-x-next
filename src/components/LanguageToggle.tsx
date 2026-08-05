@@ -3,7 +3,7 @@
 import { Globe } from "lucide-react";
 import { useCallback } from "react";
 import { usePathname, useRouter } from "@/i18n/routing";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 type Locale = "ar" | "en";
 
@@ -11,6 +11,7 @@ export function LanguageToggle() {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("common");
 
   const toggle = useCallback(() => {
     const next: Locale = locale === "ar" ? "en" : "ar";
@@ -18,8 +19,7 @@ export function LanguageToggle() {
   }, [locale, pathname, router]);
 
   const nextLabel = locale === "ar" ? "EN" : "AR";
-  const ariaLabel =
-    locale === "ar" ? "التبديل إلى الإنجليزية" : "Switch to Arabic";
+  const ariaLabel = t("changeLanguageAriaLabel");
 
   return (
     <button

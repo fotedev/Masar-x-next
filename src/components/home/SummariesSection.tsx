@@ -92,10 +92,10 @@ export function SummariesSection({
             <FileText className="w-10 h-10 text-brand-blue opacity-40" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-relaxed">
-            {isRTL ? "لا توجد ملخصات مفضلة بعد" : "No favorite summaries yet"}
+            {tHome("noFavoriteSummaries")}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 max-w-[280px] mx-auto text-sm leading-relaxed">
-            {isRTL ? "ابدأ باستكشاف المواد وأضف ملخصاتك المفضلة لتظهر هنا!" : tHome("goToSubjectsDescription")}
+            {tHome("noFavoriteSummariesHint")}
           </p>
           <button
             onClick={() => onNavigate("subjects")}

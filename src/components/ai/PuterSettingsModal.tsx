@@ -2,6 +2,7 @@
 
 import { type FC, useEffect, useMemo, useState } from "react";
 import { X, LogOut, CheckCircle2, Brain } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   signInToPuter,
   signOutFromPuter,
@@ -26,6 +27,8 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
   const [waitingForAuth, setWaitingForAuth] = useState(false);
   const [authStartedAt, setAuthStartedAt] = useState<number | null>(null);
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const tAi = useTranslations("aiAssistant");
+  const tAuth = useTranslations("auth");
 
   const isMobile = useMemo(() => isProbablyMobileDevice(), []);
 
@@ -61,7 +64,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
       setStatus(newStatus);
       if (newStatus.isSignedIn) {
         window.clearInterval(interval);
-        toast.success("تم تفعيل الوضع المتقدم بنجاح");
+        toast.success(tAi("enableAdvancedModeSuccess"));
         setWaitingForAuth(false);
         setIsLoading(false);
         onClose();
@@ -74,9 +77,8 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
         const newStatus = getPuterStatus();
         setStatus(newStatus);
         if (!newStatus.isSignedIn) {
-          toast.error("فشل تفعيل الوضع المتقدم", {
-            description:
-              "تأكد من إكمال تسجيل الدخول ثم ارجع إلى التطبيق وحاول مرة أخرى.",
+          toast.error(tAi("enableAdvancedModeFailed"), {
+            description: tAi("enableAdvancedModeTimeoutDesc"),
           });
         }
         setWaitingForAuth(false);
@@ -97,8 +99,8 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
 
   const handleSignIn = async () => {
     if (cooldownUntil > Date.now()) {
-      toast.error("خدمة Puter غير متاحة مؤقتاً", {
-        description: "⚠️ AI service is temporarily unavailable. Please try again later.",
+      toast.error(tAi("puterServiceUnavailable"), {
+        description: tAi("puterServiceUnavailableDesc"),
       });
       return;
     }
@@ -109,22 +111,22 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
       void signInToPuter()
         .then((res) => {
           if (res.ok) return;
-          toast.error("فشل تفعيل الوضع المتقدم", {
-            description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
+          toast.error(tAi("enableAdvancedModeFailed"), {
+            description: tAi("enableAdvancedModePopupDesc"),
           });
           setWaitingForAuth(false);
         })
         .catch((error) => {
           logger.error("Sign in error", error);
-          toast.error("فشل تفعيل الوضع المتقدم", {
-            description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
+          toast.error(tAi("enableAdvancedModeFailed"), {
+            description: tAi("enableAdvancedModePopupDesc"),
           });
           setWaitingForAuth(false);
         });
     } catch (error) {
       logger.error("Sign in error", error);
-      toast.error("فشل تفعيل الوضع المتقدم", {
-        description: "تأكد من السماح بالنافذة المنبثقة وحاول مرة أخرى.",
+      toast.error(tAi("enableAdvancedModeFailed"), {
+        description: tAi("enableAdvancedModePopupDesc"),
       });
       setWaitingForAuth(false);
     } finally {
@@ -137,7 +139,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
     try {
       signOutFromPuter();
       setStatus({ isReady: true, isSignedIn: false });
-      toast.success("تم إيقاف الوضع المتقدم");
+      toast.success(tAi("disableAdvancedModeSuccess"));
     } finally {
       setWaitingForAuth(false);
       setIsLoading(false);
@@ -172,24 +174,23 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
         <div className="pt-14 p-8">
           <div className="flex items-center gap-3 mb-2">
             <h3 className="text-2xl font-black text-slate-900 dark:text-white">
-              تفعيل ميزة AI
+              {tAi("enablePuterFeature")}
             </h3>
             {status.isSignedIn && (
               <span className="flex items-center gap-1 text-[11px] bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded-full font-bold border border-green-500/20">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                مفعل الآن
+                {tAi("activeNow")}
               </span>
             )}
           </div>
 
           <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed text-sm">
-            قم بالتسجيل للحصول علي Free Tier
+            {tAi("signUpForFreeTier")}
           </p>
 
           {!status.isSignedIn && isMobile && (
             <div className="mb-6 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-900/30 p-4 text-sm text-slate-700 dark:text-slate-300">
-              قد يفتح تسجيل الدخول في نافذة/تبويب جديد على الموبايل. بعد إكمال
-              التسجيل، ارجع إلى هذه الصفحة وسيتم التفعيل تلقائيًا.
+              {tAi("mobileSignInNotice")}
             </div>
           )}
 
@@ -205,10 +206,10 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
                 ) : (
                   <span>
                     {waitingForAuth
-                      ? "جاري انتظار تسجيل الدخول..."
+                      ? tAi("waitingForSignIn")
                       : cooldownUntil > Date.now()
-                        ? "غير متاح مؤقتاً"
-                        : "تسجيل الدخول"}
+                        ? tAi("temporarilyUnavailable")
+                        : tAuth("signIn")}
                   </span>
                 )}
               </button>
@@ -222,7 +223,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
                   <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  تم التسجيل بنجاح
+                  {tAi("signUpSuccess")}
                 </h4>
               </div>
 
@@ -236,7 +237,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
                 ) : (
                   <>
                     <LogOut className="w-5 h-5" />
-                    <span>إيقاف الوضع المتقدم</span>
+                    <span>{tAi("disableAdvancedMode")}</span>
                   </>
                 )}
               </button>

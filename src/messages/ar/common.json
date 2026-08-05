@@ -6,5 +6,6 @@
   "cancel": "إلغاء",
   "save": "حفظ",
   "back": "رجوع",
-  "notSpecified": "غير محدد"
+  "notSpecified": "غير محدد",
+  "changeLanguageAriaLabel": "التبديل إلى الإنجليزية"
 }
