@@ -75,12 +75,17 @@ export const Header = memo(function Header() {
 
     document.addEventListener("keydown", onKeyDown);
     const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
     const button = mobileMenuButtonRef.current;
 
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = "";
+      document.body.style.touchAction = prevTouchAction;
       button?.focus();
     };
   }, [isMounted, isMobileMenuOpen]);
@@ -392,54 +397,46 @@ export const Header = memo(function Header() {
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-nav-drawer"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className="lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] bg-transparent/0 hover:bg-white/10 transition-colors duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
+                className={`lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] hover:bg-white/10 dark:hover:bg-white/10 transition-[background-color,opacity,visibility] duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+                  isMobileMenuOpen
+                    ? "invisible pointer-events-none opacity-0"
+                    : "visible opacity-100"
+                }`}
               >
                 <div className="relative flex flex-col items-center justify-center w-[24px] h-[18px]">
                   <span
-                    className={`absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                      isMobileMenuOpen
-                        ? "top-[8px] rotate-45"
-                        : "top-0 rotate-0"
-                    }`}
+                    className="absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] top-0 rotate-0"
                   />
                   <span
-                    className={`absolute top-[8px] block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                      isMobileMenuOpen
-                        ? "opacity-0 translate-x-[10px]"
-                        : "opacity-100 translate-x-0"
-                    }`}
+                    className="absolute top-[8px] block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] opacity-100 translate-x-0"
                   />
                   <span
-                    className={`absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                      isMobileMenuOpen
-                        ? "bottom-[8px] -rotate-45"
-                        : "bottom-0 rotate-0"
-                    }`}
+                    className="absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bottom-0 rotate-0"
                   />
                 </div>
               </button>
             </div>
           </div>
         </div>
-
-        <MobileNav
-          dir={dir}
-          isMounted={isMounted}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-          mobileBackdropRef={mobileBackdropRef}
-          primaryNavItems={primaryNavItems}
-          handleNavigate={handleNavigate}
-          isTRWVisible={isTRWVisible}
-          currentPage={currentPage}
-          loading={loading}
-          user={user}
-          isAdmin={isAdmin}
-          isAdminLoading={false}
-          handleSignOut={handleSignOut}
-          tNav={tNav}
-        />
       </header>
+
+      <MobileNav
+        dir={dir}
+        isMounted={isMounted}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+        mobileBackdropRef={mobileBackdropRef}
+        primaryNavItems={primaryNavItems}
+        handleNavigate={handleNavigate}
+        isTRWVisible={isTRWVisible}
+        currentPage={currentPage}
+        loading={loading}
+        user={user}
+        isAdmin={isAdmin}
+        isAdminLoading={false}
+        handleSignOut={handleSignOut}
+        tNav={tNav}
+      />
     </Fragment>
   );
 });
