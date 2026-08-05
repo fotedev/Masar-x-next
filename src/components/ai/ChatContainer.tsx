@@ -87,7 +87,7 @@ export function ChatContainer({
       ref={messagesContainerRef}
       className={`flex-1 overflow-y-auto p-4 sm:p-6 pb-8 sm:pb-12 space-y-4 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
         isInitialState
-          ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4"
+          ? "flex flex-col items-center justify-center !overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4 pb-32 sm:pb-24"
           : "scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800"
       }`}
     >
@@ -177,7 +177,7 @@ export function ChatContainer({
               {isDropdownOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-30"
+                    className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
                     onClick={() => setIsDropdownOpen(false)}
                   />
                   <motion.div
@@ -185,7 +185,7 @@ export function ChatContainer({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-xl"
+                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-xl"
                     id={menuId}
                     role="menu"
                   >

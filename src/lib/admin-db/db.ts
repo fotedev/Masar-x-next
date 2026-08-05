@@ -32,7 +32,7 @@ const getDatabaseUrl = (): string => {
           `${warnPrefix}DATABASE_URL points to the Supabase direct connection ` +
             `(${hostname}), which is IPv6-only. This WILL fail on IPv4-only networks ` +
             "(like Vercel, WSL2, or many cloud providers) with ENETUNREACH. " +
-            "Fix: use the Session Pooler URI (port 5432) and set it as DATABASE_URL_IPV4.",
+            "Fix: use the Session Pooler URI (aws-1-REGION.pooler.supabase.com:5432) and set it as DATABASE_URL_IPV4.",
           { hostname, environment: process.env.NODE_ENV },
         );
       }
@@ -89,7 +89,7 @@ const getPool = (): Pool => {
       logger.error(
         `${logPrefix}ENETUNREACH — cannot reach the database host. ` +
           "The direct connection (db.*.supabase.co:5432) is IPv6-only. " +
-          "ACTION REQUIRED: Use the Session Pooler URI (port 5432) in DATABASE_URL_IPV4.",
+          "ACTION REQUIRED: Use the Session Pooler URI (aws-1-REGION.pooler.supabase.com:5432) in DATABASE_URL_IPV4.",
         err,
         {
           address: (err as NodeJS.ErrnoException & { address?: string }).address,
@@ -105,6 +105,16 @@ const getPool = (): Pool => {
   return pool;
 };
 
+/**
+ * @deprecated Migrated to Supabase JS service-role client
+ * (`@/lib/supabase/admin`). No callers remain in src/ as of 2026-08.
+ * Kept temporarily as a safety net.
+ *
+ * Full removal of this file + drizzle-orm + pg dependencies is tracked
+ * separately after production verification of the Supabase JS path.
+ *
+ * @see {@link ../../supabase/admin}
+ */
 export const getAdminDb = () => {
   if (adminDb) return adminDb;
   adminDb = drizzle(getPool(), { schema });
