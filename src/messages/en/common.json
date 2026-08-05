@@ -6,5 +6,6 @@
   "cancel": "Cancel",
   "save": "Save",
   "back": "Back",
-  "notSpecified": "Not specified"
+  "notSpecified": "Not specified",
+  "changeLanguageAriaLabel": "Switch to Arabic"
 }

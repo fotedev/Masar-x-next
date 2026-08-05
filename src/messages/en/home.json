@@ -6,6 +6,8 @@
   "goToExams": "View exams",
   "goToExamsDescription": "Go to exams",
   "editSummary": "Edit summary",
+  "noFavoriteSummaries": "No favorite summaries yet",
+  "noFavoriteSummariesHint": "Browse subjects and add your favorite summaries to see them here!",
   "topLectures": "Top Lectures",
   "aiCardTitle": "Ask ZANE AI",
   "aiCardDescription": "Struggling to understand a topic? ZANE is here to help you study and summarize your material.",

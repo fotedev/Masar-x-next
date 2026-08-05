@@ -17,9 +17,9 @@ export function Footer() {
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
   const trwWhatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-    locale === "ar"
-      ? `أنا الطالب: ${displayName || "زائر"}، أريد الانضمام إلى قسم TRW`
-      : `I am the student: ${displayName || "Guest"}, I want to join the TRW section`,
+    tFooter("trwWhatsappMessage", {
+      name: displayName || tFooter("guestName"),
+    }),
   )}`;
 
   const localePrefix = locale === "en" ? "/en" : "/ar";

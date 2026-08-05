@@ -65,22 +65,6 @@ export function NeuralEnergyEntity({ className = "" }: NeuralEnergyEntityProps) 
             </span>
           </h1>
 
-          {/* "AI NINDROID" Subtext with Pulse & Letter Spacing Expansion */}
-          <motion.div
-            animate={{
-              letterSpacing: ["0.2em", "0.4em", "0.2em"],
-              opacity: [0.6, 0.9, 0.6],
-              scale: [0.98, 1.02, 0.98],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="text-[10px] sm:text-xs font-black uppercase text-slate-400 dark:text-slate-500 mt-2 sm:mt-1 tracking-[0.2em]"
-          >
-            AI NINDROID
-          </motion.div>
         </div>
       </motion.div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Bot, User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
@@ -24,6 +24,8 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
   const locale = useLocale();
   const isRTL = locale === "ar";
   const isUser = message.type === "user";
+  const tAi = useTranslations("aiAssistant");
+  const tAuth = useTranslations("auth");
   const [isRawView, setIsRawView] = useState(false);
   const [isPuterSigningIn, setIsPuterSigningIn] = useState(false);
 
@@ -130,7 +132,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
       <button
         onClick={handleCopy}
         className="p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
-        title="Copy content"
+        title={tAi("copyContent")}
       >
         {isCopied ? (
           <Check className="w-3.5 h-3.5 text-emerald-400" />
@@ -323,7 +325,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
                 <button
                   onClick={() => setIsRawView(!isRawView)}
                   className="p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
-                  title={isRawView ? "View Rendered" : "View Source"}
+                  title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
                 >
                   {isRawView ? <Eye className="w-3.5 h-3.5" /> : <Code className="w-3.5 h-3.5" />}
                 </button>
@@ -380,7 +382,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({ message, onUiMe
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] disabled:opacity-60"
                     >
                       <LogIn className="w-4 h-4" />
-                      <span>{isPuterSigningIn ? "جاري فتح تسجيل الدخول..." : "تسجيل الدخول"}</span>
+                      <span>{isPuterSigningIn ? tAi("signingIn") : tAuth("signIn")}</span>
                     </button>
                   </div>
                 )}
