@@ -198,8 +198,8 @@ export default function AiAssistantPage() {
       <div
         className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
           isInitialState
-            ? "h-dvh justify-center items-center px-4 py-4"
-            : "h-dvh pt-0 pb-2 px-0 sm:px-4"
+            ? "h-[calc(100dvh-6.5rem)] sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-8.5rem)] justify-center items-center px-2 sm:px-4 py-2"
+            : "h-[calc(100dvh-6.5rem)] sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-8.5rem)] pt-0 pb-1 sm:pb-2 px-0 sm:px-4"
         }`}
       >
         {!isInitialState && (
@@ -247,6 +247,7 @@ export default function AiAssistantPage() {
           }}
           isPuterSignedIn={isPuterSignedIn}
           onUiMessage={handleUiMessage}
+          hasUserInput={inputMessage.trim().length > 0}
         />
 
         <ChatInput
