@@ -13,7 +13,8 @@
     "lint:strict": "eslint . --max-warnings=0",
     "setup-subjects": "node setup-subjects.js",
     "check:auth-routes": "node scripts/auth-route-check.mjs",
-    "db:diagnose": "node scripts/db-diagnose.cjs"
+    "db:diagnose": "node scripts/db-diagnose.cjs",
+    "postinstall": "node scripts/apply-lottie-patch.mjs"
   },
   "dependencies": {
     "@heyputer/puter.js": "^2.2.10",
