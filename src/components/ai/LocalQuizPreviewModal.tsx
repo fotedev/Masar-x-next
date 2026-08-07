@@ -1,4 +1,5 @@
 
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 type LocalGeneratedQuiz = {
@@ -31,8 +32,12 @@ export function LocalQuizPreviewModal({
   t,
 }: LocalQuizPreviewModalProps) {
   if (!generatedQuiz) return null;
+  // Render into <body> via a portal so the `fixed inset-0` is always anchored
+  // to the viewport. Without this, a `backdrop-filter` / `transform` on any
+  // ancestor would create a new containing block and pin the modal in place.
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="w-full max-w-2xl modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl">
         <div className="flex items-center justify-between mb-6">
@@ -99,6 +104,7 @@ export function LocalQuizPreviewModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

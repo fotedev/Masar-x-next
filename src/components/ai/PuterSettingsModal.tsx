@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, LogOut, CheckCircle2, Brain } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -96,6 +97,10 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
   }, [authStartedAt, isOpen, onClose, waitingForAuth]);
 
   if (!isOpen) return null;
+  // Render into <body> via a portal so the `fixed inset-0` is always anchored
+  // to the viewport. Without this, a `backdrop-filter` / `transform` on any
+  // ancestor would create a new containing block and pin the modal in place.
+  if (typeof document === "undefined") return null;
 
   const handleSignIn = async () => {
     if (cooldownUntil > Date.now()) {
@@ -146,7 +151,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
       <div className="w-full max-w-lg modern-card overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         {/* Decorative Header Background */}
@@ -245,7 +250,8 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
