@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Brain, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { aiAssistant } from "@/lib/ai-assistant";
@@ -28,6 +29,11 @@ export function QuickQuizFromTextModal(props: {
   const canGenerate = useMemo(() => text.trim().length > 20 && !isGenerating, [text, isGenerating]);
 
   if (!isOpen) return null;
+  // Render the modal directly into <body> so its `position: fixed` is always
+  // anchored to the viewport. Without the portal, the `backdrop-blur-xl`
+  // on the parent ChatInput container creates a new containing block, which
+  // pins the modal to the bottom of the input area instead of centering it.
+  if (typeof document === "undefined") return null;
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
@@ -53,7 +59,7 @@ export function QuickQuizFromTextModal(props: {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="p-5 sm:p-6 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50">
@@ -117,6 +123,7 @@ export function QuickQuizFromTextModal(props: {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
