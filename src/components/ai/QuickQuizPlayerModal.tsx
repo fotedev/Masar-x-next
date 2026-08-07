@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -30,6 +31,10 @@ export function QuickQuizPlayerModal(props: {
   const canSubmit = useMemo(() => Boolean(user?.id) && Boolean(quizData) && !isSubmitting, [user?.id, quizData, isSubmitting]);
 
   if (!isOpen || !quizData) return null;
+  // Render into <body> via a portal so the `fixed inset-0` is always anchored
+  // to the viewport. Without this, a `backdrop-filter` / `transform` on any
+  // ancestor would create a new containing block and pin the modal in place.
+  if (typeof document === "undefined") return null;
 
   const handleSubmitForReview = async () => {
     if (!canSubmit || !user?.id) {
@@ -52,7 +57,7 @@ export function QuickQuizPlayerModal(props: {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
       <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl border border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl">
         <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50">
@@ -81,6 +86,7 @@ export function QuickQuizPlayerModal(props: {
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
