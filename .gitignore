@@ -174,3 +174,9 @@ backup
 /context_output
 /.context
 /files.txt
+
+# === Lottie migration artifacts ===
+# Unpacked lottie source (5.8MB); use the bundled .lottie file instead
+public/animations/ai-robo/
+# Debug script used to verify the dotlottie-react patch
+scripts/test_patch.mjs
