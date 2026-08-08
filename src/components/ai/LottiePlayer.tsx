@@ -10,7 +10,20 @@ import {
   type ReactNode,
 } from "react";
 import dynamic from "next/dynamic";
+import { setWasmUrl } from "@lottiefiles/dotlottie-react";
 import type { DotLottieReactProps } from "@lottiefiles/dotlottie-react";
+
+// Self-host the dotlottie-web WASM blob from /public. By default the
+// library fetches it from `cdn.jsdelivr.net`, which gets blocked by the
+// production CSP on Vercel (script-src does not include 'unsafe-eval',
+// so `WebAssembly.instantiateStreaming()` fails and the avatar never
+// starts). Calling `setWasmUrl` before any `<DotLottieReact>` mount
+// redirects the fetch to the same-origin copy, which Next.js serves
+// with the correct `application/wasm` MIME type and which is allowed
+// by the existing CSP without relaxing any directives.
+if (typeof window !== "undefined") {
+  setWasmUrl("/dotlottie-player.wasm");
+}
 
 // Client-only wrapper to avoid SSR crashes with the dotLottie WASM player.
 // We use `dynamic` so the WASM bundle is only loaded on the client; the
