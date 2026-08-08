@@ -101,6 +101,26 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // dotlottie-web's WebAssembly module. Vercel's default MIME
+        // for .wasm is application/octet-stream, which makes
+        // WebAssembly.instantiateStreaming() fail and forces the
+        // library to fall back to WebAssembly.instantiate() — that
+        // path requires 'unsafe-eval' in the CSP. Setting the
+        // correct MIME keeps us on the streaming path, which is
+        // both faster and CSP-friendly. Rule is applied here (not
+        // in vercel.json) because Next.js merges the two and the
+        // most-specific match wins, and we want this to take
+        // precedence over the global `/(.*)` block above.
+        source: "/dotlottie-player.wasm",
+        headers: [
+          { key: "Content-Type", value: "application/wasm" },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ];
   },
 };
