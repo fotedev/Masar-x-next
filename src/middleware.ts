@@ -35,8 +35,14 @@ function getCspHeader(nonce: string): string {
     // Allow YouTube and Google Video in default-src to cover media/workers
     "default-src 'self' https://*.youtube.com https://*.googlevideo.com",
 
-    // script-src: nonce for inline scripts; unsafe-eval only in dev (react-refresh / HMR needs eval)
-    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""} https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.youtube.com https://s.ytimg.com`,
+    // script-src: nonce for inline scripts; unsafe-eval only in dev (react-refresh / HMR
+    // needs eval). In production we add 'wasm-unsafe-eval' instead — a much narrower
+    // directive that only permits WebAssembly compilation/instantiation, so the
+    // dotlottie-web WASM can be compiled even if Vercel serves it with the wrong
+    // MIME type (which forces the library to fall back from instantiateStreaming
+    // to instantiate, the latter requiring WebAssembly access). Much safer than
+    // the full 'unsafe-eval' because arbitrary eval() is still blocked.
+    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : " 'wasm-unsafe-eval'"} https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.youtube.com https://s.ytimg.com`,
 
     // style-src: unsafe-inline is required because:
     //   1. Nonces cannot be applied to `style="…"` attributes (only to <style> elements).
@@ -185,6 +191,19 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // sw.js is excluded so the PWA ServiceWorker can register from
+    // /sw.js without being locale-redirected by next-intl. ServiceWorker
+    // spec forbids scripts behind redirects, so any redirect on the SW
+    // URL breaks registration on production.
+    //
+    // .wasm is excluded so the dotlottie-web WebAssembly blob at
+    // /dotlottie-player.wasm is served by Next.js as a static file
+    // instead of being routed through the middleware. Without this,
+    // next-intl's locale detection treats the request as a missing
+    // locale and returns the HTML 404 page (which starts with
+    // `<!DOCTYPE html>`), and the library's WebAssembly.instantiate()
+    // blows up with "expected magic word 00 61 73 6d, found 3c 21
+    // 44 4f" because it's trying to parse HTML as a binary module.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm)$).*)",
   ],
 };
