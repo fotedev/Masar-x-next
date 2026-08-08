@@ -185,6 +185,10 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // sw.js is excluded so the PWA ServiceWorker can register from
+    // /sw.js without being locale-redirected by next-intl. ServiceWorker
+    // spec forbids scripts behind redirects, so any redirect on the SW
+    // URL breaks registration on production.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
