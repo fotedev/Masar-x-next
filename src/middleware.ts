@@ -195,6 +195,15 @@ export const config = {
     // /sw.js without being locale-redirected by next-intl. ServiceWorker
     // spec forbids scripts behind redirects, so any redirect on the SW
     // URL breaks registration on production.
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    //
+    // .wasm is excluded so the dotlottie-web WebAssembly blob at
+    // /dotlottie-player.wasm is served by Next.js as a static file
+    // instead of being routed through the middleware. Without this,
+    // next-intl's locale detection treats the request as a missing
+    // locale and returns the HTML 404 page (which starts with
+    // `<!DOCTYPE html>`), and the library's WebAssembly.instantiate()
+    // blows up with "expected magic word 00 61 73 6d, found 3c 21
+    // 44 4f" because it's trying to parse HTML as a binary module.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm)$).*)",
   ],
 };
