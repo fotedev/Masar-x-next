@@ -35,8 +35,14 @@ function getCspHeader(nonce: string): string {
     // Allow YouTube and Google Video in default-src to cover media/workers
     "default-src 'self' https://*.youtube.com https://*.googlevideo.com",
 
-    // script-src: nonce for inline scripts; unsafe-eval only in dev (react-refresh / HMR needs eval)
-    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""} https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.youtube.com https://s.ytimg.com`,
+    // script-src: nonce for inline scripts; unsafe-eval only in dev (react-refresh / HMR
+    // needs eval). In production we add 'wasm-unsafe-eval' instead — a much narrower
+    // directive that only permits WebAssembly compilation/instantiation, so the
+    // dotlottie-web WASM can be compiled even if Vercel serves it with the wrong
+    // MIME type (which forces the library to fall back from instantiateStreaming
+    // to instantiate, the latter requiring WebAssembly access). Much safer than
+    // the full 'unsafe-eval' because arbitrary eval() is still blocked.
+    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : " 'wasm-unsafe-eval'"} https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.youtube.com https://s.ytimg.com`,
 
     // style-src: unsafe-inline is required because:
     //   1. Nonces cannot be applied to `style="…"` attributes (only to <style> elements).
