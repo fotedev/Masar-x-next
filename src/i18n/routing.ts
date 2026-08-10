@@ -1,5 +1,4 @@
 import { defineRouting } from "next-intl/routing";
-import { createNavigation } from 'next-intl/navigation';
 
 export const locales = ["ar", "en"] as const;
 export type Locale = (typeof locales)[number];
@@ -11,7 +10,5 @@ export const routing = defineRouting({
   localeDetection: true,
 });
 
-// Lightweight wrappers around Next.js navigation APIs
-// that will consider the routing configuration
-export const { Link, redirect, usePathname, useRouter } =
-  createNavigation(routing);
+// Navigation APIs (Link, redirect, usePathname, useRouter) are client-side
+// only and have been moved to "@/navigation" to keep this file server-safe.
