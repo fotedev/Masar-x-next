@@ -1,17 +1,35 @@
 "use client";
 
-import { type FormEvent } from "react";
-import { useState, useEffect } from "react";
-import { UserPlus, Mail, Lock, ArrowLeft, EyeOff } from "lucide-react";
+/**
+ * Masar X — Sign up page (Pathfinder edition).
+ *
+ * Same design language as the login screen — featuring the "Masar"
+ * mascot — but in signup mode. The robot greets new users,
+ * encourages them through the form, meters their password on its
+ * back panel, turns around on both password fields, and celebrates
+ * when the account is created.
+ *
+ * The auth flow is unchanged — Supabase email/password + Google,
+ * the same brute-force lockout pattern, same analytics hooks.
+ */
+
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { Eye, EyeOff, ArrowLeft, UserPlus } from "lucide-react";
 import { useRouter } from "@/navigation";
-import { DynamicLogo } from "@/components/DynamicLogo";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useTranslations } from "next-intl";
+import { LoginRobot, type LoginRobotHandle } from "@/components/auth/LoginRobot";
+import "@/components/auth/auth.css";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export default function SignUpPage() {
   const router = useRouter();
   const t = useTranslations("authPages");
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, user } = useAuth();
+  const { trackEvent, logError } = useAnalytics();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,29 +41,41 @@ export default function SignUpPage() {
   const [lockoutTime, setLockoutTime] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [watchingForm, setWatchingForm] = useState(false);
 
-  const onNavigate = (page: string) => {
-    if (page === "home") {
-      router.push("/");
-    } else {
-      router.push(`/${page}`);
-    }
-  };
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const robotRef = useRef<LoginRobotHandle | null>(null);
+  const cardRef = useRef<HTMLFormElement | null>(null);
+  const successHandledRef = useRef(false);
 
-  // Load attempts from sessionStorage on mount (T032: migrated from localStorage)
+  const onNavigate = useCallback(
+    (page: string) => {
+      if (page === "home") router.push("/");
+      else router.push(`/${page}`);
+    },
+    [router],
+  );
+
+  // Auto-redirect once a user lands here while already signed in
+  useEffect(() => {
+    if (user) onNavigate("home");
+  }, [user, onNavigate]);
+
+  // Restore the lockout timer from sessionStorage
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem("signup_attempts");
       if (stored) {
-        const { count, timestamp } = JSON.parse(stored);
+        const { count, timestamp } = JSON.parse(stored) as {
+          count: number;
+          timestamp: number;
+        };
         const timeDiff = Date.now() - timestamp;
-        const lockoutDuration = Math.min(count * 30000, 300000); // Max 5 minutes
-
+        const lockoutDuration = Math.min(count * 30000, 300000);
         if (timeDiff < lockoutDuration) {
           setAttempts(count);
           setLockoutTime(lockoutDuration - timeDiff);
         } else {
-          // Reset if lockout expired
           sessionStorage.removeItem("signup_attempts");
         }
       }
@@ -54,38 +84,67 @@ export default function SignUpPage() {
     }
   }, []);
 
-  // Countdown timer for lockout
+  // Tick the lockout countdown
   useEffect(() => {
-    if (lockoutTime > 0) {
-      const timer = setTimeout(() => {
-        setLockoutTime((prev) => Math.max(0, prev - 1000));
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
+    if (lockoutTime <= 0) return;
+    const timer = setTimeout(() => {
+      setLockoutTime((prev) => Math.max(0, prev - 1000));
+    }, 1000);
+    return () => clearTimeout(timer);
   }, [lockoutTime]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    // Check if user is locked out
     if (lockoutTime > 0) {
       setError(t("lockoutWait", { seconds: Math.ceil(lockoutTime / 1000) }));
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError(t("passwordMismatch"));
+    // Local validation — let the robot react first
+    if (!email.trim()) {
+      setError("");
+      robotRef.current?.reportError(t("robot.signup.errorNoEmail"));
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
       return;
     }
-
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("");
+      robotRef.current?.reportError(t("robot.signup.errorBadEmail"));
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
+      return;
+    }
+    if (!password) {
+      setError("");
+      robotRef.current?.reportError(t("robot.signup.errorNoPassword"));
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
+      return;
+    }
     if (password.length < 6) {
-      setError(t("passwordMinLength"));
+      setError("");
+      robotRef.current?.reportError(t("robot.signup.errorWeak"));
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("");
+      robotRef.current?.reportError(t("robot.signup.errorMismatch"));
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
       return;
     }
 
     setLoading(true);
+    setError("");
+    setSuccess("");
 
     try {
       await signUp(email, password);
@@ -93,42 +152,47 @@ export default function SignUpPage() {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
-
-      // Reset attempts on successful signup (T032: using sessionStorage)
       setAttempts(0);
       setLockoutTime(0);
       sessionStorage.removeItem("signup_attempts");
+      trackEvent("signup_success", { method: "email" });
+      robotRef.current?.reportSuccess(t("robot.signup.success"));
+      robotRef.current?.celebrate();
+      successHandledRef.current = true;
     } catch (err: unknown) {
-      // Increment attempts and set lockout
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
-
-      // T032: Store in sessionStorage for persistence (migrated from localStorage)
-      const lockoutDuration = Math.min(newAttempts * 30000, 300000); // Max 5 minutes
+      const lockoutDuration = Math.min(newAttempts * 30000, 300000);
       sessionStorage.setItem(
         "signup_attempts",
-        JSON.stringify({
-          count: newAttempts,
-          timestamp: Date.now(),
-        }),
+        JSON.stringify({ count: newAttempts, timestamp: Date.now() }),
       );
 
+      const isAuthError = (e: unknown): e is { code: string } =>
+        typeof e === "object" && e !== null && "code" in e;
+
+      let message: string;
       if (newAttempts >= 20) {
         setLockoutTime(lockoutDuration);
-        setError(
-          t("lockoutRepeated", { seconds: Math.ceil(lockoutDuration / 1000) }),
-        );
+        message = t("lockoutRepeated", {
+          seconds: Math.ceil(lockoutDuration / 1000),
+        });
+      } else if (isAuthError(err) && err.code === "EMAIL_ALREADY_REGISTERED") {
+        message = t("signupEmailAlreadyRegistered");
+        robotRef.current?.reportError(t("robot.signup.errorEmailTaken"));
       } else {
-        const isAuthError = (e: unknown): e is { code: string } => {
-          return typeof e === "object" && e !== null && "code" in e;
-        };
-
-        if (isAuthError(err) && err.code === "EMAIL_ALREADY_REGISTERED") {
-          setError(t("signupEmailAlreadyRegistered"));
-        } else {
-          setError(t("signupGenericError"));
-        }
+        message = t("signupGenericError");
+        robotRef.current?.reportError(message);
       }
+      setError(message);
+      logError(err instanceof Error ? err : String(err), {
+        message: "Sign up failed",
+        metadata: { method: "email" },
+      });
+      trackEvent("signup_failure", { method: "email" });
+      cardRef.current?.classList.remove("shake");
+      void cardRef.current?.offsetWidth;
+      cardRef.current?.classList.add("shake");
     } finally {
       setLoading(false);
     }
@@ -137,57 +201,73 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     setError("");
-
     try {
       await signInWithGoogle();
-    } catch {
-      setError(t("googleSignupFailed"));
-    } finally {
+      trackEvent("signup_success", { method: "google" });
+    } catch (err) {
+      const msg = t("googleSignupFailed");
+      setError(msg);
+      logError(err instanceof Error ? err : String(err), {
+        message: "Google sign up failed",
+        metadata: { method: "google" },
+      });
+      trackEvent("signup_failure", { method: "google" });
+      robotRef.current?.reportError(msg);
       setGoogleLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto py-10">
-      <div className="modern-card p-8 sm:p-10">
-        <div className="text-center mb-10">
-          <div className="bg-brand-blue/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-blue/5">
-            <DynamicLogo
-              width={56}
-              height={56}
-              className="object-contain w-14 h-14"
-              priority
-            />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
-            {t("signupTitle")}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium">
-            {t("signupSubtitle")}
-          </p>
-        </div>
+    <div className="mx-auth">
+      <div className="scene">
+        <div className="w-full max-w-md">
+          <LoginRobot
+            ref={robotRef}
+            email={email}
+            password={password}
+            watchingForm={watchingForm}
+            loading={loading}
+            success={successHandledRef.current}
+            error={Boolean(error)}
+            mode="signup"
+          />
 
-        {(error || success) && (
-          <div
-            className={`mb-8 p-4 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2 duration-300 ${
-              error
-                ? "bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400"
-                : "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
-            }`}
+          <form
+            ref={(el) => {
+              formRef.current = el;
+              cardRef.current = el;
+            }}
+            className="card"
+            onSubmit={handleSubmit}
+            onFocus={() => setWatchingForm(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setWatchingForm(false);
+              }
+            }}
+            noValidate
           >
-            {error || success}
-          </div>
-        )}
+            <span className="hand hand--l" aria-hidden="true" />
+            <span className="hand hand--r" aria-hidden="true" />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="signup-email"
-              className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
-            >
-              {t("emailLabel")}
-            </label>
-            <div className="relative">
+            <h1 className="title">{t("signupTitle")}</h1>
+            <p className="subtitle">{t("signupSubtitle")}</p>
+
+            {success && !error && (
+              <div className="status status--success" role="status">
+                {success}
+              </div>
+            )}
+            {error && (
+              <div className="status status--error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <label className="field">
+              <svg className="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm8 7.3L4.4 7h15.2L12 12.3ZM4 9.2V17h16V9.2l-8 5.3-8-5.3Z" />
+              </svg>
               <input
                 id="signup-email"
                 name="email"
@@ -196,21 +276,16 @@ export default function SignUpPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pe-12 ps-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
-                placeholder="student@university.edu"
+                onFocus={() => robotRef.current?.onEmailFocus()}
+                placeholder="user@example.com"
+                aria-label={t("emailLabel")}
               />
-              <Mail className="absolute end-4 inset-y-0 my-auto w-5 h-5 text-slate-400" />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="signup-password"
-              className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
-            >
-              {t("passwordLabel")}
             </label>
-            <div className="relative">
+
+            <label className="field">
+              <svg className="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 0 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.7V19h-2v-1.3a2 2 0 0 1 1-3.7Z" />
+              </svg>
               <input
                 id="signup-password"
                 name="password"
@@ -219,34 +294,55 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pe-12 ps-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
-                placeholder="••••••••"
+                onFocus={() => robotRef.current?.onPasswordFocus()}
+                onBlur={() => robotRef.current?.onPasswordBlur()}
+                placeholder={t("passwordPlaceholder")}
+                aria-label={t("passwordLabel")}
                 minLength={6}
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                className="peek"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={
+                  showPassword ? t("hidePassword") : t("showPassword")
+                }
                 aria-pressed={showPassword}
-                className="absolute end-1 inset-y-0 my-auto flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:text-brand-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue transition-colors"
               >
                 {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff
+                    aria-hidden="true"
+                    style={{ width: 20, height: 20 }}
+                  />
                 ) : (
-                  <Lock className="w-5 h-5" />
+                  <Eye aria-hidden="true" style={{ width: 20, height: 20 }} />
                 )}
               </button>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="signup-confirm-password"
-              className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
-            >
-              {t("confirmPasswordLabel")}
             </label>
-            <div className="relative">
+
+            <div
+              className={`field-hint ${
+                password.length === 0
+                  ? ""
+                  : password.length >= 6
+                    ? "field-hint--ok"
+                    : "field-hint--bad"
+              }`}
+            >
+              <span className="field-hint-dot" aria-hidden="true" />
+              <span>
+                {password.length === 0
+                  ? t("passwordHint")
+                  : password.length >= 6
+                    ? t("passwordHintOk")
+                    : t("passwordHintShort")}
+              </span>
+            </div>
+
+            <label className="field">
+              <svg className="field-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 0 1 6 0v3H9Zm3 4a2 2 0 0 1 1 3.7V19h-2v-1.3a2 2 0 0 1 1-3.7Z" />
+              </svg>
               <input
                 id="signup-confirm-password"
                 name="confirmPassword"
@@ -255,105 +351,128 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pe-12 ps-5 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all"
-                placeholder="••••••••"
+                onFocus={() => robotRef.current?.onConfirmFocus?.()}
+                onBlur={() => robotRef.current?.onConfirmBlur?.()}
+                placeholder={t("confirmPasswordPlaceholder")}
+                aria-label={t("confirmPasswordLabel")}
                 minLength={6}
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                aria-label={showConfirmPassword ? t("hidePassword") : t("showPassword")}
+                className="peek"
+                onClick={() => setShowConfirmPassword((s) => !s)}
+                aria-label={
+                  showConfirmPassword ? t("hidePassword") : t("showPassword")
+                }
                 aria-pressed={showConfirmPassword}
-                className="absolute end-1 inset-y-0 my-auto flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:text-brand-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-blue transition-colors"
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff
+                    aria-hidden="true"
+                    style={{ width: 20, height: 20 }}
+                  />
                 ) : (
-                  <Lock className="w-5 h-5" />
+                  <Eye aria-hidden="true" style={{ width: 20, height: 20 }} />
                 )}
               </button>
-            </div>
-          </div>
+            </label>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 bg-brand-blue hover:bg-brand-sky text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>{t("signingUp")}</span>
-              </>
-            ) : (
-              <>
-                <UserPlus className="w-6 h-6" />
-                <span>{t("signUp")}</span>
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100 dark:border-slate-800"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white dark:bg-brand-navy text-slate-400 font-bold">
-                {t("or")}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGoogleSignUp}
-          disabled={googleLoading}
-          className="mt-8 w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-2xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {googleLoading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-700 dark:border-slate-300"></div>
-          ) : (
-            <svg className="w-6 h-6" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-          )}
-          <span>{t("signUpWithGoogle")}</span>
-        </button>
-
-        <div className="mt-10 text-center space-y-4">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {t("alreadyHaveAccountPrompt")}{" "}
             <button
-              onClick={() => onNavigate("login")}
-              className="text-brand-blue hover:text-brand-sky font-bold transition-colors"
+              id="mx-auth-submit"
+              type="submit"
+              className={`btn ${successHandledRef.current ? "is-success" : ""}`}
+              disabled={loading}
             >
-              {t("goToLogin")}
+              {loading ? (
+                <>
+                  <span className="btn-spinner" aria-hidden="true" />
+                  <span>{t("signingUp")}</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus
+                    aria-hidden="true"
+                    style={{ width: 18, height: 18 }}
+                  />
+                  <span>{t("signUp")}</span>
+                </>
+              )}
             </button>
-          </p>
-          <button
-            onClick={() => onNavigate("home")}
-            className="flex items-center justify-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors mx-auto"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t("backToHome")}</span>
-          </button>
+
+            <div className="divider">
+              <span>{t("or")}</span>
+            </div>
+
+            <button
+              type="button"
+              className="google-btn"
+              onClick={handleGoogleSignUp}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <span
+                  className="btn-spinner"
+                  aria-hidden="true"
+                  style={{
+                    borderTopColor: "currentColor",
+                    width: 18,
+                    height: 18,
+                  }}
+                />
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+              )}
+              <span>{t("signUpWithGoogle")}</span>
+            </button>
+
+            <div className="bottom">
+              <div>
+                {t("alreadyHaveAccountPrompt")}{" "}
+                <button
+                  type="button"
+                  className="signup-link"
+                  onClick={() => onNavigate("login")}
+                >
+                  {t("goToLogin")}
+                </button>
+              </div>
+              <button
+                type="button"
+                className="home-link"
+                onClick={() => onNavigate("home")}
+              >
+                <ArrowLeft
+                  aria-hidden="true"
+                  style={{
+                    width: 14,
+                    height: 14,
+                    display: "inline-block",
+                  }}
+                />
+                <span>{t("backToHome")}</span>
+              </button>
+            </div>
+
+            <span className="foot foot--l" aria-hidden="true" />
+            <span className="foot foot--r" aria-hidden="true" />
+          </form>
         </div>
       </div>
     </div>
