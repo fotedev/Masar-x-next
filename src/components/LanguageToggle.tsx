@@ -2,7 +2,7 @@
 
 import { Globe } from "lucide-react";
 import { useCallback } from "react";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname, useRouter } from '@/navigation';
 import { useLocale, useTranslations } from "next-intl";
 
 type Locale = "ar" | "en";
