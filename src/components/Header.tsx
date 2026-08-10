@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect, useRef, memo } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname, useRouter } from '@/navigation';
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { useTranslations, useLocale } from "next-intl";

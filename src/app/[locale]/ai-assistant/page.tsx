@@ -14,7 +14,7 @@ import { ChatInput } from "@/components/ai/ChatInput";
 import { AIErrorBoundary } from "@/components/AIErrorBoundary";
 import { aiAssistant } from "@/lib/ai-assistant";
 import { toast } from "sonner";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { initPuterDiagnostics } from "@/lib/puter";
 
 const PuterSettingsModal = dynamic(

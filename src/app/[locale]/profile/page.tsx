@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Root as SwitchRoot, Thumb as SwitchThumb } from "@radix-ui/react-switch";
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import {
   User,
   Mail,
