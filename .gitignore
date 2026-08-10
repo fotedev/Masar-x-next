@@ -140,6 +140,11 @@ AGENTS.md
 localhost-profile.log
 skills-lock.json
 
+# Empty legacy auth directory — the new LoginRobot lives in
+# src/components/auth/, so this route directory was abandoned.
+# Keeping the entry here so git stops reporting it as untracked.
+src/app/[locale]/auth/
+
 # === Added by Reorganization Plan ===
 
 # Heavy transient files
