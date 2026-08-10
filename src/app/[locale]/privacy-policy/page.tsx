@@ -9,7 +9,7 @@ import {
   ArrowRight,
   ChevronRight,
 } from "lucide-react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 
 export default function PrivacyPolicyPage() {
   const t = useTranslations("privacyPolicy");
