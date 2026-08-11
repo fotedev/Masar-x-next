@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { useTranslations } from "next-intl";
 import { SubjectsGrid } from "@/components/SubjectsGrid";
 

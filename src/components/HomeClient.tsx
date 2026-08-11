@@ -17,7 +17,7 @@ import {
   Subject,
 } from "@/types/database";
 import { useRouter, useParams } from "next/navigation";
-import { Link } from "@/i18n/routing";
+import { Link } from '@/navigation';
 import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";

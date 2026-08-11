@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import {

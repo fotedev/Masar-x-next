@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { useParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";

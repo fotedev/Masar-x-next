@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { Trash } from "lucide-react";
