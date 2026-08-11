@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { QuizPlayer } from "@/components/QuizPlayer";
 import { PreloadKatex } from "@/components/quiz/PreloadKatex";
 import { use } from "react";
