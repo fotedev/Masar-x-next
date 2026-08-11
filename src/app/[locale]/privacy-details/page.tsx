@@ -9,7 +9,7 @@ import {
   CheckCircle,
   Info,
 } from "lucide-react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 
 export default function PrivacyDetailsPage() {
   const t = useTranslations("privacyDetails");
