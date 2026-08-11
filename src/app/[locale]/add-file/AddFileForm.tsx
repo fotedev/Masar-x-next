@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LectureSelect } from "@/components/lectures/LectureSelect";
 import { addFile } from "@/actions/content";
 import { useContentForm } from "@/hooks/useContentForm";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from '@/navigation';
 import { useCallback } from "react";
 
 export function AddFileForm() {

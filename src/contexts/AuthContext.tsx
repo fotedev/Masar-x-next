@@ -15,6 +15,7 @@ import { supabase } from "../lib/supabase";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
 import { logger } from "../lib/logger";
 import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
+import { useLocale } from "next-intl";
 
 interface AuthContextType {
   user: User | null;
@@ -46,6 +47,11 @@ export function AuthProvider({
   const [profile, setProfile] = useState<ProfileRow | null>(initialProfile);
   const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
   const [loading, setLoading] = useState(!initialUser);
+  // Current next-intl locale, so the OAuth redirect lands back in the
+  // same locale the user started the flow from. Without this, the
+  // next-intl middleware rewrites the post-OAuth URL and the user can
+  // bounce between locales (or hit a 404, see `[locale]/auth/callback`).
+  const locale = useLocale();
   
   // T005: Sync guards
   const syncInProgress = useRef<boolean>(false);
@@ -187,10 +193,12 @@ export function AuthProvider({
   };
 
   const signInWithGoogle = async () => {
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`,
+        redirectTo: `${origin}/${locale}/auth/callback`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
