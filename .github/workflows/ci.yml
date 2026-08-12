@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel in-progress runs for the same PR/branch when new pushes arrive.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least-privilege: CI only needs to read the repo contents.
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------
+  # ESLint check
+  # Job name is set to "ESLint" so the resulting check name matches the
+  # legacy required_status_checks entry in the repo Ruleset.
+  # ---------------------------------------------------------------------
+  ESLint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint
+
+  # ---------------------------------------------------------------------
+  # next build check
+  # Job name is set to "next build" so the resulting check name matches
+  # the legacy required_status_checks entry in the repo Ruleset.
+  #
+  # Env vars below are placeholders. NEXT_PUBLIC_* vars are inlined into
+  # the client bundle at build time and are public by design; the values
+  # here are only used to satisfy module-load `throw new Error(...)`
+  # checks in `src/lib/supabase.ts` and similar files. They never need
+  # to point at a real Supabase/Cloudinary project.
+  # ---------------------------------------------------------------------
+  next-build:
+    name: next build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
+      NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+      NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+      NEXT_PUBLIC_GA_ID: ""
+      ANALYZE: "false"
+      # Server-side placeholders. These are not consumed at build time
+      # but are referenced by route handlers; placeholders keep any
+      # defensive `throw` paths from blowing up.
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+      VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run next build
+        run: pnpm build
