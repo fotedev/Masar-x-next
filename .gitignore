@@ -175,6 +175,11 @@ vizvibe.mmd
 .opencode
 .github/*
 !.github/FUNDING.yml
+# Allow GitHub Actions workflows so CI config can be committed.
+# Keep agents/, prompts/, copilot-instructions.md, etc. untracked (they
+# remain covered by the .github/* ignore above).
+!.github/workflows/
+!.github/workflows/**
 .specify
 .windsurf
 backup
