@@ -173,7 +173,8 @@ vizvibe.mmd
 # Env backups
 .env.local.bak
 .opencode
-.github
+.github/*
+!.github/FUNDING.yml
 .specify
 .windsurf
 backup
