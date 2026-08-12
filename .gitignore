@@ -180,6 +180,8 @@ vizvibe.mmd
 # remain covered by the .github/* ignore above).
 !.github/workflows/
 !.github/workflows/**
+# Document the active branch protection Ruleset alongside this file.
+!.github/RULESET.md
 .specify
 .windsurf
 backup
