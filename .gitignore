@@ -9,6 +9,12 @@ build/
 out/
 .vercel/
 
+# Generated Service Worker — produced from public/sw.template.js by
+# scripts/inject-sw-version.mjs at prebuild/predev time. Keep the
+# template tracked; ignore the generated copy so it never gets
+# committed by accident (it changes per build).
+public/sw.js
+
 # Environment variables
 .env
 .env.local
