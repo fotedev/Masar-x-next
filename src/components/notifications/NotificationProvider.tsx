@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { getLogoPath } from "../DynamicLogo";
+import { registerServiceWorker } from "@/lib/sw-register";
 
 interface NotificationContextType {
   permission: NotificationPermission;
@@ -56,19 +57,16 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         const timeoutId = setTimeout(() => setShowPrompt(true), 20000);
         return () => clearTimeout(timeoutId);
       }
-
-      if (
-        ("serviceWorker" in navigator &&
-          Notification.permission === "granted" &&
-          !process.env.NODE_ENV) ||
-        process.env.NODE_ENV !== "development"
-      ) {
-        navigator.serviceWorker.register("/sw.js").then(() => {
-          // Service Worker registered
-        });
-      }
     }
   }, [isSupported]);
+
+  // Register the Service Worker once on mount. Centralized here so
+  // every user gets the PWA cache, not just users who granted
+  // notification permission (the previous per-effect registration
+  // was gated on `permission === "granted"`).
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   const requestPermission = async (): Promise<NotificationPermission> => {
     if (!isSupported) return "denied";
@@ -78,19 +76,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       setPermission(result);
       setShowPrompt(false);
 
-      if (result === "granted") {
-        if (
-          typeof window !== "undefined" &&
-          "serviceWorker" in navigator &&
-          (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
-        ) {
-          try {
-            await navigator.serviceWorker.register("/sw.js");
-          } catch {
-            // Registration failed
-          }
-        }
-      }
+      // Service Worker registration is handled by the dedicated mount
+      // effect above; no need to re-register on every permission grant.
 
       return result;
     } catch {
