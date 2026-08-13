@@ -14,7 +14,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Force cache invalidation: 2026-02-14T04:30:00
   reactStrictMode: true,
   transpilePackages: ["next-intl"],
   serverExternalPackages: ["pg"],
@@ -88,7 +87,67 @@ const nextConfig = {
     // which takes precedence for all page routes. Having two CSP headers
     // causes the browser to AND them (most-restrictive wins), which
     // breaks nonce-based policies when combined with unsafe-inline policies.
+    //
+    // Most-specific match wins in Next.js, so order in this array is
+    // for readability only:
+    //   1. /sw.js            — no-store so the browser re-validates on
+    //                           every page load and detects the
+    //                           build-time-injected CACHE_NAME change
+    //   2. HTML catch-all    — no-store for all pages and data routes
+    //   3. /dotlottie...wasm — long-lived, Content-Type for streaming
+    //   4. /(.*) security    — global baseline (some of these are also
+    //                           set by middleware; harmless duplication)
     return [
+      // === 1. Service Worker itself: re-validate on every page load ===
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          { key: "Pragma", value: "no-cache" },
+          { key: "Expires", value: "0" },
+        ],
+      },
+      // === 2. HTML pages: never cache, always revalidate ===
+      // Excludes _next/static, _next/image, favicon, and common asset
+      // extensions (which are safe to cache via their content-hashed
+      // URLs from Next.js's build system).
+      {
+        source:
+          "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm|ico)$).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          { key: "Pragma", value: "no-cache" },
+          { key: "Expires", value: "0" },
+        ],
+      },
+      // === 3. dotlottie-web WebAssembly module ===
+      // dotlottie-web's WebAssembly module. Vercel's default MIME
+      // for .wasm is application/octet-stream, which makes
+      // WebAssembly.instantiateStreaming() fail and forces the
+      // library to fall back to WebAssembly.instantiate() — that
+      // path requires 'unsafe-eval' in the CSP. Setting the
+      // correct MIME keeps us on the streaming path, which is
+      // both faster and CSP-friendly. Rule is applied here (not
+      // in vercel.json) because Next.js merges the two and the
+      // most-specific match wins, and we want this to take
+      // precedence over the global `/(.*)` block below.
+      {
+        source: "/dotlottie-player.wasm",
+        headers: [
+          { key: "Content-Type", value: "application/wasm" },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // === 4. Security baseline (global) ===
       {
         source: "/(.*)",
         headers: [
@@ -98,26 +157,6 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
-          },
-        ],
-      },
-      {
-        // dotlottie-web's WebAssembly module. Vercel's default MIME
-        // for .wasm is application/octet-stream, which makes
-        // WebAssembly.instantiateStreaming() fail and forces the
-        // library to fall back to WebAssembly.instantiate() — that
-        // path requires 'unsafe-eval' in the CSP. Setting the
-        // correct MIME keeps us on the streaming path, which is
-        // both faster and CSP-friendly. Rule is applied here (not
-        // in vercel.json) because Next.js merges the two and the
-        // most-specific match wins, and we want this to take
-        // precedence over the global `/(.*)` block above.
-        source: "/dotlottie-player.wasm",
-        headers: [
-          { key: "Content-Type", value: "application/wasm" },
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
           },
         ],
       },
