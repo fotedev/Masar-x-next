@@ -146,12 +146,10 @@ AGENTS.md
 localhost-profile.log
 skills-lock.json
 
-# Empty legacy auth directory — the new LoginRobot lives in
-# src/components/auth/, so this route directory was abandoned.
-# Keeping the entry here so git stops reporting it as untracked.
-# Brackets are escaped because unescaped [...] is a character
-# class in gitignore patterns and would match the wrong path.
-src/app/\[locale\]/auth/
+# NOTE: src/app/[locale]/auth/ is no longer ignored — it now hosts
+# the OAuth callback route at src/app/[locale]/auth/callback/route.ts
+# (moved here from src/app/auth/callback/ on 2026-08-13 to fix the
+# 404 on /<locale>/auth/callback after the i18n refactor).
 
 # === Added by Reorganization Plan ===
 
