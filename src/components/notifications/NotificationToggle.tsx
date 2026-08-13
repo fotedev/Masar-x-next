@@ -27,17 +27,9 @@ export function NotificationToggle() {
         const result = await requestPermission();
 
         if (result === "granted") {
-          if (
-            typeof window !== "undefined" &&
-            "serviceWorker" in navigator &&
-            (!process.env.NODE_ENV || process.env.NODE_ENV !== "development")
-          ) {
-            try {
-              await navigator.serviceWorker.register("/sw.js");
-            } catch {
-              // Registration failed
-            }
-          }
+          // Service Worker registration is handled centrally by
+          // NotificationProvider's mount effect; no need to re-register
+          // here when the user grants permission.
         } else if (result === "denied") {
           const message = `تم رفض إذن الإشعارات.
 
