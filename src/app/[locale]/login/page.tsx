@@ -25,11 +25,11 @@ import {
   useState,
 } from "react";
 import { Eye, EyeOff, ArrowLeft, LogIn } from "lucide-react";
-import { useRouter } from "@/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { supabase } from "@/lib/supabase";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { LoginRobot, type LoginRobotHandle } from "@/components/auth/LoginRobot";
 import "@/components/auth/auth.css";
 
@@ -37,6 +37,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export default function LoginPage() {
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("authPages");
   const { signIn, signInWithGoogle, user } = useAuth();
   const { trackEvent, logError } = useAnalytics();
@@ -62,8 +63,8 @@ export default function LoginPage() {
 
   const onNavigate = useCallback(
     (page: string) => {
-      if (page === "home") router.push("/");
-      else router.push(`/${page}`);
+      if (page === "home") router.push(`/${locale}`);
+      else router.push(`/${locale}/${page}`);
     },
     [router],
   );
