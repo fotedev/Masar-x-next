@@ -142,7 +142,6 @@ public/logo_alt*.svg
 .agents
 scripts/row-preview-notgoodforhtml.txt
 .vercel
-AGENTS.md
 localhost-profile.log
 skills-lock.json
 
@@ -199,3 +198,4 @@ backup
 public/animations/ai-robo/
 # Debug script used to verify the dotlottie-react patch
 scripts/test_patch.mjs
+/.trash

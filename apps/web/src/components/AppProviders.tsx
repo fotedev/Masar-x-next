@@ -31,7 +31,9 @@ export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
         <PlatformSettingsProvider>
           <ThemeProvider>
             <NotificationProvider>
-              <style jsx global>{`
+              <style
+                dangerouslySetInnerHTML={{
+                  __html: `
                 [data-sonner-toast] [data-close-button] {
                   top: 50% !important;
                   right: 8px !important;
@@ -47,7 +49,9 @@ export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
                     --mobile-offset: 16px;
                   }
                 }
-              `}</style>
+              `,
+                }}
+              />
               <Layout>{children}</Layout>
               <Toaster 
                 position="top-center" 

@@ -1,15 +1,8 @@
-# This project is a single package, NOT a monorepo.
-# `onlyBuiltDependencies` is the valid pnpm 9 key for controlling post-install
-# build scripts (replaces the invalid `allowBuilds` key).
+# pnpm workspaces for the Masar X monorepo.
 packages:
-  - .
+  - "apps/*"
+  - "packages/*"
 
-allowBuilds:
-  '@parcel/watcher': true
-  '@swc/core': true
-  esbuild: true
-  sharp: true
-  unrs-resolver: true
-
-onlyBuiltDependencies:
-  - sharp
+# Approve all build scripts (sharp, esbuild, @swc/core, @parcel/watcher, etc.)
+# for this trusted monorepo. Switch to a per-package list later if needed.
+dangerouslyAllowAllBuilds: true
