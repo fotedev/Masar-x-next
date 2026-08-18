@@ -1,6 +1,5 @@
 "use client";
 
-import Error from "next/error";
 import { useEffect } from "react";
 
 export default function GlobalError({
@@ -15,7 +14,7 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <Error statusCode={0} />
+        <h2>Something went wrong!</h2>
       </body>
     </html>
   );
