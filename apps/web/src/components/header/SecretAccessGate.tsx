@@ -47,7 +47,9 @@ export const SecretAccessGate: FC<SecretAccessGateProps> = ({
             </div>
             <div className="h-1 w-0 bg-red-600 mx-auto animate-matrix-line" />
           </div>
-          <style jsx global>{`
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
             @keyframes matrix-fade-in {
               from {
                 opacity: 0;
@@ -77,7 +79,9 @@ export const SecretAccessGate: FC<SecretAccessGateProps> = ({
             .animate-matrix-line {
               animation: matrix-line 3s ease-in-out forwards 1s;
             }
-          `}</style>
+          `,
+            }}
+          />
         </div>
       )}
 
