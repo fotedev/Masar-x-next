@@ -9,6 +9,16 @@ Expand Masar X from a single Next.js web app to three surfaces — web (unchange
 
 The technical decisions are recorded in [research.md](./research.md); the data model is in [data-model.md](./data-model.md); the cross-platform interface contracts are in [contracts/](./contracts/); the developer setup walkthrough is in [quickstart.md](./quickstart.md).
 
+## Cross-cutting concerns (non-negotiable across all phases)
+
+These are requirements that apply to every user story and every release, not features of any single story. They are recorded here so the implementation phase treats them as release-blockers, not as polish:
+
+- **Mechanical enforcement of the AI provider key boundary.** The contract in [contracts/ai-boundary.md](./contracts/ai-boundary.md) forbids any direct call to an AI provider's API from any client context. A documentation rule is not enough. CI MUST include a check that fails the build if a known AI provider API host string (`api.openai.com`, `api.anthropic.com`, and equivalents for any other provider the Edge Function may route to) appears in any file outside `supabase/functions/**` and `packages/shared/ai/__fixtures__/**` (test fixtures are exempt by path). Additionally, an ESLint `no-restricted-imports` rule MUST block direct imports of the AI provider SDKs (`openai`, `@anthropic-ai/sdk`, and equivalents) from any path outside `supabase/functions/**` and `packages/shared/**`. The lint rule and the CI grep together close the raw-HTTP bypass; `gitleaks` on the built artifacts (existing) closes the leaked-key symptom. This is a required deliverable, not an implementation detail to be picked up if a future contributor notices.
+
+- **Web app non-regression.** Every change to the monorepo, the shared package, the contracts, and the build pipeline is expected to leave the web app's behavior, URLs, and public API unchanged. A passing web-app smoke test (existing Playwright suite, preserved) is the gate for any PR that touches the monorepo's structure.
+
+- **Server-side enforcement belongs at the server.** As noted in [contracts/README.md](./contracts/README.md), Row Level Security (FR-018) and rate limits (FR-019) are enforced at the Supabase project/policy layer, not in the client code. The implementation phase MUST NOT duplicate these in the apps; doing so creates a second source of truth that can drift.
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x across all apps. Next.js 16 + React 19 for the web (existing). Electron 30+ for the desktop runtime. Expo SDK 51+ / React Native 0.74+ for mobile.
