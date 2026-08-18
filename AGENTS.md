@@ -1,0 +1,162 @@
+<!-- VERCEL BEST PRACTICES START -->
+## Best practices for developing on Vercel
+
+These defaults are optimized for AI coding agents (and humans) working on apps that deploy to Vercel.
+
+- Treat Vercel Functions as stateless + ephemeral (no durable RAM/FS, no background daemons), use Blob or marketplace integrations for preserving state
+- Edge Functions (standalone) are deprecated; prefer Vercel Functions
+- Don't start new projects on Vercel KV/Postgres (both discontinued); use Marketplace Redis/Postgres instead
+- Store secrets in Vercel Env Variables; not in git or `NEXT_PUBLIC_*`
+- Provision Marketplace native integrations with `vercel integration add` (CI/agent-friendly)
+- Sync env + project settings with `vercel env pull` / `vercel pull` when you need local/offline parity
+- Use `waitUntil` for post-response work; avoid the deprecated Function `context` parameter
+- Set Function regions near your primary data source; avoid cross-region DB/service roundtrips
+- Tune Fluid Compute knobs (e.g., `maxDuration`, memory/CPU) for long I/O-heavy calls (LLMs, APIs)
+- Use Runtime Cache for fast **regional** caching + tag invalidation (don't treat it as global KV)
+- Use Cron Jobs for schedules; cron runs in UTC and triggers your production URL via HTTP GET
+- Use Vercel Blob for uploads/media; Use Edge Config for small, globally-read config
+- If Enable Deployment Protection is enabled, use a bypass secret to directly access them
+- Add OpenTelemetry via `@vercel/otel` on Node; don't expect OTEL support on the Edge runtime
+- Enable Web Analytics + Speed Insights early
+- Use AI Gateway for model routing, set AI_GATEWAY_API_KEY, using a model string (e.g. 'anthropic/claude-sonnet-4.6'), Gateway is already default in AI SDK
+  needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
+- For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
+<!-- VERCEL BEST PRACTICES END -->
+
+<!-- AVAILABLE CLIS START -->
+## Available CLIs (verified 2026-08-13)
+
+User has these CLIs installed locally and authorized for project operations. Use them for verifiable infra operations instead of guessing dashboard URLs or asking the user to perform manual clicks.
+
+| CLI | Common commands | Use case |
+|---|---|---|
+| **Vercel** (`vercel`) | `vercel deploy`, `vercel env`, `vercel logs`, `vercel integration add`, `vercel pull` | Deploys, env vars, build/runtime logs, marketplace integrations |
+| **GitHub** (`gh`) | `gh pr create`, `gh issue`, `gh repo`, `gh api` | PRs, issues, repo ops, raw GitHub API |
+| **Supabase** (`supabase`) | `supabase db push`, `supabase migration`, `supabase functions` | Schema migrations, edge functions, local dev |
+
+**Safety rule:** Always ask for explicit confirmation before any state-changing CLI command (deploy, db push, secret set, branch push to protected branch). The CLIs are scriptable, but the operations they perform often are not.
+<!-- AVAILABLE CLIS END -->
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+at `specs/004-multi-platform-expansion/plan.md` (research, data model,
+contracts, and quickstart live alongside it in the same directory).
+<!-- SPECKIT END -->
+
+<!-- PROJECT-SPECIFIC GOTCHAS START -->
+## Project-specific gotchas (Masar X, verified 2026-08-14)
+
+These came out of a real incident where Google OAuth sign-in returned
+404 on `/en/auth/callback` and a 500 on `/en/login` for ~24h. The fixes
+are committed on `main` (see git log for `3cd749e`, `efe0059`,
+`122c692`, `bd8a1d3`, `59dc5f5`). **Read this section before touching
+`src/lib/supabase/server.ts`, `src/navigation.ts`, or any OAuth
+callback route.**
+
+### 1. next-intl `useRouter` from `@/navigation` leaks into server bundle
+
+- `src/navigation.ts` re-exports `useRouter` from `next-intl/navigation`
+  via `createNavigation(routing)`. **It must start with `"use client";`**
+  (see commit `bd8a1d3`). Without it, the re-exported `useRouter` is
+  treated as server-safe by Next.js 16.2.1's webpack and hoisted into
+  the server bundle, throwing `useRouter is not supported in Server
+  Components`.
+- `next-intl@4.9.0` + `next@16.2.1` has an additional compatibility
+  issue: webpack cannot statically analyze next-intl's dynamic
+  import in `dist/esm/production/extractor/format/index.js`
+  (Build dependencies behind this expression are ignored), so
+  even with `"use client"` in `src/navigation.ts`, pages that
+  call `useRouter()` at the **top of the component body** (not
+  inside `useEffect`/event handlers) still fail in production
+  builds. **Fix:** in pages like `login/page.tsx` and
+  `signup/page.tsx`, import `useRouter` directly from
+  `next/navigation` and prepend the locale manually
+  (`router.push(\`/${locale}/${page}\`)`). See commit `122c692`.
+- Why profile/news etc. keep working: they call `router.push` inside
+  `useEffect` or event handlers, so the server render pass never
+  invokes the hook. login/signup are the only two that invoke it
+  at component top level.
+
+### 2. BOM (U+FEFF) in `@supabase/ssr@0.8.0` cookies breaks undici
+
+- In Next.js 16 + `@supabase/ssr@0.8.0`, the supabase client emits
+  Set-Cookie values that occasionally start with U+FEFF
+  (the UTF-8 byte-order-mark). `undici`'s `Headers.set` throws
+  `TypeError: Cannot convert argument to a ByteString because the
+  character at index 0 has a value of 65279`, which bubbles up
+  as a 500 on every page that calls `supabase.auth.getUser()`
+  (i.e. the entire `/[locale]` layout's profile fetch AND
+  `/api/auth/sync`).
+- **Fix:** in `src/lib/supabase/server.ts`, strip U+FEFF from both
+  `getAll()` (existing cookies) and `setAll()` (new cookies).
+  See commits `3cd749e` and `efe0059`.
+- Symptom to grep for in Vercel logs: `ByteString` or `65279`
+  in any stack trace, especially under `.next/server/chunks/6350.js`
+  (the supabase ssr chunk).
+
+### 3. OAuth callback route MUST live under `[locale]`
+
+- With `localePrefix: "always"` in `next-intl/routing.ts`, the
+  Google OAuth redirect lands on `/{locale}/auth/callback`
+  (built by `AuthContext.signInWithGoogle` as
+  `\`${origin}/\${locale}/auth/callback\``). The route handler
+  must live at `src/app/[locale]/auth/callback/route.ts`,
+  NOT `src/app/auth/callback/route.ts`. See commit `59dc5f5`.
+- The git history has a stale comment in `i18n/routing.ts`
+  (line 13-14) saying navigation APIs were "moved to
+  `@/navigation` to keep this file server-safe" — this was true
+  once, but the directory `src/app/[locale]/auth/` was
+  accidentally emptied during PR #7's auth refactor. The fix
+  is the route, not the refactor. Do NOT remove the `auth/`
+  ignore-rule in `.gitignore` without first re-creating the
+  route file under `[locale]`.
+
+### 4. Vercel Deployment Protection masks bugs
+
+- The Vercel deployment URL (e.g. `masar-x-next-XXXXXX.vercel.app`)
+  is gated by SSO. Any request to it returns 302 to
+  `/sso-api?...` BEFORE the app handler runs. The alias domain
+  (`masarx.vercel.app`) is NOT gated, so real page render errors
+  show up there.
+- **Always smoke-test the alias domain, not the deployment URL.**
+  A 302 on the deployment URL is meaningless; a 302/200 on the
+  alias domain is the real signal.
+- The BOM issue above was invisible on the deployment URL for
+  the same reason — the 500 only manifested on the alias.
+
+### 5. Vercel free tier can't `vercel rollback` more than 1 deploy
+
+- `vercel rollback <deploymentId>` requires Pro plan
+  (error: `To rollback further than the previous production
+  deployment, upgrade to pro. (402)`).
+- **Free alternative:** `vercel promote <deploymentId>`
+  (works the same way, no plan limit). Then run
+  `vercel cache purge --yes` to flush edge cache.
+- The "previous production" is whatever's currently aliased to
+  the production domain. To find it: `vercel inspect <alias-domain>`.
+
+### 6. `SUPABASE_SERVICE_ROLE_KEY` must be in Vercel env, not just `.env`
+
+- `src/actions/auth.ts` reads `process.env.SUPABASE_SERVICE_ROLE_KEY`
+  directly. If it's missing from Vercel production, the sync
+  returns "Database not configured" with status 500.
+- `vercel env ls production` does NOT list it by default search;
+  always grep for `SUPABASE` after adding/removing env vars.
+- Adding it via CLI: pipe the value from `.env` to
+  `vercel env add SUPABASE_SERVICE_ROLE_KEY production --yes`
+  (stdin). The value stays encrypted in Vercel's storage; only
+  the *name* shows in `vercel env ls`.
+- **Never** paste a service role key into chat/CLI args directly
+  — the shell history will record it.
+
+### 7. `vercel.json` redirect from `masar-x.vercel.app` to `masarx.vercel.app`
+
+- There is a `301 permanent` redirect in `vercel.json` from
+  `masar-x.vercel.app/(.*)` → `https://masarx.vercel.app/$1`.
+- This means the `masar-x` hostname is dead — anything testing
+  the OAuth flow on it will redirect and the `state` param may
+  be lost. **Always use `masarx.vercel.app`** (without hyphen).
+- If the user reports "the redirect URL doesn't match", check
+  they're not using the hyphenated variant.
+<!-- PROJECT-SPECIFIC GOTCHAS END -->
