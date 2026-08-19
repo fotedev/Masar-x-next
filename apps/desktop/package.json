@@ -1,0 +1,20 @@
+{
+  "name": "desktop",
+  "version": "0.5.6",
+  "private": true,
+  "type": "module",
+  "description": "Masar X desktop app — Electron wrapper that loads the web build over a local HTTP server (research.md §2; spec FR-003, FR-005, FR-006).",
+  "scripts": {
+    "dev": "echo '[desktop] dev script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",
+    "build": "echo '[desktop] build script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",
+    "typecheck": "echo '[desktop] no TypeScript sources yet — scaffold only (T002).'",
+    "lint": "echo '[desktop] no ESLint config yet — scaffold only (T002).'"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}
