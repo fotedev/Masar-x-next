@@ -3,6 +3,26 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# Approve all build scripts (sharp, esbuild, @swc/core, @parcel/watcher, etc.)
-# for this trusted monorepo. Switch to a per-package list later if needed.
-dangerouslyAllowAllBuilds: true
+# Explicit allowlist of packages whose postinstall build scripts may run.
+#
+# This replaces the prior `dangerouslyAllowAllBuilds: true` so every
+# native module is reviewed individually before its build script
+# executes (Spec 004 Task T067).
+#
+# In pnpm v11 the legacy `onlyBuiltDependencies` array was removed
+# in favor of `allowBuilds` — a map of `package-name: true`. The
+# default in v11 is `strictDepBuilds: true`, meaning any package
+# not in this map has its postinstall rejected.
+#
+# The list below covers every native module currently pulled in by
+# apps/{web,desktop,mobile} and packages/shared (sharp, esbuild,
+# @swc/core, @parcel/watcher for fast file watching, unrs-resolver
+# for the workspace resolver, and electron which downloads a binary
+# during its postinstall).
+allowBuilds:
+  sharp: true
+  "@parcel/watcher": true
+  "@swc/core": true
+  esbuild: true
+  unrs-resolver: true
+  electron: true
