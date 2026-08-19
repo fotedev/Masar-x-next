@@ -5,10 +5,25 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "description": "Masar X shared package — translations, types, Supabase client factory, AI client. Consumed by apps/{web,desktop,mobile} via the workspace protocol (research.md §1, §4, §5, §9).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./messages/*": "./src/messages/*",
+    "./supabase": "./src/supabase/index.ts",
+    "./supabase/*": "./src/supabase/*",
+    "./types": "./src/types/index.ts",
+    "./types/*": "./src/types/*",
+    "./ai": "./src/ai/index.ts",
+    "./ai/*": "./src/ai/*"
+  },
+  "description": "Masar X shared package — translations, types, Supabase client factory, AI client. Consumed by apps/{web,desktop,mobile} via the workspace protocol (research.md §1, §4, §5, §9; contracts/ directory).",
   "scripts": {
-    "typecheck": "echo '[shared] no TypeScript sources yet — scaffold only (T004). Migration of translations/types/Supabase/AI client begins in T009-T016 (Phase 2).'",
-    "lint": "echo '[shared] no ESLint config yet — scaffold only (T004).'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo '[shared] ESLint config co-located with consumers (apps/{web,desktop,mobile}/eslint.config.*); shared package sources are linted by the consumer that owns the build.'",
     "build": "echo '[shared] no build step yet — consumers import directly from main: ./src/index.ts. A tsc-based build will be added when the source tree grows.'"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.97.0",
+    "zod": "^4.3.6"
   }
 }

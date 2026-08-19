@@ -1,0 +1,19 @@
+{
+  "best": "الأفضل",
+  "goToSubjects": "عرض المواد",
+  "goToSubjectsDescription": "اذهب للمواد",
+  "exams": "الامتحانات",
+  "goToExams": "عرض الامتحانات",
+  "goToExamsDescription": "اذهب للامتحانات",
+  "editSummary": "تعديل الملخص",
+  "noFavoriteSummaries": "لا توجد ملخصات مفضلة بعد",
+  "noFavoriteSummariesHint": "ابدأ باستكشاف المواد وأضف ملخصاتك المفضلة لتظهر هنا!",
+  "topLectures": "أفضل المحاضرات",
+  "aiCardTitle": "اسأل زين AI",
+  "aiCardDescription": "هل تواجه صعوبة في فهم موضوع معين؟ زين هنا لمساعدتك في المذاكرة وتلخيص المواد.",
+  "aiCardCta": "ابدأ المحادثة الآن",
+  "actionSubjects": "المواد الدراسية",
+  "actionQuizzes": "بنك الاختبارات",
+  "actionNews": "آخر الأخبار",
+  "actionActivity": "نشاطك الأخير"
+}
