@@ -1,0 +1,13 @@
+{
+  "access": {
+    "lockedTitle": "System locked",
+    "lockedDescription": "Too many attempts. Try again in {seconds} seconds.",
+    "locked30Description": "Too many failed attempts. The system has been locked for 30 seconds.",
+    "codeRequired": "Code is required",
+    "systemErrorTitle": "System error",
+    "maxUsesDescription": "Sorry, this code has exhausted all available uses.",
+    "securityAlertTitle": "Security alert",
+    "invalidOrExpiredDescription": "The code you entered is incorrect or expired.",
+    "connectionError": "Connection error"
+  }
+}

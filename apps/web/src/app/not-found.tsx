@@ -2,8 +2,8 @@ import Link from "next/link";
 import { headers, cookies } from "next/headers";
 import { getLocale } from "next-intl/server";
 
-import arMessages from "@/messages/ar/notFound.json";
-import enMessages from "@/messages/en/notFound.json";
+import arMessages from "masarx-shared/messages/ar/notFound.json";
+import enMessages from "masarx-shared/messages/en/notFound.json";
 
 type Locale = "en" | "ar";
 

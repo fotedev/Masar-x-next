@@ -70,7 +70,7 @@ export function useLectureContent({
               .limit(400),
             supabase
               .from("quizzes")
-              .select("id,title,description,created_at,lecture_id")
+              .select("id,title,subject,description,created_at,lecture_id")
               .eq("subject", subject)
               .order("created_at", { ascending: false })
               .limit(500),
@@ -81,7 +81,7 @@ export function useLectureContent({
         if (filesRes.error) throw filesRes.error;
         if (quizzesRes.error) throw quizzesRes.error;
 
-        const lectureMatch = (row: { lecture_id: string | null; lecture_key: string | null; title: string | null; id: string }) => {
+        const lectureMatch = (row: { lecture_id?: string | null; lecture_key?: string | null; title?: string | null; id: string }) => {
           // 1. Match by ID (most reliable)
           if (lecture?.id && row.lecture_id === lecture.id) return true;
 
