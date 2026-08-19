@@ -1,5 +1,6 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { FileText, BookOpen, Calendar, Star } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { SummaryWithRatings } from "@/types/database";
@@ -148,7 +149,7 @@ export function SummariesSection({
                   </h3>
                   {canEdit && !summary.isOptimistic && (
                     <button
-                      onClick={(e) => {
+                      onClick={(e: MouseEvent<HTMLButtonElement>) => {
                         e.stopPropagation();
                         onEditSummary(summary);
                       }}
