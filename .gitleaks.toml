@@ -1,0 +1,30 @@
+# gitleaks configuration for the Masar X monorepo (Spec 004, Task T008).
+# See https://github.com/gitleaks/gitleaks for the full schema.
+#
+# This config is intentionally minimal: it extends the default rule set
+# (broad coverage of known secret formats — Supabase, OpenAI, Anthropic,
+# GitHub, AWS, generic API keys, etc.) and adds a small allowlist for
+# files that look secret-shaped but are safe to commit.
+#
+# The gitleaks run is wired in two places:
+#   1. CI: scan the working tree of the CI checkout on every PR / push
+#      (extended in a follow-up to also scan built artifacts — the
+#      built-artifact scan is the one that catches keys introduced by
+#      build-time string concatenation, per research.md §8).
+#   2. Local dev: `gitleaks protect --pre-commit` (added in a follow-up).
+
+title = "Masar X gitleaks config"
+
+# Inherit gitleaks' default rule set (~150 detectors covering the common
+# provider formats and high-entropy generic secrets).
+[extend]
+useDefault = true
+
+# Allow .env.example / .env.template / .env.sample — these are templates
+# with placeholder values, not real secrets. Real .env / .env.local
+# files are gitignored and never reach this allowlist.
+[allowlist]
+description = "Allow .env templates and known-safe fixture files"
+paths = [
+  '''(^|/)(\.env\.example|\.env\.template|\.env\.sample)$''',
+]
