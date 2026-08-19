@@ -69,7 +69,7 @@ export function streamAiMessage(
 
 ## What the apps are NOT allowed to do
 
-- ❌ Make any direct call to an AI provider's API — through an SDK (`openai`, `@anthropic-ai/sdk`, etc.), through raw HTTP to the provider's endpoint, or through any other mechanism. All AI traffic goes through the shared package, which calls the Edge Function. This rule applies to **all** client contexts, including the Electron main process, the Electron preload script, the desktop renderer's web context, the mobile JS runtime, and the web app's server-side code paths that don't go through the Edge Function.
+- ❌ Make any direct call to an AI provider's API — through an SDK (`openai`, `@anthropic-ai/sdk`, etc.), through raw HTTP to the provider's endpoint, or through any other mechanism. All AI traffic goes through the shared package, which calls the Edge Function. This rule applies to **all** client contexts, including the Electron main process, the Electron preload script, the desktop renderer's web context, the mobile JS runtime, and the web app's server-side code paths (including Next.js API routes) that don't go through the Edge Function.
 - ❌ Send the AI provider key, the user's auth token, or any other secret in a request body or header. The Edge Function reads the AI key from its own environment.
 - ❌ Cache the AI response on the device in a way that persists across users on the same device (spec FR-020's spirit: the response may be cached for the same user, but the key must never be reachable).
 - ❌ Read or write the AI provider's response stream directly. The shared package's `streamAiMessage` is the only consumer.

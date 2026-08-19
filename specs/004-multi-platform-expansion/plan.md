@@ -153,6 +153,8 @@ masarx_next/
 
 Steps 1–6 are sequential and each one is independently deployable. The web app is the source of truth at every step, so a rollback to the previous state is just `git revert` of the relevant step.
 
+**Rollback note (added during review, 2026-08-19):** In the actual implementation, steps 1 and 6 landed in a single atomic commit that moved the entire web app from `src/` to `apps/web/src/` along with all of its supporting configs. This means the practical rollback unit for "go back to a single-package layout" is that one commit (`git revert <sha>`), not two separate reverts. The other steps (2-5: shared-package extraction, 7: desktop/mobile scaffolds, 8: CI matrix) are still independent and revertible individually.
+
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
