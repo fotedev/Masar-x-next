@@ -1,0 +1,16 @@
+{
+  "brand": "Masar X",
+  "platformSubtitle": "MASAR X PLATFORM",
+  "closeMenuAriaLabel": "Close menu",
+  "defaultUserName": "Masar X User",
+  "adminLabel": "System Admin ⚡",
+  "studentLabel": "Academic Student",
+  "welcomeHeading": "Welcome to Masar X 👋",
+  "welcomeMessage": "Log in to get full access to subjects and interactive quizzes.",
+  "mainNavigation": "Main Navigation",
+  "theRealWorld": "The Real World",
+  "language": "Language",
+  "adminPanel": "Admin Panel",
+  "version": "Masar X v{version}",
+  "online": "Online"
+}

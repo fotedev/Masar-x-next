@@ -1,0 +1,19 @@
+{
+  "professorUnknown": "Professor not specified",
+  "manageLectures": "View & manage lectures",
+  "noDescription": "No description for this subject",
+  "levelLabel": "Level {level}",
+  "semesterLabel": "Semester {semester}",
+  "professorLabelMale": "Dr.",
+  "professorLabelFemale": "Dr.",
+  "approve": "Approve",
+  "reject": "Reject",
+  "status": "Status",
+  "updateStatusError": "An error occurred while updating the subject status",
+  "confirmDelete": "Are you sure you want to delete this subject?",
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "deleteError": "An error occurred while deleting the subject",
+  "emptyTitle": "No subjects match your search",
+  "emptyDescription": "Start by adding your first subject now"
+}

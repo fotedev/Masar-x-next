@@ -1,0 +1,26 @@
+{
+  "videos": {
+    "title": "Course Videos",
+    "addVideo": "Add Video",
+    "empty": "No videos available for this course yet",
+    "arabic": "Arabic",
+    "english": "English",
+    "arabicTitle": "Arabic Videos",
+    "englishTitle": "English Videos",
+    "duration": "Duration",
+    "watch": "Watch"
+  },
+  "files": {
+    "title": "Course Files",
+    "addFile": "Add File",
+    "empty": "No files available for this course yet",
+    "fileSize": "File Size",
+    "download": "Download"
+  },
+  "reviews": {
+    "title": "Student Reviews",
+    "addReview": "Add Review",
+    "empty": "No reviews yet. Be the first to review this course!",
+    "anonymous": "Anonymous user"
+  }
+}

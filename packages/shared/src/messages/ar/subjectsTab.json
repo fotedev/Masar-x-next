@@ -1,0 +1,19 @@
+{
+  "professorUnknown": "المحاضر غير محدد",
+  "manageLectures": "عرض وإدارة المحاضرات",
+  "noDescription": "لا يوجد وصف لهذه المادة",
+  "levelLabel": "المستوى {level}",
+  "semesterLabel": "الترم {semester}",
+  "professorLabelMale": "دكتور",
+  "professorLabelFemale": "دكتورة",
+  "approve": "اعتماد",
+  "reject": "رفض",
+  "status": "الحالة",
+  "updateStatusError": "حدث خطأ أثناء تحديث حالة المادة",
+  "confirmDelete": "هل أنت متأكد من حذف هذه المادة؟",
+  "delete": "حذف",
+  "cancel": "إلغاء",
+  "deleteError": "حدث خطأ أثناء حذف المادة",
+  "emptyTitle": "لا توجد مواد تطابق بحثك",
+  "emptyDescription": "ابدأ بإضافة أول مادة دراسية الآن"
+}

@@ -1,0 +1,23 @@
+{
+  "pageTitle": "Edit Summary",
+  "summaryTitle": "Summary Title",
+  "semester": "Semester",
+  "semester1": "Term 1",
+  "semester2": "Term 2",
+  "subjectName": "Subject Name",
+  "selectSubject": "Select Subject",
+  "summaryContent": "Summary Content",
+  "updatePdf": "Update PDF File",
+  "currentPdfNote": "A PDF file already exists. Upload a new one to replace it.",
+  "uploadPdfDropzone": "Click or drag to upload a new PDF file",
+  "pdfLimitNote": "PDF only (up to 10MB)",
+  "saveButton": "Save Changes",
+  "noPermission": "You do not have permission to edit this summary",
+  "loadError": "An error occurred while loading summary data",
+  "uploadingPdf": "Uploading PDF file...",
+  "updateSuccessTitle": "Summary updated successfully!",
+  "updateSuccessDesc": "Summary \"{title}\" has been updated",
+  "updateError": "An error occurred while updating the summary. Please try again.",
+  "redirecting": "Redirecting to the summary page...",
+  "pdfOnlyError": "Please select a PDF file only"
+}

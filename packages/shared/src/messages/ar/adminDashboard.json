@@ -1,0 +1,39 @@
+{
+  "title": "لوحة تحكم المشرفين",
+  "subtitle": "إدارة ومراجعة المحتوى والأخبار والامتحانات",
+  "globalFilter": "فلتر شامل:",
+  "levelTwo": "المستوى الثاني",
+  "allLevels": "كل المستويات",
+  "allDepartments": "كل الأقسام",
+  "allSubjects": "كل المواد",
+  "clearFilters": "مسح الفلاتر",
+  "tabs": {
+    "courses": "الكورسات",
+    "subjects": "المواد",
+    "enrollments": "إثباتات الدفع",
+    "summaries": "الملخصات",
+    "news": "الأخبار",
+    "appeals": "الطعون",
+    "quizzes": "الامتحانات",
+    "analytics": "التحليلات",
+    "pageManagement": "إدارة الصفحة"
+  },
+  "noAccess": {
+    "courses": "ليس لديك صلاحية الوصول لإدارة الكورسات",
+    "enrollments": "ليس لديك صلاحية الوصول لإثباتات الدفع",
+    "pageManagement": "ليس لديك صلاحية الوصول لإدارة الصفحة"
+  },
+  "auth": {
+    "checking": "جاري التحقق من الصلاحيات...",
+    "unauthorized": "غير مصرح",
+    "noPermission": "ليس لديك صلاحية الوصول لهذه الصفحة"
+  },
+  "coursesTab": {
+    "title": "إدارة الكورسات",
+    "subtitle": "إنشاء وإدارة الكورسات المدفوعة",
+    "createCourse": "إنشاء كورس جديد",
+    "noCourses": "لا توجد كورسات",
+    "startFirstCourse": "ابدأ بإنشاء أول كورس لك",
+    "createFirstCourse": "إنشاء الكورس الأول"
+  }
+}
