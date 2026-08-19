@@ -50,6 +50,7 @@ export function createSupabaseClient(options: SupabaseClientOptions): SupabaseCl
 ## What the apps are NOT allowed to do
 
 - ❌ Import `@supabase/supabase-js` directly. All access goes through the factory.
+- ❌ Make any direct call to the Supabase REST API (`<project>.supabase.co/rest/...`) using the service role key, in any form (via the `@supabase/supabase-js` client, via raw `fetch`/`axios`/`node-fetch`/etc.), in any client context. All Supabase access goes through the factory (`createSupabaseClient`), which uses the anon key + RLS. gitleaks catches the key if it leaks into a built artifact, but does not prevent the call pattern itself.
 - ❌ Pass the service role key to `createSupabaseClient` under any name. The factory throws on detection.
 - ❌ Construct a Supabase URL that differs from the build-time-resolved value. (This catches the "I'll just hardcode a different project for testing" mistake.)
 - ❌ Reach for the `service_role` role via a Postgres function or RPC. RLS is the only authorization layer.
