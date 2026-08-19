@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type MouseEvent } from "react";
 import { useRouter } from '@/navigation';
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -463,7 +463,7 @@ function NewsPage() {
 
           <div
             className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
           >
             <Image
               src={selectedImage}

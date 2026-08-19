@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { ArrowLeft, CheckCircle, Plus, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ContentItem } from "./types";
@@ -76,7 +77,7 @@ export function LectureExamsSection(props: {
                   {item.title}
                 </h4>
                 <button
-                  onClick={(e) => {
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
                     e.stopPropagation();
                     if (item.id) onToggleProgress(item.id);
                   }}
