@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { CheckCircle, ClipboardList, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ContentItem } from "./types";
@@ -60,7 +61,7 @@ export function LectureHomeworkSection(props: {
             <div className="flex justify-between items-start mb-4 sm:mb-6">
               <FileText className="w-8 h-8 sm:w-10 sm:h-10 opacity-40" />
               <button
-                onClick={(e) => {
+                onClick={(e: MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   const contentId = item.id || item.url || item.file_url;
                   if (contentId) onToggleProgress(contentId);

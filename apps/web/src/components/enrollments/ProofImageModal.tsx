@@ -1,7 +1,7 @@
 
 import Image from "next/image";
 import { XCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type MouseEvent } from "react";
 
 interface ProofImageModalProps {
   imageUrl: string | null;
@@ -32,7 +32,7 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
     >
       <div
         className="max-w-4xl w-full h-[90vh] relative"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
       >
         <Image
           src={imageUrl}

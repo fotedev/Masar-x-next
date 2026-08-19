@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type MouseEvent } from "react";
 import { useRouter } from '@/navigation';
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -345,7 +345,7 @@ export default function SummaryDetailPage() {
                       />
                       <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button
-                          onClick={(e) => {
+                          onClick={(e: MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
                             window.open(imageUrl, "_blank");
                           }}

@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { CheckCircle, FileText, Plus, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -154,7 +155,7 @@ export function LectureExplanationSection(props: {
                   type="button"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={(e) => {
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
                     e.preventDefault();
                     e.stopPropagation();
                     const contentId = item.id || item.url || item.file_url;
