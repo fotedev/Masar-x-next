@@ -33,6 +33,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "masarx-shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "masarx-shared/*": [
+        "../../packages/shared/src/*"
       ]
     }
   },

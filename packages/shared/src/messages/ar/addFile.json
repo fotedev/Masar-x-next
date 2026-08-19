@@ -1,0 +1,21 @@
+{
+  "title": "إضافة ملف جديد",
+  "subtitle": "إضافة ملف PDF أو ملخص جديد للمحاضرة",
+  "fileTitle": "عنوان الملف",
+  "fileTitlePlaceholder": "مثال: ملخص المحاضرة الأولى",
+  "subject": "اسم المادة",
+  "lecture": "المحاضرة المرتبطة",
+  "description": "وصف الملف (اختياري)",
+  "descriptionPlaceholder": "أدخل وصفاً للمحتوى...",
+  "uploadFile": "رفع ملف",
+  "submit": "إضافة ملف",
+  "submitting": "جاري الإضافة...",
+  "success": "تم إضافة الملف بنجاح",
+  "error": "حدث خطأ أثناء إضافة الملف",
+  "selectFile": "يرجى اختيار ملف",
+  "selectLectureFirst": "يرجى اختيار محاضرة أولاً",
+  "adminOnly": "هذه الصفحة متاحة للمشرفين فقط",
+  "lectureNotFound": "المحاضرة \"{lectureKey}\" غير موجودة في المادة \"{subject}\"",
+  "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة",
+  "uploading": "جاري الرفع... ({progress}%)"
+}

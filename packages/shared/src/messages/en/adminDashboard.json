@@ -1,0 +1,39 @@
+{
+  "title": "Admin Dashboard",
+  "subtitle": "Manage and review content, news, and exams",
+  "globalFilter": "Global Filter:",
+  "levelTwo": "Level 2",
+  "allLevels": "All Levels",
+  "allDepartments": "All Departments",
+  "allSubjects": "All Subjects",
+  "clearFilters": "Clear Filters",
+  "tabs": {
+    "courses": "Courses",
+    "subjects": "Subjects",
+    "enrollments": "Enrollments",
+    "summaries": "Summaries",
+    "news": "News",
+    "appeals": "Appeals",
+    "quizzes": "Quizzes",
+    "analytics": "Analytics",
+    "pageManagement": "Page Management"
+  },
+  "noAccess": {
+    "courses": "You do not have permission to manage courses",
+    "enrollments": "You do not have permission to view enrollments",
+    "pageManagement": "You do not have permission to manage the page"
+  },
+  "auth": {
+    "checking": "Checking permissions...",
+    "unauthorized": "Unauthorized",
+    "noPermission": "You do not have permission to access this page"
+  },
+  "coursesTab": {
+    "title": "Courses Management",
+    "subtitle": "Create and manage paid courses",
+    "createCourse": "Create New Course",
+    "noCourses": "No courses found",
+    "startFirstCourse": "Start by creating your first course",
+    "createFirstCourse": "Create First Course"
+  }
+}

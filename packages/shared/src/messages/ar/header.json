@@ -1,0 +1,13 @@
+{
+  "access": {
+    "lockedTitle": "النظام مغلق",
+    "lockedDescription": "محاولات كثيرة جداً. حاول مرة أخرى بعد {seconds} ثانية.",
+    "codeRequired": "مطلوب إدخال الكود",
+    "systemErrorTitle": "خطأ في النظام",
+    "maxUsesDescription": "عذراً، هذا الكود استنفد جميع محاولات الاستخدام المتاحة.",
+    "securityAlertTitle": "تنبيه أمني",
+    "locked30Description": "محاولات فاشلة كثيرة. تم قفل النظام لمدة 30 ثانية.",
+    "invalidOrExpiredDescription": "الكود الذي أدخلته غير صحيح أو منتهي الصلاحية.",
+    "connectionError": "خطأ في الاتصال"
+  }
+}
