@@ -3,5 +3,18 @@
   "private": true,
   "version": "0.5.6",
   "type": "module",
-  "description": "Masar X monorepo — web, desktop, mobile, and shared package"
+  "description": "Masar X monorepo — web, desktop, mobile, and shared package",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:desktop": "pnpm --filter desktop dev",
+    "dev:mobile": "pnpm --filter mobile dev",
+    "build": "pnpm --filter web build",
+    "build:web": "pnpm --filter web build",
+    "build:desktop": "pnpm --filter desktop build",
+    "build:mobile": "pnpm --filter mobile build",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test"
+  }
 }
