@@ -1,0 +1,14 @@
+{
+  "name": "masarx-shared",
+  "version": "0.5.6",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "description": "Masar X shared package — translations, types, Supabase client factory, AI client. Consumed by apps/{web,desktop,mobile} via the workspace protocol (research.md §1, §4, §5, §9).",
+  "scripts": {
+    "typecheck": "echo '[shared] no TypeScript sources yet — scaffold only (T004). Migration of translations/types/Supabase/AI client begins in T009-T016 (Phase 2).'",
+    "lint": "echo '[shared] no ESLint config yet — scaffold only (T004).'",
+    "build": "echo '[shared] no build step yet — consumers import directly from main: ./src/index.ts. A tsc-based build will be added when the source tree grows.'"
+  }
+}
