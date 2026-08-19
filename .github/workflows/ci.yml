@@ -93,3 +93,38 @@ jobs:
 
       - name: Run next build
         run: pnpm --filter web build
+
+  # ---------------------------------------------------------------------
+  # Cross-workspace validation
+  # Lightweight job that confirms every workspace package is healthy:
+  # installs cleanly via the lockfile, reports as a workspace, and its
+  # typecheck script (currently a stub for desktop/mobile/shared) exits
+  # cleanly. Per-workspace build/lint jobs for the new surfaces land
+  # in Phase 3 when those packages grow real source files.
+  # ---------------------------------------------------------------------
+  workspaces:
+    name: workspaces
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify workspaces are linked
+        run: pnpm list -r --depth=-1
+
+      - name: Cross-workspace typecheck
+        run: pnpm -r --if-present typecheck
