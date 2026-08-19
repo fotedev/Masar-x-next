@@ -1,7 +1,5 @@
 "use client";
 
-import Script from "next/script";
-
 interface ThemeScriptProps {
   siteUrl: string;
   assistantName: string;
@@ -15,7 +13,9 @@ export default function ThemeScript({
 }: ThemeScriptProps) {
   return (
     <>
-      <Script
+      {/* JSON-LD structured data: use a plain <script> tag (next/script's
+          <Script> component is for JS files and doesn't accept `type`). */}
+      <script
         id="schema-org"
         type="application/ld+json"
         nonce={nonce}
@@ -29,9 +29,8 @@ export default function ThemeScript({
           }),
         }}
       />
-      <Script
+      <script
         id="theme-initializer"
-        strategy="afterInteractive"
         nonce={nonce}
         dangerouslySetInnerHTML={{
           __html: `

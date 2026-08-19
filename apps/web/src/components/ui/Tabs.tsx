@@ -1,4 +1,9 @@
-import { type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import {
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { createContext, useContext, useState } from "react";
 
 interface TabsContextType {
@@ -80,7 +85,7 @@ export const TabsTrigger = ({
           ? "bg-background text-foreground shadow-sm"
           : "hover:bg-muted hover:text-foreground"
       } ${className}`}
-      onClick={(e) => {
+      onClick={(e: MouseEvent<HTMLButtonElement>) => {
         onClick?.(e);
         if (!e.defaultPrevented) {
           context.onValueChange(value);
