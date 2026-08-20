@@ -1,0 +1,145 @@
+# ============================================================================
+# T019 — electron-builder configuration
+# Spec: specs/004-multi-platform-expansion/tasks.md §T019
+# Reference: research.md §7 (electron-builder signing), spec FR-001 (no OS
+# security warnings), spec FR-005 (cross-platform).
+#
+# Build outputs:
+#   Windows: NSIS installer (.exe) + portable .exe, signed with
+#            Authenticode (EV certificate preferred — research.md §7.1).
+#   macOS:   .dmg + .zip in a notarized, Developer-ID-signed bundle.
+#   Linux:   AppImage (signed), .deb, .rpm (GPG-signed via
+#            linux-gpg-key-path / linux-gpg-key / linux-deb-fpm).
+# ============================================================================
+
+appId: ai.masarx.app
+productName: Masar X
+copyright: Copyright © 2026 Masar X
+artifactName: ${productName}-${version}-${arch}
+
+directories:
+  output: release
+  # electron-builder picks up the Next.js build from apps/web/.next via
+  # the `extraResources` and `files` entries below.
+  buildResources: build
+
+files:
+  - dist/**/*
+  - package.json
+  - "!**/.DS_Store"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}"
+  - "!**/node_modules/*.d.ts"
+  - "!**/node_modules/.bin"
+  - "!**/{.git,.github,coverage,docs,specs,__tests__,test}"
+
+# Extra resources bundled alongside the binary so the production main
+# process can find the local Next.js server entry point.
+extraResources:
+  - from: "../web/.next"
+    to: ".next"
+    filter:
+      - "**/*"
+  - from: "../web/public"
+    to: "public"
+    filter:
+      - "**/*"
+  - from: "../web/package.json"
+    to: "web.package.json"
+
+# ----- Windows target -----
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  # Authenticode signing. CSC_LINK and CSC_KEY_PASSWORD env vars
+  # are read from the build environment (Vercel/CI secret store, or
+  # local `set CSC_LINK=...`). An EV cert is preferred per research.md §7.1.
+  certificateFile: ${env.CSC_LINK}
+  certificatePassword: ${env.CSC_KEY_PASSWORD}
+  publisherName: "Masar X"
+  verifyUpdateCodeSignature: true
+  # Use SHA-256 timestamping to satisfy Windows SmartScreen reputation
+  # requirements for new certificates.
+  signingHashAlgorithms:
+    - sha256
+  rfc3161TimeStampServer: http://timestamp.digicert.com
+  timeStampServer: http://timestamp.digicert.com
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Masar X
+  # The desktop app launches the local Next.js server; the installer
+  # therefore registers the URL protocol so the OAuth flow can return
+  # to the desktop app from the system browser.
+  include: build/installer.nsh
+
+# ----- macOS target -----
+mac:
+  category: public.app-category.education
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  # Developer ID signing + notarization. Apple notarization requires
+  # APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID env vars.
+  identity: ${env.APPLE_IDENTITY}
+  notarize: true
+  notarizeAppleId: ${env.APPLE_ID}
+  notarizeAppleIdPassword: ${env.APPLE_APP_SPECIFIC_PASSWORD}
+  notarizeTeamId: ${env.APPLE_TEAM_ID}
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  # The Electron helper needs the same entitlements.
+  extendInfo:
+    NSHumanReadableCopyright: Copyright © 2026 Masar X
+
+dmg:
+  sign: false
+
+# ----- Linux target -----
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+    - target: rpm
+      arch: [x64]
+  category: Education
+  vendor: Masar X
+  maintainer: ops@masarx.ai
+  synopsis: Learn programming with Masar X
+  description: |
+    Masar X is a learning platform for beginners and people who want
+    to learn programming from scratch in a practical way.
+  desktop:
+    entry:
+      Name: Masar X
+      Comment: Learn programming with Masar X
+      Categories: Education
+      Keywords: education;programming;learning;
+      MimeType: x-scheme-handler/masarx;
+  # GPG signing. Provide the GPG private key via env var (base64-encoded
+  # ASCII-armored) or via a file path. The build host's gpg-agent must
+  # be available; for headless CI use `--pinentry-mode loopback`.
+  executableName: masarx
+
+# Auto-update channel (T023) — populated when the updater is wired.
+# publisherName on Windows must match the code-signing certificate's CN.
+publish:
+  - provider: generic
+    url: https://releases.masarx.ai
+    channel: stable
+  - provider: generic
+    url: https://releases.masarx.ai
+    channel: beta

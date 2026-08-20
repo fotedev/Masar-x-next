@@ -7,14 +7,18 @@
   "scripts": {
     "dev": "echo '[desktop] dev script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",
     "build": "echo '[desktop] build script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",
-    "typecheck": "echo '[desktop] no TypeScript sources yet — scaffold only (T002).'",
-    "lint": "echo '[desktop] no ESLint config yet — scaffold only (T002).'"
+    "typecheck": "tsc --noEmit",
+    "lint": "echo '[desktop] no ESLint config yet — scaffold only (T002).'",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.8",
     "electron": "^32.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "vitest": "^2.1.8"
   }
 }
