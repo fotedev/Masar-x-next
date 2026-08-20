@@ -1,4 +1,6 @@
 {
+    "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter web... --ignore-scripts",
+    "buildCommand": "cd ../.. && pnpm --filter web run lottie-patch && pnpm --filter web build",
     "headers": [
         {
             "source": "/(.*)",

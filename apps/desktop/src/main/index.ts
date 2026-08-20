@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
 import { LocalAuthSession, type StoredSession } from './auth-storage.js';
+import { LocalReadCache } from './read-cache.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -89,6 +90,35 @@ export async function startMainProcess(): Promise<number> {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send('auth:changed', session);
     }
+  });
+
+  // T022 — LocalReadCache IPC wiring.
+  // SQLite cache for read-through Supabase queries. The renderer
+  // owns the read-through policy; main is just storage.
+  const readCache = new LocalReadCache({ userDataPath });
+
+  ipcMain.handle('cache:get', (_event, key: string) => readCache.get(key));
+  ipcMain.handle(
+    'cache:set',
+    (_event, key: string, value: unknown, opts?: { ttlMs?: number; entity?: string }) =>
+      readCache.set(key, value, opts),
+  );
+  ipcMain.handle('cache:delete', (_event, key: string) => readCache.delete(key));
+
+  // Prune timer — every 1h, drop entries past their grace period.
+  // `unref()` so the timer doesn't keep the app alive at quit.
+  const pruneTimer = setInterval(() => {
+    try {
+      readCache.prune();
+    } catch {
+      // Prune failures are non-fatal; the next tick will retry.
+    }
+  }, 60 * 60 * 1000);
+  pruneTimer.unref();
+
+  app.on('before-quit', () => {
+    clearInterval(pruneTimer);
+    readCache.close();
   });
 
   // Smoke-test hook: when launched with `electron . --masarx-smoke`, the

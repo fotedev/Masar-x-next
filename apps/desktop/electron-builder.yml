@@ -33,6 +33,26 @@ files:
   - "!**/node_modules/.bin"
   - "!**/{.git,.github,coverage,docs,specs,__tests__,test}"
 
+# Native modules (better-sqlite3) ship prebuilt .node binaries; they
+# must be unpacked from the asar archive so Node can dlopen them at
+# runtime via the standard require() path. Without asarUnpack, the
+# .node file is inside the asar and dlopen fails on Windows/Linux.
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+
+# Native dependencies — `electron-builder install-app-deps` runs as
+# a postinstall step (see package.json scripts) and rebuilds each
+# listed module against the current Electron's Node ABI. This is the
+# official replacement for `electron-rebuild`.
+nativeDependencies:
+  - "better-sqlite3"
+
+# Always rebuild native modules from source as part of the build,
+# even when a prebuild is available. We need this for better-sqlite3
+# because the pinned v11.10.0 ships prebuilds only for Node up to v131
+# (Node 23), so Electron 32's Node 20 needs a source compile.
+npmRebuild: true
+
 # Extra resources bundled alongside the binary so the production main
 # process can find the local Next.js server entry point.
 extraResources:
