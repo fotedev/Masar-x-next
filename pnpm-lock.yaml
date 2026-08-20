@@ -13,6 +13,9 @@ importers:
       electron-updater:
         specifier: ^6.3.9
         version: 6.8.9(supports-color@8.1.1)
+      masarx-shared:
+        specifier: workspace:*
+        version: link:../../packages/shared
       next:
         specifier: ^16.2.1
         version: 16.2.1(@babel/core@7.29.0(supports-color@8.1.1))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
