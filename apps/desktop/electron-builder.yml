@@ -47,6 +47,12 @@ asarUnpack:
 nativeDependencies:
   - "better-sqlite3"
 
+# Always rebuild native modules from source as part of the build,
+# even when a prebuild is available. We need this for better-sqlite3
+# because the pinned v11.10.0 ships prebuilds only for Node up to v131
+# (Node 23), so Electron 32's Node 20 needs a source compile.
+npmRebuild: true
+
 # Extra resources bundled alongside the binary so the production main
 # process can find the local Next.js server entry point.
 extraResources:
