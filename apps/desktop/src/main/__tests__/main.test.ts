@@ -128,6 +128,24 @@ vi.mock('node:http', () => ({
   },
 }));
 
+// T022 — `index.ts` now imports `LocalReadCache` which loads
+// `better-sqlite3` at module-load time. The T017 contract is about
+// the Electron main process startup (port, window, webPreferences);
+// the read-cache wiring is out of scope, so we mock the native
+// module entirely. The T022 contract test exercises the real
+// better-sqlite3 path in `read-cache.test.ts`.
+vi.mock('better-sqlite3', () => ({
+  default: vi.fn(() => ({
+    pragma: vi.fn(),
+    exec: vi.fn(),
+    prepare: vi.fn(() => ({
+      get: vi.fn(),
+      run: vi.fn(() => ({ changes: 0 })),
+    })),
+    close: vi.fn(),
+  })),
+}));
+
 describe('T017 — Electron main process contract', () => {
   beforeEach(() => {
     // NOTE: do NOT use vi.clearAllMocks() here. In Vitest 2.x, clearAllMocks

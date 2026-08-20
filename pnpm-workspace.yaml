@@ -12,13 +12,19 @@ packages:
 # In pnpm v11 the legacy `onlyBuiltDependencies` array was removed
 # in favor of `allowBuilds` — a map of `package-name: true`. The
 # default in v11 is `strictDepBuilds: true`, meaning any package
-# not in this map has its postinstall rejected.
+# not in this map has its postinstall rejected. This makes the
+# workspace config the single source of truth — the older
+# per-package `onlyBuiltDependencies` in apps/desktop/package.json
+# is a no-op when the workspace config is in effect.
 #
 # The list below covers every native module currently pulled in by
 # apps/{web,desktop,mobile} and packages/shared (sharp, esbuild,
 # @swc/core, @parcel/watcher for fast file watching, unrs-resolver
-# for the workspace resolver, and electron which downloads a binary
-# during its postinstall).
+# for the workspace resolver, electron which downloads a binary
+# during its postinstall, and better-sqlite3 which the desktop
+# build needs and is compiled via `electron-builder install-app-deps`
+# on Electron's Node ABI at build time — see
+# apps/desktop/electron-builder.yml `nativeDependencies`).
 allowBuilds:
   sharp: true
   "@parcel/watcher": true
@@ -26,3 +32,4 @@ allowBuilds:
   esbuild: true
   unrs-resolver: true
   electron: true
+  better-sqlite3: true
