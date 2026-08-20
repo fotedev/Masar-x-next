@@ -33,6 +33,11 @@ const mockApp = {
   quit: vi.fn(),
   isReady: vi.fn().mockReturnValue(true),
   getPath: vi.fn().mockReturnValue('/tmp/test-userData'),
+  // isPackaged=true forces the production path in startMainProcess so the
+  // test exercises findFreePort (returns 41234) instead of the dev
+  // MASARX_DESKTOP_PORT fallback (3000). The contract is that prod
+  // never uses a hardcoded port.
+  isPackaged: true,
 };
 
 const mockIpcMain = {
@@ -62,24 +67,35 @@ vi.mock('next', () => ({
   default: NextMock,
 }));
 
-// Mock net so we can stub the find-free-port path.
-vi.mock('net', () => ({
-  createServer: vi.fn().mockReturnValue({
-    listen: vi.fn().mockImplementation((port: number, _host: string, cb: () => void) => {
-      cb();
-    }),
-    address: vi.fn().mockReturnValue({ port: 41234, address: '127.0.0.1' }),
-    close: vi.fn().mockImplementation((cb?: () => void) => {
-      if (cb) cb();
-    }),
+// Mock net so we can stub the find-free-port path. The mockServer is
+// declared at module scope and reused across calls (and across `clearAllMocks`
+// in beforeEach, which clears call history but preserves the function
+// reference, so the createServer vi.fn() always returns the same object).
+const mockServer = {
+  listen: vi.fn().mockImplementation((port: number, _host: string, cb: () => void) => {
+    cb();
   }),
+  address: vi.fn().mockReturnValue({ port: 41234, address: '127.0.0.1' }),
+  close: vi.fn().mockImplementation((cb?: () => void) => {
+    if (cb) cb();
+  }),
+  unref: vi.fn(),
+  on: vi.fn(),
+};
+
+vi.mock('node:net', () => ({
+  createServer: vi.fn(() => mockServer),
 }));
 
 const mockHttpListen = vi.fn().mockImplementation((_req: unknown, res: any) => {
   res.statusCode = 200;
   res.end('ok');
 });
-vi.mock('http', () => ({
+// Mock `node:http` (the same specifier server.ts uses) so the
+// createServer() in the production path returns a server whose listen()
+// invokes the callback synchronously. Includes `once` and `removeListener`
+// for the EventEmitter surface the production code touches.
+vi.mock('node:http', () => ({
   default: {
     createServer: vi.fn().mockReturnValue({
       listen: vi.fn().mockImplementation((port: number, _host: string, cb: () => void) => {
@@ -90,20 +106,23 @@ vi.mock('http', () => ({
         };
       }),
       on: vi.fn(),
+      once: vi.fn(),
+      removeListener: vi.fn(),
     }),
   },
 }));
 
 describe('T017 — Electron main process contract', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // NOTE: do NOT use vi.clearAllMocks() here. In Vitest 2.x, clearAllMocks
+    // appears to reset mockImplementation on vi.fn() instances stored in
+    // module-scope objects (like our `mockServer` for `node:net`), which
+    // breaks the listen-callback contract. The mocks are designed to be
+    // stable across tests; if you need a per-test reset, re-establish the
+    // mockImplementation explicitly here.
     BrowserWindowMock.mockImplementation(() => mockBrowserWindowInstance);
     (BrowserWindowMock as any).getAllWindows = vi.fn().mockReturnValue([]);
     NextMock.mockImplementation(() => mockNextHandler);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it('exports a startMainProcess function (red until T020)', async () => {
