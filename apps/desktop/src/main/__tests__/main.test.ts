@@ -66,6 +66,18 @@ vi.mock('electron', () => ({
       shouldReEncrypt: false,
     })),
   },
+  // T024 — `index.ts` imports `buildAppMenu` from `./menu.js`, which
+  // uses `Menu.buildFromTemplate` and `shell.openExternal` at
+  // module-load time. The T017 contract is about Electron startup,
+  // not the menu; stub both with no-op surfaces. The T024 contract
+  // test exercises the real `buildAppMenu` in `menu.test.ts`.
+  Menu: {
+    buildFromTemplate: vi.fn(() => ({ items: [] })),
+    setApplicationMenu: vi.fn(),
+  },
+  shell: {
+    openExternal: vi.fn(async () => undefined),
+  },
 }));
 
 // Mock `next` start so the test does not actually spawn a Next.js server.
