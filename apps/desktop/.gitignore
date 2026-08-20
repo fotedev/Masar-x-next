@@ -1,0 +1,7 @@
+# Build outputs (electron-builder packs from dist/, but dist/ is regenerated
+# on every build; release/ is the installer artifact directory).
+dist/
+release/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

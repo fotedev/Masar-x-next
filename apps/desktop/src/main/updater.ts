@@ -1,7 +1,18 @@
 import { promises as fs, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
-import { autoUpdater } from 'electron-updater';
+// electron-updater is a CommonJS module whose `autoUpdater` is a lazy
+// getter on `module.exports`. The named-import form
+// `import { autoUpdater } from 'electron-updater'` is recognized by the
+// .d.ts but Node's ESM loader rejects it at runtime
+// (`SyntaxError: Named export 'autoUpdater' not found`). And
+// `import * as ns from 'electron-updater'` returns a namespace where
+// `ns.autoUpdater` is undefined (the getter only fires on the
+// module.exports default). So we use the synthetic default import
+// (esModuleInterop: true) and destructure from there. Type-only imports
+// still work as before.
+import electronUpdater from 'electron-updater';
+const { autoUpdater } = electronUpdater;
 import type { UpdateInfo } from 'electron-updater';
 
 // ============================================================================

@@ -76,25 +76,35 @@ vi.mock('electron-updater', () => {
     }
   };
 
-  return {
-    autoUpdater: {
-      checkForUpdates: vi.fn(async () => null),
-      downloadUpdate: vi.fn(async () => ['/path/to/update.exe']),
-      quitAndInstall: vi.fn(),
-      skipUpdateCallback: vi.fn(),
-      install: vi.fn(),
-      on,
-      autoDownload: false,
-      autoInstallOnAppQuit: false,
-      __emitter: {
-        emit<K extends keyof UpdaterEvents>(event: K, ...args: UpdaterEvents[K]) {
-          for (const h of handlers[event] || []) {
-            h(...args);
-          }
-        },
+  // electron-updater is a CommonJS module; under Node ESM the production
+  // code accesses `autoUpdater` via the default export
+  // (`import pkg from 'electron-updater'; const { autoUpdater } = pkg;`).
+  // The named import (`import { autoUpdater } from 'electron-updater'`) is
+  // also used by this test file. Provide both so the mock matches the
+  // shape that vitest's loader expects, otherwise the test suite fails to
+  // collect with "No default export is defined on the mock".
+  const autoUpdaterMock = {
+    checkForUpdates: vi.fn(async () => null),
+    downloadUpdate: vi.fn(async () => ['/path/to/update.exe']),
+    quitAndInstall: vi.fn(),
+    skipUpdateCallback: vi.fn(),
+    install: vi.fn(),
+    on,
+    autoDownload: false,
+    autoInstallOnAppQuit: false,
+    __emitter: {
+      emit<K extends keyof UpdaterEvents>(event: K, ...args: UpdaterEvents[K]) {
+        for (const h of handlers[event] || []) {
+          h(...args);
+        }
       },
-      __reset: reset,
     },
+    __reset: reset,
+  };
+  const moduleExports = { autoUpdater: autoUpdaterMock };
+  return {
+    ...moduleExports,
+    default: moduleExports,
   };
 });
 

@@ -163,8 +163,12 @@ vi.mock('better-sqlite3', () => ({
 // of scope, so we stub the module with a no-op surface. The T023
 // contract test exercises the real Updater class in
 // `updater.test.ts`.
-vi.mock('electron-updater', () => ({
-  autoUpdater: {
+//
+// electron-updater is a CJS module; the production code accesses
+// `autoUpdater` via the default export (see updater.ts). We mirror
+// that shape here so the mock matches what vitest's loader expects.
+vi.mock('electron-updater', () => {
+  const autoUpdaterMock = {
     on: vi.fn(),
     checkForUpdates: vi.fn(async () => null),
     downloadUpdate: vi.fn(async () => []),
@@ -173,8 +177,13 @@ vi.mock('electron-updater', () => ({
     skipUpdateCallback: vi.fn(),
     autoDownload: false,
     autoInstallOnAppQuit: false,
-  },
-}));
+  };
+  const moduleExports = { autoUpdater: autoUpdaterMock };
+  return {
+    ...moduleExports,
+    default: moduleExports,
+  };
+});
 
 describe('T017 — Electron main process contract', () => {
   beforeEach(() => {

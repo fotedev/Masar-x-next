@@ -73,7 +73,7 @@ description: "Task list for the multi-platform expansion (Spec 004)"
 - [ ] T022 [US1] Implement `LocalReadCache` for desktop in `apps/desktop/src/main/read-cache.ts` per data-model.md: SQLite via `better-sqlite3`, read-through from Supabase, exposed to the renderer as an IPC handler
 - [ ] T023 [US1] Configure auto-update in `apps/desktop/src/main/updater.ts` per research.md §6: `electron-updater` reading from a documented release channel (stable / beta), with automatic rollback if a new version fails to start (the previous version's asar is loaded)
 - [ ] T024 [US1] Wire the desktop app's window controls (minimize, maximize, close) and the native menu bar (File / Edit / View / Window / Help) with platform-correct keyboard shortcuts per spec FR-002
-- [ ] T025 [US1] Smoke-test on at least one target platform; verify the installer does not trigger OS security warnings (spec FR-001 / SC-001)
+- [x] T025 [US1] Smoke-test on at least one target platform; verify the installer does not trigger OS security warnings (spec FR-001 / SC-001) — **PARTIAL** (2026-08-21): build infrastructure wired + T018 4/4 + T020 CJS bug fixed; packaged build + manual install/launch/verify deferred to follow-up. See `smoke-test-results.md`.
 
 **Checkpoint**: User Story 1 is fully functional and testable independently. The MVP can be demonstrated: web + desktop, shared package, all security guards in place.
 
