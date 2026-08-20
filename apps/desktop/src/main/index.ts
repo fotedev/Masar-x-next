@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
+import { LocalAuthSession, type StoredSession } from './auth-storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,13 @@ const __dirname = path.dirname(__filename);
 //   4. Open a BrowserWindow with secure webPreferences pointing at the
 //      local server.
 //   5. Wire the IPC handlers that preload.ts invokes.
+//
+// T021: `auth:*` IPC channels round-trip a `StoredSession` through
+// `LocalAuthSession` (an encrypted file in `userData/auth/session.bin`,
+// encrypted via `safeStorage`). The renderer holds the supabase client
+// and persists via `auth:setSession`; `auth:changed` is broadcast on
+// every write/clear for multi-window sync (v1 has a single window; the
+// channel is in place for v2).
 //
 // The contract (T017) asserts:
 //   - `startMainProcess` is a named export
@@ -62,6 +70,26 @@ export async function startMainProcess(): Promise<number> {
   });
 
   win.loadURL(`http://127.0.0.1:${running.port}`);
+
+  // T021 — LocalAuthSession IPC wiring.
+  // Constructed AFTER app.whenReady so safeStorage is initialized on
+  // all platforms (especially Windows, where DPAPI needs the app event
+  // loop to be running).
+  const authStorage = new LocalAuthSession({ userDataPath });
+
+  ipcMain.handle('auth:getSession', () => authStorage.read());
+  ipcMain.handle('auth:setSession', (_event, session: StoredSession) =>
+    authStorage.write(session),
+  );
+  ipcMain.handle('auth:signOut', () => authStorage.clear());
+
+  // Broadcast auth changes to all renderers. v1 has a single window;
+  // the channel is wired so v2 multi-window just works.
+  authStorage.onChange((session) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('auth:changed', session);
+    }
+  });
 
   // Smoke-test hook: when launched with `electron . --masarx-smoke`, the
   // app prints the chosen port to stdout and stays alive long enough for
