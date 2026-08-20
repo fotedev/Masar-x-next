@@ -51,7 +51,14 @@ export async function startMainProcess(): Promise<number> {
 
   await app.whenReady();
 
-  const preloadPath = path.join(__dirname, '../preload.js');
+  // Preload lives in the same directory as index.js after `tsc -p
+  // tsconfig.build.json` (both are under dist/main/). The earlier
+  // `../preload.js` form only worked when index.js was compiled to
+  // dist/ with the preload at dist/preload.js; that layout was never
+  // the case for the current tsconfig (rootDir: src, outDir: dist),
+  // so the renderer was getting `window.masarxDesktop === undefined`
+  // in every packaged build. Surfaced by T025; fixed in T020.1.
+  const preloadPath = path.join(__dirname, './preload.js');
 
   const win = new BrowserWindow({
     width: 1280,
