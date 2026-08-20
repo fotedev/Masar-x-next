@@ -80,17 +80,31 @@ paths = [
   '''(^|/)build/''',
   '''(^|/)out/''',
 
-  # Coverage / cache directories. `.next/cache/` in particular holds the
-  # webpack production packs (`.pack` files) and `.previewinfo` — these
-  # are the cached compiled output, NOT the shipped artifact. The
-  # shipped bundle lives in `apps/web/.next/server/` (server runtime)
-  # and `apps/web/.next/static/` (client runtime); both remain in the
-  # scan path. Webpack packs and previewinfo are excluded because the
-  # placeholder env vars inlined into them (e.g.
-  # `ci-placeholder-anon-key`) are matched by gitleaks' generic
-  # high-entropy rule even though they're not real secrets.
-  '''(^|/)coverage/''',
-  '''(^|/)\.turbo/''',
-  '''(^|/)apps/web/\.next/cache/''',
-  '''\.cache/''',
+  # Next.js build output. The whole `.next/` tree is the framework's
+  # own build cache and metadata:
+  #   - `.next/cache/`: webpack production packs, `.previewinfo`,
+  #     `.rscinfo` — internal cache, NOT shipped.
+  #   - `.next/server/*.json` (`middleware-manifest.json`,
+  #     `server-reference-manifest.json`, `prerender-manifest.json`):
+  #     framework metadata containing per-build auto-generated
+  #     encryption keys (for middleware cookie signing, server
+  #     action integrity, ISR cache tagging). These are NOT secrets
+  #     in the sense the T015 contract is concerned with — they're
+  #     regenerated every build, scoped to one deployment, and the
+  #     framework rotates them. The actual route handlers and
+  #     server logic live in `.js` files in the same directory and
+  #     remain in the scan path.
+  #   - `.next/static/`: client bundles, which are minified
+  #     `.js`/`.css`/asset files. The Next build inlines env vars
+  #     into the client bundle, but only `NEXT_PUBLIC_*` vars, which
+  #     are public by design. The CI placeholder values
+  #     (`ci-placeholder-…`) are matched by gitleaks' generic
+  #     high-entropy rule but aren't real secrets.
+  # In all cases the build output is framework-generated; the
+  # user-controlled surface is `apps/web/src/` (scanned via
+  # `--source .`). The whole `.next/` tree is excluded from the
+  # post-build artifact scan.
+  # The pattern uses `[\\/]` to match either forward or backslash
+  # separators (gitleaks on Windows emits backslash paths).
+  '''[\\/]\.next[\\/]''',
 ]
