@@ -154,12 +154,20 @@ linux:
   # be available; for headless CI use `--pinentry-mode loopback`.
   executableName: masarx
 
-# Auto-update channel (T023) — populated when the updater is wired.
+# Auto-update channel (T023) — GitHub Releases feed.
+# `electron-updater` reads from the GitHub Releases API for the
+# `fotedev/Masar-x-next` repo. `releaseType: release` → stable channel,
+# `releaseType: prerelease` → beta channel. `GH_TOKEN` env var is
+# required at publish time; end users read the feed anonymously.
 # publisherName on Windows must match the code-signing certificate's CN.
 publish:
-  - provider: generic
-    url: https://releases.masarx.ai
+  - provider: github
+    owner: fotedev
+    repo: Masar-x-next
+    releaseType: release
     channel: stable
-  - provider: generic
-    url: https://releases.masarx.ai
+  - provider: github
+    owner: fotedev
+    repo: Masar-x-next
+    releaseType: prerelease
     channel: beta
