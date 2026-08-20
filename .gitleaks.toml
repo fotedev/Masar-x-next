@@ -80,8 +80,17 @@ paths = [
   '''(^|/)build/''',
   '''(^|/)out/''',
 
-  # Coverage / cache directories
+  # Coverage / cache directories. `.next/cache/` in particular holds the
+  # webpack production packs (`.pack` files) and `.previewinfo` — these
+  # are the cached compiled output, NOT the shipped artifact. The
+  # shipped bundle lives in `apps/web/.next/server/` (server runtime)
+  # and `apps/web/.next/static/` (client runtime); both remain in the
+  # scan path. Webpack packs and previewinfo are excluded because the
+  # placeholder env vars inlined into them (e.g.
+  # `ci-placeholder-anon-key`) are matched by gitleaks' generic
+  # high-entropy rule even though they're not real secrets.
   '''(^|/)coverage/''',
   '''(^|/)\.turbo/''',
+  '''(^|/)apps/web/\.next/cache/''',
   '''\.cache/''',
 ]
