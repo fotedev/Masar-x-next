@@ -128,3 +128,105 @@ jobs:
 
       - name: Cross-workspace typecheck
         run: pnpm -r --if-present typecheck
+
+  # ---------------------------------------------------------------------
+  # AI-endpoint grep (Spec 004 Phase 2, Task T014 — NON-NEGOTIABLE).
+  #
+  # Fails the build if any direct AI provider API endpoint string
+  # (e.g. `api.openai.com`, `api.anthropic.com`) appears in code
+  # outside `supabase/functions/**` and
+  # `packages/shared/ai/__fixtures__/**`. This is the second of three
+  # enforcement layers for the AI provider key boundary (the others
+  # are the ESLint `no-restricted-imports` rule at error severity in
+  # T013, and gitleaks on built artifacts in T015).
+  #
+  # Required status check registration: this job MUST be registered
+  # as a required status check on the protected branch
+  # (Branch protection rules → Require status checks to pass before
+  # merging). The registration is a one-time repo setting via the
+  # GitHub UI or `gh api` against the repo's ruleset. A CI job that
+  # runs but isn't required is observability, not enforcement.
+  # ---------------------------------------------------------------------
+  ai-endpoint-grep:
+    name: ai-endpoint-grep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+
+      - name: Run AI-endpoint grep
+        run: bash .github/scripts/check-ai-provider-endpoints.sh
+
+  # ---------------------------------------------------------------------
+  # gitleaks on built artifacts (Spec 004 Phase 2, Task T015 —
+  # NON-NEGOTIABLE).
+  #
+  # Runs gitleaks against the `apps/web/.next` build output and
+  # (when the relevant build steps exist in Phase 3+) the Electron
+  # asar and the Expo bundle. Fails the build on any known secret
+  # shape — Supabase service-role JWT, OpenAI/Anthropic API key, etc.
+  #
+  # Why `--no-git`: we scan the built artifacts as files on disk, not
+  # the git history. The repo-level scan (against tracked files) is
+  # already covered by the default gitleaks run on PR/push.
+  #
+  # Required status check registration: same as the AI-endpoint grep
+  # above. See T015 in specs/004-multi-platform-expansion/tasks.md
+  # for the one-time Branch-protection setup.
+  # ---------------------------------------------------------------------
+  gitleaks-artifacts:
+    name: gitleaks-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
+          NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+          NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+          NEXT_PUBLIC_GA_ID: ""
+          ANALYZE: "false"
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+        run: pnpm --filter web build
+
+      - name: Install gitleaks
+        run: |
+          GL_VERSION="8.18.4"
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GL_VERSION}/gitleaks_${GL_VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Scan built artifacts
+        # `--no-git` scans files on disk, not git history. The repo
+        # itself is scanned by the default gitleaks pre-commit / push
+        # hook (added in a follow-up). Here we only need the
+        # built-artifact check, per T015.
+        # `--source .` scans the entire current directory; the gitleaks
+        # config's `[allowlist]` block (`.gitleaks.toml` at the repo
+        # root) excludes safe templates like `.env.example`.
+        run: |
+          gitleaks detect --no-git --source . --config .gitleaks.toml --redact --exit-code 1 \
+            || (echo "::error::gitleaks detected secrets in built artifacts. See above for matches." && exit 1)
