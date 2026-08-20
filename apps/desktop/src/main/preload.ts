@@ -31,8 +31,9 @@ const subscribe = <T>(channel: string, cb: (payload: T) => void): Unsubscribe =>
 const api = {
   auth: {
     getSession: (): Promise<unknown> => ipcRenderer.invoke('auth:getSession'),
-    refresh: (): Promise<unknown> => ipcRenderer.invoke('auth:refresh'),
-    signOut: (): Promise<unknown> => ipcRenderer.invoke('auth:signOut'),
+    setSession: (session: unknown): Promise<void> =>
+      ipcRenderer.invoke('auth:setSession', session),
+    signOut: (): Promise<void> => ipcRenderer.invoke('auth:signOut'),
     onChange: (cb: (event: unknown) => void): Unsubscribe =>
       subscribe<unknown>('auth:changed', cb),
   },
