@@ -1,10 +1,11 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
 import { LocalAuthSession, type StoredSession } from './auth-storage.js';
 import { LocalReadCache } from './read-cache.js';
 import { Updater, bootUpdater } from './updater.js';
+import { buildAppMenu } from './menu.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -139,6 +140,19 @@ export async function startMainProcess(): Promise<number> {
   ipcMain.handle('updates:installAndRestart', () => updater.installAndRestart());
   ipcMain.handle('updates:skip', (_event, version: string) =>
     updater.skipThisVersion(version),
+  );
+
+  // T024 — native menu bar. Built using Electron's `role` property
+  // for the standard menus (File/Edit/View/Window); the only custom
+  // items are the Help links and the "Check for Updates…" trigger.
+  // The native title bar already provides window Minimize/Zoom/Close
+  // (no IPC for those — see T024 plan).
+  Menu.setApplicationMenu(
+    buildAppMenu({
+      onCheckForUpdates: () => {
+        void updater.checkFor();
+      },
+    }),
   );
 
   // Smoke-test hook: when launched with `electron . --masarx-smoke`, the
