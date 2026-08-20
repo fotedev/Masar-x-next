@@ -12,12 +12,19 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "dependencies": {
+    "better-sqlite3": "^11.5.0",
     "electron-updater": "^6.3.9",
     "masarx-shared": "workspace:*",
     "next": "^16.2.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^2.1.8",
     "electron": "^32.2.0",

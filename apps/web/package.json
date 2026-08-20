@@ -18,6 +18,7 @@
     "setup-subjects": "node setup-subjects.js",
     "check:auth-routes": "node scripts/auth-route-check.mjs",
     "db:diagnose": "node scripts/db-diagnose.cjs",
+    "lottie-patch": "node scripts/apply-lottie-patch.mjs",
     "postinstall": "node scripts/apply-lottie-patch.mjs"
   },
   "dependencies": {
