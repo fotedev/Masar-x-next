@@ -50,8 +50,12 @@ const api = {
   },
   updates: {
     check: (): Promise<unknown> => ipcRenderer.invoke('updates:check'),
-    install: (): Promise<void> => ipcRenderer.invoke('updates:install'),
-    onAvailable: (cb: () => void): Unsubscribe => subscribe<void>('updates:available', cb),
+    installAndRestart: (): Promise<void> =>
+      ipcRenderer.invoke('updates:installAndRestart'),
+    skip: (version: string): Promise<void> =>
+      ipcRenderer.invoke('updates:skip', version),
+    onAvailable: (cb: (info: unknown) => void): Unsubscribe =>
+      subscribe<unknown>('updates:available', cb),
   },
 } as const;
 

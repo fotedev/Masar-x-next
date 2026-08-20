@@ -146,6 +146,24 @@ vi.mock('better-sqlite3', () => ({
   })),
 }));
 
+// T023 — `index.ts` now imports `Updater` from `electron-updater`.
+// The T017 contract is about Electron startup; auto-update is out
+// of scope, so we stub the module with a no-op surface. The T023
+// contract test exercises the real Updater class in
+// `updater.test.ts`.
+vi.mock('electron-updater', () => ({
+  autoUpdater: {
+    on: vi.fn(),
+    checkForUpdates: vi.fn(async () => null),
+    downloadUpdate: vi.fn(async () => []),
+    quitAndInstall: vi.fn(),
+    install: vi.fn(),
+    skipUpdateCallback: vi.fn(),
+    autoDownload: false,
+    autoInstallOnAppQuit: false,
+  },
+}));
+
 describe('T017 — Electron main process contract', () => {
   beforeEach(() => {
     // NOTE: do NOT use vi.clearAllMocks() here. In Vitest 2.x, clearAllMocks
