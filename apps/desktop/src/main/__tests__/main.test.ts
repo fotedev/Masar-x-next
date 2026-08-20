@@ -50,6 +50,22 @@ vi.mock('electron', () => ({
   app: mockApp,
   BrowserWindow: BrowserWindowMock,
   ipcMain: mockIpcMain,
+  // T021 — LocalAuthSession requires `safeStorage` at construction.
+  // The T017 contract is about main-process startup (port, window,
+  // webPreferences); auth is out of scope, so we stub a no-op
+  // "available" response. The T021 contract test exercises the
+  // real safeStorage path in `auth-storage.test.ts`.
+  safeStorage: {
+    isEncryptionAvailable: () => true,
+    getSelectedStorageBackend: () => 'unknown',
+    encryptStringAsync: vi.fn(async (plaintext: string) =>
+      Buffer.from(plaintext, 'utf8'),
+    ),
+    decryptStringAsync: vi.fn(async (buf: Buffer) => ({
+      result: buf.toString('utf8'),
+      shouldReEncrypt: false,
+    })),
+  },
 }));
 
 // Mock `next` start so the test does not actually spawn a Next.js server.

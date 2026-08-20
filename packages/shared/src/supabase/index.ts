@@ -27,6 +27,7 @@
  *     reach into the client internals.
  */
 import { createBrowserClient } from "@supabase/ssr";
+import { createClient as createJsClient } from "@supabase/supabase-js";
 
 import { buildClientInfo } from "./client-info";
 import { looksLikeServiceRoleJwt } from "./service-role-guard";
@@ -92,10 +93,28 @@ export function createSupabaseClient(options: SupabaseClientOptions): SupabaseCl
       return wrapClient(client, options.runtime, clientInfo);
     }
     case "desktop": {
-      throw new Error(
-        "createSupabaseClient: `runtime: 'desktop'` is not implemented in v1. " +
-          "The Electron main process will land in US1 (Spec 004 Phase 3, T020/T021).",
-      );
+      // T021: the desktop runtime requires an explicit storage adapter
+      // (provided by apps/desktop/src/renderer/ipc-supabase-storage.ts).
+      // We use `@supabase/supabase-js`'s `createClient` here (NOT
+      // `@supabase/ssr`'s `createBrowserClient`) because the latter is
+      // opinionated about cookies; the former accepts a custom auth
+      // storage via `options.auth.storage`, which is what we need.
+      if (!options.storage) {
+        throw new Error(
+          "createSupabaseClient: `runtime: 'desktop'` requires a `storage` adapter. " +
+            "Use `createIpcSupabaseStorage()` from apps/desktop/src/renderer.",
+        );
+      }
+      const client = createJsClient(options.url, options.anonKey, {
+        auth: {
+          storage: options.storage,
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false, // desktop: no PKCE callback in URL
+          flowType: "pkce",
+        },
+      });
+      return wrapClient(client, options.runtime, clientInfo);
     }
     case "mobile": {
       throw new Error(
