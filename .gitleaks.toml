@@ -1,30 +1,87 @@
-# gitleaks configuration for the Masar X monorepo (Spec 004, Task T008).
-# See https://github.com/gitleaks/gitleaks for the full schema.
+# gitleaks configuration for the Masar X monorepo (Spec 004, Tasks
+# T008 / T015). See https://github.com/gitleaks/gitleaks for the full
+# schema.
 #
-# This config is intentionally minimal: it extends the default rule set
-# (broad coverage of known secret formats — Supabase, OpenAI, Anthropic,
-# GitHub, AWS, generic API keys, etc.) and adds a small allowlist for
-# files that look secret-shaped but are safe to commit.
+# This config extends gitleaks' default rule set (~150 detectors
+# covering Supabase service-role JWTs, OpenAI/Anthropic/GitHub/AWS
+# tokens, and high-entropy generic secrets) and adds an allowlist for
+# files that look secret-shaped but are safe to scan over:
 #
-# The gitleaks run is wired in two places:
-#   1. CI: scan the working tree of the CI checkout on every PR / push
-#      (extended in a follow-up to also scan built artifacts — the
-#      built-artifact scan is the one that catches keys introduced by
-#      build-time string concatenation, per research.md §8).
-#   2. Local dev: `gitleaks protect --pre-commit` (added in a follow-up).
+#   - `.env.{example,template,sample}`: documentation templates with
+#     placeholder values.
+#   - `node_modules/`, `.pnpm/`, `pnpm-lock.yaml`: third-party code
+#     and the regenerated pnpm lockfile. Third-party packages'
+#     test fixtures and changelogs routinely contain strings that
+#     match gitleaks' high-entropy generic rules; scanning these
+#     produces false positives that drown the real signal.
+#   - `packages/shared/src/ai/__fixtures__/**`: test fixtures that
+#     intentionally contain the AI provider endpoint strings the
+#     `ai-endpoint-grep` check (T014) allows.
+#   - `.github/scripts/check-ai-provider-endpoints.sh`: the T014
+#     script itself, which contains the regex patterns literally.
+#   - `specs/**`, `docs/**`, `*.md`: documentation files that
+#     discuss the secret formats in plain prose.
+#
+# What the config DELIBERATELY does NOT allowlist:
+#   - `apps/web/.next/**`: the contract for T015 (per
+#     specs/004-multi-platform-expansion/tasks.md) is to scan
+#     the built artifacts so a key introduced by build-time
+#     string concatenation is caught. Adding `.next/` to the
+#     allowlist would defeat the entire point of the T015 job.
+#   - `apps/desktop/dist/**` and `apps/mobile/.expo/**`: same
+#     reason; these land in their respective user-story phases
+#     and are then added to the scan path explicitly.
+#   - Any real `.env`, `.env.local`, or `.env.production`:
+#     gitignored, never reach the scanner.
 
 title = "Masar X gitleaks config"
 
-# Inherit gitleaks' default rule set (~150 detectors covering the common
-# provider formats and high-entropy generic secrets).
 [extend]
 useDefault = true
 
-# Allow .env.example / .env.template / .env.sample — these are templates
-# with placeholder values, not real secrets. Real .env / .env.local
-# files are gitignored and never reach this allowlist.
 [allowlist]
-description = "Allow .env templates and known-safe fixture files"
+description = "Allow third-party code, lockfiles, env templates, and test fixtures"
 paths = [
+  # Env templates with placeholder values
   '''(^|/)(\.env\.example|\.env\.template|\.env\.sample)$''',
+
+  # pnpm's workspace store and the lockfile (T008 already added the
+  # gitleaks config; this is the same allowlist concept extended to
+  # the build's transitive state). `node_modules/` and `.pnpm/`
+  # contain third-party code whose test fixtures and docs routinely
+  # include strings that match gitleaks' high-entropy rules. The
+  # lockfile is regenerated on every install and contains SHAs that
+  # occasionally trip the generic detector.
+  '''(^|/)node_modules/''',
+  '''(^|/)\.pnpm/''',
+  '''(^|/)pnpm-lock\.yaml$''',
+
+  # Test fixtures allowed by the ai-boundary contract (T014's
+  # allowlist; mirrored here so T015 doesn't double-report them).
+  '''(^|/)packages/shared/src/ai/__fixtures__/''',
+
+  # The T014 CI script itself, which contains the literal regex
+  # patterns gitleaks would otherwise match against.
+  '''(^|/)\.github/scripts/check-ai-provider-endpoints\.sh$''',
+
+  # The T015 CI workflow file (in case a future contributor adds a
+  # test fixture URL to the step).
+  '''(^|/)\.github/workflows/ci\.yml$''',
+
+  # Documentation that discusses the secret formats in plain prose.
+  '''(^|/)specs/''',
+  '''(^|/)docs/''',
+  '''\.md$''',
+
+  # Build outputs other than the contract-scanned `.next/`
+  # (Electron asar and Expo bundle land here when their phases
+  # add the scan path explicitly).
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  '''(^|/)out/''',
+
+  # Coverage / cache directories
+  '''(^|/)coverage/''',
+  '''(^|/)\.turbo/''',
+  '''\.cache/''',
 ]
