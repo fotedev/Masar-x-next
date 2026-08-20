@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
 import { LocalAuthSession, type StoredSession } from './auth-storage.js';
 import { LocalReadCache } from './read-cache.js';
+import { Updater, bootUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -120,6 +121,25 @@ export async function startMainProcess(): Promise<number> {
     clearInterval(pruneTimer);
     readCache.close();
   });
+
+  // T023 — auto-update wiring.
+  // The Updater class wraps electron-updater; bootUpdater() wires the
+  // available/progress/error events to broadcasts on `updates:*`
+  // channels (handled by preload.ts and the renderer's updates.* API).
+  const updater = new Updater({ userDataPath });
+  bootUpdater({
+    updater,
+    broadcast: (channel, payload) => {
+      for (const w of BrowserWindow.getAllWindows()) {
+        w.webContents.send(channel, payload);
+      }
+    },
+  });
+  ipcMain.handle('updates:check', () => updater.checkFor());
+  ipcMain.handle('updates:installAndRestart', () => updater.installAndRestart());
+  ipcMain.handle('updates:skip', (_event, version: string) =>
+    updater.skipThisVersion(version),
+  );
 
   // Smoke-test hook: when launched with `electron . --masarx-smoke`, the
   // app prints the chosen port to stdout and stays alive long enough for
