@@ -23,6 +23,52 @@ import { request as httpRequest } from 'node:http';
 // (smoke-test on at least one target platform) per the spec.
 // ============================================================================
 
+/**
+ * Fetch a URL, transparently following HTTP 3xx redirects up to
+ * `maxRedirects` deep. Node's built-in `http` module has no redirect
+ * helper, so we implement a minimal one. Returns the final response
+ * body. Resolves with the body string; rejects on a non-redirect
+ * error response or a socket error.
+ */
+function fetchFollowingRedirects(
+  host: string,
+  port: number,
+  path: string,
+  maxRedirects: number,
+): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const req = httpRequest(
+      { host, port, path, method: 'GET' },
+      (res) => {
+        const status = res.statusCode ?? 0;
+        if (
+          status >= 300 &&
+          status < 400 &&
+          res.headers.location &&
+          maxRedirects > 0
+        ) {
+          const loc = res.headers.location;
+          const nextPath = loc.startsWith('http')
+            ? new URL(loc).pathname + new URL(loc).search
+            : loc;
+          // Drain the redirect body to free the socket.
+          res.resume();
+          resolve(
+            fetchFollowingRedirects(host, port, nextPath, maxRedirects - 1),
+          );
+          return;
+        }
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', (c) => (data += c));
+        res.on('end', () => resolve(data));
+      },
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
 const isSmokeDisabled = process.env.MASARX_SKIP_SMOKE === '1';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,20 +147,21 @@ describeSmoke('T018 — Desktop app smoke test (red until T020)', () => {
 
   it('serves the home page over the local Next.js server', async () => {
     if (discoveredPort === null) throw new Error('port not discovered');
-    const body = await new Promise<string>((resolve, reject) => {
-      const req = httpRequest(
-        { host: '127.0.0.1', port: discoveredPort!, path: '/', method: 'GET' },
-        (res) => {
-          let data = '';
-          res.on('data', (c) => (data += c.toString()));
-          res.on('end', () => resolve(data));
-        },
-      );
-      req.on('error', reject);
-      req.end();
-    });
-    // The Next.js home page should at least mention the Masar X brand.
-    expect(body.toLowerCase()).toMatch(/masar/);
+    // next-intl with `localePrefix: 'always'` redirects `/` to the
+    // default locale (`/ar` for Masar X). Follow the redirect so we
+    // assert on the actual home page body, not the redirect's tiny
+    // body. The brand is rendered in Arabic script on `/ar` and in
+    // Latin script on `/en`; both forms are accepted.
+    const body = await fetchFollowingRedirects(
+      '127.0.0.1',
+      discoveredPort!,
+      '/',
+      5,
+    );
+    const lower = body.toLowerCase();
+    // Matches "masar" (Latin) or "مسار" (Arabic) — both spellings of
+    // the Masar X brand.
+    expect(lower).toMatch(/masar|مسار/);
   });
 
   it('exposes the AI assistant endpoint at /api/ai-assistant', async () => {

@@ -16,6 +16,16 @@ appId: ai.masarx.app
 productName: Masar X
 copyright: Copyright © 2026 Masar X
 artifactName: ${productName}-${version}-${arch}
+# T025 smoke validation: skip the asar packing. The asar packager in
+# electron-builder 25.x follows the pnpm-workspace symlink
+# `apps/desktop/node_modules/masarx-shared -> ../../../packages/shared`
+# and rejects `packages/shared/package.json must be under apps/desktop/`
+# from inside `AsarPackager.unpackPattern`. Without asar, better-sqlite3's
+# .node file is loaded directly from the filesystem (no asarUnpack
+# needed), and the symlink is just a directory entry. Trade-off: no asar
+# compression and no source-asar protection. We can flip this back to
+# `true` once T019.1 (pnpm `nodeLinker: hoisted` migration) lands.
+asar: false
 
 directories:
   output: release
@@ -24,7 +34,16 @@ directories:
   buildResources: build
 
 files:
-  - dist/**/*
+  # After the tsconfig.build.json change (no `rootDir`, `paths` mapping
+  # to packages/shared), tsc emits the desktop JS under
+  # `dist/apps/desktop/src/...` and the shared package's JS under
+  # `dist/packages/shared/src/...`. The desktop main process is
+  # compiled in-place from the source tree (no separate shared build),
+  # so the asar only needs the desktop portion — the shared JS is
+  # loaded directly by Node from the source TS via the paths mapping
+  # in the dev/release runtime. We scope the glob to `dist/apps/desktop/**/*`
+  # so the symlinked shared output never reaches the asar packager.
+  - dist/apps/desktop/**/*
   - package.json
   - "!**/.DS_Store"
   - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
@@ -40,12 +59,12 @@ files:
 asarUnpack:
   - "**/node_modules/better-sqlite3/**"
 
-# Native dependencies — `electron-builder install-app-deps` runs as
-# a postinstall step (see package.json scripts) and rebuilds each
-# listed module against the current Electron's Node ABI. This is the
-# official replacement for `electron-rebuild`.
-nativeDependencies:
-  - "better-sqlite3"
+# Native dependencies — `npmRebuild: true` below is the current
+# mechanism: electron-builder 25.x dropped the `nativeDependencies`
+# array (replaced by the global flag). For better-sqlite3 specifically,
+# the prebuilt `.node` binary is unpacked from the asar archive
+# (`asarUnpack` above) so Node can dlopen it via the standard
+# `require()` path at runtime.
 
 # Always rebuild native modules from source as part of the build,
 # even when a prebuild is available. We need this for better-sqlite3
@@ -55,17 +74,38 @@ npmRebuild: true
 
 # Extra resources bundled alongside the binary so the production main
 # process can find the local Next.js server entry point.
+#
+# T020.2: switch from the in-process next() programmatic API
+# to the standalone Next.js output. Standalone emits a self-contained
+# server.js entry point at apps/web/.next/standalone/apps/web/server.js
+# with its own bundled node_modules, so we ship that whole tree under
+# resources/web/. Standalone does NOT copy .next/static (client
+# bundles) or public/ automatically -- those must be moved alongside
+# the servers apps/web/ siblings, otherwise every CSS/JS request 404s
+# at runtime.
+#
+# Resulting layout under resources/:
+#   web/
+#     apps/web/server.js     <- entry point spawned by src/main/server.ts
+#     apps/web/.next/...     <- next runtime artifacts (manifests, etc.)
+#     apps/web/.next/static/ <- client-side bundles (CSS/JS)
+#     apps/web/public/       <- static files
+#     apps/web/package.json
+#     node_modules/          <- bundled by standalone (includes react)
+#     packages/              <- workspace deps
 extraResources:
-  - from: "../web/.next"
-    to: ".next"
+  - from: "../web/.next/standalone"
+    to: "web"
+    filter:
+      - "**/*"
+  - from: "../web/.next/static"
+    to: "web/apps/web/.next/static"
     filter:
       - "**/*"
   - from: "../web/public"
-    to: "public"
+    to: "web/apps/web/public"
     filter:
       - "**/*"
-  - from: "../web/package.json"
-    to: "web.package.json"
 
 # ----- Windows target -----
 win:
@@ -74,19 +114,24 @@ win:
       arch: [x64]
     - target: portable
       arch: [x64]
-  # Authenticode signing. CSC_LINK and CSC_KEY_PASSWORD env vars
-  # are read from the build environment (Vercel/CI secret store, or
-  # local `set CSC_LINK=...`). An EV cert is preferred per research.md §7.1.
-  certificateFile: ${env.CSC_LINK}
-  certificatePassword: ${env.CSC_KEY_PASSWORD}
-  publisherName: "Masar X"
-  verifyUpdateCodeSignature: true
+  # Authenticode signing. T025 smoke validation runs unsigned (no EV
+  # cert acquired yet — that lands in Phase 8 per the multi-platform
+  # expansion plan). The signing env vars (`CSC_LINK`,
+  # `CSC_KEY_PASSWORD`) are read from the build environment in
+  # production; for the smoke run we leave the cert lines commented
+  # out so electron-builder 25.x does not try to open a literal
+  # `${env.CSC_LINK}` path. To re-enable signing, uncomment and
+  # export the env vars before `pnpm --filter desktop build`.
+  # certificateFile: ${env.CSC_LINK}
+  # certificatePassword: ${env.CSC_KEY_PASSWORD}
+  # publisherName: "Masar X"
+  # verifyUpdateCodeSignature: true
   # Use SHA-256 timestamping to satisfy Windows SmartScreen reputation
   # requirements for new certificates.
-  signingHashAlgorithms:
-    - sha256
-  rfc3161TimeStampServer: http://timestamp.digicert.com
-  timeStampServer: http://timestamp.digicert.com
+  # signingHashAlgorithms:
+  #   - sha256
+  # rfc3161TimeStampServer: http://timestamp.digicert.com
+  # timeStampServer: http://timestamp.digicert.com
 
 nsis:
   oneClick: false
@@ -110,13 +155,15 @@ mac:
       arch: [x64, arm64]
   hardenedRuntime: true
   gatekeeperAssess: false
-  # Developer ID signing + notarization. Apple notarization requires
-  # APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID env vars.
+  # Developer ID signing + notarization. Apple notarization in
+  # electron-builder 25.x reads APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD,
+  # and APPLE_TEAM_ID from the environment automatically (the old
+  # `notarizeAppleId` / `notarizeAppleIdPassword` / `notarizeTeamId`
+  # fields were removed in 25.x — the env vars are the only config
+  # knob now). APPLE_IDENTITY is still the explicit signing identity
+  # override.
   identity: ${env.APPLE_IDENTITY}
   notarize: true
-  notarizeAppleId: ${env.APPLE_ID}
-  notarizeAppleIdPassword: ${env.APPLE_APP_SPECIFIC_PASSWORD}
-  notarizeTeamId: ${env.APPLE_TEAM_ID}
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   # The Electron helper needs the same entitlements.

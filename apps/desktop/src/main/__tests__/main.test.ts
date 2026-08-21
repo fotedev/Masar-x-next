@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 // ============================================================================
 // T017 — Contract test for the Electron main process
@@ -140,6 +143,28 @@ vi.mock('node:http', () => ({
   },
 }));
 
+// T020.2 — server.ts now spawns the Next.js standalone server.js as a
+// child process. The T017 contract test exercises startLocalServer in
+// isPackaged=true mode, which calls startProductionServer → spawn().
+// We stub spawn() so the test doesn't actually exec node. The returned
+// child stays "alive" (exitCode: null) past the 500ms early-error
+// window in startProductionServer, so the function returns {port} and
+// the BrowserWindow assertions can run.
+const mockChildProcess = {
+  stdout: { on: vi.fn() },
+  stderr: { on: vi.fn() },
+  on: vi.fn(),
+  once: vi.fn(),
+  removeListener: vi.fn(),
+  kill: vi.fn(),
+  exitCode: null,
+  pid: 99999,
+};
+vi.mock('node:child_process', () => ({
+  spawn: vi.fn(() => mockChildProcess),
+  default: { spawn: vi.fn(() => mockChildProcess) },
+}));
+
 // T022 — `index.ts` now imports `LocalReadCache` which loads
 // `better-sqlite3` at module-load time. The T017 contract is about
 // the Electron main process startup (port, window, webPreferences);
@@ -163,8 +188,12 @@ vi.mock('better-sqlite3', () => ({
 // of scope, so we stub the module with a no-op surface. The T023
 // contract test exercises the real Updater class in
 // `updater.test.ts`.
-vi.mock('electron-updater', () => ({
-  autoUpdater: {
+//
+// electron-updater is a CJS module; the production code accesses
+// `autoUpdater` via the default export (see updater.ts). We mirror
+// that shape here so the mock matches what vitest's loader expects.
+vi.mock('electron-updater', () => {
+  const autoUpdaterMock = {
     on: vi.fn(),
     checkForUpdates: vi.fn(async () => null),
     downloadUpdate: vi.fn(async () => []),
@@ -173,8 +202,45 @@ vi.mock('electron-updater', () => ({
     skipUpdateCallback: vi.fn(),
     autoDownload: false,
     autoInstallOnAppQuit: false,
-  },
-}));
+  };
+  const moduleExports = { autoUpdater: autoUpdaterMock };
+  return {
+    ...moduleExports,
+    default: moduleExports,
+  };
+});
+
+// T020.2 — server.ts reads process.resourcesPath to find the packaged
+// standalone tree at <resourcesPath>/web/apps/web/server.js. In the
+// test environment (no Electron), process.resourcesPath is undefined,
+// which makes startProductionServer throw ENOENT before it can return
+// a port. We create a real temp dir tree that mirrors the packaged
+// layout and point process.resourcesPath at its root, so the fs.access
+// check passes and the function proceeds to spawn() (mocked) and
+// return a port for the BrowserWindow assertions to verify.
+let tmpUserDataDir: string;
+let tmpResourcesDir: string;
+
+beforeAll(() => {
+  tmpUserDataDir = mkdtempSync(path.join(os.tmpdir(), 'masarx-test-userdata-'));
+  tmpResourcesDir = mkdtempSync(path.join(os.tmpdir(), 'masarx-test-resources-'));
+  const webAppDir = path.join(tmpResourcesDir, 'web', 'apps', 'web');
+  mkdirSync(webAppDir, { recursive: true });
+  writeFileSync(path.join(webAppDir, 'server.js'), '// test stub\n', 'utf8');
+  Object.defineProperty(process, 'resourcesPath', {
+    value: tmpResourcesDir,
+    configurable: true,
+    writable: true,
+  });
+  // writePortSidecar writes port.json into userData; point app.getPath
+  // at a real tmpdir so the write succeeds.
+  mockApp.getPath = vi.fn().mockReturnValue(tmpUserDataDir);
+});
+
+afterAll(() => {
+  if (tmpUserDataDir) rmSync(tmpUserDataDir, { recursive: true, force: true });
+  if (tmpResourcesDir) rmSync(tmpResourcesDir, { recursive: true, force: true });
+});
 
 describe('T017 — Electron main process contract', () => {
   beforeEach(() => {
