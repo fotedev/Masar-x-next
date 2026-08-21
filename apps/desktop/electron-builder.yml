@@ -74,17 +74,38 @@ npmRebuild: true
 
 # Extra resources bundled alongside the binary so the production main
 # process can find the local Next.js server entry point.
+#
+# T020.2: switch from the in-process next() programmatic API
+# to the standalone Next.js output. Standalone emits a self-contained
+# server.js entry point at apps/web/.next/standalone/apps/web/server.js
+# with its own bundled node_modules, so we ship that whole tree under
+# resources/web/. Standalone does NOT copy .next/static (client
+# bundles) or public/ automatically -- those must be moved alongside
+# the servers apps/web/ siblings, otherwise every CSS/JS request 404s
+# at runtime.
+#
+# Resulting layout under resources/:
+#   web/
+#     apps/web/server.js     <- entry point spawned by src/main/server.ts
+#     apps/web/.next/...     <- next runtime artifacts (manifests, etc.)
+#     apps/web/.next/static/ <- client-side bundles (CSS/JS)
+#     apps/web/public/       <- static files
+#     apps/web/package.json
+#     node_modules/          <- bundled by standalone (includes react)
+#     packages/              <- workspace deps
 extraResources:
-  - from: "../web/.next"
-    to: ".next"
+  - from: "../web/.next/standalone"
+    to: "web"
+    filter:
+      - "**/*"
+  - from: "../web/.next/static"
+    to: "web/apps/web/.next/static"
     filter:
       - "**/*"
   - from: "../web/public"
-    to: "public"
+    to: "web/apps/web/public"
     filter:
       - "**/*"
-  - from: "../web/package.json"
-    to: "web.package.json"
 
 # ----- Windows target -----
 win:
