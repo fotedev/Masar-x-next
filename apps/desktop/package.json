@@ -1,9 +1,10 @@
 {
   "name": "desktop",
   "version": "0.5.6",
+  "author": "Masar X",
   "private": true,
   "type": "module",
-  "main": "dist/main/index.js",
+  "main": "dist/apps/desktop/src/main/index.js",
   "description": "Masar X desktop app — Electron wrapper that loads the web build over a local HTTP server (research.md §2; spec FR-003, FR-005, FR-006).",
   "scripts": {
     "dev": "echo '[desktop] dev script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",

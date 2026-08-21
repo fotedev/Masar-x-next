@@ -4,7 +4,7 @@ description: "T025 smoke test results — desktop installer validation on Window
 
 # T025 — Smoke Test Results (Desktop)
 
-**Status**: 🟡 **PARTIAL** — automated smoke test (T018) green; manual validation + packaged build deferred to a follow-up session.
+**Status**: 🟠 **BLOCKED** — automated smoke test (T018) green; packaged build produces a .exe but it cannot launch because of a T020 integration bug (Next.js production server needs `output: 'standalone'`). Full manual validation deferred to a follow-up that addresses the underlying integration.
 
 **Date**: 2026-08-21
 **Platform**: Windows 11 x64
@@ -216,8 +216,9 @@ Documented inline in `updater.ts`. No further action.
 ## 6. What is **NOT** done in this PR (and why)
 
 The T025 DoD's canonical evidence is the **packaged NSIS installer** + **live
-install/launch/verify checklist**. This PR delivered the **prerequisites** but
-not the build or the manual run.
+install/launch/verify checklist**. This PR delivered the **build infrastructure**
+and got the **packaged .exe to build successfully**, but the .exe **cannot
+launch** due to a T020 integration bug (§6.1 below).
 
 | DoD item | Status | Notes |
 |---|---|---|
@@ -237,16 +238,70 @@ not the build or the manual run.
 
 ### Suggested follow-up
 
-1. **PR review** of this build-infrastructure PR.
-2. **Run `pnpm --filter desktop build`** in a new session — produces
-   `apps/desktop/release/Masar X-0.5.6-x64.exe`.
-3. **Manual install** + DoD items 2-8.
-4. **Fix the preload path bug** (§5.1) — either as a quick T020.1 PR
+1. **PR review** of this build-infrastructure PR (now includes the asar: false
+   workaround, the rootDir/output structure change, the cert deprecation, and
+   the untracked-JS gitignore for `packages/shared/`).
+2. **Address the T020 integration bug** (§6.1) in a separate PR — likely
+   touching `apps/web/next.config.mjs` (add `output: 'standalone'`),
+   `apps/desktop/electron-builder.yml` (point `extraResources` at
+   `.next/standalone/`), and `apps/desktop/src/main/server.ts` (call the
+   standalone `server.js` instead of `next({ dir: webDist })`).
+3. **Re-run `pnpm --filter desktop build`** in a new session once §6.1 is fixed.
+4. **Manual install** + DoD items 2-8 (NSIS installer now well-formed + has
+   separate filename from portable via per-target `artifactName`).
+5. **Fix the preload path bug** (§5.1) — either as a quick T020.1 PR
    (`../preload.js` → `./preload.js`), or alongside the next touch on
    `index.ts`.
-5. **Re-tick T025** in `tasks.md` to `[x]` once the manual run is verified.
-6. **macOS / Linux smoke** — same `electron-builder.yml` config; deferred to
+6. **Re-tick T025** in `tasks.md` to `[x]` once the manual run is verified.
+7. **macOS / Linux smoke** — same `electron-builder.yml` config; deferred to
    Phase 8 per `apps/web/vercel.json` parity.
+
+### 6.1 BLOCKER — Packaged .exe cannot launch (T020 integration)
+
+**Symptom** (from `win-unpacked\Masar X.exe` launched from PowerShell with
+`ELECTRON_ENABLE_LOGGING=1`):
+
+```
+[masarx-desktop] Failed to start: Error: Cannot find module 'react'
+Require stack:
+- .../win-unpacked/resources/app/node_modules/next/dist/server/...
+- .../win-unpacked/resources/app/node_modules/next/dist/server/...
+- .../win-unpacked/resources/app/node_modules/next/dist/server/...
+```
+
+**Root cause**: `apps/web/next.config.mjs` does not set `output: 'standalone'`.
+The `extraResources` block in `apps/desktop/electron-builder.yml:59-68` copies
+only the regular `apps/web/.next/` (which contains the compiled app + manifests
+but **not** the production `node_modules`). The Electron main process
+(`apps/desktop/src/main/server.ts:63-73`) then spawns the Next.js production
+server pointing at `process.resourcesPath + '.next'`, and that server needs
+`react` + ~20 other production peer-deps that the regular `.next` does not
+include.
+
+**The proper fix** (out of T025 scope; needs a dedicated T020.2 task):
+
+1. `apps/web/next.config.mjs` — add `output: 'standalone'`. This makes
+   `next build` produce `apps/web/.next/standalone/` containing the compiled
+   app + a pruned `node_modules` + a `server.js` entry point.
+2. `apps/desktop/electron-builder.yml:59-68` — point `extraResources` at
+   `../web/.next/standalone/` (filter `**/*`) instead of `../web/.next`, and
+   also include the web app's `node_modules` it now bundles, plus a
+   `static/` copy.
+3. `apps/desktop/src/main/server.ts:70` — change
+   `const app = next({ dev: false, dir: webDist })` to spawn
+   `next/standalone/server.js` directly (the standalone bundle ships its
+   own server entry point).
+
+**The T018 smoke test is unaffected** — it runs the desktop main process in
+unpackaged mode, which expects the dev server to be running externally (T018
+spawns `pnpm --filter web dev` on port 3000 before launching Electron). The
+bundled dev server has its full `node_modules` and the missing-`react` failure
+does not occur.
+
+**No production release** can ship until §6.1 is addressed. The packaged
+.exe is a valid artifact of the build pipeline (proves electron-builder is
+correctly configured, native modules rebuilt, NSIS portable produced) but
+the app inside is not self-contained.
 
 ---
 
