@@ -1,0 +1,7 @@
+# Compiled JS output (T025 fallout: tsc with `paths` mapping and no
+# `rootDir` emits the shared package's JS next to its source. The
+# shared package is consumed as TypeScript source by apps/{web,desktop,mobile}
+# via the workspace protocol, so these compiled artefacts are never
+# used at runtime — keep them out of git.)
+*.js
+*.js.map

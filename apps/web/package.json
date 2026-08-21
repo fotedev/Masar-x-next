@@ -9,6 +9,7 @@
     "dev:clean": "node scripts/clean.mjs && next dev --webpack",
     "prebuild": "node scripts/inject-sw-version.mjs",
     "build": "next build --webpack",
+    "postbuild": "node scripts/dereference-standalone.cjs",
     "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "clean": "node scripts/clean.mjs",
