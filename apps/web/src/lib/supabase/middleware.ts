@@ -14,7 +14,17 @@ export async function updateSession(request: NextRequest) {
         {
             cookies: {
                 getAll() {
-                    return request.cookies.getAll()
+                    return request.cookies.getAll().map(({ name, value }) => ({
+                        name,
+                        // Strip UTF-8 BOM (U+FEFF) prefix from cookies. Old sessions
+                        // stored before the server.ts BOM fix may have it baked in;
+                        // without stripping, passing the cookie value to
+                        // fetch/Headers downstream triggers undici's
+                        // "Cannot convert argument to a ByteString" error and
+                        // supabase.auth.getUser() returns authError on /api/auth/sync.
+                        // Mirrors the fix in lib/supabase/server.ts:14-23.
+                        value: value.replace(/^\uFEFF/, ''),
+                    }))
                 },
                 setAll(cookiesToSet: { name: string; value: string; options: ResponseCookieOptions }[]) {
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
