@@ -17,6 +17,16 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["next-intl"],
   serverExternalPackages: ["pg"],
+  // T020.2: switch the web app to Next.js standalone output so the
+  // desktop app can ship a self-contained server.js entry point
+  // (apps/web/.next/standalone/server.js). This is the documented
+  // way to run Next.js inside Electron — the previous in-process
+  // 
+  //   next({ dir }) approach could not find the react module at
+  // runtime because Next's normal webpack chunking does not emit a
+  // standalone-friendly layout. See specs/004-multi-platform-expansion/
+  // tasks.md §T020.2.
+  output: "standalone",
   compiler: {
     removeConsole: {
       exclude: ["error", "warn"],
