@@ -91,16 +91,29 @@ export async function syncUserProfile() {
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    const code = (error as { code?: string })?.code;
+    // Supabase PostgREST errors are plain objects { message, code, details, hint },
+    // NOT Error instances — so `String(error)` becomes "[object Object]".
+    // Extract the structured fields first, then fall back to generic handling.
+    const errObj = error as { message?: string; code?: string; details?: string; hint?: string };
+    const message =
+      errObj?.message ??
+      (error instanceof Error ? error.message : JSON.stringify(error));
+    const code = errObj?.code;
+    const details = errObj?.details;
+    const hint = errObj?.hint;
+
     logger.error('[auth/sync] Database sync failed:', {
       error: message,
       code,
+      details,
+      hint,
       userId: user.id,
     });
 
-    const isDev = process.env.NODE_ENV === 'development';
-    const errorMessage = isDev ? `Sync failed: ${message}` : 'Internal server error';
+    // DIAGNOSTIC MODE (hotfix/auth-sync-diag): expose real error message
+    // to identify root cause. Will be reverted once we know the underlying
+    // Supabase admin client / DB error.
+    const errorMessage = `Sync failed: ${message} (code: ${code ?? 'none'})`;
 
     return { success: false, error: errorMessage };
   }
