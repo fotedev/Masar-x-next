@@ -41,11 +41,14 @@ export async function POST() {
   } catch (error: any) {
     logger.error('[api/auth/sync] Unexpected route error:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        // DIAGNOSTIC MODE (hotfix/auth-sync-diag): always expose error.message
+        // to surface root cause in /api/auth/sync 500s. Will be reverted.
+        detail: error?.message ?? String(error),
+        code: (error as { code?: string })?.code,
         timestamp: new Date().toISOString()
-      }, 
+      },
       { status: 500 }
     );
   }
