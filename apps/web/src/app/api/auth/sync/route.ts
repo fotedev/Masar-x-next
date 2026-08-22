@@ -7,21 +7,12 @@ export const runtime = 'nodejs'; // Ensure we use Node.js runtime for full DB su
 /**
  * Endpoint to trigger profile sync after login.
  * This can be called from client-side after successful auth.
+ *
+ * NOTE: This route does NOT use DATABASE_URL directly — it goes through
+ * Supabase JS client. The previous DATABASE_URL pre-check was a leftover
+ * from an old Drizzle/pg implementation and incorrectly returned 503.
  */
 export async function POST() {
-  // Check for database configuration early
-  if (!process.env.DATABASE_URL && !process.env.DATABASE_URL_IPV4) {
-    logger.error('[api/auth/sync] DATABASE_URL not configured');
-    return NextResponse.json(
-      {
-        error: 'Database not configured',
-        detail: 'DATABASE_URL or DATABASE_URL_IPV4 environment variable is missing',
-        timestamp: new Date().toISOString()
-      },
-      { status: 503 }
-    );
-  }
-
   try {
     const result = await syncUserProfile();
     

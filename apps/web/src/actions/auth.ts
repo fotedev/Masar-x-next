@@ -91,11 +91,22 @@ export async function syncUserProfile() {
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    const code = (error as { code?: string })?.code;
+    // Supabase PostgREST errors are plain objects { message, code, details, hint },
+    // NOT Error instances — so `String(error)` becomes "[object Object]".
+    // Extract the structured fields first, then fall back to generic handling.
+    const errObj = error as { message?: string; code?: string; details?: string; hint?: string };
+    const message =
+      errObj?.message ??
+      (error instanceof Error ? error.message : JSON.stringify(error));
+    const code = errObj?.code;
+    const details = errObj?.details;
+    const hint = errObj?.hint;
+
     logger.error('[auth/sync] Database sync failed:', {
       error: message,
       code,
+      details,
+      hint,
       userId: user.id,
     });
 
