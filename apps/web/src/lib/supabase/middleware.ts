@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { stripBOM } from './utils'
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -8,9 +9,15 @@ export async function updateSession(request: NextRequest) {
 
     type ResponseCookieOptions = Parameters<(typeof supabaseResponse.cookies)['set']>[2]
 
+    // Strip BOM from the env vars passed to the Supabase SDK. The SDK
+    // forwards these into HTTP headers / the API base URL, and undici
+    // throws on any value containing U+FEFF. Idempotent.
+    const supabaseUrl = stripBOM(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+    const supabaseAnonKey = stripBOM(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '')
+
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl,
+        supabaseAnonKey,
         {
             cookies: {
                 getAll() {
@@ -22,17 +29,24 @@ export async function updateSession(request: NextRequest) {
                         // fetch/Headers downstream triggers undici's
                         // "Cannot convert argument to a ByteString" error and
                         // supabase.auth.getUser() returns authError on /api/auth/sync.
-                        // Mirrors the fix in lib/supabase/server.ts:14-23.
-                        value: value.replace(/^\uFEFF/, ''),
+                        value: stripBOM(value),
                     }))
                 },
                 setAll(cookiesToSet: { name: string; value: string; options: ResponseCookieOptions }[]) {
-                    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                    // Strip the BOM in BOTH directions: request.cookies.set
+                    // (so the in-request cookie store is clean) and
+                    // supabaseResponse.cookies.set (so the Set-Cookie header
+                    // sent back to the client is clean — otherwise the BOM is
+                    // re-persisted on every request cycle and the strip on
+                    // getAll() never gets a chance to break the loop).
+                    cookiesToSet.forEach(({ name, value }) =>
+                        request.cookies.set(name, stripBOM(value))
+                    )
                     supabaseResponse = NextResponse.next({
                         request,
                     })
                     cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
+                        supabaseResponse.cookies.set(name, stripBOM(value), options)
                     )
                 },
             },
@@ -56,7 +70,7 @@ export async function updateSession(request: NextRequest) {
 
         // Check for show_extra_assets in app_metadata first (faster)
         const hasExtraAssets = user.app_metadata?.show_extra_assets;
-        
+
         if (!hasExtraAssets) {
             // Fallback for transition period: check database if not in metadata
             const { data: profile } = await supabase
