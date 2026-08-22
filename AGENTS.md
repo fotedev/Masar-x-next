@@ -37,6 +37,47 @@ User has these CLIs installed locally and authorized for project operations. Use
 **Safety rule:** Always ask for explicit confirmation before any state-changing CLI command (deploy, db push, secret set, branch push to protected branch). The CLIs are scriptable, but the operations they perform often are not.
 <!-- AVAILABLE CLIS END -->
 
+<!-- AVAILABLE MCPS START -->
+## Available MCP servers (verified 2026-08-22)
+
+The user has these Model Context Protocol servers wired into their OpenCode
+profile at `C:\Users\FOTE\.config\opencode\opencode.jsonc`. They give an
+agent direct, structured access to infra without leaving the editor.
+
+| MCP server | Transport | Auth | Primary use case |
+|---|---|---|---|
+| **supabase** | local stdio (`@supabase/mcp-server-supabase@latest`) | `SUPABASE_ACCESS_TOKEN` (read-only) | Schema introspection, ad-hoc SQL, RLS/policy inspection. Locked to project ref `jcufigozkhxazjbwhjjm` via `--project-ref`. |
+| **github** | local stdio (`@modelcontextprotocol/server-github`) | `GITHUB_TOKEN` | Repo/PR/issue ops through MCP instead of the `gh` CLI when the agent needs structured tool calls. |
+| **vercel** | remote HTTP (`https://mcp.vercel.com`) | `Authorization: Bearer <token>` (OAuth-compatible) | Deployments, env vars, build/runtime logs, Web Analytics, project search. Same surface as the `vercel` CLI but exposed as MCP tools. |
+
+**OpenCode config schema notes** (for agents that share this config):
+- `mcp.<name>.command` is an **array** (exec + args), not a string.
+- Env vars live under `mcp.<name>.environment`, **not** `env`.
+- Remote servers use `mcp.<name>.url` + optional `mcp.<name>.headers`
+  (no `command` / `environment` needed).
+- This file is **distinct from** MiniMax Code's MCP config at
+  `C:\Users\FOTE\.minimax\mcp\mcp.json` — do not conflate the two.
+
+**Security rules — non-negotiable:**
+- **Tokens are NEVER in this file or in git.** Real values live only in
+  `C:\Users\FOTE\.config\opencode\opencode.jsonc` on the user's machine.
+  When documenting or restating MCP config, use placeholders
+  (`<YOUR_VERCEL_TOKEN>`, etc.) — never paste the actual value.
+- A repo-local `.gitignore` must keep `opencode.jsonc` and
+  `.minimax/mcp/mcp.json` out of any commit, even if those files live
+  outside the repo tree. Do not move real tokens into project files.
+- If a token needs to be rotated, update it in the canonical config
+  first, then restart the agent. The agent cannot hot-reload auth
+  headers mid-session.
+
+**Overlap with the `vercel` CLI:** the Vercel MCP and the `vercel` CLI
+have ~80% overlapping capability. Prefer the MCP for tool-call style
+work (the agent can chain multiple calls without leaving the chat);
+prefer the CLI for scripted workflows, CI, or when an MCP tool is
+missing in the agent's current tool list. Both auth against the same
+Vercel account.
+<!-- AVAILABLE MCPS END -->
+
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan

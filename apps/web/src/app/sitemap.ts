@@ -1,12 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { MetadataRoute } from "next";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const baseUrl = "https://masarx.vercel.app";
+
+// Lazy client factory: instantiating at module level breaks the build
+// when env vars aren't inlined yet (Next.js "Collecting page data" phase).
+// Returning null lets the sitemap gracefully degrade to static entries
+// if Supabase env vars are missing (e.g. local dev without .env).
+function getSupabaseClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 const staticPaths = [
   { path: "", priority: 1.0, changeFrequency: "daily" as const },
@@ -30,6 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const dynamicEntries: MetadataRoute.Sitemap = [];
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    // Env vars missing (e.g. local dev without .env) — return static
+    // entries only. This is safe at build time and at runtime.
+    return [...staticEntries, ...dynamicEntries];
+  }
 
   try {
     const [subjectsRes, coursesRes, summariesRes] = await Promise.all([
