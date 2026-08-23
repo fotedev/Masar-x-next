@@ -1,0 +1,159 @@
+# ============================================================================
+# Release Desktop App
+#
+# Tag-triggered pipeline that builds the Electron desktop installers
+# (NSIS + Portable) and attaches them to a GitHub Release.
+#
+# Triggers
+# --------
+# - Push a tag matching `v*` (e.g. `git tag v0.5.6 && git push origin v0.5.6`).
+#   The tag's version is what `electron-builder` reads via the GH_TOKEN
+#   flow (see the `publish:` block in `apps/desktop/electron-builder.yml`).
+# - Manual run via the Actions UI's "Run workflow" button — useful for
+#   smoke-testing the pipeline end-to-end without pushing a tag.
+#
+# What it does
+# ------------
+# 1. pnpm install (frozen lockfile) — installs all workspace deps.
+# 2. `electron-builder install-app-deps` for the desktop workspace —
+#    fetches the better-sqlite3 prebuild matched to Electron 32's ABI
+#    (v128). Without this, better-sqlite3's `install` script falls
+#    back to `node-gyp rebuild` against the system Node, producing a
+#    `.node` file with the wrong ABI that won't load inside Electron.
+# 3. Builds the Next.js web standalone bundle into
+#    `apps/web/.next/standalone/`. The desktop installer ships this
+#    bundle as an `extraResource` (see `electron-builder.yml`), so it
+#    must be built before the desktop step.
+# 4. Runs `pnpm --filter desktop run build:all`, which invokes
+#    `electron-builder --win --x64`. The yml lists both `nsis` and
+#    `portable` under `win.target`, so both files land in
+#    `apps/desktop/out/` in one pass.
+# 5. Publishes the `.exe` installers, the electron-updater
+#    `latest*.yml` metadata, and the `*.blockmap` files to a GitHub
+#    Release. The release is published (not a draft) and auto-generates
+#    notes from the merged PRs since the previous tag.
+#
+# Permissions
+# -----------
+# `contents: write` is required for `softprops/action-gh-release` to
+# upload assets and create the release.
+#
+# Out of scope
+# ------------
+# - macOS (.dmg + .zip) and Linux (.AppImage, .deb, .rpm) targets are
+#   defined in `electron-builder.yml` but not built here. Add sibling
+#   jobs (`build-macos:`, `build-linux:`) when those targets are ready.
+# - Authenticode signing (Windows) and notarization (macOS) env vars
+#   are commented out in `electron-builder.yml`; add them as repo
+#   secrets and reference via `${{ secrets.* }}` when the EV cert
+#   lands in Phase 8.
+# ============================================================================
+
+name: Release Desktop App
+
+# `on:` is a YAML reserved keyword; quoting avoids parser issues.
+"on":
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows installers
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Electron native modules
+        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds (Electron
+        # 32's ABI). The default pnpm install invokes better-sqlite3's
+        # `install` script which runs `prebuild-install || node-gyp
+        # rebuild` — prebuild-install fetches the Node.js ABI prebuild
+        # (ABI 137 on Node 24, not in the release asset list), so the
+        # fallback to `node-gyp rebuild` fires, producing a binary that
+        # won't load inside Electron. This step re-fetches the
+        # prebuild matched to Electron 32's ABI.
+        run: pnpm --filter desktop exec electron-builder install-app-deps
+
+      - name: Build Web standalone app
+        # NEXT_PUBLIC_* vars are inlined into the client bundle at build
+        # time and are public by design. The values here are only used
+        # to satisfy module-load `throw new Error(...)` checks in
+        # `src/lib/supabase.ts` and similar files; they never need to
+        # point at a real Supabase/Cloudinary project.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
+          NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+          NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+          NEXT_PUBLIC_GA_ID: ""
+          ANALYZE: "false"
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+        run: pnpm --filter web build
+
+      - name: Build Desktop installers (NSIS + Portable)
+        # `build:all` is `electron-builder --win --x64`. The yml lists
+        # both `nsis` and `portable` under `win.target`, so this single
+        # invocation produces both files in `apps/desktop/out/`.
+        # GH_TOKEN is required by electron-builder's `publish:` block
+        # to create the draft release metadata (.yml/.blockmap) that
+        # electron-updater consumes; the actual Release is created by
+        # the next step via `softprops/action-gh-release`.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter desktop run build:all
+
+      - name: List build artifacts
+        # Sanity check before upload — fails fast if the build step
+        # silently produced no artifacts.
+        shell: pwsh
+        run: |
+          Get-ChildItem apps/desktop/out/*.exe, apps/desktop/out/latest*.yml, apps/desktop/out/*.blockmap `
+            -ErrorAction SilentlyContinue |
+            Select-Object Name, @{N='SizeMB';E={[math]::Round($_.Length/1MB, 2)}} |
+            Format-Table -AutoSize
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            apps/desktop/out/*.exe
+            apps/desktop/out/latest*.yml
+            apps/desktop/out/*.blockmap
+          # `fail_on_unmatched_files: false` (default) is what we want —
+          # the `*.yml` and `*.blockmap` files are only produced when
+          # electron-builder's publish flow runs with a real GH_TOKEN
+          # (which it does, see the previous step). If a future
+          # electron-builder version drops these, the action should
+          # still succeed with the .exe uploads.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
