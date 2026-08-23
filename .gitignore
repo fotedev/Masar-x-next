@@ -199,3 +199,24 @@ public/animations/ai-robo/
 # Debug script used to verify the dotlottie-react patch
 scripts/test_patch.mjs
 /.trash
+
+# === Agent helper scripts and build verification artifacts (2026-08-23) ===
+# The agent that built the new app icon and resolved the @swc/helpers
+# standalone build fix created a series of .git-tmp-*.py / .git-tmp-*.log
+# helper files at the workspace root and inside apps/desktop/build. They
+# are transient debug artifacts and should never be committed.
+.git-tmp-*
+# 1024x1024 PNG used as a master source when generating icon.ico. Not
+# needed at runtime — the .ico is the actual deliverable, and the
+# generator script (if needed again) can re-create this from git history.
+apps/desktop/build/icon-master.png
+# Visual previews of every ICO size (used to verify contrast on light
+# and dark taskbars before packaging). Regenerable from icon.ico + a
+# 10-line Pillow script.
+apps/desktop/build/.icon-preview/
+# Stale release/ outputs from interrupted builds. The prebuild script
+# renames these to release.__stale_<timestamp>__/ when a file lock
+# (antivirus / Windows Search indexer) blocks the rmSync of the normal
+# release/ dir. They are safe to delete manually once the new build
+# is verified.
+apps/desktop/release.__stale*/

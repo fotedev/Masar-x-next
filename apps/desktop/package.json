@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "main": "dist/apps/desktop/src/main/index.js",
-  "description": "Masar X desktop app — Electron wrapper that loads the web build over a local HTTP server (research.md §2; spec FR-003, FR-005, FR-006).",
+  "description": "Masar X — An integrated educational platform for university students.",
   "scripts": {
     "dev": "echo '[desktop] dev script not yet implemented — will be wired in US1 (Phase 3). See specs/004-multi-platform-expansion/tasks.md.' && exit 1",
     "prebuild": "node scripts/prebuild.mjs",

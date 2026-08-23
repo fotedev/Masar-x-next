@@ -10,6 +10,19 @@ import { buildAppMenu } from './menu.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Resolve the window icon path for both dev and packaged builds.
+// - Dev:       apps/desktop/src/main/index.ts → ../../build/icon.ico
+//              (resolves to apps/desktop/build/icon.ico in the source tree)
+// - Packaged:  build/icon.ico is shipped as an extraResource (see
+//              electron-builder.yml `extraResources`); the path is
+//              ${resourcesPath}/build/icon.ico.
+// On Windows, the EXE icon (set via electron-builder `win.icon`) is used
+// by Explorer/Task Manager regardless. This `icon` option drives the
+// window's title-bar/Alt-Tab icon — critical on macOS/Linux and in dev.
+const WINDOW_ICON_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'build', 'icon.ico')
+  : path.join(__dirname, '../../build/icon.ico');
+
 // ============================================================================
 // index.ts — Electron main process entry point (T020)
 //
@@ -67,6 +80,7 @@ export async function startMainProcess(): Promise<number> {
     minHeight: 600,
     show: !isDev, // dev mode can be hidden for faster iteration
     title: 'Masar X',
+    icon: WINDOW_ICON_PATH,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true, // T017 assertion

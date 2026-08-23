@@ -16,6 +16,16 @@ appId: ai.masarx.app
 productName: Masar X
 copyright: Copyright © 2026 Masar X
 artifactName: "${productName}-${version}-${arch}.${ext}"
+# Package.json overrides applied at packaging time. Sets the
+# `description` and `author` fields in the packaged app's
+# package.json (visible in Windows Explorer's properties dialog
+# when the EXE is not Authenticode-signed, and in macOS Finder's
+# Get Info pane).
+extraMetadata:
+  description: Masar X — An integrated educational platform for university students.
+  author:
+    name: Masar X
+    email: ops@masarx.ai
 # T025 smoke validation: skip the asar packing. The asar packager in
 # electron-builder 25.x follows the pnpm-workspace symlink
 # `apps/desktop/node_modules/masarx-shared -> ../../../packages/shared`
@@ -66,11 +76,15 @@ asarUnpack:
 # (`asarUnpack` above) so Node can dlopen it via the standard
 # `require()` path at runtime.
 
-# Always rebuild native modules from source as part of the build,
-# even when a prebuild is available. We need this for better-sqlite3
-# because the pinned v11.10.0 ships prebuilds only for Node up to v131
-# (Node 23), so Electron 32's Node 20 needs a source compile.
-npmRebuild: true
+# Use prebuilt better-sqlite3 binaries. v11.10.0 ships electron-v128
+# prebuilds (Electron 32's ABI) for win32-x64, downloaded via
+# `prebuild-install --runtime=electron --target=32.3.3`. The local
+# build/Release/better_sqlite3.node has been replaced with the
+# electron-v128 prebuild (verified by process.dlopen failing on Node
+# 24's ABI 137 with "compiled against NODE_MODULE_VERSION 128").
+# Toggling this to `true` would force a node-gyp source compile, which
+# requires Visual Studio Build Tools (not installed locally).
+npmRebuild: false
 
 # Extra resources bundled alongside the binary so the production main
 # process can find the local Next.js server entry point.
@@ -106,9 +120,21 @@ extraResources:
     to: "web/apps/web/public"
     filter:
       - "**/*"
+  # T019 icon. Ship the multi-size .ico as an extraResource so the
+  # BrowserWindow `icon` option in src/main/index.ts can resolve it
+  # at runtime via process.resourcesPath. electron-builder's `win.icon`
+  # above is what sets the EXE icon shown in Explorer/Task Manager;
+  # this entry drives the in-window title-bar/Alt-Tab icon.
+  - from: "build/icon.ico"
+    to: "build/icon.ico"
 
 # ----- Windows target -----
 win:
+  # T019 icon. Multi-size .ico (16/32/48/64/128/256) generated from
+  # public/logo_EN.png (1200x880 RGBA, restored from git history — it
+  # was replaced by logo_EN.webp in commit 2ccee68). electron-builder
+  # picks this up for the EXE icon shown in Explorer/Taskbar/Start Menu.
+  icon: build/icon.ico
   target:
     - target: nsis
       arch: [x64]
@@ -135,6 +161,12 @@ win:
 
 nsis:
   artifactName: "${productName}-Setup-${version}-${arch}.${ext}"
+  # Display name in Add/Remove Programs. The full description
+  # text (used in the EXE's Properties → Details tab on Windows
+  # and the macOS Finder Get Info pane) comes from
+  # `extraMetadata.description` above; electron-builder 25.x does
+  # not expose a separate NSIS-level productDescription field.
+  uninstallDisplayName: Masar X — An integrated educational platform for university students.
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
