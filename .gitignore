@@ -9,6 +9,15 @@ build/
 out/
 .vercel/
 
+# Electron desktop build outputs (these can be 200+ MB and are
+# regenerated on every pnpm --filter desktop run build:installer /
+# build:portable; never commit them). The `apps/desktop/dist/`
+# entry above already catches the tsc output, but the `out/` and
+# `dist-release/` dirs are sibling roots to `dist/`, not children.
+apps/desktop/release/
+apps/desktop/dist-release/
+apps/desktop/out/
+
 # Generated Service Worker — produced from public/sw.template.js by
 # scripts/inject-sw-version.mjs at prebuild/predev time. Keep the
 # template tracked; ignore the generated copy so it never gets
