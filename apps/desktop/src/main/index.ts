@@ -79,6 +79,19 @@ export async function startMainProcess(): Promise<number> {
     },
   });
 
+  win.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    if (errorCode === -102 || errorCode === -105) {
+      setTimeout(() => {
+        if (!win.isDestroyed()) {
+          void win.loadURL(`http://127.0.0.1:${running.port}`);
+        }
+      }, 500);
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn(`[masarx-desktop] Window failed to load: ${errorDescription} (${errorCode})`);
+    }
+  });
+
   win.loadURL(`http://127.0.0.1:${running.port}`);
 
   // T021 — LocalAuthSession IPC wiring.
