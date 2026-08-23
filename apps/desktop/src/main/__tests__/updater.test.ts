@@ -111,6 +111,13 @@ vi.mock('electron-updater', () => {
 // electron mock: app is referenced by Updater for app.quit() and app.getPath().
 // We use a minimal mock — T017 already has the full shape; here we just need
 // app.quit, app.getPath, and app.whenReady.
+//
+// `isPackaged` is read lazily by the production code at call time (see
+// `isAutoUpdateEnabled` in updater.ts), so individual tests can mutate it
+// via `mockedApp.isPackaged = false` and restore it in `finally`. Default
+// is `true` because the rest of the suite models the packaged production
+// runtime (electron-builder produces a packaged app; the check should
+// actually run).
 vi.mock('electron', () => ({
   app: {
     quit: vi.fn(),
@@ -120,13 +127,14 @@ vi.mock('electron', () => ({
       return '';
     }),
     on: vi.fn(),
-    isPackaged: false,
+    isPackaged: true,
   },
 }));
 
 // Import AFTER mocks. Vitest hoists vi.mock() so this is safe.
 import { Updater } from '../updater.js';
 import { autoUpdater as importedAutoUpdater } from 'electron-updater';
+import { app as mockedApp } from 'electron';
 
 // --- per-test temp dir --------------------------------------------------------
 
@@ -234,5 +242,38 @@ describe('T023 — Updater contract', () => {
     // and then clears the flag so we don't loop.
     expect(autoUpdaterMock.install).toHaveBeenCalledWith(true, true);
     expect(existsSync(flagPath)).toBe(false);
+  });
+
+  it('bypasses auto-updater checks when running in portable mode', async () => {
+    process.env.PORTABLE_EXECUTABLE_DIR = 'C:\\test\\portable';
+    try {
+      const updater = new Updater({ userDataPath: tmpDir });
+      const startupRes = await updater.checkOnStartup();
+      const manualRes = await updater.checkFor();
+
+      expect(startupRes).toBeNull();
+      expect(manualRes).toBeNull();
+      expect(autoUpdaterMock.checkForUpdates).not.toHaveBeenCalled();
+    } finally {
+      delete process.env.PORTABLE_EXECUTABLE_DIR;
+    }
+  });
+
+  it('bypasses auto-updater checks when running in dev mode (app.isPackaged === false)', async () => {
+    // Dev = `electron .` (unpackaged). In that mode there's no GitHub
+    // release feed to check against, and the smoke menu item would
+    // produce noisy warnings. Mutate the lazy property and restore.
+    (mockedApp as unknown as { isPackaged: boolean }).isPackaged = false;
+    try {
+      const updater = new Updater({ userDataPath: tmpDir });
+      const startupRes = await updater.checkOnStartup();
+      const manualRes = await updater.checkFor();
+
+      expect(startupRes).toBeNull();
+      expect(manualRes).toBeNull();
+      expect(autoUpdaterMock.checkForUpdates).not.toHaveBeenCalled();
+    } finally {
+      (mockedApp as unknown as { isPackaged: boolean }).isPackaged = true;
+    }
   });
 });
