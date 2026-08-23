@@ -58,6 +58,32 @@ const DEFAULT_TRIAL_MS = 30_000;
 const DEFAULT_RATE_LIMIT_MS = 60 * 60 * 1000;
 const FLAG_FILE = 'pending-update.json';
 
+export function isPortable(): boolean {
+  return Boolean(
+    process.env.PORTABLE_EXECUTABLE_DIR ||
+    process.env.PORTABLE_EXECUTABLE_FILE ||
+    process.env.PORTABLE_EXECUTABLE_APP_FILENAME,
+  );
+}
+
+/**
+ * Returns true when the running app should actually consult the
+ * `autoUpdater` feed. Two disqualifying cases:
+ *
+ *   1. Portable build — electron-builder's portable target is a single
+ *      self-extracting .exe; `electron-updater`'s Squirrel.Windows
+ *      update flow doesn't apply to it.
+ *   2. Dev mode — `app.isPackaged` is false when running via
+ *      `electron .` (unpackaged). There's no GitHub release feed to
+ *      check against, and the call would just emit a noisy warning.
+ *
+ * Read at call time (not module load) so the test can flip
+ * `app.isPackaged` per test.
+ */
+export function isAutoUpdateEnabled(): boolean {
+  return !isPortable() && app.isPackaged;
+}
+
 export class Updater {
   private readonly userDataPath: string;
   private readonly au: typeof autoUpdater;
@@ -95,6 +121,12 @@ export class Updater {
    * window. Triggers the auto-download flow if an update is found.
    */
   async checkOnStartup(): Promise<UpdateAvailableInfo | null> {
+    if (!isAutoUpdateEnabled()) {
+      // eslint-disable-next-line no-console
+      console.log('[masarx-desktop] Auto-updater disabled (dev or portable); skipping startup check.');
+      return null;
+    }
+
     // Enable auto-download + install-on-quit before checking. These are
     // the defaults per electron-updater docs; we set them explicitly so
     // the behavior is in one place.
@@ -109,8 +141,13 @@ export class Updater {
       return null;
     }
 
-    this.lastCheckAt = Date.now();
-    await this.au.checkForUpdates();
+    try {
+      this.lastCheckAt = Date.now();
+      await this.au.checkForUpdates();
+    } catch (err: unknown) {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Startup update check failed or skipped:', err);
+    }
     return null; // The update-available event is what tells the caller.
   }
 
@@ -119,12 +156,21 @@ export class Updater {
    * to one call per `rateLimitMs` window.
    */
   async checkFor(): Promise<UpdateAvailableInfo | null> {
+    if (!isAutoUpdateEnabled()) {
+      return null;
+    }
+
     const now = Date.now();
     if (now - this.lastCheckAt < this.rateLimitMs) {
       return null;
     }
-    this.lastCheckAt = now;
-    await this.au.checkForUpdates();
+    try {
+      this.lastCheckAt = now;
+      await this.au.checkForUpdates();
+    } catch (err: unknown) {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Manual update check failed:', err);
+    }
     return null;
   }
 
@@ -289,6 +335,12 @@ export interface UpdaterBootOptions {
 }
 
 export function bootUpdater(opts: UpdaterBootOptions): void {
+  if (!isAutoUpdateEnabled()) {
+    // eslint-disable-next-line no-console
+    console.log('[masarx-desktop] Auto-updater disabled (dev or portable); skipping boot.');
+    return;
+  }
+
   opts.updater.onAvailable((info) => {
     opts.broadcast('updates:available', info);
   });
@@ -298,6 +350,7 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
   opts.updater.onError((err) => {
     opts.broadcast('updates:error', { message: err.message });
   });
+
   // Defer the first check until after `app.whenReady()` — electron-updater
   // is fine being constructed early, but the first check is best done
   // when the main window is up so the renderer is ready to receive the
