@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 on:
   pull_request:
@@ -31,8 +31,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          # version: 10 — see packageManager in root package.json
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -80,8 +79,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          # version: 10 — see packageManager in root package.json
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -112,8 +110,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          # version: 10 — see packageManager in root package.json
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -187,8 +184,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
-
+          # version: 10 — see packageManager in root package.json
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
