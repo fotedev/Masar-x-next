@@ -76,17 +76,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          # Pinned to match the `packageManager` field in the root
-          # package.json (`pnpm@10.2.0`). The action downloads the
-          # exact version, ignoring whatever corepack would resolve.
-          # Update both this and the root package.json together if
-          # you bump pnpm. Note: the lockfile was originally generated
-          # with pnpm 10 — pinning to v10 here avoids the layout
-          # mismatch that broke `next/dist/bin/next` symlinks under
-          # pnpm 9.
-          version: 10
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -94,31 +83,49 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
+        # better-sqlite3's `install` postinstall is the only one we
+        # need to skip on windows-latest. It's listed in the root
+        # `.npmrc` under `neverBuiltDependencies[]=better-sqlite3`,
+        # so pnpm skips it for us. All other packages (electron,
+        # esbuild, sharp, @swc/core, @parcel/watcher) still run their
+        # postinstalls — in particular, the electron postinstall
+        # downloads the Electron 32.2.0 binary, which the next step
+        # relies on. We previously used `--ignore-scripts` here, but
+        # that also skipped electron's postinstall, leaving
+        # `electron-builder install-app-deps` unable to determine
+        # the Electron version. Using `neverBuiltDependencies` is
+        # more targeted.
         run: pnpm install --frozen-lockfile
 
       - name: Install Electron native modules
-        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds (Electron
-        # 32's ABI). The default pnpm install invokes better-sqlite3's
-        # `install` script which runs `prebuild-install || node-gyp
-        # rebuild` — prebuild-install fetches the Node.js ABI prebuild
-        # (ABI 137 on Node 24, not in the release asset list), so the
-        # fallback to `node-gyp rebuild` fires, producing a binary that
-        # won't load inside Electron. This step re-fetches the
-        # prebuild matched to Electron 32's ABI.
+        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds
+        # (Electron 32's ABI). The previous step intentionally
+        # skipped its postinstall (see the comment on
+        # `Install dependencies`), so better-sqlite3 has no `.node`
+        # binary on disk yet. This step runs
+        # `prebuild-install --runtime electron --target 32.2.0` to
+        # fetch the correct prebuild (electron-v128, ABI 128) without
+        # falling back to node-gyp.
         run: pnpm --filter desktop exec electron-builder install-app-deps
 
       - name: Build Web standalone app
         # NEXT_PUBLIC_* vars are inlined into the client bundle at build
-        # time and are public by design. The values here are only used
-        # to satisfy module-load `throw new Error(...)` checks in
-        # `src/lib/supabase.ts` and similar files; they never need to
-        # point at a real Supabase/Cloudinary project.
+        # time. The desktop installer packages this bundle, so the values
+        # here must be the production Supabase / Cloudinary / site URL
+        # for the installed app to talk to the right backend. The actual
+        # values are pulled from repo secrets (set via `gh secret set`)
+        # so the workflow yml never contains real anon keys.
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
-          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
-          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
-          NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # The Cloudinary cloud name + upload preset are also needed by
+          # the client. Set the matching repo secrets if you have them.
+          # If unset, the build still succeeds (Cloudinary returns a 401
+          # at runtime, which is acceptable for installers that ship
+          # before Cloudinary creds are finalized).
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'ci-placeholder' }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ci-placeholder' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
           NEXT_PUBLIC_GA_ID: ""
           ANALYZE: "false"

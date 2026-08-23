@@ -77,9 +77,18 @@ const nextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Fix next-intl resolution for Next.js 16
+    // Fix next-intl resolution for Next.js 16. The path must resolve
+    // from the workspace root (`apps/web/`) up to the monorepo root
+    // because pnpm 9.x with `node-linker=hoisted` hoists `next-intl`
+    // to `<root>/node_modules/` (NOT `apps/web/node_modules/`). An
+    // earlier version of this alias used `__dirname + "node_modules/..."`
+    // which only worked when pnpm created a workspace-level symlink for
+    // every direct dep — that stopped happening once the install mode
+    // became pure hoisted. See commit message for full diagnosis.
     const nextIntlEsm = path.resolve(
       __dirname,
+      "..",
+      "..",
       "node_modules/next-intl/dist/esm/production",
     );
 
