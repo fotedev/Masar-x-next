@@ -78,11 +78,14 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           # Pinned to match the `packageManager` field in the root
-          # package.json (`pnpm@9.15.4`). The action downloads the
+          # package.json (`pnpm@10.2.0`). The action downloads the
           # exact version, ignoring whatever corepack would resolve.
           # Update both this and the root package.json together if
-          # you bump pnpm.
-          version: 9
+          # you bump pnpm. Note: the lockfile was originally generated
+          # with pnpm 10 — pinning to v10 here avoids the layout
+          # mismatch that broke `next/dist/bin/next` symlinks under
+          # pnpm 9.
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
