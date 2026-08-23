@@ -15,7 +15,7 @@
 appId: ai.masarx.app
 productName: Masar X
 copyright: Copyright © 2026 Masar X
-artifactName: ${productName}-${version}-${arch}
+artifactName: "${productName}-${version}-${arch}.${ext}"
 # T025 smoke validation: skip the asar packing. The asar packager in
 # electron-builder 25.x follows the pnpm-workspace symlink
 # `apps/desktop/node_modules/masarx-shared -> ../../../packages/shared`
@@ -134,16 +134,32 @@ win:
   # timeStampServer: http://timestamp.digicert.com
 
 nsis:
+  artifactName: "${productName}-Setup-${version}-${arch}.${ext}"
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: Masar X
+  # Disable the differential-update package. electron-builder otherwise
+  # tries to compute a partial-update `.7z` against the previous release
+  # (line-7 section in the NSIS installer). On a fresh local build (no
+  # previous release on disk) the diff engine produces a corrupt archive,
+  # which the NSIS extractor then rejects with `The archive is corrupt`.
+  # We ship full installers and let the GitHub auto-updater use them as-is
+  # (T023). Setting this to `false` removes the diff step entirely.
+  differentialPackage: false
+  # On uninstall, wipe `%LOCALAPPDATA%\Programs\masarx\` (the SQLite cache,
+  # encrypted auth session, local HTTP cache). Otherwise a reinstall picks
+  # up stale state and the first launch may crash.
+  deleteAppDataOnUninstall: true
   # The desktop app launches the local Next.js server; the installer
   # therefore registers the URL protocol so the OAuth flow can return
   # to the desktop app from the system browser.
   include: build/installer.nsh
+
+portable:
+  artifactName: "${productName}-Portable-${version}-${arch}.${ext}"
 
 # ----- macOS target -----
 mac:
