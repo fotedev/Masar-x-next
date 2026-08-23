@@ -21,12 +21,35 @@ const nextConfig = {
   // desktop app can ship a self-contained server.js entry point
   // (apps/web/.next/standalone/server.js). This is the documented
   // way to run Next.js inside Electron — the previous in-process
-  // 
+  //
   //   next({ dir }) approach could not find the react module at
   // runtime because Next's normal webpack chunking does not emit a
   // standalone-friendly layout. See specs/004-multi-platform-expansion/
   // tasks.md §T020.2.
   output: "standalone",
+  // Force Next.js to copy the @swc/helpers package into the standalone
+  // output. Without this, the file tracer misses transitive deps that
+  // live under pnpm's `.pnpm/<pkg>@<ver>/node_modules/...` virtual
+  // store and only resolves them from the top-level node_modules of the
+  // source project — so they don't end up in
+  // `.next/standalone/apps/web/node_modules/@swc/helpers/`. When the
+  // packaged Electron app then tries to require()
+  // `@swc/helpers/_/_interop_require_default` from
+  // `node_modules/next/dist/shared/lib/constants.js`, Node throws
+  // `MODULE_NOT_FOUND` and the app crashes with
+  // "startProductionServer: server.js exited before becoming ready
+  // (code=1)" — diagnosed 2026-08-23 from the AppData install failing
+  // even though the same `win-unpacked` EXE looked like it worked
+  // (it didn't — it just fell back to dev mode because
+  // `app.isPackaged === false` outside Program Files).
+  //
+  // Belt-and-suspenders: this is paired with adding `@swc/helpers` as
+  // an explicit dep in apps/web/package.json so the package is also
+  // installed in the top-level node_modules tree, which is where
+  // Next's file tracer starts from.
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/@swc/helpers/**/*"],
+  },
   compiler: {
     removeConsole: {
       exclude: ["error", "warn"],
