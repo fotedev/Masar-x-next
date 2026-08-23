@@ -77,15 +77,15 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pinned to match the `packageManager` field in the root
-          # package.json (`pnpm@10.2.0`). The action downloads the
-          # exact version, ignoring whatever corepack would resolve.
-          # Update both this and the root package.json together if
-          # you bump pnpm. Note: the lockfile was originally generated
-          # with pnpm 10 — pinning to v10 here avoids the layout
-          # mismatch that broke `next/dist/bin/next` symlinks under
-          # pnpm 9.
-          version: 10
+          # Do NOT set `version:` here — the `packageManager` field
+          # in the root package.json (`pnpm@9.15.4`) already pins
+          # the pnpm version, and setting both causes pnpm/action-setup
+          # to fail with "Multiple versions of pnpm specified". The
+          # action reads packageManager and installs the exact version.
+          # This setup also matches the lockfile's expected path format
+          # (pnpm 9.x uses long format like
+          # `next@16.2.1_@babel+core@7.29.0_supports-color@8.1.1__...`,
+          # which Vercel and CI both produce).
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
