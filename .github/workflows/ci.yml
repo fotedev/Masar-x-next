@@ -37,7 +37,15 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # --ignore-scripts skips every package's `install`
+        # postinstall. For the web build this is safe: sharp, esbuild,
+        # @swc/core and friends do their platform-binary download at
+        # first import (or have a fallback path), and we don't
+        # actually need to run them during install. The flag is
+        # included here for consistency with the release workflow —
+        # it also avoids running native rebuilds in the CI sandbox
+        # (which has no Visual Studio / Xcode).
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run ESLint
         run: pnpm --filter web lint
@@ -83,7 +91,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # See the ESLint job for the rationale on --ignore-scripts.
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run next build
         run: pnpm --filter web build
@@ -112,7 +121,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # See the ESLint job for the rationale on --ignore-scripts.
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Verify workspaces are linked
         run: pnpm list -r --depth=-1
@@ -184,7 +194,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # See the ESLint job for the rationale on --ignore-scripts.
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Build web app
         env:
