@@ -83,26 +83,29 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # --ignore-scripts: skip every package's `install` postinstall
-        # during the workspace install. The default behavior runs
-        # `prebuild-install || node-gyp rebuild --release` for
-        # better-sqlite3, which on the windows-latest runner has no
-        # prebuilt binary for Node 24.19.0 (ABI 137) and falls back to
-        # `node-gyp rebuild` — that needs Visual Studio 2017+, but the
-        # windows-latest image only ships a VS 18 (preview) install
-        # that node-gyp cannot detect. Skipping the postinstall here
-        # and re-running it through `electron-builder install-app-deps`
-        # in the next step fetches the electron-v128 prebuild (matched
-        # to Electron 32.3.3) without ever invoking node-gyp.
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        # better-sqlite3's `install` postinstall is the only one we
+        # need to skip on windows-latest. It's listed in the root
+        # `.npmrc` under `neverBuiltDependencies[]=better-sqlite3`,
+        # so pnpm skips it for us. All other packages (electron,
+        # esbuild, sharp, @swc/core, @parcel/watcher) still run their
+        # postinstalls — in particular, the electron postinstall
+        # downloads the Electron 32.2.0 binary, which the next step
+        # relies on. We previously used `--ignore-scripts` here, but
+        # that also skipped electron's postinstall, leaving
+        # `electron-builder install-app-deps` unable to determine
+        # the Electron version. Using `neverBuiltDependencies` is
+        # more targeted.
+        run: pnpm install --frozen-lockfile
 
       - name: Install Electron native modules
-        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds (Electron
-        # 32's ABI). The previous step intentionally skipped
-        # postinstalls, so better-sqlite3 has no `.node` binary on
-        # disk yet. This step runs `prebuild-install --runtime
-        # electron --target 32.3.3` to fetch the correct prebuild
-        # (electron-v128, ABI 128) without falling back to node-gyp.
+        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds
+        # (Electron 32's ABI). The previous step intentionally
+        # skipped its postinstall (see the comment on
+        # `Install dependencies`), so better-sqlite3 has no `.node`
+        # binary on disk yet. This step runs
+        # `prebuild-install --runtime electron --target 32.2.0` to
+        # fetch the correct prebuild (electron-v128, ABI 128) without
+        # falling back to node-gyp.
         run: pnpm --filter desktop exec electron-builder install-app-deps
 
       - name: Build Web standalone app
