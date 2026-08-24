@@ -98,16 +98,22 @@ jobs:
 
       - name: Build Web standalone app
         # NEXT_PUBLIC_* vars are inlined into the client bundle at build
-        # time and are public by design. The values here are only used
-        # to satisfy module-load `throw new Error(...)` checks in
-        # `src/lib/supabase.ts` and similar files; they never need to
-        # point at a real Supabase/Cloudinary project.
+        # time. The desktop installer packages this bundle, so the values
+        # here must be the production Supabase / Cloudinary / site URL
+        # for the installed app to talk to the right backend. The actual
+        # values are pulled from repo secrets (set via `gh secret set`)
+        # so the workflow yml never contains real anon keys.
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
-          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
-          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
-          NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # The Cloudinary cloud name + upload preset are also needed by
+          # the client. Set the matching repo secrets if you have them.
+          # If unset, the build still succeeds (Cloudinary returns a 401
+          # at runtime, which is acceptable for installers that ship
+          # before Cloudinary creds are finalized).
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'ci-placeholder' }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ci-placeholder' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
           NEXT_PUBLIC_GA_ID: ""
           ANALYZE: "false"
