@@ -200,4 +200,98 @@ callback route.**
   be lost. **Always use `masarx.vercel.app`** (without hyphen).
 - If the user reports "the redirect URL doesn't match", check
   they're not using the hyphenated variant.
+
+### 8. pnpm 9.x: `pnpm.neverBuiltDependencies` goes in root `package.json`, NOT `.npmrc`
+
+`pnpm 9.x` silently ignores the `.npmrc` form
+(`neverBuiltDependencies[]=pkg-name`) for workspace projects
+(pnpm/pnpm#5407). Put it under the `"pnpm"` key in the root
+`package.json` instead. `--ignore-scripts` is the wrong
+substitute — it also skips `electron`'s postinstall and
+breaks `electron-builder install-app-deps`.
+
+### 9. `gh secret set` from Windows `.env` keeps trailing `\r\n`
+
+`Get-Content .env | gh secret set X --body -` includes the
+file's CRLF in the secret value. For URL-shaped secrets
+(`NEXT_PUBLIC_SUPABASE_URL`, etc.) the resulting `\r\n`
+suffix makes `new URL(...)` throw `Invalid supabaseUrl` at
+prerender time, not at compile time. `gh secret list` won't
+surface this. Re-set with literal-quoted
+`--body "https://..."` (no newline).
+
+### 10. Webpack aliases for direct deps must walk up to the monorepo root
+
+With `node-linker=hoisted` (`.npmrc`), pnpm 9.x puts direct
+deps at the root `node_modules/`, not at
+`apps/web/node_modules/`. Any webpack alias like
+`path.resolve(__dirname, "node_modules/<dep>/...")` in
+`apps/web/next.config.mjs` will fail with
+`Module not found: Can't resolve '<dep>'`. Use
+`path.resolve(__dirname, "..", "..", "node_modules/<dep>/...")`
+instead.
+
+### 11. Pin Electron exactly in `apps/desktop/package.json`
+
+`electron-builder install-app-deps` needs an exact version
+(no `^`, no `~`). `"electron": "^32.2.0"` makes it fail
+with `Cannot compute electron version from installed node
+modules`. Use `"electron": "32.2.0"`.
+
+### 12. Vercel: `cache purge` + `redeploy` for pnpm path-format mismatches
+
+Vercel's bundled pnpm occasionally materializes the
+`.pnpm/<long-format-path>/...` directory as empty even when
+the install reports success — then `next build` fails with
+`Cannot find module '.../.pnpm/next@16.2.1_@babel+core@.../next/dist/bin/next'`.
+Local pnpm 9.15.4 does not reproduce this. Workaround:
+`vercel cache purge --yes` then `vercel redeploy <url> --no-wait`.
+Note: the "Vercel - Deployment has failed" check can stay
+stuck on the original failed deployment ID even after a
+successful `redeploy` — confirm with `vercel list --limit 1`
+(`● Ready` on the latest).
+
+## Workflows
+
+CI and release are fully automated via GitHub Actions. Do
+NOT build installers or Vercel deploys locally unless asked
+— the workflows cover it.
+
+### `ci.yml` — runs on every push to `main` and every PR
+
+5 jobs: ESLint, next build, gitleaks-artifacts, workspaces,
+ai-endpoint-grep. `pnpm install` uses
+`pnpm.neverBuiltDependencies: ["better-sqlite3"]` from root
+`package.json` (gotcha #8). No `--ignore-scripts` — all
+other postinstalls (electron, esbuild, sharp, @swc/core)
+still run.
+
+### `release.yml` — tag-triggered, builds the Windows desktop installer
+
+Trigger: push a tag matching `v*` (e.g. `v0.5.7`). Workflow
+file: `.github/workflows/release.yml`. Steps:
+1. `pnpm install --frozen-lockfile` (uses
+   `pnpm.neverBuiltDependencies` to skip better-sqlite3)
+2. `pnpm --filter desktop exec electron-builder install-app-deps`
+   (fetches `electron-v128` prebuild for Electron 32.3.3)
+3. `pnpm --filter web build` (NEXT_PUBLIC_* come from
+   repo secrets)
+4. `pnpm --filter desktop run build:all` (produces both
+   NSIS `Setup` and `Portable` `*.exe` in `apps/desktop/out/`)
+5. `softprops/action-gh-release@v2` publishes them to a
+   GitHub Release named after the tag.
+
+To release: bump the version in `package.json` +
+`apps/desktop/package.json`, commit, then:
+```bash
+git tag v0.5.7         # tag moves with the new commit
+git push origin main --follow-tags
+```
+Or for a re-tag on an existing commit: `git tag -d v0.5.7
+&& git push origin --delete v0.5.7 && git tag v0.5.7 &&
+git push origin v0.5.7`.
+
+Vercel deploys on every push to `main` automatically — no
+manual deploy needed.
+
 <!-- PROJECT-SPECIFIC GOTCHAS END -->
