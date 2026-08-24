@@ -2,13 +2,13 @@
 // Updated for Next.js App Router
 //
 // ⚠️ DO NOT EDIT public/sw.js DIRECTLY — it is generated from this template
-// by scripts/inject-sw-version.mjs at build/dev time. The masarx-local-1787533818605
+// by scripts/inject-sw-version.mjs at build/dev time. The masarx-local-1787538706701
 // placeholder below is replaced with the current Vercel commit SHA so
 // every deploy produces a different Service Worker byte sequence, which
 // forces the browser to install + activate the new SW and purge the
 // previous cache automatically.
 
-const CACHE_NAME = "masarx-local-1787533818605";
+const CACHE_NAME = "masarx-local-1787538706701";
 
 // Simple environment check helper for SW
 const isDev = (url) => {

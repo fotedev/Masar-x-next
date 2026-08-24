@@ -37,15 +37,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # --ignore-scripts skips every package's `install`
-        # postinstall. For the web build this is safe: sharp, esbuild,
-        # @swc/core and friends do their platform-binary download at
-        # first import (or have a fallback path), and we don't
-        # actually need to run them during install. The flag is
-        # included here for consistency with the release workflow —
-        # it also avoids running native rebuilds in the CI sandbox
-        # (which has no Visual Studio / Xcode).
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        # better-sqlite3's `install` postinstall is skipped via the
+        # root `.npmrc`'s `neverBuiltDependencies[]=better-sqlite3`
+        # (it has no Node 24 prebuild on Linux x64, and node-gyp
+        # can't run in the CI sandbox). All other packages'
+        # postinstalls (sharp, esbuild, @swc/core) still run as
+        # normal so the web build can find their platform binaries.
+        run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
         run: pnpm --filter web lint
@@ -91,8 +89,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # See the ESLint job for the rationale on --ignore-scripts.
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
 
       - name: Run next build
         run: pnpm --filter web build
@@ -121,8 +119,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # See the ESLint job for the rationale on --ignore-scripts.
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
 
       - name: Verify workspaces are linked
         run: pnpm list -r --depth=-1
@@ -194,8 +192,8 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # See the ESLint job for the rationale on --ignore-scripts.
-        run: pnpm install --frozen-lockfile --ignore-scripts
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
 
       - name: Build web app
         env:
