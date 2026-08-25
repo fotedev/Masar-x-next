@@ -22,13 +22,19 @@ import { supabase } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
 import { useTopVideos } from "@/hooks/useVideoRatings";
 import { queryCache, cacheTTL } from "@/lib/queryCache";
-import { 
-  Sparkles, 
-  History, 
+import { DOWNLOAD_URLS, detectPlatform, type Platform } from "@/lib/github-releases";
+import {
+  Sparkles,
+  History,
   ArrowRight,
   BookOpen,
   PlayCircle,
-  FileText
+  FileText,
+  Download,
+  Monitor,
+  Apple,
+  Smartphone,
+  ChevronRight,
 } from "lucide-react";
 
 export default function HomeClient() {
@@ -177,6 +183,11 @@ export default function HomeClient() {
 
   return (
     <div className="space-y-10">
+      {/* Smart Desktop App Banner — auto-detects platform.
+          On Windows: shows direct download CTA.
+          On other platforms: deep-links to /downloads. */}
+      <DesktopAppBanner locale={locale} />
+
       {/* Quick Actions & Navigation Hub */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6">
         {/* ZANE AI Shortcut */}
@@ -286,5 +297,85 @@ export default function HomeClient() {
         onSave={handleSaveSummary}
       />
     </div>
+  );
+}
+
+/* ───── Desktop App Banner (auto-detect) ───── */
+
+function DesktopAppBanner({ locale }: { locale: string }) {
+  const t = useTranslations("downloads");
+  const [platform, setPlatform] = useState<Platform>("other");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setPlatform(detectPlatform(typeof navigator !== "undefined" ? navigator.userAgent : null));
+  }, []);
+
+  // Don't show for crawlers or before mount — keeps SSR clean.
+  if (!mounted) return null;
+
+  const isWindows = platform === "windows";
+  const isMac = platform === "macos";
+  const isAndroid = platform === "android";
+
+  // Pick the headline icon based on detected platform.
+  const Icon = isWindows ? Monitor : isMac ? Apple : isAndroid ? Smartphone : Download;
+
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-gradient-to-br from-slate-50 via-white to-brand-blue/5 dark:from-slate-900 dark:via-slate-900 dark:to-brand-blue/10 p-5 sm:p-6"
+      dir="auto"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-blue/10 text-brand-blue flex items-center justify-center flex-shrink-0">
+            <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
+                {t("hero.title")}
+              </h2>
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                v0.5.8
+              </span>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+              {t("hero.subtitle")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-shrink-0">
+          {isWindows ? (
+            <>
+              <a
+                href={DOWNLOAD_URLS.windowsInstaller}
+                className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-brand-blue text-white font-bold text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-sm shadow-brand-blue/20"
+              >
+                <Download className="w-4 h-4" />
+                <span>{t("hero.primaryCta")}</span>
+              </a>
+              <Link
+                href="/downloads"
+                className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-brand-blue dark:hover:text-brand-blue transition-colors"
+              >
+                <span>{t("hero.secondaryCta")}</span>
+                <ChevronRight className={`w-4 h-4 ${locale === "ar" ? "rotate-180" : ""}`} />
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/downloads"
+              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-brand-blue text-white font-bold text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-sm shadow-brand-blue/20"
+            >
+              <span>{t("hero.secondaryCta")}</span>
+              <ChevronRight className={`w-4 h-4 ${locale === "ar" ? "rotate-180" : ""}`} />
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
