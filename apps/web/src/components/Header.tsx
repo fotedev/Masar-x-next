@@ -328,6 +328,14 @@ export const Header = memo(function Header() {
       activeText: "text-emerald-600 dark:text-emerald-400",
       activeUnderline: "bg-emerald-600 dark:bg-emerald-400",
     },
+    {
+      key: "downloads",
+      page: "downloads",
+      label: tNav("downloads"),
+      isActive: () => isMounted && currentPage === "downloads",
+      activeText: "text-orange-600 dark:text-orange-400",
+      activeUnderline: "bg-orange-600 dark:bg-orange-400",
+    },
   ] as const;
 
   return (
