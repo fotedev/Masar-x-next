@@ -188,6 +188,62 @@ jobs:
           VERCEL_MCP_BYPASS_SECRET: ci-placeholder
         run: pnpm --filter web build
 
+      - name: Mirror release tag to masarx-releases
+        # GitHub's releases API requires the tag to exist in the SAME
+        # repo as the release (see gotcha "Published releases must have
+        # a valid tag" — 422 Unprocessable Entity). Since this project
+        # publishes releases to the separate public repo
+        # `fotedev/masarx-releases`, we need to mirror the tag there
+        # BEFORE the build+publish step.
+        #
+        # We do NOT push the full source code (the source is private
+        # for a reason). Instead, we push a small "version marker"
+        # commit to a `versions/` subdirectory of masarx-releases, then
+        # tag that commit. The `versions/` directory becomes a
+        # chronological index of releases — useful for debugging
+        # (e.g. `git log versions/` shows every release ever made).
+        #
+        # GH_TOKEN is the `GH_RELEASES_TOKEN` PAT (scoped to
+        # `fotedev/masarx-releases` with `Contents: Read and write`).
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+        run: |
+          $tagName = "${{ github.ref_name }}"
+          $srcSha  = "${{ github.sha }}"
+          $runId   = "${{ github.run_id }}"
+          $workDir = Join-Path $env:RUNNER_TEMP "mirror-tag"
+          New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+          Push-Location $workDir
+          try {
+            # Shallow clone for speed; --no-tags to avoid the
+            # existing v0.5.8 tag conflicting with our new one.
+            git clone --depth 1 --no-tags `
+              "https://x-access-token:$env:GH_TOKEN@github.com/fotedev/masarx-releases.git" `
+              _repo 2>&1 | Out-Null
+            Set-Location _repo
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            New-Item -ItemType Directory -Path versions -Force | Out-Null
+            $marker = "# Release $tagName`n`n- Source commit: $srcSha`n- Workflow run: $runId`n- Date: $(Get-Date -Format 'o')`n`nThis is a placeholder for the $tagName Git tag in this repo. The actual release artifacts (.exe, latest.yml, blockmap) are attached as release assets."
+            Set-Content -Path "versions/$tagName.txt" -Value $marker -Encoding UTF8 -NoNewline
+            git add versions/
+            git commit -m "release: tag anchor for $tagName" 2>&1 | Out-Null
+            git push origin HEAD:main 2>&1 | Out-Null
+            git tag $tagName
+            # --force: idempotent on re-runs. On the first run, the tag
+            # doesn't exist; on a re-run (workflow re-triggered for the
+            # same tag), the tag may already point to an older commit —
+            # --force overwrites it with the new marker commit. Safe
+            # because the source code SHA is what defines the release,
+            # and the version marker file's content captures it.
+            git push --force origin $tagName 2>&1 | Out-Null
+            Write-Output "  mirrored tag $tagName to masarx-releases (commit: $(git rev-parse HEAD))"
+          } finally {
+            Pop-Location
+            if (Test-Path $workDir) { mavis-trash $workDir }
+          }
+
       - name: Build & Publish Desktop installers (NSIS + Portable)
         # `build:all` is `tsc -p tsconfig.build.json && electron-builder
         # --win --x64`. The yml lists both `nsis` and `portable` under
@@ -206,6 +262,10 @@ jobs:
         # `Contents: Read and write`. The default `GITHUB_TOKEN`
         # only has access to the source repo `Masar-x-next`, so it
         # CAN'T create releases on `masarx-releases`.
+        #
+        # The "Mirror release tag" step above MUST run first so the
+        # tag exists in masarx-releases (GitHub's releases API
+        # requires "valid tag in same repo").
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
         run: pnpm --filter desktop run build:all
