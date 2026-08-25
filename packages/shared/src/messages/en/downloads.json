@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "title": "Download Masar X — Windows, macOS, Android",
+    "description": "Download the Masar X desktop app for Windows. Works offline. Auto-updates. Syncs with your account."
+  },
+  "hero": {
+    "badge": "Desktop App",
+    "title": "Download Masar X",
+    "subtitle": "Learn anywhere — pick your platform",
+    "primaryCta": "Download for Windows",
+    "secondaryCta": "Other platforms"
+  },
+  "platforms": {
+    "windows": {
+      "name": "Windows",
+      "status": "Available now",
+      "version": "Version 0.5.8",
+      "size": "121 MB",
+      "installerLabel": "Download installer (Setup)",
+      "installerHint": "Requires installation — recommended for most users",
+      "portableLabel": "Portable edition",
+      "portableHint": "No install needed — run from any folder"
+    },
+    "macos": {
+      "name": "macOS",
+      "status": "Coming soon",
+      "notifyLabel": "Notify me when available"
+    },
+    "android": {
+      "name": "Android",
+      "status": "Coming soon",
+      "notifyLabel": "Notify me when available"
+    }
+  },
+  "features": {
+    "title": "Why the desktop app?",
+    "offlineTitle": "Works offline",
+    "offlineBody": "Download once, access your materials anytime — even without a connection.",
+    "updatesTitle": "Auto-updates",
+    "updatesBody": "The app silently checks for new versions in the background and installs them.",
+    "systemTitle": "Native integration",
+    "systemBody": "Tray notifications, taskbar, keyboard shortcuts — feels like a real app, not a tab."
+  },
+  "faq": {
+    "title": "FAQ",
+    "items": {
+      "free": {
+        "q": "Is the app free?",
+        "a": "Yes, 100%. Masar X is a free learning tool for students."
+      },
+      "account": {
+        "q": "Do I need an account?",
+        "a": "Not for downloading or installing. An account is only required for synced content (summaries, exams, courses)."
+      },
+      "update": {
+        "q": "How do I make sure I have the latest version?",
+        "a": "The app checks for updates automatically. If a new version is available, a tray notification will appear."
+      },
+      "uninstall": {
+        "q": "How do I uninstall?",
+        "a": "Go to Windows Settings > Apps > Masar X > Uninstall. For the portable edition, just delete the file."
+      }
+    }
+  }
+}
