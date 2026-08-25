@@ -38,7 +38,7 @@ User has these CLIs installed locally and authorized for project operations. Use
 <!-- AVAILABLE CLIS END -->
 
 <!-- AVAILABLE MCPS START -->
-## Available MCP servers (verified 2026-08-22)
+## Available MCP servers (verified 2026-08-24)
 
 The user has these Model Context Protocol servers wired into their OpenCode
 profile at `C:\Users\FOTE\.config\opencode\opencode.jsonc`. They give an
@@ -49,6 +49,9 @@ agent direct, structured access to infra without leaving the editor.
 | **supabase** | local stdio (`@supabase/mcp-server-supabase@latest`) | `SUPABASE_ACCESS_TOKEN` (read-only) | Schema introspection, ad-hoc SQL, RLS/policy inspection. Locked to project ref `jcufigozkhxazjbwhjjm` via `--project-ref`. |
 | **github** | local stdio (`@modelcontextprotocol/server-github`) | `GITHUB_TOKEN` | Repo/PR/issue ops through MCP instead of the `gh` CLI when the agent needs structured tool calls. |
 | **vercel** | remote HTTP (`https://mcp.vercel.com`) | `Authorization: Bearer <token>` (OAuth-compatible) | Deployments, env vars, build/runtime logs, Web Analytics, project search. Same surface as the `vercel` CLI but exposed as MCP tools. |
+| **cloudflare-api** | remote HTTP (`https://mcp.cloudflare.com/mcp`) | `Authorization: Bearer <token>` (OAuth-compatible) | **Code Mode MCP** — exposes the entire Cloudflare API (~2,500 endpoints: DNS, Workers, R2, Zero Trust, KV, D1) via just two tools: `search()` and `execute()`. The model writes JavaScript against a typed OpenAPI spec; cost is ~1,000 tokens regardless of API size. |
+| **cloudflare-docs** | remote HTTP (`https://docs.mcp.cloudflare.com/mcp`) | `Authorization: Bearer <token>` (OAuth-compatible) | Token-efficient search of Cloudflare's official documentation. Pairs with `cloudflare-api`: API server says WHAT to call, docs server says HOW. |
+| **cloudflare-browser** | remote HTTP (`https://browser.mcp.cloudflare.com/mcp`) | `Authorization: Bearer <token>` (OAuth-compatible) | Cloudflare Browser Rendering — fetch web pages, convert to markdown, take screenshots. Requires the Browser Rendering product enabled on the account. |
 
 **OpenCode config schema notes** (for agents that share this config):
 - `mcp.<name>.command` is an **array** (exec + args), not a string.
@@ -69,6 +72,25 @@ agent direct, structured access to infra without leaving the editor.
 - If a token needs to be rotated, update it in the canonical config
   first, then restart the agent. The agent cannot hot-reload auth
   headers mid-session.
+- **For the 3 Cloudflare MCPs, the same User API Token is shared
+  across `cloudflare-api`, `cloudflare-docs`, and `cloudflare-browser`.**
+  Rotating the Cloudflare token means updating all 3 entries in one
+  sweep — use a single grep-and-replace (e.g. on the old token value)
+  before restarting the agent.
+
+**Cloudflare MCPs — Code Mode pattern (important):**
+- `cloudflare-api` does NOT expose individual API endpoints as tools.
+  It exposes exactly two: `search()` (find the right endpoint +
+  schema) and `execute()` (run JavaScript against the typed OpenAPI
+  spec in an isolated Worker sandbox). This is by design — a native
+  tool-per-endpoint MCP would cost >1M tokens to load.
+- When using `cloudflare-api`, write the `execute()` call as a small
+  script: search → read the returned schema → call the function →
+  return the result. Don't try to enumerate endpoints one by one.
+- `cloudflare-docs` is a complementary read-only knowledge source
+  (prose + examples), not a code execution surface. Prefer it for
+  "how do I configure X" questions, then drop down to
+  `cloudflare-api` for the actual call.
 
 **Overlap with the `vercel` CLI:** the Vercel MCP and the `vercel` CLI
 have ~80% overlapping capability. Prefer the MCP for tool-call style
@@ -250,6 +272,69 @@ Note: the "Vercel - Deployment has failed" check can stay
 stuck on the original failed deployment ID even after a
 successful `redeploy` — confirm with `vercel list --limit 1`
 (`● Ready` on the latest).
+
+### 13. The `cloudflare-api` / `cloudflare-docs` / `cloudflare-browser` MCPs documented in `<available_mcps>` are NOT loaded in this MiniMax Code session
+
+The MCP servers listed in the `<available_mcps>` section of this file are configured in the **OpenCode profile** at `C:\Users\FOTE\.config\opencode\opencode.jsonc` — a separate config from MiniMax Code's. The **MiniMax Code runtime** loads its own MCPs from `C:\Users\FOTE\.minimax\mcp\mcp.json`, which (verified 2026-08-24) only includes: `opencode`, `matrix`, `playwright`, `cu`, `trash`. **Cloudflare is not there.**
+
+**Diagnostic:** at the start of any session, run `mavis mcp list`. If it returns `{"servers": []}`, no MCPs are available regardless of what this file claims. `mavis mcp get <name>` will 404.
+
+**Fallback when a documented MCP is missing:** use direct HTTP calls (with the user's API token) or the corresponding CLI (`wrangler` for Cloudflare, `vercel` for Vercel, `gh` for GitHub, `supabase` for Supabase). Confirm tool availability with `Get-Command <tool>` before relying on it.
+
+### 14. Windows env var propagation: `setx` and `[Environment]::SetEnvironmentVariable(..., "User")` write to the registry, but do NOT update currently running processes
+
+Each fresh shell (PowerShell, bash, etc.) starts with a copy of the registry-sourced env vars. Setting via the registry does not affect the current process — only **future** processes that re-read the registry will see the new value.
+
+**For MiniMax Code's `bash` tool:** each `bash` invocation is a **new process**, so any env var set in one `bash` call is NOT visible in the next. Re-read from the registry inside every script that needs the var:
+
+```powershell
+$env:VAR = [Environment]::GetEnvironmentVariable("VAR", "User")
+```
+
+**For the user's interactive PowerShell:** also requires either reopening the window OR running the read-once line above. `setx VAR value` alone will not update the current `$env:VAR` — the next command still sees the old value.
+
+**Diagnostic signal:** wrangler/HTTP call returns 401/403 even though `wrangler whoami` worked in a previous shell. The token IS in the registry but not in the current process.
+
+### 15. Windows `EditEnvironmentVariables` GUI dialog (`rundll32.exe sysdm.cpl,EditEnvironmentVariables`) silently creates variables with empty values when paste buffer doesn't populate
+
+When pasting long tokens (e.g. a 50-char `cfat_xxx` API token) into the legacy env-var dialog, the dialog may accept the empty value if Ctrl+V silently failed, and the registry entry will exist with an **empty string** (not null, not absent). Pressing `OK` does not validate that the value is non-empty.
+
+**Symptom to grep for:** `Get-ItemProperty HKCU:\Environment -Name VAR` returns the var (so it exists), but `(Get-ItemProperty ...).VAR` is `""`. Auth fails with "invalid token" downstream.
+
+**Workaround (proven 2026-08-24):** use a file-based handoff:
+1. Paste the token into a plain `.txt` file (e.g. `C:\Users\FOTE\Downloads\cf-token.txt`).
+2. Run a PowerShell script that reads the file, strips CRLF/BOM/whitespace, sets the var via `[Environment]::SetEnvironmentVariable(..., "User")`, then **re-reads and asserts the value is non-empty** before declaring success.
+
+This is strictly more reliable than any UI-driven flow on Windows for long alphanumeric tokens.
+
+### 16. GitHub Releases on a private repo are private — no public download, no anonymous auto-update
+
+`provider: github` in `electron-builder.yml` uploads `.exe`, `latest.yml`, and `*.blockmap` to the GitHub Release **attached to the same repo as the source code**. If the source repo is private (e.g. `fotedev/Masar-x-next` is private), the release assets are also private:
+- `https://github.com/<owner>/<repo>/releases/download/v.../Setup.exe` returns 404 for anonymous users.
+- `electron-updater`'s `checkForUpdates()` cannot read the feed (no token, no access).
+- The marketing website can't link to a direct download.
+
+**Fix in this project:** split into two repos — the source code stays in `fotedev/Masar-x-next` (private); the release artifacts go to `fotedev/masarx-releases` (public). See "Release distribution" below.
+
+**Diagnostic signal:** the desktop app shows "Update check failed" or the website's "Download" link returns 404, even though the `release.yml` workflow published successfully. Check `gh repo view <repo> --json isPrivate` — if `true`, the release is private.
+
+## Release distribution
+
+The project ships desktop installers and mobile builds from a **separate public releases repo** so the main source repo can stay private while still enabling anonymous auto-updates and direct downloads from the website.
+
+| Repo | Visibility | Contents |
+|---|---|---|
+| `fotedev/Masar-x-next` | **Private** | All source code, GitHub Actions workflows, secrets (`GH_RELEASES_TOKEN`, `NEXT_PUBLIC_*`, etc.) |
+| `fotedev/masarx-releases` | **Public** | NSIS `.exe`, portable `.exe`, mobile `.apk` (when ready), `latest.yml`, `*.blockmap` |
+
+**Why this works:**
+- `electron-builder`'s `provider: github` accepts a `repo` that differs from the source repo — override in the `publish:` block.
+- `electron-updater` reads the latest release from the public repo — no GitHub auth needed for end users.
+- The website can link directly to `https://github.com/fotedev/masarx-releases/releases/latest`.
+
+**How the upload happens:** the `release.yml` workflow in the **private** source repo clones, builds, then pushes the artifacts to the **public** releases repo using a Personal Access Token (`GH_RELEASES_TOKEN`) stored as a secret in the private repo. The PAT needs `repo` scope on the **public** releases repo (Fine-grained token scoped to that one repo is preferred for least-privilege).
+
+**Adding a new platform:** the public releases repo can host additional artifacts (e.g. `.apk` for Android, `.dmg` for macOS, `.AppImage` for Linux) under the same release tag. `electron-updater` is platform-aware and ignores foreign-platform assets; mobile builds have their own update mechanism. Use tag prefixes like `desktop-v1.0.0` and `mobile-v1.0.0` if release cadences diverge — `electron-updater` uses `channel` and tag semver, so a single `v*` tag can still work as long as artifact paths don't collide.
 
 ## Workflows
 

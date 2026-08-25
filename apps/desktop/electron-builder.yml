@@ -272,19 +272,31 @@ linux:
   executableName: masarx
 
 # Auto-update channel (T023) — GitHub Releases feed.
-# `electron-updater` reads from the GitHub Releases API for the
-# `fotedev/Masar-x-next` repo. `releaseType: release` → stable channel,
-# `releaseType: prerelease` → beta channel. `GH_TOKEN` env var is
-# required at publish time; end users read the feed anonymously.
+# The release artifacts (NSIS .exe, portable .exe, latest.yml, blockmaps)
+# are published to a SEPARATE public repo, `fotedev/masarx-releases`,
+# while the source code stays in the private `fotedev/Masar-x-next` repo.
+# This split is required because GitHub Releases on a private repo are
+# also private — anonymous `electron-updater` would 404 on the
+# `latest.yml` fetch, and the website's download link would 404 too.
+# See AGENTS.md gotcha #16 + the "Release distribution" section for the
+# full rationale.
+#
+# `electron-updater` reads from the GitHub Releases API for
+# `fotedev/masarx-releases`. `releaseType: release` → stable channel,
+# `releaseType: prerelease` → beta channel. The PAT stored as the
+# `GH_RELEASES_TOKEN` repo secret in `fotedev/Masar-x-next` has `repo`
+# scope on `fotedev/masarx-releases` (Fine-grained token) so the
+# release workflow can write there. End users read the release feed
+# anonymously because `masarx-releases` is public.
 # publisherName on Windows must match the code-signing certificate's CN.
 publish:
   - provider: github
     owner: fotedev
-    repo: Masar-x-next
+    repo: masarx-releases
     releaseType: release
     channel: stable
   - provider: github
     owner: fotedev
-    repo: Masar-x-next
+    repo: masarx-releases
     releaseType: prerelease
     channel: beta
