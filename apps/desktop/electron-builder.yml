@@ -15,7 +15,22 @@
 appId: ai.masarx.app
 productName: Masar X
 copyright: Copyright © 2026 Masar X
-artifactName: "${productName}-${version}-${arch}.${ext}"
+# Artifact names are STATIC (no `${version}` suffix) so that GitHub's
+# `releases/latest/download/<name>` URL is a stable, predictable endpoint
+# across all releases. `latest.yml` references these exact names, so
+# `electron-updater` continues to work without modification.
+#
+# Why no version in the filename: GitHub's `/releases/latest/download/<name>`
+# is LITERAL — it does not do fuzzy matching. If the URL says
+# `Masar-X-Setup-x64.exe`, the file MUST be named exactly that. With
+# `electron-builder`'s default `${productName}-${version}-${arch}.${ext}`
+# the file would be `Masar-X-Setup-0.5.8-x64.exe` and the bare URL
+# `/Masar-X-Setup-x64.exe` would 404. The website's
+# `getLatestReleaseUrls()` helper in `apps/web/src/lib/github-releases.ts`
+# also handles the versioned-filename case (it queries the GitHub API for
+# the real asset names), so this naming is belt-and-suspenders forward
+# compatibility for v0.5.9+.
+artifactName: "${productName}-${arch}.${ext}"
 # Compression level for the installer's outer archive (NSIS uses 7z
 # for the .exe payload, electron-builder applies this setting there).
 # The default (`max`) uses solid LZMA, the slowest to extract on
@@ -182,7 +197,7 @@ win:
   # timeStampServer: http://timestamp.digicert.com
 
 nsis:
-  artifactName: "${productName}-Setup-${version}-${arch}.${ext}"
+  artifactName: "${productName}-Setup-${arch}.${ext}"
   # Display name in Add/Remove Programs. The full description
   # text (used in the EXE's Properties → Details tab on Windows
   # and the macOS Finder Get Info pane) comes from
@@ -213,7 +228,7 @@ nsis:
   include: build/installer.nsh
 
 portable:
-  artifactName: "${productName}-Portable-${version}-${arch}.${ext}"
+  artifactName: "${productName}-Portable-${arch}.${ext}"
 
 # ----- macOS target -----
 mac:

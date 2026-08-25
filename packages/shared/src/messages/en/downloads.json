@@ -14,7 +14,7 @@
     "windows": {
       "name": "Windows",
       "status": "Available now",
-      "version": "Version 0.5.8",
+      "version": "Version {version}",
       "size": "121 MB",
       "installerLabel": "Download installer (Setup)",
       "installerHint": "Requires installation — recommended for most users",
@@ -61,5 +61,9 @@
         "a": "Go to Windows Settings > Apps > Masar X > Uninstall. For the portable edition, just delete the file."
       }
     }
+  },
+  "error": {
+    "title": "Could not fetch the latest release",
+    "body": "Try again in a moment, or download directly from the releases page: {url}"
   }
 }
