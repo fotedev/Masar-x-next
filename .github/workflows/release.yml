@@ -2,7 +2,31 @@
 # Release Desktop App
 #
 # Tag-triggered pipeline that builds the Electron desktop installers
-# (NSIS + Portable) and attaches them to a GitHub Release.
+# (NSIS + Portable) and attaches them to a GitHub Release on the
+# SEPARATE PUBLIC RELEASES REPO `fotedev/masarx-releases`.
+#
+# Why a separate repo?
+# --------------------
+# The source code lives in `fotedev/Masar-x-next`, which is PRIVATE.
+# GitHub Releases on a private repo are also private, which means:
+#   - Anonymous `electron-updater` clients get 404 on `latest.yml`
+#     and can never check for updates.
+#   - The website's "Download" link returns 404 for unauthenticated
+#     users.
+# The fix: publish artifacts to `fotedev/masarx-releases` (PUBLIC)
+# while keeping the source private. `electron-updater` reads from the
+# public repo (anonymous, no auth needed), and the website can link
+# directly to release assets. See AGENTS.md gotcha #16 and the
+# "Release distribution" section for the full rationale.
+#
+# How the upload works
+# --------------------
+# The default `GITHUB_TOKEN` only has access to the source repo
+# (`Masar-x-next`), not the releases repo. So both the electron-builder
+# publish step AND the `softprops/action-gh-release` step reference
+# the `GH_RELEASES_TOKEN` secret — a Fine-grained PAT scoped to
+# `fotedev/masarx-releases` with `Contents: Read and write`. This PAT
+# is stored as a repo secret in `fotedev/Masar-x-next` (the source).
 #
 # Triggers
 # --------
@@ -27,22 +51,30 @@
 # 4. Runs `pnpm --filter desktop run build:all`, which invokes
 #    `electron-builder --win --x64`. The yml lists both `nsis` and
 #    `portable` under `win.target`, so both files land in
-#    `apps/desktop/out/` in one pass.
+#    `apps/desktop/out/` in one pass. GH_TOKEN is `GH_RELEASES_TOKEN`
+#    so electron-builder can read the previous release from the
+#    public releases repo to compute the differential blockmap.
 # 5. Publishes the `.exe` installers, the electron-updater
 #    `latest*.yml` metadata, and the `*.blockmap` files to a GitHub
-#    Release. The release is published (not a draft) and auto-generates
-#    notes from the merged PRs since the previous tag.
+#    Release on `fotedev/masarx-releases`. The release is published
+#    (not a draft) and auto-generates notes from the merged PRs since
+#    the previous tag.
 #
 # Permissions
 # -----------
 # `contents: write` is required for `softprops/action-gh-release` to
-# upload assets and create the release.
+# upload assets and create the release. The actual write happens
+# against `masarx-releases` via the `token:` input (GH_RELEASES_TOKEN);
+# the workflow's `GITHUB_TOKEN` is only used for the checkout step.
 #
 # Out of scope
 # ------------
 # - macOS (.dmg + .zip) and Linux (.AppImage, .deb, .rpm) targets are
 #   defined in `electron-builder.yml` but not built here. Add sibling
 #   jobs (`build-macos:`, `build-linux:`) when those targets are ready.
+#   The same `GH_RELEASES_TOKEN` PAT works for them — electron-builder
+#   automatically picks the right `*.yml` and `*.blockmap` for each
+#   platform based on the artifact names.
 # - Authenticode signing (Windows) and notarization (macOS) env vars
 #   are commented out in `electron-builder.yml`; add them as repo
 #   secrets and reference via `${{ secrets.* }}` when the EV cert
@@ -138,11 +170,16 @@ jobs:
         # both `nsis` and `portable` under `win.target`, so this single
         # invocation produces both files in `apps/desktop/out/`.
         # GH_TOKEN is required by electron-builder's `publish:` block
-        # to create the draft release metadata (.yml/.blockmap) that
-        # electron-updater consumes; the actual Release is created by
-        # the next step via `softprops/action-gh-release`.
+        # to read the previous release from `fotedev/masarx-releases`
+        # (used to compute the differential blockmap) and to write
+        # the `latest.yml` + `*.blockmap` metadata that
+        # electron-updater consumes. We use `GH_RELEASES_TOKEN` (a
+        # Fine-grained PAT scoped to `fotedev/masarx-releases`)
+        # instead of the default `GITHUB_TOKEN` because the default
+        # token only has access to the source repo `Masar-x-next`,
+        # not the public releases repo.
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
         run: pnpm --filter desktop run build:all
 
       - name: List build artifacts
@@ -159,6 +196,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          # The PAT (Fine-grained, scoped to `fotedev/masarx-releases`
+          # with `Contents: Read and write`) is required here because
+          # the default `GITHUB_TOKEN` only grants access to the
+          # source repo `fotedev/Masar-x-next`. Without `token:` the
+          # upload would 404/403. The PAT is stored as the
+          # `GH_RELEASES_TOKEN` repo secret in the source repo.
+          token: ${{ secrets.GH_RELEASES_TOKEN }}
           files: |
             apps/desktop/out/*.exe
             apps/desktop/out/latest*.yml
