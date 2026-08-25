@@ -13,8 +13,15 @@ import {
   Wifi,
   RefreshCw,
   AppWindow,
+  AlertTriangle,
 } from "lucide-react";
-import { DOWNLOAD_URLS, detectPlatform, type Platform } from "@/lib/github-releases";
+import {
+  detectPlatform,
+  formatBytes,
+  getLatestReleaseUrls,
+  type Platform,
+  type ReleaseUrls,
+} from "@/lib/github-releases";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -38,6 +45,20 @@ export default async function DownloadsPage({ params }: Props) {
   const hdrs = await headers();
   const platform: Platform = detectPlatform(hdrs.get("user-agent"));
 
+  // Fetch real release URLs from GitHub. Cached at the Next.js layer
+  // for 1h. If both strategies fail, show an error instead of broken
+  // links (we never want to serve a 404 to a real user).
+  let release: ReleaseUrls | null = null;
+  let fetchError: string | null = null;
+  try {
+    release = await getLatestReleaseUrls();
+  } catch (err) {
+    fetchError =
+      err instanceof Error
+        ? err.message
+        : "Unknown error fetching the latest release.";
+  }
+
   return (
     <div className="space-y-10 pb-12" dir="auto">
       {/* ───── Hero ───── */}
@@ -53,10 +74,9 @@ export default async function DownloadsPage({ params }: Props) {
           {t("hero.subtitle")}
         </p>
 
-        {/* Smart CTA — adapts copy to the visitor's platform */}
-        {platform === "windows" ? (
+        {release && platform === "windows" ? (
           <a
-            href={DOWNLOAD_URLS.windowsInstaller}
+            href={release.windowsInstaller}
             className="mt-6 inline-flex items-center gap-2 h-12 px-6 sm:px-8 rounded-lg bg-brand-blue text-white font-bold text-base hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-lg shadow-brand-blue/20"
           >
             <Download className="w-5 h-5" />
@@ -74,29 +94,52 @@ export default async function DownloadsPage({ params }: Props) {
 
       {/* ───── Platform grid ───── */}
       <section id="platforms" className="space-y-4 scroll-mt-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <WindowsCard
-            installerLabel={t("platforms.windows.installerLabel")}
-            installerHint={t("platforms.windows.installerHint")}
-            portableLabel={t("platforms.windows.portableLabel")}
-            portableHint={t("platforms.windows.portableHint")}
-            version={t("platforms.windows.version")}
-            size={t("platforms.windows.size")}
-            status={t("platforms.windows.status")}
-          />
-          <ComingSoonCard
-            icon={<Apple className="w-7 h-7" />}
-            name={t("platforms.macos.name")}
-            status={t("platforms.macos.status")}
-            cta={t("platforms.macos.notifyLabel")}
-          />
-          <ComingSoonCard
-            icon={<Smartphone className="w-7 h-7" />}
-            name={t("platforms.android.name")}
-            status={t("platforms.android.status")}
-            cta={t("platforms.android.notifyLabel")}
-          />
-        </div>
+        {fetchError ? (
+          <div className="modern-card p-6 sm:p-8 flex items-start gap-3 border-amber-300/60 dark:border-amber-500/40">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {t("error.title")}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {t("error.body", {
+                  url: "https://github.com/fotedev/masarx-releases/releases/latest",
+                })}
+              </p>
+            </div>
+          </div>
+        ) : release ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <WindowsCard
+              installerUrl={release.windowsInstaller}
+              portableUrl={release.windowsPortable}
+              installerSize={formatBytes(release.installerSizeBytes)}
+              portableSize={formatBytes(release.portableSizeBytes)}
+              versionLabel={t("platforms.windows.version", {
+                version: release.version,
+              })}
+              status={t("platforms.windows.status")}
+              installerLabel={t("platforms.windows.installerLabel")}
+              installerHint={t("platforms.windows.installerHint")}
+              portableLabel={t("platforms.windows.portableLabel")}
+              portableHint={t("platforms.windows.portableHint")}
+            />
+            <ComingSoonCard
+              icon={<Apple className="w-7 h-7" />}
+              name={t("platforms.macos.name")}
+              status={t("platforms.macos.status")}
+              cta={t("platforms.macos.notifyLabel")}
+            />
+            <ComingSoonCard
+              icon={<Smartphone className="w-7 h-7" />}
+              name={t("platforms.android.name")}
+              status={t("platforms.android.status")}
+              cta={t("platforms.android.notifyLabel")}
+            />
+          </div>
+        ) : null}
       </section>
 
       {/* ───── Why the desktop app? ───── */}
@@ -142,21 +185,27 @@ export default async function DownloadsPage({ params }: Props) {
 /* ───────────── Card components ───────────── */
 
 function WindowsCard({
+  installerUrl,
+  portableUrl,
+  installerSize,
+  portableSize,
+  versionLabel,
+  status,
   installerLabel,
   installerHint,
   portableLabel,
   portableHint,
-  version,
-  size,
-  status,
 }: {
+  installerUrl: string;
+  portableUrl: string;
+  installerSize: string;
+  portableSize: string;
+  versionLabel: string;
+  status: string;
   installerLabel: string;
   installerHint: string;
   portableLabel: string;
   portableHint: string;
-  version: string;
-  size: string;
-  status: string;
 }) {
   return (
     <div className="modern-card p-6 flex flex-col gap-4 relative overflow-hidden ring-1 ring-brand-blue/20">
@@ -172,14 +221,15 @@ function WindowsCard({
         <div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Windows</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {version} · {size}
+            {versionLabel}
+            {installerSize ? ` · ${installerSize}` : ""}
           </p>
         </div>
       </div>
 
       <div className="space-y-2.5">
         <a
-          href={DOWNLOAD_URLS.windowsInstaller}
+          href={installerUrl}
           className="group flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-brand-blue text-white flex items-center justify-center flex-shrink-0">
@@ -190,13 +240,14 @@ function WindowsCard({
               {installerLabel}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
+              {installerSize ? `${installerSize} · ` : ""}
               {installerHint}
             </div>
           </div>
         </a>
 
         <a
-          href={DOWNLOAD_URLS.windowsPortable}
+          href={portableUrl}
           className="group flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors"
         >
           <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center flex-shrink-0">
@@ -207,6 +258,7 @@ function WindowsCard({
               {portableLabel}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400">
+              {portableSize ? `${portableSize} · ` : ""}
               {portableHint}
             </div>
           </div>
