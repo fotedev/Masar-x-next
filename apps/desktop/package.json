@@ -1,6 +1,6 @@
 {
   "name": "desktop",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "author": "Masar X",
   "private": true,
   "type": "module",
@@ -15,7 +15,7 @@
     "build": "tsc -p tsconfig.build.json && electron-builder --win --x64 --publish never",
     "build:installer": "tsc -p tsconfig.build.json && electron-builder --win nsis --x64 --publish never",
     "build:portable": "tsc -p tsconfig.build.json && electron-builder --win portable --x64 --publish never",
-    "build:all": "tsc -p tsconfig.build.json && electron-builder --win --x64 --publish never",
+    "build:all": "tsc -p tsconfig.build.json && electron-builder --win --x64",
     "typecheck": "tsc --noEmit",
     "lint": "echo '[desktop] no ESLint config yet — scaffold only (T002).'",
     "test": "vitest run",

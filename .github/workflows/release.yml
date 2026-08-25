@@ -2,7 +2,8 @@
 # Release Desktop App
 #
 # Tag-triggered pipeline that builds the Electron desktop installers
-# (NSIS + Portable) and attaches them to a GitHub Release on the
+# (NSIS + Portable), generates electron-updater metadata (`latest.yml`,
+# `*.blockmap`), and publishes everything as a GitHub Release on the
 # SEPARATE PUBLIC RELEASES REPO `fotedev/masarx-releases`.
 #
 # Why a separate repo?
@@ -19,22 +20,42 @@
 # directly to release assets. See AGENTS.md gotcha #16 and the
 # "Release distribution" section for the full rationale.
 #
-# How the upload works
-# --------------------
-# The default `GITHUB_TOKEN` only has access to the source repo
-# (`Masar-x-next`), not the releases repo. So both the electron-builder
-# publish step AND the `softprops/action-gh-release` step reference
-# the `GH_RELEASES_TOKEN` secret — a Fine-grained PAT scoped to
-# `fotedev/masarx-releases` with `Contents: Read and write`. This PAT
-# is stored as a repo secret in `fotedev/Masar-x-next` (the source).
+# How the publish works (electron-builder does it all)
+# ----------------------------------------------------
+# The `apps/desktop/electron-builder.yml` `publish:` block targets
+# `fotedev/masarx-releases` (a public repo). The default
+# `GITHUB_TOKEN` only has access to the source repo
+# (`Masar-x-next`), so we override it with `GH_RELEASES_TOKEN` — a
+# Fine-grained PAT scoped to `fotedev/masarx-releases` with
+# `Contents: Read and write`. This PAT is stored as a repo secret in
+# `fotedev/Masar-x-next` (the source).
+#
+# The `build:all` script in `apps/desktop/package.json` invokes
+# `electron-builder --win --x64` WITHOUT `--publish never`, so the
+# default `onTagOrDraft` mode kicks in: on a tag, electron-builder
+# generates the `.exe`, the `latest.yml` / `*.blockmap` metadata,
+# AND publishes the GitHub Release on `masarx-releases` — all in
+# one step. No separate `softprops/action-gh-release` step needed.
+#
+# (Earlier versions of this workflow used `softprops/action-gh-release`
+# to do the publish. That had two problems: (a) `latest.yml` and
+# `*.blockmap` weren't being uploaded because `electron-builder
+# --publish never` was suppressing their generation, and (b) softprops
+# uploads to the current repo by default unless `repository:` is
+# passed explicitly, which sent releases to the wrong repo. Letting
+# electron-builder handle the whole flow removes both problems.)
 #
 # Triggers
 # --------
 # - Push a tag matching `v*` (e.g. `git tag v0.5.6 && git push origin v0.5.6`).
-#   The tag's version is what `electron-builder` reads via the GH_TOKEN
-#   flow (see the `publish:` block in `apps/desktop/electron-builder.yml`).
+#   The tag's version is what `electron-builder` reads from
+#   `apps/desktop/package.json` (it MUST be bumped before tagging —
+#   otherwise the release tag and the installer filename will diverge).
 # - Manual run via the Actions UI's "Run workflow" button — useful for
-#   smoke-testing the pipeline end-to-end without pushing a tag.
+#   smoke-testing the pipeline end-to-end without pushing a tag. Note
+#   that `onTagOrDraft` mode skips publish on non-tag runs, so a
+#   `workflow_dispatch` build will only produce `out/*.exe` locally
+#   and not publish.
 #
 # What it does
 # ------------
@@ -51,21 +72,23 @@
 # 4. Runs `pnpm --filter desktop run build:all`, which invokes
 #    `electron-builder --win --x64`. The yml lists both `nsis` and
 #    `portable` under `win.target`, so both files land in
-#    `apps/desktop/out/` in one pass. GH_TOKEN is `GH_RELEASES_TOKEN`
-#    so electron-builder can read the previous release from the
-#    public releases repo to compute the differential blockmap.
-# 5. Publishes the `.exe` installers, the electron-updater
-#    `latest*.yml` metadata, and the `*.blockmap` files to a GitHub
-#    Release on `fotedev/masarx-releases`. The release is published
-#    (not a draft) and auto-generates notes from the merged PRs since
-#    the previous tag.
+#    `apps/desktop/out/` in one pass. `GH_TOKEN` is
+#    `GH_RELEASES_TOKEN` so electron-builder can:
+#      - read the previous release from the public releases repo
+#        (to compute the differential blockmap)
+#      - generate the `latest.yml` + `*.blockmap` metadata that
+#        `electron-updater` consumes
+#      - create the GitHub Release on `fotedev/masarx-releases` and
+#        upload all assets
+# 5. Lists the build artifacts as a sanity check (fails fast if the
+#    build step silently produced no artifacts).
 #
 # Permissions
 # -----------
-# `contents: write` is required for `softprops/action-gh-release` to
-# upload assets and create the release. The actual write happens
-# against `masarx-releases` via the `token:` input (GH_RELEASES_TOKEN);
-# the workflow's `GITHUB_TOKEN` is only used for the checkout step.
+# `contents: write` is required for electron-builder to create the
+# release and upload assets. The actual write happens against
+# `masarx-releases` via the `GH_RELEASES_TOKEN` PAT; the workflow's
+# default `GITHUB_TOKEN` is only used for the checkout step.
 #
 # Out of scope
 # ------------
@@ -165,54 +188,36 @@ jobs:
           VERCEL_MCP_BYPASS_SECRET: ci-placeholder
         run: pnpm --filter web build
 
-      - name: Build Desktop installers (NSIS + Portable)
-        # `build:all` is `electron-builder --win --x64`. The yml lists
-        # both `nsis` and `portable` under `win.target`, so this single
-        # invocation produces both files in `apps/desktop/out/`.
-        # GH_TOKEN is required by electron-builder's `publish:` block
-        # to read the previous release from `fotedev/masarx-releases`
-        # (used to compute the differential blockmap) and to write
-        # the `latest.yml` + `*.blockmap` metadata that
-        # electron-updater consumes. We use `GH_RELEASES_TOKEN` (a
-        # Fine-grained PAT scoped to `fotedev/masarx-releases`)
-        # instead of the default `GITHUB_TOKEN` because the default
-        # token only has access to the source repo `Masar-x-next`,
-        # not the public releases repo.
+      - name: Build & Publish Desktop installers (NSIS + Portable)
+        # `build:all` is `tsc -p tsconfig.build.json && electron-builder
+        # --win --x64`. The yml lists both `nsis` and `portable` under
+        # `win.target`, so both files land in `apps/desktop/out/` in one
+        # pass. The script does NOT pass `--publish never`, so
+        # electron-builder uses its default `onTagOrDraft` mode:
+        # on a tag, it generates the `latest.yml` + `*.blockmap`
+        # metadata AND creates the GitHub Release on
+        # `fotedev/masarx-releases` (per the `publish:` block in
+        # `apps/desktop/electron-builder.yml`). On non-tag runs
+        # (e.g. `workflow_dispatch`), it just builds the .exe files
+        # and skips publish.
+        #
+        # GH_TOKEN is the `GH_RELEASES_TOKEN` PAT — a Fine-grained
+        # token scoped to `fotedev/masarx-releases` with
+        # `Contents: Read and write`. The default `GITHUB_TOKEN`
+        # only has access to the source repo `Masar-x-next`, so it
+        # CAN'T create releases on `masarx-releases`.
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
         run: pnpm --filter desktop run build:all
 
       - name: List build artifacts
-        # Sanity check before upload — fails fast if the build step
-        # silently produced no artifacts.
+        # Sanity check after build+publish — fails fast if the build
+        # step silently produced no artifacts (electron-builder would
+        # have errored out on missing outputs otherwise, but this
+        # surfaces exact file sizes in the run log).
         shell: pwsh
         run: |
           Get-ChildItem apps/desktop/out/*.exe, apps/desktop/out/latest*.yml, apps/desktop/out/*.blockmap `
             -ErrorAction SilentlyContinue |
             Select-Object Name, @{N='SizeMB';E={[math]::Round($_.Length/1MB, 2)}} |
             Format-Table -AutoSize
-
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          # The PAT (Fine-grained, scoped to `fotedev/masarx-releases`
-          # with `Contents: Read and write`) is required here because
-          # the default `GITHUB_TOKEN` only grants access to the
-          # source repo `fotedev/Masar-x-next`. Without `token:` the
-          # upload would 404/403. The PAT is stored as the
-          # `GH_RELEASES_TOKEN` repo secret in the source repo.
-          token: ${{ secrets.GH_RELEASES_TOKEN }}
-          files: |
-            apps/desktop/out/*.exe
-            apps/desktop/out/latest*.yml
-            apps/desktop/out/*.blockmap
-          # `fail_on_unmatched_files: false` (default) is what we want —
-          # the `*.yml` and `*.blockmap` files are only produced when
-          # electron-builder's publish flow runs with a real GH_TOKEN
-          # (which it does, see the previous step). If a future
-          # electron-builder version drops these, the action should
-          # still succeed with the .exe uploads.
-          draft: false
-          prerelease: false
-          generate_release_notes: true
