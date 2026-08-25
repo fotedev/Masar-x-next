@@ -290,13 +290,23 @@ linux:
 # anonymously because `masarx-releases` is public.
 # publisherName on Windows must match the code-signing certificate's CN.
 publish:
+  # Single publish entry for the stable channel. The previous config
+  # had a second `releaseType: prerelease` entry for betas — but
+  # electron-builder treated BOTH entries as active for the same tag,
+  # creating TWO releases with the same tag (one normal, one
+  # prerelease) and confusing the channel mapping (both got `beta.yml`
+  # instead of `latest.yml`).
+  #
+  # When we need to publish a beta, the proper pattern is:
+  #   1. Bump the version to e.g. 0.5.9-beta.1 in package.json
+  #   2. Tag as v0.5.9-beta.1
+  #   3. Re-add the `releaseType: prerelease` entry temporarily
+  #   4. electron-builder picks it up because the semver version
+  #      has a prerelease tag (matches the `prerelease` entry)
+  #
+  # For now, we only ship stable releases, so only the stable entry.
   - provider: github
     owner: fotedev
     repo: masarx-releases
     releaseType: release
     channel: stable
-  - provider: github
-    owner: fotedev
-    repo: masarx-releases
-    releaseType: prerelease
-    channel: beta
