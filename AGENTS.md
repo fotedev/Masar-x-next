@@ -318,6 +318,27 @@ This is strictly more reliable than any UI-driven flow on Windows for long alpha
 
 **Diagnostic signal:** the desktop app shows "Update check failed" or the website's "Download" link returns 404, even though the `release.yml` workflow published successfully. Check `gh repo view <repo> --json isPrivate` — if `true`, the release is private.
 
+### 17. `electron-builder` default `artifactName` includes the version — `/releases/latest/download/<name>` is literal, so a bare name 404s
+
+`electron-builder` defaults `artifactName` to `"${productName}-${version}-${arch}.${ext}"`, so the actual assets on GitHub Releases are e.g. `Masar-X-Setup-0.5.8-x64.exe` and `Masar-X-Portable-0.5.8-x64.exe`.
+
+GitHub's `/releases/latest/download/<name>` endpoint is **literal** — it does NOT do fuzzy matching or strip the version. A request for `.../Masar-X-Setup-x64.exe` 404s because the actual file is `Masar-X-Setup-0.5.8-x64.exe`. The version-pinned URL `.../download/v0.5.8/Masar-X-Setup-0.5.8-x64.exe` works (as copied from the GitHub releases page), but bare `/releases/latest/download/<bare-name>` does not.
+
+**Two layered defenses in this project:**
+
+1. **`electron-builder.yml` strips `${version}` from `artifactName`** (top-level, `nsis`, and `portable` blocks, all set to `"${productName}-${arch}.${ext}"` / `"${productName}-Setup-${arch}.${ext}"` / `"${productName}-Portable-${arch}.${ext}"`). From the next release (v0.5.9+) the file names are stable across versions, so `/releases/latest/download/Masar-X-Setup-x64.exe` always resolves.
+2. **The website's `getLatestReleaseUrls()` in `apps/web/src/lib/github-releases.ts` queries the GitHub Releases API** (`/repos/fotedev/masarx-releases/releases/latest`) and uses each asset's `browser_download_url` directly. Falls back to parsing `latest.yml` if the API is rate-limited. This is what makes the v0.5.8 download page work TODAY, even though v0.5.8's files still have the version suffix (the new artifactName config only takes effect from v0.5.9 onward).
+
+Caching: `next: { revalidate: 3600 }` on the fetch. Vercel's edge cache absorbs the 60/h unauthenticated API quota.
+
+**Why both layers?** The API call handles today's v0.5.8 (which still has versioned names). The artifactName change makes future releases' URLs stable AND cacheable. Either alone would work; together they cover every release ever made.
+
+**Diagnostic signal:** the user reports that "Download" buttons on the website 404, but the same URL works when copy-pasted from the GitHub releases page. Confirm by running:
+```powershell
+gh api repos/fotedev/masarx-releases/releases/latest --jq '.assets[].name'
+```
+If the names contain `-0.5.8-` (or any version) but your hardcoded URL says otherwise, that's the gotcha.
+
 ## Release distribution
 
 The project ships desktop installers and mobile builds from a **separate public releases repo** so the main source repo can stay private while still enabling anonymous auto-updates and direct downloads from the website.
