@@ -227,3 +227,36 @@ jobs:
         run: |
           gitleaks detect --no-git --source . --config .gitleaks.toml --redact --exit-code 1 \
             || (echo "::error::gitleaks detected secrets in built artifacts. See above for matches." && exit 1)
+
+  # ---------------------------------------------------------------------
+  # Docs lint
+  #
+  # Lints the first-party Markdown (README, CONTRIBUTING, SECURITY,
+  # CODE_OF_CONDUCT, CHANGELOG) with markdownlint-cli2 (config:
+  # `.markdownlint.jsonc` at the repo root) and verifies every internal
+  # (relative) link in those files resolves via
+  # `.github/scripts/check-doc-links.sh`.
+  #
+  # External URLs are intentionally NOT fetched — network checks are
+  # flaky in CI. Internal-only keeps this fast and deterministic.
+  #
+  # Not currently a required status check; promote it to required in
+  # the branch ruleset once it has run green for a while.
+  # ---------------------------------------------------------------------
+  docs-lint:
+    name: docs-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Lint Markdown
+        run: npx -y markdownlint-cli2 README.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md
+
+      - name: Check internal doc links resolve
+        run: bash .github/scripts/check-doc-links.sh

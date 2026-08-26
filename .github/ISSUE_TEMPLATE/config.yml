@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/fotedev/Masar-x-next/security/advisories/new
+    about: Report security vulnerabilities privately via GitHub vulnerability reporting — never as public issues. See SECURITY.md.
+  - name: Installer downloads and release questions
+    url: https://github.com/fotedev/masarx-releases/releases
+    about: Download installers and portable builds. This source repository does not host release artifacts.
