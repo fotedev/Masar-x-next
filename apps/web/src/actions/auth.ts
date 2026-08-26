@@ -110,10 +110,8 @@ export async function syncUserProfile() {
       userId: user.id,
     });
 
-    // DIAGNOSTIC MODE (hotfix/auth-sync-diag): expose real error message
-    // to identify root cause. Will be reverted once we know the underlying
-    // Supabase admin client / DB error.
-    const errorMessage = `Sync failed: ${message} (code: ${code ?? 'none'})`;
+    const isDev = process.env.NODE_ENV === 'development';
+    const errorMessage = isDev ? `Sync failed: ${message}` : 'Internal server error';
 
     return { success: false, error: errorMessage };
   }

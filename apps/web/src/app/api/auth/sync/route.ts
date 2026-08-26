@@ -34,10 +34,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error: 'Internal server error',
-        // DIAGNOSTIC MODE (hotfix/auth-sync-diag): always expose error.message
-        // to surface root cause in /api/auth/sync 500s. Will be reverted.
-        detail: error?.message ?? String(error),
-        code: (error as { code?: string })?.code,
+        detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
         timestamp: new Date().toISOString()
       },
       { status: 500 }
