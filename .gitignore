@@ -197,7 +197,6 @@ vizvibe.mmd
 .specify
 .windsurf
 backup
-/docs
 /context_output
 /.context
 /files.txt
@@ -229,3 +228,9 @@ apps/desktop/build/.icon-preview/
 # release/ dir. They are safe to delete manually once the new build
 # is verified.
 apps/desktop/release.__stale*/
+/masarx-remotion-ad
+/masarx-video-ad
+masarx-ad.html
+
+.vercel
+.env*
