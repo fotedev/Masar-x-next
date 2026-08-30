@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Masar X</string>
+    <string name="title_activity_main">Masar X</string>
+    <string name="package_name">com.masarx.app</string>
+    <string name="custom_url_scheme">com.masarx.app</string>
+</resources>

@@ -1,0 +1,9 @@
+# Wrapper-local ignores (extends the repo root .gitignore)
+node_modules/
+masarx-upload.jks
+.keystore-password
+keystore-details.txt
+sha256.txt
+assetlinks.json
+masarx-*-release.apk
+APK_SHA256SUMS.txt
