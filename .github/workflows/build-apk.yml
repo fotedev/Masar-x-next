@@ -1,0 +1,173 @@
+name: Build Android APK
+
+# Builds a signed release APK of the Masar X web app (Capacitor WebView
+# wrapper around https://masarx.vercel.app). Runs manually from the
+# apk-build branch so the default branch stays untouched.
+#
+# Signing:
+#   - If the repo secrets MASARX_KEYSTORE_B64 + MASARX_KEYSTORE_PASSWORD are
+#     set, the stored upload keystore is used (recommended for updates).
+#   - Otherwise a fresh keystore is generated for this run and delivered in
+#     the `masarx-signing` artifact. Reuse that keystore (upload it as the
+#     two secrets above) for every later build so installs upgrade in place.
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: "versionName shown to users (e.g. 0.5.6)"
+        required: false
+        default: "0.5.6"
+      versionCode:
+        description: "versionCode, must increase for in-place updates (e.g. 506)"
+        required: false
+        default: "506"
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    name: Build signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/android-wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/android-wrapper/package-lock.json
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Capacitor runtime (node_modules)
+        run: npm ci
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Resolve signing keystore
+        id: keystore
+        env:
+          MASARX_KEYSTORE_B64: ${{ secrets.MASARX_KEYSTORE_B64 }}
+          MASARX_KEYSTORE_PASSWORD: ${{ secrets.MASARX_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # Fail loudly on a partially configured signing setup — a silent
+          # fresh-keystore fallback would break in-place update continuity.
+          if [ -n "${MASARX_KEYSTORE_B64:-}${MASARX_KEYSTORE_PASSWORD:-}" ] && { [ -z "${MASARX_KEYSTORE_B64:-}" ] || [ -z "${MASARX_KEYSTORE_PASSWORD:-}" ]; }; then
+            echo "::error::Set both MASARX_KEYSTORE_B64 and MASARX_KEYSTORE_PASSWORD, or neither."
+            exit 1
+          fi
+          if [ -n "${MASARX_KEYSTORE_B64:-}" ] && [ -n "${MASARX_KEYSTORE_PASSWORD:-}" ]; then
+            echo "Using upload keystore from repository secrets."
+            printf '%s' "$MASARX_KEYSTORE_B64" | base64 -d > masarx-upload.jks
+            STORE_PASSWORD="$MASARX_KEYSTORE_PASSWORD"
+          else
+            echo "No signing secret configured - generating a fresh upload keystore."
+            STORE_PASSWORD="$(openssl rand -hex 16)"
+            keytool -genkeypair -v \
+              -keystore masarx-upload.jks \
+              -alias masarx \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$STORE_PASSWORD" -keypass "$STORE_PASSWORD" \
+              -dname "CN=Masar X, OU=Mobile, O=Masar X, C=US" \
+              > keystore-details.txt
+          fi
+          keytool -list -v -keystore masarx-upload.jks -alias masarx \
+            -storepass "$STORE_PASSWORD" >> keystore-details.txt
+          grep -m1 'SHA256:' keystore-details.txt | sed 's/.*SHA256: //' | tr -d ' \r\n' > sha256.txt
+          printf '%s' "$STORE_PASSWORD" > .keystore-password
+          echo "fingerprint: $(cat sha256.txt)"
+
+      - name: Apply version inputs
+        env:
+          VERSION_NAME: ${{ inputs.versionName }}
+          VERSION_CODE: ${{ inputs.versionCode }}
+        run: |
+          VERSION_NAME="${VERSION_NAME:-0.5.6}"
+          VERSION_CODE="${VERSION_CODE:-506}"
+          [[ "$VERSION_CODE" =~ ^[0-9]{1,6}$ ]] || { echo "invalid versionCode: $VERSION_CODE"; exit 1; }
+          [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid versionName: $VERSION_NAME"; exit 1; }
+          sed -i "s/versionCode .*/versionCode ${VERSION_CODE}/" android/app/build.gradle
+          sed -i "s/versionName .*/versionName \"${VERSION_NAME}\"/" android/app/build.gradle
+          grep -nE "version(Code|Name)" android/app/build.gradle
+
+      - name: Build release APK
+        working-directory: apps/android-wrapper/android
+        env:
+          # Optional: only needed if an external keystore uses a different key password.
+          MASARX_KEY_PASSWORD_SECRET: ${{ secrets.MASARX_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          export MASARX_KEYSTORE="$GITHUB_WORKSPACE/apps/android-wrapper/masarx-upload.jks"
+          export MASARX_STORE_PASSWORD="$(cat ../.keystore-password)"
+          export MASARX_KEY_PASSWORD="${MASARX_KEY_PASSWORD_SECRET:-$MASARX_STORE_PASSWORD}"
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Collect artifacts
+        env:
+          VERSION_NAME: ${{ inputs.versionName }}
+          VERSION_CODE: ${{ inputs.versionCode }}
+        run: |
+          set -euo pipefail
+          VERSION_NAME="${VERSION_NAME:-0.5.6}"
+          VERSION_CODE="${VERSION_CODE:-506}"
+          [[ "$VERSION_CODE" =~ ^[0-9]{1,6}$ ]] || { echo "invalid versionCode: $VERSION_CODE"; exit 1; }
+          [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid versionName: $VERSION_NAME"; exit 1; }
+          FINGERPRINT="$(cat sha256.txt)"
+          cp android/app/build/outputs/apk/release/app-release.apk "masarx-${VERSION_NAME}-release.apk"
+          sha256sum "masarx-${VERSION_NAME}-release.apk" | tee APK_SHA256SUMS.txt
+          cat > assetlinks.json <<EOF
+          [{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+              "namespace": "android_app",
+              "package_name": "com.masarx.app",
+              "sha256_cert_fingerprints": ["${FINGERPRINT}"]
+            }
+          }]
+          EOF
+          {
+            echo "## Masar X APK build"
+            echo ""
+            echo "- versionName: \`${VERSION_NAME}\`"
+            echo "- versionCode: \`${VERSION_CODE}\`"
+            echo "- package: \`com.masarx.app\`"
+            echo "- wraps: https://masarx.vercel.app"
+            echo "- SHA256: \`$(cut -d' ' -f1 APK_SHA256SUMS.txt)\`"
+            echo "- cert SHA256 fingerprint: \`${FINGERPRINT}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: masarx-apk
+          path: |
+            apps/android-wrapper/masarx-*-release.apk
+            apps/android-wrapper/APK_SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Upload signing material
+        uses: actions/upload-artifact@v4
+        with:
+          name: masarx-signing
+          retention-days: 30
+          path: |
+            apps/android-wrapper/masarx-upload.jks
+            apps/android-wrapper/.keystore-password
+            apps/android-wrapper/sha256.txt
+            apps/android-wrapper/assetlinks.json
+          if-no-files-found: error

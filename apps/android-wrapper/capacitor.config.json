@@ -1,0 +1,14 @@
+{
+  "appId": "com.masarx.app",
+  "appName": "Masar X",
+  "webDir": "www",
+  "version": "0.5.6",
+  "server": {
+    "url": "https://masarx.vercel.app",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#ffffff"
+  }
+}

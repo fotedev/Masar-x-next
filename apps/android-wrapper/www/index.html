@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Masar X</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #ffffff; }
+    body {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+      color: #1f2937; gap: 16px; padding: 24px; text-align: center;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #2563eb;
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 20px; margin: 0; }
+    p { margin: 0; color: #6b7280; font-size: 14px; max-width: 320px; line-height: 1.6; }
+    button {
+      margin-top: 8px; padding: 10px 22px; border: 0; border-radius: 10px;
+      background: #2563eb; color: #fff; font-size: 15px; cursor: pointer;
+    }
+    button:active { opacity: 0.85; }
+    #error { display: none; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>Masar X</h1>
+    <p>جارٍ الاتصال بالخدمة…</p>
+  </div>
+  <div id="error">
+    <h1>لا يوجد اتصال بالإنترنت</h1>
+    <p>تأكد من اتصالك بالشبكة، ثم أعد المحاولة. سيتم تحميل تطبيق Masar X تلقائيًا عند عودة الاتصال.</p>
+    <button onclick="retry()">إعادة المحاولة</button>
+  </div>
+  <script>
+    // Offline / first-load fallback. The real app is served from
+    // https://masarx.vercel.app (Capacitor server.url). If the WebView
+    // lands here (no network or server unreachable on first paint),
+    // keep polling until connectivity returns, then reload into the app.
+    var retryCount = 0;
+    function check() {
+      fetch("https://masarx.vercel.app/favicon.ico", { method: "HEAD", cache: "no-store" })
+        .then(function (r) {
+          if (r.ok) { window.location.replace("https://masarx.vercel.app"); }
+        })
+        .catch(function () { /* still offline */ });
+    }
+    function retry() { retryCount = 0; check(); }
+    setInterval(function () { retryCount++; if (retryCount < 120) check(); }, 5000);
+    setTimeout(function () {
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("error").style.display = "flex";
+      var body = document.querySelector("body");
+      body.style.display = "flex";
+    }, 6000);
+  </script>
+</body>
+</html>
