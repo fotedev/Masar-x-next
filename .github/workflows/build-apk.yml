@@ -22,6 +22,14 @@ on:
         description: "versionCode, must increase for in-place updates (e.g. 506)"
         required: false
         default: "506"
+  # Push trigger works while this workflow lives only on apk-build
+  # (workflow_dispatch becomes available after merging to the default branch).
+  push:
+    branches:
+      - apk-build
+    paths:
+      - ".github/workflows/build-apk.yml"
+      - "apps/android-wrapper/**"
 
 permissions:
   contents: read
