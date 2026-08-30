@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 
 import { supabase } from "@/lib/supabase";
 import { palette, Card, EmptyState, ErrorState, ListSkeleton } from "@/components/bits";
@@ -11,6 +11,7 @@ type NewsItem = {
   body?: string | null;
   content?: string | null;
   description?: string | null;
+  type?: string | null;
   created_at?: string | null;
   is_active?: boolean | null;
 };
@@ -39,21 +40,22 @@ export default function NewsScreen() {
     },
   });
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await query.refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <FlatList
       style={styles.flex}
       contentContainerStyle={styles.list}
       data={query.data ?? []}
       keyExtractor={(item, index) => String(item.id ?? index)}
-      refreshing={refreshing}
-      onRefresh={async () => {
-        setRefreshing(true);
-        try {
-          await query.refetch();
-        } finally {
-          setRefreshing(false);
-        }
-      }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#2563eb"]} tintColor="#2563eb" />}
       renderItem={({ item }) => {
         const body = item.body ?? item.content ?? item.description ?? "";
         return (
@@ -62,13 +64,18 @@ export default function NewsScreen() {
               <Text style={styles.title} numberOfLines={2}>
                 {item.title ?? "إعلان"}
               </Text>
-              {item.created_at ? <Text style={styles.date}>{formatDate(item.created_at)}</Text> : null}
+              {item.type ? (
+                <View style={styles.typeBadge}>
+                  <Text style={styles.typeText}>{item.type}</Text>
+                </View>
+              ) : null}
             </View>
             {body ? (
               <Text style={styles.body} numberOfLines={6}>
                 {body}
               </Text>
             ) : null}
+            {item.created_at ? <Text style={styles.date}>{formatDate(item.created_at)}</Text> : null}
           </Card>
         );
       }}
@@ -89,6 +96,13 @@ const styles = StyleSheet.create({
   list: { padding: 16, paddingBottom: 24 },
   headRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
   title: { flex: 1, fontSize: 16, fontWeight: "700", color: palette.text },
+  typeBadge: {
+    backgroundColor: "#dbeafe",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  typeText: { color: palette.primaryDark, fontSize: 11, fontWeight: "700" },
   date: { color: palette.textMuted, fontSize: 12 },
   body: { color: palette.text, fontSize: 14, lineHeight: 22, marginTop: 8 },
 });

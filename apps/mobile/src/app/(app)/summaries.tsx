@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { supabase } from "@/lib/supabase";
 import { palette, Card, EmptyState, ErrorState, ListSkeleton } from "@/components/bits";
@@ -16,17 +17,9 @@ type Summary = {
   description?: string | null;
 };
 
-function formatDate(iso?: string | null) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
-  } catch {
-    return "";
-  }
-}
-
 export default function SummariesScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
   const query = useQuery({
     queryKey: ["summaries"],
     queryFn: async () => {
@@ -41,56 +34,67 @@ export default function SummariesScreen() {
     },
   });
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await query.refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const rows = query.data ?? [];
+
   return (
-    <FlatList
-      style={styles.flex}
+    <ScrollView
+      className="flex-1 bg-slate-50"
       contentContainerStyle={styles.list}
-      data={query.data ?? []}
-      keyExtractor={(item, index) => String(item.id ?? index)}
-      refreshing={refreshing}
-      onRefresh={async () => {
-        setRefreshing(true);
-        try {
-          await query.refetch();
-        } finally {
-          setRefreshing(false);
-        }
-      }}
-      renderItem={({ item }) => (
-        <Card>
-          <View style={styles.headRow}>
-            <Text style={styles.title} numberOfLines={2}>
-              {item.title ?? "ملخص"}
-            </Text>
-            {typeof item.avg_rating === "number" ? (
-              <View style={styles.ratingBadge}>
-                <Text style={styles.ratingText}>★ {item.avg_rating.toFixed(1)}</Text>
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#2563eb"]} tintColor="#2563eb" />}
+    >
+      {query.isError ? (
+        <ErrorState message="تعذّر تحميل الملخصات" onRetry={() => query.refetch()} />
+      ) : query.isLoading ? (
+        <ListSkeleton rows={5} />
+      ) : rows.length === 0 ? (
+        <EmptyState title="لا توجد ملخصات بعد" />
+      ) : (
+        rows.map((item) => (
+          <Card key={String(item.id)}>
+            <Pressable
+              onPress={() => router.push(`/(app)/summaries/${item.id}`)}
+              hitSlop={4}
+              android_ripple={{ color: "#e5edff" }}
+              accessibilityRole="button"
+              accessibilityLabel={item.title ?? "ملخص"}
+            >
+              <View style={styles.headRow}>
+                <Text style={styles.title} numberOfLines={2}>
+                  {item.title ?? "ملخص"}
+                </Text>
+                {typeof item.avg_rating === "number" ? (
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>★ {item.avg_rating.toFixed(1)}</Text>
+                  </View>
+                ) : null}
               </View>
-            ) : null}
-          </View>
-          {item.subject_name ? <Text style={styles.subject}>{item.subject_name}</Text> : null}
-          {item.description ? (
-            <Text style={styles.description} numberOfLines={2}>
-              {item.description}
-            </Text>
-          ) : null}
-          {item.created_at ? <Text style={styles.date}>{formatDate(item.created_at)}</Text> : null}
-        </Card>
+              {item.subject_name ? <Text style={styles.subject}>{item.subject_name}</Text> : null}
+              {item.description ? (
+                <Text style={styles.description} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              ) : null}
+            </Pressable>
+          </Card>
+        ))
       )}
-      ListHeaderComponent={
-        query.isError ? (
-          <ErrorState message="تعذّر تحميل الملخصات" onRetry={() => query.refetch()} />
-        ) : !query.isLoading && (query.data ?? []).length === 0 ? (
-          <EmptyState title="لا توجد ملخصات بعد" />
-        ) : null
-      }
-      ListEmptyComponent={query.isLoading ? <ListSkeleton rows={5} /> : null}
-    />
+      {!query.isError && !query.isLoading && rows.length > 0 ? (
+        <Text style={styles.footer}>اضغط على أي ملخص لعرضه كاملًا وتحميله</Text>
+      ) : null}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: palette.bg },
   list: { padding: 16, paddingBottom: 24 },
   headRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
   title: { flex: 1, fontSize: 16, fontWeight: "700", color: palette.text },
@@ -103,5 +107,5 @@ const styles = StyleSheet.create({
   ratingText: { color: "#92400e", fontSize: 12, fontWeight: "700" },
   subject: { color: palette.primaryDark, fontSize: 13, marginTop: 4 },
   description: { color: palette.text, fontSize: 13, lineHeight: 20, marginTop: 8 },
-  date: { color: palette.textMuted, fontSize: 12, marginTop: 8 },
+  footer: { color: palette.textMuted, fontSize: 12, textAlign: "center", marginTop: 4 },
 });

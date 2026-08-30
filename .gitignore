@@ -229,3 +229,6 @@ apps/desktop/build/.icon-preview/
 # release/ dir. They are safe to delete manually once the new build
 # is verified.
 apps/desktop/release.__stale*/
+# stray local artifact downloads
+masarx-native-apk/
+*.apk

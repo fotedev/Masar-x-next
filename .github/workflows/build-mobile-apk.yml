@@ -109,14 +109,52 @@ jobs:
         working-directory: apps/mobile
         run: |
           set -euo pipefail
-          cp android/app/build/outputs/apk/release/app-release.apk masarx-1.0.0-native-release.apk
-          sha256sum masarx-1.0.0-native-release.apk | tee NATIVE_APK_SHA256SUMS.txt
+          VERSION=$(node -e "console.log(require('./app.json').expo.version)")
+          cp android/app/build/outputs/apk/release/app-release.apk "masarx-$VERSION-native-release.apk"
+          sha256sum "masarx-$VERSION-native-release.apk" | tee NATIVE_APK_SHA256SUMS.txt
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: masarx-native-apk
           path: |
-            apps/mobile/masarx-1.0.0-native-release.apk
+            apps/mobile/masarx-*-native-release.apk
             apps/mobile/NATIVE_APK_SHA256SUMS.txt
           if-no-files-found: error
+
+      - name: Publish APK to fotedev/masarx-releases
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${VERSION:?version missing}"
+          TAG="v$VERSION"
+          ASSET="Masar-X-v$VERSION.apk"
+          cp "masarx-$VERSION-native-release.apk" "$ASSET"
+          NOTES=$(cat <<EOF
+          ## Masar X Mobile $TAG (Android)
+
+          التطبيق الأصلي لمنصة Masar X — Android 6.0+.
+
+          ### ما الجديد في $TAG
+          - المساعد الذكي زين داخل التطبيق (محادثة مباشرة)
+          - إنشاء حساب جديد من داخل التطبيق
+          - تحسينات أزرار ولمس وشاشة رئيسية جديدة
+
+          ### التثبيت
+          1. حمّل ملف **$ASSET** بالأسفل.
+          2. افتح الملف على هاتفك واسمح بالتثبيت من مصادر غير معروفة عند الطلب.
+          3. سجّل الدخول بنفس حساب Masar X.
+
+          SHA-256: $(sha256sum "$ASSET" | cut -d' ' -f1)
+          EOF
+          )
+          if gh release view "$TAG" --repo fotedev/masarx-releases > /dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --repo fotedev/masarx-releases --clobber
+            gh release edit "$TAG" --repo fotedev/masarx-releases --notes "$NOTES"
+          else
+            gh release create "$TAG" "$ASSET" --repo fotedev/masarx-releases \
+              --title "Masar X Mobile $TAG" --notes "$NOTES"
+          fi
+          echo "- Published: https://github.com/fotedev/masarx-releases/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
