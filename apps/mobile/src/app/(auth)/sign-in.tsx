@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useAuth } from "@/lib/auth";
 import { palette, Card, Field, Notice, PrimaryButton } from "@/components/bits";
 
@@ -87,9 +87,15 @@ export default function SignInScreen() {
 
           <PrimaryButton label="دخول" onPress={onSubmit} disabled={!canSubmit} loading={submitting} />
 
-          <Pressable onPress={onForgot} style={styles.link} disabled={resetting}>
+          <Pressable onPress={onForgot} style={styles.link} disabled={resetting} hitSlop={8}>
             <Text style={styles.linkText}>نسيت كلمة المرور؟</Text>
           </Pressable>
+
+          <Link href="/(auth)/signup" asChild>
+            <Pressable style={styles.link} hitSlop={8}>
+              <Text style={[styles.linkText, { fontWeight: "700" }]}>ليس لديك حساب؟ إنشاء حساب جديد</Text>
+            </Pressable>
+          </Link>
         </Card>
 
         <Card style={styles.signupCard}>
