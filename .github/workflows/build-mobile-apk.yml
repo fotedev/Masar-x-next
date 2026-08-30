@@ -46,7 +46,7 @@ jobs:
 
       - name: Install JS dependencies
         working-directory: apps/mobile
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Resolve signing keystore
         env:
