@@ -96,7 +96,7 @@ jobs:
           keytool -list -v -keystore masarx-upload.jks -alias masarx \
             -storepass "$STORE_PASSWORD" >> keystore-details.txt
           grep -m1 'SHA256:' keystore-details.txt | sed 's/.*SHA256: //' | tr -d ' \r\n' > sha256.txt
-          printf '%s' "$STORE_PASSWORD" > .keystore-password
+          printf '%s' "$STORE_PASSWORD" > keystore-password.txt
           echo "fingerprint: $(cat sha256.txt)"
 
       - name: Apply version inputs
@@ -120,7 +120,7 @@ jobs:
         run: |
           set -euo pipefail
           export MASARX_KEYSTORE="$GITHUB_WORKSPACE/apps/android-wrapper/masarx-upload.jks"
-          export MASARX_STORE_PASSWORD="$(cat ../.keystore-password)"
+          export MASARX_STORE_PASSWORD="$(cat ../keystore-password.txt)"
           export MASARX_KEY_PASSWORD="${MASARX_KEY_PASSWORD_SECRET:-$MASARX_STORE_PASSWORD}"
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
@@ -173,9 +173,10 @@ jobs:
         with:
           name: masarx-signing
           retention-days: 30
+          include-hidden-files: true
           path: |
             apps/android-wrapper/masarx-upload.jks
-            apps/android-wrapper/.keystore-password
+            apps/android-wrapper/keystore-password.txt
             apps/android-wrapper/sha256.txt
             apps/android-wrapper/assetlinks.json
           if-no-files-found: error
