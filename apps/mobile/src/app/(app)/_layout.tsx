@@ -69,6 +69,13 @@ export default function AppTabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="zane"
+          options={{
+            title: "المساعد",
+            tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="news"
           options={{
             title: "الأخبار",
