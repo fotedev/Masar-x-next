@@ -1,56 +1,55 @@
-# Welcome to your Expo app 👋
+# Masar X Mobile (Expo / React Native)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+التطبيق الأصلي لمنصة **Masar X** — Android (iOS لاحقًا). يعرض المواد والملخصات والأخبار والاختبارات والمساعد الذكي زين مباشرة من حساب Supabase الخاص بك، مع تحديثات مباشرة وتخزين محلي للعمل دون إنترنت.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Quick start
 
 ```bash
-npm run reset-project
+cd apps/mobile
+npm install
+npx expo start          # dev server (Expo Go / device)
+npx expo export --platform android   # verify JS bundle
+npx expo prebuild -p android --no-install   # regenerate android/ (CNG)
+cd android && ./gradlew assembleRelease     # signed release APK (CI env vars required)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Node 22**, **JDK 21**, Android SDK (platform 36) for local gradle builds — or just push to the `apk-build` branch and let GitHub Actions build + publish.
+- CI workflow: `.github/workflows/build-mobile-apk.yml` — builds, verifies Hermes/RN presence, uploads the artifact AND publishes `Masar-X-v{VERSION}.apk` to [fotedev/masarx-releases](https://github.com/fotedev/masarx-releases/releases).
 
-### Other setup steps
+## Environment
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Create `apps/mobile/.env.local` (gitignored):
 
-## Learn more
+```
+EXPO_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Values already exist as repo secrets `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon key is public by design — it ships in the web bundle). CI injects them at build time; Metro inlines `EXPO_PUBLIC_*` constants.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Architecture
 
-## Join the community
+| Piece | Where | What |
+| --- | --- | --- |
+| Routing | `src/app/` (expo-router) | `(auth)/sign-in`, `(auth)/signup`, `(app)/` tabs: home, subjects (+`[name]` detail), summaries (+`[id]`), quizzes, quiz-play/`[quizId]`, zane, news, notifications, profile |
+| Auth | `src/lib/auth.tsx` | Supabase session via `onAuthStateChange`; router-level gate; profile fetch |
+| Session storage | `src/lib/supabase.ts` | Chunked SecureStore adapter (≤2048 B/key), fail-fast env check |
+| Data layer | `src/lib/api.ts` | Typed queries mirroring the web app exactly (columns/order/filters) |
+| AI (Zane) | `src/lib/zane.ts` | Contract-compliant Edge Function call with user JWT; types from `@masarx-shared/ai` |
+| Live updates | `src/lib/realtime.ts` | Supabase Realtime `postgres_changes` channels → TanStack invalidation |
+| Offline | `src/lib/cache.ts` | Query cache persisted to AsyncStorage (7 days) via `PersistQueryClientProvider` |
+| Shared package | `tsconfig.json` paths | `@masarx-shared/*` → `../../packages/shared/src/*` (types: database rows + AI contract) |
+| Styling | NativeWind 4 (Tailwind) | `babel.config.js`, `metro.config.js`, `tailwind.config.js`, `global.css`; reading-first, system-font, zero-decoration |
 
-Join our community of developers creating universal apps.
+## Versioning
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `app.json` → `expo.version` (user-visible) + `expo.android.versionCode` (must increase per release; current 1.2.0 / 602).
+- Keep `android/app/build.gradle` `versionCode`/`versionName` in sync (regenerated by `expo prebuild`).
+- Signing: shared upload keystore via repo secrets `MASARX_KEYSTORE_B64` + `MASARX_KEYSTORE_PASSWORD` (release builds fail hard without them).
+
+## Known limitations
+
+- First launch may render LTR-ish until RTL applies after one restart (`I18nManager.forceRTL` quirk).
+- Google OAuth not wired (email+password only) — Google rejects embedded WebView OAuth; needs `@react-native-google-signin`.
+- Password-reset completes on the web (email link lands there).
+- Deferred with backend untouched: courses detail/enrollment, TRW section, notifications authoring, admin/instructor dashboards, media uploads, quiz-attempts history screen. See `PARITY-MATRIX.md` for the full traceability.

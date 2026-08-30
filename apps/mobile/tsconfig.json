@@ -8,6 +8,9 @@
       ],
       "@/assets/*": [
         "./assets/*"
+      ],
+      "@masarx-shared/*": [
+        "C:/programming/WEB_Development/projects/masarx_next/packages/shared/src/*"
       ]
     }
   },
@@ -15,6 +18,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ]
 }

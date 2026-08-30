@@ -1,22 +1,11 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { TextInputProps } from "react-native";
 
-export const palette = {
-  bg: "#f8fafc",
-  surface: "#ffffff",
-  border: "#e2e8f0",
-  text: "#0f172a",
-  textMuted: "#64748b",
-  primary: "#2563eb",
-  primaryDark: "#1d4ed8",
-  danger: "#dc2626",
-  warningBg: "#fff7ed",
-  warningText: "#9a3412",
-  star: "#f59e0b",
-};
+// NativeWind (Tailwind) primitives shared by every screen.
+// Reading-first design: zero decoration, system font, clear hierarchy.
 
-export function Card({ children, style }: { children: React.ReactNode; style?: object }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function Card({ children, style, className }: { children: React.ReactNode; style?: object; className?: string }) {
+  return <View className={`rounded-xl border border-slate-200 bg-white p-4 mb-3 ${className ?? ""}`} style={style}>{children}</View>;
 }
 
 export function PrimaryButton({
@@ -32,22 +21,17 @@ export function PrimaryButton({
   loading?: boolean;
   variant?: "primary" | "danger" | "ghost";
 }) {
-  const bg =
-    variant === "danger" ? palette.danger : variant === "ghost" ? "transparent" : palette.primary;
-  const fg = variant === "ghost" ? palette.textMuted : "#ffffff";
+  const bg = variant === "danger" ? "bg-red-600" : variant === "ghost" ? "bg-transparent" : "bg-blue-600";
+  const fg = variant === "ghost" ? "text-slate-500" : "text-white";
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: bg },
-        variant === "ghost" && styles.buttonGhost,
-        pressed && styles.buttonPressed,
-        (disabled || loading) && styles.buttonDisabled,
-      ]}
+      className={`min-h-[48px] items-center justify-center rounded-xl px-4 active:opacity-85 ${bg} ${
+        variant === "ghost" ? "border border-slate-200" : ""
+      } ${(disabled || loading) ? "opacity-50" : ""}`}
     >
-      {loading ? <ActivityIndicator color={fg} /> : <Text style={[styles.buttonLabel, { color: fg }]}>{label}</Text>}
+      {loading ? <ActivityIndicator color={fg === "text-white" ? "#ffffff" : "#64748b"} /> : <Text className={`text-base font-semibold ${fg}`}>{label}</Text>}
     </Pressable>
   );
 }
@@ -70,51 +54,50 @@ export function Field({
   autoComplete?: TextInputProps["autoComplete"];
 }) {
   return (
-    <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View className="mb-3.5">
+      <Text className="mb-1.5 text-sm text-slate-500">{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         secureTextEntry={secure}
         keyboardType={keyboard}
         placeholder={placeholder}
-        placeholderTextColor={palette.textMuted}
+        placeholderTextColor="#94a3b8"
         autoComplete={autoComplete}
         autoCapitalize="none"
         autoCorrect={false}
-        style={styles.fieldInput}
+        className="min-h-[48px] rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-base text-slate-900"
       />
     </View>
   );
 }
 
 export function Notice({ kind, text }: { kind: "error" | "info" | "warn"; text: string }) {
-  const bg = kind === "error" ? "#fef2f2" : kind === "warn" ? palette.warningBg : "#eff6ff";
-  const color =
-    kind === "error" ? palette.danger : kind === "warn" ? palette.warningText : palette.primaryDark;
+  const bg = kind === "error" ? "bg-red-50" : kind === "warn" ? "bg-orange-50" : "bg-blue-50";
+  const color = kind === "error" ? "text-red-600" : kind === "warn" ? "text-orange-800" : "text-blue-800";
   return (
-    <View style={[styles.notice, { backgroundColor: bg }]}>
-      <Text style={[styles.noticeText, { color }]}>{text}</Text>
+    <View className={`mb-3 rounded-xl p-3 ${bg}`}>
+      <Text className={`text-sm leading-5 ${color}`}>{text}</Text>
     </View>
   );
 }
 
 export function EmptyState({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <View style={styles.center}>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      {subtitle ? <Text style={styles.emptySubtitle}>{subtitle}</Text> : null}
+    <View className="items-center p-6">
+      <Text className="text-center text-base font-semibold text-slate-900">{title}</Text>
+      {subtitle ? <Text className="mt-1.5 text-center text-sm text-slate-500">{subtitle}</Text> : null}
     </View>
   );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <View style={styles.center}>
-      <Text style={[styles.emptyTitle, { color: palette.danger }]}>{message}</Text>
+    <View className="items-center p-6">
+      <Text className="text-center text-base font-semibold text-red-600">{message}</Text>
       {onRetry ? (
-        <Pressable onPress={onRetry} style={styles.retryLink}>
-          <Text style={{ color: palette.primary }}>إعادة المحاولة</Text>
+        <Pressable onPress={onRetry} className="mt-3 p-2" hitSlop={8}>
+          <Text className="text-blue-600">إعادة المحاولة</Text>
         </Pressable>
       ) : null}
     </View>
@@ -125,71 +108,37 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <View>
       {Array.from({ length: rows }, (_, i) => (
-        <View key={i} style={styles.skeletonRow}>
-          <View style={[styles.skeletonBar, { width: "70%" }]} />
-          <View style={[styles.skeletonBar, { width: "40%", height: 12 }]} />
+        <View key={i} className="mb-3 rounded-xl bg-white p-4">
+          <View className="mb-2 h-4 w-2/3 rounded-lg bg-slate-200" />
+          <View className="h-3 w-2/5 rounded-lg bg-slate-200" />
         </View>
       ))}
-      <ActivityIndicator style={{ marginTop: 16 }} color={palette.primary} />
+      <ActivityIndicator className="mt-4" color="#2563eb" />
     </View>
   );
 }
 
 export function Chip({ text }: { text: string }) {
   return (
-    <View style={styles.chip}>
-      <Text style={styles.chipText}>{text}</Text>
+    <View className="self-start rounded-full bg-blue-50 px-2.5 py-1">
+      <Text className="text-xs font-semibold text-blue-800">{text}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 16,
-    marginBottom: 12,
-  },
-  button: {
-    minHeight: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-  },
-  buttonGhost: { borderWidth: 1, borderColor: palette.border },
-  buttonPressed: { opacity: 0.85 },
-  buttonDisabled: { opacity: 0.5 },
-  buttonLabel: { fontSize: 16, fontWeight: "600" },
-  fieldWrap: { marginBottom: 14 },
-  fieldLabel: { fontSize: 14, color: palette.textMuted, marginBottom: 6 },
-  fieldInput: {
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: 12,
-    backgroundColor: palette.surface,
-    paddingHorizontal: 14,
-    minHeight: 48,
-    fontSize: 16,
-    color: palette.text,
-    textAlignVertical: "center",
-  },
-  notice: { borderRadius: 12, padding: 12, marginBottom: 12 },
-  noticeText: { fontSize: 14, lineHeight: 21 },
-  center: { alignItems: "center", padding: 24 },
-  emptyTitle: { fontSize: 16, fontWeight: "600", color: palette.text, textAlign: "center" },
-  emptySubtitle: { fontSize: 14, color: palette.textMuted, marginTop: 6, textAlign: "center" },
-  retryLink: { marginTop: 12, padding: 8 },
-  skeletonRow: { padding: 16, backgroundColor: palette.surface, borderRadius: 14, marginBottom: 12 },
-  skeletonBar: { height: 16, borderRadius: 8, backgroundColor: "#e2e8f0", marginBottom: 8 },
-  chip: {
-    backgroundColor: "#eff6ff",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    alignSelf: "flex-start",
-  },
-  chipText: { color: palette.primaryDark, fontSize: 12, fontWeight: "600" },
-});
+// Kept for screens not yet migrated to NativeWind classes.
+export const palette = {
+  bg: "#f8fafc",
+  surface: "#ffffff",
+  border: "#e2e8f0",
+  text: "#0f172a",
+  textMuted: "#64748b",
+  primary: "#2563eb",
+  primaryDark: "#1d4ed8",
+  danger: "#dc2626",
+  warningBg: "#fff7ed",
+  warningText: "#9a3412",
+  star: "#f59e0b",
+};
+
+export const styles = StyleSheet.create({});

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import NetInfo from "@react-native-community/netinfo";
 import { Redirect, Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { useAuth } from "@/lib/auth";
+import { useLiveInvalidation } from "@/lib/realtime";
 import { palette } from "@/components/bits";
 
 export default function AppTabsLayout() {
   const { session, loading } = useAuth();
   const [offline, setOffline] = useState(false);
+  const queryClient = useQueryClient();
+  const liveStatus = useLiveInvalidation(queryClient);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((s) => setOffline(!s.isConnected));
@@ -34,7 +38,7 @@ export default function AppTabsLayout() {
     <View style={styles.flex}>
       {offline ? (
         <View style={styles.offlineBar}>
-          <Text style={styles.offlineText}>لا يوجد اتصال بالإنترنت — سيتم التحديث عند عودة الشبكة</Text>
+          <Text style={styles.offlineText}>لا يوجد اتصال بالإنترنت — المحتوى المخزّن متاح، وسيتم التحديث عند عودة الشبكة</Text>
         </View>
       ) : null}
       <Tabs
@@ -82,6 +86,11 @@ export default function AppTabsLayout() {
             tabBarIcon: ({ color, size }) => <Ionicons name="megaphone" size={size} color={color} />,
           }}
         />
+        <Tabs.Screen
+          name="quiz-play/[quizId]"
+          options={{ href: null, headerShown: true, headerTitleAlign: "center" }}
+        />
+        <Tabs.Screen name="notifications" options={{ href: null, headerShown: true, headerTitleAlign: "center" }} />
         <Tabs.Screen
           name="profile"
           options={{

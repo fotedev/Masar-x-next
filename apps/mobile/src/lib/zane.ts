@@ -1,25 +1,18 @@
 import { supabase, SITE_URL } from "./supabase";
+import type { AiRequest, AiResponse } from "@masarx-shared/ai";
 
 // Cross-platform AI contract (specs/004/contracts/ai-boundary.md):
 // every AI request goes through the Supabase Edge Function `ai-chat`,
 // which injects the provider key server-side. The app calls the Edge
 // Function directly with the user's access token — the same trust
 // boundary the web app reaches through its /api/ai-chat proxy.
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.2.0";
 
 export type ZaneMessage = {
   id: string;
   role: "user" | "assistant";
   text: string;
 };
-
-type AiRequest = {
-  conversationId: string;
-  userMessage: string;
-  context: { language: "ar" | "en"; appVersion: string; deviceClass: "mobile" };
-};
-
-type AiResponse = { content: string; usage: { promptTokens: number; completionTokens: number } };
 
 export function newConversationId(): string {
   const rnd = Math.random().toString(36).slice(2, 10);

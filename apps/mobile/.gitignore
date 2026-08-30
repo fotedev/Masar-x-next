@@ -40,13 +40,3 @@ example
 
 # generated native folders
 /ios
-
-# build outputs (never commit binaries)
-*.apk
-masarx-native-apk/
-NATIVE_APK_SHA256SUMS.txt
-masarx-upload.jks
-.keystore-pass
-assetlinks.json
-keystore-details.txt
-sha256.txt
