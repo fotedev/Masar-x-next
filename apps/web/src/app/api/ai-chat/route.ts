@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Rate limit (10 req/min per user, same as the existing /api/ai/chat)
-    const rateLimitResult = checkAIChatRateLimit(user.id);
+    const rateLimitResult = await checkAIChatRateLimit(user.id);
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    recordAIChatRequest(user.id);
+    await recordAIChatRequest(user.id);
 
     // 4. Env-var check (fail fast on misconfiguration)
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -90,15 +90,34 @@ export async function POST(req: NextRequest) {
     //    can call supabase.auth.getUser() with the user's identity
     //    (matching the same pattern as the existing summarize-chat
     //    function, see supabase/functions/summarize-chat/index.ts).
+    // Forward the client's Accept header so SSE mode (Accept: text/event-stream)
+    // reaches the Edge Function (spec 004 T054a end-to-end streaming).
+    const acceptHeader = req.headers.get('Accept') ?? '';
     const response = await fetch(AI_CHAT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': acceptHeader,
         'Authorization': req.headers.get('Authorization') ?? `Bearer ${SUPABASE_ANON_KEY}`,
         'apikey': SUPABASE_ANON_KEY,
       },
       body: JSON.stringify(body),
     });
+
+    // SSE passthrough: when the Edge Function streams (text/event-stream),
+    // forward the raw body unbuffered so shared-client streaming works
+    // end-to-end through this proxy (spec 004 T054a).
+    const upstreamContentType = response.headers.get('content-type') ?? '';
+    if (response.ok && upstreamContentType.includes('text/event-stream')) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
