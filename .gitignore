@@ -229,3 +229,8 @@ apps/desktop/build/.icon-preview/
 # release/ dir. They are safe to delete manually once the new build
 # is verified.
 apps/desktop/release.__stale*/
+/masarx-video-ad
+/masarx-remotion-ad
+/pattern.html
+.tmp_old_login.txt
+.tmp_old_signup.txt
