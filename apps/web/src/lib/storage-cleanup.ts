@@ -4,10 +4,12 @@
  * Run this on app initialization to clear PII from persistent storage
  */
 
+import { USER_ACADEMIC_CACHE_KEY } from './academic-utils';
+
 const OLD_LOCALSTORAGE_KEYS = [
   'quiz_attempt_',      // Prefix - quiz attempts now in sessionStorage
   'quiz_history',       // Quiz history now in sessionStorage
-  'USER_ACADEMIC_CACHE_KEY', // Academic cache now in sessionStorage without PII
+  USER_ACADEMIC_CACHE_KEY, // T034: real old key value ('masarx_user_academic_cache') - academic cache now in sessionStorage without PII
   'login_attempts',     // Login attempts now in sessionStorage
   'signup_attempts',    // Signup attempts now in sessionStorage
 ];

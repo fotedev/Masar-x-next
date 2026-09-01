@@ -546,6 +546,14 @@ html[dir="rtl"] [lang="en"] {
   scrollbar-width: thin;
 }
 
+/* dvh-based min-height with vh fallback (spec 003 FR-002) */
+@layer utilities {
+  .min-h-dvh-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

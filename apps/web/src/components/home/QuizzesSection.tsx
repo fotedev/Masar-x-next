@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, BookOpen, Calendar } from "lucide-react";
+import { FileText, BookOpen, Calendar, ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Quiz } from "@/types/database";
 import { useLocale } from "next-intl";
@@ -39,19 +39,25 @@ export function QuizzesSection({
 }: QuizzesSectionProps) {
   const locale = useLocale();
   const shouldReduceMotion = useReducedMotion();
+  const isRTL = locale === "ar";
+  const showHeaderLink = displayQuizzes.length > 0;
+
   return (
-    <div className="space-y-6" dir="auto">
+    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       <div className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
           {tHome("exams")}
         </h2>
-        <button
-          onClick={() => onNavigate("quizzes")}
-          className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
-        >
-          {tHome("goToExams")}
-          <span className={`text-lg transition-transform ${locale === 'ar' ? 'rotate-180' : ''}`}>←</span>
-        </button>
+        {showHeaderLink && (
+          <button
+            onClick={() => onNavigate("quizzes")}
+            dir={isRTL ? "rtl" : "ltr"}
+            className="group text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1.5"
+          >
+            <span>{tHome("goToExams")}</span>
+            <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
 
       {subjectsLoading || loading ? (
@@ -85,7 +91,7 @@ export function QuizzesSection({
           </p>
           <button
             onClick={() => onNavigate("quizzes")}
-            className="px-6 py-2.5 bg-brand-blue text-white rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-all duration-300"
+            className="px-6 py-2.5 bg-brand-blue text-primary-foreground rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-[colors,transform,box-shadow] duration-300"
           >
             {tHome("goToExams")}
           </button>

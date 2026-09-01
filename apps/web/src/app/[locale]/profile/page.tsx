@@ -22,6 +22,7 @@ import { AdminProfileImage } from "@/components/AdminProfileImage";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { ProfileSchema } from "@/lib/validation/profile";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -71,6 +72,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState(displayName || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [isSavingAcademic, setIsSavingAcademic] = useState(false);
   const [academicError, setAcademicError] = useState<string | null>(null);
   const [level, setLevel] = useState<number>(academic.level ?? 1);
@@ -144,6 +146,26 @@ export default function ProfilePage() {
       setIsEditing(false);
       return;
     }
+
+    // FR-005 (Round-B): validate with ProfileSchema BEFORE any DB write.
+    // Implementer decision (logged in fix-log_roundB.md): the validated
+    // server action updateProfile (apps/web/src/actions/profile.ts) cannot
+    // be wired here without editing that file (not owned by this fix): it
+    // upserts ALL of fullName/username/website/avatarUrl and ProfileSchema
+    // requires a valid username (min 3 chars, [a-zA-Z0-9_]) which this page
+    // does not manage. Calling it would block saves for users without a
+    // username and could null unrelated columns. Per the Round-B brief the
+    // minimal safe fallback is client-side ProfileSchema validation.
+    const parsedDisplayName = ProfileSchema.shape.fullName.safeParse(
+      newDisplayName.trim(),
+    );
+    if (!parsedDisplayName.success) {
+      setDisplayNameError(
+        parsedDisplayName.error.issues[0]?.message ?? "Invalid name",
+      );
+      return;
+    }
+    setDisplayNameError(null);
 
     setIsSaving(true);
     try {
@@ -254,7 +276,7 @@ export default function ProfilePage() {
 
   if (!mounted || authLoading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-brand-navy flex items-center justify-center">
+      <div className="min-h-dvh-safe bg-white dark:bg-brand-navy flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin" />
           <p className="text-slate-500 dark:text-slate-400 font-bold animate-pulse">
@@ -267,7 +289,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
         <div className="text-center">
           <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
@@ -289,7 +311,7 @@ export default function ProfilePage() {
 
   return (
     <div
-      className={`max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8 ${locale === 'ar' ? 'text-right' : 'text-left'}`}
+      className={`max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-0 sm:py-8 ${locale === 'ar' ? 'text-right' : 'text-left'} overflow-x-hidden`}
       dir={dir}
     >
       <div className="modern-card overflow-hidden sm:rounded-3xl border-0 sm:border">
@@ -371,8 +393,18 @@ export default function ProfilePage() {
                         <div className="relative mt-2">
                           <input
                             id="profile-display-name"
+                            name="displayName"
+                            aria-invalid={displayNameError ? true : undefined}
+                            aria-describedby={
+                              displayNameError
+                                ? "profile-display-name-error"
+                                : undefined
+                            }
                             value={newDisplayName}
-                            onChange={(e) => setNewDisplayName(e.target.value)}
+                            onChange={(e) => {
+                              setNewDisplayName(e.target.value);
+                              if (displayNameError) setDisplayNameError(null);
+                            }}
                             dir="auto"
                             className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg"
                             maxLength={50}
@@ -382,6 +414,15 @@ export default function ProfilePage() {
                       ) : (
                         <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                           {displayName || t("notSpecified")}
+                        </p>
+                      )}
+                      {displayNameError && (
+                        <p
+                          id="profile-display-name-error"
+                          role="alert"
+                          className="mt-2 text-sm font-bold text-red-500"
+                        >
+                          {displayNameError}
                         </p>
                       )}
                     </div>
@@ -485,10 +526,15 @@ export default function ProfilePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_0.8fr_auto] gap-4 items-end">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                    <label
+                      htmlFor="profile-level"
+                      className="text-[10px] font-black text-slate-400 uppercase"
+                    >
                       {academicT("academicLevel")}
                     </label>
                     <select
+                      id="profile-level"
+                      name="level"
                       value={level}
                       onChange={(e) => setLevel(Number(e.target.value))}
                       className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
@@ -506,10 +552,15 @@ export default function ProfilePage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                    <label
+                      htmlFor="profile-department"
+                      className="text-[10px] font-black text-slate-400 uppercase"
+                    >
                       {academicT("department")}
                     </label>
                     <select
+                      id="profile-department"
+                      name="departmentId"
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
@@ -539,10 +590,15 @@ export default function ProfilePage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase">
+                    <label
+                      htmlFor="profile-semester"
+                      className="text-[10px] font-black text-slate-400 uppercase"
+                    >
                       {t("semester")}
                     </label>
                     <select
+                      id="profile-semester"
+                      name="semester"
                       value={semester}
                       onChange={(e) => setSemester(Number(e.target.value))}
                       className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none"

@@ -163,7 +163,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
   if (isAdminLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -178,7 +178,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-12">
             <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>
@@ -195,7 +195,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">

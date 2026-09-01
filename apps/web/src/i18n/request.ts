@@ -104,30 +104,25 @@ const namespaceCache = new Map<string, Messages>();
 async function readNamespaceFromDisk(locale: string, namespace: string): Promise<Messages> {
   if (process.env.NEXT_RUNTIME === "edge") return {};
 
-  // Disk fallback path — messages moved to packages/shared/src/messages/ in
-  // Spec 004 Phase 2 (T009). From apps/web's CWD, the relative path is
-  // `../../packages/shared/src/messages/{locale}/{namespace}.json`.
-  const filePath = path.join(
-    process.cwd(),
-    "..",
-    "..",
-    "packages",
-    "shared",
-    "src",
-    "messages",
-    locale,
-    `${namespace}.json`,
-  );
+  const possiblePaths = [
+    path.join(process.cwd(), "packages", "shared", "src", "messages", locale, `${namespace}.json`),
+    path.join(process.cwd(), "..", "..", "packages", "shared", "src", "messages", locale, `${namespace}.json`),
+    path.join(process.cwd(), "src", "messages", locale, `${namespace}.json`),
+  ];
 
-  try {
-    const raw = await readFile(filePath, "utf8");
-    const parsed = JSON.parse(raw) as unknown;
-
-    if (!parsed || typeof parsed !== "object") return {};
-    return parsed as Messages;
-  } catch {
-    return {};
+  for (const filePath of possiblePaths) {
+    try {
+      const raw = await readFile(filePath, "utf8");
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+        return parsed as Messages;
+      }
+    } catch {
+      // try next
+    }
   }
+
+  return {};
 }
 
 async function safeImportNamespace(
@@ -135,8 +130,19 @@ async function safeImportNamespace(
   namespace: string,
 ): Promise<Messages> {
   const cacheKey = `${locale}:${namespace}`;
-  const cached = namespaceCache.get(cacheKey);
-  if (cached && Object.keys(cached).length > 0) return cached;
+  if (process.env.NODE_ENV !== "development") {
+    const cached = namespaceCache.get(cacheKey);
+    if (cached && Object.keys(cached).length > 0) return cached;
+  } else {
+    try {
+      const fromDisk = await readNamespaceFromDisk(locale, namespace);
+      if (fromDisk && typeof fromDisk === "object" && Object.keys(fromDisk).length > 0) {
+        return fromDisk;
+      }
+    } catch {
+      // fallback to loader
+    }
+  }
 
   try {
     const loader = MESSAGE_LOADERS[locale]?.[namespace];
