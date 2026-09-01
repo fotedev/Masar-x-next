@@ -6,9 +6,11 @@
   "hero": {
     "badge": "تطبيق سطح المكتب",
     "title": "حمّل Masar X",
-    "subtitle": "تعلّم من أي مكان — اختار نظامك",
+    "subtitle": "تجربة أسرع بدون متصفح مع دعم كامل للعمل المكتبي وتصفح أسهل",
     "primaryCta": "حمّل للويندوز",
-    "secondaryCta": "أنظمة تشغيل أخرى"
+    "secondaryCta": "أنظمة تشغيل أخرى",
+    "allPlatformsCta": "عرض جميع المنصات",
+    "dismiss": "إخفاء الشريط"
   },
   "platforms": {
     "windows": {

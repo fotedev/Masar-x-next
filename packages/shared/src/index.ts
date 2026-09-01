@@ -7,6 +7,7 @@
  *   - supabase  → createSupabaseClient factory (single chokepoint)
  *   - types     → database types + Zod schemas
  *   - ai        → sendAiMessage / streamAiMessage (Edge-Function only)
+ *   - i18n      -- t() helper + static messages registry (Spec 004 T040)
  *
  * Apps MUST NOT import from the underlying packages directly
  * (e.g. @supabase/ssr, openai, @anthropic-ai/sdk). The ESLint
@@ -16,6 +17,7 @@
 
 export * from "./supabase/index";
 export * from "./ai/index";
+export * from "./i18n/index";
 // `types` is intentionally NOT re-exported as `*` here — it has its own
 // `index.ts` that consumers import via the `@masarx-shared/types` path so
 // that the contract for what's exposed (Database row types vs. Zod schemas

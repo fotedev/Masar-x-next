@@ -6,9 +6,11 @@
   "hero": {
     "badge": "Desktop App",
     "title": "Download Masar X",
-    "subtitle": "Learn anywhere — pick your platform",
+    "subtitle": "A faster, distraction-free desktop experience with offline support",
     "primaryCta": "Download for Windows",
-    "secondaryCta": "Other platforms"
+    "secondaryCta": "Other platforms",
+    "allPlatformsCta": "View all platforms",
+    "dismiss": "Dismiss banner"
   },
   "platforms": {
     "windows": {

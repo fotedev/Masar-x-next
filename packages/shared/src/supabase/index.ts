@@ -117,10 +117,28 @@ export function createSupabaseClient(options: SupabaseClientOptions): SupabaseCl
       return wrapClient(client, options.runtime, clientInfo);
     }
     case "mobile": {
-      throw new Error(
-        "createSupabaseClient: `runtime: 'mobile'` is not implemented in v1. " +
-          "The Expo app will land in US2 (Spec 004 Phase 4, T029/T032).",
-      );
+      // T032: the mobile runtime requires an explicit storage adapter
+      // (provided by apps/mobile/src/lib/supabase.ts on top of
+      // expo-secure-store). Same shape as the desktop branch: we use
+      // `@supabase/supabase-js`'s `createClient` (NOT `@supabase/ssr`,
+      // which is cookie-opinionated) and hand it the adapter via
+      // `options.auth.storage`.
+      if (!options.storage) {
+        throw new Error(
+          "createSupabaseClient: `runtime: 'mobile'` requires a `storage` adapter. " +
+            "Use the SecureStoreAdapter from apps/mobile/src/lib/supabase.ts.",
+        );
+      }
+      const client = createJsClient(options.url, options.anonKey, {
+        auth: {
+          storage: options.storage,
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: false, // mobile: no OAuth/PKCE callback in an app URL
+          flowType: "pkce",
+        },
+      });
+      return wrapClient(client, options.runtime, clientInfo);
     }
     default: {
       const _exhaustive: never = options.runtime;

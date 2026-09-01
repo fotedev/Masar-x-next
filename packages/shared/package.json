@@ -13,7 +13,8 @@
     "./types": "./src/types/index.ts",
     "./types/*": "./src/types/*",
     "./ai": "./src/ai/index.ts",
-    "./ai/*": "./src/ai/*"
+    "./ai/*": "./src/ai/*",
+    "./i18n": "./src/i18n/index.ts"
   },
   "description": "Masar X shared package — translations, types, Supabase client factory, AI client. Consumed by apps/{web,desktop,mobile} via the workspace protocol (research.md §1, §4, §5, §9; contracts/ directory).",
   "scripts": {
