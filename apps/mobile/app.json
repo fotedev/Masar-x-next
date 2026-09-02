@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Masar X",
+    "slug": "masarx",
+    "version": "0.5.6",
+    "orientation": "portrait",
+    "scheme": "masarx",
+    "userInterfaceStyle": "automatic",
+    "supportsRTL": true,
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "com.masarx.app",
+      "supportsTablet": false,
+      "infoPlist": {}
+    },
+    "android": {
+      "package": "com.masarx.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1d4ed8"
+      }
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
