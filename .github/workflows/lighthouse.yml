@@ -48,18 +48,23 @@ jobs:
     # same rationale as the `next build` job in ci.yml: NEXT_PUBLIC_*
     # are public by design and the placeholders only satisfy
     # module-load throw checks. Job-level so both the build step AND
-    # the served app (next start) see them.
+    # the served app (next start) see them. The placeholder VALUES are
+    # obviously not secrets (English words, not the high-entropy
+    # patterns the gitleaks-artifacts job would catch on the
+    # Supabase / Vercel / Cloudinary rules), so they don't trigger
+    # the gitleaks false-positives that the previous strings did
+    # after PR1 tightened the gitleaks allowlist.
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
-      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
-      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
-      NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
-      NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+      NEXT_PUBLIC_SUPABASE_URL: https://example.com
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: replace-with-real-anon-key
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: cloudinary-cloud-name
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: cloudinary-upload-preset
+      NEXT_PUBLIC_SITE_URL: https://example.com
+      NEXT_PUBLIC_COLLEGE_NAME: CI
       NEXT_PUBLIC_GA_ID: ""
       ANALYZE: "false"
-      DATABASE_URL: postgresql://placeholder:***@localhost:5432/placeholder
-      VERCEL_MCP_BYPASS_SECRET: ***
+      DATABASE_URL: postgresql://user:replace@localhost:5432/dbname
+      VERCEL_MCP_BYPASS_SECRET: replace-with-real-secret
 
     steps:
       - name: Checkout

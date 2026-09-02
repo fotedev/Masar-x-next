@@ -62,20 +62,26 @@ jobs:
   next-build:
     name: next build
     runs-on: ubuntu-latest
+    # Placeholder values for the build-time env vars. They are obviously
+    # not secrets (English words, no high-entropy patterns) so the
+    # gitleaks-artifacts job doesn't flag the inlined NEXT_PUBLIC_*
+    # values inside apps/web/.next/. The previous strings matched
+    # Supabase / Cloudinary / Vercel rules after PR1 tightened the
+    # gitleaks allowlist (PR27 follow-up / category A-3).
     env:
-      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
-      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
-      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
-      NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
-      NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+      NEXT_PUBLIC_SUPABASE_URL: https://example.com
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: replace-with-real-anon-key
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: cloudinary-cloud-name
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: cloudinary-upload-preset
+      NEXT_PUBLIC_SITE_URL: https://example.com
+      NEXT_PUBLIC_COLLEGE_NAME: CI
       NEXT_PUBLIC_GA_ID: ""
       ANALYZE: "false"
       # Server-side placeholders. These are not consumed at build time
       # but are referenced by route handlers; placeholders keep any
       # defensive `throw` paths from blowing up.
-      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
-      VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+      DATABASE_URL: postgresql://user:replace@localhost:5432/dbname
+      VERCEL_MCP_BYPASS_SECRET: replace-with-real-secret
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -197,16 +203,16 @@ jobs:
 
       - name: Build web app
         env:
-          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
-          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
-          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
-          NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
-          NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+          NEXT_PUBLIC_SUPABASE_URL: https://example.com
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: replace-with-real-anon-key
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: cloudinary-cloud-name
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: cloudinary-upload-preset
+          NEXT_PUBLIC_SITE_URL: https://example.com
+          NEXT_PUBLIC_COLLEGE_NAME: CI
           NEXT_PUBLIC_GA_ID: ""
           ANALYZE: "false"
-          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
-          VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+          DATABASE_URL: postgresql://user:replace@localhost:5432/dbname
+          VERCEL_MCP_BYPASS_SECRET: replace-with-real-secret
         run: pnpm --filter web build
 
       - name: Install gitleaks
