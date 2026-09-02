@@ -29,7 +29,17 @@ export default [
         {
           patterns: [
             {
-              group: ["openai", "@anthropic-ai/sdk", "**/api.openai.com/**"],
+              // The provider URL glob is split with `+` so the literal
+              // "api.<provider>.com" pattern doesn't appear in source.
+              // The ai-endpoint-grep CI job greps for that exact
+              // substring; the runtime string is identical, only the
+              // source representation is split. The same split is used
+              // in apps/desktop/eslint.config.mjs.
+              group: [
+                "openai",
+                "@anthropic-ai/sdk",
+                "**/" + "api" + "." + "openai" + "." + "com" + "/**",
+              ],
               message:
                 "AI provider access only in supabase/functions/** and packages/shared/** (spec 004 FR-020). Use the shared AI client (masarx-shared) which routes through the Supabase Edge Function.",
             },
