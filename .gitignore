@@ -197,7 +197,12 @@ vizvibe.mmd
 .specify
 .windsurf
 backup
-/docs
+# Per-PR9 landing: scope the docs ignore to the obviously-scratch subdirs
+# so the new intentional deliverables (docs/{delivery,security,perf,releases}/)
+# can be tracked. PR1's /docs line was too broad — it blocked everything
+# including the spec 004 deliverable docs.
+/docs/scratch
+/docs/audits
 /context_output
 /.context
 /files.txt
