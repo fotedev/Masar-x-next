@@ -192,6 +192,12 @@ vizvibe.mmd
 # remain covered by the .github/* ignore above).
 !.github/workflows/
 !.github/workflows/**
+# Allow .github/scripts/* (check-ai-provider-endpoints.sh,
+# check-doc-links.sh, check-translations.sh) so the CI jobs can
+# invoke them. Without this, new helper scripts are silently
+# ignored and the calling job fails with exit 127.
+!.github/scripts/
+!.github/scripts/**
 # Document the active branch protection Ruleset alongside this file.
 !.github/RULESET.md
 .specify
