@@ -72,4 +72,22 @@ paths = [
   '''(^|/)specs/''',
   '''(^|/)docs/''',
   '''\.md$''',
+
+  # Next.js build-time artifacts containing the auto-generated
+  # Preview Mode keys (`previewModeSigningKey` /
+  # `previewModeEncryptionKey`). These are 256-bit random values
+  # Next.js embeds in its manifest files for the ISR preview
+  # workflow. They:
+  #   - regenerate on every `next build` (no build-to-build reuse),
+  #   - are not used in this project (no `draftMode()` or
+  #     `previewModeId` consumer in `apps/web/src/`),
+  #   - ship to every Next.js deployment as part of the public
+  #     `.next` output, so they have no secrecy value.
+  # Five specific files are listed (not a directory allowlist) so
+  # the T015 artifact-scan contract still catches real secrets
+  # introduced by build-time string concatenation. See PR27
+  # follow-up "fix(d): allowlist Next.js Preview Mode manifest
+  # fields" for the diagnostic and the 10-leak breakdown.
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
 ]
