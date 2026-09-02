@@ -1,0 +1,180 @@
+# Lighthouse CI for the web app (Spec 004 Phase 8, Task T057).
+#
+# Builds apps/web in production mode, serves it with `next start`, and
+# audits http://127.0.0.1:3000/ with Lighthouse (3 runs). The
+# Performance and Accessibility category scores are asserted against
+# baselines stored as repository variables - a drop of more than
+# 5 points fails the job (spec SC-009: "web app Lighthouse score has
+# no regression >5 points").
+#
+# One-time setup after the first green run:
+#   1. Note the printed Performance / Accessibility scores.
+#   2. Set repository variables (Settings -> Secrets and variables ->
+#      Actions -> Variables):
+#        LHCI_BASELINE_PERFORMANCE   = <captured score, 0-100>
+#        LHCI_BASELINE_ACCESSIBILITY = <captured score, 0-100>
+#      Optional override:
+#        LHCI_REGRESSION_BUDGET      = <points; default 5 (SC-009)>
+#   3. Until the baseline variables are set, the job records scores
+#      but never fails (record-only mode), so it is safe to enable
+#      before the first baseline capture.
+#
+# Lighthouse scores jitter by a couple of points between runs; the
+# 5-point budget absorbs that noise, per SC-009.
+
+name: Lighthouse CI
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly - Mondays 05:00 UTC.
+    - cron: '0 5 * * 1'
+
+# Least-privilege, mirroring ci.yml.
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Placeholder values for the client-side build-time env vars -
+    # same rationale as the `next build` job in ci.yml: NEXT_PUBLIC_*
+    # are public by design and the placeholders only satisfy
+    # module-load throw checks. Job-level so both the build step AND
+    # the served app (next start) see them.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-key
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ci-placeholder
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ci-placeholder
+      NEXT_PUBLIC_SITE_URL: https://ci-placeholder.local
+      NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+      NEXT_PUBLIC_GA_ID: ""
+      ANALYZE: "false"
+      DATABASE_URL: postgresql://placeholder:***@localhost:5432/placeholder
+      VERCEL_MCP_BYPASS_SECRET: ***
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # Same posture as ci.yml: better-sqlite3's postinstall is
+        # skipped via the root .npmrc; everything else installs
+        # normally so the web build finds its platform binaries.
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm --filter web build
+
+      - name: Start web server (next start, port 3000)
+        # Start the production server in the background - it keeps
+        # running for the later steps of this job. If `next start`
+        # ever becomes incompatible with a future Next.js output
+        # mode, fall back to the standalone server (node
+        # apps/web/.next/standalone/apps/web/server.js after copying
+        # .next/static alongside it - see electron-builder.yml
+        # extraResources).
+        run: |
+          nohup pnpm --filter web run start -- --port 3000 > "$RUNNER_TEMP/next-start.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3000/ > /dev/null; then
+              echo "next start answered on :3000 (attempt $i)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo '::error::next start did not answer on :3000 within 120s'
+          cat "$RUNNER_TEMP/next-start.log"
+          exit 1
+
+      - name: Run Lighthouse
+        id: lhci
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://127.0.0.1:3000/
+          runs: 3
+          # Full JSON/HTML reports are uploaded as workflow artifacts.
+          uploadArtifacts: true
+          temporaryPublicStorage: false
+
+      - name: Assert category thresholds (SC-009: >5-point regression fails)
+        env:
+          RESULTS_PATH: ${{ steps.lhci.outputs.resultsPath }}
+          BASELINE_PERFORMANCE: ${{ vars.LHCI_BASELINE_PERFORMANCE || '0' }}
+          BASELINE_ACCESSIBILITY: ${{ vars.LHCI_BASELINE_ACCESSIBILITY || '0' }}
+          REGRESSION_BUDGET: ${{ vars.LHCI_REGRESSION_BUDGET || '5' }}
+        run: |
+          node <<'NODE_EOF'
+          const fs = require("fs");
+          const path = require("path");
+
+          const dir = process.env.RESULTS_PATH || "";
+          const budget = Number(process.env.REGRESSION_BUDGET || "5");
+          const baseline = {
+            performance: Number(process.env.BASELINE_PERFORMANCE || "0"),
+            accessibility: Number(process.env.BASELINE_ACCESSIBILITY || "0"),
+          };
+
+          if (!dir || !fs.existsSync(dir)) {
+            console.error("::error::No Lighthouse results found at:", dir);
+            process.exit(1);
+          }
+
+          const reports = fs.readdirSync(dir)
+            .filter((f) => f.endsWith(".json"))
+            .map((f) => {
+              try {
+                const json = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+                return json.categories ? json : (json.lhr && json.lhr.categories ? json.lhr : null);
+              } catch (e) {
+                return null;
+              }
+            })
+            .filter(Boolean);
+
+          if (reports.length === 0) {
+            console.error("::error::No parseable Lighthouse reports in", dir);
+            process.exit(1);
+          }
+
+          const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+
+          for (const category of ["performance", "accessibility"]) {
+            const points = reports
+              .map((r) => (r.categories[category] && r.categories[category].score != null ? r.categories[category].score * 100 : null))
+              .filter((x) => x != null);
+            if (points.length === 0) {
+              console.error("::error::Category missing from Lighthouse reports:", category);
+              process.exit(1);
+            }
+            const score = Math.floor(avg(points));
+            console.log(category + ": runs=" + points.map((x) => Math.round(x)).join(",") + " average=" + score);
+
+            if (baseline[category] > 0) {
+              const floor = baseline[category] - budget;
+              if (score < floor) {
+                console.error("::error::" + category + " regressed beyond the " + budget + "-point budget: " + score + " < baseline " + baseline[category] + " - " + budget + " (SC-009)");
+                process.exitCode = 1;
+              }
+            } else {
+              console.log("::warning::No baseline set for " + category + " - record-only mode. Set LHCI_BASELINE_" + category.toUpperCase() + " to enable the SC-009 regression check.");
+            }
+          }
+          NODE_EOF

@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   pull_request:
@@ -260,3 +260,44 @@ jobs:
 
       - name: Check internal doc links resolve
         run: bash .github/scripts/check-doc-links.sh
+
+  # ---------------------------------------------------------------------
+  # Translations single-source check (Spec 004 T038).
+  # Fails if any app declares a local messages/ or locales/ directory;
+  # the only translation source is packages/shared/src/messages/.
+  # ---------------------------------------------------------------------
+  translations:
+    name: translations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check translation source of truth
+        run: bash .github/scripts/check-translations.sh
+
+  # ---------------------------------------------------------------------
+  # Workspace tests (Spec 004 T007 — `pnpm test` at root).
+  # Runs every workspace that defines a `test` script (web, desktop).
+  # ---------------------------------------------------------------------
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
+
+      - name: Run workspace tests
+        run: pnpm -r --if-present test
