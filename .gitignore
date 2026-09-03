@@ -245,3 +245,8 @@ apps/desktop/release.__stale*/
 /pattern.html
 .tmp_old_login.txt
 .tmp_old_signup.txt
+
+# Added by organize-root v2.3 (Phase 4)
+.tmp_old_*.txt
+.vercel/
+sandbox/
