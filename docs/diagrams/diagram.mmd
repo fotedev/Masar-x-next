@@ -1,0 +1,158 @@
+flowchart TD
+
+%% --- ACTORS ---
+User["Users (المستخدمين)"]
+RA(["Root Admin (مدير النظام)"])
+
+%% --- CLIENT LAYER (NEXT.JS) ---
+subgraph ClientApp ["Next.js App Layer (واجهة المستخدم)"]
+    direction TB
+    I18n{"I18n Middleware<br/>Detect Locale"}
+    
+    subgraph PublicRoutes ["Public (عام)"]
+        Home["/ (Home - الرئيسية)"]
+        News["/news (الأخبار)"]
+    end
+
+    subgraph ProtectedRoutes ["Authenticated (محمي)"]
+        direction TB
+        Profile["/profile (الملف الشخصي)"]
+        
+        subgraph AcademicHub ["Academic Hub (المحور الأكاديمي)"]
+            Subjects["/subjects (المواد)"]
+            Courses["/courses (الدورات)"]
+            Quizzes["/quizzes (الاختبارات)"]
+        end
+        
+        AI_Assist["/ai-assistant (المساعد الذكي)"]
+        TRW["/trw (Premium Studies)"]
+        
+        subgraph AdminPortal ["Admin Dashboard (لوحة التحكم)"]
+            Moderation["/admin/moderation"]
+            Settings["/admin/settings"]
+        end
+    end
+end
+
+%% --- API / INTERMEDIATE LAYER ---
+Auth_Middleware{{"App Router Middleware<br/>(Auth Check)"}}
+
+%% --- BACKEND SERVICES LAYER (SUPABASE) ---
+subgraph SupabaseLayer ["Supabase Platform (منصة الخدمات الخلفية)"]
+    direction TB
+    
+    Auth_Service["Supabase Auth<br/>(JWT, RLS)"]
+    EF_Gateway["Supabase Edge Functions Gateway"]
+    
+    subgraph EdgeFunctions ["Edge Functions (وظائف الحافة)"]
+        direction LR
+        Func_PDF["process-pdf"]
+        Func_Upload["upload-file"]
+        Func_Email["auth-hook-email"]
+        Func_Chat["summarize-chat"]
+    end
+    
+    DB_Gateway["PostgreSQL Gateway"]
+end
+
+%% --- DATA STORAGE LAYER ---
+subgraph StorageLayer ["Data & Assets (البيانات والوسائط)"]
+    direction TB
+    
+    SupaStorage[("Supabase Storage<br/>Avatars, TempFiles")]
+    
+    subgraph PostgreSQL ["PostgreSQL Schema (قاعدة البيانات)"]
+        direction TB
+        
+        subgraph Schema_Identity ["Identity & Roles"]
+            profiles["profiles (id, full_name, role, department_id)"]
+            admins["admins (user_id, role, permissions)"]
+        end
+
+        subgraph Schema_Academic ["Academic Structure"]
+            levels["academic_levels (id, level_number, name)"]
+            departments["departments (id, name, level_id)"]
+            subjects_db["subjects (id, name, semester, department_id)"]
+            lectures["subject_lectures (id, subject_id, lecture_key)"]
+        end
+
+        subgraph Schema_Content ["Content & Interactivity"]
+            summaries["summaries (id, subject_id, user_id, status)"]
+            videos["videos (id, lecture_id, url)"]
+            quizzes_db["quizzes (id, subject_id, course_id)"]
+            reviews["reviews (id, user_id, video_id, rating)"]
+        end
+        
+        PlatformSettings[("platform_settings")]
+    end
+end
+
+%% --- EXTERNAL APIS ---
+subgraph ExternalAPIs ["External APIs (خدمات خارجية)"]
+    direction TB
+    CDN_Cloudinary(("Cloudinary<br/>Media Assets"))
+    SMTP_Brevo(("Brevo<br/>Transactional Email"))
+    AI_Gemini(("Google Gemini<br/>LLM Integration"))
+end
+
+%% --- RELATIONSHIPS & DATA FLOW ---
+
+%% 1. User Interaction
+User --> I18n
+RA --> Moderation
+
+%% 2. Frontend Routing & Protection
+I18n --> Auth_Middleware
+Auth_Middleware --> PublicRoutes
+Auth_Middleware -- "Valid Session" --> ProtectedRoutes
+Auth_Middleware -- "No Session" --> Home
+Auth_Middleware -- "Admin Role" --> AdminPortal
+
+%% 3. Frontend to Backend Services
+ProtectedRoutes --> Auth_Service
+AcademicHub --> DB_Gateway
+AI_Assist --> Func_Chat
+Profile --> Func_Upload
+
+%% 4. Backend Services Interaction
+Auth_Service -.-> profiles
+DB_Gateway --> PostgreSQL
+EF_Gateway --> EdgeFunctions
+
+%% 5. Edge Function Flows
+Func_PDF --> DB_Gateway
+Func_PDF --> CDN_Cloudinary
+Func_Upload --> SupaStorage
+Func_Email --> SMTP_Brevo
+Func_Chat --> AI_Gemini
+
+%% 6. Database Internals
+profiles --> admins
+levels --> departments
+departments --> subjects_db
+subjects_db --> lectures
+PlatformSettings -.-> ProtectedRoutes
+
+%% --- STYLING ---
+classDef default color:#f8fafc,stroke-width:1px;
+classDef user fill:#334155,stroke:#94a3b8,color:#f1f5f9;
+classDef admin fill:#450a0a,stroke:#f87171,color:#fecaca;
+classDef client fill:#0f172a,stroke:#3b82f6,color:#bfdbfe;
+classDef service fill:#1e1b4b,stroke:#8b5cf6,color:#ddd6fe;
+classDef db fill:#020617,stroke:#10b981,color:#d1fae5;
+classDef storage fill:#111827,stroke:#10b981,stroke-dasharray: 3 3,color:#d1fae5;
+classDef external fill:#1c1917,stroke:#f59e0b,color:#fef3c7,stroke-dasharray: 5 5;
+
+%% Apply classes
+class User,RA user;
+class AdminPortal,admins,Moderation,Settings,RA admin;
+class ClientApp,PublicRoutes,ProtectedRoutes,Home,News,Profile,AcademicHub,Subjects,Courses,Quizzes,AI_Assist,TRW,Auth_Middleware,I18n client;
+class SupabaseLayer,Auth_Service,EF_Gateway,EdgeFunctions,Func_PDF,Func_Upload,Func_Email,Func_Chat,DB_Gateway service;
+class PostgreSQL,Schema_Identity,Schema_Academic,Schema_Content,PlatformSettings,profiles,levels,departments,subjects_db,lectures,summaries,videos,quizzes_db,reviews,PostgreSQL,SupaStorage db;
+class CDN_Cloudinary,SMTP_Brevo,AI_Gemini external;
+
+%% --- NOTES ---
+%% 1. i18n Detection: Middleware uses request path for reliable language context.
+%% 2. Gated Access: 'admins' table dictates access to Moderation paths.
+%% 3. Edge Compute: PDF processing, email hooks, and AI logic are offloaded to V8 Edge Functions.
+%% 4. Hybrid Media: Avatars use internal storage; academic media uses external CDN (Cloudinary).
