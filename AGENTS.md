@@ -359,6 +359,83 @@ The same pitfall affects `actions/setup-node@v4` with `cache: 'pnpm'`: the pnpm 
 
 **Diagnostic signal:** the `Setup pnpm` step fails with `Error: No pnpm version is specified.` even though the source repo's root `package.json` has the right `packageManager` field. Confirms that the workflow's CWD is not the source's root.
 
+### 19. `ThemeScript.tsx` must use native `<script>` + `suppressHydrationWarning` (never `next/script`)
+
+`apps/web/src/components/ThemeScript.tsx` MUST stay as a native
+`<script>` element with `suppressHydrationWarning`, `nonce={nonce}`,
+and `dangerouslySetInnerHTML`. Do NOT replace it with Next.js
+`<Script strategy="beforeInteractive">` from `next/script`.
+
+**Why:** W3C CSP `nonce-hiding` empties the `nonce` attribute of
+inline scripts in the DOM after the browser executes them
+(`https://www.w3.org/TR/CSP3/#security-nonces`). `next/script`'s
+hydration logic does NOT suppress this browser-level attribute
+change, so React throws a hydration mismatch:
+
+```
++ nonce="<real>"    (client / RSC payload)
+- nonce=""          (server / SSR HTML)
+```
+
+The native `<script>` + `suppressHydrationWarning` pattern tells
+React to ignore the browser's nonce-hiding while the nonce still
+satisfies CSP at parse time.
+
+**Source of truth:** the inline comment block in the file itself
+explains the same three-point rationale (nonce-hiding, missing
+suppress, native script as the fix). If you are tempted to
+"modernize" it to `<Script strategy="beforeInteractive">`, read
+that comment first and the memory entry on the original PR3
+regression before making the change. The previous attempt at this
+fix landed in commit `1d951d5..611a022` and was reverted in
+`d20247f` after producing the same hydration warning in dev.
+
+**Diagnostic signal:** Next.js dev server prints
+`A tree hydrated but some attributes of the server rendered HTML
+didn't match the client properties` with the diff showing
+`+ nonce="<hex>"` on client and `- nonce=""` on server under
+`src\components\ThemeScript.tsx`.
+
+### 20. Never `git stash drop`, `git restore`, `git reset --hard`, or `git checkout -- <file>` on uncommitted user changes without explicit consent
+
+**Strict safety guardrail.** Discarding uncommitted local edits
+is a CATASTROPHIC, DESTRUCTIVE operation. The cost of recovery is
+the user re-deriving the change from scratch and re-applying it,
+which wastes time and erodes trust.
+
+**Banned without explicit, interactive user consent in the current
+turn:**
+- `git stash drop <stash>`
+- `git stash clear`
+- `git restore <file>` / `git restore --staged <file>` when
+  there are uncommitted changes the user has not acknowledged
+- `git reset --hard <ref>` when there are uncommitted changes
+- `git checkout -- <file>` / `git checkout <ref> -- <path>` when
+  the working tree is dirty
+- `git clean -fd` / `git clean -fdx` (any form)
+
+**Required pattern when the working tree is dirty and the task
+demands a clean state:** STOP, surface the dirty state to the
+user, and ask. The user will decide between (a) commit, (b) stash
+*KEEP the stash*, (c) abandon and live with the dirty tree, or
+(d) explicitly authorize the discard. Default is (a) or (b).
+
+**Symptom of misapplying this rule:** the user discovers their
+local fix is missing from `main` (or the working tree is now
+empty after a `git stash drop`), has to re-derive and re-apply
+it manually, and has to ask the agent to commit a second time.
+This is exactly what happened on 2026-09-04: the
+`ThemeScript.tsx` fix (this file, the previous attempt at
+`next/script` <Script> with `beforeInteractive`) was stashed
+before a merge and the stash was dropped without confirmation,
+forcing the user to redo the same fix after the merge.
+
+**Why this is in `AGENTS.md` and not just in agent memory:** the
+project's gotcha section is read first when a new agent loads
+the repo. Putting the rule here means the next session's agent
+sees it before the first `git stash drop` even becomes a
+consideration.
+
 ## Release distribution
 
 The project ships desktop installers and mobile builds from a **separate public releases repo** so the main source repo can stay private while still enabling anonymous auto-updates and direct downloads from the website.
