@@ -192,12 +192,23 @@ vizvibe.mmd
 # remain covered by the .github/* ignore above).
 !.github/workflows/
 !.github/workflows/**
+# Allow .github/scripts/* (check-ai-provider-endpoints.sh,
+# check-doc-links.sh, check-translations.sh) so the CI jobs can
+# invoke them. Without this, new helper scripts are silently
+# ignored and the calling job fails with exit 127.
+!.github/scripts/
+!.github/scripts/**
 # Document the active branch protection Ruleset alongside this file.
 !.github/RULESET.md
 .specify
 .windsurf
 backup
-/docs
+# Per-PR9 landing: scope the docs ignore to the obviously-scratch subdirs
+# so the new intentional deliverables (docs/{delivery,security,perf,releases}/)
+# can be tracked. PR1's /docs line was too broad — it blocked everything
+# including the spec 004 deliverable docs.
+/docs/scratch
+/docs/audits
 /context_output
 /.context
 /files.txt
@@ -229,3 +240,13 @@ apps/desktop/build/.icon-preview/
 # release/ dir. They are safe to delete manually once the new build
 # is verified.
 apps/desktop/release.__stale*/
+/masarx-video-ad
+/masarx-remotion-ad
+/pattern.html
+.tmp_old_login.txt
+.tmp_old_signup.txt
+
+# Added by organize-root v2.3 (Phase 4)
+.tmp_old_*.txt
+.vercel/
+sandbox/

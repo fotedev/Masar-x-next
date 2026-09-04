@@ -76,12 +76,30 @@ export default function QuizAttemptsPage() {
           }
         }
 
-        // 2. Load from localStorage
+        // 2. Load from sessionStorage (quiz history was migrated there, T029)
         let localAttempts: AttemptRecord[] = [];
         try {
-          const localData = localStorage.getItem("quiz_history");
-          if (localData) {
-            localAttempts = JSON.parse(localData) as AttemptRecord[];
+          const sessionData = sessionStorage.getItem("quiz_history");
+          if (sessionData) {
+            localAttempts = JSON.parse(sessionData) as AttemptRecord[];
+          }
+        } catch {
+          // ignore
+        }
+
+        // 2b. Legacy one-time read: merge pre-migration localStorage data,
+        // then remove the legacy key so it is cleaned up automatically.
+        try {
+          const legacyData = localStorage.getItem("quiz_history");
+          if (legacyData) {
+            const legacyAttempts = JSON.parse(legacyData) as AttemptRecord[];
+            legacyAttempts.forEach((legacy) => {
+              const exists = localAttempts.some((l) => l.id === legacy.id);
+              if (!exists) {
+                localAttempts.push(legacy);
+              }
+            });
+            localStorage.removeItem("quiz_history");
           }
         } catch {
           // ignore
@@ -192,7 +210,8 @@ export default function QuizAttemptsPage() {
                 cancelLabel: commonT("cancel"),
               }).then((confirmed: boolean) => {
                 if (!confirmed) return;
-                localStorage.removeItem("quiz_history");
+                sessionStorage.removeItem("quiz_history");
+                localStorage.removeItem("quiz_history"); // legacy cleanup
                 window.location.reload();
               });
             }}

@@ -107,6 +107,7 @@ export function LectureSelect({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
+                aria-label={t("searchPlaceholder")}
                 autoFocus
                 dir="auto"
                 className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-900 border-none rounded-md focus:ring-1 focus:ring-blue-500 dark:text-white placeholder:text-start"

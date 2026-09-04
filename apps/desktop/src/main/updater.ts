@@ -58,6 +58,15 @@ const DEFAULT_TRIAL_MS = 30_000;
 const DEFAULT_RATE_LIMIT_MS = 60 * 60 * 1000;
 const FLAG_FILE = 'pending-update.json';
 
+// `electron-updater` derives the download/cache folder from `app.name`
+// as `<name>-updater`. The packaged app's `package.json` keeps
+// `"name": "desktop"` for pnpm workspace compatibility (renaming it
+// would break `apps/desktop` resolution in the monorepo), so we
+// override `app.name` once at module load. The override must happen
+// BEFORE `autoUpdater` makes its first check; both `isAutoUpdateEnabled`
+// and the boot path below run after this line, so we're safe.
+app.setName('masarx');
+
 export function isPortable(): boolean {
   return Boolean(
     process.env.PORTABLE_EXECUTABLE_DIR ||

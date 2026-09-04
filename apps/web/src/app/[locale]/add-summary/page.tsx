@@ -672,6 +672,7 @@ export default function AddSummaryPage() {
             </label>
             <input
               id="summary-youtube"
+              name="youtubeLink"
               type="url"
               value={youtubeLink}
               onChange={(e) => setYoutubeLink(e.target.value)}
@@ -690,6 +691,7 @@ export default function AddSummaryPage() {
                 <input
                   type="radio"
                   name="attachmentType"
+                  id="attachment-file"
                   value="file"
                   checked={attachmentType === "file"}
                   onChange={(e) => setAttachmentType(e.target.value as "file")}
@@ -703,6 +705,7 @@ export default function AddSummaryPage() {
                 <input
                   type="radio"
                   name="attachmentType"
+                  id="attachment-link"
                   value="link"
                   checked={attachmentType === "link"}
                   onChange={(e) => setAttachmentType(e.target.value as "link")}
@@ -762,10 +765,15 @@ export default function AddSummaryPage() {
 
             {attachmentType === "link" && (
               <div className="mb-4">
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <label
+                  htmlFor="summary-drive-link"
+                  className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2"
+                >
                   {t("googleDriveLink")}
                 </label>
                 <input
+                  id="summary-drive-link"
+                  name="driveLink"
                   type="url"
                   value={driveLink}
                   onChange={(e) => setDriveLink(e.target.value)}

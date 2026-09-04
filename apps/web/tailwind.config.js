@@ -21,7 +21,8 @@ export default {
           sky: 'rgba(var(--brand-sky), <alpha-value>)',
           orange: 'rgba(var(--brand-orange), <alpha-value>)',
           purple: '#8b5cf6',
-        }
+        },
+        primary: { foreground: 'hsl(var(--primary-foreground))' },
       },
       screens: {
         'xs': '475px',

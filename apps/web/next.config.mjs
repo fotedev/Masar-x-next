@@ -15,7 +15,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["next-intl"],
+  transpilePackages: ["next-intl", "masarx-shared"],
   serverExternalPackages: ["pg"],
   // T020.2: switch the web app to Next.js standalone output so the
   // desktop app can ship a self-contained server.js entry point

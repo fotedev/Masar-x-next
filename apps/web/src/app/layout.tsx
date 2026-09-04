@@ -101,7 +101,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${fontVariable} min-h-screen bg-slate-50 dark:bg-brand-navy antialiased`}
+        className={`${fontVariable} min-h-dvh-safe bg-slate-50 dark:bg-brand-navy antialiased`}
         suppressHydrationWarning
       >
         {children}

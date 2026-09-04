@@ -94,7 +94,18 @@ export async function startMainProcess(): Promise<number> {
   });
 
   win.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-    if (errorCode === -102 || errorCode === -105) {
+    // Retry transient local-server startup errors:
+    //   -102 ERR_CONNECTION_REFUSED  — Next.js standalone server not yet bound
+    //   -105 ERR_NAME_NOT_RESOLVED    — DNS race during launch
+    //   -107 ERR_SSL_PROTOCOL_ERROR   — defense-in-depth: if a stale CSP or
+    //                                    ServiceWorker re-introduces HTTPS to
+    //                                    the loopback host, the retry will
+    //                                    land on plain HTTP and the page will
+    //                                    render. The actual fix lives in
+    //                                    apps/web/src/middleware.ts (the
+    //                                    CSP drops upgrade-insecure-requests
+    //                                    for 127.0.0.1/localhost).
+    if (errorCode === -102 || errorCode === -105 || errorCode === -107) {
       setTimeout(() => {
         if (!win.isDestroyed()) {
           void win.loadURL(`http://127.0.0.1:${running.port}`);
