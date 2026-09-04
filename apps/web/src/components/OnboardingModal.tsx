@@ -1,8 +1,8 @@
 import { type FormEvent } from "react";
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useAcademicOptions } from "../hooks/useAcademicOptions";
+import { useUserAcademic } from "../hooks/useUserAcademic";
 import { useTranslations } from "next-intl";
 
 interface OnboardingModalProps {
@@ -13,7 +13,10 @@ interface OnboardingModalProps {
 export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
   const { user } = useAuth();
   const t = useTranslations("onboarding");
-  const { levels, getDepartmentsForLevelName } = useAcademicOptions();
+  const { levels, departments, getDepartmentsForLevelName } = useAcademicOptions();
+  // T036/T035: profiles-backed academic data + write path via useUserAcademic.
+  // JWT user_metadata is no longer read or written; cache invalidation runs.
+  const { academic, departments: userDepartments, setUserAcademic } = useUserAcademic();
   const [formData, setFormData] = useState({
     academic_level: "",
     department: "",
@@ -28,18 +31,28 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
 
   useEffect(() => {
     if (isOpen && user) {
-      // Check if user has completed onboarding
-      const academicLevel = user.user_metadata?.academic_level;
-      const department = user.user_metadata?.department;
-
-      if (academicLevel) {
-        setFormData((prev) => ({ ...prev, academic_level: academicLevel }));
+      // T036: prefill from the profiles-backed cache (useUserAcademic) instead of
+      // JWT user_metadata. Map level number -> name and department_id -> name
+      // through the option lists, the same way the submit handler maps names
+      // back to level_number / id.
+      if (typeof academic.level === "number") {
+        const levelName = levels.find(
+          (l) => l.level_number === academic.level,
+        )?.name;
+        if (levelName) {
+          setFormData((prev) => ({ ...prev, academic_level: levelName }));
+        }
       }
-      if (department) {
-        setFormData((prev) => ({ ...prev, department: department }));
+      if (academic.department_id) {
+        const departmentName =
+          userDepartments.find((d) => d.id === academic.department_id)?.name ??
+          departments.find((d) => d.id === academic.department_id)?.name;
+        if (departmentName) {
+          setFormData((prev) => ({ ...prev, department: departmentName }));
+        }
       }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, academic, levels, departments, userDepartments]);
 
   useEffect(() => {
     if (!formData.academic_level) {
@@ -74,16 +87,16 @@ export function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
         (d) => d.name === formData.department,
       );
 
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
+      // T035: write through setUserAcademic so the academic cache update,
+      // query invalidation and the masarx_user_academic_updated event all run.
+      // (refreshSession is no longer needed: nothing is written to user_metadata.)
+      const result = await setUserAcademic({
         level: selectedLevel?.level_number ?? null,
+        semester: academic.semester ?? null,
         department_id: selectedDepartment?.id ?? null,
-        updated_at: new Date().toISOString(),
       });
 
-      if (error) throw error;
-
-      await supabase.auth.refreshSession();
+      if (!result.success) throw new Error(result.message || "onboarding-failed");
 
       onComplete();
     } catch {

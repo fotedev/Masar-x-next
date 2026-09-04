@@ -1,7 +1,7 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { FileText, BookOpen, Calendar, Star } from "lucide-react";
+import { FileText, BookOpen, Calendar, Star, ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { SummaryWithRatings } from "@/types/database";
 import { SummaryWithRatingsOptimistic } from "@/hooks/useSummaries";
@@ -50,19 +50,24 @@ export function SummariesSection({
   const locale = useLocale();
   const shouldReduceMotion = useReducedMotion();
   const isRTL = locale === "ar";
+  const showHeaderLink = displaySummaries.length > 0;
+
   return (
-    <div className="space-y-6" dir="auto">
+    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       <div className="flex items-center justify-between">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
           {tHome("best")}
         </h2>
-        <button
-          onClick={() => onNavigate("subjects")}
-          className="text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1"
-        >
-          {tHome("goToSubjects")}
-          <span className={`text-lg transition-transform ${locale === 'ar' ? 'rotate-180' : ''}`}>←</span>
-        </button>
+        {showHeaderLink && (
+          <button
+            onClick={() => onNavigate("subjects")}
+            dir={isRTL ? "rtl" : "ltr"}
+            className="group text-brand-blue hover:text-brand-sky text-sm font-semibold transition-colors flex items-center gap-1.5"
+          >
+            <span>{tHome("goToSubjects")}</span>
+            <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>
       {loading || subjectsLoading ? (
         <div className="summary-grid">
@@ -100,7 +105,7 @@ export function SummariesSection({
           </p>
           <button
             onClick={() => onNavigate("subjects")}
-            className="px-8 py-3 bg-brand-blue text-white rounded-2xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-all duration-300 active:scale-95"
+            className="px-8 py-3 bg-brand-blue text-primary-foreground rounded-2xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/20 transition-[colors,transform,box-shadow] duration-300 active:scale-95"
           >
             {tHome("goToSubjects")}
           </button>
@@ -153,7 +158,7 @@ export function SummariesSection({
                         e.stopPropagation();
                         onEditSummary(summary);
                       }}
-                      className="text-slate-400 hover:text-brand-blue p-1.5 rounded-lg hover:bg-brand-blue/5 transition-all"
+                      className="text-slate-400 hover:text-brand-blue p-1.5 rounded-lg hover:bg-brand-blue/5 transition-colors"
                       title={tHome("editSummary")}
                     >
                       <svg

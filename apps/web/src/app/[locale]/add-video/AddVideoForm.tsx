@@ -91,10 +91,14 @@ export function AddVideoForm() {
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="video-title"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               {t("videoTitle")} <span className="text-red-500">*</span>
             </label>
             <input
+              id="video-title"
               name="title"
               type="text"
               required
@@ -104,10 +108,15 @@ export function AddVideoForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="video-subject"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               {t("subject")}
             </label>
             <input
+              id="video-subject"
+              name="subjectDisplay"
               type="text"
               readOnly
               value={subject}
@@ -128,10 +137,14 @@ export function AddVideoForm() {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="video-url"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               {t("videoUrl")} <span className="text-red-500">*</span>
             </label>
             <input
+              id="video-url"
               name="url"
               type="url"
               required
@@ -146,13 +159,13 @@ export function AddVideoForm() {
             </label>
             <div className="grid grid-cols-2 gap-4">
               <label className="relative">
-                <input type="radio" name="language" value="ar" defaultChecked className="peer hidden" />
+                <input type="radio" name="language" value="ar" id="lang-ar" defaultChecked className="peer hidden" />
                 <div className="cursor-pointer py-3 px-4 rounded-xl border-2 transition-all font-bold text-center border-gray-100 dark:border-gray-700 text-gray-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:text-blue-600">
                   {t("arabic")}
                 </div>
               </label>
               <label className="relative">
-                <input type="radio" name="language" value="en" className="peer hidden" />
+                <input type="radio" name="language" value="en" id="lang-en" className="peer hidden" />
                 <div className="cursor-pointer py-3 px-4 rounded-xl border-2 transition-all font-bold text-center border-gray-100 dark:border-gray-700 text-gray-500 peer-checked:border-blue-600 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/20 peer-checked:text-blue-600">
                   {t("english")}
                 </div>

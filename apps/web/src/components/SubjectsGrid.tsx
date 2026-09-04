@@ -104,7 +104,7 @@ export function SubjectsGrid({
               type="button"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
-                <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors transition-transform duration-300 flex-shrink-0
+                <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-[colors,transform] duration-300 flex-shrink-0
                   ${!subject.isOptimistic ? "group-hover:bg-brand-blue/20 group-hover:scale-110" : ""}`}>
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>

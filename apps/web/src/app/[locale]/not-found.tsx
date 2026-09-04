@@ -8,7 +8,7 @@ export default async function NotFound() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-4 bg-gray-50 dark:bg-slate-900 font-sans"
+      className="min-h-dvh-safe flex items-center justify-center px-4 bg-gray-50 dark:bg-slate-900 font-sans"
       dir={dir}
     >
       <div className="text-center relative">

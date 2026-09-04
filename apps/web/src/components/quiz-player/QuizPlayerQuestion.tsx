@@ -154,7 +154,7 @@ export function QuizPlayerQuestion(props: {
         <div className="space-y-4 mb-10">
           {currentQuestion.options.map((option, index) => {
             let optionClass =
-              "w-full text-start p-5 rounded-2xl border-2 transition-colors transition-shadow transition-transform duration-300 relative group ";
+              "w-full text-start p-5 rounded-2xl border-2 transition-[colors,box-shadow,transform] duration-300 relative group ";
 
             if (isAnswered) {
               if (index === currentQuestion.correct_answer) {
@@ -245,7 +245,7 @@ export function QuizPlayerQuestion(props: {
               <button
                 onClick={onSubmitAnswer}
                 disabled={selectedOption === null}
-                className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-shadow transition-transform hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
+                className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-[colors,box-shadow,transform] hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
                 type="button"
               >
                 {t("confirmAnswer")}
@@ -253,7 +253,7 @@ export function QuizPlayerQuestion(props: {
             ) : (
               <button
                 onClick={onNextQuestion}
-                className="group flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:bg-black dark:hover:bg-gray-100 transition-colors transition-shadow transition-transform hover:shadow-xl active:scale-95"
+                className="group flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:bg-black dark:hover:bg-gray-100 transition-[colors,box-shadow,transform] hover:shadow-xl active:scale-95"
                 type="button"
               >
                 <span>

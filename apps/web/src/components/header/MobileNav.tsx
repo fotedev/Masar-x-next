@@ -127,7 +127,7 @@ export function MobileNav({
             animate="open"
             exit="closed"
             variants={drawerVariants}
-            className="fixed inset-y-0 start-0 w-[min(340px,88vw)] h-[100dvh] bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-2xl z-[10000] flex flex-col border-e border-slate-200/80 dark:border-slate-800/80 overflow-hidden"
+            className="fixed inset-y-0 start-0 w-[min(320px,85vw)] h-[100dvh] bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 shadow-2xl z-[10000] flex flex-col border-e border-slate-200/80 dark:border-slate-800/80 overflow-hidden"
           >
             {/* Header section with logo & close button */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
@@ -159,7 +159,7 @@ export function MobileNav({
             </div>
 
             {/* Scrollable Body Content */}
-            <div className="flex flex-col flex-1 min-h-0 px-4 py-4 overflow-y-auto custom-scrollbar space-y-5">
+            <div className="flex flex-col flex-1 min-h-0 px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] overflow-y-auto custom-scrollbar space-y-5">
               {/* User Profile / Greeting Card */}
               <motion.div variants={itemVariants}>
                 {user ? (
@@ -208,8 +208,8 @@ export function MobileNav({
                         onClick={() => handleNavigate(item.page)}
                         className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
                           active
-                            ? "bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-transparent text-cyan-600 dark:text-cyan-400 border-s-4 border-cyan-500 dark:border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
-                            : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-900/60"
+                            ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12 border-s-4 border-brand-blue dark:border-cyan-400"
+                            : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
                         } active:scale-[0.98]`}
                         type="button"
                       >
@@ -217,7 +217,7 @@ export function MobileNav({
                           <div
                             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                               active
-                                ? "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400"
+                                ? "bg-brand-blue/10 text-brand-blue dark:text-cyan-400"
                                 : "bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 group-hover:bg-cyan-500/10"
                             }`}
                           >
@@ -243,7 +243,7 @@ export function MobileNav({
                       className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
                         isMounted && currentPage === "non-academic"
                           ? "bg-gradient-to-r from-purple-500/15 to-transparent text-purple-600 dark:text-purple-400 border-s-4 border-purple-500 font-black"
-                          : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-900/60"
+                          : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
                       } active:scale-[0.98]`}
                       type="button"
                     >
@@ -315,7 +315,7 @@ export function MobileNav({
                   <div className="flex flex-col gap-2.5">
                     <button
                       onClick={() => handleNavigate("signup")}
-                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-black bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:opacity-95 active:scale-[0.98] transition-all"
+                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-black bg-gradient-to-r from-blue-600 to-cyan-500 text-primary-foreground shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:opacity-95 active:scale-[0.98] transition-all"
                       type="button"
                     >
                       <UserPlus className="w-5 h-5" />

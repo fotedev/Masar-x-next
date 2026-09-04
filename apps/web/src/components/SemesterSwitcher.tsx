@@ -31,7 +31,7 @@ export function SemesterSwitcher() {
         <button
           onClick={() => setSemester(1)}
           disabled={loading}
-          className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors transition-transform duration-200 ${
+          className={`px-4 py-1.5 rounded-md text-sm font-bold transition-[colors,transform] duration-200 ${
             activeSemester === 1
               ? "bg-blue-600 text-white shadow-sm scale-105"
               : "text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -43,7 +43,7 @@ export function SemesterSwitcher() {
         <button
           onClick={() => setSemester(2)}
           disabled={loading}
-          className={`ml-1 px-4 py-1.5 rounded-md text-sm font-bold transition-colors transition-transform duration-200 ${
+          className={`ml-1 px-4 py-1.5 rounded-md text-sm font-bold transition-[colors,transform] duration-200 ${
             activeSemester === 2
               ? "bg-blue-600 text-white shadow-sm scale-105"
               : "text-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700"

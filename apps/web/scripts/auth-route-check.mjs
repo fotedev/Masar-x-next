@@ -1,4 +1,64 @@
-const baseUrl = process.argv[2] ?? 'http://localhost:3000';
+// Modes:
+//   node scripts/auth-route-check.mjs [baseUrl]   -> live redirect checks for protected pages (default)
+//   node scripts/auth-route-check.mjs --scan-api  -> static scan of src/app/api/**/route.ts:
+//                                                    0 occurrences of getSession( allowed (getUser required).
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const args = process.argv.slice(2);
+const scanApi = args.includes('--scan-api');
+const baseUrl = args.find((a) => !a.startsWith('--')) ?? 'http://localhost:3000';
+
+// T046: static scan mode. API routes must authenticate with getUser(), never getSession().
+function scanApiRoutes() {
+  const apiDir = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '..',
+    'src',
+    'app',
+    'api',
+  );
+  if (!existsSync(apiDir)) {
+    console.error(`API directory not found: ${apiDir}`);
+    return 1;
+  }
+
+  const routeFiles = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.isFile() && entry.name === 'route.ts') {
+        routeFiles.push(full);
+      }
+    }
+  };
+  walk(apiDir);
+
+  const offenders = [];
+  for (const file of routeFiles) {
+    const rel = path.relative(process.cwd(), file) || file;
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+    lines.forEach((line, idx) => {
+      if (/getSession\s*\(/.test(line)) offenders.push(`${rel}:${idx + 1}: ${line.trim()}`);
+    });
+  }
+
+  console.log(`Scanned ${routeFiles.length} API route.ts file(s) under src/app/api.`);
+  if (offenders.length > 0) {
+    console.error(`\n${offenders.length} getSession( occurrence(s) found - API routes must use getUser():`);
+    for (const o of offenders) console.error(`  BAD ${o}`);
+    return 1;
+  }
+  console.log('OK: 0 occurrences of getSession(.');
+  return 0;
+}
+
+if (scanApi) {
+  process.exit(scanApiRoutes());
+}
 
 const routesToCheck = [
   '/',

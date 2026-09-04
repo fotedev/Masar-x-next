@@ -24,6 +24,11 @@ const mockLoadURL = vi.fn();
 const mockBrowserWindowInstance = {
   loadURL: mockLoadURL,
   on: vi.fn(),
+  // T025 follow-up: the production did-fail-load handler guards the
+  // setTimeout callback with `win.isDestroyed()`. The retry tests below
+  // invoke the handler manually, so the guard must be stubbed — otherwise
+  // the timer fires an uncaught TypeError that masks the assertion.
+  isDestroyed: vi.fn(() => false),
   webContents: { on: vi.fn(), send: vi.fn() },
 };
 
@@ -36,6 +41,10 @@ const mockApp = {
   quit: vi.fn(),
   isReady: vi.fn().mockReturnValue(true),
   getPath: vi.fn().mockReturnValue('/tmp/test-userData'),
+  // T023 — `apps/desktop/src/main/updater.ts:68` calls `app.setName('masarx')`
+  // at module load. The T017 contract is about main-process startup; the
+  // app-name side effect is out of scope, so the mock only needs a stub.
+  setName: vi.fn(),
   // isPackaged=true forces the production path in startMainProcess so the
   // test exercises findFreePort (returns 41234) instead of the dev
   // MASARX_DESKTOP_PORT fallback (3000). The contract is that prod
@@ -287,4 +296,40 @@ describe('T017 — Electron main process contract', () => {
 
     expect(mockLoadURL).toHaveBeenCalledWith(`http://127.0.0.1:${port}`);
   });
+
+  // T025 follow-up: the BrowserWindow `did-fail-load` handler must retry
+  // on transient local-server startup errors. The original implementation
+  // only covered -102 (ERR_CONNECTION_REFUSED) and -105 (ERR_NAME_NOT_RESOLVED).
+  // After the localhost-aware CSP fix in apps/web/src/middleware.ts, -107
+  // (ERR_SSL_PROTOCOL_ERROR) is the third error code a stale ServiceWorker
+  // or transient CSP can produce; the desktop should self-heal by retrying
+  // the loadURL 500ms later.
+  it.each([-102, -105, -107])(
+    'retries loadURL on did-fail-load error %i',
+    async (errorCode) => {
+      const mod = await import('../index');
+      await (mod as any).startMainProcess();
+
+      // The handler is registered on `webContents.on('did-fail-load', …)`
+      // (see apps/desktop/src/main/index.ts). The mock exposes the
+      // `on` calls on `mockBrowserWindowInstance.webContents.on`.
+      const webContentsOn = (mockBrowserWindowInstance as any).webContents.on;
+      const handler = webContentsOn.mock.calls.find(
+        (c: any[]) => c[0] === 'did-fail-load',
+      )?.[1];
+      expect(handler, 'did-fail-load handler should be registered').toBeTruthy();
+
+      const before = mockLoadURL.mock.calls.length;
+      handler({}, errorCode, 'simulated error');
+      // Allow the 500ms backoff to elapse.
+      await new Promise((r) => setTimeout(r, 600));
+      const after = mockLoadURL.mock.calls.length;
+
+      expect(after, 'loadURL should be called again after the retry backoff').toBeGreaterThan(before);
+      // The retry URL must be plain HTTP on the loopback port (defense in
+      // depth: even if the CSP regresses, the retry should not be HTTPS).
+      const lastCall = mockLoadURL.mock.calls[mockLoadURL.mock.calls.length - 1];
+      expect(lastCall[0]).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+    },
+  );
 });
