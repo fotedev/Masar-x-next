@@ -88,6 +88,15 @@ paths = [
   # introduced by build-time string concatenation. See PR27
   # follow-up "fix(d): allowlist Next.js Preview Mode manifest
   # fields" for the diagnostic and the 10-leak breakdown.
+  #
+  # The `dev/` variants below are Next.js 16's dev-mode cache that
+  # `next dev` writes under `.next/dev/` (separate from the
+  # production build output). They contain the same Preview Mode
+  # keys plus per-route type info. They are not produced by
+  # `next build` itself, but gitleaks scans the entire source tree
+  # on this CI job, and a previous local `next dev` run can leave
+  # them in the working tree.
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
 ]

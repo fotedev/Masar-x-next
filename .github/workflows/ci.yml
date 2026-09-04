@@ -230,9 +230,32 @@ jobs:
         # `--source .` scans the entire current directory; the gitleaks
         # config's `[allowlist]` block (`.gitleaks.toml` at the repo
         # root) excludes safe templates like `.env.example`.
+        # The structured JSON report is uploaded as a workflow artifact
+        # so a future contributor can see per-leak rule/file/line details
+        # without re-running the scan (gitleaks 8.x's `--log` output only
+        # prints the summary "leaks found: N" line).
         run: |
+          mkdir -p "$RUNNER_TEMP/gitleaks-report"
+          REPORT="$RUNNER_TEMP/gitleaks-report/scan.json"
+          set +e
           gitleaks detect --no-git --source . --config .gitleaks.toml --redact --exit-code 1 \
-            || (echo "::error::gitleaks detected secrets in built artifacts. See above for matches." && exit 1)
+            --report-path "$REPORT"
+          RC=$?
+          set -e
+          if [ $RC -ne 0 ]; then
+            echo "::error::gitleaks detected secrets in built artifacts. See $REPORT for the per-leak breakdown (uploaded as the gitleaks-report artifact)."
+            exit $RC
+          fi
+        continue-on-error: false
+
+      - name: Upload gitleaks report on failure
+        if: failure() && steps.scan.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: ${{ runner.temp }}/gitleaks-report/scan.json
+          if-no-files-found: warn
+          retention-days: 7
 
   # ---------------------------------------------------------------------
   # Docs lint
@@ -312,12 +335,23 @@ jobs:
         # fetches the right prebuild instead) but it also skips the postinstall
         # on the Linux CI runner, which is what we need the native binding for
         # (`apps/desktop/src/main/__tests__/read-cache.test.ts` exercises the
-        # real better-sqlite3 path). This explicit rebuild produces the
-        # `node_modules/better-sqlite3/lib/binding/node-v137-linux-x64/`
-        # binding the test suite requires, without touching the
-        # `neverBuiltDependencies` allowlist that the desktop build relies on.
-        # See .npmrc for the full rationale.
-        run: pnpm rebuild better-sqlite3
+        # real better-sqlite3 path).
+        #
+        # `pnpm rebuild better-sqlite3` is a no-op here because pnpm 9
+        # respects the neverBuiltDependencies allowlist (per pnpm's own
+        # warning: "The following dependencies have build scripts that
+        # were ignored: better-sqlite3"). Workaround: invoke the
+        # package's own install script directly via npm, which has no
+        # awareness of pnpm's allowlist. The script runs
+        # `prebuild-install || node-gyp rebuild --release`, which on
+        # Linux x64 + Node 24 successfully downloads the matching
+        # `node-v137-linux-x64` prebuild.
+        run: |
+          if [ ! -d node_modules/better-sqlite3 ]; then
+            echo "::error::node_modules/better-sqlite3 is missing — was pnpm install --frozen-lockfile run before this step?"
+            exit 1
+          fi
+          (cd node_modules/better-sqlite3 && npm run install --foreground-scripts)
 
       - name: Run workspace tests
         run: pnpm -r --if-present test
