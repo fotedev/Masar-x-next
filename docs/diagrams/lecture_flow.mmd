@@ -1,0 +1,67 @@
+graph TD
+    %% Global Styles & Theme
+    accTitle: Lecture Flow Diagram
+    accDescr: A diagram explaining how lectures are handled and displayed in the application.
+
+    %% Theme Configuration
+    %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0070f3', 'primaryTextColor': '#fff', 'primaryBorderColor': '#0070f3', 'lineColor': '#0070f3', 'secondaryColor': '#f5f5f7', 'tertiaryColor': '#fff' }}}%%
+
+    classDef primary fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b;
+    classDef secondary fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#7b1fa2;
+    classDef database fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100;
+    classDef action fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32;
+    classDef highlight fill:#fff9c4,stroke:#fbc02d,stroke-width:3px,color:#000;
+
+    %% Entry Points
+    Start([شاشة المواد / Subjects Page]) --> ClickSubject[الضغط على مادة معينة]
+    ClickSubject --> SubjectPage[صفحة المادة: src/app/subjects/subject/page.tsx]
+
+    %% Main Logic in Subject Page
+    subgraph Subject_Page_Logic [منطق صفحة المادة]
+        LoadData[تحميل البيانات: Summaries, Videos, Files, Quizzes]
+        FetchLectures[جلب المحاضرات المسجلة من جدول subject_lectures]
+        
+        LectureIndex{تكوين فهرس المحاضرات: lectureIndex}
+        LoadData --> LectureIndex
+        FetchLectures --> LectureIndex
+        
+        %% Categorization Logic
+        subgraph Categorization [كيف يتم تصنيف المحتوى؟]
+            TitleParsing[تحليل عنوان الملف/الفيديو: getLectureInfoFromTitle]
+            TitleParsing --> |"مثال: محاضرة 1 - مقدمة"| Key[Key: lec-1]
+            TitleParsing --> |"اسم العرض"| Label[Label: المحاضرة الأولى]
+        end
+        
+        LectureIndex --> |"إذا لم تكن في عرض محاضرة معينة"| RenderDashboard[عرض لوحة تحكم المادة: renderSubjectDashboard]
+        LectureIndex --> |"إذا تم اختيار محاضرة (URL ?lecture=...)"| RenderDetail[عرض تفاصيل المحاضرة: renderLectureDetailView]
+    end
+
+    %% Interaction Flow
+    RenderDashboard --> |"الضغط على كارت المحاضرة"| UpdateURL[تحديث الرابط: router.push?lecture=key]
+    UpdateURL --> SelectedKey[تحديث selectedLectureKey]
+    SelectedKey --> FilterContent[تصفية المحتوى للمحاضرة المختارة فقط]
+    FilterContent --> RenderDetail
+
+    %% Content Grouping in Detail View
+    subgraph Detail_View [عرض التفاصيل]
+        RenderDetail --> GroupContent[تجميع المحتوى: groupContentBySection]
+        GroupContent --> Explanation[قسم الشرح: فيديوهات + ملخصات]
+        GroupContent --> Homework[قسم الواجب: ملفات]
+        GroupContent --> Exams[قسم الاختبارات: الكويزات]
+    end
+
+    %% Database
+    subgraph Database [قاعدة البيانات - Supabase]
+        DB_Lectures[(جدول subject_lectures: يحفظ ترتيب وأسماء المحاضرات)]
+        DB_Content[(جداول المحتوى: summaries, videos, files, quizzes)]
+    end
+
+    FetchLectures -.-> DB_Lectures
+    LoadData -.-> DB_Content
+
+    %% Styling
+    class Start,ClickSubject,SubjectPage primary;
+    class LoadData,FetchLectures,LectureIndex secondary;
+    class DB_Lectures,DB_Content database;
+    class UpdateURL,FilterContent,GroupContent action;
+    class Key,Label highlight;

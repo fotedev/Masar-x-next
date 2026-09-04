@@ -26,10 +26,41 @@ function generateNonce(): string {
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function getCspHeader(nonce: string): string {
+function isLocalHost(host: string | null): boolean {
+  if (!host) return false;
+  const lower = host.toLowerCase();
+
+  // IPv6 loopback — the Host header for an IPv6 literal is bracketed and
+  // has the port after the closing bracket: `[::1]:3000`. Strip the
+  // bracketed part first, then check the literal. We also accept a bare
+  // `::1` (non-conformant per RFC 9110, but some clients send it that
+  // way and treating it as loopback is the safer default).
+  if (lower.startsWith("[")) {
+    const end = lower.indexOf("]");
+    if (end < 0) return false;
+    const literal = lower.slice(1, end);
+    if (literal === "::1") return true;
+    return false;
+  }
+  if (lower === "::1") return true;
+
+  // Strip the port for IPv4 / hostname (Host is `hostname[:port]` per RFC 9110).
+  const hostname = lower.split(":", 1)[0] ?? "";
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return true;
+  }
+  // IPv4 loopback range 127.0.0.0/8.
+  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
+    return true;
+  }
+  return false;
+}
+
+function getCspHeader(nonce: string, host: string | null = null): string {
   // Use a more robust check for production environment at the edge
   const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
   const isDev = !isProd;
+  const isLocal = isLocalHost(host);
 
   const cspDirectives = [
     // Allow YouTube and Google Video in default-src to cover media/workers
@@ -91,15 +122,21 @@ function getCspHeader(nonce: string): string {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "upgrade-insecure-requests",
+    // `upgrade-insecure-requests` is correct for production (real Vercel HTTPS
+    // domain) but breaks the Electron desktop runtime: the local Next.js
+    // server is plain HTTP on 127.0.0.1:<port>, and upgrading to HTTPS makes
+    // Chromium emit ERR_SSL_PROTOCOL_ERROR. Suppress only for loopback hosts.
+    ...(isLocal ? [] : ["upgrade-insecure-requests"]),
   ];
 
   return cspDirectives.join("; ");
 }
 
-function addSecurityHeaders(response: NextResponse, nonce: string): void {
-  // CSP with nonce
-  response.headers.set("Content-Security-Policy", getCspHeader(nonce));
+function addSecurityHeaders(response: NextResponse, nonce: string, host: string | null = null): void {
+  // CSP with nonce. Pass the request Host so we can suppress
+  // `upgrade-insecure-requests` for the desktop's loopback server (see
+  // getCspHeader).
+  response.headers.set("Content-Security-Policy", getCspHeader(nonce, host));
   response.headers.set("x-nonce", nonce);
 
   // Security headers
@@ -116,6 +153,7 @@ export default async function middleware(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname;
     const nonce = generateNonce();
+    const host = request.headers.get("host");
 
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-pathname", pathname);
@@ -126,7 +164,7 @@ export default async function middleware(request: NextRequest) {
 
     if (intlResponse && isRedirectResponse(intlResponse)) {
       intlResponse.headers.set("x-pathname", pathname);
-      addSecurityHeaders(intlResponse, nonce);
+      addSecurityHeaders(intlResponse, nonce, host);
 
       const sessionSetCookie = sessionResponse.headers.get("set-cookie");
       if (sessionSetCookie)
@@ -137,7 +175,7 @@ export default async function middleware(request: NextRequest) {
 
     if (isRedirectResponse(sessionResponse)) {
       sessionResponse.headers.set("x-pathname", pathname);
-      addSecurityHeaders(sessionResponse, nonce);
+      addSecurityHeaders(sessionResponse, nonce, host);
 
       const intlSetCookie = intlResponse?.headers.get("set-cookie");
       if (intlSetCookie)
@@ -167,7 +205,7 @@ export default async function middleware(request: NextRequest) {
       finalResponse.headers.append("set-cookie", sessionSetCookie);
 
     finalResponse.headers.set("x-pathname", pathname);
-    addSecurityHeaders(finalResponse, nonce);
+    addSecurityHeaders(finalResponse, nonce, host);
     return finalResponse;
   } catch (error) {
     // On middleware error, log and pass through to page (don't block request)

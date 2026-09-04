@@ -109,7 +109,7 @@ export function useUserAcademic() {
 
         setAcademic(academicData);
         academicCache.setUserAcademic(userId, academicData);
-        localStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString());
+        sessionStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString()); // T033: migrated from localStorage to sessionStorage
       } catch (e) {
         logger.error("Failed to fetch academic profile data", e, { userId });
       }
@@ -131,7 +131,7 @@ export function useUserAcademic() {
       if (cached) {
         setAcademic(cached);
         setLoading(false);
-        const lastFetch = localStorage.getItem(ACADEMIC_FETCH_KEY);
+        const lastFetch = sessionStorage.getItem(ACADEMIC_FETCH_KEY); // T033: migrated from localStorage to sessionStorage
         if (!lastFetch || Date.now() - Number(lastFetch) > FETCH_COOLDOWN) {
           fetchProfileData(user.id);
         }
@@ -189,7 +189,7 @@ export function useUserAcademic() {
     ): Promise<{ success: boolean; message?: string }> => {
       if (!user) return { success: false };
       if (options?.isProfileUpdate) {
-        const rlRaw = localStorage.getItem(RATE_LIMIT_KEY);
+        const rlRaw = sessionStorage.getItem(RATE_LIMIT_KEY); // T033: migrated from localStorage to sessionStorage
         const rlStats = rlRaw ? JSON.parse(rlRaw) : { count: 0, blockUntil: 0 };
         const now = Date.now();
         if (rlStats.blockUntil > now) {
@@ -201,7 +201,7 @@ export function useUserAcademic() {
         }
         rlStats.count++;
         if (rlStats.count >= 5) rlStats.blockUntil = now + 60000;
-        localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rlStats));
+        sessionStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(rlStats)); // T033: migrated from localStorage to sessionStorage
       }
 
       try {

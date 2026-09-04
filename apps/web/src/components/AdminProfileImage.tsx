@@ -1,4 +1,5 @@
 import { User, Camera } from "lucide-react";
+import { updateAvatar } from "@/actions/profile";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -7,7 +8,6 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { supabase } from "@/lib/supabase";
 
 interface AdminProfileImageProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -26,14 +26,15 @@ export function AdminProfileImage({
   const [isUploading, setIsUploading] = useState(false);
   const avatarUrl = profile?.avatarUrl || user?.user_metadata?.avatar_url;
 
-  const updateAvatar = async (file: File) => {
+  const uploadAndPersistAvatar = async (file: File) => {
     if (!user) return;
     const res = await uploadToCloudinary(file, { folder: "avatars" });
-    const { error } = await supabase
-      .from("profiles")
-      .update({ avatar_url: res.url })
-      .eq("id", user.id);
-    if (error) throw error;
+    // FR-005: route the write through the validated server action
+    // (ProfileSchema.shape.avatarUrl) instead of a raw client-side update.
+    const result = await updateAvatar(res.url);
+    if (!result.success) {
+      throw new Error(result.error ?? "Avatar update rejected");
+    }
     window.dispatchEvent(new CustomEvent("profileUpdate", { detail: { avatar_url: res.url } }));
   };
 
@@ -64,7 +65,7 @@ export function AdminProfileImage({
 
     setIsUploading(true);
     try {
-      await updateAvatar(file);
+      await uploadAndPersistAvatar(file);
       // Wait for a small delay to ensure AuthContext state has propagated if needed
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {

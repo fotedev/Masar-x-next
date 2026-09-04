@@ -22,17 +22,18 @@
 #   - `specs/**`, `docs/**`, `*.md`: documentation files that
 #     discuss the secret formats in plain prose.
 #
-# What the config DELIBERATELY does NOT allowlist:
-#   - `apps/web/.next/**`: the contract for T015 (per
-#     specs/004-multi-platform-expansion/tasks.md) is to scan
-#     the built artifacts so a key introduced by build-time
-#     string concatenation is caught. Adding `.next/` to the
-#     allowlist would defeat the entire point of the T015 job.
-#   - `apps/desktop/dist/**` and `apps/mobile/.expo/**`: same
-#     reason; these land in their respective user-story phases
-#     and are then added to the scan path explicitly.
-#   - Any real `.env`, `.env.local`, or `.env.production`:
-#     gitignored, never reach the scanner.
+# ARTIFACT DIRECTORIES MUST REMAIN SCANNABLE (spec 004 T015).
+# `dist/`, `build/`, `out/` and `.next/` are deliberately NOT
+# allowlisted: the `gitleaks-artifacts` CI job runs
+# `gitleaks detect --no-git` over the built bundles (apps/web/.next
+# today; the Electron asar and the Expo bundle as their phases land)
+# so that a key introduced by build-time string concatenation is
+# still caught. Re-adding artifact paths here would defeat the
+# entire point of the T015 / T049-T051 artifact-scan contract.
+#
+# The config also does NOT allowlist any real `.env`, `.env.local`,
+# or `.env.production`: they are gitignored and never reach the
+# scanner.
 
 title = "Masar X gitleaks config"
 
@@ -45,13 +46,11 @@ paths = [
   # Env templates with placeholder values
   '''(^|/)(\.env\.example|\.env\.template|\.env\.sample)$''',
 
-  # pnpm's workspace store and the lockfile (T008 already added the
-  # gitleaks config; this is the same allowlist concept extended to
-  # the build's transitive state). `node_modules/` and `.pnpm/`
-  # contain third-party code whose test fixtures and docs routinely
-  # include strings that match gitleaks' high-entropy rules. The
-  # lockfile is regenerated on every install and contains SHAs that
-  # occasionally trip the generic detector.
+  # pnpm's workspace store and the lockfile. `node_modules/` and
+  # `.pnpm/` contain third-party code whose test fixtures and docs
+  # routinely include strings that match gitleaks' high-entropy
+  # rules. The lockfile is regenerated on every install and contains
+  # SHAs that occasionally trip the generic detector.
   '''(^|/)node_modules/''',
   '''(^|/)\.pnpm/''',
   '''(^|/)pnpm-lock\.yaml$''',
@@ -68,43 +67,36 @@ paths = [
   # test fixture URL to the step).
   '''(^|/)\.github/workflows/ci\.yml$''',
 
-  # Documentation that discusses the secret formats in plain prose.
+  # Documentation that discusses the secret formats in plain prose
+  # (e.g. docs/security/secret-leak-runbook.md, T056).
   '''(^|/)specs/''',
   '''(^|/)docs/''',
   '''\.md$''',
 
-  # Build outputs other than the contract-scanned `.next/`
-  # (Electron asar and Expo bundle land here when their phases
-  # add the scan path explicitly).
-  '''(^|/)dist/''',
-  '''(^|/)build/''',
-  '''(^|/)out/''',
-
-  # Next.js build output. The whole `.next/` tree is the framework's
-  # own build cache and metadata:
-  #   - `.next/cache/`: webpack production packs, `.previewinfo`,
-  #     `.rscinfo` — internal cache, NOT shipped.
-  #   - `.next/server/*.json` (`middleware-manifest.json`,
-  #     `server-reference-manifest.json`, `prerender-manifest.json`):
-  #     framework metadata containing per-build auto-generated
-  #     encryption keys (for middleware cookie signing, server
-  #     action integrity, ISR cache tagging). These are NOT secrets
-  #     in the sense the T015 contract is concerned with — they're
-  #     regenerated every build, scoped to one deployment, and the
-  #     framework rotates them. The actual route handlers and
-  #     server logic live in `.js` files in the same directory and
-  #     remain in the scan path.
-  #   - `.next/static/`: client bundles, which are minified
-  #     `.js`/`.css`/asset files. The Next build inlines env vars
-  #     into the client bundle, but only `NEXT_PUBLIC_*` vars, which
-  #     are public by design. The CI placeholder values
-  #     (`ci-placeholder-…`) are matched by gitleaks' generic
-  #     high-entropy rule but aren't real secrets.
-  # In all cases the build output is framework-generated; the
-  # user-controlled surface is `apps/web/src/` (scanned via
-  # `--source .`). The whole `.next/` tree is excluded from the
-  # post-build artifact scan.
-  # The pattern uses `[\\/]` to match either forward or backslash
-  # separators (gitleaks on Windows emits backslash paths).
-  '''[\\/]\.next[\\/]''',
+  # Next.js build-time artifacts containing the auto-generated
+  # Preview Mode keys (`previewModeSigningKey` /
+  # `previewModeEncryptionKey`). These are 256-bit random values
+  # Next.js embeds in its manifest files for the ISR preview
+  # workflow. They:
+  #   - regenerate on every `next build` (no build-to-build reuse),
+  #   - are not used in this project (no `draftMode()` or
+  #     `previewModeId` consumer in `apps/web/src/`),
+  #   - ship to every Next.js deployment as part of the public
+  #     `.next` output, so they have no secrecy value.
+  # Five specific files are listed (not a directory allowlist) so
+  # the T015 artifact-scan contract still catches real secrets
+  # introduced by build-time string concatenation. See PR27
+  # follow-up "fix(d): allowlist Next.js Preview Mode manifest
+  # fields" for the diagnostic and the 10-leak breakdown.
+  #
+  # The `dev/` variants below are Next.js 16's dev-mode cache that
+  # `next dev` writes under `.next/dev/` (separate from the
+  # production build output). They contain the same Preview Mode
+  # keys plus per-route type info. They are not produced by
+  # `next build` itself, but gitleaks scans the entire source tree
+  # on this CI job, and a previous local `next dev` run can leave
+  # them in the working tree.
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
 ]

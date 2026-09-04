@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // T022: Check rate limit (10 req/min per user)
-    const rateLimitResult = checkAIChatRateLimit(user.id);
+    const rateLimitResult = await checkAIChatRateLimit(user.id);
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Record this request for rate limiting
-    recordAIChatRequest(user.id);
+    await recordAIChatRequest(user.id);
 
     // For now, return a graceful fallback message
     // In the future, this can be enhanced with actual LLM integration

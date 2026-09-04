@@ -56,7 +56,7 @@ export function NotificationItem({
     >
       <div className="flex items-start gap-4">
         <div
-          className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-colors transition-transform duration-300 group-hover:scale-110 ${
+          className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-[colors,transform] duration-300 group-hover:scale-110 ${
             isHighlighted
               ? "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
               : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400"
