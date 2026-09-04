@@ -127,6 +127,10 @@ vi.mock('electron', () => ({
       return '';
     }),
     on: vi.fn(),
+    // `apps/desktop/src/main/updater.ts:68` calls `app.setName('masarx')`
+    // at module load. The T023 contract test exercises the Updater class,
+    // not the Electron main process, so the side effect is stubbed here.
+    setName: vi.fn(),
     isPackaged: true,
   },
 }));

@@ -305,5 +305,19 @@ jobs:
         # See the ESLint job for the rationale.
         run: pnpm install --frozen-lockfile
 
+      - name: Rebuild better-sqlite3 for the runner's Node 24 ABI
+        # The root package.json's `pnpm.neverBuiltDependencies: [better-sqlite3]`
+        # is correct for the Windows desktop build (where node-gyp fails on
+        # Visual Studio 18 preview and `electron-builder install-app-deps`
+        # fetches the right prebuild instead) but it also skips the postinstall
+        # on the Linux CI runner, which is what we need the native binding for
+        # (`apps/desktop/src/main/__tests__/read-cache.test.ts` exercises the
+        # real better-sqlite3 path). This explicit rebuild produces the
+        # `node_modules/better-sqlite3/lib/binding/node-v137-linux-x64/`
+        # binding the test suite requires, without touching the
+        # `neverBuiltDependencies` allowlist that the desktop build relies on.
+        # See .npmrc for the full rationale.
+        run: pnpm rebuild better-sqlite3
+
       - name: Run workspace tests
         run: pnpm -r --if-present test

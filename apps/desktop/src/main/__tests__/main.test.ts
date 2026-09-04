@@ -41,6 +41,10 @@ const mockApp = {
   quit: vi.fn(),
   isReady: vi.fn().mockReturnValue(true),
   getPath: vi.fn().mockReturnValue('/tmp/test-userData'),
+  // T023 — `apps/desktop/src/main/updater.ts:68` calls `app.setName('masarx')`
+  // at module load. The T017 contract is about main-process startup; the
+  // app-name side effect is out of scope, so the mock only needs a stub.
+  setName: vi.fn(),
   // isPackaged=true forces the production path in startMainProcess so the
   // test exercises findFreePort (returns 41234) instead of the dev
   // MASARX_DESKTOP_PORT fallback (3000). The contract is that prod
