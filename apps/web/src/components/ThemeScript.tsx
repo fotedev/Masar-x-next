@@ -1,5 +1,3 @@
-import Script from "next/script";
-
 interface ThemeScriptProps {
   siteUrl: string;
   assistantName: string;
@@ -38,23 +36,21 @@ export default function ThemeScript({
         }}
       />
       {/* Theme initializer: must run BEFORE the page paints so users never
-          see a light-mode flash on a dark-preference device. The previous
-          inline <script> with `dangerouslySetInnerHTML` suffered a CSP nonce
-          mismatch: React's server render emitted `nonce=""` in the SSR HTML
-          (the nonce prop is only known at request time, not at component
-          render time), so the browser blocked the script under the
-          production CSP policy even though `suppressHydrationWarning` hid
-          the visible React warning.
-          The fix: hand the executable script to next/script with the
-          `beforeInteractive` strategy. Next.js injects it into the initial
-          HTML during request handling, where the real nonce is available,
-          so the CSP check passes. The `nonce` prop is forwarded so
-          non-CSP-mode builds still work. */}
-      {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document -- App Router root layout; the rule's Pages Router heuristic fires incorrectly here per next.js issue tracker. */}
-      <Script
+          see a light-mode flash on a dark-preference device.
+          We use a standard <script> tag with suppressHydrationWarning instead
+          of next/script <Script> because:
+            1. next/script is designed for external scripts (with src). For inline scripts,
+               browsers empty the DOM nonce attribute after script execution per the
+               W3C CSP specification (nonce hiding).
+            2. next/script does not suppress this attribute change during hydration,
+               triggering a React hydration mismatch error (nonce="" vs nonce="...").
+            3. A native <script> tag with suppressHydrationWarning correctly tells React
+               to ignore this browser-level attribute modification while keeping the nonce
+               valid for CSP execution during initial HTML parsing. */}
+      <script
         id="theme-initializer"
-        strategy="beforeInteractive"
         nonce={nonce}
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
