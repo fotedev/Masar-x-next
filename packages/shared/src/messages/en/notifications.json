@@ -23,5 +23,11 @@
   "promptTitle": "Enable notifications",
   "promptBody": "Get notified when new summaries or news are available.",
   "promptAllow": "Enable",
-  "promptLater": "Later"
+  "promptLater": "Later",
+  "timeAgo": {
+    "now": "Just now",
+    "minutesAgo": "{count} min ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
+  }
 }

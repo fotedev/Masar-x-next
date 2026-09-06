@@ -5,11 +5,13 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from '@/navigation';
 import { useAuth } from "../../../../contexts/AuthContext";
 import { useUserAcademic } from "../../../../hooks/useUserAcademic";
+import { useTranslations } from "next-intl";
 
 export default function AcademicOnboardingPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { academic, loading, setUserAcademic } = useUserAcademic();
+  const t = useTranslations("onboarding");
 
   const initialLevel = useMemo(() => academic.level ?? 1, [academic.level]);
   const initialSemester = useMemo(
@@ -70,12 +72,12 @@ export default function AcademicOnboardingPage() {
     if (!user) return;
 
     if (![1, 2, 3, 4].includes(level)) {
-      setError("اختر مستوى صحيح");
+      setError(t("invalidLevel"));
       return;
     }
 
     if (![1, 2].includes(semester)) {
-      setError("اختر ترم صحيح");
+      setError(t("invalidSemester"));
       return;
     }
 
@@ -92,7 +94,7 @@ export default function AcademicOnboardingPage() {
       );
 
       if (!result.success) {
-        setError(result.message || "حدث خطأ أثناء الحفظ. حاول مرة أخرى.");
+        setError(result.message || t("saveError"));
         setSaving(false);
         return;
       }
