@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { streamText } from 'ai';
 import { createClient } from '@/lib/supabase/server';
 import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
 
@@ -15,34 +16,27 @@ type ChatRequest = {
 };
 
 /**
- * Simple fallback response generator
- * Returns helpful guidance when AI service is unavailable
+ * System prompt per chat mode.
+ * Keep concise — the model produces the actual response.
  */
-function generateFallbackResponse(prompt: string, mode: string): string {
-  const query = prompt.toLowerCase();
-  
-  if (query.includes('كود') || query.includes('code') || query.includes('برنامج')) {
-    return `I understand you're asking about code. Since the AI service is temporarily unavailable, here are some helpful resources:
-
-**English Resources:**
-- MDN WebDocs: https://developer.mozilla.org
-- Stack Overflow: https://stackoverflow.com
-- W3Schools: https://w3schools.com
-
-**عربي:**
-- أكاديمية Alison: https://alison.com
-- Coursera: https://www.coursera.org
-- edX: https://www.edx.org
-
-معذرة، خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة لاحقاً أو استشارة المصادر أعلاه.`;
+function buildSystemPrompt(mode: ChatRequest['mode']): string {
+  switch (mode) {
+    case 'cs_assistant':
+      return "You are a computer science tutor. Answer concisely in the user's language. Show code examples when relevant.";
+    case 'student_agent':
+      return 'You are a Masar X platform assistant. Help students find summaries, courses, and quizzes on the platform.';
+    case 'group_rag':
+    default:
+      return 'You are a helpful study assistant for university students. Answer in the user\'s language (Arabic or English).';
   }
-  
-  if (mode === 'cs_assistant') {
-    return 'The AI assistant service is temporarily unavailable. Please try again in a few moments. You can also check online programming resources like MDN, Stack Overflow, or GeeksforGeeks.';
-  }
-  
-  return '⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة مرة أخرى لاحقاً.\n\n⚠️ AI service is temporarily unavailable. Please try again later.';
 }
+
+/**
+ * Default model for the Vercel AI Gateway.
+ * Override via the request body's `model` field. Must be a valid
+ * gateway model id — see https://ai-gateway.vercel.sh/v1/models.
+ */
+const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-sonnet-4.6';
 
 export async function POST(request: NextRequest) {
   try {
@@ -96,19 +90,32 @@ export async function POST(request: NextRequest) {
     // Record this request for rate limiting
     await recordAIChatRequest(user.id);
 
-    // For now, return a graceful fallback message
-    // In the future, this can be enhanced with actual LLM integration
-    // (e.g., Anthropic, OpenAI, or Vercel AI SDK)
-    const response = generateFallbackResponse(body.prompt, body.mode || 'group_rag');
+    // Explicit 503 if the AI Gateway isn't configured — fail loud rather than
+    // silently returning a fake response (would defeat the purpose of the route).
+    if (!process.env.AI_GATEWAY_API_KEY) {
+      return NextResponse.json(
+        {
+          error: 'AI gateway not configured',
+          message: 'AI_GATEWAY_API_KEY is not set on the server. Set it in Vercel/env.local before calling this endpoint.',
+        },
+        { status: 503 }
+      );
+    }
 
-    return NextResponse.json(
-      { 
-        message: response,
-        source: 'fallback',
-        timestamp: new Date().toISOString()
-      },
-      { status: 200 }
-    );
+    // Stream a real LLM response via the Vercel AI Gateway.
+    // The AI SDK reads AI_GATEWAY_API_KEY automatically and resolves
+    // string model ids (e.g. 'anthropic/claude-sonnet-4.6') to the gateway.
+    const modelId = body.model?.trim() || DEFAULT_GATEWAY_MODEL;
+
+    const result = streamText({
+      model: modelId,
+      system: buildSystemPrompt(body.mode),
+      prompt: body.prompt,
+      maxOutputTokens: 1500,
+    });
+
+    // toTextStreamResponse() sets text/plain + chunked transfer encoding.
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
