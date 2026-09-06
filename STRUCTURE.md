@@ -3,7 +3,7 @@
 > **What is this?** A short reference for the next contributor (human or AI) explaining what lives where in this repo's root. Keep it under one screen.
 
 **Project type:** Full-stack Next.js monorepo (frontend + backend, pnpm workspaces)
-**Last organized:** 2026-09-03
+**Last organized:** 2026-09-05
 **Maintainer:** the team
 **Organized by:** organize-root v2.3
 
@@ -95,8 +95,6 @@ masarx_next/                          # Full-stack Next.js monorepo
 | `specs/` | Specify spec-driven-dev artifacts (numbered spec directories). |
 | `sandbox/`, `context_output/` | Working directories. Both gitignored; contain throwaway experiments. |
 | `masarx-remotion-ad/`, `masarx-video-ad/` | Sibling ad-generation projects kept at root by design. NOT part of pnpm workspace. Move only by explicit decision. |
-| `my-project/` | **Flagged.** Contains `.opencode/` + `.specify/` — appears to be an OpenCode/Specify scaffolded workspace. Empty of code. Awaiting user decision: delete or relocate. |
-| `pnpm-lock.yaml.bak` | Lockfile backup. Convention violation to coexist with active lockfile. Awaiting user decision. |
 | `AGENTS.md` | Agent-facing project conventions. Read this before any agent task. |
 | `STRUCTURE.md` | This file. |
 | `REVERT_PLAN.sh` | Rollback for the 2026-09-03 reorganization. Safe to delete once you're confident in the new layout. |
@@ -127,6 +125,23 @@ masarx_next/                          # Full-stack Next.js monorepo
 | `.trash/` | (root) | **deleted recursively** |
 | `.gitignore` patterns | — | added `.tmp_old_*.txt`, `.vercel/`, `sandbox/` |
 | `my-project/` | (root) | **flagged — non-empty, contains `.opencode/` + `.specify/`** |
+
+### What was cleaned up in 2026-09-05
+
+Four gitignored backup/scratch artifacts at root with no git history — removed:
+
+| File | Size | Why |
+|---|---|---|
+| `pnpm-lock.yaml.bak` | ~620 KB | Lockfile backup; convention violation to coexist with active lockfile. Flagged in prior run. |
+| `temp-chat.txt` | ~41 KB | Stray throwaway chat log; ignored by `.gitignore`. |
+| `.env.local.bak` | ~2.3 KB | Backup of `.env.local`; ignored by `.gitignore` (`*.bak`). |
+| `.npmrc.bak` | ~89 B | Backup of `.npmrc`; ignored by `.gitignore` (`*.bak`). |
+
+`my-project/` not found at root — the 2026-09-03 flag was already resolved (dir removed elsewhere or never persisted).
+
+`REVERT_PLAN.sh` was left alone — it has git history (committed in `c07d0e6` and `611a022`) and is intentionally retained as the rollback for the prior reorg.
+
+No destructive git ops were performed; the 9 modified files and 8 untracked user-work items from the prior turn are untouched.
 
 To reverse the moves (not the deletions): `bash REVERT_PLAN.sh`.
 
@@ -164,7 +179,5 @@ If a future reorganization is needed, run `organize-root` again — Phase 0 (ide
 
 These were deliberately left untouched. Decide on them separately:
 
-- **`my-project/`** — Untracked dir at root, not empty (contains `.opencode/` + `.specify/` tool scaffolding). Looks like an orphaned OpenCode/Specify workspace session. Decision pending.
 - **`masarx-remotion-ad/`** — Sibling Remotion ad project. Out of pnpm workspace by design. Move only if explicitly promoted.
 - **`masarx-video-ad/`** — Same as above for video ads.
-- **`pnpm-lock.yaml.bak`** — Lockfile backup file. Convention violation; should not coexist with active lockfile. Decision pending.
