@@ -72,6 +72,7 @@ export default function AddSummaryPage() {
   const [driveLink, setDriveLink] = useState<string>("");
   const [youtubeLink, setYoutubeLink] = useState<string>("");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
+  const [ocrSucceeded, setOcrSucceeded] = useState(false);
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
@@ -354,8 +355,9 @@ export default function AddSummaryPage() {
 
   const handleAiOcr = async () => {
     if (!pdfFile && !driveLink) return;
-    
+
     setIsOcrLoading(true);
+    setOcrSucceeded(false);
     setError("");
 
     try {
@@ -380,7 +382,9 @@ export default function AddSummaryPage() {
         throw new Error("No PDF URL available");
       }
 
-      // Call the Edge Function
+      // Call the Edge Function (process-pdf exists at supabase/functions/process-pdf/index.ts).
+      // It uses Gemini 2.0 Flash for OCR. If GEMINI_API_KEY is missing, the function returns 500 —
+      // that error is surfaced to the user via setError(t("aiOcrError")).
       const { data, error: ocrError } = await supabase.functions.invoke("process-pdf", {
         body: { pdfUrl: finalPdfUrl },
       });
@@ -390,16 +394,21 @@ export default function AddSummaryPage() {
 
       setFormData((prev) => ({
         ...prev,
-        content: prev.content 
+        content: prev.content
           ? `${prev.content}\n\n---\n\n${data.text}`
           : data.text,
       }));
-      
+      setOcrSucceeded(true);
+
       sendNotification(t("aiOcrSuccess"), {
         icon: getLogoPath(locale),
       });
     } catch (err) {
       console.error("OCR Error:", err);
+      setOcrSucceeded(false);
+      // Surface a generic, user-friendly, localized message.
+      // The Edge Function may return a more specific reason in err.message, but we
+      // deliberately keep the user-facing copy stable and localized via aiOcrError.
       setError(t("aiOcrError"));
     } finally {
       setIsOcrLoading(false);
@@ -640,7 +649,17 @@ export default function AddSummaryPage() {
             />
             
             {(pdfFile || (attachmentType === "link" && driveLink)) && (
-              <div className="mt-2 flex justify-end">
+              <div className="mt-2 flex items-center justify-end gap-2">
+                {ocrSucceeded && !isOcrLoading && (
+                  <span
+                    role="status"
+                    aria-label={t("aiOcrSuccess")}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    {t("aiOcrSuccess")}
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={handleAiOcr}

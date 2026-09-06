@@ -11,5 +11,8 @@
   "saving": "Saving...",
   "continue": "Continue",
   "changeLaterNotice": "You can change these details later from profile settings",
-  "error": "An error occurred while saving. Please try again."
+  "error": "An error occurred while saving. Please try again.",
+  "invalidLevel": "Please select a valid level",
+  "invalidSemester": "Please select a valid semester",
+  "saveError": "An error occurred while saving. Please try again."
 }
