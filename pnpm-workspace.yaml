@@ -9,13 +9,19 @@ packages:
 # native module is reviewed individually before its build script
 # executes (Spec 004 Task T067).
 #
-# In pnpm v11 the legacy `onlyBuiltDependencies` array was removed
-# in favor of `allowBuilds` — a map of `package-name: true`. The
-# default in v11 is `strictDepBuilds: true`, meaning any package
-# not in this map has its postinstall rejected. This makes the
-# workspace config the single source of truth — the older
-# per-package `onlyBuiltDependencies` in apps/desktop/package.json
-# is a no-op when the workspace config is in effect.
+# **SYNTAX: this project pins `pnpm@9.15.4`** (see `package.json`'s
+# `packageManager` field). pnpm 9 uses the legacy `onlyBuiltDependencies`
+# ARRAY syntax. The newer `allowBuilds` MAP syntax is pnpm v11+ only.
+# Mixing them up causes silent install failures: the lockfile gets
+# updated, but `node_modules/<pkg>` is never materialized, on a
+# workspace this size (`1916+` packages) the install hangs for 10+
+# minutes at ~1.5GB RAM and exits 0 with a half-written tree. See
+# `.agents/references/01-gotchas.md` §21 for the full incident.
+#
+# When upgrading to pnpm v11+: replace this block with the `allowBuilds`
+# map syntax — but verify with `pnpm install --frozen-lockfile` after
+# the upgrade that the binary download for `electron` (postinstall)
+# completes successfully before merging.
 #
 # The list below covers every native module currently pulled in by
 # apps/{web,desktop,mobile} and packages/shared (sharp, esbuild,
@@ -25,11 +31,11 @@ packages:
 # build needs and is compiled via `electron-builder install-app-deps`
 # on Electron's Node ABI at build time — see
 # apps/desktop/electron-builder.yml `nativeDependencies`).
-allowBuilds:
-  sharp: true
-  "@parcel/watcher": true
-  "@swc/core": true
-  esbuild: true
-  unrs-resolver: true
-  electron: true
-  better-sqlite3: true
+onlyBuiltDependencies:
+  - sharp
+  - "@parcel/watcher"
+  - "@swc/core"
+  - esbuild
+  - unrs-resolver
+  - electron
+  - better-sqlite3

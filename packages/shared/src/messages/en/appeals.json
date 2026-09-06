@@ -56,5 +56,6 @@
     "delete": "Delete",
     "submittedAt": "Submitted at",
     "unknown": "Unknown"
-  }
+  },
+  "paginationRange": "Showing {start}-{end} of {total} appeals"
 }

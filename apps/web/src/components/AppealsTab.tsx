@@ -137,9 +137,11 @@ export function AppealsTab({
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                عرض {startIndex + 1}-
-                {Math.min(endIndex, filteredAppeals.length)} من{" "}
-                {filteredAppeals.length} طعن
+                {t("paginationRange", {
+                  start: startIndex + 1,
+                  end: Math.min(endIndex, filteredAppeals.length),
+                  total: filteredAppeals.length,
+                })}
               </div>
               <div className="flex items-center gap-2">
                 <button

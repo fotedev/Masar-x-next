@@ -98,7 +98,7 @@ export function NotificationItem({
                 >
                   <span className="w-1 h-1 rounded-full bg-current opacity-50" />
                   {notification.created_at
-                    ? formatTimeAgo(notification.created_at)
+                    ? formatTimeAgo(notification.created_at, tNotifications)
                     : tNotifications("unknownTime")}
                 </time>
               </div>
