@@ -41,7 +41,26 @@ title = "Masar X gitleaks config"
 useDefault = true
 
 [allowlist]
-description = "Allow third-party code, lockfiles, env templates, and test fixtures"
+description = "Allow third-party code, lockfiles, env templates, test fixtures, and the Puter.js public client_id"
+# NOTE: this table also carries `regexes` below (singular `[allowlist]`
+# is the only global form gitleaks 8.x honors — a separate
+# `[[allowlists]]` block is silently ignored; verified 2026-09-07).
+regexes = [
+  # Puter.js public OAuth client_id, bundled into the Next.js server
+  # output by the third-party `puter` SDK (`node_modules/` itself is
+  # allowlisted above, but the webpack-bundled copies under
+  # `apps/web/.next/` are not). Diagnosed 2026-09-07: the ONLY finding
+  # (21/21) in the `gitleaks-artifacts` CI job, identical before and
+  # after the release-pipeline consolidation. This `cl_...` value is a
+  # public OAuth client identifier (PKCE refresh_token flow), not a
+  # secret — hardcoded in the published SDK, identical in every
+  # deployment. Pinned to the exact value so the T015 artifact-scan
+  # contract still catches any real secret introduced by build-time
+  # string concatenation. If a `puter` SDK upgrade rotates this ID, the
+  # artifacts job will fail again — update the value, do NOT widen this
+  # to a directory rule.
+  '''cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp''',
+]
 paths = [
   # Env templates with placeholder values
   '''(^|/)(\.env\.example|\.env\.template|\.env\.sample)$''',
