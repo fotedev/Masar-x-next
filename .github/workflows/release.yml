@@ -1,0 +1,178 @@
+# ============================================================================
+# Release Desktop App
+#
+# Tag-triggered pipeline that builds the Electron desktop installers
+# (NSIS + Portable), generates electron-updater metadata (`latest.yml`,
+# `*.blockmap`), and publishes everything as a GitHub Release on THIS
+# repo (`fotedev/Masar-x-next`).
+#
+# History: the source repo used to be PRIVATE, so releases were published
+# to a separate public repo (`fotedev/masarx-releases`) via a
+# `GH_RELEASES_TOKEN` PAT plus a tag-mirror step. The source repo is now
+# PUBLIC (2026-09), so that split is gone: the built-in `GITHUB_TOKEN`
+# (with `permissions: contents: write`) publishes directly, and no
+# tag-mirror is needed because the tag already lives in this repo.
+# `fotedev/masarx-releases` is archived read-only for old downloads.
+# See `docs/agents/references/02-release-pipeline.md` for the full story.
+#
+# How the publish works (electron-builder does it all)
+# ----------------------------------------------------
+# The `apps/desktop/electron-builder.yml` `publish:` block targets
+# `fotedev/Masar-x-next`. The `build:all` script in
+# `apps/desktop/package.json` invokes `electron-builder --win --x64`
+# WITHOUT `--publish never`, so the default `onTagOrDraft` mode kicks
+# in: on a tag, electron-builder generates the `.exe`, the `latest.yml` /
+# `*.blockmap` metadata, AND creates the GitHub Release — all in one step.
+# No separate `softprops/action-gh-release` step needed.
+#
+# Triggers
+# --------
+# - Push a tag matching `v*` (e.g. `git tag v0.6.0 && git push origin v0.6.0`).
+#   The tag's version MUST match `apps/desktop/package.json` (bump first —
+#   otherwise the release tag and the installer filename will diverge).
+# - Manual run via the Actions UI's "Run workflow" button — useful for
+#   smoke-testing the pipeline end-to-end without pushing a tag. Note
+#   that `onTagOrDraft` mode skips publish on non-tag runs, so a
+#   `workflow_dispatch` build will only produce `out/*.exe` locally
+#   and not publish.
+#
+# What it does
+# ------------
+# 1. pnpm install (frozen lockfile) — installs all workspace deps.
+# 2. `electron-builder install-app-deps` for the desktop workspace —
+#    fetches the better-sqlite3 prebuild matched to Electron 32's ABI
+#    (v128). Without this, better-sqlite3's `install` script falls
+#    back to `node-gyp rebuild` against the system Node, producing a
+#    `.node` file with the wrong ABI that won't load inside Electron.
+# 3. Builds the Next.js web standalone bundle into
+#    `apps/web/.next/standalone/`. The desktop installer ships this
+#    bundle as an `extraResource` (see `electron-builder.yml`), so it
+#    must be built before the desktop step.
+# 4. Runs `pnpm --filter desktop run build:all`, which invokes
+#    `electron-builder --win --x64`. The yml lists both `nsis` and
+#    `portable` under `win.target`, so both files land in
+#    `apps/desktop/out/` in one pass. `GH_TOKEN` is the built-in
+#    `GITHUB_TOKEN` (`permissions: contents: write` below) so
+#    electron-builder can create the release and upload assets.
+# 5. Lists the build artifacts as a sanity check (fails fast if the
+#    build step silently produced no artifacts).
+#
+# Out of scope
+# ------------
+# - macOS (.dmg + .zip) and Linux (.AppImage, .deb, .rpm) targets are
+#   defined in `electron-builder.yml` but not built here. Add sibling
+#   jobs (`build-macos:`, `build-linux:`) when those targets are ready.
+# - Authenticode signing (Windows) and notarization (macOS) env vars
+#   are commented out in `electron-builder.yml`; add them as repo
+#   secrets and reference via `${{ secrets.* }}` when the EV cert
+#   lands in Phase 8.
+# ============================================================================
+
+name: Release Desktop App
+
+# `on:` is a YAML reserved keyword; quoting avoids parser issues.
+"on":
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows installers
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # better-sqlite3's `install` postinstall is the only one we
+        # need to skip on windows-latest. It's listed in the root
+        # `package.json` under `pnpm.neverBuiltDependencies`, so pnpm
+        # skips it for us. All other packages (electron, esbuild,
+        # sharp, @swc/core, @parcel/watcher) still run their
+        # postinstalls — in particular, the electron postinstall
+        # downloads the Electron 32.2.0 binary, which the next step
+        # relies on.
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Electron native modules
+        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds
+        # (Electron 32's ABI). The previous step intentionally
+        # skipped its postinstall (see the comment on
+        # `Install dependencies`), so better-sqlite3 has no `.node`
+        # binary on disk yet. This step fetches the correct prebuild
+        # (electron-v128, ABI 128) without falling back to node-gyp.
+        run: pnpm --filter desktop exec electron-builder install-app-deps
+
+      - name: Build Web standalone app
+        # NEXT_PUBLIC_* vars are inlined into the client bundle at build
+        # time. The desktop installer packages this bundle, so the values
+        # here must be the production Supabase / Cloudinary / site URL
+        # for the installed app to talk to the right backend. The actual
+        # values are pulled from repo secrets (set via `gh secret set`)
+        # so the workflow yml never contains real anon keys.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # The Cloudinary cloud name + upload preset are also needed by
+          # the client. Set the matching repo secrets if you have them.
+          # If unset, the build still succeeds (Cloudinary returns a 401
+          # at runtime, which is acceptable for installers that ship
+          # before Cloudinary creds are finalized).
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'ci-placeholder' }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ci-placeholder' }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_COLLEGE_NAME: CI Placeholder
+          NEXT_PUBLIC_GA_ID: ""
+          ANALYZE: "false"
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          VERCEL_MCP_BYPASS_SECRET: ci-placeholder
+        run: pnpm --filter web build
+
+      - name: Build & Publish Desktop installers (NSIS + Portable)
+        # `build:all` is `tsc -p tsconfig.build.json && electron-builder
+        # --win --x64`. The yml lists both `nsis` and `portable` under
+        # `win.target`, so both files land in `apps/desktop/out/` in one
+        # pass. The script does NOT pass `--publish never`, so
+        # electron-builder uses its default `onTagOrDraft` mode:
+        # on a tag, it generates the `latest.yml` + `*.blockmap`
+        # metadata AND creates the GitHub Release on
+        # `fotedev/Masar-x-next` (per the `publish:` block in
+        # `apps/desktop/electron-builder.yml`). On non-tag runs
+        # (e.g. `workflow_dispatch`), it just builds the .exe files
+        # and skips publish.
+        #
+        # GH_TOKEN is the built-in `GITHUB_TOKEN` — no PAT needed
+        # since the release lives in this same (now public) repo.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter desktop run build:all
+
+      - name: List build artifacts
+        # Sanity check after build+publish — fails fast if the build
+        # step silently produced no artifacts (electron-builder would
+        # have errored out on missing outputs otherwise, but this
+        # surfaces exact file sizes in the run log).
+        shell: pwsh
+        run: |
+          Get-ChildItem apps/desktop/out/*.exe, apps/desktop/out/latest*.yml, apps/desktop/out/*.blockmap `
+            -ErrorAction SilentlyContinue |
+            Select-Object Name, @{N='SizeMB';E={[math]::Round($_.Length/1MB, 2)}} |
+            Format-Table -AutoSize

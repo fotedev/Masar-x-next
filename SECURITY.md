@@ -4,7 +4,7 @@
 
 **Do not open a public issue for a security vulnerability.**
 
-Report it privately through [GitHub's private vulnerability reporting](https://github.com/fotedev/Masar-x-next/security/advisories/new) on this repository — the private source repository. Do **not** file security reports against [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases); that repository publishes build artifacts only and contains no code to review. Include:
+Report it privately through [GitHub's private vulnerability reporting](https://github.com/fotedev/Masar-x-next/security/advisories/new) on this repository. Do **not** file security reports against [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases); that archived repository holds old build artifacts only and contains no code to review. Include:
 
 - A description of the issue and its impact
 - Steps to reproduce or a proof of concept

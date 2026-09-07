@@ -79,7 +79,7 @@ Verify your setup: `pnpm typecheck && pnpm lint && pnpm test`.
 - **Web is source of truth** for product behavior; desktop + mobile are feature-parity ports.
 - **AI**: client-side via Puter.js SDK (preferred, no server key leak). Server-side `/api/ai/chat` is a graceful fallback that returns helpful guidance when Puter is unavailable (not a real LLM — see `apps/web/src/app/api/ai/chat/route.ts`).
 - **Storage**: Cloudinary (PDFs + images).
-- **Releases**: web → Vercel. Desktop + mobile → GitHub Releases via public-runner pipeline (`fotedev/masarx-releases`). See [references/02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md).
+- **Releases**: web → Vercel. Desktop + mobile → GitHub Releases on this same (public) repo via `.github/workflows/release.yml`. See [references/02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md).
 
 ---
 
@@ -148,6 +148,6 @@ Before opening a PR:
 
 ## 9. Gotcha index (read on demand)
 
-Full gotchas: [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) — 20 entries with Trigger/Why/Fix/Symptom for each. Topics covered: next-intl server bundle, supabase-ssr BOM, OAuth callback path, Vercel deployment protection, free-tier rollback limits, service-role key in Vercel env, pnpm 9.x neverBuiltDependencies, GitHub secret CRLF, webpack aliases, Electron pinning, Vercel cache purge for pnpm path mismatches, Cloudflare MCPs not loaded in MiniMax Code, Windows env var propagation, Windows env dialog empty values, GitHub Releases on private repos, electron-builder artifactName versions, pnpm/action-setup with subdir checkout, ThemeScript nonce hydration, git stash drop safety.
+Full gotchas: [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) — 20 entries with Trigger/Why/Fix/Symptom for each. Topics covered: next-intl server bundle, supabase-ssr BOM, OAuth callback path, Vercel deployment protection, free-tier rollback limits, service-role key in Vercel env, pnpm 9.x neverBuiltDependencies, GitHub secret CRLF, webpack aliases, Electron pinning, Vercel cache purge for pnpm path mismatches, Cloudflare MCPs not loaded in MiniMax Code, Windows env var propagation, Windows env dialog empty values, GitHub Releases on private repos (historical, resolved 2026-09), electron-builder artifactName versions, pnpm/action-setup with subdir checkout, ThemeScript nonce hydration, git stash drop safety.
 
 Release pipeline (separate file): [references/02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md) — public-runner pipeline architecture, secrets model, what-it-does steps, CI workflow summary.
