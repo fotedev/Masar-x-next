@@ -88,5 +88,8 @@
   "submitForReviewError": "An error occurred while submitting",
   "submitForReviewErrorDesc": "Try again.",
   "start": "Start",
-  "send": "Send"
+  "send": "Send",
+  "comingSoonBadge": "Coming Soon",
+  "comingSoonTooltip": "The AI Assistant is under active development. It will ship in a future release.",
+  "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon."
 }
