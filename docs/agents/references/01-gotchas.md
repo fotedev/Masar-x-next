@@ -134,14 +134,11 @@
   2. Run a PowerShell script that reads the file, strips CRLF/BOM/whitespace, sets via `[Environment]::SetEnvironmentVariable(..., "User")`, then **re-reads and asserts non-empty** before declaring success.
 - **Symptom:** `Get-ItemProperty HKCU:\Environment -Name VAR` returns the var (exists), but `(Get-ItemProperty ...).VAR` is `""`. Auth fails with "invalid token" downstream.
 
-## 16. GitHub Releases on a private repo are private — no public download, no anonymous auto-update
+## 16. GitHub Releases on a private repo are private — no public download, no anonymous auto-update [HISTORICAL — resolved 2026-09]
 
 - **Trigger:** `provider: github` in `electron-builder.yml` uploads `.exe`, `latest.yml`, `*.blockmap` to a private GitHub Release.
 - **Why:** Release assets on a private repo are private. `https://github.com/<owner>/<repo>/releases/download/v.../Setup.exe` returns 404 for anonymous users. `electron-updater`'s `checkForUpdates()` cannot read the feed (no token, no access). The marketing website can't link to a direct download.
-- **Fix:** Split into two repos:
-  - Source code: `fotedev/Masar-x-next` (private)
-  - Release artifacts: `fotedev/masarx-releases` (public)
-  See `AGENTS.md → Release distribution` for the full architecture.
+- **Fix (historical):** while the source repo was private, releases were split across two repos (source: `fotedev/Masar-x-next`, artifacts: `fotedev/masarx-releases`). **Since 2026-09 the source repo is PUBLIC, so releases publish directly to `fotedev/Masar-x-next/releases`** — no split, no PAT, no tag-mirror. `fotedev/masarx-releases` is archived read-only. See the release pipeline reference for the current architecture.
 - **Symptom:** Desktop shows "Update check failed" or website's "Download" link 404s, even though the release workflow published successfully. Check `gh repo view <repo> --json isPrivate` — if `true`, the release is private.
 
 ## 17. `electron-builder` default `artifactName` includes the version
@@ -151,7 +148,7 @@
 - **Fix (two layered defenses in this project):**
   1. `electron-builder.yml` strips `${version}` from `artifactName` (top-level, `nsis`, `portable`). From v0.5.9+, file names are stable across versions.
   2. The website's `getLatestReleaseUrls()` in `apps/web/src/lib/github-releases.ts` queries the GitHub Releases API directly, falls back to parsing `latest.yml`. Caching: `next: { revalidate: 3600 }`.
-- **Diagnostic:** `gh api repos/fotedev/masarx-releases/releases/latest --jq '.assets[].name'` — if names contain `-0.5.8-` but your URL doesn't, that's the gotcha.
+- **Diagnostic:** `gh api repos/fotedev/Masar-x-next/releases/latest --jq '.assets[].name'` — if names contain `-0.5.8-` but your URL doesn't, that's the gotcha. (Old references to `fotedev/masarx-releases` in git history mean the archived artifacts repo.)
 
 ## 18. `pnpm/action-setup@v4` cannot find `packageManager` when source is checked out into a subdirectory
 

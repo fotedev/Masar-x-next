@@ -105,7 +105,7 @@ export default async function DownloadsPage({ params }: Props) {
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                 {t("error.body", {
-                  url: "https://github.com/fotedev/masarx-releases/releases/latest",
+                  url: "https://github.com/fotedev/Masar-x-next/releases/latest",
                 })}
               </p>
             </div>

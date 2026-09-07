@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Installers, portable builds, and update manifests for each tagged version are published to the public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository.
+Installers, portable builds, and update manifests for each tagged version are published as [GitHub Releases](https://github.com/fotedev/Masar-x-next/releases) on this repository. (Releases ≤ v0.5.x went to the separate public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository, now archived read-only.)
 
 ## [Unreleased]
 
@@ -15,6 +15,7 @@ Installers, portable builds, and update manifests for each tagged version are pu
 
 ### Changed
 
+- Release pipeline consolidated back into this (now public) repository: `.github/workflows/release.yml` builds and publishes desktop installers directly with the built-in `GITHUB_TOKEN`; the `fotedev/masarx-releases` split, `GH_RELEASES_TOKEN` PAT, and tag-mirror step are retired
 - Release builds moved to a public GitHub Actions runner in `fotedev/masarx-releases`; the source-side release workflow is disabled
 
 ### Fixed
