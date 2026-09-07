@@ -56,5 +56,6 @@
     "delete": "حذف",
     "submittedAt": "تم التقديم",
     "unknown": "غير معروف"
-  }
+  },
+  "paginationRange": "عرض {start}-{end} من {total} طعن"
 }

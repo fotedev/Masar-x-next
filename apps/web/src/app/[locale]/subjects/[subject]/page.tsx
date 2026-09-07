@@ -225,10 +225,6 @@ export default function SubjectPage() {
     }
   }, [lectureIdParam, subjectLectures, selectedLecture?.key]);
 
-  const totalPossibleItems = useMemo(() => {
-    return lectureIndex.length;
-  }, [lectureIndex]);
-
   // YouTube Utility
   const getYouTubeId = useCallback((url: string) => {
     const regExp =
@@ -288,6 +284,13 @@ export default function SubjectPage() {
           newCompleted.add(contentId);
         }
         setCompletedContent(newCompleted);
+        // Surface the state change so the student has visible confirmation
+        // (the toggle is otherwise silent — students can't tell if it stuck).
+        toast.success(
+          isCompleted
+            ? t("progress.unmarked")
+            : t("progress.markedComplete"),
+        );
       } catch (error) {
         logger.error("Error toggling progress", error);
         toast.error(t("errors.updateProgressFailed"));
@@ -379,7 +382,6 @@ export default function SubjectPage() {
           }
           dashboardData={dashboardData}
           lectureIndex={lectureIndex}
-          totalPossibleItems={totalPossibleItems}
           tSubjectPage={t}
           onBackToSubjects={() => router.push(`/${locale}/subjects`)}
           onEditSubject={() => {}} // Handle edit subject

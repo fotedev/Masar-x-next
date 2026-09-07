@@ -45,11 +45,11 @@ Study summaries, interactive courses, quizzes, AI-powered assistance, and comple
 
 ## Download
 
-Ready-to-run builds are published automatically to the public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository — this source repository hosts no installers.
+Ready-to-run builds are published automatically as [GitHub Releases](https://github.com/fotedev/Masar-x-next/releases) on this same repository.
 
 | Platform | Download |
 | ---------- | ---------- |
-| Windows — installer | [Latest setup `.exe`](https://github.com/fotedev/masarx-releases/releases/latest) |
+| Windows — installer | [Latest setup `.exe`](https://github.com/fotedev/Masar-x-next/releases/latest) |
 | Windows — portable | Portable `.exe` on the same releases page |
 | Android | `.apk` will appear on the same releases page when the mobile app ships |
 | Web | No download needed — runs at [masarx.vercel.app](https://masarx.vercel.app) |

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, Send, CheckCircle, X, Sparkles, Loader2 } from "lucide-react";
+import { Upload, Send, CheckCircle, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,6 +72,7 @@ export default function AddSummaryPage() {
   const [driveLink, setDriveLink] = useState<string>("");
   const [youtubeLink, setYoutubeLink] = useState<string>("");
   const [isOcrLoading, setIsOcrLoading] = useState(false);
+  const [ocrSucceeded, setOcrSucceeded] = useState(false);
 
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
@@ -352,10 +353,18 @@ export default function AddSummaryPage() {
     }
   };
 
+  // MVP: OCR handler is preserved (NOT deleted) for when the feature ships again.
+  // Marked @ts-expect-error so TypeScript's `noUnusedLocals` doesn't complain —
+  // the function body and Supabase Edge Function call remain fully intact.
+  // To re-enable: replace the notice <span> in the JSX with the original
+  // <button onClick={handleAiOcr}>...</button> and remove the @ts-expect-error.
+  // @ts-expect-error -- MVP: handler is preserved but not wired to UI yet
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAiOcr = async () => {
     if (!pdfFile && !driveLink) return;
-    
+
     setIsOcrLoading(true);
+    setOcrSucceeded(false);
     setError("");
 
     try {
@@ -380,7 +389,9 @@ export default function AddSummaryPage() {
         throw new Error("No PDF URL available");
       }
 
-      // Call the Edge Function
+      // Call the Edge Function (process-pdf exists at supabase/functions/process-pdf/index.ts).
+      // It uses Gemini 2.0 Flash for OCR. If GEMINI_API_KEY is missing, the function returns 500 —
+      // that error is surfaced to the user via setError(t("aiOcrError")).
       const { data, error: ocrError } = await supabase.functions.invoke("process-pdf", {
         body: { pdfUrl: finalPdfUrl },
       });
@@ -390,16 +401,21 @@ export default function AddSummaryPage() {
 
       setFormData((prev) => ({
         ...prev,
-        content: prev.content 
+        content: prev.content
           ? `${prev.content}\n\n---\n\n${data.text}`
           : data.text,
       }));
-      
+      setOcrSucceeded(true);
+
       sendNotification(t("aiOcrSuccess"), {
         icon: getLogoPath(locale),
       });
     } catch (err) {
       console.error("OCR Error:", err);
+      setOcrSucceeded(false);
+      // Surface a generic, user-friendly, localized message.
+      // The Edge Function may return a more specific reason in err.message, but we
+      // deliberately keep the user-facing copy stable and localized via aiOcrError.
       setError(t("aiOcrError"));
     } finally {
       setIsOcrLoading(false);
@@ -640,25 +656,28 @@ export default function AddSummaryPage() {
             />
             
             {(pdfFile || (attachmentType === "link" && driveLink)) && (
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleAiOcr}
-                  disabled={isOcrLoading || loading}
-                  className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
+              <div className="mt-2 flex items-center justify-end gap-2">
+                {ocrSucceeded && !isOcrLoading && (
+                  <span
+                    role="status"
+                    aria-label={t("aiOcrSuccess")}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    {t("aiOcrSuccess")}
+                  </span>
+                )}
+                {/* MVP: OCR button hidden. The backend (process-pdf Edge Function +
+                   handleAiOcr) is preserved for when the feature ships again.
+                   To re-enable: replace this notice block with the original
+                   <button onClick={handleAiOcr}>...</button>. */}
+                <span
+                  role="note"
+                  className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 italic"
                 >
-                  {isOcrLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t("aiOcrProcessing")}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      {t("aiOcrButton")}
-                    </>
-                  )}
-                </button>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t("aiOcrDisabledNotice")}
+                </span>
               </div>
             )}
           </div>

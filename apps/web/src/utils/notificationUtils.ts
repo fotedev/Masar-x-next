@@ -1,21 +1,34 @@
 import type { Notification } from '../types/database';
 
 /**
- * Format time ago for notification timestamps
+ * Format time ago for notification timestamps.
+ *
+ * Pass an i18n translator so the relative-time labels can be localized.
+ * Server Components / non-React callers should resolve a translator via
+ * `getTranslations('notifications')` from `next-intl/server` and pass it.
  */
-export function formatTimeAgo(dateString: string): string {
+export function formatTimeAgo(
+  dateString: string,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+): string {
   const now = new Date();
   const date = new Date(dateString);
   const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-  if (diffInMinutes < 1) return 'الآن';
-  if (diffInMinutes < 60) return `منذ ${diffInMinutes} دقيقة`;
+  if (diffInMinutes < 1) return t('timeAgo.now');
+  if (diffInMinutes < 60) {
+    return t('timeAgo.minutesAgo', { count: diffInMinutes });
+  }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `منذ ${diffInHours} ساعة`;
+  if (diffInHours < 24) {
+    return t('timeAgo.hoursAgo', { count: diffInHours });
+  }
 
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `منذ ${diffInDays} يوم`;
+  if (diffInDays < 7) {
+    return t('timeAgo.daysAgo', { count: diffInDays });
+  }
 
   return date.toLocaleDateString('ar-EG');
 }
