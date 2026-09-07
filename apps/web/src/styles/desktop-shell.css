@@ -1,0 +1,137 @@
+/*
+ * desktop-shell.css — Desktop-only native-feel pass (spec 005, US2, FR-013..FR-018)
+ *
+ * EVERY rule below is scoped under the single root marker
+ *   [data-masarx-desktop="true"]
+ * set by DesktopShellGate.tsx when (and only when) window.masarxDesktop
+ * is present. With the marker absent — i.e. in any plain browser tab —
+ * none of this stylesheet applies, so FR-011 and SC-010 hold by
+ * construction: the browser experience is byte-for-byte unchanged.
+ *
+ * If you add a rule here, keep it under that selector. A naked rule that
+ * leaks past the marker is a web regression and a hard failure (FR-011).
+ */
+
+/* ---------- FR-017: root must not scroll ----------
+   The desktop window is a workspace; the shell chrome stays fixed and only
+   designated inner panes scroll. height: 100% lets the html/body fill the
+   Electron BrowserWindow viewport exactly, with overflow:hidden on both. */
+[data-masarx-desktop="true"] {
+  height: 100%;
+  overflow: hidden;
+  --masarx-titlebar-h: 32px;
+}
+
+/* Offset the existing fixed header so it sits under the custom titlebar. */
+[data-masarx-desktop="true"] .z-header {
+  top: var(--masarx-titlebar-h) !important;
+}
+
+[data-masarx-desktop="true"] .masarx-titlebar {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+[data-masarx-desktop="true"] .masarx-titlebar-nodrag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+[data-masarx-desktop="true"] body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---------- FR-013: kill text selection on chrome ----------
+   Default to non-selectable across the whole app. Study content, summaries,
+   and assistant replies opt back in via .selectable-content (FR-014). */
+[data-masarx-desktop="true"],
+[data-masarx-desktop="true"] * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ---------- FR-014: opt BACK IN for study content ----------
+   Lecture prose, summary bodies, and assistant replies must remain
+   selectable and copyable. The class is applied in those surfaces — not
+   the shell chrome. */
+[data-masarx-desktop="true"] .selectable-content,
+[data-masarx-desktop="true"] .selectable-content * {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+/* ---------- FR-015: kill image/link drag ghost ----------
+   -webkit-user-drag blocks the native drag-image / drag-link ghost that
+   otherwise peels a translucent copy off the screen and, on links, would
+   navigate. The standard `user-drag` is non-standard but harmless as a
+   companion declaration for engines that honour it. */
+[data-masarx-desktop="true"] img,
+[data-masarx-desktop="true"] a {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Re-enable drag on explicitly draggable assets if a study surface ever
+   needs it (off by default; included so the opt-in is one class away). */
+[data-masarx-desktop="true"] .draggable,
+[data-masarx-desktop="true"] .draggable * {
+  -webkit-user-drag: auto;
+  user-drag: auto;
+}
+
+/* ---------- FR-018: slim, application-styled scrollbars ----------
+   scrollbar-gutter: stable reserves the gutter even when no scrollbar is
+   present, so layout does not shift as panes overflow and recover.
+   The selectors below are all inside [data-masarx-desktop="true"] so they
+   do nothing in a browser. */
+[data-masarx-desktop="true"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  scrollbar-gutter: stable;
+}
+
+[data-masarx-desktop="true"] *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-masarx-desktop="true"] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-masarx-desktop="true"] *::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+[data-masarx-desktop="true"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+  background-clip: content-box;
+}
+
+[data-masarx-desktop="true"] *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark-mode override: lighter thumb against the navy shell. */
+[data-masarx-desktop="true"].dark *,
+[data-masarx-desktop="true"] .dark * {
+  scrollbar-color: rgba(226, 232, 240, 0.25) transparent;
+}
+
+[data-masarx-desktop="true"].dark *::-webkit-scrollbar-thumb,
+[data-masarx-desktop="true"] .dark *::-webkit-scrollbar-thumb {
+  background: rgba(226, 232, 240, 0.2);
+}
+
+[data-masarx-desktop="true"].dark *::-webkit-scrollbar-thumb:hover,
+[data-masarx-desktop="true"] .dark *::-webkit-scrollbar-thumb:hover {
+  background: rgba(226, 232, 240, 0.4);
+}
