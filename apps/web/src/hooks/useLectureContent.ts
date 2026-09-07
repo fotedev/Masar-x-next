@@ -100,7 +100,17 @@ export function useLectureContent({
             );
             return inferredKey === lectureKey;
           } catch (inferenceError) {
-            logger.error("Inference failed for row:", { rowId: row.id, error: inferenceError });
+            // Inference is best-effort — log as warning rather than error to
+            // reduce noise in Vercel/Sentry dashboards. The row simply won't
+            // match this lecture; the next lecture (or admin re-fetch) will
+            // re-evaluate it.
+            logger.warn("Lecture inference failed for row", {
+              rowId: row.id,
+              error:
+                inferenceError instanceof Error
+                  ? inferenceError.message
+                  : String(inferenceError),
+            });
             return false;
           }
         };

@@ -161,5 +161,9 @@
   "explanation": "شرح",
   "homework": "تكليف",
   "videoPlayer": "مشغل الفيديو",
-  "backToLectures": "العودة للمحاضرات"
+  "backToLectures": "العودة للمحاضرات",
+  "progress": {
+    "markedComplete": "تم تحديد المحاضرة كمكتملة",
+    "unmarked": "تم إلغاء التحديد كمكتمل"
+  }
 }
