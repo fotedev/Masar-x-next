@@ -4,14 +4,12 @@ import { LayoutGrid, Trophy, Layers } from "lucide-react";
 interface DashboardStatsProps {
   lectureCount: number;
   totalLectures: string;
-  totalPossibleItems: number;
   tSubjectPage: (key: string) => string;
 }
 
 export function DashboardStats({
   lectureCount,
   totalLectures,
-  totalPossibleItems,
   tSubjectPage,
 }: DashboardStatsProps) {
   return (
@@ -71,7 +69,7 @@ export function DashboardStats({
           </div>
           <div className="space-y-0.5">
             <span className="block text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-              {totalPossibleItems}
+              {lectureCount}
             </span>
             <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               {tSubjectPage("lectures")}

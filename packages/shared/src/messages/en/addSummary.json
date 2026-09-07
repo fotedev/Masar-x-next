@@ -49,5 +49,6 @@
   "aiOcrButton": "Extract Text with AI",
   "aiOcrProcessing": "Extracting text...",
   "aiOcrSuccess": "Text extracted successfully!",
-  "aiOcrError": "Failed to extract text from the file. Make sure the file is valid."
+  "aiOcrError": "Failed to extract text from the file. Make sure the file is valid.",
+  "aiOcrDisabledNotice": "AI text extraction will be available soon. Please paste the summary manually."
 }

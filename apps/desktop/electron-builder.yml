@@ -288,21 +288,19 @@ linux:
 
 # Auto-update channel (T023) — GitHub Releases feed.
 # The release artifacts (NSIS .exe, portable .exe, latest.yml, blockmaps)
-# are published to a SEPARATE public repo, `fotedev/masarx-releases`,
-# while the source code stays in the private `fotedev/Masar-x-next` repo.
-# This split is required because GitHub Releases on a private repo are
-# also private — anonymous `electron-updater` would 404 on the
-# `latest.yml` fetch, and the website's download link would 404 too.
-# See AGENTS.md gotcha #16 + the "Release distribution" section for the
-# full rationale.
+# are published to this same repo (`fotedev/Masar-x-next`), which is now
+# PUBLIC, so anonymous `electron-updater` clients and the website's
+# download link can read them without auth.
+#
+# History: when the source repo was PRIVATE, releases went to a separate
+# public repo (`fotedev/masarx-releases`, now archived read-only) because
+# releases on a private repo are also private (anonymous 404). That split
+# was removed in 2026-09 — see `docs/agents/references/02-release-pipeline.md`.
 #
 # `electron-updater` reads from the GitHub Releases API for
-# `fotedev/masarx-releases`. `releaseType: release` → stable channel,
-# `releaseType: prerelease` → beta channel. The PAT stored as the
-# `GH_RELEASES_TOKEN` repo secret in `fotedev/Masar-x-next` has `repo`
-# scope on `fotedev/masarx-releases` (Fine-grained token) so the
-# release workflow can write there. End users read the release feed
-# anonymously because `masarx-releases` is public.
+# `fotedev/Masar-x-next`. `releaseType: release` → stable channel,
+# `releaseType: prerelease` → beta channel. The release workflow uses the
+# built-in `GITHUB_TOKEN` (`permissions: contents: write`) — no PAT needed.
 # publisherName on Windows must match the code-signing certificate's CN.
 publish:
   # Single publish entry for the stable channel. The previous config
@@ -322,7 +320,7 @@ publish:
   # For now, we only ship stable releases, so only the stable entry.
   - provider: github
     owner: fotedev
-    repo: masarx-releases
+    repo: Masar-x-next
     releaseType: release
     # Channel name = filename of the auto-update metadata. `latest` is
     # the default that `electron-updater` looks for, so the generated

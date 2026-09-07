@@ -23,5 +23,11 @@
   "promptTitle": "تفعيل الإشعارات",
   "promptBody": "احصل على إشعارات عندما تكون هناك ملخصات أو أخبار جديدة",
   "promptAllow": "تفعيل",
-  "promptLater": "لاحقاً"
+  "promptLater": "لاحقاً",
+  "timeAgo": {
+    "now": "الآن",
+    "minutesAgo": "منذ {count} دقيقة",
+    "hoursAgo": "منذ {count} ساعة",
+    "daysAgo": "منذ {count} يوم"
+  }
 }
