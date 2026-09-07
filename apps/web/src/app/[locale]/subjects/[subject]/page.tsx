@@ -12,6 +12,10 @@ import { inferLectureKeyFromTitle } from "@/utils/lecture-inference";
 import { useSubjectModals } from "@/hooks/useSubjectModals";
 import { useLectureContent } from "@/hooks/useLectureContent";
 import { useManageLectures } from "@/hooks/useManageLectures";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
+import { StudyWorkspace } from "@/components/desktop/workspace/StudyWorkspace";
+import type { WorkspaceLecture } from "@/components/desktop/workspace/types";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import type {
@@ -35,7 +39,9 @@ export default function SubjectPage() {
   const router = useRouter();
   const t = useTranslations("subjectPage");
   const { user, isAdmin } = useAuth();
+  const { trackEvent } = useAnalytics();
   const isRTL = locale === "ar";
+  const isDesktop = useIsDesktopRuntime();
 
   const {
     lectureFormData,
@@ -87,7 +93,8 @@ export default function SubjectPage() {
     [subjectLectures],
   );
 
-  const { summaries, videos, files, quizzes } = useLectureContent({
+  const { summaries, videos, files, quizzes, loading: contentLoading } =
+    useLectureContent({
     show: !!selectedLectureForContent,
     subject: normalizedSubjectName,
     lecture: selectedLectureForContent,
@@ -310,10 +317,85 @@ export default function SubjectPage() {
     }
   }, []);
 
+  // Shape the desktop workspace input from the subject lectures list.
+  // Counts are zeroed here (the upstream subject fetch doesn't carry them);
+  // the workspace sidebar renders only existing counts via `> 0` guards.
+  const workspaceLectures: WorkspaceLecture[] = useMemo(
+    () =>
+      subjectLectures.map((l) => ({
+        id: l.id,
+        title: l.lecture_label,
+        ordinal: l.order_index,
+        lectureKey: l.lecture_key,
+        documentUrl: undefined,
+        counts: { summaries: 0, videos: 0, files: 0, quizzes: 0 },
+      })),
+    [subjectLectures],
+  );
+
+  // Workspace initial-id: prefer a lecture already open via the URL param;
+  // otherwise the StudyWorkspace falls back to the first lecture.
+  const workspaceInitialId = selectedLectureForContent?.id ?? null;
+
+  // Active lecture with its first matching file URL attached, used by
+  // the embedded reader. Without a lecture selected, documentUrl stays
+  // undefined and the reader surfaces its no-document state.
+  const activeWorkspaceLecture: WorkspaceLecture | null = useMemo(() => {
+    if (!selectedLectureForContent) return null;
+    const lec = workspaceLectures.find(
+      (l) => l.id === selectedLectureForContent.id,
+    );
+    if (!lec) return null;
+    const docFile = files.find((f) => !!f.file_url);
+    if (!docFile?.file_url) return lec;
+    return {
+      ...lec,
+      documentUrl: docFile.file_url,
+      documentTitle: docFile.title,
+    };
+  }, [workspaceLectures, selectedLectureForContent, files]);
+
+  const workspaceLecturesWithActiveDoc = useMemo(
+    () =>
+      activeWorkspaceLecture
+        ? workspaceLectures.map((l) =>
+            l.id === activeWorkspaceLecture.id ? activeWorkspaceLecture : l,
+          )
+        : workspaceLectures,
+    [workspaceLectures, activeWorkspaceLecture],
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-dvh-safe">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-blue"></div>
+      </div>
+    );
+  }
+
+  // Desktop surface — spec 005 study workspace (FR-001).
+  // One window: lecture list / reader / assistant side by side.
+  // The wrapper guarantees the workspace fills the available height below
+  // the chrome; `flex-1` survives the outer Layout `flex-grow` so the
+  // page never overflows the viewport. `min-h-0` lets the flex chain
+  // shrink past its content height (per spec 005 acceptance #1).
+  if (isDesktop) {
+    return (
+      <div className="flex h-[calc(100dvh-72px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full min-h-0 flex-col">
+        <StudyWorkspace
+          subjectName={normalizedSubjectName}
+          lectures={workspaceLecturesWithActiveDoc}
+          initialLectureId={workspaceInitialId ?? undefined}
+          currentContent={{
+            summaries,
+            videos,
+            files,
+            quizzes,
+          }}
+          contentLoading={contentLoading}
+          user={user}
+          trackEvent={trackEvent}
+        />
       </div>
     );
   }
