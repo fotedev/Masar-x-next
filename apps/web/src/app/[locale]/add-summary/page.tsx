@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Upload, Send, CheckCircle, X, Sparkles, Loader2 } from "lucide-react";
+import { Upload, Send, CheckCircle, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
@@ -353,6 +353,13 @@ export default function AddSummaryPage() {
     }
   };
 
+  // MVP: OCR handler is preserved (NOT deleted) for when the feature ships again.
+  // Marked @ts-expect-error so TypeScript's `noUnusedLocals` doesn't complain —
+  // the function body and Supabase Edge Function call remain fully intact.
+  // To re-enable: replace the notice <span> in the JSX with the original
+  // <button onClick={handleAiOcr}>...</button> and remove the @ts-expect-error.
+  // @ts-expect-error -- MVP: handler is preserved but not wired to UI yet
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAiOcr = async () => {
     if (!pdfFile && !driveLink) return;
 
@@ -660,24 +667,17 @@ export default function AddSummaryPage() {
                     {t("aiOcrSuccess")}
                   </span>
                 )}
-                <button
-                  type="button"
-                  onClick={handleAiOcr}
-                  disabled={isOcrLoading || loading}
-                  className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors disabled:opacity-50"
+                {/* MVP: OCR button hidden. The backend (process-pdf Edge Function +
+                   handleAiOcr) is preserved for when the feature ships again.
+                   To re-enable: replace this notice block with the original
+                   <button onClick={handleAiOcr}>...</button>. */}
+                <span
+                  role="note"
+                  className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 italic"
                 >
-                  {isOcrLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t("aiOcrProcessing")}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      {t("aiOcrButton")}
-                    </>
-                  )}
-                </button>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t("aiOcrDisabledNotice")}
+                </span>
               </div>
             )}
           </div>
