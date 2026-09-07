@@ -161,5 +161,9 @@
   "videoPlayer": "Video Player",
   "theatreMode": "Theatre Mode",
   "exitTheatreMode": "Exit Theatre Mode",
-  "backToLectures": "Back to Lectures"
+  "backToLectures": "Back to Lectures",
+  "progress": {
+    "markedComplete": "Lecture marked as complete",
+    "unmarked": "Lecture unmarked as complete"
+  }
 }

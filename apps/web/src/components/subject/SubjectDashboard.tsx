@@ -33,7 +33,6 @@ export function SubjectDashboard(props: {
   normalizedSubjectName: string;
   dashboardData: DashboardData;
   lectureIndex: LectureIndexItem[];
-  totalPossibleItems: number;
   tSubjectPage: (key: string) => string;
   onBackToSubjects: () => void;
   onEditSubject: () => void;
@@ -46,7 +45,6 @@ export function SubjectDashboard(props: {
     normalizedSubjectName,
     dashboardData,
     lectureIndex,
-    totalPossibleItems,
     tSubjectPage,
     onBackToSubjects,
     onEditSubject,
@@ -84,7 +82,6 @@ export function SubjectDashboard(props: {
       <DashboardStats
         lectureCount={lectureIndex.length}
         totalLectures={dashboardData.totalLectures}
-        totalPossibleItems={totalPossibleItems}
         tSubjectPage={tSubjectPage}
       />
 
