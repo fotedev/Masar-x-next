@@ -21,6 +21,12 @@ import os from 'node:os';
 // ============================================================================
 
 const mockLoadURL = vi.fn();
+const mockSetMenu = vi.fn();
+const mockMinimize = vi.fn();
+const mockMaximize = vi.fn();
+const mockUnmaximize = vi.fn();
+const mockClose = vi.fn();
+const mockIsMaximized = vi.fn(() => false);
 const mockBrowserWindowInstance = {
   loadURL: mockLoadURL,
   on: vi.fn(),
@@ -29,6 +35,13 @@ const mockBrowserWindowInstance = {
   // invoke the handler manually, so the guard must be stubbed — otherwise
   // the timer fires an uncaught TypeError that masks the assertion.
   isDestroyed: vi.fn(() => false),
+  // T043 — frameless shell: per-window menu strip + window-control IPC.
+  setMenu: mockSetMenu,
+  minimize: mockMinimize,
+  maximize: mockMaximize,
+  unmaximize: mockUnmaximize,
+  close: mockClose,
+  isMaximized: mockIsMaximized,
   webContents: { on: vi.fn(), send: vi.fn() },
 };
 
@@ -295,6 +308,98 @@ describe('T017 — Electron main process contract', () => {
     });
 
     expect(mockLoadURL).toHaveBeenCalledWith(`http://127.0.0.1:${port}`);
+  });
+
+  // T043 (spec 005 US3) — frameless shell + window-control IPC.
+  // The T017 contract stays intact (secure webPreferences, loadURL).
+  // These assertions pin the new window chrome so GATE-TEST-DESKTOP
+  // fails if someone reintroduces the OS title bar or drops an IPC
+  // handler that CustomTitlebar.tsx depends on.
+  it('creates a frameless window and strips the native menu bar (T043)', async () => {
+    const { Menu } = await import('electron');
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    expect(Menu.setApplicationMenu).toHaveBeenCalledWith(null);
+
+    const lastOpts = BrowserWindowMock.mock.calls[BrowserWindowMock.mock.calls.length - 1][0];
+    expect(lastOpts).toMatchObject({
+      frame: false,
+      titleBarStyle: 'hidden',
+      titleBarOverlay: false,
+      autoHideMenuBar: true,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+      },
+    });
+    expect(mockSetMenu).toHaveBeenCalledWith(null);
+  });
+
+  it('registers window-control IPC handlers (T043)', async () => {
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    const registered = mockIpcMain.handle.mock.calls.map((c: unknown[]) => c[0]);
+    expect(registered).toEqual(
+      expect.arrayContaining([
+        'window:minimize',
+        'window:toggleMaximize',
+        'window:close',
+        'window:isMaximized',
+      ]),
+    );
+
+    const handlerFor = (channel: string) =>
+      mockIpcMain.handle.mock.calls.find((c: unknown[]) => c[0] === channel)?.[1] as
+        | (() => unknown)
+        | undefined;
+
+    handlerFor('window:minimize')?.();
+    expect(mockMinimize).toHaveBeenCalled();
+
+    mockIsMaximized.mockReturnValueOnce(false);
+    expect(handlerFor('window:toggleMaximize')?.()).toBe(true);
+    expect(mockMaximize).toHaveBeenCalled();
+
+    mockIsMaximized.mockReturnValueOnce(true);
+    expect(handlerFor('window:toggleMaximize')?.()).toBe(false);
+    expect(mockUnmaximize).toHaveBeenCalled();
+
+    handlerFor('window:close')?.();
+    expect(mockClose).toHaveBeenCalled();
+
+    mockIsMaximized.mockReturnValueOnce(true);
+    expect(handlerFor('window:isMaximized')?.()).toBe(true);
+  });
+
+  it('broadcasts maximize-state changes from the OS (T043)', async () => {
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    const winOn = mockBrowserWindowInstance.on as ReturnType<typeof vi.fn>;
+    const maximizeHandler = winOn.mock.calls.find((c: unknown[]) => c[0] === 'maximize')?.[1] as
+      | (() => void)
+      | undefined;
+    const unmaximizeHandler = winOn.mock.calls.find((c: unknown[]) => c[0] === 'unmaximize')?.[1] as
+      | (() => void)
+      | undefined;
+
+    expect(maximizeHandler, 'maximize listener should be registered').toBeTruthy();
+    expect(unmaximizeHandler, 'unmaximize listener should be registered').toBeTruthy();
+
+    maximizeHandler?.();
+    expect(mockBrowserWindowInstance.webContents.send).toHaveBeenCalledWith(
+      'window:maximizeStateChanged',
+      true,
+    );
+
+    unmaximizeHandler?.();
+    expect(mockBrowserWindowInstance.webContents.send).toHaveBeenCalledWith(
+      'window:maximizeStateChanged',
+      false,
+    );
   });
 
   // T025 follow-up: the BrowserWindow `did-fail-load` handler must retry

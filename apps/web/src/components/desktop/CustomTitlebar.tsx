@@ -134,7 +134,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
       aria-label="Application title bar"
       // Height is owned by CSS (--masarx-titlebar-h in desktop-shell.css).
       // `masarx-titlebar` makes the whole strip a drag handle.
-      className="masarx-titlebar fixed inset-x-0 top-0 z-[60] flex h-[var(--masarx-titlebar-h,32px)] items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      className="masarx-titlebar fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70"
       dir="ltr"
     >
       {/* Drag-only lead slot: enough to grab but small enough that the

@@ -381,7 +381,7 @@ export default function SubjectPage() {
   // shrink past its content height (per spec 005 acceptance #1).
   if (isDesktop) {
     return (
-      <div className="flex h-[calc(100dvh-72px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full min-h-0 flex-col">
+      <div className="flex h-full w-full min-h-0 flex-col">
         <StudyWorkspace
           subjectName={normalizedSubjectName}
           lectures={workspaceLecturesWithActiveDoc}
