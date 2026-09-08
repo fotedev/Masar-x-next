@@ -22,9 +22,30 @@
   --masarx-titlebar-h: 32px;
 }
 
-/* Offset the existing fixed header so it sits under the custom titlebar. */
+/* App Router has no #__next. Fill html → body → first child so the
+   workspace's h-full chain actually has a definite height (FR-017). */
+html[data-masarx-desktop="true"],
+html[data-masarx-desktop="true"] body {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Clamp the custom titlebar to exactly 32px. A body-level flex rule once
+   stretched the fixed bar to the full 800px viewport — this !important
+   guard makes that class of regression impossible under the desktop marker. */
+html[data-masarx-desktop="true"] .masarx-titlebar {
+  height: 32px !important;
+  max-height: 32px !important;
+  flex: 0 0 32px;
+}
+
+/* Hide the web marketing header in the desktop shell. CustomTitlebar
+   owns the chrome (US3); the logo / nav / login cluster is a website
+   surface and must not sit under the title strip (FR-019, visual gate).
+   Selector is `.z-header` so the custom <header class="masarx-titlebar">
+   is NOT matched. */
 [data-masarx-desktop="true"] .z-header {
-  top: var(--masarx-titlebar-h) !important;
+  display: none !important;
 }
 
 [data-masarx-desktop="true"] .masarx-titlebar {
