@@ -134,7 +134,7 @@ export function StudyWorkspace({
           In RTL (dir=rtl) it lands on the right. No physical sides. */}
       <div
         // Order 1 on the inline-start side
-        className="order-1 flex h-full w-72 shrink-0 flex-col border-e border-border bg-muted/30"
+        className="order-1 flex h-full w-72 shrink-0 flex-col border-e border-border/80 bg-muted/50"
       >
         <LectureListColumn
           lectures={lectures}
@@ -171,7 +171,7 @@ export function StudyWorkspace({
           end regardless of text direction, because flex `order` is
           directional and the platform already sets `dir`. */}
       <div
-        className={`order-3 flex h-full w-96 shrink-0 flex-col transition-[width] duration-200 ${
+        className={`order-3 flex h-full w-96 shrink-0 flex-col border-s border-border/80 bg-muted/40 transition-[width] duration-200 ${
           assistantOpen ? "" : "w-0 overflow-hidden"
         }`}
       >
