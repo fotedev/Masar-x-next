@@ -101,3 +101,98 @@ These were flagged in the audit but excluded from this PR:
 | `setWindowOpenHandler` swallows the workspace Download button | `handleDownload` now opens in the system browser via `shell.openExternal`, which is the desktop UX expectation. |
 | Recovery page is a `data:` URL | No CSP/network dependency; runs entirely from main. Retry reloads the loopback, which re-enters the did-fail-load handler with a fresh attempt budget. |
 | Stale `mockBrowserWindowInstance` shared across tests | Added selective `mockClear()` in `beforeEach` for `mockLoadURL`, `webContents.on`, `setWindowOpenHandler`, `setPermissionRequestHandler` to keep tests hermetic. |
+
+## Follow-up / Known Gaps
+
+### Gap F1 — Missing `desktopStudyWorkspace` i18n namespace
+
+**Severity:** High (workspace screens currently fail at runtime in any locale other than English-fallback).
+**Status:** Out of scope for this PR per user direction. Stub for a dedicated i18n PR.
+**Audit reference:** `docs/audits/desktop-app-report-2026-09-08/09-StudyWorkspace-feature.md` "i18n parity" claim and `appendix-A-file-inventory.md` row "i18n parity verified" — both are **incorrect**. The `packages/shared/src/messages/{ar,en}/desktopStudyWorkspace.json` files **do not exist in this repository's source tree** (verified 2026-09-08 by `find` and `grep -rln`). The components call `useTranslations("desktopStudyWorkspace")` against a namespace that has no source-defined messages.
+
+#### Components that depend on this namespace
+
+All five components under `apps/web/src/components/desktop/workspace/`:
+
+| File | Line | Hook | Keys requested |
+|---|---|---|---|
+| `StudyWorkspace.tsx` | 49 / 124 | `useTranslations("desktopStudyWorkspace")` | `aria.workspace` |
+| `LectureListColumn.tsx` | 28 | `useTranslations("desktopStudyWorkspace")` | `sidebar.emptyAria`, `sidebar.emptyTitle`, `sidebar.emptyBody`, `sidebar.aria`, `sidebar.heading`, `sidebar.listAria`, `sidebar.counts.summaries`, `sidebar.counts.videos`, `sidebar.counts.files`, `sidebar.counts.quizzes` |
+| `ReaderToolbar.tsx` | 45 | `useTranslations("desktopStudyWorkspace")` | `toolbar.label`, `toolbar.noSelection`, `toolbar.highlightTitle`, `toolbar.highlight`, `toolbar.downloadTitle`, `toolbar.download`, `toolbar.assistantOpen`, `toolbar.assistantClose`, `toolbar.assistantActive`, `toolbar.assistantInactive` |
+| `DocumentReader.tsx` | 29 | `useTranslations("desktopStudyWorkspace")` | `reader.loading`, `reader.emptyTitle`, `reader.emptyBody`, `reader.noDocumentTitle`, `reader.noDocumentBody`, `reader.loadErrorTitle`, `reader.loadErrorBody`, `reader.retry` |
+| `AssistantPanel.tsx` | 38 | `useTranslations("desktopStudyWorkspace")` | `assistant.aria`, `assistant.heading`, `assistant.scope`, `assistant.scopeEmpty`, `assistant.closeAria`, `assistant.close`, `assistant.emptyTranscript`, `assistant.role.you`, `assistant.role.zane`, `assistant.composerPlaceholder`, `assistant.composerAria`, `assistant.sending`, `assistant.send` |
+
+**Distinct key set (~42 keys, matching the audit's count):**
+
+```
+aria.workspace                            {subject}
+sidebar.emptyAria                         {subject}
+sidebar.emptyTitle
+sidebar.emptyBody                         {subject}
+sidebar.aria                              {subject}
+sidebar.heading
+sidebar.listAria
+sidebar.counts.summaries                  {count}
+sidebar.counts.videos                     {count}
+sidebar.counts.files                      {count}
+sidebar.counts.quizzes                    {count}
+toolbar.label
+toolbar.noSelection
+toolbar.highlightTitle
+toolbar.highlight
+toolbar.downloadTitle
+toolbar.download
+toolbar.assistantOpen
+toolbar.assistantClose
+toolbar.assistantActive
+toolbar.assistantInactive
+reader.loading
+reader.emptyTitle
+reader.emptyBody
+reader.noDocumentTitle
+reader.noDocumentBody                     {lecture}
+reader.loadErrorTitle
+reader.loadErrorBody
+reader.retry
+assistant.aria
+assistant.heading
+assistant.scope                           {lectureTitle}
+assistant.scopeEmpty                      {subject}
+assistant.closeAria
+assistant.close
+assistant.emptyTranscript
+assistant.role.you
+assistant.role.zane
+assistant.composerPlaceholder
+assistant.composerAria
+assistant.sending
+assistant.send
+```
+
+#### Required fix (next PR)
+
+1. Create `packages/shared/src/messages/ar/desktopStudyWorkspace.json` with Arabic translations for the 42 keys above.
+2. Create `packages/shared/src/messages/en/desktopStudyWorkspace.json` with English translations (fallback values — currently developers read the keys verbatim from `t("...")` calls because no translations exist).
+3. Verify parity programmatically: `assertEqual(Object.keys(ar).length, Object.keys(en).length)` and `assertEqual(missingIn(en), [])` / `assertEqual(missingIn(ar), [])` — matches the verification claim the audit report made.
+4. Smoke-test by opening the desktop shell in both `ar` and `en` and confirming the workspace renders without `MISSING_MESSAGE` errors in the console.
+
+#### Why out of scope here
+
+The user explicitly directed: "Do NOT add it to this branch — keep this PR tightly scoped to the audit fixes." Adding the JSON files would also need translation content (Arabic copy) which is a content/design decision, not an audit-fix item.
+
+### Gap F2 — ESLint flat config lacks TypeScript parser
+
+**Severity:** Low (does not block any pipeline; `pnpm --filter desktop typecheck` is the real TS gate via `tsc`).
+**Status:** Deferred — script is now real (`eslint .`), pre-existing parse errors are surface-visible.
+**Fix:** Add `@typescript-eslint/parser` (and ideally `@typescript-eslint/eslint-plugin` for the rule set) to `apps/desktop/package.json` devDependencies and update `apps/desktop/eslint.config.mjs` to wire the parser for `**/*.ts` / `**/*.tsx`. Then `pnpm --filter desktop lint` will report real lint findings instead of parse errors.
+
+### Gap F3 — D1 web-side contract test
+
+**Severity:** Low (T017 contract test on the desktop side exercises the IPC surface; the actual D1 wiring lives in a 6-line `useCallback` that is verified by `pnpm --filter web typecheck`).
+**Status:** Skipped per user Option A guardrail ("If apps/web does not already have Vitest/@testing-library configured, do not introduce a heavy testing setup in this PR").
+**Fix:** Add `vitest` + `@testing-library/react` to `apps/web/devDependencies`, create `apps/web/vitest.config.ts`, add a `test` script, and write a minimal `<StudyWorkspace>` test that:
+- renders with a stub `onSelectLecture` prop,
+- clicks the second lecture in the sidebar,
+- asserts the callback was invoked with the second lecture's id.
+
+This test would have caught D1 originally and will catch any regression of the wiring added in T1.
