@@ -5,7 +5,6 @@ import { startLocalServer } from './server.js';
 import { LocalAuthSession, type StoredSession } from './auth-storage.js';
 import { LocalReadCache } from './read-cache.js';
 import { Updater, bootUpdater } from './updater.js';
-import { buildAppMenu } from './menu.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +63,14 @@ export async function startMainProcess(): Promise<number> {
 
   await app.whenReady();
 
+  // T024 superseded by US3 (T040–T043). Strip the native menu bar
+  // (File / Edit / View / Window / Help) BEFORE creating the window:
+  // on Windows Electron attaches the default application menu at
+  // BrowserWindow construction, so calling this afterwards leaves a
+  // visible bar on the first paint. The T024 "Check for Updates…"
+  // trigger stays available through the `updates:check` IPC.
+  Menu.setApplicationMenu(null);
+
   // Preload lives in the same directory as index.js after `tsc -p
   // tsconfig.build.json` (both are under dist/main/). The earlier
   // `../preload.js` form only worked when index.js was compiled to
@@ -81,6 +88,16 @@ export async function startMainProcess(): Promise<number> {
     show: !isDev, // dev mode can be hidden for faster iteration
     title: 'Masar X',
     icon: WINDOW_ICON_PATH,
+    // T040–T043 (spec 005 US3): frameless shell — `CustomTitlebar.tsx`
+    // owns the chrome, so we strip both the OS frame and the hidden
+    // overlay adornments. The `titleBarOverlay: false` keeps control of
+    // hover/click regions fully with the renderer (no surprises at the
+    // ends of the drag strip). `autoHideMenuBar` is belt-and-suspenders
+    // for the rare Windows path where a default menu still attaches.
+    frame: false,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true, // T017 assertion
@@ -92,6 +109,12 @@ export async function startMainProcess(): Promise<number> {
       spellcheck: false,
     },
   });
+
+  // Per-window menu removal. `setApplicationMenu(null)` above is the
+  // app-wide switch; `setMenu(null)` is the Windows/Linux per-window
+  // equivalent and is what actually hides the bar on those platforms
+  // when a default menu slipped through construction.
+  win.setMenu(null);
 
   win.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     // Retry transient local-server startup errors:
@@ -118,6 +141,42 @@ export async function startMainProcess(): Promise<number> {
   });
 
   win.loadURL(`http://127.0.0.1:${running.port}`);
+
+  // T040–T042 (spec 005 US3): window-control IPC surface exposed to the
+  // renderer through `masarxDesktop.window` (see apps/desktop/src/main/preload.ts).
+  // Every handler is a thin wrapper around BrowserWindow + a single state
+  // query. The IPC names match the contract in
+  // apps/web/src/lib/desktop/runtime.ts exactly so the renderer never has
+  // to know the implementation detail behind each call.
+  //
+  // The maximize-state broadcast channel (`window:maximizeStateChanged`)
+  // is consumed by the renderer's `CustomTitlebar.tsx` to flip the
+  // button glyph between maximize/restore. It fires on every transition
+  // including the initial state so subscribers that mount late do not
+  // observe a stale "isMaximized=false" while the window is actually
+  // fullscreen.
+  ipcMain.handle('window:minimize', () => {
+    win.minimize();
+  });
+  ipcMain.handle('window:toggleMaximize', () => {
+    if (win.isMaximized()) {
+      win.unmaximize();
+      return false;
+    }
+    win.maximize();
+    return true;
+  });
+  ipcMain.handle('window:close', () => {
+    win.close();
+  });
+  ipcMain.handle('window:isMaximized', () => win.isMaximized());
+
+  win.on('maximize', () => {
+    win.webContents.send('window:maximizeStateChanged', true);
+  });
+  win.on('unmaximize', () => {
+    win.webContents.send('window:maximizeStateChanged', false);
+  });
 
   // T021 — LocalAuthSession IPC wiring.
   // Constructed AFTER app.whenReady so safeStorage is initialized on
@@ -185,19 +244,6 @@ export async function startMainProcess(): Promise<number> {
   ipcMain.handle('updates:installAndRestart', () => updater.installAndRestart());
   ipcMain.handle('updates:skip', (_event, version: string) =>
     updater.skipThisVersion(version),
-  );
-
-  // T024 — native menu bar. Built using Electron's `role` property
-  // for the standard menus (File/Edit/View/Window); the only custom
-  // items are the Help links and the "Check for Updates…" trigger.
-  // The native title bar already provides window Minimize/Zoom/Close
-  // (no IPC for those — see T024 plan).
-  Menu.setApplicationMenu(
-    buildAppMenu({
-      onCheckForUpdates: () => {
-        void updater.checkFor();
-      },
-    }),
   );
 
   // Smoke-test hook: when launched with `electron . --masarx-smoke`, the
