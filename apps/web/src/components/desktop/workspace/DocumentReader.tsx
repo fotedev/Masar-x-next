@@ -36,6 +36,23 @@ export function DocumentReader({ lectureTitle, document, loading }: DocumentRead
     setLoadFailed(false);
   }, [document?.id, document?.file_url]);
 
+  // D2 fix (audit 2026-09-08) — the iframe's `onError` handler does NOT
+  // fire for CSP refusals (Chromium silently blocks the navigation), so
+  // the designed retry state was unreachable when a Cloudinary URL was
+  // blocked. A load watchdog catches both CSP refusals and slow/dead
+  // origins: if `onLoad` hasn't fired within the timeout, surface the
+  // retry surface (load-failure-with-retry state from FR-009).
+  useEffect(() => {
+    if (!document?.file_url) return;
+    const WATCHDOG_MS = 8000;
+    const timer = setTimeout(() => {
+      // If the iframe never reported a load event in time, treat it as a
+      // load failure so the user can retry / see the error message.
+      setLoadFailed((failed) => failed || true);
+    }, WATCHDOG_MS);
+    return () => clearTimeout(timer);
+  }, [document?.file_url, reloadKey]);
+
   const handleRetry = useCallback(() => {
     setLoadFailed(false);
     setReloadKey((k) => k + 1);
