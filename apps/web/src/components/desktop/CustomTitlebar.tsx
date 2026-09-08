@@ -36,16 +36,36 @@
  * the button anyway (the click still goes through if/when the IPC is
  * added) and just skip the visual indicator — accessibility, not state.
  *
- * Localization: text labels are picked up from the surrounding app
- * locale via the existing `t()` helper if present in scope; this
- * component does NOT depend on it explicitly so that this file compiles
- * in isolation. TODO(spec 005 i18n): wire `useTranslations("titlebar")`.
+ * Localization (R19, audit 2026-09-08): strings are extracted into the
+ * `TITLEBAR_STRINGS` const below so the i18n invariant I3 is one JSON
+ * drop away. A full `useTranslations("titlebar")` wiring is deferred
+ * until the desktopStudyWorkspace JSON namespace is added in a
+ * dedicated i18n pass — the constant block keeps the file ready.
  */
 
 import { useCallback, useEffect, useState } from "react";
 
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
 import type { MasarxDesktopRuntimeBridge } from "@/lib/desktop/runtime";
+
+/**
+ * User-facing strings. Once the `titlebar` namespace ships in both
+ * `packages/shared/src/messages/{ar,en}/titlebar.json`, replace each
+ * lookup with `t(...)` and remove the const. Keeping the keys here
+ * means a follow-up PR is a one-line edit per call site.
+ */
+const TITLEBAR_STRINGS = {
+  appName: "Masar X",
+  banner: "Application title bar",
+  minimizeLabel: "Minimize window",
+  minimizeTitle: "Minimize",
+  maximizeLabel: "Maximize window",
+  maximizeTitle: "Maximize",
+  restoreLabel: "Restore window",
+  restoreTitle: "Restore",
+  closeLabel: "Close window",
+  closeTitle: "Close",
+} as const;
 
 /**
  * Defensive helper. The bridge shape is `window?` so the renderer must
@@ -131,7 +151,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
   return (
     <header
       role="banner"
-      aria-label="Application title bar"
+      aria-label={TITLEBAR_STRINGS.banner}
       // Height is owned by CSS (--masarx-titlebar-h in desktop-shell.css).
       // `masarx-titlebar` makes the whole strip a drag handle.
       className="masarx-titlebar fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70"
@@ -141,7 +161,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
           app menu can live here later without breaking the drag region. */}
       <div className="masarx-titlebar-nodrag flex h-full items-center px-3">
         <span className="select-none text-xs font-medium text-muted-foreground">
-          Masar X
+          {TITLEBAR_STRINGS.appName}
         </span>
       </div>
 
@@ -150,8 +170,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onMinimize}
-          aria-label="Minimize window"
-          title="Minimize"
+          aria-label={TITLEBAR_STRINGS.minimizeLabel}
+          title={TITLEBAR_STRINGS.minimizeTitle}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <MinimizeGlyph />
@@ -159,8 +179,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onToggleMaximize}
-          aria-label={isMaximized ? "Restore window" : "Maximize window"}
-          title={isMaximized ? "Restore" : "Maximize"}
+          aria-label={isMaximized ? TITLEBAR_STRINGS.restoreLabel : TITLEBAR_STRINGS.maximizeLabel}
+          title={isMaximized ? TITLEBAR_STRINGS.restoreTitle : TITLEBAR_STRINGS.maximizeTitle}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           {isMaximized ? <RestoreGlyph /> : <MaximizeGlyph />}
@@ -168,8 +188,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close window"
-          title="Close"
+          aria-label={TITLEBAR_STRINGS.closeLabel}
+          title={TITLEBAR_STRINGS.closeTitle}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <CloseGlyph />

@@ -18,7 +18,7 @@
     "build:portable": "tsc -p tsconfig.build.json && tsc -p tsconfig.preload.json && electron-builder --win portable --x64 --publish never",
     "build:all": "tsc -p tsconfig.build.json && tsc -p tsconfig.preload.json && electron-builder --win --x64",
     "typecheck": "tsc --noEmit",
-    "lint": "echo '[desktop] no ESLint config yet — scaffold only (T002).'",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
