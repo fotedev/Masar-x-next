@@ -2,6 +2,7 @@ import { type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LanguageToggle } from "../LanguageToggle";
+import { ThemeToggle } from "../ThemeToggle";
 import { DynamicLogo } from "../DynamicLogo";
 import {
   Home,
@@ -261,13 +262,19 @@ export function MobileNav({
 
               <div className="h-px bg-slate-200/80 dark:bg-slate-800/80" />
 
-              {/* Language Switcher */}
-              <motion.div variants={itemVariants} className="px-1">
+              {/* Language + Theme Switchers */}
+              <motion.div variants={itemVariants} className="px-1 space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">
                     {tMobileNav("language")}
                   </span>
                   <LanguageToggle />
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2">
+                    {tMobileNav("theme")}
+                  </span>
+                  <ThemeToggle />
                 </div>
               </motion.div>
 

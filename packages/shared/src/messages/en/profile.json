@@ -20,6 +20,8 @@
   "admin": "Admin",
   "user": "User",
   "refreshRole": "Update account rank",
+  "roleRefreshSuccess": "Account rank updated",
+  "roleRefreshError": "Failed to update account rank",
   "personalInfo": "Personal Information",
   "username": "Username",
   "notSpecified": "Not specified",

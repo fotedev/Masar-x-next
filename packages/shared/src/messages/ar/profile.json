@@ -20,6 +20,8 @@
   "admin": "ادمن",
   "user": "مستخدم",
   "refreshRole": "تحديث رتبة الحساب",
+  "roleRefreshSuccess": "تم تحديث رتبة الحساب",
+  "roleRefreshError": "فشل تحديث رتبة الحساب",
   "personalInfo": "المعلومات الشخصية",
   "username": "اسم المستخدم",
   "notSpecified": "غير محدد",
