@@ -405,7 +405,7 @@ describe('T017 — Electron main process contract', () => {
   // T025 follow-up: the BrowserWindow `did-fail-load` handler must retry
   // on transient local-server startup errors. The original implementation
   // only covered -102 (ERR_CONNECTION_REFUSED) and -105 (ERR_NAME_NOT_RESOLVED).
-  // After the localhost-aware CSP fix in apps/web/src/middleware.ts, -107
+  // After the localhost-aware CSP fix in apps/web/src/proxy.ts, -107
   // (ERR_SSL_PROTOCOL_ERROR) is the third error code a stale ServiceWorker
   // or transient CSP can produce; the desktop should self-heal by retrying
   // the loadURL 500ms later.
