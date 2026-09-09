@@ -231,6 +231,7 @@ jobs:
           gitleaks version
 
       - name: Scan built artifacts
+        id: scan
         # `--no-git` scans files on disk, not git history. The repo
         # itself is scanned by the default gitleaks pre-commit / push
         # hook (added in a follow-up). Here we only need the
