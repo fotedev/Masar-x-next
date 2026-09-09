@@ -1,0 +1,8 @@
+{
+  "title": "Update available",
+  "description": "Version {version} is ready to install",
+  "install": "Install and restart",
+  "later": "Later",
+  "errorTitle": "Update check failed",
+  "dismiss": "Dismiss"
+}

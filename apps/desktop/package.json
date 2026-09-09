@@ -25,8 +25,7 @@
   "dependencies": {
     "better-sqlite3": "^11.5.0",
     "electron-updater": "^6.3.9",
-    "masarx-shared": "workspace:*",
-    "next": "^16.2.1"
+    "masarx-shared": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",

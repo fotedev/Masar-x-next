@@ -196,3 +196,37 @@ The user explicitly directed: "Do NOT add it to this branch — keep this PR tig
 - asserts the callback was invoked with the second lecture's id.
 
 This test would have caught D1 originally and will catch any regression of the wiring added in T1.
+
+---
+
+# Second pass — 2026-09-09 (this session)
+
+Follow-up fixes on top of `b6d547f`, same PR. Includes the full `useTranslations` completion of T8 and the R9 item the first pass deferred.
+
+| Item | Fix | Files |
+|---|---|---|
+| R9 — updater rollback unreachable | Trial flag now written at startup when `last-version.json` differs from the running version (first boot of an applied update), with a 30 s trial in the NEW version; `update-downloaded` no longer writes the flag. Rollback check reordered before the trial write (a naive order rolled back every fresh-update boot — caught by the new contract tests). | `apps/desktop/src/main/updater.ts`, `__tests__/updater.test.ts` (10/10 pass) |
+| R9 — update UI | New `UpdateToast` renderer component consumes `masarxDesktop.updates` (available → install-and-restart / skip; error → dismiss). Mounted in `AppProviders`. | `apps/web/src/components/desktop/UpdateToast.tsx`, `AppProviders.tsx`, `packages/shared/src/messages/{ar,en}/desktopUpdates.json` |
+| Regression — shell unmounted | The committed `AppProviders.tsx` had lost the `<DesktopShellGate />` + `<CustomTitlebar />` mounts (they existed only as uncommitted WIP that was reverted). Without them the frameless window has no window controls and no desktop CSS. Restored, plus `UpdateToast`. | `apps/web/src/components/AppProviders.tsx` |
+| T8 completed — titlebar i18n | `TITLEBAR_STRINGS` replaced by `useTranslations("titlebar")`; `titlebar` namespace added with full ar/en parity. | `CustomTitlebar.tsx`, `packages/shared/src/messages/{ar,en}/titlebar.json` |
+| i18n loader gap | `desktopStudyWorkspace` (pre-existing gap: only loaded via the disk fallback), `desktopUpdates`, and `titlebar` registered in the `MESSAGE_LOADERS` registry for both locales. | `apps/web/src/i18n/request.ts` |
+| R15 — dead code | Deleted `menu.ts` + `menu.test.ts` (superseded by the frameless shell), unused `WorkspaceSelection` type, and the unused `next` runtime dependency (lockfile resynced). | `apps/desktop/src/main/menu.ts`, `__tests__/menu.test.ts`, `workspace/types.ts`, `apps/desktop/package.json`, `pnpm-lock.yaml` |
+| R11 — smoke suite | Now opt-in (`MASARX_RUN_SMOKE=1`) with an actionable skip message covering both preconditions (compiled main + dev server); skips locally instead of failing with "process crashed". | `apps/desktop/__tests__/smoke.test.ts` |
+| R11 — lint parse errors | The dependency-free flat config could not parse TypeScript (14 "Unexpected token" errors). Added `tseslint.parser` (resolved from the hoisted workspace install, same as apps/web). | `apps/desktop/eslint.config.mjs` |
+
+## Second-pass verification
+
+| Check | Result |
+|---|---|
+| Desktop typecheck | PASS |
+| Web typecheck | PASS |
+| Desktop tests | 28 pass / 7 fail (read-cache ABI only — pre-existing) / 4 skipped (smoke, opt-in) |
+| Updater contract tests | 10/10 pass (incl. 3 new R9 semantics tests) |
+| Desktop lint | 0 errors (16 informational unused-disable warnings remain) |
+
+## Still open
+
+- Electron 32 → 44 upgrade (R3) — unchanged.
+- OAuth `masarx://` protocol (R4) — unchanged.
+- Encrypted session storage wire-or-delete (R8) — unchanged.
+- read-cache ABI conflict (R11 partial) — needs an Electron-hosted test runner or dual-ABI handling.

@@ -1,0 +1,12 @@
+{
+  "appName": "Masar X",
+  "bannerAria": "شريط عنوان التطبيق",
+  "minimize": "تصغير",
+  "minimizeAria": "تصغير النافذة",
+  "maximize": "تكبير",
+  "maximizeAria": "تكبير النافذة",
+  "restore": "استعادة",
+  "restoreAria": "استعادة حجم النافذة",
+  "close": "إغلاق",
+  "closeAria": "إغلاق النافذة"
+}

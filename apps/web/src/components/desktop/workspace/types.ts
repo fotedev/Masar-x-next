@@ -35,16 +35,6 @@ export interface WorkspaceLecture {
   };
 }
 
-/**
- * The transient selection state for one open workspace. Session-scoped;
- * not persisted (per "Workspace selection" key entity in spec).
- */
-export interface WorkspaceSelection {
-  lectureId: string | null;
-  /** Whether the assistant panel is expanded. Default false. */
-  assistantOpen: boolean;
-}
-
 export interface StudyWorkspaceProps {
   subjectName: string;
   lectures: WorkspaceLecture[];
