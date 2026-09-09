@@ -1,0 +1,58 @@
+{
+  "aria": {
+    "workspace": "Study workspace for {subject}"
+  },
+  "sidebar": {
+    "heading": "Lectures",
+    "aria": "Lecture list for {subject}",
+    "listAria": "Lectures",
+    "emptyTitle": "No lectures yet",
+    "emptyBody": "Lectures for {subject} will appear here once they are added.",
+    "emptyAria": "Empty lecture list for {subject}",
+    "counts": {
+      "summaries": "{count, plural, one {# summary} other {# summaries}}",
+      "videos": "{count, plural, one {# video} other {# videos}}",
+      "files": "{count, plural, one {# file} other {# files}}",
+      "quizzes": "{count, plural, one {# quiz} other {# quizzes}}"
+    }
+  },
+  "toolbar": {
+    "label": "Reading",
+    "noSelection": "No lecture selected",
+    "highlight": "Highlight",
+    "highlightTitle": "Highlight text in this document",
+    "download": "Download",
+    "downloadTitle": "Download the lecture document",
+    "assistantOpen": "Open assistant",
+    "assistantClose": "Close assistant",
+    "assistantActive": "Assistant open",
+    "assistantInactive": "Assistant closed"
+  },
+  "reader": {
+    "loading": "Loading document",
+    "emptyTitle": "Select a lecture to start studying",
+    "emptyBody": "Pick a lecture from the list to open it here with its document, summaries, and assistant.",
+    "noDocumentTitle": "No document attached",
+    "noDocumentBody": "\"{lecture}\" has no document attached yet. Check the summaries and videos for this lecture instead.",
+    "loadErrorTitle": "Could not load the document",
+    "loadErrorBody": "The document may be unavailable or the connection was interrupted. Try again.",
+    "retry": "Retry"
+  },
+  "assistant": {
+    "heading": "Zane assistant",
+    "aria": "Study assistant panel",
+    "close": "Close",
+    "closeAria": "Close assistant panel",
+    "scope": "{lecture} · {subject}",
+    "scopeEmpty": "{subject}",
+    "emptyTranscript": "Ask anything about this lecture — summaries, definitions, exam prep.",
+    "composerPlaceholder": "Ask about this lecture…",
+    "composerAria": "Message to the assistant",
+    "send": "Send",
+    "sending": "Sending…",
+    "role": {
+      "you": "You",
+      "zane": "Zane"
+    }
+  }
+}
