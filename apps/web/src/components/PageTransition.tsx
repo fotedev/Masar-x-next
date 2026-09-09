@@ -26,7 +26,7 @@ export function PageTransition({ children, pathname }: Props) {
                 ease: "easeInOut",
               }
         }
-        className="w-full"
+        className="flex h-full min-h-0 w-full flex-1 flex-col"
       >
         {children}
       </motion.div>
