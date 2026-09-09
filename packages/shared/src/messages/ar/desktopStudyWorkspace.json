@@ -1,0 +1,58 @@
+{
+  "aria": {
+    "workspace": "مساحة الدراسة لمادة {subject}"
+  },
+  "sidebar": {
+    "heading": "المحاضرات",
+    "aria": "قائمة محاضرات مادة {subject}",
+    "listAria": "المحاضرات",
+    "emptyTitle": "لا توجد محاضرات بعد",
+    "emptyBody": "ستظهر محاضرات {subject} هنا بمجرد إضافتها.",
+    "emptyAria": "قائمة محاضرات فارغة لمادة {subject}",
+    "counts": {
+      "summaries": "{count, plural, one {ملخص واحد} other {# ملخص}}",
+      "videos": "{count, plural, one {فيديو واحد} other {# فيديو}}",
+      "files": "{count, plural, one {ملف واحد} other {# ملف}}",
+      "quizzes": "{count, plural, one {اختبار واحد} other {# اختبار}}"
+    }
+  },
+  "toolbar": {
+    "label": "قراءة",
+    "noSelection": "لم يتم اختيار محاضرة",
+    "highlight": "تظليل",
+    "highlightTitle": "تظليل النص في هذا المستند",
+    "download": "تنزيل",
+    "downloadTitle": "تنزيل مستند المحاضرة",
+    "assistantOpen": "فتح المساعد",
+    "assistantClose": "إغلاق المساعد",
+    "assistantActive": "المساعد مفتوح",
+    "assistantInactive": "المساعد مغلق"
+  },
+  "reader": {
+    "loading": "جارٍ تحميل المستند",
+    "emptyTitle": "اختر محاضرة لبدء الدراسة",
+    "emptyBody": "اختر محاضرة من القائمة لفتحها هنا مع مستندها وملخصاتها والمساعد.",
+    "noDocumentTitle": "لا يوجد مستند مرفق",
+    "noDocumentBody": "لا يحتوي \"{lecture}\" على مستند مرفق بعد. تصفح الملخصات والفيديوهات الخاصة بهذه المحاضرة بدلًا من ذلك.",
+    "loadErrorTitle": "تعذر تحميل المستند",
+    "loadErrorBody": "قد يكون المستند غير متوفر أو انقطع الاتصال. حاول مرة أخرى.",
+    "retry": "إعادة المحاولة"
+  },
+  "assistant": {
+    "heading": "المساعد زين",
+    "aria": "لوحة المساعد الدراسي",
+    "close": "إغلاق",
+    "closeAria": "إغلاق لوحة المساعد",
+    "scope": "{lecture} · {subject}",
+    "scopeEmpty": "{subject}",
+    "emptyTranscript": "اسأل عن أي شيء يخص هذه المحاضرة — ملخصات، تعريفات، تحضير للاختبار.",
+    "composerPlaceholder": "اسأل عن هذه المحاضرة…",
+    "composerAria": "رسالة إلى المساعد",
+    "send": "إرسال",
+    "sending": "جارٍ الإرسال…",
+    "role": {
+      "you": "أنت",
+      "zane": "زين"
+    }
+  }
+}
