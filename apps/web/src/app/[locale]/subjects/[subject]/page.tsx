@@ -337,6 +337,22 @@ export default function SubjectPage() {
   // otherwise the StudyWorkspace falls back to the first lecture.
   const workspaceInitialId = selectedLectureForContent?.id ?? null;
 
+  // D1 fix (audit 2026-09-08) — without this callback the StudyWorkspace
+  // cannot trigger a content fetch when the user clicks a sidebar row.
+  // `useLectureContent` only fires when `selectedLectureForContent` is set
+  // (apps/web/src/hooks/useLectureContent.ts:42-43), so the host page must
+  // own the state-machine handoff between the workspace's internal
+  // selection and the content hook's lecture argument.
+  const handleWorkspaceLectureSelect = useCallback((lectureId: string) => {
+    const target = subjectLectures.find((l) => l.id === lectureId);
+    if (!target) return;
+    setSelectedLectureForContent({
+      id: target.id,
+      lecture_key: target.lecture_key,
+      lecture_label: target.lecture_label,
+    });
+  }, [subjectLectures]);
+
   // Active lecture with its first matching file URL attached, used by
   // the embedded reader. Without a lecture selected, documentUrl stays
   // undefined and the reader surfaces its no-document state.
@@ -381,11 +397,12 @@ export default function SubjectPage() {
   // shrink past its content height (per spec 005 acceptance #1).
   if (isDesktop) {
     return (
-      <div className="flex h-[calc(100dvh-72px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full min-h-0 flex-col">
+      <div className="flex h-full w-full min-h-0 flex-col">
         <StudyWorkspace
           subjectName={normalizedSubjectName}
           lectures={workspaceLecturesWithActiveDoc}
           initialLectureId={workspaceInitialId ?? undefined}
+          onSelectLecture={handleWorkspaceLectureSelect}
           currentContent={{
             summaries,
             videos,

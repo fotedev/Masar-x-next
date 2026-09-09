@@ -57,6 +57,26 @@ const api = {
     onAvailable: (cb: (info: unknown) => void): Unsubscribe =>
       subscribe<unknown>('updates:available', cb),
   },
+  // T040–T043 (spec 005 US3): frameless titlebar window controls. The
+  // renderer exposes a thin surface that matches the optional
+  // `MasarxDesktopRuntimeBridge.window` contract in
+  // apps/web/src/lib/desktop/runtime.ts. Each method is a Promise so
+  // the renderer's call sites stay await-able and the titlebar can
+  // surface a "could not minimize" toast if main ever rejects.
+  // `onMaximizeChange` is the renderer-facing event for the OS
+  // maximize/unmaximize broadcast (channel `window:maximizeStateChanged`).
+  // The unsubscribe handle is returned synchronously so the React effect
+  // that subscribes on mount can cleanly detach on unmount.
+  window: {
+    minimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: (): Promise<boolean> =>
+      ipcRenderer.invoke('window:toggleMaximize'),
+    close: (): Promise<void> => ipcRenderer.invoke('window:close'),
+    isMaximized: (): Promise<boolean> =>
+      ipcRenderer.invoke('window:isMaximized'),
+    onMaximizeChange: (cb: (isMaximized: boolean) => void): Unsubscribe =>
+      subscribe<boolean>('window:maximizeStateChanged', cb),
+  },
 } as const;
 
 contextBridge.exposeInMainWorld('masarxDesktop', api);

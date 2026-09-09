@@ -1,8 +1,9 @@
 // T013c (Spec 004, Phase 2): minimal ESLint 9 flat config for the
-// Electron desktop app. Deliberately dependency-free - no parsers,
-// no plugins, nothing to install (desktop has no ESLint devDeps yet;
-// add `eslint` here only when the desktop `lint` script is wired to
-// run eslint). The single enforced rule is the AI-boundary import
+// Electron desktop app. Originally dependency-free; since the `lint`
+// script is now wired to `eslint .`, TypeScript files must parse, so the
+// parser comes from `typescript-eslint` — the same install apps/web uses
+// (resolved through the hoisted pnpm workspace root; no desktop-local
+// devDep needed). The single enforced rule is the AI-boundary import
 // restriction (FR-020): AI provider SDKs and endpoints may only be
 // referenced from `supabase/functions/**` (the Edge Function itself)
 // and `packages/shared/**` (the shared AI client). The Electron main
@@ -10,6 +11,8 @@
 // the shared client (`masarx-shared`), never a provider SDK or a
 // direct provider API call. Severity is `error` so a slip becomes
 // a build break, not a warning.
+
+import tseslint from "typescript-eslint";
 
 export default [
   {
@@ -23,6 +26,13 @@ export default [
   },
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
     rules: {
       "no-restricted-imports": [
         "error",

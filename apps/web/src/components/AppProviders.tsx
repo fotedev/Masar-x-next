@@ -11,6 +11,9 @@ import { Toaster } from "sonner";
 import { QueryProvider } from "@/components/QueryProvider";
 import { User } from "@supabase/supabase-js";
 import { ProfileRow } from "@/lib/admin-db/schema";
+import { DesktopShellGate } from "@/components/desktop/DesktopShellGate";
+import { CustomTitlebar } from "@/components/desktop/CustomTitlebar";
+import { UpdateToast } from "@/components/desktop/UpdateToast";
 
 type Props = {
   children: ReactNode;
@@ -31,6 +34,9 @@ export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
         <PlatformSettingsProvider>
           <ThemeProvider>
             <NotificationProvider>
+              <DesktopShellGate />
+              <CustomTitlebar />
+              <UpdateToast />
               <style
                 dangerouslySetInnerHTML={{
                   __html: `

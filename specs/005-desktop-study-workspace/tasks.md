@@ -113,13 +113,13 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 > Depends on Phase 1 only, but ships last: a frameless window with broken controls is unclosable.
 
-- [ ] T040 [US3] In `apps/desktop/src/main/index.ts`, create the `BrowserWindow` without the platform title bar (`titleBarStyle: 'hidden'` with `titleBarOverlay`, or `frame: false`). MUST NOT disturb the secure `webPreferences` the T017 contract test asserts (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`) (FR-020).
-- [ ] T041 [US3] Register `window:minimize`, `window:toggleMaximize`, `window:close`, and `window:isMaximized` IPC handlers in `apps/desktop/src/main/index.ts`, and emit a `window:maximizeChange` event on the window's own `maximize`/`unmaximize` events so state stays true even when changed outside the control (FR-022, FR-023).
-- [ ] T042 [US3] Expose the matching `window` namespace on `apps/desktop/src/main/preload.ts` via `contextBridge`, mirroring the optional shape typed in T001 (FR-012, FR-022).
-- [ ] T043 [US3] Update `apps/desktop/src/main/__tests__/main.test.ts` for the changed window options and the new IPC handler registrations (keeps GATE-TEST-DESKTOP honest rather than loosening it).
-- [ ] T044 [US3] Create `apps/web/src/components/desktop/CustomTitlebar.tsx` — renders only when the shell is active; app identity, `-webkit-app-region: drag` on the strip with `no-drag` on every control, minimize/maximize/close wired to the bridge, maximize icon driven by `onMaximizeChange`, and a no-op-safe path when the bridge lacks the `window` namespace (FR-012, FR-021, FR-022, FR-023).
-- [ ] T045 [US3] Mount `CustomTitlebar` above the app shell so it is present on every route in the shell and absent in the browser (FR-011).
-- [ ] T046 [US3] Verify GATE-TYPE-DESKTOP, GATE-TYPE-WEB, GATE-TEST-DESKTOP, and GATE-VISUAL (no titlebar in a browser render).
+- [x] T040 [US3] In `apps/desktop/src/main/index.ts`, create the `BrowserWindow` without the platform title bar (`titleBarStyle: 'hidden'` with `titleBarOverlay`, or `frame: false`). MUST NOT disturb the secure `webPreferences` the T017 contract test asserts (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`) (FR-020).
+- [x] T041 [US3] Register `window:minimize`, `window:toggleMaximize`, `window:close`, and `window:isMaximized` IPC handlers in `apps/desktop/src/main/index.ts`, and emit a `window:maximizeChange` event on the window's own `maximize`/`unmaximize` events so state stays true even when changed outside the control (FR-022, FR-023).
+- [x] T042 [US3] Expose the matching `window` namespace on `apps/desktop/src/main/preload.ts` via `contextBridge`, mirroring the optional shape typed in T001 (FR-012, FR-022).
+- [x] T043 [US3] Update `apps/desktop/src/main/__tests__/main.test.ts` for the changed window options and the new IPC handler registrations (keeps GATE-TEST-DESKTOP honest rather than loosening it).
+- [x] T044 [US3] Create `apps/web/src/components/desktop/CustomTitlebar.tsx` — renders only when the shell is active; app identity, `-webkit-app-region: drag` on the strip with `no-drag` on every control, minimize/maximize/close wired to the bridge, maximize icon driven by `onMaximizeChange`, and a no-op-safe path when the bridge lacks the `window` namespace (FR-012, FR-021, FR-022, FR-023).
+- [x] T045 [US3] Mount `CustomTitlebar` above the app shell so it is present on every route in the shell and absent in the browser (FR-011).
+- [x] T046 [US3] Verify GATE-TYPE-DESKTOP, GATE-TYPE-WEB, GATE-TEST-DESKTOP, and GATE-VISUAL (no titlebar in a browser render).
 
 **Checkpoint**: All four stories independently functional.
 

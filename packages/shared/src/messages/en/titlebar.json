@@ -1,0 +1,12 @@
+{
+  "appName": "Masar X",
+  "bannerAria": "Application title bar",
+  "minimize": "Minimize",
+  "minimizeAria": "Minimize window",
+  "maximize": "Maximize",
+  "maximizeAria": "Maximize window",
+  "restore": "Restore",
+  "restoreAria": "Restore window",
+  "close": "Close",
+  "closeAria": "Close window"
+}
