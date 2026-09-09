@@ -150,9 +150,18 @@ export class Updater {
 
     // Record which binary is running now BEFORE anything else so rollback
     // and restart loops always converge (the marker must describe the
-    // current boot, not a previous one).
-    const previousVersion = await this.readVersionMarker();
-    await this.writeVersionMarker(app.getVersion());
+    // current boot, not a previous one). Marker/flag IO failures are
+    // non-fatal: bootUpdater() fires this without awaiting, so a rejection
+    // here would surface as an unhandled error and must never break the
+    // update check (or app startup).
+    let previousVersion: string | null = null;
+    try {
+      previousVersion = await this.readVersionMarker();
+      await this.writeVersionMarker(app.getVersion());
+    } catch (err: unknown) {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Update marker IO failed; skipping trial detection:', err);
+    }
 
     // First-launch rollback: if a stale flag from a previous attempt
     // exists, roll back BEFORE doing a new check. The flag means the
@@ -173,8 +182,13 @@ export class Updater {
     // version that was just applied. If it crashes before the timer fires,
     // the flag survives to the next boot and the rollback check above runs.
     if (previousVersion && previousVersion !== app.getVersion()) {
-      await this.writeFlag({ version: app.getVersion(), appliedAt: Date.now() });
-      this.startTrialTimer();
+      try {
+        await this.writeFlag({ version: app.getVersion(), appliedAt: Date.now() });
+        this.startTrialTimer();
+      } catch (err: unknown) {
+        // eslint-disable-next-line no-console
+        console.warn('[masarx-desktop] Could not write update trial flag; rollback disabled for this update:', err);
+      }
     }
 
     try {
@@ -313,6 +327,10 @@ export class Updater {
   }
 
   private async writeFlag(payload: { version: string; appliedAt: number }): Promise<void> {
+    // The userData dir can disappear between construction and this write
+    // (uninstall helpers, tests tearing down temp dirs). Recreating it
+    // keeps the flag write from turning into an unhandled ENOENT.
+    await fs.mkdir(path.dirname(this.flagPath), { recursive: true });
     await fs.writeFile(this.flagPath, JSON.stringify(payload), 'utf8');
   }
 
@@ -338,11 +356,8 @@ export class Updater {
   }
 
   private async writeVersionMarker(version: string): Promise<void> {
-    try {
-      await fs.writeFile(this.versionMarkerPath, JSON.stringify({ version }), 'utf8');
-    } catch {
-      // Marker write failure must never break the update flow.
-    }
+    await fs.mkdir(path.dirname(this.versionMarkerPath), { recursive: true });
+    await fs.writeFile(this.versionMarkerPath, JSON.stringify({ version }), 'utf8');
   }
 
   private startTrialTimer(): void {
@@ -414,10 +429,16 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
   // when the main window is up so the renderer is ready to receive the
   // broadcast.
   if (app.isReady()) {
-    void opts.updater.checkOnStartup();
+    void opts.updater.checkOnStartup().catch((err: unknown) => {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
+    });
   } else {
     app.on('ready', () => {
-      void opts.updater.checkOnStartup();
+      void opts.updater.checkOnStartup().catch((err: unknown) => {
+        // eslint-disable-next-line no-console
+        console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
+      });
     });
   }
 }
