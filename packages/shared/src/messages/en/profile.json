@@ -20,6 +20,8 @@
   "admin": "Admin",
   "user": "User",
   "refreshRole": "Update account rank",
+  "roleRefreshSuccess": "Account rank updated",
+  "roleRefreshError": "Failed to update account rank",
   "personalInfo": "Personal Information",
   "username": "Username",
   "notSpecified": "Not specified",
@@ -43,5 +45,11 @@
   "lastActivity": "Last Recorded Activity",
   "locale": "en-US",
   "backToHome": "Back to Home",
-  "back": "Back"
+  "back": "Back",
+  "academicRateLimit": "Please wait {seconds} seconds before updating your data again.",
+  "avatarOnlyImages": "Please choose an image file only",
+  "avatarTooLarge": "Image size must be under 5 MB",
+  "avatarUploadError": "Image upload failed",
+  "tryAgain": "Please try again.",
+  "avatarAlt": "Profile picture"
 }
