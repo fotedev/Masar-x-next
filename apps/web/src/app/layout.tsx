@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import "../index.css";
+import "@/styles/desktop-shell.css";
 
 export const viewport: Viewport = {
   width: "device-width",

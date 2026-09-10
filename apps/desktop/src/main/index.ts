@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, session } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
@@ -70,6 +70,27 @@ export async function startMainProcess(): Promise<number> {
   // visible bar on the first paint. The T024 "Check for Updates…"
   // trigger stays available through the `updates:check` IPC.
   Menu.setApplicationMenu(null);
+
+  // Pin Accept-Language to Arabic (with English fallback) so the bundled
+  // Next.js app's `localeDetection: true` (apps/web/src/i18n/routing.ts)
+  // auto-redirects the BrowserWindow's first request to /ar instead of
+  // falling back to the Chromium default (English). Masar X is an
+  // Arabic-first product; the web path also benefits because visitors
+  // who haven't picked a locale yet land on the Arabic home page.
+  //
+  // `onBeforeSendHeaders` runs at the network layer for the default
+  // session, so it applies to every request the BrowserWindow makes
+  // (HTML, XHR, RSC, asset fetches). Setting the header on the request
+  // rather than via `BrowserWindow.webPreferences.locale` (which only
+  // affects navigator.language) is what next-intl's middleware reads.
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      requestHeaders: {
+        ...details.requestHeaders,
+        'Accept-Language': 'ar-EG,ar;q=0.95,en;q=0.8',
+      },
+    });
+  });
 
   // Preload lives in the same directory as index.js after `tsc -p
   // tsconfig.build.json` (both are under dist/main/). The earlier

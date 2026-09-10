@@ -8,6 +8,8 @@ import { PWAInstallPrompt } from "./PWAInstallPrompt";
 import { NotificationPrompt } from "./NotificationManager";
 import { AcademicOnboardingGate } from "./AcademicOnboardingGate";
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
+import { DesktopShellGate } from "./desktop/DesktopShellGate";
+import { DesktopShell } from "./desktop/DesktopShell";
 
 interface LayoutProps {
   children: ReactNode;
@@ -65,33 +67,51 @@ export function Layout({ children }: LayoutProps) {
   // Padding drops from the 72px web header to the 32px titlebar so the
   // three-column workspace can fill the remaining viewport (FR-017).
   return (
-    <div
-      className={
-        isDesktop
-          ? "flex h-screen w-screen flex-col overflow-hidden bg-background pt-8"
-          : "min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
-      }
-    >
-      {!isDesktop && <Header />}
-      <AcademicOnboardingGate />
-      <main
-        className={
-          isDesktop
-            ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden"
-            : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
-        }
-      >
-        {isLightRoute ? (
-          <div className="w-full h-full min-h-0">{children}</div>
-        ) : (
-          <PageTransition pathname={pathname || "/"}>{children}</PageTransition>
-        )}
-      </main>
-      {/* T024 gate: every block below belongs to the web experience
-          and must not leak into the Electron shell (FR-019, FR-011). */}
-      {!isDesktop && <PWAInstallPrompt />}
-      {!isDesktop && <NotificationPrompt />}
-      {!isDesktop && <Footer />}
-    </div>
+    <>
+      {/* FR-001 / FR-010: the gate must render unconditionally so the
+          `data-masarx-desktop` attribute is present on <html> before any
+          child reads it via CSS or window. Hydration-safe: returns null on
+          server + first paint, then flips post-mount. */}
+      <DesktopShellGate />
+      {isDesktop ? (
+        // Desktop shell owns the chrome (titlebar + sidebar + scroll-locked
+        // <main>). The wrapper below is the web-side anchor that lets the
+        // next-intl providers, theme provider, and AcademicOnboardingGate
+        // continue to wrap the page tree unchanged.
+        <div className="flex h-screen w-screen flex-col overflow-hidden bg-background">
+          <DesktopShell>
+            {isLightRoute ? (
+              <div className="w-full h-full min-h-0">{children}</div>
+            ) : (
+              <PageTransition pathname={pathname || "/"}>
+                {children}
+              </PageTransition>
+            )}
+          </DesktopShell>
+          <AcademicOnboardingGate />
+        </div>
+      ) : (
+        <div
+          className="min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
+        >
+          <Header />
+          <AcademicOnboardingGate />
+          <main
+            className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
+          >
+            {isLightRoute ? (
+              <div className="w-full h-full min-h-0">{children}</div>
+            ) : (
+              <PageTransition pathname={pathname || "/"}>{children}</PageTransition>
+            )}
+          </main>
+          {/* T024 gate: every block below belongs to the web experience
+              and must not leak into the Electron shell (FR-019, FR-011). */}
+          <PWAInstallPrompt />
+          <NotificationPrompt />
+          <Footer />
+        </div>
+      )}
+    </>
   );
 }
