@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "@/navigation";
+import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
 import type { Platform, ReleaseUrls } from "@/lib/github-releases";
 import {
   Download,
@@ -32,6 +33,7 @@ export function DesktopAppBannerClient({
   locale,
   translations,
 }: DesktopAppBannerClientProps) {
+  const isDesktop = useIsDesktopRuntime();
   const [isDismissed, setIsDismissed] = useState(false);
   const [platform, setPlatform] = useState<Platform>(initialPlatform);
 
@@ -60,6 +62,18 @@ export function DesktopAppBannerClient({
       localStorage.setItem(`masarx_dismissed_banner_v_${release.version}`, "true");
     }
   };
+
+  // Spec 005 / FR-019: the in-app "حمّل Masar X" banner must NEVER appear
+  // inside the Electron shell — the user is already running the desktop
+  // build. The desktop shell's UA string contains "Windows"/"Mac OS X"
+  // which the banner's platform detector mis-reads as a web browser on the
+  // same OS, so the only reliable gate is `window.masarxDesktop`. The hook
+  // is hydration-safe (false on the server + first paint, flips post-mount
+  // in the Electron context). On the very first paint we render the banner
+  // to keep the SSR HTML identical to the web path; the banner disappears
+  // one frame later inside Electron — invisible because the shell window
+  // only appears once the page has fully loaded.
+  if (isDesktop) return null;
 
   if (isDismissed) return null;
 
