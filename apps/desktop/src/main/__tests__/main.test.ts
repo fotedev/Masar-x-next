@@ -100,6 +100,17 @@ vi.mock('electron', () => ({
     buildFromTemplate: vi.fn(() => ({ items: [] })),
     setApplicationMenu: vi.fn(),
   },
+  // CSP header wiring (`session.defaultSession.webRequest.onBeforeSendHeaders`)
+  // runs at startup in index.ts, so the mock must cover the `session` import.
+  // The T017 contract asserts window options and IPC, not header interception —
+  // a no-op registration stub is sufficient here.
+  session: {
+    defaultSession: {
+      webRequest: {
+        onBeforeSendHeaders: vi.fn(),
+      },
+    },
+  },
   shell: {
     openExternal: vi.fn(async () => undefined),
   },

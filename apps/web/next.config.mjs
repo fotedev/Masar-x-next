@@ -125,7 +125,7 @@ const nextConfig = {
   },
   async headers() {
     // NOTE: Content-Security-Policy is intentionally omitted here.
-    // It is set per-request with a fresh nonce in src/middleware.ts,
+    // It is set per-request with a fresh nonce in src/proxy.ts,
     // which takes precedence for all page routes. Having two CSP headers
     // causes the browser to AND them (most-restrictive wins), which
     // breaks nonce-based policies when combined with unsafe-inline policies.
@@ -138,7 +138,7 @@ const nextConfig = {
     //   2. HTML catch-all    — no-store for all pages and data routes
     //   3. /dotlottie...wasm — long-lived, Content-Type for streaming
     //   4. /(.*) security    — global baseline (some of these are also
-    //                           set by middleware; harmless duplication)
+    //                           set by the proxy; harmless duplication)
     return [
       // === 1. Service Worker itself: re-validate on every page load ===
       {
