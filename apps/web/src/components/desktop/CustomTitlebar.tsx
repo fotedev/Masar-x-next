@@ -36,13 +36,11 @@
  * the button anyway (the click still goes through if/when the IPC is
  * added) and just skip the visual indicator — accessibility, not state.
  *
- * Localization: text labels are picked up from the surrounding app
- * locale via the existing `t()` helper if present in scope; this
- * component does NOT depend on it explicitly so that this file compiles
- * in isolation. TODO(spec 005 i18n): wire `useTranslations("titlebar")`.
+ * Localization (I3): all labels come from the `titlebar` namespace (packages/shared/src/messages/{ar,en}/titlebar.json).
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
 import type { MasarxDesktopRuntimeBridge } from "@/lib/desktop/runtime";
@@ -59,6 +57,7 @@ function getWindowSurface(
 }
 
 export function CustomTitlebar(): React.JSX.Element | null {
+  const t = useTranslations("titlebar");
   const isDesktop = useIsDesktopRuntime();
   const [isMaximized, setIsMaximized] = useState(false);
 
@@ -131,7 +130,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
   return (
     <header
       role="banner"
-      aria-label="Application title bar"
+      aria-label={t("bannerAria")}
       // Height is owned by CSS (--masarx-titlebar-h in desktop-shell.css).
       // `masarx-titlebar` makes the whole strip a drag handle.
       className="masarx-titlebar fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70"
@@ -141,7 +140,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
           app menu can live here later without breaking the drag region. */}
       <div className="masarx-titlebar-nodrag flex h-full items-center px-3">
         <span className="select-none text-xs font-medium text-muted-foreground">
-          Masar X
+          {t("appName")}
         </span>
       </div>
 
@@ -150,8 +149,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onMinimize}
-          aria-label="Minimize window"
-          title="Minimize"
+          aria-label={t("minimizeAria")}
+          title={t("minimize")}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <MinimizeGlyph />
@@ -159,8 +158,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onToggleMaximize}
-          aria-label={isMaximized ? "Restore window" : "Maximize window"}
-          title={isMaximized ? "Restore" : "Maximize"}
+          aria-label={isMaximized ? t("restoreAria") : t("maximizeAria")}
+          title={isMaximized ? t("restore") : t("maximize")}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           {isMaximized ? <RestoreGlyph /> : <MaximizeGlyph />}
@@ -168,8 +167,8 @@ export function CustomTitlebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close window"
-          title="Close"
+          aria-label={t("closeAria")}
+          title={t("close")}
           className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
           <CloseGlyph />

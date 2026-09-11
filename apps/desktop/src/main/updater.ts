@@ -57,6 +57,10 @@ export type Unsubscribe = () => void;
 const DEFAULT_TRIAL_MS = 30_000;
 const DEFAULT_RATE_LIMIT_MS = 60 * 60 * 1000;
 const FLAG_FILE = 'pending-update.json';
+// Records the version of the last boot. A mismatch between this and the
+// running version is the reliable "an update was just applied" signal
+// (audit 2026-09-08 R9) — see checkOnStartup().
+const VERSION_MARKER_FILE = 'last-version.json';
 
 // `electron-updater` derives the download/cache folder from `app.name`
 // as `<name>-updater`. The packaged app's `package.json` keeps
@@ -99,6 +103,7 @@ export class Updater {
   private readonly trialMs: number;
   private readonly rateLimitMs: number;
   private readonly flagPath: string;
+  private readonly versionMarkerPath: string;
   private lastCheckAt = 0;
   private trialTimer: NodeJS.Timeout | null = null;
 
@@ -115,6 +120,7 @@ export class Updater {
     this.trialMs = opts.trialMs ?? DEFAULT_TRIAL_MS;
     this.rateLimitMs = opts.checkForRateLimitMs ?? DEFAULT_RATE_LIMIT_MS;
     this.flagPath = path.join(this.userDataPath, FLAG_FILE);
+    this.versionMarkerPath = path.join(this.userDataPath, VERSION_MARKER_FILE);
 
     if (!existsSync(this.userDataPath)) {
       mkdirSync(this.userDataPath, { recursive: true });
@@ -142,12 +148,47 @@ export class Updater {
     this.au.autoDownload = true;
     this.au.autoInstallOnAppQuit = true;
 
+    // Record which binary is running now BEFORE anything else so rollback
+    // and restart loops always converge (the marker must describe the
+    // current boot, not a previous one). Marker/flag IO failures are
+    // non-fatal: bootUpdater() fires this without awaiting, so a rejection
+    // here would surface as an unhandled error and must never break the
+    // update check (or app startup).
+    let previousVersion: string | null = null;
+    try {
+      previousVersion = await this.readVersionMarker();
+      await this.writeVersionMarker(app.getVersion());
+    } catch (err: unknown) {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Update marker IO failed; skipping trial detection:', err);
+    }
+
     // First-launch rollback: if a stale flag from a previous attempt
     // exists, roll back BEFORE doing a new check. The flag means the
-    // previous version didn't run the trial successfully.
+    // previous version didn't run the trial successfully. This check MUST
+    // precede the trial write below — otherwise the flag we just wrote
+    // would trigger an immediate rollback on the same call.
     if (existsSync(this.flagPath)) {
       await this.rollback();
       return null;
+    }
+
+    // First boot of a different version ⇒ an update (or rollback) was just
+    // applied. electron-updater applies install-on-quit updates while the
+    // OLD process is exiting, so 'update-downloaded' fires too early to
+    // carry the trial (audit 2026-09-08 R9): a 30s timer started there is
+    // virtually always cleared before the new version boots, leaving the
+    // rollback path unreachable. The trial therefore starts HERE, in the
+    // version that was just applied. If it crashes before the timer fires,
+    // the flag survives to the next boot and the rollback check above runs.
+    if (previousVersion && previousVersion !== app.getVersion()) {
+      try {
+        await this.writeFlag({ version: app.getVersion(), appliedAt: Date.now() });
+        this.startTrialTimer();
+      } catch (err: unknown) {
+        // eslint-disable-next-line no-console
+        console.warn('[masarx-desktop] Could not write update trial flag; rollback disabled for this update:', err);
+      }
     }
 
     try {
@@ -254,12 +295,14 @@ export class Updater {
     });
 
     this.au.on('update-downloaded', (info: UpdateInfo) => {
-      // Write the trial flag and start the 30s timer. If the app runs
-      // cleanly for 30s, the timer clears the flag ("trial passed").
-      // If the app crashes/quits before the timer fires, the flag
-      // persists, and the next startup rolls back.
-      this.writeFlag({ version: info.version, appliedAt: Date.now() });
-      this.startTrialTimer();
+      // NOTE (audit 2026-09-08 R9): the trial flag is intentionally NOT
+      // written here. 'update-downloaded' fires in the old, still-running
+      // process — a 30s timer started here would clear the flag before the
+      // new version ever boots, making rollback unreachable. The trial
+      // starts in checkOnStartup() when the recorded version differs from
+      // the running one.
+      // eslint-disable-next-line no-console
+      console.log(`[masarx-desktop] Update downloaded: ${info.version}`);
     });
 
     this.au.on('download-progress', (p: { percent: number }) => {
@@ -284,6 +327,10 @@ export class Updater {
   }
 
   private async writeFlag(payload: { version: string; appliedAt: number }): Promise<void> {
+    // The userData dir can disappear between construction and this write
+    // (uninstall helpers, tests tearing down temp dirs). Recreating it
+    // keeps the flag write from turning into an unhandled ENOENT.
+    await fs.mkdir(path.dirname(this.flagPath), { recursive: true });
     await fs.writeFile(this.flagPath, JSON.stringify(payload), 'utf8');
   }
 
@@ -294,6 +341,23 @@ export class Updater {
       const code = (err as NodeJS.ErrnoException).code;
       if (code !== 'ENOENT') throw err;
     }
+  }
+
+  private async readVersionMarker(): Promise<string | null> {
+    try {
+      const raw = await fs.readFile(this.versionMarkerPath, 'utf8');
+      const parsed = JSON.parse(raw) as { version?: unknown };
+      return typeof parsed.version === 'string' ? parsed.version : null;
+    } catch {
+      // Missing or corrupt marker: treat as "no previous version recorded"
+      // so the first-ever boot does not start a trial.
+      return null;
+    }
+  }
+
+  private async writeVersionMarker(version: string): Promise<void> {
+    await fs.mkdir(path.dirname(this.versionMarkerPath), { recursive: true });
+    await fs.writeFile(this.versionMarkerPath, JSON.stringify({ version }), 'utf8');
   }
 
   private startTrialTimer(): void {
@@ -365,10 +429,16 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
   // when the main window is up so the renderer is ready to receive the
   // broadcast.
   if (app.isReady()) {
-    void opts.updater.checkOnStartup();
+    void opts.updater.checkOnStartup().catch((err: unknown) => {
+      // eslint-disable-next-line no-console
+      console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
+    });
   } else {
     app.on('ready', () => {
-      void opts.updater.checkOnStartup();
+      void opts.updater.checkOnStartup().catch((err: unknown) => {
+        // eslint-disable-next-line no-console
+        console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
+      });
     });
   }
 }

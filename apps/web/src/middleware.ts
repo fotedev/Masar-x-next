@@ -112,8 +112,11 @@ function getCspHeader(nonce: string, host: string | null = null): string {
       "https://www.transparenttextures.com",
     ].join(" "),
 
-    // frame-src: YouTube embeds
-    "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com",
+    // frame-src: YouTube embeds + Cloudinary document reader iframes
+    // (the desktop workspace embeds PDF/image URLs served from
+    // https://res.cloudinary.com — see apps/web/src/components/desktop/workspace/
+    // DocumentReader.tsx and apps/web/src/lib/cloudinary.ts).
+    "frame-src 'self' https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://*.youtube.com https://res.cloudinary.com",
 
     // worker-src: blob workers (e.g. PDF.js, Lottie)
     "worker-src 'self' blob:",

@@ -17,7 +17,9 @@ import os from 'node:os';
 // The contract has six assertions:
 //   1. checkOnStartup() calls autoUpdater.checkForUpdates() once.
 //   2. autoUpdater 'update-available' triggers onAvailable subscribers.
-//   3. autoUpdater 'update-downloaded' writes the pending-update flag.
+//   3. autoUpdater 'update-downloaded' does NOT write the pending-update
+//      flag (audit R9: the trial must run in the newly-applied version,
+//      detected via the last-version.json marker in checkOnStartup).
 //   4. skipThisVersion(v) calls autoUpdater.skipUpdateCallback.
 //   5. installAndRestart() calls autoUpdater.quitAndInstall()
 //      (quitAndInstall itself handles app.quit() internally —
@@ -127,6 +129,9 @@ vi.mock('electron', () => ({
       return '';
     }),
     on: vi.fn(),
+    // R9: checkOnStartup compares the recorded marker version against the
+    // running binary. Tests mutate this like isPackaged when needed.
+    getVersion: vi.fn(() => '0.5.9-test'),
     // `apps/desktop/src/main/updater.ts:68` calls `app.setName('masarx')`
     // at module load. The T023 contract test exercises the Updater class,
     // not the Electron main process, so the side effect is stubbed here.
@@ -187,29 +192,56 @@ describe('T023 — Updater contract', () => {
     expect(seen).toEqual([{ version: '0.6.0' }]);
   });
 
-  it('writes the pending-update flag on update-downloaded', async () => {
+  it('does NOT write the pending-update flag on update-downloaded (trial runs in the new version)', async () => {
     const updater = new Updater({ userDataPath: tmpDir });
-    // Trigger the wired event handlers by calling checkOnStartup (which
-    // calls on() for the autoUpdater events).
+    // Wire the event handlers via checkOnStartup (which calls on()).
     await updater.checkOnStartup();
 
     autoUpdaterMock.__emitter.emit('update-downloaded', { version: '0.6.0' });
-    // The 'update-downloaded' handler kicks off an async writeFile; wait
-    // for the file to exist AND have content (writeFile may create an
-    // empty file before the write completes).
+
+    // Give any (incorrect) async write a chance to land before asserting.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(existsSync(path.join(tmpDir, 'pending-update.json'))).toBe(false);
+  });
+
+  it('writes the trial flag on the first boot of a different version', async () => {
+    // Pre-seed the marker as if version 0.6.0 was running before; the mock
+    // reports the current binary as 0.5.9-test → an update was applied.
+    writeFileSync(
+      path.join(tmpDir, 'last-version.json'),
+      JSON.stringify({ version: '0.6.0' }),
+      'utf8',
+    );
+
+    const updater = new Updater({ userDataPath: tmpDir });
+    await updater.checkOnStartup();
+
     const flagPath = path.join(tmpDir, 'pending-update.json');
     await vi.waitFor(
       () => {
-        const exists = existsSync(flagPath);
-        const hasContent = exists && readFileSync(flagPath, 'utf8').length > 0;
-        expect(hasContent).toBe(true);
+        expect(existsSync(flagPath)).toBe(true);
       },
       { timeout: 1000 },
     );
 
     const flag = JSON.parse(readFileSync(flagPath, 'utf8'));
-    expect(flag.version).toBe('0.6.0');
+    expect(flag.version).toBe('0.5.9-test');
     expect(typeof flag.appliedAt).toBe('number');
+
+    // The marker must now describe the running version so the next boot
+    // does not re-trigger a trial.
+    const marker = JSON.parse(
+      readFileSync(path.join(tmpDir, 'last-version.json'), 'utf8'),
+    );
+    expect(marker.version).toBe('0.5.9-test');
+  });
+
+  it('does not write a trial flag when the version is unchanged across boots', async () => {
+    const updater = new Updater({ userDataPath: tmpDir });
+    await updater.checkOnStartup(); // records the current version
+    await updater.checkOnStartup(); // same version → no trial
+
+    expect(existsSync(path.join(tmpDir, 'pending-update.json'))).toBe(false);
   });
 
   it('skipThisVersion calls autoUpdater.skipUpdateCallback', () => {
