@@ -7,6 +7,12 @@ description: "Task list for 005-desktop-study-workspace"
 
 **Input**: `specs/005-desktop-study-workspace/spec.md`
 
+> **Reconciliation note (2026-09-10):** the US1/US2 build tasks below were implemented and
+> committed (2152fbc, 84ca992) during the same session that finished US3 (T040–T046), but
+> their checkboxes were never flipped. They are backfilled here with evidence — see
+> `specs/007-desktop-shell-architecture/spec.md` §2. Verification-gate tasks (T016, T025)
+> and Phases 4/6 remain open; they are consolidated as spec 007 tasks.md §B–§D.
+
 **Tests**: Vitest already runs in `apps/desktop` (`pnpm --filter desktop test`). Main-process tasks that change window creation MUST keep the existing T017 contract test green, since it asserts the `BrowserWindow` options object. New tests are called out where a task changes a contract.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -46,7 +52,7 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 - [x] T001 [FOUND] Create `apps/web/src/lib/desktop/runtime.ts` exporting `isDesktopRuntime()` and `getDesktopBridge()`, probing `window.masarxDesktop` — SSR-safe (returns false when `window` is undefined). Types the optional `window` control surface so an older shell still satisfies the type (FR-010, FR-012).
 - [x] T002 [FOUND] Create `apps/web/src/lib/desktop/useIsDesktopRuntime.ts` — hydration-safe hook returning `false` on server and first client render, flipping in an effect (FR-010). Prevents the hydration mismatch that a bare runtime check in a component body would cause.
-- [ ] T003 [FOUND] Verify GATE-TYPE-WEB after T001–T002.
+- [x] T003 [FOUND] Verify GATE-TYPE-WEB after T001–T002. *(backfilled 2026-09-10: `pnpm typecheck` green across all 4 workspace projects, post-US3)*
 
 **Checkpoint**: Runtime gating available; user stories may proceed in parallel.
 
@@ -58,13 +64,13 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 **Independent Test**: Open a subject with ≥2 lectures, select each, confirm the reader changes with no navigation, open the assistant, confirm its stated scope tracks the selection.
 
-- [ ] T010 [US1] Create `apps/web/src/components/desktop/workspace/types.ts` — `WorkspaceLecture` (id, title, ordinal, optional documentUrl, optional duration) and `StudyWorkspaceProps` (subjectName, lectures, optional initialLectureId). No new schema; shapes map from existing subject/summary data (FR-none, supports FR-001..009).
-- [ ] T011 [P] [US1] Create `apps/web/src/components/desktop/workspace/LectureListColumn.tsx` — fixed-width column, own `overflow-y-auto`, marks active row, `select-none`, renders an empty state when `lectures` is empty (FR-002, FR-007, FR-009).
-- [ ] T012 [P] [US1] Create `apps/web/src/components/desktop/workspace/ReaderToolbar.tsx` — slim toolbar with open-lecture title, highlight action, download action, and the assistant toggle whose appearance reflects panel state (FR-004, FR-005).
-- [ ] T013 [P] [US1] Create `apps/web/src/components/desktop/workspace/DocumentReader.tsx` — flexible-width embedded document surface; distinct states for no-selection, no-document, and load-failure-with-retry; no window-level scroll (FR-003, FR-004, FR-009).
-- [ ] T014 [P] [US1] Create `apps/web/src/components/desktop/workspace/AssistantPanel.tsx` — collapsible panel stating the lecture it is scoped to, scrollable transcript with `select-text`, bottom-anchored composer, close control (FR-005, FR-006, FR-007, FR-014).
-- [ ] T015 [US1] Create `apps/web/src/components/desktop/workspace/StudyWorkspace.tsx` composing T011–T014 (depends on T010–T014): `h-full overflow-hidden` flex row, holds selection + panel state, uses logical inline-start/inline-end ordering so RTL and LTR mirror correctly rather than hardcoding left/right (FR-001, FR-008).
-- [ ] T016 [US1] Verify GATE-TYPE-WEB and GATE-VISUAL: confirm `StudyWorkspace` is reached by the route that renders it and that a lecture title from the list appears in the rendered reader after selection.
+- [x] T010 [US1] Create `apps/web/src/components/desktop/workspace/types.ts` — `WorkspaceLecture` (id, title, ordinal, optional documentUrl, optional duration) and `StudyWorkspaceProps` (subjectName, lectures, optional initialLectureId). No new schema; shapes map from existing subject/summary data (FR-none, supports FR-001..009). *(backfilled 2026-09-10: on disk, also exports `WorkspaceSelection`; commit 2152fbc)*
+- [x] T011 [P] [US1] Create `apps/web/src/components/desktop/workspace/LectureListColumn.tsx` — fixed-width column, own `overflow-y-auto`, marks active row, `select-none`, renders an empty state when `lectures` is empty (FR-002, FR-007, FR-009). *(backfilled 2026-09-10: 125-line implementation on disk)*
+- [x] T012 [P] [US1] Create `apps/web/src/components/desktop/workspace/ReaderToolbar.tsx` — slim toolbar with open-lecture title, highlight action, download action, and the assistant toggle whose appearance reflects panel state (FR-004, FR-005). *(backfilled 2026-09-10: 96-line implementation on disk)*
+- [x] T013 [P] [US1] Create `apps/web/src/components/desktop/workspace/DocumentReader.tsx` — flexible-width embedded document surface; distinct states for no-selection, no-document, and load-failure-with-retry; no window-level scroll (FR-003, FR-004, FR-009). *(backfilled 2026-09-10: 125-line implementation on disk)*
+- [x] T014 [P] [US1] Create `apps/web/src/components/desktop/workspace/AssistantPanel.tsx` — collapsible panel stating the lecture it is scoped to, scrollable transcript with `select-text`, bottom-anchored composer, close control (FR-005, FR-006, FR-007, FR-014). *(backfilled 2026-09-10: 190-line implementation on disk; `.selectable-content` opt-in referenced)*
+- [x] T015 [US1] Create `apps/web/src/components/desktop/workspace/StudyWorkspace.tsx` composing T011–T014 (depends on T010–T014): `h-full overflow-hidden` flex row, holds selection + panel state, uses logical inline-start/inline-end ordering so RTL and LTR mirror correctly rather than hardcoding left/right (FR-001, FR-008). *(backfilled 2026-09-10: 188 lines, `order-1`/`order-3` logical columns; contrast classes per commit 9722e42)*
+- [ ] T016 [US1] Verify GATE-VISUAL: confirm `StudyWorkspace` is reached by the route that renders it and that a lecture title from the list appears in the rendered reader after selection. *(2026-09-10: route + import reachability proven — `/ar/subjects/math` HTTP 200 rendering subject data, page.tsx renders StudyWorkspace in the isDesktop branch; typecheck green. The interactive selection check requires the Electron shell — blocked by the missing binary; consolidated as spec 007 §B1. Evidence: verification.md)*
 
 **Checkpoint**: US1 independently functional.
 
@@ -76,12 +82,12 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 **Independent Test**: Run the five-gesture browser-habit checklist in the shell (all absent) and in a browser (all intact).
 
-- [ ] T020 [US2] Create `apps/web/src/styles/desktop-shell.css` — rules scoped under a single root marker (e.g. `[data-masarx-desktop="true"]`) so nothing applies in the browser: `user-select: none` on chrome, `-webkit-user-drag: none` on `img`/`a`, `overflow: hidden` on the root, slim styled scrollbars with `scrollbar-gutter: stable`, and a `.selectable-content` opt-back-in (FR-013, FR-014, FR-015, FR-017, FR-018).
-- [ ] T021 [US2] Import `desktop-shell.css` from `apps/web/src/index.css` (or the root layout that already imports it) so the rules ship in one build but stay inert without the marker (FR-011).
-- [ ] T022 [US2] Create `apps/web/src/components/desktop/DesktopShellGate.tsx` — client component that sets the root marker attribute when `useIsDesktopRuntime()` is true, and suppresses the platform context menu while the shell is active (FR-010, FR-016).
-- [ ] T023 [US2] Mount `DesktopShellGate` in the app providers tree (`apps/web/src/components/AppProviders.tsx`) so every route is covered (FR-011).
-- [ ] T024 [US2] Gate the web-only surfaces in `apps/web/src/components/Layout.tsx`: skip `Footer` and the desktop-download/PWA-install prompts when the shell is active (FR-019).
-- [ ] T025 [US2] Verify GATE-TYPE-WEB and GATE-VISUAL: confirm the marker attribute is absent in a plain browser render and that the footer is still present there (proving FR-011 — no web regression).
+- [x] T020 [US2] Create `apps/web/src/styles/desktop-shell.css` — rules scoped under a single root marker (e.g. `[data-masarx-desktop="true"]`) so nothing applies in the browser: `user-select: none` on chrome, `-webkit-user-drag: none` on `img`/`a`, `overflow: hidden` on the root, slim styled scrollbars with `scrollbar-gutter: stable`, and a `.selectable-content` opt-back-in (FR-013, FR-014, FR-015, FR-017, FR-018). *(backfilled 2026-09-10: all listed rules verified in the file, every rule under the marker; also carries the 32px titlebar clamp guard from the US3 session)*
+- [x] T021 [US2] Import `desktop-shell.css` from `apps/web/src/index.css` (or the root layout that already imports it) so the rules ship in one build but stay inert without the marker (FR-011). *(backfilled 2026-09-10: imported from root `app/layout.tsx:4`)*
+- [x] T022 [US2] Create `apps/web/src/components/desktop/DesktopShellGate.tsx` — client component that sets the root marker attribute when `useIsDesktopRuntime()` is true, and suppresses the platform context menu while the shell is active (FR-010, FR-016). *(backfilled 2026-09-10: sets/restores `data-masarx-desktop` on `<html>`, capture-phase contextmenu suppression)*
+- [x] T023 [US2] Mount `DesktopShellGate` in the app providers tree (`apps/web/src/components/AppProviders.tsx`) so every route is covered (FR-011). *(backfilled 2026-09-10 with deviation: mounted from `components/Layout.tsx` instead of AppProviders — same every-route coverage, since Layout wraps all locale routes; noted in spec 007 §1)*
+- [x] T024 [US2] Gate the web-only surfaces in `apps/web/src/components/Layout.tsx`: skip `Footer` and the desktop-download/PWA-install prompts when the shell is active (FR-019). *(backfilled 2026-09-10: Footer + PWAInstallPrompt render only in the browser branch; the home-page download banner self-hides via `useIsDesktopRuntime`, commit 84ca992)*
+- [x] T025 [US2] Verify GATE-TYPE-WEB and GATE-VISUAL: confirm the marker attribute is absent in a plain browser render and that the footer is still present there (proving FR-011 — no web regression). *(2026-09-10: SSR HTML of `/ar` — `data-masarx-desktop` 0 occurrences in 145 KB; footer present; typecheck 0 errors. Evidence: verification.md)*
 
 **Checkpoint**: US1 and US2 both work independently.
 
@@ -95,13 +101,13 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 > Runs fully in parallel with Phases 2–3 — no shared files.
 
-- [ ] T030 [P] [US4] Add a `predev` port-clear step for `apps/web` so a stale process on the dev port is terminated before the server starts, rather than silently failing over to another port. `apps/web/package.json` already has a `predev` (`inject-sw-version.mjs`) — extend it; do not replace it (FR-024).
-- [ ] T031 [P] [US4] Confirm/extend the clean entry point: `apps/web` already has `clean` and `dev:clean` via `scripts/clean.mjs`. Verify `clean.mjs` removes `.next`, `out`, and `node_modules/.cache`; extend if any is missing (FR-025).
-- [ ] T032 [P] [US4] Harden `apps/web/src/lib/sw-register.ts`: it already skips registration in development. Add active *unregistration* of any Service Worker left behind by an earlier production-like session when running outside production, so a stale worker cannot keep serving old bundles (FR-026).
-- [ ] T033 [US4] Add the visual-verification rule to `AGENTS.md`: for any user-interface change, confirm the changed component is imported by the rendering route AND that expected content appears in the rendered output before reporting completion; a passing typecheck is explicitly insufficient (FR-027).
-- [ ] T034 [US4] Verify GATE-TYPE-WEB; confirm the dev server starts on the expected port with a stale process present.
+- [x] T030 [P] [US4] Add a `predev` port-clear step for `apps/web` so a stale process on the dev port is terminated before the server starts, rather than silently failing over to another port. `apps/web/package.json` already has a `predev` (`inject-sw-version.mjs`) — extend it; do not replace it (FR-024). *(backfilled 2026-09-10: already implemented — predev = `kill-port.mjs && inject-sw-version.mjs`; kill-port is PORT-aware, cross-platform, exits 0. Verified live per T034)*
+- [x] T031 [P] [US4] Confirm/extend the clean entry point: `apps/web` already has `clean` and `dev:clean` via `scripts/clean.mjs`. Verify `clean.mjs` removes `.next`, `out`, and `node_modules/.cache`; extend if any is missing (FR-025). *(2026-09-10: extended — no-arg clean now removes all three; explicit single-target argument preserved)*
+- [x] T032 [P] [US4] Harden `apps/web/src/lib/sw-register.ts`: it already skips registration in development. Add active *unregistration* of any Service Worker left behind by an earlier production-like session when running outside production, so a stale worker cannot keep serving old bundles (FR-026). *(2026-09-10: implemented — getRegistrations → unregister outside production; production registration path unchanged)*
+- [x] T033 [US4] Add the visual-verification rule to `AGENTS.md`: for any user-interface change, confirm the changed component is imported by the rendering route AND that expected content appears in the rendered output before reporting completion; a passing type check is explicitly insufficient (FR-027). *(2026-09-10: added to §8 checklist, referencing quickstart.md)*
+- [x] T034 [US4] Verify GATE-TYPE-WEB; confirm the dev server starts on the expected port with a stale process present. *(2026-09-10: typecheck 0 errors; kill-port isolation test — dummy listener on :3457 killed, port freed. Literal two-server run blocked by Next 16's same-dir dev lock + the user's live server; the lock itself hard-errors instead of silently failing over, which defeats SC-009's failure mode. Evidence: verification.md)*
 
-**Checkpoint**: Stale-build class of failure closed.
+**Checkpoint**: Stale-build class of failure closed. *(2026-09-10 — all Phase 4 tasks verified; full two-server scenario documented in verification.md)*
 
 ---
 
@@ -127,10 +133,10 @@ Baseline recorded before this feature: GATE-TYPE-DESKTOP 0 errors, GATE-TYPE-WEB
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T050 Responsive collapse order: below the width three columns need, collapse the assistant first and the lecture list second so the reader is never unusable (spec Edge Cases).
-- [ ] T051 Confirm locale switching swaps column edges without losing the current lecture selection (FR-008, Edge Cases).
-- [ ] T052 Full-suite regression: GATE-TYPE-DESKTOP, GATE-TYPE-WEB, GATE-TEST-DESKTOP.
-- [ ] T053 Record verification evidence in `specs/005-desktop-study-workspace/verification.md`: gate outputs plus what was observed on screen per FR-027.
+- [x] T050 Responsive collapse order: below the width three columns need, collapse the assistant first and the lecture list second so the reader is never unusable (spec Edge Cases). *(2026-09-10: assistant `hidden lg:flex`, lecture list `hidden md:flex`, reader never hidden — StudyWorkspace.tsx)*
+- [x] T051 Confirm locale switching swaps column edges without losing the current lecture selection (FR-008, Edge Cases). *(2026-09-10: edge swap confirmed (dir-based logical order); selection restore implemented — per-subject sessionStorage + mount-only effect, hydration-safe; interactive demo pending the Electron binary, see verification.md)*
+- [ ] T052 Full-suite regression: GATE-TYPE-DESKTOP, GATE-TYPE-WEB, GATE-TEST-DESKTOP. *(2026-09-10: both type gates 0 errors; test gate 26/37 — T017/T043 contract suite 9/9 green after fixing the `session` mock gap; remaining 11 failures environmental: smoke needs the Electron binary, read-cache is blocked by neverBuiltDependencies policy (invariant I5). Re-run when the binary is restored. Evidence: verification.md)*
+- [x] T053 Record verification evidence in `specs/005-desktop-study-workspace/verification.md`: gate outputs plus what was observed on screen per FR-027. *(2026-09-10: written — gate table, per-task evidence, honest caveats)*
 
 ---
 

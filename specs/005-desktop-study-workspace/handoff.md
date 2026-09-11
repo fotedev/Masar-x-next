@@ -1,5 +1,13 @@
 # Handoff — `005-desktop-study-workspace` (Updated after T024)
 
+> ⚠️ **STALE — superseded (2026-09-10).** This handoff was written *before* US3 and was never
+> updated after that session completed. US3 (T040–T046) is **done** — frameless shell, window
+> IPC, CustomTitlebar, visual gate all landed (commits `04053f1`, `2152fbc`, `9722e42`,
+> `84ca992`) — and the US1/US2 ledger has since been backfilled. The status table below
+> ("no `window` namespace yet", "CustomTitlebar buttons remain no-ops") is outdated, as is the
+> "Then US3" priority list. Authoritative status: `specs/005-desktop-study-workspace/tasks.md`
+> and `specs/007-desktop-shell-architecture/spec.md` (the reconciliation spec for that session).
+
 **Repo:** `C:\programming\WEB_Development\projects\masarx_next`
 **Feature dir:** `specs/005-desktop-study-workspace/` (`spec.md`, `tasks.md`, `checklists/requirements.md`)
 **Active Typecheck Status:** `tsc --noEmit` on `apps/web/tsconfig.json` → **PASS (exit 0, 0 errors, 0 stderr bytes)** — verified this session.
