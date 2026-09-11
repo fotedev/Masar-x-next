@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, memo, useEffect, type ComponentProps } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,9 @@ import { ManageLecturesModal } from "@/components/ManageLecturesModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
 import { AdminDashboardHeader } from "@/components/admin/AdminDashboardHeader";
-import { AdminDashboardTabs } from "@/components/admin/AdminDashboardTabs";
+import { AdminDashboardShell } from "@/components/admin-shell/AdminDashboardShell";
+import { AdminOverviewTab } from "@/components/admin-shell/AdminOverviewTab";
+import type { AdminTabId } from "@/lib/admin-shell/navigation";
 import type { SummaryWithRatings } from "@/types/database";
 import { usePathname } from "next/navigation";
 
@@ -128,9 +130,7 @@ function AdminDashboardContent() {
     setIsMounted(true);
   }, []);
 
-  const [activeTab, setActiveTab] = useState(
-    adminRole === "doctor" ? "courses" : "summaries",
-  );
+  const [activeTab, setActiveTab] = useState<AdminTabId>("overview");
 
   const newsHook = useNews({ includeInactive: true });
   const summariesHook = useSummaries();
@@ -251,6 +251,19 @@ function AdminDashboardContent() {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "overview":
+        return (
+          <AdminOverviewTab
+            subjects={subjectsHook.subjects}
+            summaries={summariesHook.summaries}
+            news={newsHook.news}
+            quizzes={quizzesHook.quizzes}
+            appealsCount={appealsHook.appeals.length}
+            onNavigate={(tab) => setActiveTab(tab)}
+            onAddNew={() => newsHook.setShowAddNews(true)}
+            onAddSubject={handleCreateSubject}
+          />
+        );
       case "courses":
         return adminRole === "doctor" ? (
           <MemoizedCoursesTab
@@ -366,25 +379,32 @@ function AdminDashboardContent() {
   if (!isMounted) return null;
 
   return (
+    <AdminDashboardShell
+      activeTab={activeTab as AdminTabId}
+      onSelectTab={(id) => setActiveTab(id)}
+      adminRole={adminRole}
+      sectionLabel={t(`tabs.${activeTab === "page_management" ? "pageManagement" : activeTab}`)}
+      onAddNew={() => newsHook.setShowAddNews(true)}
+    >
     <div className="space-y-6">
-      <AdminDashboardHeader
-        globalFilters={globalFilters}
-        setGlobalFilters={setGlobalFilters}
-        levels={levels}
-        availableDepartments={availableDepartments}
-        subjects={subjectsHook.subjects}
-        onClearFilters={clearFilters}
-      />
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors">
-        <AdminDashboardTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          adminRole={adminRole}
+      {activeTab !== "overview" ? (
+        <AdminDashboardHeader
+          globalFilters={globalFilters}
+          setGlobalFilters={setGlobalFilters}
+          levels={levels}
+          availableDepartments={availableDepartments}
+          subjects={subjectsHook.subjects}
+          onClearFilters={clearFilters}
         />
+      ) : null}
 
-        {renderTabContent()}
-      </div>
+      {activeTab === "overview" ? (
+        renderTabContent()
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors">
+          {renderTabContent()}
+        </div>
+      )}
 
       <AddNewsModal
         showAddNews={newsHook.showAddNews}
@@ -442,6 +462,7 @@ function AdminDashboardContent() {
         }}
       />
     </div>
+    </AdminDashboardShell>
   );
 }
 

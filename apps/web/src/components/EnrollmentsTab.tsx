@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "../lib/supabase";
 import { Card, CardContent } from "./ui";
 import { Users } from "lucide-react";
@@ -13,6 +14,7 @@ interface EnrollmentsTabProps {
 }
 
 export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
+  const t = useTranslations("adminDashboard.enrollmentsTab");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -32,7 +34,7 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
         setSelectedImage(data.signedUrl);
       }
     } catch {
-      toast.error("حدث خطأ في عرض الصورة");
+      toast.error(t("imageError"));
     }
   };
 
@@ -51,7 +53,7 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600 dark:text-gray-400">
-          جاري تحميل الطلبات...
+          {t("loading")}
         </p>
       </div>
     );
@@ -72,7 +74,7 @@ export function EnrollmentsTab({ instructorId }: EnrollmentsTabProps) {
             <CardContent className="py-12 text-center">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                لا توجد طلبات تسجيل مطابقة
+                {t("empty")}
               </p>
             </CardContent>
           </Card>
