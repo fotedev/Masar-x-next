@@ -260,3 +260,6 @@ sandbox/
 # 7-day retention window).
 videos/
 *.mp4
+
+# Local AI & agent tooling workspace
+.zcode/
