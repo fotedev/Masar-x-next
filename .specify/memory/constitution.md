@@ -1,50 +1,40 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Masar X Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Server-Only Secrets (NON-NEGOTIABLE)
+Service-role and AI provider keys stay server-side only. NEVER in `NEXT_PUBLIC_*`, never in chat/CLI args, never in client bundles. RLS depends on it; CI enforces via `ai-endpoint-grep` + gitleaks. AI default path is client-side Puter.js (no server key leak); `/api/ai/chat` is a graceful fallback, not a real LLM proxy.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. End-to-End Type Safety
+`Database` types + Zod schemas live in `packages/shared` as the single source of truth across web/desktop/mobile. No parallel type definitions in apps. Spec contracts that touch data MUST reference shared types.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Bilingual by Design (NON-NEGOTIABLE)
+Every user-facing string has `ar` + `en` entries under `packages/shared/src/messages/`. No hardcoded Arabic (or English UI copy) in components — migrate on touch. Components use logical CSS (`ms-`/`me-`/`border-e-`), never physical `left`/`right`; `next-intl` owns `<html dir>`.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Platform Boundaries
+Web (`apps/web`, Next.js 16 + React 19) is the source of truth for product behavior; desktop (Electron) and mobile (Expo/RN) are feature-parity ports. All OAuth callbacks live under `[locale]/auth/callback/`. Storage is Cloudinary (PDFs + images). Releases: web → Vercel; desktop + mobile → GitHub Releases via `.github/workflows/release.yml`.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Pinned, Reproducible Toolchain
+`pnpm.neverBuiltDependencies` lives in root `package.json` under `"pnpm"`. Electron version is pinned exact (no `^`/`~`) in `apps/desktop/package.json`. Node >= 24, pnpm 9.15.4. New deps MUST update `pnpm-lock.yaml` via `pnpm install`. Supabase migrations MUST be timestamp-prefixed and chronologically ordered.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Theme & Correctness Details
+Theme switching uses the native `<script>` + `suppressHydrationWarning` pattern in `ThemeScript.tsx` (dark mode is calibrated for late-night study, not inverted). Re-read the ThemeScript/CSP gotcha before touching it or CSP nonce handling.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### VII. Safe Version Control
+Never destructive git ops (`stash drop`, `reset --hard`, `checkout --`, `clean -fd`) on a dirty tree without explicit user consent.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Technology Constraints
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Stack: Next.js 16 / React 19 monorepo (`apps/web`, `apps/desktop`, `apps/mobile`, `packages/shared`); Supabase (Postgres + RLS, Auth, Storage, Edge Functions); `next-intl` with 42 message namespaces.
+- Supabase project ref `jcufigozkhxazjbwhjjm`; `SUPABASE_SERVICE_ROLE_KEY` must be set in Vercel production env, not just `.env.local`.
+- Specs live in `specs/` (currently `001`–`007`); every spec change follows Spec Kit workflow (spec → plan → tasks), not ad-hoc code.
+
+## Development Workflow & Quality Gates
+
+Before opening a PR: `pnpm typecheck`, `pnpm lint` (security-guard rules fail the build), and `pnpm test` MUST pass. No hardcoded Arabic strings added (grep `apps/web/src`). Supabase changes require a current timestamped migration. Reviewers verify constitution compliance (I–VII) on every spec PR.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes ad-hoc practices; `AGENTS.md` + `docs/agents/references/01-gotchas.md` are runtime guidance, not overrides. Amendments require a documented reason, approval, and a migration plan for affected specs. Complexity (new apps, deps, workflows) must be justified against parity and reproducibility.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-09-10 | **Last Amended**: 2026-09-10

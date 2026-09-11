@@ -139,6 +139,7 @@ Before opening a PR:
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm lint` passes (security-guard rules fail the build — see `ai-endpoint-grep` in `ci.yml`)
 - [ ] `pnpm test` passes
+- [ ] If you touched **rendered UI**: the changed component is confirmed to be reached by the route that renders it, AND the expected content was observed in the rendered output (DOM probe / screenshot on the actual route) before reporting completion — **a passing typecheck is explicitly NOT sufficient evidence** (GATE-VISUAL, spec 005 FR-027; see `specs/005-desktop-study-workspace/quickstart.md`)
 - [ ] No hardcoded Arabic strings added (grep `apps/web/src --include='*.tsx' --include='*.ts'` for non-comment lines containing Arabic chars)
 - [ ] No new deps without updating root `pnpm-lock.yaml` via `pnpm install`
 - [ ] If you touched `supabase/`: migration timestamp is current + file is in chronological order
@@ -151,3 +152,9 @@ Before opening a PR:
 Full gotchas: [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) — 20 entries with Trigger/Why/Fix/Symptom for each. Topics covered: next-intl server bundle, supabase-ssr BOM, OAuth callback path, Vercel deployment protection, free-tier rollback limits, service-role key in Vercel env, pnpm 9.x neverBuiltDependencies, GitHub secret CRLF, webpack aliases, Electron pinning, Vercel cache purge for pnpm path mismatches, Cloudflare MCPs not loaded in MiniMax Code, Windows env var propagation, Windows env dialog empty values, GitHub Releases on private repos (historical, resolved 2026-09), electron-builder artifactName versions, pnpm/action-setup with subdir checkout, ThemeScript nonce hydration, git stash drop safety.
 
 Release pipeline (separate file): [references/02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md) — public-runner pipeline architecture, secrets model, what-it-does steps, CI workflow summary.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+at specs/005-desktop-study-workspace/plan.md
+<!-- SPECKIT END -->
