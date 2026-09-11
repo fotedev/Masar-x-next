@@ -91,5 +91,9 @@
   "send": "Send",
   "comingSoonBadge": "Coming Soon",
   "comingSoonTooltip": "The AI Assistant is under active development. It will ship in a future release.",
-  "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon."
+  "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon.",
+  "genericError": "Sorry, something went wrong. Please try again.",
+  "studentAgentNeedsSubject": "I can't answer from platform data without a subject selected first. Pick a subject from the list and resend your question.",
+  "retryMessage": "Retry",
+  "summarizeNeedsSubject": "Please select a subject first to summarize its academic content."
 }

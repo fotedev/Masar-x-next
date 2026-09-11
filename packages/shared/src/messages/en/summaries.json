@@ -36,6 +36,7 @@
   "deleteAll": "Delete all summaries",
   "noSummaries": "No summaries",
   "noSummariesDesc": "No summaries in this category currently",
+  "noSummariesBeFirst": "Be the first to share a summary and start the goodness in your section!",
   "noResults": "No results",
   "noResultsDesc": "No summaries match your search criteria"
 }

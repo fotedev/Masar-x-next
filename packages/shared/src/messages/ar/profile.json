@@ -20,6 +20,8 @@
   "admin": "ادمن",
   "user": "مستخدم",
   "refreshRole": "تحديث رتبة الحساب",
+  "roleRefreshSuccess": "تم تحديث رتبة الحساب",
+  "roleRefreshError": "فشل تحديث رتبة الحساب",
   "personalInfo": "المعلومات الشخصية",
   "username": "اسم المستخدم",
   "notSpecified": "غير محدد",
@@ -43,5 +45,11 @@
   "lastActivity": "آخر نشاط مسجل",
   "locale": "ar-EG",
   "backToHome": "العودة للرئيسية",
-  "back": "رجوع"
+  "back": "رجوع",
+  "academicRateLimit": "يرجى الانتظار {seconds} ثانية قبل تحديث بياناتك مرة أخرى.",
+  "avatarOnlyImages": "يرجى اختيار ملف صورة فقط",
+  "avatarTooLarge": "حجم الصورة يجب أن يكون أقل من 5 ميجابايت",
+  "avatarUploadError": "حدث خطأ في رفع الصورة",
+  "tryAgain": "يرجى المحاولة مرة أخرى.",
+  "avatarAlt": "الصورة الشخصية"
 }

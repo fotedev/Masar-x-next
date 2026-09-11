@@ -6,5 +6,7 @@
   "professorLabelMale": "دكتور",
   "professorLabelFemale": "دكتورة",
   "emptyNonAcademicTitle": "لا يوجد محتوى",
-  "emptyNonAcademicDescription": "سيتم إضافة محتوى جديد قريباً"
+  "emptyNonAcademicDescription": "سيتم إضافة محتوى جديد قريباً",
+  "optimisticSaving": "جاري الحفظ...",
+  "studyWithZainCta": "ابدأ المذاكرة مع زين AI"
 }

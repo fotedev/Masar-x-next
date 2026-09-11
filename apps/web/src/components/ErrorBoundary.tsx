@@ -8,7 +8,7 @@ type TranslationFn = (key: string, values?: TranslationValues) => string;
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  t?: TranslationFn; // Add translation prop
+  t: TranslationFn;
 }
 
 interface State {
@@ -70,12 +70,10 @@ class ErrorBoundaryInner extends Component<Props, State> {
 
             {/* Error Message */}
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {t ? t("title") : "عذراً، حدث خطأ غير متوقع"}
+              {t("title")}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {t
-                ? t("subtitle")
-                : "نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى أو العودة للصفحة الرئيسية."}
+              {t("subtitle")}
             </p>
 
             {/* Error Details (Development only) */}
@@ -99,14 +97,14 @@ class ErrorBoundaryInner extends Component<Props, State> {
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
                 <RefreshCcw className="w-4 h-4" />
-                {t ? t("retry") : "إعادة المحاولة"}
+                {t("retry")}
               </button>
               <button
                 onClick={this.handleGoHome}
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
               >
                 <Home className="w-4 h-4" />
-                {t ? t("home") : "الصفحة الرئيسية"}
+                {t("home")}
               </button>
             </div>
 
@@ -115,7 +113,7 @@ class ErrorBoundaryInner extends Component<Props, State> {
               onClick={this.handleReload}
               className="mt-4 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
             >
-              {t ? t("reload") : "أو إعادة تحميل الصفحة"}
+              {t("reload")}
             </button>
           </div>
         </div>

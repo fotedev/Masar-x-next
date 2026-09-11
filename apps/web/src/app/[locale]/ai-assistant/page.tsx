@@ -53,6 +53,7 @@ export default function AiAssistantPage() {
     isLoading,
     isReady,
     sendMessage,
+    retryLast,
     clearChat,
     isPuterSignedIn,
     mode,
@@ -143,7 +144,7 @@ export default function AiAssistantPage() {
       let analysis;
       if (mode === "student_agent") {
         if (!studentSelectedSubject) {
-          toast.error("يرجى اختيار مادة أولاً لتلخيص محتواها الأكاديمي.");
+          toast.error(t("summarizeNeedsSubject"));
           return;
         }
         // Use the messages as context for student agent too if relevant,
@@ -248,6 +249,7 @@ export default function AiAssistantPage() {
           isPuterSignedIn={isPuterSignedIn}
           onUiMessage={handleUiMessage}
           hasUserInput={inputMessage.trim().length > 0}
+          onRetryMessage={() => void retryLast(selectedModel)}
         />
 
         <ChatInput

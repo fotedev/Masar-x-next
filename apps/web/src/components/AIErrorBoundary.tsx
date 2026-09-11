@@ -2,18 +2,22 @@
 
 import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle, RotateCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "./ui/Button";
+
+type TranslationFn = (key: string) => string;
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  t: TranslationFn;
 }
 
 interface State {
   hasError: boolean;
 }
 
-export class AIErrorBoundary extends Component<Props, State> {
+class AIErrorBoundaryInner extends Component<Props, State> {
   public state: State = {
     hasError: false,
   };
@@ -41,10 +45,10 @@ export class AIErrorBoundary extends Component<Props, State> {
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                عذراً، حدث خطأ في مساعد زين الذكي
+                {this.props.t("aiTitle")}
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-                يبدو أن هناك مشكلة تقنية مؤقتة. يمكنك محاولة إعادة تشغيل المحادثة.
+                {this.props.t("aiSubtitle")}
               </p>
             </div>
             <Button
@@ -53,7 +57,7 @@ export class AIErrorBoundary extends Component<Props, State> {
               className="flex items-center gap-2 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-950/20"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>إعادة المحاولة</span>
+              <span>{this.props.t("retry")}</span>
             </Button>
           </div>
         )
@@ -62,4 +66,19 @@ export class AIErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
+}
+
+export function AIErrorBoundary({
+  children,
+  fallback,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  const t = useTranslations("errorBoundary");
+  return (
+    <AIErrorBoundaryInner t={t} fallback={fallback}>
+      {children}
+    </AIErrorBoundaryInner>
+  );
 }

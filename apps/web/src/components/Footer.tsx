@@ -50,15 +50,17 @@ export function Footer() {
           <p className="text-slate-500 dark:text-slate-500 text-xs font-medium">
             {tFooter("copyright", { year: new Date().getFullYear() })}
           </p>
+          {/* Order matters: reads "Made with ♥ by Aboalayoun" in both LTR and RTL
+              (each Latin span is bidi-isolated via .bidi-ltr). */}
           <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-500">
-            <span className="text-brand-blue font-bold">Aboalayoun</span>
-            <span lang="en" dir="ltr" className="bidi-ltr">
-              {tFooter("by")}
-            </span>
-            <Heart className="w-3 h-3 text-white fill-white animate-pulse" />
             <span lang="en" dir="ltr" className="bidi-ltr">
               {tFooter("madeWith")}
             </span>
+            <Heart className="w-3 h-3 text-white fill-white animate-pulse" />
+            <span lang="en" dir="ltr" className="bidi-ltr">
+              {tFooter("by")}
+            </span>
+            <span className="text-brand-blue font-bold">Aboalayoun</span>
           </div>
         </div>
       </div>

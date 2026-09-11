@@ -1,8 +1,17 @@
 {
+  "summaries": {
+    "title": "Course Summaries",
+    "add": "Add Summary",
+    "empty": "No summaries available for this course yet",
+    "beFirst": "Be the first to share a summary and help your classmates study!",
+    "membersOnly": "Summary content is available to enrolled students only"
+  },
   "videos": {
     "title": "Course Videos",
     "addVideo": "Add Video",
     "empty": "No videos available for this course yet",
+    "beFirst": "Be the first to add a helpful video to this course!",
+    "membersOnly": "Video content is available to enrolled students only",
     "arabic": "Arabic",
     "english": "English",
     "arabicTitle": "Arabic Videos",
@@ -14,6 +23,8 @@
     "title": "Course Files",
     "addFile": "Add File",
     "empty": "No files available for this course yet",
+    "beFirst": "Be the first to upload a file for this course's students!",
+    "membersOnly": "File content is available to enrolled students only",
     "fileSize": "File Size",
     "download": "Download"
   },

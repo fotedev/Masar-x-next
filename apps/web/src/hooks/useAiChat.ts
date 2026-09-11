@@ -2,7 +2,7 @@
 
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect, useLayoutEffect, useCallback } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
@@ -15,6 +15,8 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  /** Marks a failed turn so the UI can offer a retry. Not persisted to Supabase. */
+  isError?: boolean;
 }
 
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
@@ -28,6 +30,7 @@ interface SupabaseChatMessage {
 
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const locale = useLocale();
+  const tAi = useTranslations("aiAssistant");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
@@ -145,6 +148,89 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     }
   }, [messages, user, storageKey]);
 
+  const runAssistantTurn = useCallback(
+    async (
+      userMsg: ChatMessage,
+      historyBase: ChatMessage[],
+      currentMode: AiAssistantMode,
+      modelOverride?: string,
+    ) => {
+      setIsLoading(true);
+
+      try {
+        const historyTurns: AiChatHistoryTurn[] = [...historyBase]
+          .filter(m => m?.content && m.content.trim())
+          .map(m => ({
+            role: m.type === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          }));
+
+        const platformContext = await (async () => {
+          if (currentMode !== 'student_agent') return undefined;
+
+          const scopedQuery = studentSelectedSubject
+            ? `${userMsg.content} (المادة المختارة: ${studentSelectedSubject})`
+            : userMsg.content;
+
+          const built = await buildStudentContext(
+            {
+              level: academic.level,
+              semester: academic.semester,
+              department_id: academic.department_id,
+            },
+            scopedQuery,
+          );
+
+          if (!built.context || built.sources.length === 0) return "";
+          return built.context;
+        })();
+
+        const response = await aiAssistant.generateResponse(userMsg.content, undefined, {
+          mode: currentMode,
+          chatHistory: historyTurns,
+          platformContext,
+          model: modelOverride,
+          locale,
+        });
+
+        // Avoid setting state if another request was started or mode changed
+        if (mode !== currentMode) return;
+
+        const assistantMsg: ChatMessage = {
+          id: `assistant_${Date.now()}`,
+          type: "assistant",
+          content: response,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+
+        // Background save assistant response to Supabase
+        if (user) {
+          supabase.from("ai_chat_messages").insert({
+            user_id: user.id,
+            role: "assistant",
+            content: response,
+            mode: currentMode
+          }).then();
+        }
+
+      } catch (_e) {
+        logger.error("Failed to send AI message", _e);
+        if (mode !== currentMode) return;
+        setMessages(prev => [...prev, {
+          id: `error_${Date.now()}`,
+          type: "assistant",
+          content: tAi("genericError"),
+          isError: true,
+          timestamp: new Date()
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id, locale, tAi],
+  );
+
   const sendMessage = useCallback(async (content: string, modelOverride?: string) => {
     if (!content.trim() || isLoading) return;
 
@@ -154,7 +240,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         {
           id: `assistant_${Date.now()}`,
           type: "assistant",
-          content: "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك.",
+          content: tAi("studentAgentNeedsSubject"),
           timestamp: new Date(),
         },
       ]);
@@ -170,7 +256,6 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     const currentMode = mode;
     setMessages(prev => [...prev, userMsg]);
-    setIsLoading(true);
 
     // Save user message to Supabase if authenticated
     if (user) {
@@ -184,75 +269,32 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn, model: modelOverride });
 
-    try {
-      const historyTurns: AiChatHistoryTurn[] = [...messages, userMsg]
-        .filter(m => m?.content && m.content.trim())
-        .map(m => ({
-          role: m.type === 'user' ? 'user' : 'assistant',
-          content: m.content,
-        }));
+    await runAssistantTurn(userMsg, [...messages, userMsg], currentMode, modelOverride);
+  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, tAi, runAssistantTurn]);
 
-      const platformContext = await (async () => {
-        if (mode !== 'student_agent') return undefined;
+  // Re-runs the latest user turn: drops the trailing assistant/error bubbles and
+  // regenerates the response without duplicating the user message (or its DB row).
+  const retryLast = useCallback(async (modelOverride?: string) => {
+    if (isLoading) return;
 
-        const scopedQuery = studentSelectedSubject
-          ? `${content} (المادة المختارة: ${studentSelectedSubject})`
-          : content;
-
-        const built = await buildStudentContext(
-          {
-            level: academic.level,
-            semester: academic.semester,
-            department_id: academic.department_id,
-          },
-          scopedQuery,
-        );
-
-        if (!built.context || built.sources.length === 0) return "";
-        return built.context;
-      })();
-
-    const response = await aiAssistant.generateResponse(content, undefined, {
-        mode,
-        chatHistory: historyTurns,
-        platformContext,
-        model: modelOverride,
-        locale,
-      });
-
-      // Avoid setting state if another request was started or mode changed
-      if (mode !== currentMode) return;
-
-      const assistantMsg: ChatMessage = {
-        id: `assistant_${Date.now()}`,
-        type: "assistant",
-        content: response,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-
-      // Background save assistant response to Supabase
-      if (user) {
-        supabase.from("ai_chat_messages").insert({
-          user_id: user.id,
-          role: "assistant",
-          content: response,
-          mode: mode
-        }).then();
+    let lastUserIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].type === "user") {
+        lastUserIdx = i;
+        break;
       }
-
-    } catch (_e) {
-      logger.error("Failed to send AI message", _e);
-      setMessages(prev => [...prev, {
-        id: `error_${Date.now()}`,
-        type: "assistant",
-        content: "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
-        timestamp: new Date()
-      }]);
-    } finally {
-      setIsLoading(false);
     }
-  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id, locale]);
+    if (lastUserIdx === -1) return;
+
+    const lastUser = messages[lastUserIdx];
+    const historyBase = messages.slice(0, lastUserIdx + 1);
+    const currentMode = mode;
+
+    setMessages(historyBase);
+    trackEvent("ai_retry", { length: lastUser.content.length, using_puter_auth: isPuterSignedIn, model: modelOverride });
+
+    await runAssistantTurn(lastUser, historyBase, currentMode, modelOverride);
+  }, [isLoading, messages, mode, trackEvent, isPuterSignedIn, runAssistantTurn]);
 
   const clearChat = useCallback(async () => {
     setMessages([]);
@@ -280,6 +322,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     isLoading,
     isReady, // Changed from isInitialLoading
     sendMessage,
+    retryLast,
     clearChat,
     setMessages,
     isPuterSignedIn,

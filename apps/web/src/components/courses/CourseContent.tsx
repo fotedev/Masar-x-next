@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui";
+import { useTranslations } from "next-intl";
 
 type CourseSummary = {
   id: string;
@@ -76,6 +77,7 @@ export function CourseContent({
   onDeleteFile,
   onDownloadFile,
 }: CourseContentProps) {
+  const t = useTranslations("courseDetail");
   const isEnrolled = enrollmentStatus === "active";
 
   return (
@@ -86,12 +88,12 @@ export function CourseContent({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
               <FileText className="w-5 h-5 ml-2 text-blue-600" />
-              ملخصات الكورس
+              {t("summaries.title")}
             </div>
             {isInstructor && (
               <Button size="sm" onClick={() => onOpenSummaryModal()}>
                 <Plus className="w-4 h-4" />
-                إضافة ملخص
+                {t("summaries.add")}
               </Button>
             )}
           </CardTitle>
@@ -101,12 +103,12 @@ export function CourseContent({
             <div className="text-center py-8">
               <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                محتوى الملخصات متاح فقط للطلاب المسجلين
+                {t("summaries.membersOnly")}
               </p>
             </div>
           ) : summaries.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              لا توجد ملخصات متاحة
+              {t("summaries.empty")}
             </p>
           ) : (
             <div className="space-y-4">
@@ -152,12 +154,12 @@ export function CourseContent({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
               <Video className="w-5 h-5 ml-2 text-red-600" />
-              فيدوهات الكورس
+              {t("videos.title")}
             </div>
             {isInstructor && (
               <Button size="sm" onClick={() => onOpenVideoModal()}>
                 <Plus className="w-4 h-4" />
-                إضافة فيديو
+                {t("videos.addVideo")}
               </Button>
             )}
           </CardTitle>
@@ -167,12 +169,12 @@ export function CourseContent({
             <div className="text-center py-8">
               <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                محتوى الفيديوهات متاح فقط للطلاب المسجلين
+                {t("videos.membersOnly")}
               </p>
             </div>
           ) : videos.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              لا توجد فيدوهات متاحة
+              {t("videos.empty")}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -215,7 +217,7 @@ export function CourseContent({
                         className="p-0 h-auto text-blue-600"
                         onClick={() => window.open(v.video_url, "_blank")}
                       >
-                        مشاهدة الآن
+                        {t("videos.watch")}
                       </Button>
                     </div>
                   </div>
@@ -232,12 +234,12 @@ export function CourseContent({
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center">
               <Download className="w-5 h-5 ml-2 text-green-600" />
-              ملفات الكورس
+              {t("files.title")}
             </div>
             {isInstructor && (
               <Button size="sm" onClick={() => onOpenFileModal()}>
                 <Plus className="w-4 h-4" />
-                إضافة ملف
+                {t("files.addFile")}
               </Button>
             )}
           </CardTitle>
@@ -247,12 +249,12 @@ export function CourseContent({
             <div className="text-center py-8">
               <Lock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
-                محتوى الملفات متاح فقط للطلاب المسجلين
+                {t("files.membersOnly")}
               </p>
             </div>
           ) : files.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              لا توجد ملفات متاحة
+              {t("files.empty")}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -295,7 +297,7 @@ export function CourseContent({
                         className="p-0 h-auto text-blue-600"
                         onClick={() => onDownloadFile(f.file_url)}
                       >
-                        تحميل
+                        {t("files.download")}
                       </Button>
                     </div>
                   </div>

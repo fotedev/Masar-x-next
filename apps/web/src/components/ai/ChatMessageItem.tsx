@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useId, useRef, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
+import { User, Copy, Check, Code, Eye, LogIn, RotateCcw } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
@@ -17,6 +17,7 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  isError?: boolean;
 }
 
 interface ChatMessageItemProps {
@@ -28,6 +29,8 @@ interface ChatMessageItemProps {
   isLoading?: boolean;
   /** Current AI assistant mode (used to pick the right reaction event). */
   mode?: AiAssistantMode;
+  /** Invoked when the user retries a failed assistant turn. */
+  onRetry?: () => void;
 }
 
 /**
@@ -91,6 +94,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   isLatestAssistant = false,
   isLoading = false,
   mode = "cs_assistant",
+  onRetry,
 }) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -516,6 +520,18 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             ) : (
               <div className="space-y-3">
                 {renderAssistantContent(displayContent)}
+
+                {message.isError && onRetry && (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    disabled={isLoading}
+                    className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    {tAi("retryMessage")}
+                  </button>
+                )}
 
                 {zaneUiBlocks.length > 0 && (
                   <div className="space-y-2">

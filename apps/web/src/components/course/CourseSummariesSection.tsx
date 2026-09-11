@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
 import { FileText, Plus, Edit, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CourseSummary } from "./types";
 
 interface CourseSummariesSectionProps {
@@ -18,13 +19,14 @@ export default function CourseSummariesSection({
   onEditSummary,
   onDeleteSummary,
 }: CourseSummariesSectionProps) {
+  const t = useTranslations("courseDetail.summaries");
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <FileText className="w-5 h-5 ml-2 text-blue-600" />
-            ملخصات الكورس
+            {t("title")}
           </div>
           {isInstructor && (
             <Button
@@ -33,7 +35,7 @@ export default function CourseSummariesSection({
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              إضافة ملخص
+              {t("add")}
             </Button>
           )}
         </CardTitle>
@@ -41,7 +43,7 @@ export default function CourseSummariesSection({
       <CardContent>
         {summaries.length === 0 ? (
           <p className="text-gray-500 text-center py-8">
-            لا توجد ملخصات متاحة لهذا الكورس بعد
+            {t("empty")}
           </p>
         ) : (
           <div className="space-y-4">

@@ -1,5 +1,6 @@
 
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 
 interface Review {
@@ -14,17 +15,18 @@ interface ReviewSectionProps {
 }
 
 export function ReviewSection({ reviews }: ReviewSectionProps) {
+  const t = useTranslations("reviews");
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Star className="w-5 h-5 ml-2 text-yellow-500" />
-          التقييمات والآراء
+          {t("opinionsTitle")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">لا توجد تقييمات بعد</p>
+          <p className="text-gray-500 text-center py-8">{t("emptyOpinions")}</p>
         ) : (
           <div className="space-y-6">
             {reviews.map((r) => (

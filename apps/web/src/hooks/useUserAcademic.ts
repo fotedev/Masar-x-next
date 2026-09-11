@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { queryCache } from "../lib/queryCache";
@@ -19,6 +20,7 @@ import {
 
 export function useUserAcademic() {
   const { user, loading: authLoading } = useAuth();
+  const tProfile = useTranslations("profile");
 
   const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
   const [levels, setLevels] = useState<AcademicLevel[]>([]);
@@ -196,7 +198,7 @@ export function useUserAcademic() {
           const remaining = Math.ceil((rlStats.blockUntil - now) / 1000);
           return {
             success: false,
-            message: `يرجى الانتظار ${remaining} ثانية قبل تحديث بياناتك مرة أخرى.`,
+            message: tProfile("academicRateLimit", { seconds: remaining }),
           };
         }
         rlStats.count++;
@@ -230,13 +232,12 @@ export function useUserAcademic() {
           userId: user.id,
           next,
         });
-        const msg =
-          "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى.";
+        const msg = tProfile("academicUpdateError");
         toast.error(msg);
         return { success: false, message: msg };
       }
     },
-    [user, executeWithRetry],
+    [user, executeWithRetry, tProfile],
   );
 
   useEffect(() => {

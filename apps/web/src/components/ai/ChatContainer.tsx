@@ -25,6 +25,7 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  isError?: boolean;
 }
 
 interface ChatContainerProps {
@@ -41,6 +42,8 @@ interface ChatContainerProps {
   isPuterSignedIn?: boolean;
   onUiMessage?: (message: string) => void;
   hasUserInput?: boolean;
+  /** Invoked when the user retries a failed assistant turn. */
+  onRetryMessage?: () => void;
 }
 
 export function ChatContainer({
@@ -57,6 +60,7 @@ export function ChatContainer({
   isPuterSignedIn = false,
   onUiMessage,
   hasUserInput = false,
+  onRetryMessage,
 }: ChatContainerProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
@@ -479,6 +483,7 @@ export function ChatContainer({
               isLatestAssistant={index === lastAssistantIndex}
               isLoading={isLoading}
               mode={mode}
+              onRetry={message.isError ? onRetryMessage : undefined}
             />
           ))}
           {isLoading && (
