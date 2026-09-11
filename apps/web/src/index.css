@@ -13,7 +13,7 @@
 @layer base {
   /* Suppress the white/blue tap highlight on iOS/Android + the default
      focus outline, then re-enable a controlled focus-visible ring.
-     Fixes the "إطار أبيض يظهر على العنصر المحدد" bug on the dark theme. */
+     Fixes the "Ø¥Ø·Ø§Ø± Ø£Ø¨ÙŠØ¶ ÙŠØ¸Ù‡Ø± Ø¹Ù„Ù‰ Ø§Ù„Ø¹Ù†ØµØ± Ø§Ù„Ù…Ø­Ø¯Ø¯" bug on the dark theme. */
   html {
     -webkit-tap-highlight-color: transparent;
   }
@@ -209,7 +209,7 @@ html[dir="rtl"] [lang="en"] {
 /* Animated gradient backgrounds */
 .animated-bg {
   background-size: 400% 400%;
-  /* animation: gradientShift 8s ease infinite; — perpetual animation removed */
+  /* animation: gradientShift 8s ease infinite; â€” perpetual animation removed */
 }
 
 @keyframes gradientShift {
@@ -563,3 +563,129 @@ html[dir="rtl"] [lang="en"] {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   Admin Shell tokens (admin-only, namespaced --ax-*)
+   Ported from the verified Aurora Admin kit. Additive: no
+   existing variable is redefined; user-facing styles untouched.
+   Light values on :root, dark values under html.dark.
+   ============================================================ */
+:root {
+  --ax-canvas-rgb: 246 247 249;
+  --ax-surface-rgb: 255 255 255;
+  --ax-surface-hover-rgb: 241 243 246;
+  --ax-surface-inset-rgb: 236 239 244;
+  --ax-text-primary-rgb: 23 33 51;
+  --ax-text-secondary-rgb: 71 85 105;
+  --ax-text-muted-rgb: 92 107 132;
+  --ax-border-default-rgb: 227 231 238;
+  --ax-border-strong-rgb: 133 144 164;
+  --ax-accent-rgb: 29 78 216;
+  --ax-accent-hover-rgb: 30 64 175;
+  --ax-on-accent-rgb: 255 255 255;
+  --ax-accent-soft-rgb: 233 238 251;
+  --ax-accent-soft-hover-rgb: 219 231 249;
+  --ax-success-rgb: 19 108 52;
+  --ax-success-soft-rgb: 230 244 235;
+  --ax-warning-rgb: 146 64 14;
+  --ax-warning-soft-rgb: 253 243 222;
+  --ax-danger-rgb: 180 35 24;
+  --ax-danger-soft-rgb: 251 232 229;
+  --ax-info-rgb: 12 98 117;
+  --ax-info-soft-rgb: 227 242 246;
+  --ax-tooltip-bg-rgb: 23 33 51;
+  --ax-tooltip-fg-rgb: 246 247 249;
+  --ax-space-sidebar: 264px;
+  --ax-space-sidebar-collapsed: 72px;
+  --ax-shadow-sm: 0 1px 2px 0 rgb(23 33 51 / 0.05);
+  --ax-shadow-md: 0 2px 4px -1px rgb(23 33 51 / 0.06), 0 4px 8px -2px rgb(23 33 51 / 0.06);
+  --ax-shadow-lg: 0 12px 24px -6px rgb(23 33 51 / 0.14), 0 4px 8px -4px rgb(23 33 51 / 0.06);
+  --ax-dur-fast: 120ms;
+  --ax-dur-base: 200ms;
+  --ax-dur-slow: 250ms;
+  --ax-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html.dark {
+  --ax-canvas-rgb: 10 16 28;
+  --ax-surface-rgb: 17 26 44;
+  --ax-surface-hover-rgb: 26 38 60;
+  --ax-surface-inset-rgb: 12 19 33;
+  --ax-text-primary-rgb: 233 238 246;
+  --ax-text-secondary-rgb: 168 182 206;
+  --ax-text-muted-rgb: 137 151 175;
+  --ax-border-default-rgb: 40 54 79;
+  --ax-border-strong-rgb: 94 110 138;
+  --ax-accent-rgb: 96 165 250;
+  --ax-accent-hover-rgb: 147 192 253;
+  --ax-on-accent-rgb: 10 16 28;
+  --ax-accent-soft-rgb: 30 45 77;
+  --ax-accent-soft-hover-rgb: 38 56 92;
+  --ax-success-rgb: 74 222 128;
+  --ax-success-soft-rgb: 20 45 34;
+  --ax-warning-rgb: 251 191 36;
+  --ax-warning-soft-rgb: 62 47 14;
+  --ax-danger-rgb: 248 113 113;
+  --ax-danger-soft-rgb: 66 32 32;
+  --ax-info-rgb: 56 189 248;
+  --ax-info-soft-rgb: 15 60 82;
+  --ax-tooltip-bg-rgb: 233 238 246;
+  --ax-tooltip-fg-rgb: 10 16 28;
+  --ax-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --ax-shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.4), 0 4px 8px -2px rgb(0 0 0 / 0.35);
+  --ax-shadow-lg: 0 12px 24px -6px rgb(0 0 0 / 0.5), 0 4px 8px -4px rgb(0 0 0 / 0.4);
+}
+
+/* ============================================================
+   Admin Shell motion (namespaced .ax-* classes)
+   ============================================================ */
+.ax-chevron {
+  transition: transform 150ms var(--ax-ease-standard);
+  transform-origin: center;
+}
+.ax-collapse-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--ax-dur-base) var(--ax-ease-standard);
+}
+.ax-collapse-grid[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+.ax-collapse-grid > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.ax-drawer-panel {
+  transition: transform var(--ax-dur-slow) var(--ax-ease-standard),
+    visibility var(--ax-dur-slow) linear;
+}
+.ax-drawer-backdrop {
+  transition: opacity var(--ax-dur-base) var(--ax-ease-standard),
+    visibility var(--ax-dur-base) linear;
+}
+.ax-badge-pop {
+  animation: ax-badge-pop 150ms var(--ax-ease-standard);
+}
+@keyframes ax-badge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.ax-content-fade {
+  animation: ax-content-fade 150ms var(--ax-ease-standard) both;
+}
+@keyframes ax-content-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+/* Admin shell (admin-only) — portal tooltip enter, opacity only (no CLS) */
+.ax-tooltip-fade {
+  animation: ax-tooltip-fade 100ms var(--ax-ease-standard) both;
+}
+@keyframes ax-tooltip-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+

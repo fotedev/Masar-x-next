@@ -41,7 +41,7 @@ export function SubjectsGrid({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className="modern-card p-6 w-full min-h-[160px] flex flex-col items-center justify-center">
             <div className="text-center flex flex-col items-center justify-center h-full w-full">
@@ -73,7 +73,7 @@ export function SubjectsGrid({
                 },
               }
         }
-        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+        className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
       >
         {filteredSubjects.map((subject) => {
           const IconComponent = SUBJECT_ICONS[subject.name] || BookOpen;
@@ -113,7 +113,7 @@ export function SubjectsGrid({
                   {displayName}
                   {subject.isOptimistic && (
                     <span className="block text-[10px] mt-1 font-medium animate-pulse">
-                      جاري الحفظ...
+                      {tSubjects("optimisticSaving")}
                     </span>
                   )}
                 </h3>
@@ -155,7 +155,7 @@ export function SubjectsGrid({
               onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
               className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
             >
-              ابدأ المذاكرة مع زين AI
+              {tSubjects("studyWithZainCta")}
             </button>
           )}
         </div>
