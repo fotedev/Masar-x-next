@@ -16,7 +16,8 @@
     "build:mobile": "pnpm --filter mobile build",
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "db:seed": "pnpm --filter web exec node scripts/db-seed.mjs"
   },
   "pnpm": {
     "neverBuiltDependencies": [
