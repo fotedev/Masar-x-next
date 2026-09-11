@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
 import { LectureListColumn } from "./LectureListColumn";
@@ -57,12 +57,40 @@ export function StudyWorkspace({
 
   const [assistantOpen, setAssistantOpen] = useState(false);
 
+  // T051 — locale switching remounts this page (new [locale] route segment),
+  // which resets local state and would drop the open lecture. Restore the
+  // per-subject selection after mount (hydration-safe: the first render still
+  // matches SSR — host-provided id or lectures[0] — and only a post-mount
+  // effect may diverge). A host-provided initialLectureId always wins.
+  const selectionStorageKey = `masarx_ws_selection_${subjectName}`;
+  useEffect(() => {
+    if (initialLectureId) return;
+    try {
+      const saved = sessionStorage.getItem(selectionStorageKey);
+      if (
+        saved &&
+        saved !== selectedLectureId &&
+        lectures.some((l) => l.id === saved)
+      ) {
+        setSelectedLectureId(saved);
+      }
+    } catch {
+      // sessionStorage unavailable — selection simply resets, as before
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount/remount only (locale switch)
+  }, []);
+
   const handleSelect = useCallback(
     (lectureId: string) => {
       setSelectedLectureId(lectureId);
+      try {
+        sessionStorage.setItem(selectionStorageKey, lectureId);
+      } catch {
+        // storage unavailable — selection still works for this session
+      }
       onSelectLecture?.(lectureId);
     },
-    [onSelectLecture],
+    [onSelectLecture, selectionStorageKey],
   );
 
   const handleToggleAssistant = useCallback(() => {
@@ -131,10 +159,12 @@ export function StudyWorkspace({
     >
       {/* Lecture list — inline-start.
           In LTR the row renders left → right, so this lands on the left.
-          In RTL (dir=rtl) it lands on the right. No physical sides. */}
+          In RTL (dir=rtl) it lands on the right. No physical sides.
+          T050 collapse order: hidden below `md` — the SECOND column to go,
+          after the assistant, so the reader stays usable longest. */}
       <div
         // Order 1 on the inline-start side
-        className="order-1 flex h-full w-72 shrink-0 flex-col border-e border-border/80 bg-muted/50"
+        className="order-1 hidden h-full w-72 shrink-0 flex-col border-e border-border/80 bg-muted/50 md:flex"
       >
         <LectureListColumn
           lectures={lectures}
@@ -169,9 +199,11 @@ export function StudyWorkspace({
           In RTL the inline end is the LEFT side of the screen; in LTR
           it's the RIGHT side. `order-3` keeps the column visually at the
           end regardless of text direction, because flex `order` is
-          directional and the platform already sets `dir`. */}
+          directional and the platform already sets `dir`.
+          T050 collapse order: hidden below `lg` — the FIRST column to go
+          when the window narrows below the three-column width. */}
       <div
-        className={`order-3 flex h-full w-96 shrink-0 flex-col border-s border-border/80 bg-muted/40 transition-[width] duration-200 ${
+        className={`order-3 hidden h-full w-96 shrink-0 flex-col border-s border-border/80 bg-muted/40 transition-[width] duration-200 lg:flex ${
           assistantOpen ? "" : "w-0 overflow-hidden"
         }`}
       >

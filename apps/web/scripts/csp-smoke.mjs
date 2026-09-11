@@ -2,7 +2,7 @@
 // ============================================================================
 // scripts/csp-smoke.mjs — host-aware CSP regression check
 //
-// Background: `apps/web/src/middleware.ts` adds a Content-Security-Policy
+// Background: `apps/web/src/proxy.ts` adds a Content-Security-Policy
 // header to every response. The `upgrade-insecure-requests` directive
 // forces the browser to upgrade any sub-resource from HTTP to HTTPS. That
 // is correct for the production Vercel deployment (real HTTPS domain) but
@@ -12,13 +12,13 @@
 // any `127.x.x.x`).
 //
 // This script re-implements the same `isLocalHost` logic that the
-// middleware uses and asserts the directive is dropped for local hosts
+// proxy uses and asserts the directive is dropped for local hosts
 // and kept for the production domain. It runs without a test framework
 // (no vitest config in apps/web) so it can be invoked from CI via
 // `node apps/web/scripts/csp-smoke.mjs`.
 //
 // Note: this only checks the regex/conditional logic, not the full
-// middleware flow (which requires a running Next.js server). The full
+// proxy flow (which requires a running Next.js server). The full
 // integration assertion is manual: open the dev server with
 // `Host: 127.0.0.1:3000` and verify the response header.
 // ============================================================================
