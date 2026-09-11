@@ -8,15 +8,16 @@
   "allSubjects": "كل المواد",
   "clearFilters": "مسح الفلاتر",
   "tabs": {
-    "courses": "الكورسات",
+    "courses": "الدورات",
     "subjects": "المواد",
-    "enrollments": "إثباتات الدفع",
+    "enrollments": "التسجيلات",
     "summaries": "الملخصات",
     "news": "الأخبار",
     "appeals": "الطعون",
-    "quizzes": "الامتحانات",
+    "quizzes": "الاختبارات",
     "analytics": "التحليلات",
-    "pageManagement": "إدارة الصفحة"
+    "pageManagement": "إدارة الصفحات",
+    "overview": "نظرة عامة"
   },
   "noAccess": {
     "courses": "ليس لديك صلاحية الوصول لإدارة الكورسات",
@@ -35,5 +36,135 @@
     "noCourses": "لا توجد كورسات",
     "startFirstCourse": "ابدأ بإنشاء أول كورس لك",
     "createFirstCourse": "إنشاء الكورس الأول"
+  },
+  "enrollmentsTab": {
+    "loading": "جاري تحميل الطلبات...",
+    "empty": "لا توجد طلبات تسجيل مطابقة",
+    "imageError": "حدث خطأ في عرض الصورة"
+  },
+  "pageManagementTab": {
+    "title": "إدارة محتوى الصفحة الرئيسية",
+    "subtitle": "تحكم في المواد التي تظهر للطلاب في الصفحة الرئيسية",
+    "searchPlaceholder": "البحث عن مادة...",
+    "visible": "ظاهرة للطلاب",
+    "hidden": "مخفية",
+    "hide": "إخفاء",
+    "show": "إظهار",
+    "emptySearch": "لا توجد مواد تطابق بحثك"
+  },
+  "analyticsPage": {
+    "title": "لوحة الإحصائيات الإدارية",
+    "subtitle": "مراقبة استخدام التطبيق وتفاعلات المستخدمين",
+    "loading": "جاري تحميل الإحصائيات...",
+    "loadError": "حدث خطأ في تحميل الإحصائيات",
+    "forbidden": "غير مصرح لك بالوصول إلى هذه الصفحة",
+    "retry": "إعادة المحاولة",
+    "backHome": "العودة للرئيسية",
+    "activeUsers": "المستخدمون النشطون",
+    "assistantMessages": "رسائل المساعد",
+    "views": "المشاهدات",
+    "clicks": "النقرات",
+    "topContent": "أكثر المحتويات شعبية",
+    "recentActivity": "النشاط الأخير",
+    "noData": "لا توجد بيانات متاحة",
+    "noRecentActivity": "لا توجد نشاطات حديثة",
+    "eventFallback": "حدث",
+    "typeFallback": "غير محدد",
+    "events": {
+      "page_view": "زيارة صفحة",
+      "click": "نقرة",
+      "ai_interaction": "تفاعل مع الذكاء الاصطناعي",
+      "user_login": "تسجيل دخول",
+      "user_logout": "تسجيل خروج",
+      "content_view": "عرض محتوى",
+      "summary_click": "نقر على ملخص"
+    },
+    "types": {
+      "summary": "ملخص",
+      "course": "مقرر",
+      "quiz": "اختبار",
+      "page": "صفحة",
+      "login": "تسجيل دخول",
+      "logout": "تسجيل خروج",
+      "unknown": "غير معروف"
+    }
+  },
+  "groups": {
+    "content": "المحتوى",
+    "learning": "التعليم",
+    "insights": "التحليلات",
+    "system": "النظام"
+  },
+  "shell": {
+    "navigation": "التنقل",
+    "mainNavigation": "تنقل لوحة التحكم",
+    "sidebarLabel": "الشريط الجانبي للوحة التحكم",
+    "openNavigation": "فتح القائمة",
+    "closeNavigation": "إغلاق القائمة",
+    "collapseSidebar": "طي الشريط الجانبي",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "toggleTheme": "تبديل المظهر",
+    "skipToContent": "تخطي إلى المحتوى الرئيسي",
+    "breadcrumb": "مسار التنقل",
+    "breadcrumbAdmin": "لوحة الإدارة",
+    "quickSearch": "بحث سريع",
+    "searchPlaceholder": "ابحث عن الأقسام والإجراءات…",
+    "userMenu": "قائمة الحساب",
+    "signedInAs": "مسجّل الدخول باسم",
+    "signOut": "تسجيل الخروج",
+    "viewSite": "عرض الموقع"
+  },
+  "commandPalette": {
+    "title": "التنقل السريع",
+    "inputPlaceholder": "اكتب للبحث بين الأقسام…",
+    "noResults": "لا توجد أقسام مطابقة"
+  },
+  "overview": {
+    "recentActivity": "النشاط الأخير",
+    "recentActivityHint": "أحدث المحتوى المضاف على المنصة",
+    "emptyTitle": "لا يوجد شيء بعد",
+    "emptyHint": "ستظهر المواد والملخصات والأخبار الجديدة هنا فور إضافتها.",
+    "kindSummary": "ملخص",
+    "kindNews": "خبر",
+    "kindQuiz": "اختبار",
+    "quickActions": "إجراءات سريعة",
+    "createAnnouncement": "إنشاء إعلان",
+    "reviewAppeals": "مراجعة الطلبات",
+    "addSubject": "إضافة مادة",
+    "needsAttention": "يحتاج انتباهك",
+    "pendingSummaries": "ملخصات بانتظار المراجعة",
+    "allClear": "كل شيء محدّث",
+    "newThisWeek": "جديد هذا الأسبوع"
+  },
+  "kpi": {
+    "pendingAppeals": "الطلبات المعلقة",
+    "placeholder": "—",
+    "quizzesTaken": "الاختبارات المكتملة",
+    "activeSummaries": "الملخصات النشطة",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalSubjects": "إجمالي المواد",
+    "totalQuizzes": "إجمالي الاختبارات",
+    "needsReview": "بانتظار المراجعة"
+  },
+  "table": {
+    "search": "بحث",
+    "searchPlaceholder": "ابحث في الجدول…",
+    "addNew": "إضافة جديد",
+    "actions": "إجراءات",
+    "empty": "لا توجد بيانات لعرضها",
+    "view": "عرض",
+    "recentSummaries": "أحدث الملخصات",
+    "recentSummariesCaption": "أحدث الملخصات المضافة إلى المنصة",
+    "recentNews": "أحدث الأخبار",
+    "recentNewsCaption": "أحدث الأخبار المنشورة على المنصة",
+    "colTitle": "العنوان",
+    "colSubject": "المادة",
+    "colStatus": "الحالة",
+    "colDate": "التاريخ",
+    "colViews": "المشاهدات",
+    "statusPublished": "منشور",
+    "statusPending": "قيد المراجعة",
+    "statusDraft": "مسودة",
+    "statusRejected": "مرفوض"
   }
 }

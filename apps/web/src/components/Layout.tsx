@@ -45,6 +45,16 @@ export function Layout({ children }: LayoutProps) {
     pathWithoutLocale === "/signup" ||
     pathWithoutLocale === "/reset-password";
 
+  // Admin surface isolation: every /[locale]/admin* route renders inside its
+  // own full-screen shell. The public marketing Header, the Footer, the PWA +
+  // notification prompts, the onboarding gate and the padded max-w-7xl <main>
+  // are all skipped so the admin shell owns the viewport edge-to-edge.
+  const isAdminRoute =
+    pathWithoutLocale === "/admin" ||
+    pathWithoutLocale.startsWith("/admin/") ||
+    pathWithoutLocale === "/admin-dashboard" ||
+    pathWithoutLocale.startsWith("/admin-dashboard/");
+
   // Spec 005 / US2 / T024 — FR-019: web-only chrome surfaces are skipped
   // when the desktop shell is active. The desktop app does not have a
   // marketing footer, no "install as PWA" prompt (it IS installed), and
@@ -91,26 +101,35 @@ export function Layout({ children }: LayoutProps) {
           <AcademicOnboardingGate />
         </div>
       ) : (
-        <div
-          className="min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
-        >
-          <Header />
-          <AcademicOnboardingGate />
-          <main
-            className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
+        isAdminRoute ? (
+          // Admin isolation: no Header, no Footer, no PWA/notification prompts,
+          // no onboarding gate, no max-width padding. The admin shell renders
+          // edge-to-edge and owns its own scroll container.
+          <div className="h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+            {children}
+          </div>
+        ) : (
+          <div
+            className="min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
           >
-            {isLightRoute ? (
-              <div className="w-full h-full min-h-0">{children}</div>
-            ) : (
-              <PageTransition pathname={pathname || "/"}>{children}</PageTransition>
-            )}
-          </main>
-          {/* T024 gate: every block below belongs to the web experience
-              and must not leak into the Electron shell (FR-019, FR-011). */}
-          <PWAInstallPrompt />
-          <NotificationPrompt />
-          <Footer />
-        </div>
+            <Header />
+            <AcademicOnboardingGate />
+            <main
+              className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
+            >
+              {isLightRoute ? (
+                <div className="w-full h-full min-h-0">{children}</div>
+              ) : (
+                <PageTransition pathname={pathname || "/"}>{children}</PageTransition>
+              )}
+            </main>
+            {/* T024 gate: every block below belongs to the web experience
+                and must not leak into the Electron shell (FR-019, FR-011). */}
+            <PWAInstallPrompt />
+            <NotificationPrompt />
+            <Footer />
+          </div>
+        )
       )}
     </>
   );

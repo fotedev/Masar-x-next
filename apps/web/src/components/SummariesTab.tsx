@@ -110,6 +110,9 @@ export function SummariesTab({
           <p className="text-gray-600 dark:text-gray-400">
             {t("noSummariesDesc")}
           </p>
+          <p className="text-sm font-medium text-brand-blue mt-2">
+            {t("noSummariesBeFirst")}
+          </p>
         </div>
       </div>
     );

@@ -1,11 +1,13 @@
 import { Layout, Eye, EyeOff, Search } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useSubjects } from "../hooks/useSubjects";
 import { SemesterSwitcher } from "./SemesterSwitcher";
 import { usePlatformSettings } from "../hooks/usePlatformSettings";
 
 export function PageManagementTab() {
+  const t = useTranslations("adminDashboard.pageManagementTab");
   const { activeSemester, loading: settingsLoading } = usePlatformSettings();
   const {
     subjects,
@@ -55,10 +57,10 @@ export function PageManagementTab() {
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Layout className="w-5 h-5 text-blue-500" />
-            إدارة محتوى الصفحة الرئيسية
+            {t("title")}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            تحكم في المواد التي تظهر للطلاب في الصفحة الرئيسية
+            {t("subtitle")}
           </p>
         </div>
         <div className="mt-3 sm:mt-0">
@@ -71,7 +73,7 @@ export function PageManagementTab() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="البحث عن مادة..."
+            placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] outline-none"
@@ -116,7 +118,7 @@ export function PageManagementTab() {
 
             <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {subject.show_on_home ? "ظاهرة للطلاب" : "مخفية"}
+                {subject.show_on_home ? t("visible") : t("hidden")}
               </span>
               <button
                 onClick={() =>
@@ -128,7 +130,7 @@ export function PageManagementTab() {
                     : "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20"
                 }`}
               >
-                {subject.show_on_home ? "إخفاء" : "إظهار"}
+                {subject.show_on_home ? t("hide") : t("show")}
               </button>
             </div>
           </div>
@@ -139,7 +141,7 @@ export function PageManagementTab() {
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/30 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800">
           <Layout className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
           <p className="text-gray-500 dark:text-gray-400">
-            لا توجد مواد تطابق بحثك
+            {t("emptySearch")}
           </p>
         </div>
       )}

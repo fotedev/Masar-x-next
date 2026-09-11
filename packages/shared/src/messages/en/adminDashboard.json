@@ -16,7 +16,8 @@
     "appeals": "Appeals",
     "quizzes": "Quizzes",
     "analytics": "Analytics",
-    "pageManagement": "Page Management"
+    "pageManagement": "Page Management",
+    "overview": "Overview"
   },
   "noAccess": {
     "courses": "You do not have permission to manage courses",
@@ -35,5 +36,135 @@
     "noCourses": "No courses found",
     "startFirstCourse": "Start by creating your first course",
     "createFirstCourse": "Create First Course"
+  },
+  "enrollmentsTab": {
+    "loading": "Loading enrollments...",
+    "empty": "No matching enrollment requests",
+    "imageError": "Failed to display the image"
+  },
+  "pageManagementTab": {
+    "title": "Home Page Content Management",
+    "subtitle": "Control which subjects appear to students on the home page",
+    "searchPlaceholder": "Search for a subject...",
+    "visible": "Visible to students",
+    "hidden": "Hidden",
+    "hide": "Hide",
+    "show": "Show",
+    "emptySearch": "No subjects match your search"
+  },
+  "analyticsPage": {
+    "title": "Admin Analytics Dashboard",
+    "subtitle": "Monitor app usage and user interactions",
+    "loading": "Loading analytics...",
+    "loadError": "Failed to load analytics",
+    "forbidden": "You do not have permission to access this page",
+    "retry": "Retry",
+    "backHome": "Back to Home",
+    "activeUsers": "Active Users",
+    "assistantMessages": "Assistant Messages",
+    "views": "Views",
+    "clicks": "Clicks",
+    "topContent": "Most Popular Content",
+    "recentActivity": "Recent Activity",
+    "noData": "No data available",
+    "noRecentActivity": "No recent activity",
+    "eventFallback": "Event",
+    "typeFallback": "Unspecified",
+    "events": {
+      "page_view": "Page visit",
+      "click": "Click",
+      "ai_interaction": "AI interaction",
+      "user_login": "Login",
+      "user_logout": "Logout",
+      "content_view": "Content view",
+      "summary_click": "Summary click"
+    },
+    "types": {
+      "summary": "Summary",
+      "course": "Course",
+      "quiz": "Quiz",
+      "page": "Page",
+      "login": "Login",
+      "logout": "Logout",
+      "unknown": "Unknown"
+    }
+  },
+  "groups": {
+    "content": "Content",
+    "learning": "Learning",
+    "insights": "Insights",
+    "system": "System"
+  },
+  "shell": {
+    "navigation": "Navigation",
+    "mainNavigation": "Admin navigation",
+    "sidebarLabel": "Admin sidebar",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "toggleTheme": "Toggle theme",
+    "skipToContent": "Skip to main content",
+    "breadcrumb": "Breadcrumb",
+    "breadcrumbAdmin": "Admin",
+    "quickSearch": "Quick search",
+    "searchPlaceholder": "Search sections and actions…",
+    "userMenu": "Account menu",
+    "signedInAs": "Signed in as",
+    "signOut": "Sign out",
+    "viewSite": "View site"
+  },
+  "commandPalette": {
+    "title": "Quick navigation",
+    "inputPlaceholder": "Type to search sections…",
+    "noResults": "No matching sections"
+  },
+  "overview": {
+    "recentActivity": "Recent activity",
+    "recentActivityHint": "Latest content added across the platform",
+    "emptyTitle": "Nothing here yet",
+    "emptyHint": "New subjects, summaries, and news will appear here as soon as they are added.",
+    "kindSummary": "Summary",
+    "kindNews": "News",
+    "kindQuiz": "Quiz",
+    "quickActions": "Quick actions",
+    "createAnnouncement": "Create announcement",
+    "reviewAppeals": "Review appeals",
+    "addSubject": "Add subject",
+    "needsAttention": "Needs your attention",
+    "pendingSummaries": "Summaries awaiting review",
+    "allClear": "Everything is up to date",
+    "newThisWeek": "new this week"
+  },
+  "kpi": {
+    "pendingAppeals": "Pending Appeals",
+    "placeholder": "—",
+    "quizzesTaken": "Quizzes Taken",
+    "activeSummaries": "Active Summaries",
+    "totalUsers": "Total Users",
+    "totalSubjects": "Total Subjects",
+    "totalQuizzes": "Total Quizzes",
+    "needsReview": "needs review"
+  },
+  "table": {
+    "search": "Search",
+    "searchPlaceholder": "Search the table…",
+    "addNew": "Add New",
+    "actions": "Actions",
+    "empty": "No data to display",
+    "view": "View",
+    "recentSummaries": "Recent Summaries",
+    "recentSummariesCaption": "Most recently added summaries on the platform",
+    "recentNews": "Recent News",
+    "recentNewsCaption": "Most recently published news items",
+    "colTitle": "Title",
+    "colSubject": "Subject",
+    "colStatus": "Status",
+    "colDate": "Date",
+    "colViews": "Views",
+    "statusPublished": "Published",
+    "statusPending": "Pending",
+    "statusDraft": "Draft",
+    "statusRejected": "Rejected"
   }
 }

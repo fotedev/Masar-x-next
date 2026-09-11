@@ -1,6 +1,6 @@
 import { useState, useEffect, type FC } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { analyticsHelpers } from "@/lib/analyticsHelpers";
 
@@ -28,6 +28,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
   onNavigate,
 }) => {
   const locale = useLocale();
+  const tA = useTranslations("adminDashboard.analyticsPage");
   const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
   const { isAdmin } = useAuth();
   const isAdminLoading = false; // AuthContext handles admin state within the main loading state
@@ -54,27 +55,27 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
   const getActionLabel = (action: string) => {
     const a = (action || "").toLowerCase();
-    if (a === "page_view") return "زيارة صفحة";
-    if (a === "click") return "نقرة";
-    if (a === "ai_interaction") return "تفاعل مع الذكاء الاصطناعي";
-    if (a === "user_login") return "تسجيل دخول";
-    if (a === "user_logout") return "تسجيل خروج";
-    if (a === "content_view") return "عرض محتوى";
-    if (a === "summary_click") return "نقر على ملخص";
-    return action || "حدث";
+    if (a === "page_view") return tA("events.page_view");
+    if (a === "click") return tA("events.click");
+    if (a === "ai_interaction") return tA("events.ai_interaction");
+    if (a === "user_login") return tA("events.user_login");
+    if (a === "user_logout") return tA("events.user_logout");
+    if (a === "content_view") return tA("events.content_view");
+    if (a === "summary_click") return tA("events.summary_click");
+    return action || tA("eventFallback");
   };
 
   const getContentLabel = (contentType: string) => {
-    const t = (contentType || "").toLowerCase();
-    if (t === "summary") return "ملخص";
-    if (t === "course") return "مقرر";
-    if (t === "quiz") return "اختبار";
-    if (t === "page") return "صفحة";
-    if (t === "login") return "تسجيل دخول";
-    if (t === "logout") return "تسجيل خروج";
-    if (t === "ai_assistant") return `${assistantName} AI`;
-    if (t === "unknown") return "غير معروف";
-    return contentType || "غير مححدد";
+    const type = (contentType || "").toLowerCase();
+    if (type === "summary") return tA("types.summary");
+    if (type === "course") return tA("types.course");
+    if (type === "quiz") return tA("types.quiz");
+    if (type === "page") return tA("types.page");
+    if (type === "login") return tA("types.login");
+    if (type === "logout") return tA("types.logout");
+    if (type === "ai_assistant") return `${assistantName} AI`;
+    if (type === "unknown") return tA("types.unknown");
+    return contentType || tA("typeFallback");
   };
 
   const actionBadgeClass = (action: string) => {
@@ -100,7 +101,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
         // Check if user is admin (using the already loaded isAdmin state from useAuth)
         if (!isAdminLoading && !isAdmin) {
-          setError("غير مصرح لك بالوصول إلى هذه الصفحة");
+          setError(tA("forbidden"));
           return;
         }
 
@@ -129,14 +130,14 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
           setAnalytics(placeholderSummary);
         }
       } catch {
-        setError("حدث خطأ في تحميل الإحصائيات");
+        setError(tA("loadError"));
       } finally {
         setLoading(false);
       }
     };
 
     loadAnalyticsData();
-  }, [isAdmin, isAdminLoading]);
+  }, [isAdmin, isAdminLoading, tA]);
 
   const loadAnalytics = async () => {
     // Keep this function for the retry button
@@ -155,7 +156,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         });
       }
     } catch {
-      setError("حدث خطأ في تحميل الإحصائيات");
+      setError(tA("loadError"));
     } finally {
       setLoading(false);
     }
@@ -168,7 +169,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">
-              جاري تحميل الإحصائيات...
+              {tA("loading")}
             </p>
           </div>
         </div>
@@ -186,7 +187,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               onClick={loadAnalytics}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              إعادة المحاولة
+              {tA("retry")}
             </button>
           </div>
         </div>
@@ -199,10 +200,10 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            لوحة الإحصائيات الإدارية
+            {tA("title")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            مراقبة استخدام التطبيق وتفاعلات المستخدمين
+            {tA("subtitle")}
           </p>
         </div>
 
@@ -213,7 +214,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <Users className="h-8 w-8 text-blue-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  المستخدمون النشطون
+                  {tA("activeUsers")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalUsers || 0)}
@@ -227,7 +228,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <MessageSquare className="h-8 w-8 text-green-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  رسائل المساعد
+                  {tA("assistantMessages")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalMessages || 0)}
@@ -241,7 +242,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <Eye className="h-8 w-8 text-purple-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  المشاهدات
+                  {tA("views")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalViews || 0)}
@@ -255,7 +256,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <MousePointer className="h-8 w-8 text-orange-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  النقرات
+                  {tA("clicks")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalClicks || 0)}
@@ -268,7 +269,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         {/* Top Content Types */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            أكثر المحتويات شعبية
+            {tA("topContent")}
           </h2>
           <div className="space-y-3">
             {analytics?.topContentTypes &&
@@ -297,7 +298,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               ))
             ) : (
               <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                لا توجد بيانات متاحة
+                {tA("noData")}
               </p>
             )}
           </div>
@@ -306,7 +307,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         {/* Recent Activity */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            النشاط الأخير
+            {tA("recentActivity")}
           </h2>
           {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
             <div className="space-y-2">
@@ -343,7 +344,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              لا توجد نشاطات حديثة
+              {tA("noRecentActivity")}
             </p>
           )}
         </div>
@@ -354,7 +355,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
             onClick={() => onNavigate("home")}
             className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
           >
-            العودة للرئيسية
+            {tA("backHome")}
           </button>
         </div>
       </div>

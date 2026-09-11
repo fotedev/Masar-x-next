@@ -15,6 +15,44 @@ export default {
         }
       },
       colors: {
+        ax: {
+          canvas: 'rgb(var(--ax-canvas-rgb) / <alpha-value>)',
+          surface: {
+            DEFAULT: 'rgb(var(--ax-surface-rgb) / <alpha-value>)',
+            hover: 'rgb(var(--ax-surface-hover-rgb) / <alpha-value>)',
+            inset: 'rgb(var(--ax-surface-inset-rgb) / <alpha-value>)',
+          },
+          primary: 'rgb(var(--ax-text-primary-rgb) / <alpha-value>)',
+          secondary: 'rgb(var(--ax-text-secondary-rgb) / <alpha-value>)',
+          muted: 'rgb(var(--ax-text-muted-rgb) / <alpha-value>)',
+          edge: 'rgb(var(--ax-border-default-rgb) / <alpha-value>)',
+          'edge-strong': 'rgb(var(--ax-border-strong-rgb) / <alpha-value>)',
+          accent: {
+            DEFAULT: 'rgb(var(--ax-accent-rgb) / <alpha-value>)',
+            hover: 'rgb(var(--ax-accent-hover-rgb) / <alpha-value>)',
+            soft: 'rgb(var(--ax-accent-soft-rgb) / <alpha-value>)',
+            'soft-hover': 'rgb(var(--ax-accent-soft-hover-rgb) / <alpha-value>)',
+          },
+          'on-accent': 'rgb(var(--ax-on-accent-rgb) / <alpha-value>)',
+          success: {
+            DEFAULT: 'rgb(var(--ax-success-rgb) / <alpha-value>)',
+            soft: 'rgb(var(--ax-success-soft-rgb) / <alpha-value>)',
+          },
+          warning: {
+            DEFAULT: 'rgb(var(--ax-warning-rgb) / <alpha-value>)',
+            soft: 'rgb(var(--ax-warning-soft-rgb) / <alpha-value>)',
+          },
+          danger: {
+            DEFAULT: 'rgb(var(--ax-danger-rgb) / <alpha-value>)',
+            soft: 'rgb(var(--ax-danger-soft-rgb) / <alpha-value>)',
+          },
+          info: {
+            DEFAULT: 'rgb(var(--ax-info-rgb) / <alpha-value>)',
+            soft: 'rgb(var(--ax-info-soft-rgb) / <alpha-value>)',
+          },
+          'tooltip-bg': 'rgb(var(--ax-tooltip-bg-rgb) / <alpha-value>)',
+          'tooltip-fg': 'rgb(var(--ax-tooltip-fg-rgb) / <alpha-value>)',
+        },
         brand: {
           navy: 'rgba(var(--brand-navy), <alpha-value>)',
           blue: 'rgba(var(--brand-blue), <alpha-value>)',
@@ -45,9 +83,24 @@ export default {
         '5xl': ['3rem', { lineHeight: '1' }],
       },
       spacing: {
+        'ax-sidebar': 'var(--ax-space-sidebar)',
+        'ax-sidebar-collapsed': 'var(--ax-space-sidebar-collapsed)',
         '18': '4.5rem',
         '88': '22rem',
         '128': '32rem',
+      },
+      transitionDuration: {
+        'ax-fast': 'var(--ax-dur-fast)',
+        'ax-base': 'var(--ax-dur-base)',
+        'ax-slow': 'var(--ax-dur-slow)',
+      },
+      transitionTimingFunction: {
+        'ax-standard': 'var(--ax-ease-standard)',
+      },
+      boxShadow: {
+        'ax-sm': 'var(--ax-shadow-sm)',
+        'ax-md': 'var(--ax-shadow-md)',
+        'ax-lg': 'var(--ax-shadow-lg)',
       },
       zIndex: {
         'header': '40',
@@ -61,3 +114,4 @@ export default {
   },
   plugins: [],
 };
+
