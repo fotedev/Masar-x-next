@@ -427,18 +427,17 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
   // Defer the first check until after `app.whenReady()` — electron-updater
   // is fine being constructed early, but the first check is best done
   // when the main window is up so the renderer is ready to receive the
-  // broadcast.
-  if (app.isReady()) {
+  // broadcast. The catch handler is factored out so the `ready` and
+  // `isReady()` branches share one log line (audit 2026-09-12 F3).
+  const checkStartupUpdates = (): void => {
     void opts.updater.checkOnStartup().catch((err: unknown) => {
       // eslint-disable-next-line no-console
       console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
     });
+  };
+  if (app.isReady()) {
+    checkStartupUpdates();
   } else {
-    app.on('ready', () => {
-      void opts.updater.checkOnStartup().catch((err: unknown) => {
-        // eslint-disable-next-line no-console
-        console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
-      });
-    });
+    app.on('ready', checkStartupUpdates);
   }
 }

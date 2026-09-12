@@ -167,6 +167,12 @@ export async function startMainProcess(): Promise<number> {
   // when a default menu slipped through construction.
   win.setMenu(null);
 
+  // Track did-fail-load attempts across retries. Counter resets on every
+  // successful navigation, so a one-off transient error after a healthy
+  // boot doesn't poison the retry budget. Declared ABOVE both listeners
+  // (audit 2026-09-12 M1) so the closure reads as written, not via TDZ
+  // hoisting — keeps a future refactor that reorders handlers safe.
+  let didFailLoadAttempts = 0;
   win.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     // Retry transient local-server startup errors:
     //   -102 ERR_CONNECTION_REFUSED  — Next.js standalone server not yet bound
@@ -212,10 +218,6 @@ export async function startMainProcess(): Promise<number> {
     }
   });
 
-  // Track did-fail-load attempts across retries. Counter resets on every
-  // successful navigation, so a one-off transient error after a healthy
-  // boot doesn't poison the retry budget.
-  let didFailLoadAttempts = 0;
   win.webContents.on('did-finish-load', () => {
     didFailLoadAttempts = 0;
   });
