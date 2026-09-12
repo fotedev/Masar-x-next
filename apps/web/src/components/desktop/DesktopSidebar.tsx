@@ -20,11 +20,12 @@
  *     §Home / News / Subjects / Courses / Quizzes / ai-assistant link array.
  *
  * Layout integration:
- *   - Parent DesktopShell uses `flex-row-reverse`, which flips the sidebar
- *     to the inline-start edge for RTL locales and the inline-end edge for
- *     LTR locales — this gives us a Notion / Linear / VS Code-style rail
- *     that sits on the RIGHT for Arabic (matches Masar X's RTL orientation)
- *     and the LEFT for English, without any per-locale conditional class.
+ *   - Parent DesktopShell renders the sidebar as the first flex child of
+ *     a plain `flex-row` under the document's locale-driven `dir`, so it
+ *     lands on the inline-start edge — a Notion / Linear / VS Code-style
+ *     rail that sits on the RIGHT for Arabic (matches Masar X's RTL
+ *     orientation) and the LEFT for English, without any per-locale
+ *     conditional class.
  *   - All internal spacing uses logical properties (`border-inline-start`,
  *     `ps-`, `pe-`, `gap-`) so the same JSX works under both `dir="rtl"`
  *     and `dir="ltr"`.
@@ -43,6 +44,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations as useNextIntlTranslations } from "next-intl";
 
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
+import { getDesktopBridge } from "@/lib/desktop/runtime";
 
 interface NavEntry {
   /** Route key, used as the tNav() lookup key. */
@@ -135,11 +137,11 @@ export function DesktopSidebar(): React.JSX.Element | null {
   const locale = useLocale();
   const pathname = usePathname() ?? "";
 
-  // SSR + first client paint: always expanded. The persisted state is
-  // applied in the effect below; the brief mismatch is invisible because
-  // the Electron window only renders after the page has loaded.
+  // SSR + first client paint: always expanded, no version stamp. Both
+  // are applied in the effect below; the brief mismatch is invisible
+  // because the Electron window only renders after the page has loaded.
   const [collapsed, setCollapsed] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isDesktop) return;
@@ -149,7 +151,12 @@ export function DesktopSidebar(): React.JSX.Element | null {
     } catch {
       // localStorage blocked — keep expanded default.
     }
-    setHydrated(true);
+    // Real app version from the shell, not a build-time literal — the
+    // sidebar must never advertise a stale version after a release bump.
+    void getDesktopBridge()
+      ?.app.version()
+      .then(setAppVersion)
+      .catch(() => {});
   }, [isDesktop]);
 
   const toggle = useCallback((): void => {
@@ -173,7 +180,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
   return (
     <aside
       role="navigation"
-      aria-label="Primary navigation"
+      aria-label={tNav("primaryNavAria")}
       className={
         "flex h-full flex-shrink-0 flex-col border-border bg-card transition-[width] duration-200 ease-out " +
         "border-e " +
@@ -246,7 +253,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
         <button
           type="button"
           onClick={toggle}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? tNav("expandSidebar") : tNav("collapseSidebar")}
           aria-expanded={!collapsed}
           className={
             "flex h-9 w-full items-center gap-3 rounded-lg px-3 text-xs font-medium " +
@@ -258,7 +265,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
             {collapsed ? <ChevronEndIcon /> : <ChevronStartIcon />}
           </span>
           <span className={collapsed ? "sr-only" : ""}>
-            {collapsed ? "Expand" : "Collapse"}
+            {collapsed ? tNav("expandSidebar") : tNav("collapseSidebar")}
           </span>
         </button>
         <div
@@ -267,7 +274,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
             (collapsed ? "sr-only" : "")
           }
         >
-          Masar X · v{hydrated ? "0.5.9" : "0.5.9"}
+          {appVersion ? `Masar X · v${appVersion}` : "Masar X"}
         </div>
       </div>
     </aside>

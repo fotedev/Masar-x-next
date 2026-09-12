@@ -318,8 +318,8 @@ export default function SubjectPage() {
   }, []);
 
   // Shape the desktop workspace input from the subject lectures list.
-  // Counts are zeroed here (the upstream subject fetch doesn't carry them);
-  // the workspace sidebar renders only existing counts via `> 0` guards.
+  // Counts are omitted — the upstream subject fetch doesn't carry them,
+  // and the sidebar renders count badges only for populated values.
   const workspaceLectures: WorkspaceLecture[] = useMemo(
     () =>
       subjectLectures.map((l) => ({
@@ -327,8 +327,6 @@ export default function SubjectPage() {
         title: l.lecture_label,
         ordinal: l.order_index,
         lectureKey: l.lecture_key,
-        documentUrl: undefined,
-        counts: { summaries: 0, videos: 0, files: 0, quizzes: 0 },
       })),
     [subjectLectures],
   );

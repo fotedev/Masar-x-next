@@ -24,12 +24,10 @@
  *
  * Window controls (minimize / toggleMaximize / close) route through the
  * preload bridge. The `window` namespace on the bridge is OPTIONAL by
- * contract (runtime.ts: `window?: {...}`) — pre-load versions before
- * spec 005 shipped may not have the IPC handlers wired yet, in which
- * case the bridge exposes no `window` surface. Every action is therefore
- * null-safe and silently degrades to a no-op so the titlebar never
- * crashes the shell. Once T040–T043 land and the main-process handlers
- * are installed, the same buttons start working without code changes.
+ * contract (runtime.ts: `window?: {...}`) — shells shipped before spec
+ * 005 may not have the IPC handlers wired yet, in which case the bridge
+ * exposes no `window` surface. Every action is therefore null-safe and
+ * silently degrades to a no-op so the titlebar never crashes the shell.
  *
  * The "isMaximized" indicator on the toggle button subscribes through
  * `bridge.window.onMaximizeChange`. If the bridge is absent we render
@@ -43,18 +41,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
-import type { MasarxDesktopRuntimeBridge } from "@/lib/desktop/runtime";
-
-/**
- * Defensive helper. The bridge shape is `window?` so the renderer must
- * never crash when the IPC channel is missing — that would defeat
- * spec 005's "degrade instead of crash" promise.
- */
-function getWindowSurface(
-  bridge: MasarxDesktopRuntimeBridge | null,
-): MasarxDesktopRuntimeBridge["window"] | null {
-  return bridge?.window ?? null;
-}
+import { getDesktopBridge } from "@/lib/desktop/runtime";
 
 export function CustomTitlebar(): React.JSX.Element | null {
   const t = useTranslations("titlebar");
@@ -69,14 +56,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
       return undefined;
     }
 
-    // Lazy import pattern: importing runtime directly would force the
-    // bundle to keep it on the web path too. The `window` global is
-    // guaranteed by the gate, so a direct read is safe here AND
-    // narrower than importing the helper.
-    const bridge = (
-      window as unknown as { masarxDesktop?: MasarxDesktopRuntimeBridge }
-    ).masarxDesktop;
-    const win = getWindowSurface(bridge ?? null);
+    const win = getDesktopBridge()?.window ?? null;
     if (!win) {
       return undefined;
     }
@@ -93,32 +73,21 @@ export function CustomTitlebar(): React.JSX.Element | null {
   }, [isDesktop]);
 
   const onMinimize = useCallback((): void => {
-    const win = getWindowSurface(
-      (window as unknown as { masarxDesktop?: MasarxDesktopRuntimeBridge })
-        .masarxDesktop ?? null,
-    );
-    if (!win) return;
-    win.minimize().catch(() => {
-      // Silent: missing IPC is expected before T040 lands.
-    });
+    getDesktopBridge()
+      ?.window?.minimize()
+      .catch(() => {});
   }, []);
 
   const onToggleMaximize = useCallback((): void => {
-    const win = getWindowSurface(
-      (window as unknown as { masarxDesktop?: MasarxDesktopRuntimeBridge })
-        .masarxDesktop ?? null,
-    );
-    if (!win) return;
-    win.toggleMaximize().catch(() => {});
+    getDesktopBridge()
+      ?.window?.toggleMaximize()
+      .catch(() => {});
   }, []);
 
   const onClose = useCallback((): void => {
-    const win = getWindowSurface(
-      (window as unknown as { masarxDesktop?: MasarxDesktopRuntimeBridge })
-        .masarxDesktop ?? null,
-    );
-    if (!win) return;
-    win.close().catch(() => {});
+    getDesktopBridge()
+      ?.window?.close()
+      .catch(() => {});
   }, []);
 
   // Gate: never render in SSR or first client paint. Re-evaluated

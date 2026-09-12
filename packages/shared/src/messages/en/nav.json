@@ -10,5 +10,8 @@
   "logout": "Log out",
   "admin": "Admin",
   "profile": "Profile",
-  "downloads": "Downloads"
+  "downloads": "Downloads",
+  "primaryNavAria": "Primary navigation",
+  "expandSidebar": "Expand sidebar",
+  "collapseSidebar": "Collapse sidebar"
 }
