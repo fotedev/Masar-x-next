@@ -808,82 +808,6 @@ ${platformContext}
     }
   }
 
-  // Parse chat export text
-  parseChatExport(text: string): ChatChunk[] {
-    const chunks: ChatChunk[] = [];
-
-    // Handle different data formats
-    if (text.includes('**1.') && text.includes('**2.')) {
-      // This appears to be a structured summary format, split by numbered sections
-      const sections = text.split(/\*\*\d+\./).filter(section => section.trim());
-      let chunkIndex = 0;
-
-      for (const section of sections) {
-        if (section.trim()) {
-          chunks.push({
-            id: `chunk_${chunkIndex++}`,
-            content: section.trim(),
-            timestamp: new Date().toISOString(), // Use current time for imported data
-            author: 'Summary'
-          });
-        }
-      }
-    } else {
-      // Standard chat export parsing
-      const lines = text.split('\n');
-      let currentMessage = '';
-      let currentTimestamp = '';
-      let currentAuthor = '';
-
-      for (const line of lines) {
-        // Chat export format: [12/17/25, 10:30:45 AM] Author: Message
-        const timestampMatch = line.match(/^\[([^\]]+)\]/);
-
-        if (timestampMatch) {
-          // Save previous message if exists
-          if (currentMessage.trim()) {
-            chunks.push({
-              id: `chunk_${chunks.length}`,
-              content: currentMessage.trim(),
-              timestamp: currentTimestamp,
-              author: currentAuthor
-            });
-          }
-
-          // Start new message
-          const messagePart = line.replace(timestampMatch[0], '').trim();
-          const colonIndex = messagePart.indexOf(':');
-
-          if (colonIndex !== -1) {
-            currentAuthor = messagePart.substring(0, colonIndex).trim();
-            currentMessage = messagePart.substring(colonIndex + 1).trim();
-          } else {
-            currentAuthor = 'System';
-            currentMessage = messagePart;
-          }
-
-          currentTimestamp = timestampMatch[1];
-        } else if (line.trim()) {
-          // Continuation of previous message
-          currentMessage += '\n' + line;
-        }
-      }
-
-      // Save last message
-      if (currentMessage.trim()) {
-        chunks.push({
-          id: `chunk_${chunks.length}`,
-          content: currentMessage.trim(),
-          timestamp: currentTimestamp,
-          author: currentAuthor
-        });
-      }
-    }
-
-    this.chatChunks = chunks;
-    return chunks;
-  }
-
   // Search for relevant chunks based on query
   searchRelevantChunks(query: string, maxResults: number = 5): ChatChunk[] {
     if (!query.trim()) return [];
@@ -1175,23 +1099,6 @@ ${ZANE_UI_INSTRUCTION}`;
     }
   }
 
-  // Get all chunks
-  getAllChunks(): ChatChunk[] {
-    return this.chatChunks;
-  }
-
-  // Get random chunks for quiz generation
-  getRandomChunks(count: number = 5): ChatChunk[] {
-    if (this.chatChunks.length === 0) return [];
-    const shuffled = [...this.chatChunks].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.min(count, shuffled.length));
-  }
-
-  // Clear all data
-  clearData(): void {
-    this.chatChunks = [];
-  }
-
   // Get statistics
   getStats() {
     return {
@@ -1268,72 +1175,6 @@ ${ZANE_UI_INSTRUCTION}`;
       }
 
       return false;
-    }
-  }
-
-  async loadAllData(): Promise<void> {
-    const filesToLoad = [
-      'https://raw.githubusercontent.com/kali-upper/whatsapp-group/refs/heads/main/data.txt'
-    ];
-
-    let totalLoaded = 0;
-
-    for (const fileUrl of filesToLoad) {
-      try {
-        const response = await fetch(fileUrl);
-
-        if (!response.ok) {
-          continue; // Skip this file and try next
-        }
-
-        const text = await response.text();
-        const chunks = this.parseChatExport(text);
-        totalLoaded += chunks.length;
-      } catch {
-        // ignore
-      }
-    }
-
-    // Also try to load local data.txt if available (for development)
-    try {
-      const localResponse = await fetch('/data.txt');
-      if (localResponse.ok) {
-        const localText = await localResponse.text();
-        const localChunks = this.parseChatExport(localText);
-        totalLoaded += localChunks.length;
-      }
-    } catch {
-      // ignore
-    }
-
-    if (totalLoaded < 10) {
-      // Removed console warning
-    }
-  }
-
-  // Load data from a local file (for manual upload)
-  async loadFromText(text: string): Promise<void> {
-    this.parseChatExport(text);
-  }
-
-  // Legacy function for backward compatibility
-  async loadSampleData(): Promise<void> {
-    return this.loadAllData();
-  }
-
-  // Method to reinitialize Gemini API status (for Edge Function system)
-  async reinitializeGemini(): Promise<void> {
-    try {
-      // Clear any cached API key status
-      removeLocalStorageItem('gemini_api_status');
-      removeLocalStorageItem('gemini_quota_error');
-      removeLocalStorageItem('gemini_last_test');
-
-      // Reset to default state
-      isAIWorking = true;
-      setLocalStorageItem('gemini_api_status', 'working');
-    } catch {
-      isAIWorking = false;
     }
   }
 
