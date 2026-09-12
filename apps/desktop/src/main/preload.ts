@@ -5,8 +5,6 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 // `window` only sees the surface we explicitly expose via contextBridge.
 //
 // Contract (T020):
-//   - `window.masarxDesktop.auth.*`    — session reads / sign-out / change events
-//   - `window.masarxDesktop.cache.*`   — local SQLite read-through (T022)
 //   - `window.masarxDesktop.app.*`     — app version, platform, controlled quit
 //   - `window.masarxDesktop.updates.*` — auto-update surface (T023)
 //
@@ -29,20 +27,6 @@ const subscribe = <T>(channel: string, cb: (payload: T) => void): Unsubscribe =>
 };
 
 const api = {
-  auth: {
-    getSession: (): Promise<unknown> => ipcRenderer.invoke('auth:getSession'),
-    setSession: (session: unknown): Promise<void> =>
-      ipcRenderer.invoke('auth:setSession', session),
-    signOut: (): Promise<void> => ipcRenderer.invoke('auth:signOut'),
-    onChange: (cb: (event: unknown) => void): Unsubscribe =>
-      subscribe<unknown>('auth:changed', cb),
-  },
-  cache: {
-    get: (key: string): Promise<unknown> => ipcRenderer.invoke('cache:get', key),
-    set: (key: string, value: unknown): Promise<void> =>
-      ipcRenderer.invoke('cache:set', key, value),
-    delete: (key: string): Promise<void> => ipcRenderer.invoke('cache:delete', key),
-  },
   app: {
     version: (): Promise<string> => ipcRenderer.invoke('app:version'),
     platform: (): NodeJS.Platform => process.platform,

@@ -2,8 +2,6 @@ import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
-import { LocalAuthSession, type StoredSession } from './auth-storage.js';
-import { LocalReadCache } from './read-cache.js';
 import { Updater, bootUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -313,55 +311,6 @@ export async function startMainProcess(): Promise<number> {
   });
   win.on('unmaximize', () => {
     win.webContents.send('window:maximizeStateChanged', false);
-  });
-
-  // T021 — LocalAuthSession IPC wiring.
-  // Constructed AFTER app.whenReady so safeStorage is initialized on
-  // all platforms (especially Windows, where DPAPI needs the app event
-  // loop to be running).
-  const authStorage = new LocalAuthSession({ userDataPath });
-
-  ipcMain.handle('auth:getSession', () => authStorage.read());
-  ipcMain.handle('auth:setSession', (_event, session: StoredSession) =>
-    authStorage.write(session),
-  );
-  ipcMain.handle('auth:signOut', () => authStorage.clear());
-
-  // Broadcast auth changes to all renderers. v1 has a single window;
-  // the channel is wired so v2 multi-window just works.
-  authStorage.onChange((session) => {
-    for (const win of BrowserWindow.getAllWindows()) {
-      win.webContents.send('auth:changed', session);
-    }
-  });
-
-  // T022 — LocalReadCache IPC wiring.
-  // SQLite cache for read-through Supabase queries. The renderer
-  // owns the read-through policy; main is just storage.
-  const readCache = new LocalReadCache({ userDataPath });
-
-  ipcMain.handle('cache:get', (_event, key: string) => readCache.get(key));
-  ipcMain.handle(
-    'cache:set',
-    (_event, key: string, value: unknown, opts?: { ttlMs?: number; entity?: string }) =>
-      readCache.set(key, value, opts),
-  );
-  ipcMain.handle('cache:delete', (_event, key: string) => readCache.delete(key));
-
-  // Prune timer — every 1h, drop entries past their grace period.
-  // `unref()` so the timer doesn't keep the app alive at quit.
-  const pruneTimer = setInterval(() => {
-    try {
-      readCache.prune();
-    } catch {
-      // Prune failures are non-fatal; the next tick will retry.
-    }
-  }, 60 * 60 * 1000);
-  pruneTimer.unref();
-
-  app.on('before-quit', () => {
-    clearInterval(pruneTimer);
-    readCache.close();
   });
 
   // T023 — auto-update wiring.

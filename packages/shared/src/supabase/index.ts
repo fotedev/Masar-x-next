@@ -93,16 +93,14 @@ export function createSupabaseClient(options: SupabaseClientOptions): SupabaseCl
       return wrapClient(client, options.runtime, clientInfo);
     }
     case "desktop": {
-      // T021: the desktop runtime requires an explicit storage adapter
-      // (provided by apps/desktop/src/renderer/ipc-supabase-storage.ts).
-      // We use `@supabase/supabase-js`'s `createClient` here (NOT
+      // The desktop runtime requires an explicit storage adapter. We use
+      // `@supabase/supabase-js`'s `createClient` here (NOT
       // `@supabase/ssr`'s `createBrowserClient`) because the latter is
       // opinionated about cookies; the former accepts a custom auth
       // storage via `options.auth.storage`, which is what we need.
       if (!options.storage) {
         throw new Error(
-          "createSupabaseClient: `runtime: 'desktop'` requires a `storage` adapter. " +
-            "Use `createIpcSupabaseStorage()` from apps/desktop/src/renderer.",
+          "createSupabaseClient: `runtime: 'desktop'` requires a `storage` adapter.",
         );
       }
       const client = createJsClient(options.url, options.anonKey, {
