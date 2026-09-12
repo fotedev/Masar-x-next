@@ -95,22 +95,6 @@ vi.mock('electron', () => ({
   app: mockApp,
   BrowserWindow: BrowserWindowMock,
   ipcMain: mockIpcMain,
-  // T021 — LocalAuthSession requires `safeStorage` at construction.
-  // The T017 contract is about main-process startup (port, window,
-  // webPreferences); auth is out of scope, so we stub a no-op
-  // "available" response. The T021 contract test exercises the
-  // real safeStorage path in `auth-storage.test.ts`.
-  safeStorage: {
-    isEncryptionAvailable: () => true,
-    getSelectedStorageBackend: () => 'unknown',
-    encryptStringAsync: vi.fn(async (plaintext: string) =>
-      Buffer.from(plaintext, 'utf8'),
-    ),
-    decryptStringAsync: vi.fn(async (buf: Buffer) => ({
-      result: buf.toString('utf8'),
-      shouldReEncrypt: false,
-    })),
-  },
   // T024 — `index.ts` imports `buildAppMenu` from `./menu.js`, which
   // uses `Menu.buildFromTemplate` and `shell.openExternal` at
   // module-load time. The T017 contract is about Electron startup,
@@ -205,24 +189,6 @@ const mockChildProcess = {
 vi.mock('node:child_process', () => ({
   spawn: vi.fn(() => mockChildProcess),
   default: { spawn: vi.fn(() => mockChildProcess) },
-}));
-
-// T022 — `index.ts` now imports `LocalReadCache` which loads
-// `better-sqlite3` at module-load time. The T017 contract is about
-// the Electron main process startup (port, window, webPreferences);
-// the read-cache wiring is out of scope, so we mock the native
-// module entirely. The T022 contract test exercises the real
-// better-sqlite3 path in `read-cache.test.ts`.
-vi.mock('better-sqlite3', () => ({
-  default: vi.fn(() => ({
-    pragma: vi.fn(),
-    exec: vi.fn(),
-    prepare: vi.fn(() => ({
-      get: vi.fn(),
-      run: vi.fn(() => ({ changes: 0 })),
-    })),
-    close: vi.fn(),
-  })),
 }));
 
 // T023 — `index.ts` now imports `Updater` from `electron-updater`.
