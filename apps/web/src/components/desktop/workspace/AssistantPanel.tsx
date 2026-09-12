@@ -45,7 +45,6 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
   const [draft, setDraft] = useState("");
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-stick to the bottom of the transcript when new messages arrive.
   useEffect(() => {
@@ -58,15 +57,22 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
     }
   }, [messages, isLoading]);
 
+  // The send path owns no event: the form's onSubmit and the composer's
+  // Enter-to-send shortcut both delegate here, so no KeyboardEvent needs
+  // to masquerade as a FormEvent.
+  const submitDraft = useCallback(async (): Promise<void> => {
+    const trimmed = draft.trim();
+    if (!trimmed || isLoading) return;
+    setDraft("");
+    await sendMessage(trimmed);
+  }, [draft, isLoading, sendMessage]);
+
   const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
+    (event: FormEvent<HTMLFormElement>): void => {
       event.preventDefault();
-      const trimmed = draft.trim();
-      if (!trimmed || isLoading) return;
-      setDraft("");
-      await sendMessage(trimmed);
+      void submitDraft();
     },
-    [draft, isLoading, sendMessage],
+    [submitDraft],
   );
 
   // If the panel closes, return focus to the toolbar toggle in the parent
@@ -76,13 +82,16 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
     inputRef.current?.focus();
   }, [open]);
 
-  if (!open) return null;
-
+  // Always mounted: the parent wrapper reclaims the layout width via
+  // `w-0 overflow-hidden` when closed, so this section renders through
+  // the collapse animation. `inert` keeps the hidden panel out of the
+  // tab order and the accessibility tree while it is clipped.
   return (
     <section
       role="complementary"
       aria-label={t("assistant.aria")}
       data-masarx-assistant-panel=""
+      inert={!open}
       className="flex h-full w-full min-w-0 flex-col border-s border-border bg-background"
     >
       <header
@@ -150,7 +159,6 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
                 <span className="whitespace-pre-wrap leading-relaxed">{message.content}</span>
               </li>
             ))}
-            <div ref={transcriptEndRef} />
           </ul>
         )}
       </div>
@@ -167,9 +175,7 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              if (draft.trim() && !isLoading) {
-                void handleSubmit(event as unknown as FormEvent<HTMLFormElement>);
-              }
+              void submitDraft();
             }
           }}
           rows={2}

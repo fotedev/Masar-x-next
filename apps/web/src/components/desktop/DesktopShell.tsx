@@ -41,10 +41,10 @@ export function DesktopShell({ children }: DesktopShellProps): React.JSX.Element
   }
 
   return (
-    <div
-      dir="rtl"
-      className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground"
-    >
+    // No `dir` here on purpose: direction is inherited from the
+    // locale-driven `<html dir>` (apps/web/src/app/layout.tsx), so the
+    // shell mirrors per locale instead of forcing RTL on English users.
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       <CustomTitlebar />
 
       {/* Layout direction:

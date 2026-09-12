@@ -38,6 +38,22 @@ export interface MasarxDesktopRuntimeBridge {
     isMaximized(): Promise<boolean>;
     onMaximizeChange(cb: (isMaximized: boolean) => void): () => void;
   };
+  /**
+   * Auto-update surface (T023). Optional for the same aging reason as
+   * `window`: shells shipped before the updater landed expose no
+   * `updates` namespace. This mirrors apps/desktop/src/main/preload.ts
+   * `api.updates` exactly — the main process also broadcasts
+   * `updates:error`, but the preload does not forward it yet, so there
+   * is deliberately no `onError` here. Consumers must not invent one.
+   */
+  updates?: {
+    check(): Promise<unknown>;
+    installAndRestart(): Promise<void>;
+    skip(version: string): Promise<void>;
+    onAvailable(
+      cb: (info: { version: string; releaseDate?: string }) => void,
+    ): () => void;
+  };
 }
 
 /**

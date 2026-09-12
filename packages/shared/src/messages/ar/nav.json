@@ -10,5 +10,8 @@
   "logout": "تسجيل الخروج",
   "admin": "الإدارة",
   "profile": "الملف الشخصي",
-  "downloads": "التحميل"
+  "downloads": "التحميل",
+  "primaryNavAria": "التنقل الرئيسي",
+  "expandSidebar": "توسيع الشريط الجانبي",
+  "collapseSidebar": "طي الشريط الجانبي"
 }
