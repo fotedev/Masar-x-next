@@ -4,7 +4,7 @@
   "version": "0.5.6",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/kill-port.mjs && node scripts/inject-sw-version.mjs",
+    "predev": "node scripts/inject-sw-version.mjs",
     "dev": "next dev --webpack",
     "dev:clean": "node scripts/clean.mjs && next dev --webpack",
     "prebuild": "node scripts/inject-sw-version.mjs",
