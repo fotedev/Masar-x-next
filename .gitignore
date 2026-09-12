@@ -79,6 +79,7 @@ coverage/
 
 # Database and Supabase
 supabase/.temp/
+supabase/**/.temp/
 supabase/migrations.backup/
 *.sql
 !supabase/migrations/**/*.sql
