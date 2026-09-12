@@ -40,6 +40,13 @@ const api = {
       ipcRenderer.invoke('updates:skip', version),
     onAvailable: (cb: (info: unknown) => void): Unsubscribe =>
       subscribe<unknown>('updates:available', cb),
+    // B4 (audit 2026-09-12) — main broadcasts `updates:error` (see
+    // updater.ts:424) but the renderer-facing subscription was missing
+    // here. UpdateToast.tsx was calling `updates.onError(...)` and
+    // crashing with a TypeError on first shell mount. Payload matches
+    // updater.ts: `{ message: err.message }`.
+    onError: (cb: (info: { message: string }) => void): Unsubscribe =>
+      subscribe<{ message: string }>('updates:error', cb),
   },
   // T040–T043 (spec 005 US3): frameless titlebar window controls. The
   // renderer exposes a thin surface that matches the optional
