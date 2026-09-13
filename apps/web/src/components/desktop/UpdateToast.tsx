@@ -11,9 +11,6 @@
  *
  * Renders only inside the Electron shell; every bridge access is
  * null-checked so an old/missing preload degrades to a no-op.
- * The preload does not forward `updates:error` yet, so this toast
- * surfaces availability only — update failures stay in the main-process
- * log until the preload grows an `onError` passthrough.
  * Strings come from the `desktopUpdates` namespace
  * (packages/shared/src/messages/{ar,en}/desktopUpdates.json).
  */
@@ -28,6 +25,7 @@ export function UpdateToast(): React.JSX.Element | null {
   const t = useTranslations("desktopUpdates");
   const isDesktop = useIsDesktopRuntime();
   const [availableVersion, setAvailableVersion] = useState<string | null>(null);
+  const [errorVisible, setErrorVisible] = useState(false);
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
@@ -35,9 +33,17 @@ export function UpdateToast(): React.JSX.Element | null {
     const updates = getDesktopBridge()?.updates ?? null;
     if (!updates) return undefined;
 
-    return updates.onAvailable((info) => {
+    const offAvailable = updates.onAvailable((info) => {
       setAvailableVersion(info.version);
+      setErrorVisible(false);
     });
+    const offError = updates.onError(() => {
+      setErrorVisible(true);
+    });
+    return () => {
+      offAvailable();
+      offError();
+    };
   }, [isDesktop]);
 
   if (!isDesktop) return null;
@@ -57,6 +63,25 @@ export function UpdateToast(): React.JSX.Element | null {
       .catch(() => {});
     setAvailableVersion(null);
   };
+
+  if (errorVisible) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="fixed bottom-4 end-4 z-[10000] flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 shadow-lg"
+      >
+        <p className="text-sm text-foreground">{t("errorTitle")}</p>
+        <button
+          type="button"
+          onClick={() => setErrorVisible(false)}
+          className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("dismiss")}
+        </button>
+      </div>
+    );
+  }
 
   if (!availableVersion) return null;
 
