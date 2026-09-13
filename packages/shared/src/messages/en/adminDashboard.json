@@ -35,5 +35,46 @@
     "noCourses": "No courses found",
     "startFirstCourse": "Start by creating your first course",
     "createFirstCourse": "Create First Course"
+  },
+  "analytics": {
+    "loading": "Loading analytics...",
+    "retry": "Retry",
+    "title": "Admin Analytics Dashboard",
+    "subtitle": "Monitor app usage and user interactions",
+    "errors": {
+      "unauthorized": "You are not authorized to access this page",
+      "loadFailed": "Failed to load analytics"
+    },
+    "cards": {
+      "activeUsers": "Active Users",
+      "assistantMessages": "Assistant Messages",
+      "views": "Views",
+      "clicks": "Clicks"
+    },
+    "topContent": "Most Popular Content",
+    "noData": "No data available",
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity",
+    "backHome": "Back to Home",
+    "action": {
+      "page_view": "Page Visit",
+      "click": "Click",
+      "ai_interaction": "AI Interaction",
+      "user_login": "Login",
+      "user_logout": "Logout",
+      "content_view": "Content View",
+      "summary_click": "Summary Click",
+      "fallback": "Event"
+    },
+    "contentType": {
+      "summary": "Summary",
+      "course": "Course",
+      "quiz": "Quiz",
+      "page": "Page",
+      "login": "Login",
+      "logout": "Logout",
+      "unknown": "Unknown",
+      "fallback": "Unspecified"
+    }
   }
 }

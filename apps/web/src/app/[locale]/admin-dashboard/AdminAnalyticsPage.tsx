@@ -1,6 +1,6 @@
 import { useState, useEffect, type FC } from "react";
 import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { analyticsHelpers } from "@/lib/analyticsHelpers";
 
@@ -28,7 +28,12 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
   onNavigate,
 }) => {
   const locale = useLocale();
-  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
+  const t = useTranslations("adminDashboard.analytics");
+  const tNav = useTranslations("nav");
+  const assistantName = tNav("assistant");
+  // ar-EG keeps the Arabic-Indic digits + Gregorian calendar the page
+  // always rendered; en-US switches Latin digits for English admins.
+  const intlLocale = locale === "ar" ? "ar-EG" : "en-US";
   const { isAdmin } = useAuth();
   const isAdminLoading = false; // AuthContext handles admin state within the main loading state
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
@@ -36,13 +41,13 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const formatNumber = (value: number) => {
-    return new Intl.NumberFormat("ar-EG").format(value);
+    return new Intl.NumberFormat(intlLocale).format(value);
   };
 
   const formatDateTime = (value: string) => {
     const dt = new Date(value);
     if (Number.isNaN(dt.getTime())) return value;
-    return dt.toLocaleString("ar-EG", {
+    return dt.toLocaleString(intlLocale, {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -54,27 +59,47 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
   const getActionLabel = (action: string) => {
     const a = (action || "").toLowerCase();
-    if (a === "page_view") return "زيارة صفحة";
-    if (a === "click") return "نقرة";
-    if (a === "ai_interaction") return "تفاعل مع الذكاء الاصطناعي";
-    if (a === "user_login") return "تسجيل دخول";
-    if (a === "user_logout") return "تسجيل خروج";
-    if (a === "content_view") return "عرض محتوى";
-    if (a === "summary_click") return "نقر على ملخص";
-    return action || "حدث";
+    switch (a) {
+      case "page_view":
+        return t("action.page_view");
+      case "click":
+        return t("action.click");
+      case "ai_interaction":
+        return t("action.ai_interaction");
+      case "user_login":
+        return t("action.user_login");
+      case "user_logout":
+        return t("action.user_logout");
+      case "content_view":
+        return t("action.content_view");
+      case "summary_click":
+        return t("action.summary_click");
+      default:
+        return action || t("action.fallback");
+    }
   };
 
   const getContentLabel = (contentType: string) => {
-    const t = (contentType || "").toLowerCase();
-    if (t === "summary") return "ملخص";
-    if (t === "course") return "مقرر";
-    if (t === "quiz") return "اختبار";
-    if (t === "page") return "صفحة";
-    if (t === "login") return "تسجيل دخول";
-    if (t === "logout") return "تسجيل خروج";
-    if (t === "ai_assistant") return `${assistantName} AI`;
-    if (t === "unknown") return "غير معروف";
-    return contentType || "غير مححدد";
+    const t2 = (contentType || "").toLowerCase();
+    if (t2 === "ai_assistant") return `${assistantName} AI`;
+    switch (t2) {
+      case "summary":
+        return t("contentType.summary");
+      case "course":
+        return t("contentType.course");
+      case "quiz":
+        return t("contentType.quiz");
+      case "page":
+        return t("contentType.page");
+      case "login":
+        return t("contentType.login");
+      case "logout":
+        return t("contentType.logout");
+      case "unknown":
+        return t("contentType.unknown");
+      default:
+        return contentType || t("contentType.fallback");
+    }
   };
 
   const actionBadgeClass = (action: string) => {
@@ -100,7 +125,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
         // Check if user is admin (using the already loaded isAdmin state from useAuth)
         if (!isAdminLoading && !isAdmin) {
-          setError("غير مصرح لك بالوصول إلى هذه الصفحة");
+          setError(t("errors.unauthorized"));
           return;
         }
 
@@ -129,14 +154,14 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
           setAnalytics(placeholderSummary);
         }
       } catch {
-        setError("حدث خطأ في تحميل الإحصائيات");
+        setError(t("errors.loadFailed"));
       } finally {
         setLoading(false);
       }
     };
 
     loadAnalyticsData();
-  }, [isAdmin, isAdminLoading]);
+  }, [isAdmin, isAdminLoading, t]);
 
   const loadAnalytics = async () => {
     // Keep this function for the retry button
@@ -155,7 +180,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         });
       }
     } catch {
-      setError("حدث خطأ في تحميل الإحصائيات");
+      setError(t("errors.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -168,7 +193,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">
-              جاري تحميل الإحصائيات...
+              {t("loading")}
             </p>
           </div>
         </div>
@@ -186,7 +211,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               onClick={loadAnalytics}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              إعادة المحاولة
+              {t("retry")}
             </button>
           </div>
         </div>
@@ -199,10 +224,10 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            لوحة الإحصائيات الإدارية
+            {t("title")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            مراقبة استخدام التطبيق وتفاعلات المستخدمين
+            {t("subtitle")}
           </p>
         </div>
 
@@ -213,7 +238,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <Users className="h-8 w-8 text-blue-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  المستخدمون النشطون
+                  {t("cards.activeUsers")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalUsers || 0)}
@@ -227,7 +252,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <MessageSquare className="h-8 w-8 text-green-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  رسائل المساعد
+                  {t("cards.assistantMessages")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalMessages || 0)}
@@ -241,7 +266,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <Eye className="h-8 w-8 text-purple-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  المشاهدات
+                  {t("cards.views")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalViews || 0)}
@@ -255,7 +280,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               <MousePointer className="h-8 w-8 text-orange-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  النقرات
+                  {t("cards.clicks")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatNumber(analytics?.totalClicks || 0)}
@@ -268,7 +293,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         {/* Top Content Types */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            أكثر المحتويات شعبية
+            {t("topContent")}
           </h2>
           <div className="space-y-3">
             {analytics?.topContentTypes &&
@@ -297,7 +322,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
               ))
             ) : (
               <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                لا توجد بيانات متاحة
+                {t("noData")}
               </p>
             )}
           </div>
@@ -306,7 +331,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         {/* Recent Activity */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            النشاط الأخير
+            {t("recentActivity")}
           </h2>
           {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
             <div className="space-y-2">
@@ -343,7 +368,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
             </div>
           ) : (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              لا توجد نشاطات حديثة
+              {t("noRecentActivity")}
             </p>
           )}
         </div>
@@ -354,7 +379,7 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
             onClick={() => onNavigate("home")}
             className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
           >
-            العودة للرئيسية
+            {t("backHome")}
           </button>
         </div>
       </div>
