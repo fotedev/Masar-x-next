@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "../lib/supabase";
 import { Appeal } from "../types/database";
 import { useNotifications } from "./useNotifications";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useAppeals() {
+  const t = useTranslations("appeals");
   const queryClient = useQueryClient();
   const { notifyUser } = useNotifications();
   const { user } = useAuth();
@@ -34,10 +36,10 @@ export function useAppeals() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appeals"] });
-      toast.success("تم إرسال طعنك بنجاح");
+      toast.success(t("manage.addSuccess"));
     },
     onError: () => {
-      toast.error("حدث خطأ أثناء إرسال الطعن");
+      toast.error(t("manage.addError"));
     },
   });
 
@@ -48,10 +50,10 @@ export function useAppeals() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appeals"] });
-      toast.success("تم حذف الطعن بنجاح");
+      toast.success(t("manage.deleteSuccess"));
     },
     onError: () => {
-      toast.error("حدث خطأ أثناء حذف الطعن");
+      toast.error(t("manage.deleteError"));
     },
   });
 
@@ -79,10 +81,10 @@ export function useAppeals() {
     onSuccess: ({ id, status, userId, contentTitle }) => {
       queryClient.invalidateQueries({ queryKey: ["appeals"] });
       
-      const title = status === "accepted" ? "تم قبول طعنك!" : "تم رفض طعنك.";
-      const message = status === "accepted" 
-        ? `تم قبول طعنك على ${contentTitle}. شكرا لمساهمتك. `
-        : `تم رفض طعنك على ${contentTitle}. يمكنك مراجعة السبب إذا تم توفيره. `;
+      const title = status === "accepted" ? t("manage.acceptedTitle") : t("manage.rejectedTitle");
+      const message = status === "accepted"
+        ? t("manage.acceptedMessage", { title: contentTitle })
+        : t("manage.rejectedMessage", { title: contentTitle });
 
       notifyUser(
         userId,
@@ -94,39 +96,39 @@ export function useAppeals() {
       );
     },
     onError: (_, { status }) => {
-      toast.error(`حدث خطأ أثناء ${status === "accepted" ? "قبول" : "رفض"} الطعن`);
+      toast.error(t("manage.statusUpdateError", { action: status === "accepted" ? t("manage.actionAccepted") : t("manage.actionRejected") }));
     },
   });
 
   const deleteAppeal = useCallback(async (id: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد أنك تريد حذف هذا الطعن؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("manage.confirmDelete"), {
+      confirmLabel: t("card.delete"),
+      cancelLabel: t("cancel"),
     });
     if (confirmed) {
       await deleteAppealMutation.mutateAsync(id);
     }
-  }, [deleteAppealMutation]);
+  }, [deleteAppealMutation, t]);
 
   const acceptAppeal = useCallback(async (id: string, userId: string, contentTitle: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد أنك تريد قبول هذا الطعن؟", {
-      confirmLabel: "قبول",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("manage.confirmAccept"), {
+      confirmLabel: t("card.accept"),
+      cancelLabel: t("cancel"),
     });
     if (confirmed) {
       await updateAppealStatusMutation.mutateAsync({ id, status: "accepted", userId, contentTitle });
     }
-  }, [updateAppealStatusMutation]);
+  }, [updateAppealStatusMutation, t]);
 
   const rejectAppeal = useCallback(async (id: string, userId: string, contentTitle: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد أنك تريد رفض هذا الطعن؟", {
-      confirmLabel: "رفض",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("manage.confirmReject"), {
+      confirmLabel: t("card.reject"),
+      cancelLabel: t("cancel"),
     });
     if (confirmed) {
       await updateAppealStatusMutation.mutateAsync({ id, status: "rejected", userId, contentTitle });
     }
-  }, [updateAppealStatusMutation]);
+  }, [updateAppealStatusMutation, t]);
 
   return {
     appeals,
