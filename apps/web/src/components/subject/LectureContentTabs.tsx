@@ -1,4 +1,6 @@
 import { ExternalLink, Trash2 } from "lucide-react";
+import { useLocale } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 import type { ContentItem } from "@/hooks/useLectureContent";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -64,6 +66,7 @@ interface SummariesListProps {
 }
 
 export function SummariesList({ summaries, t }: SummariesListProps) {
+  const locale = useLocale();
   if (summaries.length === 0) {
     return (
       <div className="text-center py-10 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl">
@@ -88,7 +91,7 @@ export function SummariesList({ summaries, t }: SummariesListProps) {
             </span>
           </div>
           <span className="text-xs text-gray-400">
-            {s.created_at ? new Date(s.created_at).toLocaleString() : ""}
+            {s.created_at ? formatDate(s.created_at, { locale, withTime: true }) : ""}
           </span>
         </div>
       ))}

@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState, type MouseEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { Notification } from "../types/database";
 import {
   formatTimeAgo,
@@ -23,6 +23,7 @@ export function NotificationItem({
   const [isDeleting, setIsDeleting] = useState(false);
   const isHighlighted = shouldHighlightNotification(notification);
   const tNotifications = useTranslations("notifications");
+  const locale = useLocale();
 
   const handleDelete = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -98,7 +99,7 @@ export function NotificationItem({
                 >
                   <span className="w-1 h-1 rounded-full bg-current opacity-50" />
                   {notification.created_at
-                    ? formatTimeAgo(notification.created_at, tNotifications)
+                    ? formatTimeAgo(notification.created_at, tNotifications, locale)
                     : tNotifications("unknownTime")}
                 </time>
               </div>

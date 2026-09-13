@@ -17,10 +17,13 @@ export interface FormatDateOptions {
 }
 
 export function formatDate(
-  input: string | Date,
+  input: string | Date | number,
   options: FormatDateOptions = {},
 ): string {
-  const date = typeof input === "string" ? new Date(input) : input;
+  const date =
+    typeof input === "string" || typeof input === "number"
+      ? new Date(input)
+      : input;
   return date.toLocaleDateString(options.locale ?? "ar-EG", {
     year: "numeric",
     month: options.month ?? "short",

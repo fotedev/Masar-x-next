@@ -1,5 +1,7 @@
 
 import { Card, CardContent, Button, Badge } from "../ui";
+import { useLocale } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 
 type Enrollment = {
@@ -24,6 +26,7 @@ export function EnrollmentCard({
   onAction,
   processingId,
 }: EnrollmentCardProps) {
+  const locale = useLocale();
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -71,7 +74,7 @@ export function EnrollmentCard({
               </span>
               <span>•</span>
               <span>
-                {new Date(enrollment.created_at).toLocaleDateString("ar-EG")}
+                {formatDate(enrollment.created_at, { locale })}
               </span>
             </div>
           </div>

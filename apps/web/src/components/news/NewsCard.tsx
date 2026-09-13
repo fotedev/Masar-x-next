@@ -1,5 +1,7 @@
 
 import { Trash } from "lucide-react";
+import { useLocale } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 import { News } from "../../types/database";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -20,6 +22,7 @@ export function NewsCard({
   onDelete,
   t,
 }: NewsCardProps) {
+  const locale = useLocale();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors">
       <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
@@ -73,7 +76,7 @@ export function NewsCard({
       <div className="text-xs text-gray-500 dark:text-gray-400">
         {t("publishedAt")}:{" "}
         {item.created_at
-          ? new Date(item.created_at).toLocaleDateString()
+          ? formatDate(item.created_at, { locale })
           : "---"}
       </div>
     </div>

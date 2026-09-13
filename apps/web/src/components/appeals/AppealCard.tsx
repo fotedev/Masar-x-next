@@ -2,7 +2,8 @@
 import { Check, X, Trash } from "lucide-react";
 import { Appeal } from "../../types/database";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 
 interface AppealCardProps {
   appeal: Appeal;
@@ -20,6 +21,7 @@ export function AppealCard({
   onDelete,
 }: AppealCardProps) {
   const t = useTranslations("appeals.card");
+  const locale = useLocale();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors">
       <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
@@ -105,7 +107,7 @@ export function AppealCard({
       <div className="text-xs text-gray-500 dark:text-gray-400">
         {t("submittedAt")}:{" "}
         {appeal.created_at
-          ? new Date(appeal.created_at).toLocaleDateString()
+          ? formatDate(appeal.created_at, { locale })
           : t("unknown")}
       </div>
     </div>
