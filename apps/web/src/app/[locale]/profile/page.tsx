@@ -23,6 +23,7 @@ import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { ProfileFormSchema } from "@/lib/validation/profile";
+import { formatDate } from "masarx-shared/format";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -765,14 +766,10 @@ export default function ProfilePage() {
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.created_at
-                    ? new Date(user.created_at).toLocaleDateString(
-                        locale === "ar" ? "ar-EG" : "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        },
-                      )
+                    ? formatDate(user.created_at, {
+                        locale: locale === "ar" ? "ar-EG" : "en-US",
+                        month: "long",
+                      })
                     : t("notSpecified")}
                 </p>
               </div>
@@ -782,15 +779,11 @@ export default function ProfilePage() {
                 </p>
                 <p className="font-black text-slate-900 dark:text-white text-xl tracking-tight">
                   {user.last_sign_in_at
-                    ? new Date(user.last_sign_in_at).toLocaleDateString(
-                        locale === "ar" ? "ar-EG" : "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
+                    ? formatDate(user.last_sign_in_at, {
+                        locale: locale === "ar" ? "ar-EG" : "en-US",
+                        month: "long",
+                        withTime: true,
+                      },
                       )
                     : t("notSpecified")}
                 </p>

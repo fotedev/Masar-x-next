@@ -3,6 +3,7 @@ import Image from "next/image";
 import { User, Trash2 } from "lucide-react";
 import { StarDisplay } from "./StarRating";
 import type { ReviewDetails } from "@/types/database";
+import { formatDate } from "masarx-shared/format";
 
 type ReviewLike = ReviewDetails & { content?: string | null };
 
@@ -49,11 +50,7 @@ export function ReviewItem({
               <StarDisplay rating={review.rating || 5} size="w-3 h-3" />
               <span className="text-[11px] text-slate-400 font-bold">
                 {review.created_at &&
-                  new Date(review.created_at).toLocaleDateString("ar-EG", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  formatDate(review.created_at)}
               </span>
             </div>
           </div>
