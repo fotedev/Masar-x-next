@@ -42,9 +42,9 @@ export interface MasarxDesktopRuntimeBridge {
    * Auto-update surface (T023). Optional for the same aging reason as
    * `window`: shells shipped before the updater landed expose no
    * `updates` namespace. This mirrors apps/desktop/src/main/preload.ts
-   * `api.updates` exactly — the main process also broadcasts
-   * `updates:error`, but the preload does not forward it yet, so there
-   * is deliberately no `onError` here. Consumers must not invent one.
+   * `api.updates` exactly — `updates:available` carries
+   * `{ version, releaseDate? }` and `updates:error` carries
+   * `{ message }` (both broadcast from updater.ts).
    */
   updates?: {
     check(): Promise<unknown>;
@@ -53,6 +53,7 @@ export interface MasarxDesktopRuntimeBridge {
     onAvailable(
       cb: (info: { version: string; releaseDate?: string }) => void,
     ): () => void;
+    onError(cb: (info: { message: string }) => void): () => void;
   };
 }
 
