@@ -45,6 +45,7 @@ export const MESSAGE_NAMESPACES = [
   "footer",
   "header",
   "home",
+  "instructorDashboard",
   "lectureSelect",
   "metadata",
   "mobileNav",

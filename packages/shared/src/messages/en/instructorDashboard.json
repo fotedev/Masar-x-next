@@ -1,0 +1,20 @@
+{
+  "title": "Instructor Dashboard",
+  "subtitle": "Manage your courses and enrollment requests",
+  "stats": {
+    "totalCourses": "Total courses",
+    "pendingRequests": "Pending requests",
+    "totalStudents": "Total students",
+    "averageRating": "Average rating"
+  },
+  "tabs": {
+    "enrollments": "Enrollment Management",
+    "courseStats": "Course Statistics"
+  },
+  "courseCard": {
+    "activeStudents": "Active students",
+    "pendingRequests": "Pending requests",
+    "reviewsCount": "{count} reviews"
+  },
+  "empty": "You haven't created any courses yet"
+}

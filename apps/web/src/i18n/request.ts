@@ -34,6 +34,8 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     footer: () => import("masarx-shared/messages/ar/footer.json"),
     header: () => import("masarx-shared/messages/ar/header.json"),
     home: () => import("masarx-shared/messages/ar/home.json"),
+    instructorDashboard: () =>
+      import("masarx-shared/messages/ar/instructorDashboard.json"),
     lectureSelect: () => import("masarx-shared/messages/ar/lectureSelect.json"),
     metadata: () => import("masarx-shared/messages/ar/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/ar/mobileNav.json"),
@@ -83,6 +85,8 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     footer: () => import("masarx-shared/messages/en/footer.json"),
     header: () => import("masarx-shared/messages/en/header.json"),
     home: () => import("masarx-shared/messages/en/home.json"),
+    instructorDashboard: () =>
+      import("masarx-shared/messages/en/instructorDashboard.json"),
     lectureSelect: () => import("masarx-shared/messages/en/lectureSelect.json"),
     metadata: () => import("masarx-shared/messages/en/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/en/mobileNav.json"),

@@ -1,0 +1,20 @@
+{
+  "title": "لوحة تحكم المدرب",
+  "subtitle": "إدارة كورساتك وطلبات التسجيل",
+  "stats": {
+    "totalCourses": "إجمالي الكورسات",
+    "pendingRequests": "طلبات معلقة",
+    "totalStudents": "إجمالي الطلاب",
+    "averageRating": "متوسط التقييم"
+  },
+  "tabs": {
+    "enrollments": "إدارة التسجيلات",
+    "courseStats": "إحصائيات الكورسات"
+  },
+  "courseCard": {
+    "activeStudents": "طالب نشط",
+    "pendingRequests": "طلب معلق",
+    "reviewsCount": "{count} تقييم"
+  },
+  "empty": "لم تقم بإنشاء أي كورسات بعد"
+}
