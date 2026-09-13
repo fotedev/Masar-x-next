@@ -7,7 +7,7 @@
 - Web app: `apps/web/`
 - Shared types/i18n/AI: `packages/shared/`
 - Supabase: `supabase/` (migrations, edge functions)
-- Specs: `specs/001..005/`
+- Specs: `specs/` (next spec number is always derived from disk — §10.2)
 - Agent skills: `.agents/skills/`
 - Gotchas reference: `docs/agents/references/01-gotchas.md`
 - Release pipeline: `docs/agents/references/02-release-pipeline.md`
@@ -94,7 +94,7 @@ masarx_next/
 ├── apps/                # web (Next.js), desktop (Electron), mobile (Expo)
 ├── packages/shared/     # cross-platform code + i18n messages + Zod
 ├── supabase/            # migrations, edge functions, seed data
-├── specs/               # 001..005 — SpecKit spec directories
+├── specs/               # SpecKit spec directories (NNN_ numbering derived from disk, §10.2)
 ├── docs/                # setup, product context, design, handoffs
 ├── scripts/             # utility scripts
 ├── .agents/             # this file + skills + references
@@ -172,7 +172,7 @@ Invariant I11 in practice: no agent starts writing or modifying code for any tas
 
 ### 10.2 Spec anatomy
 
-Specs live in `specs/NNN_name/` — take the **next sequential number after the highest existing directory** (same convention as `NNN_` migrations, §7) and follow the established SpecKit layout (`spec.md`, `tasks.md`, `checklists/`; see existing `001`–`005`). A spec must cover:
+Specs live in `specs/NNN_name/`. Numbering is **dynamic auto-increment, derived from disk only**: inspect the `specs/` directory, take the highest existing `NNN` prefix, and generate the next number as `max + 1`, zero-padded to three digits (`String(max + 1).padStart(3, "0")`). Never assume, pin, or recall a spec number from memory or prior instructions — the disk is the single source of truth (same convention as `NNN_` migrations, §7). Follow the established SpecKit layout of the existing spec directories (`spec.md`, `tasks.md`, `checklists/`). A spec must cover:
 
 1. **Context & problem statement** — what is wrong today and why change it.
 2. **Architecture & design** — components created/modified, each with a single responsibility; data flow; contracts (types / interfaces / Zod schemas).
