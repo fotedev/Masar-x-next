@@ -40,6 +40,7 @@ export const MESSAGE_NAMESPACES = [
   "courses",
   "editSummary",
   "errorBoundary",
+  "faq",
   "fileDropzone",
   "footer",
   "header",
