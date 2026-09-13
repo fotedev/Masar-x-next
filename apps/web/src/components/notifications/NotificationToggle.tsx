@@ -1,11 +1,11 @@
 import { useState, type MouseEvent } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
-import { useNotifications } from "./NotificationProvider";
+import { useBrowserNotifications } from "./NotificationProvider";
 
 export function NotificationToggle() {
   const { permission, requestPermission, sendNotification } =
-    useNotifications();
+    useBrowserNotifications();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleToggle = async (event: MouseEvent<HTMLButtonElement>) => {

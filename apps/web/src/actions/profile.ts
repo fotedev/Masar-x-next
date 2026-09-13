@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { ProfileSchema } from "@/lib/validation/profile";
+import { ProfileFormSchema } from "@/lib/validation/profile";
 import { logger } from "@/lib/logger";
 
 /**
@@ -27,7 +27,7 @@ export async function updateProfile(_prevState: unknown, formData: FormData) {
     const website = formData.get("website") as string;
     const avatarUrl = formData.get("avatarUrl") as string;
 
-    const validationResult = ProfileSchema.safeParse({
+    const validationResult = ProfileFormSchema.safeParse({
       fullName,
       username,
       website,
@@ -102,7 +102,7 @@ export async function updateAvatar(avatarUrl: string) {
 
   try {
     // Validate avatarUrl
-    const validationResult = ProfileSchema.shape.avatarUrl.safeParse(avatarUrl);
+    const validationResult = ProfileFormSchema.shape.avatarUrl.safeParse(avatarUrl);
     if (!validationResult.success) {
       return {
         success: false,

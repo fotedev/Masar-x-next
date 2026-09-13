@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNotifications } from "./NotificationProvider";
+import { useBrowserNotifications } from "./NotificationProvider";
 import { NotificationToggle } from "./NotificationToggle";
 
 export function NotificationSettings() {
-  const { permission, requestPermission, isSupported } = useNotifications();
+  const { permission, requestPermission, isSupported } = useBrowserNotifications();
   const [settings, setSettings] = useState({
     newSummaries: true,
     newNews: true,

@@ -8,7 +8,7 @@ import { Upload, Send, CheckCircle, X, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
+import { useBrowserNotifications } from "@/components/NotificationManager";
 import { useNotifications as useDbNotifications } from "@/hooks/useNotifications";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useSummaries, SummaryWithRatingsOptimistic } from "@/hooks/useSummaries";

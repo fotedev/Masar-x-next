@@ -1,6 +1,6 @@
 import { Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useNotifications } from "./NotificationProvider";
+import { useBrowserNotifications } from "./NotificationProvider";
 
 export function NotificationPrompt() {
   const t = useTranslations("notifications");
@@ -9,7 +9,7 @@ export function NotificationPrompt() {
     requestPermission,
     dismissPrompt,
     isSupported,
-  } = useNotifications();
+  } = useBrowserNotifications();
 
   if (!showNotificationPrompt || !isSupported) return null;
 

@@ -22,7 +22,7 @@ import { AdminProfileImage } from "@/components/AdminProfileImage";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { ProfileSchema } from "@/lib/validation/profile";
+import { ProfileFormSchema } from "@/lib/validation/profile";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -171,16 +171,16 @@ export default function ProfilePage() {
       return;
     }
 
-    // FR-005 (Round-B): validate with ProfileSchema BEFORE any DB write.
+    // FR-005 (Round-B): validate with ProfileFormSchema BEFORE any DB write.
     // Implementer decision (logged in fix-log_roundB.md): the validated
     // server action updateProfile (apps/web/src/actions/profile.ts) cannot
     // be wired here without editing that file (not owned by this fix): it
-    // upserts ALL of fullName/username/website/avatarUrl and ProfileSchema
+    // upserts ALL of fullName/username/website/avatarUrl and ProfileFormSchema
     // requires a valid username (min 3 chars, [a-zA-Z0-9_]) which this page
     // does not manage. Calling it would block saves for users without a
     // username and could null unrelated columns. Per the Round-B brief the
-    // minimal safe fallback is client-side ProfileSchema validation.
-    const parsedDisplayName = ProfileSchema.shape.fullName.safeParse(
+    // minimal safe fallback is client-side ProfileFormSchema validation.
+    const parsedDisplayName = ProfileFormSchema.shape.fullName.safeParse(
       newDisplayName.trim(),
     );
     if (!parsedDisplayName.success) {
