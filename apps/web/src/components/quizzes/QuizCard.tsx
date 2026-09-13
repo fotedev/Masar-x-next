@@ -1,5 +1,7 @@
 
 import { Trash2, Star } from "lucide-react";
+import { useLocale } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 import { QuizWithRatings } from "../../types/database";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -13,6 +15,7 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ quiz, onDelete, onUpdateStatus, t }: QuizCardProps) {
+  const locale = useLocale();
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 transition-colors">
       <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
@@ -92,7 +95,7 @@ export function QuizCard({ quiz, onDelete, onUpdateStatus, t }: QuizCardProps) {
         <span>
           {t("created")}{" "}
           {quiz.created_at
-            ? new Date(quiz.created_at).toLocaleDateString()
+            ? formatDate(quiz.created_at, { locale })
             : "-"}
         </span>
         <span

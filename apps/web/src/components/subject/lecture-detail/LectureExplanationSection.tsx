@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { CheckCircle, FileText, Plus, Video } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatDate } from "masarx-shared/format";
 import { toast } from "sonner";
 import type { ContentItem } from "./types";
 
@@ -144,9 +145,9 @@ export function LectureExplanationSection(props: {
                   </span>
                   <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
                   <span className="text-[10px] sm:text-xs font-bold text-slate-400">
-                    {new Date(item.created_at || Date.now()).toLocaleDateString(
+                    {formatDate(item.created_at || Date.now(), {
                       locale,
-                    )}
+                    })}
                   </span>
                 </div>
               </div>

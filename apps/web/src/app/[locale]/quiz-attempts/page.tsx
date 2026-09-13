@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { formatDate } from "masarx-shared/format";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "@/navigation";
 import { ChevronLeft, ChevronDown, ChevronUp } from "lucide-react";
@@ -270,7 +271,7 @@ export default function QuizAttemptsPage() {
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {a.created_at
-                        ? new Date(a.created_at).toLocaleString(dateLocale)
+                        ? formatDate(a.created_at, { locale: dateLocale, withTime: true })
                         : ""}
                     </div>
                   </div>
@@ -358,7 +359,7 @@ export default function QuizAttemptsPage() {
                         </div>
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {a._startedAt
-                            ? a._startedAt.toLocaleString(dateLocale)
+                            ? formatDate(a._startedAt, { locale: dateLocale, withTime: true })
                             : "-"}
                         </div>
                       </div>

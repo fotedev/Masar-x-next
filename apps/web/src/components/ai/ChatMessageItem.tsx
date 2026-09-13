@@ -620,7 +620,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           <div
             className={`text-[11px] px-2 font-medium opacity-60 text-slate-500 ${timestampAlignmentClass}`}
           >
-            {message.timestamp.toLocaleTimeString([], {
+            {message.timestamp.toLocaleTimeString([locale], {
               hour: "2-digit",
               minute: "2-digit",
             })}

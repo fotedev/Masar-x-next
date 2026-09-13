@@ -10,6 +10,7 @@ import type { Notification } from '../types/database';
 export function formatTimeAgo(
   dateString: string,
   t: (key: string, vars?: Record<string, string | number>) => string,
+  locale?: string,
 ): string {
   const now = new Date();
   const date = new Date(dateString);
@@ -30,7 +31,7 @@ export function formatTimeAgo(
     return t('timeAgo.daysAgo', { count: diffInDays });
   }
 
-  return date.toLocaleDateString('ar-EG');
+  return date.toLocaleDateString(locale ?? 'ar-EG');
 }
 
 /**

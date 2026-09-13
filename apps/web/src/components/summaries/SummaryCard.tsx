@@ -1,4 +1,5 @@
 import { Star, Edit } from "lucide-react";
+import { formatDate } from "masarx-shared/format";
 import { useTranslations, useLocale } from "next-intl";
 
 import { SummaryWithRatings } from "../../types/database";
@@ -107,9 +108,9 @@ export function SummaryCard({
       </div>
       <div className="text-xs text-gray-500 dark:text-gray-400">
         {t("sentAt")}:{" "}
-        {new Date(summary.created_at).toLocaleDateString(
-          locale === "ar" ? "ar-SA" : "en-US",
-        )}
+        {formatDate(summary.created_at, {
+          locale: locale === "ar" ? "ar-EG" : "en-US",
+        })}
       </div>
     </div>
   );

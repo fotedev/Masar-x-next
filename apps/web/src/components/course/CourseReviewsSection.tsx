@@ -1,5 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle, Button } from "../ui";
+import { formatDate } from "masarx-shared/format";
 import { Star } from "lucide-react";
 import type { Review, EnrollmentStatus } from "./types";
 import { useTranslations, useLocale } from "next-intl";
@@ -60,9 +61,9 @@ export default function CourseReviewsSection({
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {new Date(review.created_at).toLocaleDateString(
-                      locale === "ar" ? "ar-EG" : "en-US",
-                    )}
+                    {formatDate(review.created_at, {
+                      locale: locale === "ar" ? "ar-EG" : "en-US",
+                    })}
                   </span>
                 </div>
                 {review.content && (
