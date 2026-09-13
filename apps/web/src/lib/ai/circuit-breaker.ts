@@ -14,11 +14,10 @@ import {
   isPuterModelNotAvailableError,
   isPuterTransportError,
 } from './errors';
+import { cannedMessagesFor } from './canned-messages';
 
 export const PUTER_UNAVAILABLE_UNTIL_KEY = 'puter_unavailable_until';
 
-const PUTER_UNAVAILABLE_MESSAGE_AR = '⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً. حاول لاحقاً.';
-const PUTER_UNAVAILABLE_MESSAGE_EN = '⚠️ AI service is temporarily unavailable. Please try again later.';
 
 let puterCircuitOpenUntilMs = 0;
 let puterTransportFailureCount = 0;
@@ -27,8 +26,8 @@ let puterLastCircuitLogAtMs = 0;
 
 export const isPuterCircuitOpen = () => Date.now() < puterCircuitOpenUntilMs;
 
-export const getPuterUnavailableMessage = () =>
-  `${PUTER_UNAVAILABLE_MESSAGE_AR}\n\n${PUTER_UNAVAILABLE_MESSAGE_EN}`;
+export const getPuterUnavailableMessage = (locale?: string) =>
+  cannedMessagesFor(locale).puterUnavailable;
 
 export const notePuterTransportFailure = (error: unknown) => {
   if (!isPuterTransportError(error)) return;

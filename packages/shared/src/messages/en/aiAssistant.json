@@ -91,5 +91,16 @@
   "send": "Send",
   "comingSoonBadge": "Coming Soon",
   "comingSoonTooltip": "The AI Assistant is under active development. It will ship in a future release.",
-  "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon."
+  "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon.",
+  "canned": {
+    "noPlatformContext": "I can't answer from the platform without enough context (subject/level/semester).",
+    "groupRagNoData": "I couldn't find relevant information in the group chats to answer your question. Please:\n\n1. Rephrase the question differently\n2. Make sure the chats contain information about this topic\n3. Load more comprehensive data if needed.\n\n💡 Tip: switch to \"CS Assistant\" mode at the top of the page for general programming help.",
+    "claudeFallback": "⚠️ Automatically switched to GPT-5 nano due to Claude connection issues.\n\nThe next answer will come from GPT-5 nano:\n\n💡 To get answers from Claude, try again in a few minutes or check your internet connection.",
+    "claudeFallbackShort": "⚠️ Automatically switched to GPT-5 nano due to Claude connection issues.\n\n💡 To get answers from Claude, try again in a few minutes.",
+    "serviceUnavailable": "⚠️ The AI service is currently unavailable due to connection issues.\n\n💡 Suggestions:\n1. Wait a few minutes and try again\n2. Check your internet connection\n\nThe issue will resolve itself shortly.",
+    "serviceUnavailableShort": "⚠️ The AI service is currently unavailable due to connection issues.\n\n💡 Wait a few minutes and try again, or try a different model.",
+    "genericError": "⚠️ The AI service encountered an error.\n\n💡 Try reloading the page or trying again later.",
+    "puterUnavailable": "⚠️ The AI service is currently unavailable. Please try again later.",
+    "needsLogin": "__PUTER_AUTH_REQUIRED__\n⚠️ Sign in to Puter to enable this model{modelSuffix}.\n\nPress the \"Sign In\" button below and try again."
+  }
 }
