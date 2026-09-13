@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, type MouseEvent } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from '@/navigation';
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -44,6 +45,7 @@ const getYouTubeEmbedUrl = (url: string) => {
 };
 
 export default function SummaryDetailPage() {
+  const t = useTranslations("summaries");
   const params = useParams();
   const summaryId = params?.summaryId as string;
   const router = useRouter();
@@ -83,7 +85,7 @@ export default function SummaryDetailPage() {
       if (summaryError) throw summaryError;
 
       if (!summaryData) {
-        setError("الملخص غير موجود أو قيد المراجعة");
+        setError(t("detail.notFound"));
         return;
       }
 
@@ -136,11 +138,11 @@ export default function SummaryDetailPage() {
         setLinkedQuiz(quizData);
       }
     } catch {
-      setError("حدث خطأ أثناء تحميل الملخص");
+      setError(t("detail.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [summaryId, isAdmin, trackSummaryView]);
+  }, [summaryId, isAdmin, trackSummaryView, t]);
 
   useEffect(() => {
     if (summaryId) {
@@ -154,7 +156,7 @@ export default function SummaryDetailPage() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-400 font-bold">
-            جاري التحميل...
+            {t("detail.loading")}
           </p>
         </div>
       </div>
@@ -173,7 +175,7 @@ export default function SummaryDetailPage() {
             onClick={() => router.push("/")}
             className="mt-4 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
           >
-            العودة إلى الصفحة الرئيسية
+            {t("detail.backHome")}
           </button>
         </div>
       </div>
@@ -187,7 +189,7 @@ export default function SummaryDetailPage() {
         className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />
-        <span>العودة إلى القائمة</span>
+        <span>{t("detail.backToList")}</span>
       </button>
 
       <div className="modern-card overflow-hidden">
@@ -249,10 +251,10 @@ export default function SummaryDetailPage() {
                 </div>
                 <div className="text-center sm:text-right">
                   <p className="font-bold text-slate-900 dark:text-white text-lg">
-                    ملف PDF متاح
+                    {t("detail.pdf.title")}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    حمل الملخص بصيغة PDF للمذاكرة في أي وقت
+                    {t("detail.pdf.subtitle")}
                   </p>
                 </div>
               </div>
@@ -263,7 +265,7 @@ export default function SummaryDetailPage() {
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand-blue text-white px-8 py-3 rounded-xl font-bold hover:bg-brand-sky shadow-lg shadow-brand-blue/25 transition-all duration-300"
               >
                 <Download className="w-5 h-5" />
-                <span>تحميل الآن</span>
+                <span>{t("detail.pdf.download")}</span>
               </a>
             </div>
           )}
@@ -276,7 +278,7 @@ export default function SummaryDetailPage() {
                 </div>
                 <div className="text-center sm:text-right">
                   <p className="font-bold text-slate-900 dark:text-white text-lg">
-                    اختبر معلوماتك
+                    {t("detail.quiz.title")}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {linkedQuiz.title}
@@ -290,7 +292,7 @@ export default function SummaryDetailPage() {
                 className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-600/25 transition-all duration-300"
               >
                 <Play className="w-5 h-5" />
-                <span>ابدأ الامتحان</span>
+                <span>{t("detail.quiz.start")}</span>
               </button>
             </div>
           )}
@@ -299,7 +301,7 @@ export default function SummaryDetailPage() {
             <div className="mb-10">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
                 <span className="w-1.5 h-8 bg-red-600 rounded-full" />
-                شرح الفيديو
+                {t("detail.sections.videoExplanation")}
               </h2>
               <div className="relative pt-[56.25%] w-full overflow-hidden rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800">
                 <iframe
@@ -317,7 +319,7 @@ export default function SummaryDetailPage() {
           <div className="prose prose-lg dark:prose-invert max-w-none">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
               <span className="w-1.5 h-8 bg-brand-blue rounded-full" />
-              محتوى الملخص
+              {t("detail.sections.content")}
             </h2>
             <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed text-lg">
               {cleanContent}
@@ -327,7 +329,7 @@ export default function SummaryDetailPage() {
               <div className="mt-12">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
                   <span className="w-1.5 h-8 bg-brand-orange rounded-full" />
-                  الصور المرفقة
+                  {t("detail.sections.images")}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {summaryImages.map((imageUrl, index) => (
@@ -337,7 +339,7 @@ export default function SummaryDetailPage() {
                     >
                       <Image
                         src={imageUrl}
-                        alt={`صورة ${index + 1}`}
+                        alt={t("detail.imageAlt", { n: index + 1 })}
                         fill
                         sizes="(max-width: 640px) 100vw, 50vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
@@ -352,7 +354,7 @@ export default function SummaryDetailPage() {
                           }}
                           className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl border border-white/20 text-sm font-bold hover:bg-white/30 transition-colors cursor-pointer"
                         >
-                          عرض الصورة
+                          {t("detail.viewImage")}
                         </button>
                       </div>
                     </div>
@@ -365,8 +367,9 @@ export default function SummaryDetailPage() {
           <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <p className="text-sm font-medium text-slate-400">
-                تم النشر في{" "}
-                {formatDate(summary.created_at, { month: "long" })}
+                {t("detail.publishedOn", {
+                  date: formatDate(summary.created_at, { month: "long" }),
+                })}
               </p>
               <div className="flex items-center gap-3">
                 <button
@@ -374,7 +377,7 @@ export default function SummaryDetailPage() {
                   className="flex items-center gap-2 px-5 py-2.5 bg-brand-orange/10 text-brand-orange rounded-xl hover:bg-brand-orange/20 transition-all text-sm font-bold"
                 >
                   <Flag className="w-4 h-4" />
-                  <span>الطعن في المحتوى</span>
+                  <span>{t("detail.appeal")}</span>
                 </button>
 
                 {(isAdmin || (user && user.id === summary.user_id)) && (
@@ -385,7 +388,7 @@ export default function SummaryDetailPage() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-brand-blue/10 text-brand-blue rounded-xl hover:bg-brand-blue/20 transition-all text-sm font-bold"
                   >
                     <Edit className="w-4 h-4" />
-                    <span>تعديل الملخص</span>
+                    <span>{t("detail.edit")}</span>
                   </button>
                 )}
               </div>
