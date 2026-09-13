@@ -165,7 +165,7 @@ async function safeImportNamespace(
     }
 
     throw new Error(`Empty messages for ${locale}/${namespace}`);
-  } catch (error) {
+  } catch {
     // Fallback: Read the JSON directly from disk (Node runtime only).
     try {
       const fromDisk = await readNamespaceFromDisk(locale, namespace);

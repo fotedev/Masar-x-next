@@ -3,8 +3,6 @@
  * This file is a SCRIPT file (no export/import), so its declarations are global.
  */
 
-/* eslint-disable no-var */
-
 interface ProcessEnv {
     NODE_ENV: 'development' | 'production' | 'test';
     NEXT_PUBLIC_SUPABASE_URL: string;
