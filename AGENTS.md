@@ -20,7 +20,7 @@
 |---|---|---|
 | I1 | Service-role and AI provider keys stay **server-side only** | RLS depends on it; CI runs `ai-endpoint-grep` + gitleaks on built artifacts |
 | I2 | TypeScript end-to-end: `Database` types + Zod schemas in `packages/shared` | One source of truth across web/desktop/mobile |
-| I3 | i18n for **every** user-facing string. No hardcoded Arabic in components | 42 namespaces already in `packages/shared/src/messages/{ar,en}/` |
+| I3 | i18n for **every** user-facing string. No hardcoded Arabic in components | 45 namespaces already in `packages/shared/src/messages/{ar,en}/` |
 | I4 | All OAuth callbacks live under `[locale]/auth/callback/` | See gotcha #3 |
 | I5 | `pnpm.neverBuiltDependencies` lives in root `package.json` under `"pnpm"` | See gotcha #8 |
 | I6 | Electron version pinned exact (no `^`/`~`) in `apps/desktop/package.json` | See gotcha #11 |
@@ -130,7 +130,7 @@ At session start, run `mavis mcp list` to confirm what's actually loaded — `cl
 - **Dark mode**: calibrated for late-night study, not just inverted. Theme switching must use the native `<script>` pattern in `apps/web/src/components/ThemeScript.tsx` (gotcha #19).
 - **Service-role key**: NEVER in `NEXT_PUBLIC_*`. NEVER pasted in chat/CLI args.
 - **Hardcoded strings prohibition**: any Arabic string inside `.tsx`/`.ts` that's not in `messages/ar/*.json` is a defect — migrate on touch.
-- **Supabase migrations**: every change to `supabase/migrations/` MUST have a timestamp-prefixed file. Out-of-order files break `db push`.
+- **Supabase migrations**: migrations use sequential `NNN_name.sql` prefixes (`001_` …). A new migration takes the next number in sequence — do not introduce timestamps, and do not reorder existing files.
 
 ---
 
@@ -143,7 +143,7 @@ Before opening a PR:
 - [ ] `pnpm test` passes
 - [ ] No hardcoded Arabic strings added (grep `apps/web/src --include='*.tsx' --include='*.ts'` for non-comment lines containing Arabic chars)
 - [ ] No new deps without updating root `pnpm-lock.yaml` via `pnpm install`
-- [ ] If you touched `supabase/`: migration timestamp is current + file is in chronological order
+- [ ] If you touched `supabase/`: new migration uses the next sequential `NNN_` number + file order stays chronological
 - [ ] If you touched `ThemeScript.tsx`: re-read gotcha #19 before any change
 
 ---
