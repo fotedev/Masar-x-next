@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type FaqItem = {
   id: string;
@@ -10,40 +11,36 @@ type FaqItem = {
 };
 
 export default function FaqPage() {
+  const t = useTranslations("faq");
   const faqs = useMemo<FaqItem[]>(
     () => [
       {
-        id: "what-is-masarx",
-        question: "ما هو Masar X؟",
-        answer:
-          "Masar X منصة لمشاركة الملخصات والامتحانات ومصادر الدراسة، بهدف تسهيل الوصول للمحتوى الأكاديمي وتنظيمه.",
+        id: "whatIsMasarx",
+        question: t("items.whatIsMasarx.question"),
+        answer: t("items.whatIsMasarx.answer"),
       },
       {
-        id: "how-to-add-summary",
-        question: "كيف أضيف ملخص؟",
-        answer:
-          "من القائمة اختر (إضافة ملخص) ثم املأ البيانات وارفع الملف/المحتوى. بعد المراجعة سيتم نشره إذا تمت الموافقة.",
+        id: "howToAddSummary",
+        question: t("items.howToAddSummary.question"),
+        answer: t("items.howToAddSummary.answer"),
       },
       {
-        id: "approval-process",
-        question: "لماذا الملخص/الامتحان غير ظاهر؟",
-        answer:
-          "قد يكون المحتوى قيد المراجعة أو غير معتمد بعد. يتم إظهار المحتوى المعتمد فقط في الصفحات العامة.",
+        id: "approvalProcess",
+        question: t("items.approvalProcess.question"),
+        answer: t("items.approvalProcess.answer"),
       },
       {
-        id: "account-required",
-        question: "هل يجب إنشاء حساب؟",
-        answer:
-          "يمكنك التصفح بدون حساب، لكن إضافة محتوى أو التفاعل مع بعض الميزات قد يتطلب تسجيل الدخول.",
+        id: "accountRequired",
+        question: t("items.accountRequired.question"),
+        answer: t("items.accountRequired.answer"),
       },
       {
-        id: "report-issue",
-        question: "كيف أبلغ عن مشكلة أو محتوى غير مناسب؟",
-        answer:
-          "استخدم زر التواصل/الدعم داخل المنصة (إن وجد) أو تواصل مع الإدارة. سنراجع البلاغ بأسرع وقت.",
+        id: "reportIssue",
+        question: t("items.reportIssue.question"),
+        answer: t("items.reportIssue.answer"),
       },
     ],
-    [],
+    [t],
   );
 
   const [openId, setOpenId] = useState<string | null>(faqs[0]?.id ?? null);
@@ -57,10 +54,10 @@ export default function FaqPage() {
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              الأسئلة الشائعة
+              {t("title")}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 font-medium">
-              إجابات سريعة على الأسئلة الأكثر تكراراً حول المنصة.
+              {t("subtitle")}
             </p>
           </div>
         </div>

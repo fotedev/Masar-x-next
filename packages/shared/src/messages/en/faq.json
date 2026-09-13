@@ -1,0 +1,26 @@
+{
+  "title": "Frequently Asked Questions",
+  "subtitle": "Quick answers to the most common questions about the platform.",
+  "items": {
+    "whatIsMasarx": {
+      "question": "What is Masar X?",
+      "answer": "Masar X is a platform for sharing summaries, exams, and study resources, aiming to make academic content easier to access and organize."
+    },
+    "howToAddSummary": {
+      "question": "How do I add a summary?",
+      "answer": "Choose \"Add summary\" from the menu, fill in the details, and upload your file or content. After review, it will be published once approved."
+    },
+    "approvalProcess": {
+      "question": "Why isn't my summary/exam showing?",
+      "answer": "The content may still be under review or not yet approved. Only approved content is shown on public pages."
+    },
+    "accountRequired": {
+      "question": "Do I need to create an account?",
+      "answer": "You can browse without an account, but adding content or interacting with some features may require signing in."
+    },
+    "reportIssue": {
+      "question": "How do I report a problem or inappropriate content?",
+      "answer": "Use the contact/support button inside the platform (if available) or reach out to the administration. We will review the report as soon as possible."
+    }
+  }
+}
