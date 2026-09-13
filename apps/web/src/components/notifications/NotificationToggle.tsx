@@ -1,9 +1,11 @@
 import { useState, type MouseEvent } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useBrowserNotifications } from "./NotificationProvider";
 
 export function NotificationToggle() {
+  const t = useTranslations("notifications");
   const { permission, requestPermission, sendNotification } =
     useBrowserNotifications();
   const [isLoading, setIsLoading] = useState(false);
@@ -20,7 +22,7 @@ export function NotificationToggle() {
     try {
       if (permission === "default" || permission === "denied") {
         if (!("Notification" in window)) {
-          toast.error("متصفحك لا يدعم الإشعارات");
+          toast.error(t("toggle.unsupported"));
           return;
         }
 
@@ -31,23 +33,14 @@ export function NotificationToggle() {
           // NotificationProvider's mount effect; no need to re-register
           // here when the user grants permission.
         } else if (result === "denied") {
-          const message = `تم رفض إذن الإشعارات.
-
-لإعادة تفعيل الإشعارات:
-• Chrome: اضغط على قفل الموقع في شريط العنوان ← إعدادات الموقع ← الإشعارات
-• Firefox: اضغط على قفل الموقع في شريط العنوان ← الإشعارات
-• Safari: Safari ← التفضيلات ← الخصوصية ← إدارة بيانات الموقع
-
-أو يمكنك النقر على أيقونة الجرس مرة أخرى للمحاولة.`;
-
-          toast.error("تم رفض إذن الإشعارات", {
-            description: message,
+          toast.error(t("toggle.deniedTitle"), {
+            description: t("toggle.deniedDescription"),
             duration: 8000,
           });
         }
       } else if (permission === "granted") {
-        sendNotification("اختبار الإشعارات", {
-          body: "هذا إشعار تجريبي من Masar X",
+        sendNotification(t("toggle.testTitle"), {
+          body: t("toggle.testBody"),
           tag: "test-notification",
         });
       }
@@ -59,11 +52,10 @@ export function NotificationToggle() {
   };
 
   const getTitle = () => {
-    if (isLoading) return "جاري طلب الإذن...";
-    if (permission === "granted") return "الإشعارات مفعلة - اضغط للاختبار";
-    if (permission === "denied")
-      return "الإشعارات محظورة - اضغط للمحاولة مرة أخرى";
-    return "اضغط لتفعيل الإشعارات";
+    if (isLoading) return t("toggle.titleLoading");
+    if (permission === "granted") return t("toggle.titleGranted");
+    if (permission === "denied") return t("toggle.titleDenied");
+    return t("toggle.titleDefault");
   };
 
   const getIconColor = () => {
