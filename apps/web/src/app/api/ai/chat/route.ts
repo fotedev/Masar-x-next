@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamText } from 'ai';
-import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import {
+  invalidRequestBody,
+  requireAuthenticatedUser,
+  tooManyRequestsResponse,
+} from '@/lib/api-auth';
 import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 /**
  * Server-side AI chat API endpoint
@@ -9,11 +15,16 @@ import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
  * Protected: Requires authentication + rate limiting
  */
 
-type ChatRequest = {
-  prompt: string;
-  model?: string;
-  mode?: 'group_rag' | 'cs_assistant' | 'student_agent';
-};
+const chatRequestSchema = z.object({
+  prompt: z
+    .string()
+    .min(1, 'Missing or invalid prompt')
+    .max(10000, 'Prompt too long (max 10000 characters)'),
+  model: z.string().max(200).optional(),
+  mode: z.enum(['group_rag', 'cs_assistant', 'student_agent']).optional(),
+});
+
+type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 /**
  * System prompt per chat mode.
@@ -41,54 +52,28 @@ const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-sonnet-4.6';
 export async function POST(request: NextRequest) {
   try {
     // T021: Authenticate user using getUser() for JWT verification
-    const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized', message: 'Valid authentication required' },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAuthenticatedUser();
+    if (!('user' in auth)) return auth.response;
+    const { user } = auth;
 
     // T022: Check rate limit (10 req/min per user)
-    const rateLimitResult = await checkAIChatRateLimit(user.id);
+    const rateLimitResult = checkAIChatRateLimit(user.id);
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Too Many Requests',
-          message: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfter} seconds.`,
-          retryAfter: rateLimitResult.retryAfter
-        },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(rateLimitResult.retryAfter)
-          }
-        }
-      );
+      return tooManyRequestsResponse(rateLimitResult.retryAfter);
     }
 
-    const body = await request.json() as ChatRequest;
-
-    // T023: Validate prompt
-    if (!body.prompt || typeof body.prompt !== 'string') {
-      return NextResponse.json(
-        { error: 'Missing or invalid prompt' },
-        { status: 400 }
+    const parsed = chatRequestSchema.safeParse(
+      await request.json().catch(() => null),
+    );
+    if (!parsed.success) {
+      return invalidRequestBody(
+        parsed.error.issues[0]?.message ?? 'Invalid payload',
       );
     }
-
-    // Validate request size
-    if (body.prompt.length > 10000) {
-      return NextResponse.json(
-        { error: 'Prompt too long (max 10000 characters)' },
-        { status: 400 }
-      );
-    }
+    const body = parsed.data;
 
     // Record this request for rate limiting
-    await recordAIChatRequest(user.id);
+    recordAIChatRequest(user.id);
 
     // Explicit 503 if the AI Gateway isn't configured — fail loud rather than
     // silently returning a fake response (would defeat the purpose of the route).
@@ -117,7 +102,7 @@ export async function POST(request: NextRequest) {
     // toTextStreamResponse() sets text/plain + chunked transfer encoding.
     return result.toTextStreamResponse();
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('api/ai/chat error', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

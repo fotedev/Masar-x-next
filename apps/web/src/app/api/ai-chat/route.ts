@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { z } from 'zod';
+import {
+  invalidRequestBody,
+  requireAuthenticatedUser,
+  tooManyRequestsResponse,
+} from '@/lib/api-auth';
 import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
 
 /**
  * Server-side proxy to the Supabase Edge Function `ai-chat`.
@@ -39,6 +45,15 @@ const FORBIDDEN_HEADERS = [
   'x-gemini-api-key',
 ];
 
+// The proxy is contract-preserving: the Edge Function owns the payload
+// semantics, so we only enforce structure (a JSON object, size-capped)
+// and forward everything else untouched.
+const proxyBodySchema = z
+  .record(z.string(), z.unknown())
+  .refine((body) => JSON.stringify(body).length <= 50_000, {
+    message: 'Payload too large (max 50000 characters)',
+  });
+
 export async function POST(req: NextRequest) {
   try {
     // 1. Reject forbidden headers
@@ -52,36 +67,29 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Authenticate the caller (server-side, JWT verification)
-    const supabase = await createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const auth = await requireAuthenticatedUser();
+    if (!('user' in auth)) return auth.response;
+    const { user } = auth;
 
     // 3. Rate limit (10 req/min per user, same as the existing /api/ai/chat)
-    const rateLimitResult = await checkAIChatRateLimit(user.id);
+    const rateLimitResult = checkAIChatRateLimit(user.id);
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Too Many Requests',
-          message: `Rate limit exceeded. Try again in ${rateLimitResult.retryAfter} seconds.`,
-        },
-        {
-          status: 429,
-          headers: { 'Retry-After': String(rateLimitResult.retryAfter) },
-        }
-      );
+      return tooManyRequestsResponse(rateLimitResult.retryAfter);
     }
 
-    const body = await req.json();
+    const parsed = proxyBodySchema.safeParse(
+      await req.json().catch(() => null),
+    );
+    if (!parsed.success) {
+      return invalidRequestBody(
+        parsed.error.issues[0]?.message ?? 'Invalid payload',
+      );
+    }
     await recordAIChatRequest(user.id);
 
     // 4. Env-var check (fail fast on misconfiguration)
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-      console.error('[api/ai-chat] Supabase env vars missing');
+      logger.error('[api/ai-chat] Supabase env vars missing');
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
@@ -101,7 +109,7 @@ export async function POST(req: NextRequest) {
         'Authorization': req.headers.get('Authorization') ?? `Bearer ${SUPABASE_ANON_KEY}`,
         'apikey': SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(parsed.data),
     });
 
     // SSE passthrough: when the Edge Function streams (text/event-stream),
@@ -122,7 +130,7 @@ export async function POST(req: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('[api/ai-chat] error:', error instanceof Error ? error.message : 'unknown');
+    logger.error('[api/ai-chat] error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
