@@ -28,6 +28,7 @@
 | I8 | Never destructive git ops (`stash drop`, `reset --hard`, `checkout --`, `clean -fd`) on a dirty tree without explicit user consent | See gotcha #20 |
 | I9 | **No direct file deletion.** Agents never run `rm`/`git rm`/`del` on project files. To retire a dead or obsolete file: ask the user explicitly first, and on approval **move it to `.trash/`** (mirroring its original path; `.trash/` is gitignored) instead of deleting | Deletion from the working tree is irreversible; the user audits every removal and keeps a local archive |
 | I10 | **Pasted model output is welcome — Validate & Adapt.** Raw copy-pasted text from other AI models is accepted as normal input (this is the user's primary phone-first workflow), but the agent must run full engineering validation before executing: match every snippet and claim against the actual repo state and real installed library versions, fix errors and hallucinations, adapt paths/names/APIs to project conventions — never blind application, never absolute rejection | Pasted model answers routinely reference files/APIs/states that don't exist here; validating and adapting before executing is what prevents AI-spaghetti accumulation |
+| I11 | **Spec-first workflow.** No writing or modifying code for any task beyond trivial, direct fixes without a technical spec prepared and **approved by the user** first | Prevents unplanned dives into large/complex files and unreviewed architectural drift; see §10 Spec-First development standard |
 
 ---
 
@@ -59,6 +60,7 @@ Verify your setup: `pnpm typecheck && pnpm lint && pnpm test`.
 | Modifying CI workflows that check source into a subdir | [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) §18 |
 | Touching `ThemeScript.tsx` or CSP nonce handling | [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) §19 |
 | Working tree is dirty and a task wants a clean state | [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) §20 |
+| Starting a non-trivial change (refactor, schema/API/auth change, cross-cutting architecture, multi-component feature) | §10 Spec-First development standard (below) + existing example specs in `specs/` |
 
 ---
 
@@ -143,6 +145,7 @@ Before opening a PR:
 - [ ] `pnpm test` passes
 - [ ] No hardcoded Arabic strings added (grep `apps/web/src --include='*.tsx' --include='*.ts'` for non-comment lines containing Arabic chars)
 - [ ] No new deps without updating root `pnpm-lock.yaml` via `pnpm install`
+- [ ] If the task hits a §10 trigger: a spec exists in `specs/NNN_name/` and was approved by the user **before** code changes
 - [ ] If you touched `supabase/`: new migration uses the next sequential `NNN_` number + file order stays chronological
 - [ ] If you touched `ThemeScript.tsx`: re-read gotcha #19 before any change
 
@@ -153,3 +156,33 @@ Before opening a PR:
 Full gotchas: [references/01-gotchas.md](./docs/agents/references/01-gotchas.md) — 20 entries with Trigger/Why/Fix/Symptom for each. Topics covered: next-intl server bundle, supabase-ssr BOM, OAuth callback path, Vercel deployment protection, free-tier rollback limits, service-role key in Vercel env, pnpm 9.x neverBuiltDependencies, GitHub secret CRLF, webpack aliases, Electron pinning, Vercel cache purge for pnpm path mismatches, Cloudflare MCPs not loaded in MiniMax Code, Windows env var propagation, Windows env dialog empty values, GitHub Releases on private repos (historical, resolved 2026-09), electron-builder artifactName versions, pnpm/action-setup with subdir checkout, ThemeScript nonce hydration, git stash drop safety.
 
 Release pipeline (separate file): [references/02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md) — public-runner pipeline architecture, secrets model, what-it-does steps, CI workflow summary.
+
+---
+
+## 10. Spec-First development standard
+
+Invariant I11 in practice: no agent starts writing or modifying code for any task beyond trivial, direct fixes without a **technical spec prepared and approved by the user first**.
+
+### 10.1 When a formal spec is required (triggers)
+
+- Refactoring or splitting any file over ~300 lines (current examples: `apps/web/src/app/[locale]/add-summary/page.tsx` at 945 lines, `apps/web/src/app/[locale]/profile/page.tsx` at 813).
+- Any change to API contracts, database schemas/migrations, or auth flows.
+- Cross-cutting architectural changes: caching, state management, runtime/environment upgrades (e.g. a major Electron version bump).
+- New features spanning more than one component or route.
+
+### 10.2 Spec anatomy
+
+Specs live in `specs/NNN_name/` — take the **next sequential number after the highest existing directory** (same convention as `NNN_` migrations, §7) and follow the established SpecKit layout (`spec.md`, `tasks.md`, `checklists/`; see existing `001`–`005`). A spec must cover:
+
+1. **Context & problem statement** — what is wrong today and why change it.
+2. **Architecture & design** — components created/modified, each with a single responsibility; data flow; contracts (types / interfaces / Zod schemas).
+3. **Behavior preservation & regression strategy** — how existing behavior stays intact, and how that is proven.
+4. **Test specification** — unit/integration scenarios to be written to verify the change.
+5. **Atomic execution plan** — sequence of independent commits, with the §8 verification gates for each.
+
+The user approves the spec before implementation begins.
+
+### 10.3 Lightweight path (no separate spec)
+
+- Routine i18n extraction batches, typo fixes, and simple lint fixes do **not** need a separate spec.
+- They still require a short **inline plan** (e.g. a plan-mode plan) presented to and approved by the user immediately before execution.
