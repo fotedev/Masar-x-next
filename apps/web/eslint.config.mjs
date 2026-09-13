@@ -36,7 +36,12 @@ export default [
       ...(tseslint.configs?.recommended?.rules ?? {}),
 
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
+      // `_`-prefixed args/vars are the repo's intentional keep-the-signature
+      // convention (React API compliance, interface-shaped params).
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
       "prefer-const": "warn",
       "react-hooks/exhaustive-deps": "warn",
       "no-console": "warn",
@@ -77,6 +82,16 @@ export default [
   },
   {
     files: ["src/lib/logger.ts"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
+    // One-off maintenance scripts and the hand-written service worker are
+    // infrastructure, not shipped app source: console output is their
+    // interface, so `no-console` does not apply. App code under src/ still
+    // routes diagnostics through src/lib/logger.
+    files: ["scripts/**/*.js", "public/sw.js", "public/sw.template.js"],
     rules: {
       "no-console": "off",
     },
