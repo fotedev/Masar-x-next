@@ -58,5 +58,17 @@
       "instructor": "Instructor",
       "student": "Student"
     }
+  },
+  "content": {
+    "summariesTitle": "Course summaries",
+    "addSummary": "Add summary",
+    "summariesLocked": "Summaries are only available to enrolled students",
+    "noSummaries": "No summaries available",
+    "videosTitle": "Course videos",
+    "videosLocked": "Videos are only available to enrolled students",
+    "noVideos": "No videos available",
+    "watchNow": "Watch now",
+    "filesLocked": "Files are only available to enrolled students",
+    "noFiles": "No files available"
   }
 }
