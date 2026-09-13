@@ -24,6 +24,7 @@ import { NewsSchema } from "@/lib/validations";
 import { logger } from "@/lib/logger";
 import { AppealFormModal } from "@/components/AppealFormModal";
 import { AddNewsModal } from "@/components/AddNewsModal";
+import { formatDate } from "masarx-shared/format";
 
 // استخدام نوع News من قاعدة البيانات
 type NewsItem = News & { summary?: string };
@@ -425,11 +426,7 @@ function NewsPage() {
 
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {item.created_at
-                    ? new Date(item.created_at).toLocaleDateString("ar-EG", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })
+                    ? formatDate(item.created_at)
                     : "غير معروف"}
                 </span>
               </div>

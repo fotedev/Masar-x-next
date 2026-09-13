@@ -22,6 +22,7 @@ import { Summary, Quiz } from "@/types/database";
 import { AppealFormModal } from "@/components/AppealFormModal";
 import { ReviewSection } from "@/components/ReviewSection";
 import { SUBJECT_ICONS } from "@/constants/subjects";
+import { formatDate } from "masarx-shared/format";
 
 interface ExtendedSummary extends Summary {
   profiles: {
@@ -365,11 +366,7 @@ export default function SummaryDetailPage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <p className="text-sm font-medium text-slate-400">
                 تم النشر في{" "}
-                {new Date(summary.created_at).toLocaleDateString("ar-EG", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {formatDate(summary.created_at, { month: "long" })}
               </p>
               <div className="flex items-center gap-3">
                 <button
