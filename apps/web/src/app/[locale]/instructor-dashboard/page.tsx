@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -44,6 +45,7 @@ interface CourseRow {
 }
 
 export default function InstructorDashboard() {
+  const t = useTranslations("instructorDashboard");
   const { user } = useAuth();
   const [stats, setStats] = useState<CourseStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,10 +170,10 @@ export default function InstructorDashboard() {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          لوحة تحكم المدرب
+          {t("title")}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          إدارة كورساتك وطلبات التسجيل
+          {t("subtitle")}
         </p>
       </div>
 
@@ -183,7 +185,7 @@ export default function InstructorDashboard() {
               <BookOpen className="h-8 w-8 text-blue-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  إجمالي الكورسات
+                  {t("stats.totalCourses")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.length}
@@ -199,7 +201,7 @@ export default function InstructorDashboard() {
               <Clock className="h-8 w-8 text-yellow-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  طلبات معلقة
+                  {t("stats.pendingRequests")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.reduce((acc, s) => acc + s.pending_enrollments, 0)}
@@ -215,7 +217,7 @@ export default function InstructorDashboard() {
               <Users className="h-8 w-8 text-green-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  إجمالي الطلاب
+                  {t("stats.totalStudents")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.reduce(
@@ -234,7 +236,7 @@ export default function InstructorDashboard() {
               <Star className="h-8 w-8 text-purple-600" />
               <div className="mr-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  متوسط التقييم
+                  {t("stats.averageRating")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.length > 0
@@ -256,11 +258,11 @@ export default function InstructorDashboard() {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="enrollments" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            إدارة التسجيلات
+            {t("tabs.enrollments")}
           </TabsTrigger>
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            إحصائيات الكورسات
+            {t("tabs.courseStats")}
           </TabsTrigger>
         </TabsList>
 
@@ -283,7 +285,7 @@ export default function InstructorDashboard() {
                         {course.active_students}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        طالب نشط
+                        {t("courseCard.activeStudents")}
                       </div>
                     </div>
                     <div className="text-center">
@@ -291,7 +293,7 @@ export default function InstructorDashboard() {
                         {course.pending_enrollments}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        طلب معلق
+                        {t("courseCard.pendingRequests")}
                       </div>
                     </div>
                     <div className="text-center col-span-2">
@@ -302,7 +304,9 @@ export default function InstructorDashboard() {
                         </span>
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {course.total_reviews} تقييم
+                        {t("courseCard.reviewsCount", {
+                          count: course.total_reviews,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -316,7 +320,7 @@ export default function InstructorDashboard() {
               <CardContent className="text-center py-8">
                 <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400">
-                  لم تقم بإنشاء أي كورسات بعد
+                  {t("empty")}
                 </p>
               </CardContent>
             </Card>
