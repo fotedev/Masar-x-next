@@ -14,5 +14,18 @@
   "error": "An error occurred while saving. Please try again.",
   "invalidLevel": "Please select a valid level",
   "invalidSemester": "Please select a valid semester",
-  "saveError": "An error occurred while saving. Please try again."
+  "saveError": "An error occurred while saving. Please try again.",
+  "academic": {
+    "title": "Select your level and semester",
+    "subtitle": "Choose your academic details to see the right subjects for you",
+    "levelLabel": "Level",
+    "level1": "Level 1",
+    "level2": "Level 2",
+    "level3": "Level 3",
+    "level4": "Level 4",
+    "semesterLabel": "Semester",
+    "term1": "Semester 1",
+    "term2": "Semester 2",
+    "unexpectedError": "An unexpected error occurred. Please try again."
+  }
 }
