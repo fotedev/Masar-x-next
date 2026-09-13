@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseClient, type SupabaseClient } from "masarx-shared/supabase";
 import { MetadataRoute } from "next";
 
 const baseUrl = "https://masarx.vercel.app";
@@ -7,11 +7,18 @@ const baseUrl = "https://masarx.vercel.app";
 // when env vars aren't inlined yet (Next.js "Collecting page data" phase).
 // Returning null lets the sitemap gracefully degrade to static entries
 // if Supabase env vars are missing (e.g. local dev without .env).
+// Routed through the shared factory for the service-role guard +
+// client-info header (contracts/supabase-client.md).
 function getSupabaseClient(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
-  return createClient(url, key);
+  return createSupabaseClient({
+    runtime: "web",
+    url,
+    anonKey: key,
+    appVersion: process.env.NEXT_PUBLIC_APP_VERSION ?? "0.5.6",
+  });
 }
 
 const staticPaths = [
