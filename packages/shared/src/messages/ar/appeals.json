@@ -57,5 +57,21 @@
     "submittedAt": "تم التقديم",
     "unknown": "غير معروف"
   },
-  "paginationRange": "عرض {start}-{end} من {total} طعن"
+  "paginationRange": "عرض {start}-{end} من {total} طعن",
+  "manage": {
+    "addSuccess": "تم إرسال طعنك بنجاح",
+    "addError": "حدث خطأ أثناء إرسال الطعن",
+    "deleteSuccess": "تم حذف الطعن بنجاح",
+    "deleteError": "حدث خطأ أثناء حذف الطعن",
+    "statusUpdateError": "حدث خطأ أثناء {action} الطعن",
+    "actionAccepted": "قبول",
+    "actionRejected": "رفض",
+    "acceptedTitle": "تم قبول طعنك!",
+    "rejectedTitle": "تم رفض طعنك.",
+    "acceptedMessage": "تم قبول طعنك على {title}. شكرا لمساهمتك.",
+    "rejectedMessage": "تم رفض طعنك على {title}. يمكنك مراجعة السبب إذا تم توفيره.",
+    "confirmDelete": "هل أنت متأكد أنك تريد حذف هذا الطعن؟",
+    "confirmAccept": "هل أنت متأكد أنك تريد قبول هذا الطعن؟",
+    "confirmReject": "هل أنت متأكد أنك تريد رفض هذا الطعن؟"
+  }
 }
