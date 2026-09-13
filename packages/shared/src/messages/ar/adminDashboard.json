@@ -35,5 +35,46 @@
     "noCourses": "لا توجد كورسات",
     "startFirstCourse": "ابدأ بإنشاء أول كورس لك",
     "createFirstCourse": "إنشاء الكورس الأول"
+  },
+  "analytics": {
+    "loading": "جاري تحميل الإحصائيات...",
+    "retry": "إعادة المحاولة",
+    "title": "لوحة الإحصائيات الإدارية",
+    "subtitle": "مراقبة استخدام التطبيق وتفاعلات المستخدمين",
+    "errors": {
+      "unauthorized": "غير مصرح لك بالوصول إلى هذه الصفحة",
+      "loadFailed": "حدث خطأ في تحميل الإحصائيات"
+    },
+    "cards": {
+      "activeUsers": "المستخدمون النشطون",
+      "assistantMessages": "رسائل المساعد",
+      "views": "المشاهدات",
+      "clicks": "النقرات"
+    },
+    "topContent": "أكثر المحتويات شعبية",
+    "noData": "لا توجد بيانات متاحة",
+    "recentActivity": "النشاط الأخير",
+    "noRecentActivity": "لا توجد نشاطات حديثة",
+    "backHome": "العودة للرئيسية",
+    "action": {
+      "page_view": "زيارة صفحة",
+      "click": "نقرة",
+      "ai_interaction": "تفاعل مع الذكاء الاصطناعي",
+      "user_login": "تسجيل دخول",
+      "user_logout": "تسجيل خروج",
+      "content_view": "عرض محتوى",
+      "summary_click": "نقر على ملخص",
+      "fallback": "حدث"
+    },
+    "contentType": {
+      "summary": "ملخص",
+      "course": "مقرر",
+      "quiz": "اختبار",
+      "page": "صفحة",
+      "login": "تسجيل دخول",
+      "logout": "تسجيل خروج",
+      "unknown": "غير معروف",
+      "fallback": "غير محدد"
+    }
   }
 }
