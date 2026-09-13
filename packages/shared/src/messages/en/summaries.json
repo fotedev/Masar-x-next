@@ -37,5 +37,31 @@
   "noSummaries": "No summaries",
   "noSummariesDesc": "No summaries in this category currently",
   "noResults": "No results",
-  "noResultsDesc": "No summaries match your search criteria"
+  "noResultsDesc": "No summaries match your search criteria",
+  "detail": {
+    "notFound": "Summary not found or pending review",
+    "loadFailed": "Failed to load the summary",
+    "loading": "Loading...",
+    "backHome": "Back to Home",
+    "backToList": "Back to List",
+    "pdf": {
+      "title": "PDF file available",
+      "subtitle": "Download the summary as a PDF to study anytime",
+      "download": "Download Now"
+    },
+    "quiz": {
+      "title": "Test your knowledge",
+      "start": "Start the Quiz"
+    },
+    "sections": {
+      "videoExplanation": "Video Explanation",
+      "content": "Summary Content",
+      "images": "Attached Images"
+    },
+    "imageAlt": "Image {n}",
+    "viewImage": "View Image",
+    "publishedOn": "Published on {date}",
+    "appeal": "Appeal Content",
+    "edit": "Edit Summary"
+  }
 }
