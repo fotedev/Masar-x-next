@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from '@/navigation';
 import { useParams } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import {
@@ -110,8 +110,9 @@ export default function CourseDetailPage() {
   const { user } = useAuth();
   const adminRole = user?.app_metadata?.role;
   const router = useRouter();
-  const locale = useLocale();
-  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
+  const t = useTranslations("courseDetail.page");
+  const tNav = useTranslations("nav");
+  const assistantName = tNav("assistant");
 
   const [course, setCourse] = useState<Course | null>(null);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
@@ -158,7 +159,7 @@ export default function CourseDetailPage() {
 
         setCourse({
           ...typedCourseData,
-          instructor_name: typedCourseData.profiles?.display_name || "مدرب",
+          instructor_name: typedCourseData.profiles?.display_name || t("fallback.instructor"),
         });
 
         if (user) {
@@ -184,7 +185,7 @@ export default function CourseDetailPage() {
               rating: review.rating,
               content: review.comment || undefined,
               created_at: review.created_at,
-              student_name: review.full_name || review.username || "طالب",
+              student_name: review.full_name || review.username || t("fallback.student"),
             })),
           );
         }
@@ -211,11 +212,11 @@ export default function CourseDetailPage() {
         if (filesData) setFiles(filesData);
       }
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || "حدث خطأ في تحميل بيانات الكورس");
+      toast.error(getErrorMessage(error) || t("toasts.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [courseId, user, adminRole]);
+  }, [courseId, user, adminRole, t]);
 
   useEffect(() => {
     if (courseId) fetchCourseData();
@@ -232,11 +233,11 @@ export default function CourseDetailPage() {
         rating,
         comment: content,
       });
-      toast.success("تم إضافة تقييمك بنجاح");
+      toast.success(t("toasts.reviewAdded"));
       setShowReviewForm(false);
       fetchCourseData();
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error) || "حدث خطأ أثناء إضافة التقييم");
+      toast.error(getErrorMessage(error) || t("toasts.reviewFailed"));
     }
   };
 
@@ -261,19 +262,19 @@ export default function CourseDetailPage() {
         });
       if (enrollmentError) throw enrollmentError;
 
-      toast.success("تم إرسال طلب التسجيل بنجاح!");
+      toast.success(t("toasts.enrollmentSent"));
       setShowSubscribeModal(false);
       setPaymentScreenshot(null);
       fetchCourseData();
     } catch {
-      toast.error("حدث خطأ في إرسال طلب التسجيل");
+      toast.error(t("toasts.enrollmentFailed"));
     } finally {
       setUploadingScreenshot(false);
     }
   };
 
   const handleDeleteSummary = async (summaryId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملخص؟");
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.summary") }));
     if (!confirmed) return;
     try {
       const { error } = await supabase
@@ -281,15 +282,15 @@ export default function CourseDetailPage() {
         .delete()
         .eq("id", summaryId);
       if (error) throw error;
-      toast.success("تم حذف الملخص بنجاح!");
+      toast.success(t("toasts.deleted", { type: t("deleteTypes.summary") }));
       fetchCourseData();
     } catch {
-      toast.error("حدث خطأ في حذف الملخص");
+      toast.error(t("toasts.deleteFailed", { type: t("deleteTypes.summary") }));
     }
   };
 
   const handleDeleteVideo = async (videoId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الفيديو؟");
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.video") }));
     if (!confirmed) return;
     try {
       const { error } = await supabase
@@ -297,15 +298,15 @@ export default function CourseDetailPage() {
         .delete()
         .eq("id", videoId);
       if (error) throw error;
-      toast.success("تم حذف الفيديو بنجاح!");
+      toast.success(t("toasts.deleted", { type: t("deleteTypes.video") }));
       fetchCourseData();
     } catch {
-      toast.error("حدث خطأ في حذف الفيديو");
+      toast.error(t("toasts.deleteFailed", { type: t("deleteTypes.video") }));
     }
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذا الملف؟");
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.file") }));
     if (!confirmed) return;
     try {
       const { error = null } = await supabase
@@ -313,10 +314,10 @@ export default function CourseDetailPage() {
         .delete()
         .eq("id", fileId);
       if (error) throw error;
-      toast.success("تم حذف الملف بنجاح!");
+      toast.success(t("toasts.deleted", { type: t("deleteTypes.file") }));
       fetchCourseData();
     } catch {
-      toast.error("حدث خطأ في حذف الملف");
+      toast.error(t("toasts.deleteFailed", { type: t("deleteTypes.file") }));
     }
   };
 
@@ -330,7 +331,7 @@ export default function CourseDetailPage() {
     if (!user)
       return (
         <Button onClick={() => router.push("/login")} className="w-full">
-          تسجيل الدخول للتسجيل
+          {t("actions.loginToEnroll")}
         </Button>
       );
     switch (status) {
@@ -342,9 +343,7 @@ export default function CourseDetailPage() {
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageSquare className="w-4 h-4 ml-2" />
-              {locale.toLowerCase().startsWith("ar")
-                ? `بدء ${assistantName} AI`
-                : `Start ${assistantName} AI`}
+              {t("actions.startAi", { name: assistantName })}
             </Button>
             <Button
               variant="outline"
@@ -352,7 +351,7 @@ export default function CourseDetailPage() {
               className="w-full"
             >
               <Star className="w-4 h-4 ml-2" />
-              تقييم الكورس
+              {t("actions.reviewCourse")}
             </Button>
           </div>
         );
@@ -360,20 +359,20 @@ export default function CourseDetailPage() {
         return (
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-            <p className="text-yellow-800 font-medium">طلبك قيد المراجعة</p>
+            <p className="text-yellow-800 font-medium">{t("status.pending")}</p>
           </div>
         );
       case "rejected":
         return (
           <div className="text-center p-4 bg-red-50 rounded-lg">
             <XCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-            <p className="text-red-800 font-medium">تم رفض طلب التسجيل</p>
+            <p className="text-red-800 font-medium">{t("status.rejected")}</p>
             <Button
               onClick={() => setShowSubscribeModal(true)}
               className="mt-3"
               variant="outline"
             >
-              إعادة المحاولة
+              {t("actions.retry")}
             </Button>
           </div>
         );
@@ -383,7 +382,7 @@ export default function CourseDetailPage() {
             onClick={() => setShowSubscribeModal(true)}
             className="w-full"
           >
-            التسجيل في الكورس
+            {t("actions.enroll")}
           </Button>
         );
     }
@@ -401,7 +400,7 @@ export default function CourseDetailPage() {
       <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            الكورس غير موجود
+            {t("status.notFound")}
           </h1>
         </div>
       </div>
@@ -456,7 +455,7 @@ export default function CourseDetailPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md">
               <CardHeader>
-                <CardTitle>التسجيل في الكورس</CardTitle>
+                <CardTitle>{t("actions.enroll")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <input
@@ -473,14 +472,14 @@ export default function CourseDetailPage() {
                     disabled={!paymentScreenshot || uploadingScreenshot}
                     className="flex-1"
                   >
-                    {uploadingScreenshot ? "جاري الرفع..." : "تأكيد وإرسال"}
+                    {uploadingScreenshot ? t("actions.uploading") : t("actions.confirmAndSubmit")}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowSubscribeModal(false)}
                     className="flex-1"
                   >
-                    إلغاء
+                    {t("actions.cancel")}
                   </Button>
                 </div>
               </CardContent>
@@ -493,7 +492,7 @@ export default function CourseDetailPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md bg-white dark:bg-gray-900">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>تقييم الكورس</CardTitle>
+              <CardTitle>{t("actions.reviewCourse")}</CardTitle>
               <Button
                 variant="ghost"
                 size="icon"

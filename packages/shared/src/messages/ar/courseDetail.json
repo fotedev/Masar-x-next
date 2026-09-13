@@ -22,5 +22,41 @@
     "addReview": "إضافة تقييم",
     "empty": "لا توجد تقييمات بعد. كن أول من يقيم هذا الكورس!",
     "anonymous": "مستخدم مجهول"
+  },
+  "page": {
+    "actions": {
+      "loginToEnroll": "تسجيل الدخول للتسجيل",
+      "startAi": "بدء {name} AI",
+      "reviewCourse": "تقييم الكورس",
+      "retry": "إعادة المحاولة",
+      "enroll": "التسجيل في الكورس",
+      "uploading": "جاري الرفع...",
+      "confirmAndSubmit": "تأكيد وإرسال",
+      "cancel": "إلغاء"
+    },
+    "status": {
+      "pending": "طلبك قيد المراجعة",
+      "rejected": "تم رفض طلب التسجيل",
+      "notFound": "الكورس غير موجود"
+    },
+    "toasts": {
+      "loadFailed": "حدث خطأ في تحميل بيانات الكورس",
+      "reviewAdded": "تم إضافة تقييمك بنجاح",
+      "reviewFailed": "حدث خطأ أثناء إضافة التقييم",
+      "enrollmentSent": "تم إرسال طلب التسجيل بنجاح!",
+      "enrollmentFailed": "حدث خطأ في إرسال طلب التسجيل",
+      "confirmDelete": "هل أنت متأكد من حذف هذا {type}؟",
+      "deleted": "تم حذف {type} بنجاح!",
+      "deleteFailed": "حدث خطأ في حذف {type}"
+    },
+    "deleteTypes": {
+      "summary": "الملخص",
+      "video": "الفيديو",
+      "file": "الملف"
+    },
+    "fallback": {
+      "instructor": "مدرب",
+      "student": "طالب"
+    }
   }
 }

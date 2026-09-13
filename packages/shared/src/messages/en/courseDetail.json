@@ -22,5 +22,41 @@
     "addReview": "Add Review",
     "empty": "No reviews yet. Be the first to review this course!",
     "anonymous": "Anonymous user"
+  },
+  "page": {
+    "actions": {
+      "loginToEnroll": "Sign in to enroll",
+      "startAi": "Start {name} AI",
+      "reviewCourse": "Review Course",
+      "retry": "Retry",
+      "enroll": "Enroll in Course",
+      "uploading": "Uploading...",
+      "confirmAndSubmit": "Confirm & Submit",
+      "cancel": "Cancel"
+    },
+    "status": {
+      "pending": "Your request is under review",
+      "rejected": "Your enrollment request was rejected",
+      "notFound": "Course not found"
+    },
+    "toasts": {
+      "loadFailed": "Failed to load course data",
+      "reviewAdded": "Your review was added successfully",
+      "reviewFailed": "Failed to add your review",
+      "enrollmentSent": "Enrollment request sent successfully!",
+      "enrollmentFailed": "Failed to submit the enrollment request",
+      "confirmDelete": "Are you sure you want to delete this {type}?",
+      "deleted": "{type} deleted successfully!",
+      "deleteFailed": "Failed to delete the {type}"
+    },
+    "deleteTypes": {
+      "summary": "summary",
+      "video": "video",
+      "file": "file"
+    },
+    "fallback": {
+      "instructor": "Instructor",
+      "student": "Student"
+    }
   }
 }
