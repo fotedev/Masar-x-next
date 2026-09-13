@@ -1,3 +1,5 @@
+import { cannedMessagesFor } from './canned-messages';
+
 /**
  * Error classification for the Puter AI transport (spec 004 AI surface).
  *
@@ -115,7 +117,8 @@ export const isPuterTransportError = (error: unknown) => {
   );
 };
 
-export const formatPuterNeedsLoginMessage = (model?: string) => {
-  const modelLabel = model ? ` (${model})` : '';
-  return `__PUTER_AUTH_REQUIRED__\n⚠️ يلزم تسجيل الدخول إلى Puter لتفعيل هذا النموذج${modelLabel}.\n\nاضغط زر "تسجيل الدخول" بالأسفل ثم أعد المحاولة.`;
+export const formatPuterNeedsLoginMessage = (model?: string, locale?: string) => {
+  const modelSuffix = model ? ` (${model})` : '';
+  // The __PUTER_AUTH_REQUIRED__ sentinel is parsed upstream - keep it literal.
+  return cannedMessagesFor(locale).needsLogin.replace('{modelSuffix}', modelSuffix);
 };

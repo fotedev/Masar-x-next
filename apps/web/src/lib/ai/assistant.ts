@@ -41,6 +41,7 @@ import {
   warmupPuterClient,
 } from './puter-client';
 import { sanitizeAssistantReply } from './sanitize';
+import { cannedMessagesFor } from './canned-messages';
 import { BREVITY_INSTRUCTION, ZANE_UI_INSTRUCTION } from './prompts';
 
 export type AiAssistantMode = 'group_rag' | 'cs_assistant' | 'student_agent';
@@ -145,13 +146,15 @@ export class AiAssistant {
       chatHistory?: AiChatHistoryTurn[];
       platformContext?: string;
       model?: string;
+      locale?: string;
     },
   ): Promise<string> {
+    const canned = cannedMessagesFor(options?.locale);
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
     const platformContext = String(options?.platformContext ?? '').trim();
 
     if (!platformContext) {
-      return "لا يمكنني الإجابة من المنصة بدون تحديد بيانات كافية (مثل المادة/المستوى/الترم).";
+      return canned.noPlatformContext;
     }
 
     const prompt = `أنت مساعد طلابي داخل منصة مسار X.
@@ -169,7 +172,7 @@ ${platformContext}
 
 سؤال المستخدم: ${query}${historyContext}`;
 
-    if (isPuterCircuitOpen()) return getPuterUnavailableMessage();
+    if (isPuterCircuitOpen()) return getPuterUnavailableMessage(options?.locale);
 
     const executeWithPuter = async () => {
       const puter = await getPuterClient();
@@ -205,7 +208,7 @@ ${platformContext}
       return await extractPuterChatText(response);
     } catch (error) {
       notePuterTransportFailure(error);
-      if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage();
+      if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage(options?.locale);
       throw error;
     }
   }
@@ -223,13 +226,14 @@ ${platformContext}
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
+    const canned = cannedMessagesFor(options?.locale);
     const selectedModel = options?.model || 'gpt-5.4-nano';
     const historyContext = this.buildChatHistoryContext(options?.chatHistory);
 
     // group_rag has no chunk source anymore (the upload path was retired),
     // so it always answers with the canned message instead of reaching the SDK.
     if (mode === 'group_rag') {
-      return `لم أجد معلومات ذات صلة في محادثات المجموعة (0 رسائل متاحة) للإجابة على سؤالك. يرجى:\n\n1. إعادة صياغة السؤال بطريقة مختلفة\n2. التأكد من أن المحادثات تحتوي على معلومات حول هذا الموضوع\n3. تحميل بيانات أكثر شمولاً إذا لزم الأمر.\n\n💡 أو بدّل لوضع "مساعد برمجي" من أعلى الصفحة للحصول على مساعدة عامة في البرمجة.`;
+      return canned.groupRagNoData;
     }
 
     const executeWithPuter = async (prompt: string, model: string) => {
@@ -326,7 +330,7 @@ ${ZANE_UI_INSTRUCTION}
 سؤال المستخدم: ${query}${historyContext}`;
 
         const response = await executeWithPuter(prompt, selectedModel);
-        if (response === null) return getPuterUnavailableMessage();
+        if (response === null) return getPuterUnavailableMessage(options?.locale);
 
         const text = await extractPuterChatText(response);
         return sanitizeAssistantReply(query, text);
@@ -336,7 +340,8 @@ ${ZANE_UI_INSTRUCTION}
       return await this.generateStudentAgentResponse(query, {
         chatHistory: options?.chatHistory,
         platformContext: options?.platformContext,
-        model: selectedModel
+        model: selectedModel,
+        locale: options?.locale
       });
 
     } catch (error: unknown) {
@@ -369,27 +374,30 @@ ${ZANE_UI_INSTRUCTION}
       if (mode === 'cs_assistant') {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.toLowerCase().includes('not signed in')) {
-          return formatPuterNeedsLoginMessage(isClaudeLikeModel(selectedModel) ? selectedModel : undefined);
+          return formatPuterNeedsLoginMessage(
+            isClaudeLikeModel(selectedModel) ? selectedModel : undefined,
+            options?.locale,
+          );
         }
         if (isPuterTransportError(error)) {
           const isClaudeModel = isClaudeLikeModel(selectedModel);
           if (isClaudeModel) {
-            return `⚠️ تم التبديل تلقائياً إلى نموذج GPT-5 nano بسبب مشاكل في اتصال Claude.\n\nالإجابة التالية ستكون من GPT-5 nano:\n\n💡 للحصول على إجابات من Claude، حاول مرة أخرى بعد بضع دقائق أو تحقق من اتصالك بالإنترنت.`;
+            return canned.claudeFallback;
           }
-          return `⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب مشاكل في الاتصال.\n\n💡 الحلول المقترحة:\n1. انتظر بضع دقائق ثم حاول مرة أخرى\n2. تحقق من اتصالك بالإنترنت\n\nسيتم حل المشكلة تلقائياً خلال فترة قصيرة.`;
+          return canned.serviceUnavailable;
         }
-        return `⚠️ حدث خطأ في خدمة الذكاء الاصطناعي.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
+        return canned.genericError;
       }
 
       if (isPuterTransportError(error)) {
         const isClaudeModel = isClaudeLikeModel(selectedModel);
         if (isClaudeModel) {
-          return `⚠️ تم التبديل تلقائياً إلى نموذج GPT-5 nano بسبب مشاكل في اتصال Claude.\n\n💡 للحصول على إجابات من Claude، حاول مرة أخرى بعد بضع دقائق.`;
+          return canned.claudeFallbackShort;
         }
-        return `⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب مشاكل في الاتصال.\n\n💡 انتظر بضع دقائق ثم حاول مرة أخرى، أو جرّب استخدام نموذج مختلف.`;
+        return canned.serviceUnavailableShort;
       }
 
-      return `⚠️ حدث خطأ في خدمة الذكاء الاصطناعي.\n\n💡 جرّب إعادة تحميل الصفحة أو المحاولة مرة أخرى لاحقاً.`;
+      return canned.genericError;
     }
   }
 
