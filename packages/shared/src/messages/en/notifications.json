@@ -29,5 +29,16 @@
     "minutesAgo": "{count} min ago",
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago"
+  },
+  "toggle": {
+    "unsupported": "Your browser does not support notifications",
+    "deniedTitle": "Notification permission was denied",
+    "deniedDescription": "Notification permission was denied.\n\nTo re-enable notifications:\n• Chrome: tap the site lock icon in the address bar → Site settings → Notifications\n• Firefox: tap the site lock icon in the address bar → Notifications\n• Safari: Safari → Preferences → Privacy → Manage Website Data\n\nOr click the bell icon again to try.",
+    "testTitle": "Notification test",
+    "testBody": "This is a test notification from Masar X",
+    "titleLoading": "Requesting permission...",
+    "titleGranted": "Notifications enabled - click to test",
+    "titleDenied": "Notifications blocked - click to try again",
+    "titleDefault": "Click to enable notifications"
   }
 }
