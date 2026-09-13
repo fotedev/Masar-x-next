@@ -4,9 +4,11 @@ import { type FormEvent } from "react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 
 function ResetPasswordContent() {
+  const t = useTranslations("authPages");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
@@ -31,14 +33,14 @@ function ResetPasswordContent() {
     const type = searchParams?.get("type");
 
     if (!code || type !== "recovery") {
-      setError("رابط إعادة التعيين غير صالح. يرجى طلب رابط جديد.");
+      setError(t("resetPassword.invalidLinkError"));
       setTimeout(() => onNavigate("login"), 3000);
       return;
     }
 
     // Code exists and type is recovery, assume valid for now (will be validated on submit)
     setIsValidSession(true);
-  }, [searchParams, onNavigate]);
+  }, [searchParams, onNavigate, t]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,12 +48,12 @@ function ResetPasswordContent() {
     setSuccess("");
 
     if (newPassword !== confirmPassword) {
-      setError("كلمة المرور غير متطابقة");
+      setError(t("passwordMismatch"));
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      setError(t("passwordMinLength"));
       return;
     }
 
@@ -61,14 +63,14 @@ function ResetPasswordContent() {
       // Get code from URL
       const code = searchParams?.get("code");
       if (!code) {
-        throw new Error("رمز إعادة التعيين مفقود من الرابط");
+        throw new Error(t("resetPassword.missingCodeError"));
       }
 
       // Exchange the code for a session
       const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
       
       if (sessionError || !sessionData.session) {
-        throw new Error("رابط إعادة التعيين منتهي الصلاحية أو غير صالح");
+        throw new Error(t("resetPassword.expiredLinkError"));
       }
 
       // Update password with the new session
@@ -80,9 +82,7 @@ function ResetPasswordContent() {
         throw updateError;
       }
 
-      setSuccess(
-        "تم تحديث كلمة المرور بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...",
-      );
+      setSuccess(t("resetPassword.successMessage"));
 
       // Sign out and redirect to login
       await supabase.auth.signOut();
@@ -93,7 +93,7 @@ function ResetPasswordContent() {
       setError(
         err instanceof Error
           ? err.message
-          : "حدث خطأ أثناء تحديث كلمة المرور. يرجى المحاولة مرة أخرى.",
+          : t("resetPassword.genericError"),
       );
     } finally {
       setLoading(false);
@@ -108,10 +108,10 @@ function ResetPasswordContent() {
             <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            إعادة تعيين كلمة المرور
+            {t("resetPassword.title")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            أدخل كلمة مرور جديدة
+            {t("resetPassword.subtitle")}
           </p>
         </div>
 
@@ -134,7 +134,7 @@ function ResetPasswordContent() {
                 htmlFor="new-password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                كلمة المرور الجديدة
+                {t("resetPassword.newPasswordLabel")}
               </label>
               <div className="relative">
                 <input
@@ -168,7 +168,7 @@ function ResetPasswordContent() {
                 htmlFor="confirm-new-password"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
-                تأكيد كلمة المرور الجديدة
+                {t("resetPassword.confirmPasswordLabel")}
               </label>
               <div className="relative">
                 <input
@@ -205,12 +205,12 @@ function ResetPasswordContent() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>جاري تحديث كلمة المرور...</span>
+                  <span>{t("resetPassword.submitting")}</span>
                 </>
               ) : (
                 <>
                   <Lock className="w-5 h-5" />
-                  <span>تحديث كلمة المرور</span>
+                  <span>{t("resetPassword.submit")}</span>
                 </>
               )}
             </button>
@@ -219,7 +219,7 @@ function ResetPasswordContent() {
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">
-              جاري التحقق من صحة الرابط...
+              {t("resetPassword.checkingLink")}
             </p>
           </div>
         )}
@@ -230,7 +230,7 @@ function ResetPasswordContent() {
             className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mx-auto transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>العودة إلى تسجيل الدخول</span>
+            <span>{t("backToLogin")}</span>
           </button>
         </div>
       </div>

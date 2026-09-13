@@ -45,5 +45,19 @@
   "confirmPasswordPlaceholder": "Type it again to confirm",
   "passwordHint": "At least 6 characters",
   "passwordHintOk": "Looks good",
-  "passwordHintShort": "Keep going — at least 6 characters"
+  "passwordHintShort": "Keep going — at least 6 characters",
+  "resetPassword": {
+    "title": "Reset password",
+    "subtitle": "Enter a new password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "submitting": "Updating password...",
+    "submit": "Update password",
+    "invalidLinkError": "This reset link is invalid. Please request a new one.",
+    "missingCodeError": "The reset code is missing from the link",
+    "expiredLinkError": "This reset link has expired or is invalid",
+    "successMessage": "Password updated successfully! Redirecting you to the sign-in page...",
+    "genericError": "An error occurred while updating your password. Please try again.",
+    "checkingLink": "Verifying the link..."
+  }
 }

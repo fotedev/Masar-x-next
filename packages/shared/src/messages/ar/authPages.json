@@ -45,5 +45,19 @@
   "confirmPasswordPlaceholder": "اكتبها تاني للتأكيد",
   "passwordHint": "6 حروف على الأقل",
   "passwordHintOk": "تمام كده",
-  "passwordHintShort": "كمّل — 6 حروف على الأقل"
+  "passwordHintShort": "كمّل — 6 حروف على الأقل",
+  "resetPassword": {
+    "title": "إعادة تعيين كلمة المرور",
+    "subtitle": "أدخل كلمة مرور جديدة",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور الجديدة",
+    "submitting": "جاري تحديث كلمة المرور...",
+    "submit": "تحديث كلمة المرور",
+    "invalidLinkError": "رابط إعادة التعيين غير صالح. يرجى طلب رابط جديد.",
+    "missingCodeError": "رمز إعادة التعيين مفقود من الرابط",
+    "expiredLinkError": "رابط إعادة التعيين منتهي الصلاحية أو غير صالح",
+    "successMessage": "تم تحديث كلمة المرور بنجاح! سيتم توجيهك إلى صفحة تسجيل الدخول...",
+    "genericError": "حدث خطأ أثناء تحديث كلمة المرور. يرجى المحاولة مرة أخرى.",
+    "checkingLink": "جاري التحقق من صحة الرابط..."
+  }
 }
