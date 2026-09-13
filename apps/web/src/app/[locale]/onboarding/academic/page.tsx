@@ -102,7 +102,7 @@ export default function AcademicOnboardingPage() {
       // Redirect immediately after optimistic update succeeds
       router.replace("/");
     } catch {
-      setError("حدث خطأ غير متوقع. حاول مرة أخرى.");
+      setError(t("academic.unexpectedError"));
       setSaving(false);
     }
   };
@@ -112,10 +112,10 @@ export default function AcademicOnboardingPage() {
       <div className="modern-card p-8 sm:p-10">
         <div className="text-center mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
-            تحديد المستوى والترم
+            {t("academic.title")}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">
-            اختر بياناتك الدراسية لعرض المواد المناسبة لك
+            {t("academic.subtitle")}
           </p>
         </div>
 
@@ -131,7 +131,7 @@ export default function AcademicOnboardingPage() {
               htmlFor="onboarding-level"
               className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
             >
-              المستوى
+              {t("academic.levelLabel")}
             </label>
             <select
               id="onboarding-level"
@@ -140,10 +140,10 @@ export default function AcademicOnboardingPage() {
               onChange={(e) => setLevel(Number(e.target.value))}
               className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
             >
-              <option value={1}>المستوى الأول</option>
-              <option value={2}>المستوى الثاني</option>
-              <option value={3}>المستوى الثالث</option>
-              <option value={4}>المستوى الرابع</option>
+              <option value={1}>{t("academic.level1")}</option>
+              <option value={2}>{t("academic.level2")}</option>
+              <option value={3}>{t("academic.level3")}</option>
+              <option value={4}>{t("academic.level4")}</option>
             </select>
           </div>
 
@@ -152,7 +152,7 @@ export default function AcademicOnboardingPage() {
               htmlFor="onboarding-semester"
               className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 mr-1"
             >
-              الترم
+              {t("academic.semesterLabel")}
             </label>
             <select
               id="onboarding-semester"
@@ -161,8 +161,8 @@ export default function AcademicOnboardingPage() {
               onChange={(e) => setSemester(Number(e.target.value))}
               className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
             >
-              <option value={1}>ترم 1</option>
-              <option value={2}>ترم 2</option>
+              <option value={1}>{t("academic.term1")}</option>
+              <option value={2}>{t("academic.term2")}</option>
             </select>
           </div>
 
@@ -171,7 +171,7 @@ export default function AcademicOnboardingPage() {
             disabled={saving}
             className="w-full flex items-center justify-center gap-3 bg-brand-blue hover:bg-brand-sky text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? "جاري الحفظ..." : "متابعة"}
+            {saving ? t("saving") : t("continue")}
           </button>
         </form>
       </div>
