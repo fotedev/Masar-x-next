@@ -14,7 +14,7 @@
     "start": "next start",
     "clean": "node scripts/clean.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint . --max-warnings=56",
+    "lint": "eslint . --max-warnings=45",
     "lint:strict": "eslint . --max-warnings=0",
     "setup-subjects": "node setup-subjects.js",
     "check:auth-routes": "node scripts/auth-route-check.mjs",

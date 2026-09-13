@@ -7,7 +7,7 @@ import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotifications as useBrowserNotifications } from "@/components/NotificationManager";
+import { useBrowserNotifications } from "@/components/NotificationManager";
 import { useSubjects } from "@/hooks/useSubjects";
 import { FileDropzone } from "@/components/FileDropzone";
 import { useAcademicOptions } from "@/hooks/useAcademicOptions";

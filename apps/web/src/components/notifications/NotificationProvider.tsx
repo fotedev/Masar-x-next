@@ -21,11 +21,11 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined,
 );
 
-export function useNotifications() {
+export function useBrowserNotifications() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error(
-      "useNotifications must be used within a NotificationProvider",
+      "useBrowserNotifications must be used within a NotificationProvider",
     );
   }
   return context;

@@ -2,7 +2,7 @@
 
 export {
   NotificationProvider,
-  useNotifications,
+  useBrowserNotifications,
 } from "./notifications/NotificationProvider";
 export { NotificationPrompt } from "./notifications/NotificationPrompt";
 export { NotificationToggle } from "./notifications/NotificationToggle";
