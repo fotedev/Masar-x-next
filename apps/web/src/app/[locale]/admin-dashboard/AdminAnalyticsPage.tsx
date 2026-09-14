@@ -1,8 +1,21 @@
-import { useState, useEffect, type FC } from "react";
-import { Users, MessageSquare, Eye, MousePointer } from "lucide-react";
+"use client";
+
+import { useCallback, useEffect, useMemo, useState, type FC } from "react";
+import {
+  BarChart3,
+  Eye,
+  MessageSquare,
+  MousePointer,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { analyticsHelpers } from "@/lib/analyticsHelpers";
+import { cn } from "@/lib/utils";
+import { StatCard } from "@/components/admin-shell/StatCard";
+import { PageHeader } from "@/components/admin-shell/PageHeader";
 
 interface AdminAnalyticsPageProps {
   onNavigate: (page: string) => void;
@@ -21,7 +34,103 @@ interface AnalyticsSummary {
     action: string;
     content_type: string;
     created_at: string;
+    user_id?: string;
   }>;
+}
+
+interface MicroTrend {
+  direction: "up" | "down" | "flat";
+  pct: number;
+}
+
+function calculateMicroTrends(
+  recentActivity: Array<{
+    action: string;
+    content_type: string;
+    created_at: string;
+    user_id?: string;
+  }> = [],
+): Record<"views" | "clicks" | "assistantMessages" | "activeUsers", MicroTrend | null> {
+  const now = Date.now();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+
+  const currentWindowUsers = new Set<string>();
+  const previousWindowUsers = new Set<string>();
+
+  let currentViews = 0;
+  let previousViews = 0;
+
+  let currentClicks = 0;
+  let previousClicks = 0;
+
+  let currentMessages = 0;
+  let previousMessages = 0;
+
+  for (const item of recentActivity) {
+    if (!item.created_at) continue;
+    const time = new Date(item.created_at).getTime();
+    if (Number.isNaN(time)) continue;
+
+    const isCurrent = time >= now - sevenDaysMs && time <= now;
+    const isPrevious =
+      time >= now - fourteenDaysMs && time < now - sevenDaysMs;
+    if (!isCurrent && !isPrevious) continue;
+
+    const action = (item.action || "").toLowerCase();
+
+    // 1. page_view -> views
+    if (action === "page_view" || action === "content_view") {
+      if (isCurrent) currentViews++;
+      else previousViews++;
+    }
+
+    // 2. click -> clicks
+    if (action === "click" || action === "summary_click") {
+      if (isCurrent) currentClicks++;
+      else previousClicks++;
+    }
+
+    // 3. ai_interaction -> assistantMessages
+    if (action === "ai_interaction") {
+      if (isCurrent) currentMessages++;
+      else previousMessages++;
+    }
+
+    // 4. distinct user ids -> activeUsers
+    const userId =
+      item.user_id ||
+      (action === "user_login" ? item.content_type : undefined);
+    if (userId) {
+      if (isCurrent) currentWindowUsers.add(userId);
+      else previousWindowUsers.add(userId);
+    }
+  }
+
+  const computeDelta = (
+    current: number,
+    previous: number,
+  ): MicroTrend | null => {
+    // If either window has zero events for a metric: render NO trend badge (neutral).
+    if (current === 0 || previous === 0) return null;
+    const diff = current - previous;
+    if (diff === 0) return { direction: "flat", pct: 0 };
+    const pct = Math.round(Math.abs(diff / previous) * 100);
+    return {
+      direction: diff > 0 ? "up" : "down",
+      pct,
+    };
+  };
+
+  return {
+    views: computeDelta(currentViews, previousViews),
+    clicks: computeDelta(currentClicks, previousClicks),
+    assistantMessages: computeDelta(currentMessages, previousMessages),
+    activeUsers: computeDelta(
+      currentWindowUsers.size,
+      previousWindowUsers.size,
+    ),
+  };
 }
 
 export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
@@ -29,13 +138,15 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 }) => {
   const locale = useLocale();
   const t = useTranslations("adminDashboard.analytics");
+  const tTrends = useTranslations("adminDashboard.trends");
   const tNav = useTranslations("nav");
   const assistantName = tNav("assistant");
+
   // ar-EG keeps the Arabic-Indic digits + Gregorian calendar the page
   // always rendered; en-US switches Latin digits for English admins.
   const intlLocale = locale === "ar" ? "ar-EG" : "en-US";
   const { isAdmin } = useAuth();
-  const isAdminLoading = false; // AuthContext handles admin state within the main loading state
+  const isAdminLoading = false;
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,70 +215,22 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
 
   const actionBadgeClass = (action: string) => {
     const a = (action || "").toLowerCase();
-    if (a === "page_view")
-      return "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200";
-    if (a === "click")
-      return "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200";
-    if (a === "ai_interaction")
-      return "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200";
-    if (a === "user_login")
-      return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200";
-    if (a === "user_logout")
-      return "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200";
-    return "bg-gray-50 text-gray-700 dark:bg-gray-900/40 dark:text-gray-200";
+    if (a === "page_view") return "bg-ax-info-soft text-ax-info";
+    if (a === "click") return "bg-ax-warning-soft text-ax-warning";
+    if (a === "ai_interaction") return "bg-ax-accent-soft text-ax-accent";
+    if (a === "user_login") return "bg-ax-success-soft text-ax-success";
+    if (a === "user_logout") return "bg-ax-danger-soft text-ax-danger";
+    return "bg-ax-surface-inset text-ax-secondary";
   };
 
-  useEffect(() => {
-    const loadAnalyticsData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Check if user is admin (using the already loaded isAdmin state from useAuth)
-        if (!isAdminLoading && !isAdmin) {
-          setError(t("errors.unauthorized"));
-          return;
-        }
-
-        // Fetch real analytics data from the stored procedure
-        const summary = await analyticsHelpers.getAdminAnalyticsSummary();
-
-        if (summary) {
-          setAnalytics({
-            totalUsers: summary.totalUsers || 0,
-            totalMessages: summary.totalMessages || 0,
-            totalViews: summary.totalViews || 0,
-            totalClicks: summary.totalClicks || 0,
-            topContentTypes: summary.topContentTypes || [],
-            recentActivity: summary.recentActivity || [],
-          });
-        } else {
-          // Fallback to placeholder data if procedure returns null
-          const placeholderSummary = {
-            totalUsers: 0,
-            totalMessages: 0,
-            totalViews: 0,
-            totalClicks: 0,
-            topContentTypes: [],
-            recentActivity: [],
-          };
-          setAnalytics(placeholderSummary);
-        }
-      } catch {
-        setError(t("errors.loadFailed"));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalyticsData();
-  }, [isAdmin, isAdminLoading, t]);
-
-  const loadAnalytics = async () => {
-    // Keep this function for the retry button
+  const loadAnalytics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      if (!isAdminLoading && !isAdmin) {
+        setError(t("errors.unauthorized"));
+        return;
+      }
       const summary = await analyticsHelpers.getAdminAnalyticsSummary();
       if (summary) {
         setAnalytics({
@@ -178,210 +241,249 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
           topContentTypes: summary.topContentTypes || [],
           recentActivity: summary.recentActivity || [],
         });
+      } else {
+        setAnalytics({
+          totalUsers: 0,
+          totalMessages: 0,
+          totalViews: 0,
+          totalClicks: 0,
+          topContentTypes: [],
+          recentActivity: [],
+        });
       }
     } catch {
       setError(t("errors.loadFailed"));
     } finally {
       setLoading(false);
     }
+  }, [isAdmin, isAdminLoading, t]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
+
+  const trends = useMemo(() => {
+    return calculateMicroTrends(analytics?.recentActivity);
+  }, [analytics?.recentActivity]);
+
+  const renderTrendBadge = (trend: MicroTrend | null) => {
+    if (!trend) return null;
+    if (trend.direction === "flat") {
+      return (
+        <span
+          title={tTrends("vsPrevious")}
+          aria-label={`${tTrends("flat")} - ${tTrends("vsPrevious")}`}
+          className="inline-flex items-center gap-1 rounded-full bg-ax-surface-inset px-2 py-0.5 text-[11px] font-medium text-ax-muted sm:text-xs"
+        >
+          <span>{tTrends("flat")}</span>
+        </span>
+      );
+    }
+    const isUp = trend.direction === "up";
+    const TrendIcon = isUp ? TrendingUp : TrendingDown;
+    return (
+      <span
+        title={tTrends("vsPrevious")}
+        aria-label={`${isUp ? tTrends("up", { value: trend.pct }) : tTrends("down", { value: trend.pct })} - ${tTrends("vsPrevious")}`}
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium sm:text-xs",
+          isUp
+            ? "bg-ax-success-soft text-ax-success"
+            : "bg-ax-warning-soft text-ax-warning",
+        )}
+      >
+        <TrendIcon className="h-3 w-3" />
+        <span>
+          {isUp
+            ? tTrends("up", { value: trend.pct })
+            : tTrends("down", { value: trend.pct })}
+        </span>
+      </span>
+    );
   };
 
-  if (isAdminLoading || loading) {
+  const focusRing =
+    "focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface";
+
+  if (loading) {
     return (
-      <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">
-              {t("loading")}
-            </p>
-          </div>
-        </div>
+      <div className="rounded-xl border border-ax-edge bg-ax-surface p-8 text-center shadow-ax-sm">
+        <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-ax-accent border-t-transparent" />
+        <p className="text-sm text-ax-muted">{t("loading")}</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">
-            <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>
-            <button
-              onClick={loadAnalytics}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {t("retry")}
-            </button>
-          </div>
-        </div>
+      <div className="rounded-xl border border-ax-edge bg-ax-surface p-8 text-center shadow-ax-sm">
+        <p className="mb-4 text-sm font-medium text-ax-danger">{error}</p>
+        <button
+          type="button"
+          onClick={loadAnalytics}
+          className={cn(
+            "inline-flex h-11 items-center justify-center rounded-lg bg-ax-accent px-5 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover",
+            focusRing,
+          )}
+        >
+          {t("retry")}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh-safe bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            {t("title")}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            {t("subtitle")}
-          </p>
-        </div>
+    <div className="space-y-6 border-t border-ax-edge pt-6">
+      <PageHeader
+        icon={BarChart3}
+        title={t("title")}
+        description={t("subtitle")}
+      />
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {t("cards.activeUsers")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatNumber(analytics?.totalUsers || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Summary Cards: 2x2 grid on mobile (<lg), 4-col on lg+ */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
+          icon={Users}
+          label={t("cards.activeUsers")}
+          value={formatNumber(analytics?.totalUsers || 0)}
+          tone="accent"
+          trend={renderTrendBadge(trends.activeUsers)}
+        />
+        <StatCard
+          icon={MessageSquare}
+          label={t("cards.assistantMessages")}
+          value={formatNumber(analytics?.totalMessages || 0)}
+          tone="info"
+          trend={renderTrendBadge(trends.assistantMessages)}
+        />
+        <StatCard
+          icon={Eye}
+          label={t("cards.views")}
+          value={formatNumber(analytics?.totalViews || 0)}
+          tone="neutral"
+          trend={renderTrendBadge(trends.views)}
+        />
+        <StatCard
+          icon={MousePointer}
+          label={t("cards.clicks")}
+          value={formatNumber(analytics?.totalClicks || 0)}
+          tone="warning"
+          trend={renderTrendBadge(trends.clicks)}
+        />
+      </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <MessageSquare className="h-8 w-8 text-green-600" />
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {t("cards.assistantMessages")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatNumber(analytics?.totalMessages || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Eye className="h-8 w-8 text-purple-600" />
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {t("cards.views")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatNumber(analytics?.totalViews || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <MousePointer className="h-8 w-8 text-orange-600" />
-              <div className="mr-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {t("cards.clicks")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatNumber(analytics?.totalClicks || 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Content Types */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+      {/* Top Content Types */}
+      <section
+        aria-labelledby="ax-top-content"
+        className="overflow-hidden rounded-xl border border-ax-edge bg-ax-surface shadow-ax-sm"
+      >
+        <div className="border-b border-ax-edge px-5 py-4">
+          <h2
+            id="ax-top-content"
+            className="text-base font-semibold text-ax-primary"
+          >
             {t("topContent")}
           </h2>
-          <div className="space-y-3">
-            {analytics?.topContentTypes &&
-            analytics.topContentTypes.length > 0 ? (
-              analytics.topContentTypes.map((item, index) => (
+        </div>
+        <div className="p-4 sm:p-5">
+          {analytics?.topContentTypes && analytics.topContentTypes.length > 0 ? (
+            <div className="space-y-2.5">
+              {analytics.topContentTypes.map((item, index) => (
                 <div
                   key={`${item.type}-${index}`}
-                  className="flex items-center justify-between rounded-md border border-gray-100 dark:border-gray-700 px-4 py-3"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-ax-edge bg-ax-surface-inset px-4 py-3"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-bold">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ax-accent-soft text-xs font-bold text-ax-accent">
                       {formatNumber(index + 1)}
                     </span>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {getContentLabel(item.type)}
-                      <span className="text-gray-400 dark:text-gray-500 font-normal">
-                        {" "}
+                    <div className="min-w-0 text-sm font-medium text-ax-primary">
+                      <span className="truncate">{getContentLabel(item.type)}</span>
+                      <span className="ms-1.5 text-xs text-ax-muted font-normal">
                         ({item.type})
                       </span>
                     </div>
                   </div>
-                  <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-semibold">
+                  <span className="shrink-0 rounded-full bg-ax-accent-soft px-3 py-0.5 text-xs font-semibold tabular-nums text-ax-accent">
                     {formatNumber(item.count)}
                   </span>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                {t("noData")}
-              </p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="py-6 text-center text-sm text-ax-muted">
+              {t("noData")}
+            </p>
+          )}
         </div>
+      </section>
 
-        {/* Recent Activity */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+      {/* Recent Activity */}
+      <section
+        aria-labelledby="ax-recent-analytics"
+        className="overflow-hidden rounded-xl border border-ax-edge bg-ax-surface shadow-ax-sm"
+      >
+        <div className="border-b border-ax-edge px-5 py-4">
+          <h2
+            id="ax-recent-analytics"
+            className="text-base font-semibold text-ax-primary"
+          >
             {t("recentActivity")}
           </h2>
+        </div>
+        <div className="p-4 sm:p-5">
           {analytics?.recentActivity && analytics.recentActivity.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {analytics.recentActivity.map((activity, index) => (
                 <div
                   key={`${activity.created_at}-${index}`}
-                  className="flex items-start justify-between gap-4 rounded-md border border-gray-100 dark:border-gray-700 px-4 py-3"
+                  className="flex flex-col gap-2 rounded-lg border border-ax-edge bg-ax-surface-inset px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${actionBadgeClass(
-                          activity.action,
-                        )}`}
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                          actionBadgeClass(activity.action),
+                        )}
                       >
                         {getActionLabel(activity.action)}
                       </span>
-                      <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                      <span className="inline-flex items-center rounded-full border border-ax-edge bg-ax-surface px-2.5 py-0.5 text-xs font-medium text-ax-secondary">
                         {getContentLabel(activity.content_type)}
                       </span>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-ax-muted">
                       {activity.action} / {activity.content_type}
-                    </div>
+                    </p>
                   </div>
 
-                  <div className="shrink-0 text-left">
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatDateTime(activity.created_at)}
-                    </div>
+                  <div className="shrink-0 text-start text-xs tabular-nums text-ax-muted sm:text-end">
+                    {formatDateTime(activity.created_at)}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+            <p className="py-6 text-center text-sm text-ax-muted">
               {t("noRecentActivity")}
             </p>
           )}
         </div>
+      </section>
 
-        {/* Navigation */}
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => onNavigate("home")}
-            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
-          >
-            {t("backHome")}
-          </button>
-        </div>
+      {/* Navigation button */}
+      <div className="flex justify-center pt-2">
+        <button
+          type="button"
+          onClick={() => onNavigate("home")}
+          className={cn(
+            "flex h-11 items-center justify-center gap-2 rounded-lg border border-ax-edge bg-ax-surface px-6 text-sm font-medium text-ax-secondary transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+            focusRing,
+          )}
+        >
+          {t("backHome")}
+        </button>
       </div>
     </div>
   );

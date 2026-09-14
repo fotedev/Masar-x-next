@@ -1,21 +1,26 @@
-import { type Dispatch, type SetStateAction, type FC } from "react";
+"use client";
 
+import { useState, type Dispatch, type SetStateAction, type FC } from "react";
 import { Filter, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { AcademicLevelOption, DepartmentOption } from "../../hooks/useAcademicOptions";
-import { Subject } from "../../types/database";
+import { cn } from "@/lib/utils";
+import type { AcademicLevelOption, DepartmentOption } from "@/hooks/useAcademicOptions";
+import type { Subject } from "@/types/database";
+import { FilterBottomSheet } from "./FilterBottomSheet";
 
-interface AdminDashboardHeaderProps {
+export interface AdminDashboardHeaderProps {
   globalFilters: {
     subject: string;
     department: string;
     year: string;
   };
-  setGlobalFilters: Dispatch<SetStateAction<{
-    subject: string;
-    department: string;
-    year: string;
-  }>>;
+  setGlobalFilters: Dispatch<
+    SetStateAction<{
+      subject: string;
+      department: string;
+      year: string;
+    }>
+  >;
   levels: AcademicLevelOption[];
   availableDepartments: DepartmentOption[];
   subjects: Subject[];
@@ -31,100 +36,164 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
   onClearFilters,
 }) => {
   const t = useTranslations("adminDashboard");
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const activeCount = [
+    globalFilters.year,
+    globalFilters.department,
+    globalFilters.subject,
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = activeCount > 0;
+
+  const focusRing =
+    "focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface";
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            {t("title")}
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            {t("subtitle")}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">
-            <Filter className="w-4 h-4" />
-            <span>{t("globalFilter")}</span>
+    <>
+      <div className="rounded-xl border border-ax-edge bg-ax-surface p-4 shadow-ax-sm transition-colors sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-ax-primary sm:text-2xl">
+              {t("title")}
+            </h1>
+            <p className="mt-0.5 text-xs text-ax-muted sm:text-sm">
+              {t("subtitle")}
+            </p>
           </div>
 
-          <select
-            id="admin-filter-year"
-            name="year"
-            value={globalFilters.year}
-            onChange={(e) =>
-              setGlobalFilters((prev) => ({
-                ...prev,
-                year: e.target.value,
-                department: "",
-              }))
-            }
-            className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">{t("allLevels")}</option>
-            {levels.map((level) => (
-              <option key={level.id} value={level.name}>
-                {level.name}
-              </option>
-            ))}
-          </select>
+          {/* Mobile/Tablet (<lg): ONE Filter trigger button */}
+          <div className="flex lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              aria-label={t("filterBar.openFilters")}
+              className={cn(
+                "flex h-11 w-full items-center justify-between gap-2.5 rounded-lg border border-ax-edge bg-ax-surface-inset px-4 text-sm font-medium text-ax-primary outline-none transition-colors duration-150 hover:bg-ax-surface-hover",
+                focusRing,
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Filter aria-hidden="true" className="h-4 w-4 text-ax-secondary" />
+                <span>{t("filterBar.openFilters")}</span>
+              </div>
+              {hasActiveFilters ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-ax-accent px-1.5 text-xs font-semibold text-ax-on-accent">
+                  {activeCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
 
-          <select
-            id="admin-filter-department"
-            name="department"
-            value={globalFilters.department}
-            onChange={(e) =>
-              setGlobalFilters((prev) => ({
-                ...prev,
-                department: e.target.value,
-              }))
-            }
-            disabled={!globalFilters.year || availableDepartments.length === 0}
-            className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">{t("allDepartments")}</option>
-            {availableDepartments.map((dept) => (
-              <option key={dept.id} value={dept.name}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
+          {/* Desktop (>=lg): Compact single-row filter selects */}
+          <div className="hidden lg:flex lg:items-center lg:gap-2.5">
+            <div className="me-1 flex items-center gap-1.5 text-xs font-semibold text-ax-secondary">
+              <Filter aria-hidden="true" className="h-4 w-4 text-ax-muted" />
+              <span>{t("globalFilter")}</span>
+            </div>
 
-          <select
-            id="admin-filter-subject"
-            name="subject"
-            value={globalFilters.subject}
-            onChange={(e) =>
-              setGlobalFilters((prev) => ({
-                ...prev,
-                subject: e.target.value,
-              }))
-            }
-            className="text-xs px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-white focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">{t("allSubjects")}</option>
-            {[...new Set(subjects.map((s) => s.name))]
-              .sort()
-              .map((subject) => (
+            <select
+              id="admin-filter-year"
+              name="year"
+              value={globalFilters.year}
+              onChange={(e) =>
+                setGlobalFilters((prev) => ({
+                  ...prev,
+                  year: e.target.value,
+                  department: "",
+                }))
+              }
+              aria-label={t("filterBar.level")}
+              className={cn(
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
+                focusRing,
+              )}
+            >
+              <option value="">{t("allLevels")}</option>
+              {levels.map((level) => (
+                <option key={level.id} value={level.name}>
+                  {level.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              id="admin-filter-department"
+              name="department"
+              value={globalFilters.department}
+              onChange={(e) =>
+                setGlobalFilters((prev) => ({
+                  ...prev,
+                  department: e.target.value,
+                }))
+              }
+              disabled={!globalFilters.year || availableDepartments.length === 0}
+              aria-label={t("filterBar.department")}
+              className={cn(
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent disabled:opacity-50",
+                focusRing,
+              )}
+            >
+              <option value="">{t("allDepartments")}</option>
+              {availableDepartments.map((dept) => (
+                <option key={dept.id} value={dept.name}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              id="admin-filter-subject"
+              name="subject"
+              value={globalFilters.subject}
+              onChange={(e) =>
+                setGlobalFilters((prev) => ({
+                  ...prev,
+                  subject: e.target.value,
+                }))
+              }
+              aria-label={t("filterBar.subject")}
+              className={cn(
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
+                focusRing,
+              )}
+            >
+              <option value="">{t("allSubjects")}</option>
+              {[...new Set(subjects.map((s) => s.name))].sort().map((subject) => (
                 <option key={subject} value={subject}>
                   {subject}
                 </option>
               ))}
-          </select>
+            </select>
 
-          {(globalFilters.subject || globalFilters.department || globalFilters.year) && (
-            <button
-              onClick={onClearFilters}
-              className="p-1.5 text-gray-500 hover:text-red-500 transition-colors"
-              title={t("clearFilters")}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+            {hasActiveFilters ? (
+              <button
+                type="button"
+                onClick={onClearFilters}
+                aria-label={t("clearFilters")}
+                title={t("clearFilters")}
+                className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ax-muted outline-none transition-colors duration-150 hover:bg-ax-danger-soft hover:text-ax-danger",
+                  focusRing,
+                )}
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
+
+      <FilterBottomSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        globalFilters={globalFilters}
+        setGlobalFilters={setGlobalFilters}
+        levels={levels}
+        availableDepartments={availableDepartments}
+        subjects={subjects}
+        onClearFilters={onClearFilters}
+      />
+    </>
   );
 };
