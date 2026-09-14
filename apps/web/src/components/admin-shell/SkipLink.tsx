@@ -2,7 +2,7 @@
  * SkipLink — the first focusable element in the admin shell.
  *
  * Visually hidden until focused, then a visible chip above everything.
- * Targets #ax-main-content, which AdminDashboardShell renders with
+ * Targets #ax-main-content, which AdminLayout renders with
  * tabIndex={-1}.
  */
 export function SkipLink({ label }: { label: string }) {

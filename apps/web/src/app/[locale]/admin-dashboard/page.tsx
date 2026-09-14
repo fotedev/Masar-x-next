@@ -25,7 +25,7 @@ import { ManageLecturesModal } from "@/components/ManageLecturesModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminFilters } from "@/hooks/useAdminFilters";
 import { AdminDashboardHeader } from "@/components/admin/AdminDashboardHeader";
-import { AdminDashboardShell } from "@/components/admin-shell/AdminDashboardShell";
+import { AdminLayout } from "@/components/admin-shell/AdminLayout";
 import { AdminOverviewTab } from "@/components/admin-shell/AdminOverviewTab";
 import type { AdminTabId } from "@/lib/admin-shell/navigation";
 import type { SummaryWithRatings } from "@/types/database";
@@ -379,7 +379,7 @@ function AdminDashboardContent() {
   if (!isMounted) return null;
 
   return (
-    <AdminDashboardShell
+    <AdminLayout
       activeTab={activeTab as AdminTabId}
       onSelectTab={(id) => setActiveTab(id)}
       adminRole={adminRole}
@@ -462,7 +462,7 @@ function AdminDashboardContent() {
         }}
       />
     </div>
-    </AdminDashboardShell>
+    </AdminLayout>
   );
 }
 
