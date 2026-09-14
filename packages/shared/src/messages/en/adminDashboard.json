@@ -116,7 +116,34 @@
     "userMenu": "Account menu",
     "signedInAs": "Signed in as",
     "signOut": "Sign out",
-    "viewSite": "View site"
+    "viewSite": "View site",
+    "language": "Language",
+    "roleAdmin": "System Admin",
+    "roleDoctor": "Doctor",
+    "roleStudentAdmin": "Student Admin"
+  },
+  "filterBar": {
+    "openFilters": "Filters",
+    "sheetTitle": "Filter content",
+    "activeCount": "{count, plural, one {# active filter} other {# active filters}}",
+    "level": "Level",
+    "department": "Department",
+    "subject": "Subject",
+    "clearAll": "Clear all",
+    "apply": "Apply filters",
+    "done": "Done",
+    "clearPill": "Remove {name} filter"
+  },
+  "trends": {
+    "up": "Up {value}%",
+    "down": "Down {value}%",
+    "flat": "No change",
+    "vsPrevious": "vs previous 7 days"
+  },
+  "notifications": {
+    "label": "Notifications",
+    "emptyTitle": "No notifications",
+    "emptyHint": "Operational alerts will appear here"
   },
   "commandPalette": {
     "title": "Quick navigation",
