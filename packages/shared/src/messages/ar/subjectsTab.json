@@ -15,5 +15,14 @@
   "cancel": "إلغاء",
   "deleteError": "حدث خطأ أثناء حذف المادة",
   "emptyTitle": "لا توجد مواد تطابق بحثك",
-  "emptyDescription": "ابدأ بإضافة أول مادة دراسية الآن"
+  "emptyDescription": "ابدأ بإضافة أول مادة دراسية الآن",
+  "filters": {
+    "searchLabel": "بحث",
+    "searchPlaceholder": "بحث عن مادة أو دكتور…",
+    "allStatuses": "كل الحالات",
+    "statusPending": "قيد المراجعة",
+    "statusApproved": "معتمدة",
+    "statusRejected": "مرفوضة",
+    "addSubject": "إضافة مادة"
+  }
 }

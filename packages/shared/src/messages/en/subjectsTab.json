@@ -15,5 +15,14 @@
   "cancel": "Cancel",
   "deleteError": "An error occurred while deleting the subject",
   "emptyTitle": "No subjects match your search",
-  "emptyDescription": "Start by adding your first subject now"
+  "emptyDescription": "Start by adding your first subject now",
+  "filters": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search for a subject or professor…",
+    "allStatuses": "All statuses",
+    "statusPending": "Under review",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "addSubject": "Add subject"
+  }
 }

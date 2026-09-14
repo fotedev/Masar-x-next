@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import { Search, Plus } from "lucide-react";
 
 interface SubjectFiltersProps {
@@ -16,18 +17,20 @@ export function SubjectFilters({
   setStatusFilter,
   onAdd,
 }: SubjectFiltersProps) {
+  const t = useTranslations("subjectsTab");
+
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div className="flex-1 w-full md:max-w-md relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         <label htmlFor="subjects-admin-search" className="sr-only">
-          بحث
+          {t("filters.searchLabel")}
         </label>
         <input
           id="subjects-admin-search"
           name="subjectsAdminSearch"
           type="text"
-          placeholder="بحث عن مادة أو دكتور…"
+          placeholder={t("filters.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pr-10 pl-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -36,7 +39,7 @@ export function SubjectFilters({
 
       <div className="flex items-center gap-2 w-full md:w-auto">
         <label htmlFor="subjects-admin-status" className="sr-only">
-          الحالة
+          {t("status")}
         </label>
         <select
           id="subjects-admin-status"
@@ -49,10 +52,10 @@ export function SubjectFilters({
           }
           className="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 transition-colors text-sm"
         >
-          <option value="all">كل الحالات</option>
-          <option value="pending">قيد المراجعة</option>
-          <option value="approved">معتمدة</option>
-          <option value="rejected">مرفوضة</option>
+          <option value="all">{t("filters.allStatuses")}</option>
+          <option value="pending">{t("filters.statusPending")}</option>
+          <option value="approved">{t("filters.statusApproved")}</option>
+          <option value="rejected">{t("filters.statusRejected")}</option>
         </select>
 
         <button
@@ -61,7 +64,7 @@ export function SubjectFilters({
           type="button"
         >
           <Plus className="w-5 h-5" />
-          إضافة مادة
+          {t("filters.addSubject")}
         </button>
       </div>
     </div>
