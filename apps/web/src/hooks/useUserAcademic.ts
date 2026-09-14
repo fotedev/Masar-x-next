@@ -25,6 +25,10 @@ export function useUserAcademic() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [optionsLoading, setOptionsLoading] = useState(false);
+  // True when the last profile fetch errored: academic fields are UNKNOWN,
+  // not empty — consumers (e.g. AcademicOnboardingGate) must not treat this
+  // state as "new student" and redirect to onboarding.
+  const [fetchFailed, setFetchFailed] = useState(false);
 
   const hasInitialized = useRef(false);
 
@@ -89,6 +93,7 @@ export function useUserAcademic() {
 
   const fetchProfileData = useCallback(
     async (userId: string) => {
+      setFetchFailed(false);
       try {
         const result = await executeWithRetry(async () => {
           const { data, error } = await supabase
@@ -111,6 +116,7 @@ export function useUserAcademic() {
         academicCache.setUserAcademic(userId, academicData);
         sessionStorage.setItem(ACADEMIC_FETCH_KEY, Date.now().toString()); // T033: migrated from localStorage to sessionStorage
       } catch (e) {
+        setFetchFailed(true);
         logger.error("Failed to fetch academic profile data", e, { userId });
       }
     },
@@ -252,6 +258,7 @@ export function useUserAcademic() {
     departments,
     loading,
     optionsLoading,
+    fetchFailed,
     fetchAcademic: () => user && fetchProfileData(user.id),
     setUserAcademic,
   };

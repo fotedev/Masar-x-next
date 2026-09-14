@@ -41,6 +41,17 @@ export default function LoginPage() {
     }
   }, [user, onNavigate]);
 
+  // The auth callback lands here with ?error=auth-code-error when OAuth
+  // code exchange fails — surface it instead of showing a silent form.
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("error")
+    ) {
+      setError(t("loginGenericError"));
+    }
+  }, [t]);
+
   useEffect(() => {
     try {
       // T031: Using sessionStorage instead of localStorage for brute-force protection

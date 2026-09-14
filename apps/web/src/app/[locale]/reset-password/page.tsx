@@ -4,11 +4,12 @@ import { type FormEvent } from "react";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { Lock, ArrowLeft, EyeOff } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 
 function ResetPasswordContent() {
   const t = useTranslations("authPages");
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const router = useRouter();
   const [newPassword, setNewPassword] = useState("");
@@ -22,9 +23,9 @@ function ResetPasswordContent() {
 
   const onNavigate = useCallback(
     (page: string) => {
-      router.push(`/${page}`);
+      router.push(`/${locale}/${page}`);
     },
-    [router],
+    [router, locale],
   );
 
   // Check for valid reset token/code from URL parameters

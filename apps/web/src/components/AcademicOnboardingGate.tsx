@@ -12,7 +12,7 @@ export function AcademicOnboardingGate() {
   const pathname = usePathname();
   const locale = useLocale();
   const { user, loading: authLoading, isAdmin } = useAuth();
-  const { academic, loading: academicLoading } = useUserAcademic();
+  const { academic, loading: academicLoading, fetchFailed } = useUserAcademic();
   const hasRedirected = useRef(false);
 
   // Reset redirect guard when navigating away from onboarding
@@ -33,6 +33,12 @@ export function AcademicOnboardingGate() {
 
     // Admins bypass onboarding
     if (isAdmin) {
+      return;
+    }
+
+    // Profile fetch errored: academic fields are unknown, not empty —
+    // redirecting here would loop existing students into onboarding.
+    if (fetchFailed) {
       return;
     }
 
@@ -78,6 +84,7 @@ export function AcademicOnboardingGate() {
     academic.semester,
     academicLoading,
     authLoading,
+    fetchFailed,
     isAdmin,
     locale,
     pathname,
