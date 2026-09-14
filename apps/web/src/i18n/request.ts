@@ -13,7 +13,6 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
   ar: {
     addFile: () => import("masarx-shared/messages/ar/addFile.json"),
     addSubjectModal: () => import("masarx-shared/messages/ar/addSubjectModal.json"),
-    addSummary: () => import("masarx-shared/messages/ar/addSummary.json"),
     addVideo: () => import("masarx-shared/messages/ar/addVideo.json"),
     adminDashboard: () => import("masarx-shared/messages/ar/adminDashboard.json"),
     aiAssistant: () => import("masarx-shared/messages/ar/aiAssistant.json"),
@@ -64,7 +63,6 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
   en: {
     addFile: () => import("masarx-shared/messages/en/addFile.json"),
     addSubjectModal: () => import("masarx-shared/messages/en/addSubjectModal.json"),
-    addSummary: () => import("masarx-shared/messages/en/addSummary.json"),
     addVideo: () => import("masarx-shared/messages/en/addVideo.json"),
     adminDashboard: () => import("masarx-shared/messages/en/adminDashboard.json"),
     aiAssistant: () => import("masarx-shared/messages/en/aiAssistant.json"),

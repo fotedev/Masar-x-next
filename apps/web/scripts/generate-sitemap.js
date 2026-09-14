@@ -25,7 +25,6 @@ async function generateSitemap() {
     '',
     'add',
     'add-file',
-    'add-summary',
     'add-video',
     'admin-dashboard',
     'ai-assistant',

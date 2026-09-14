@@ -20,11 +20,6 @@ export default function FaqPage() {
         answer: t("items.whatIsMasarx.answer"),
       },
       {
-        id: "howToAddSummary",
-        question: t("items.howToAddSummary.question"),
-        answer: t("items.howToAddSummary.answer"),
-      },
-      {
         id: "approvalProcess",
         question: t("items.approvalProcess.question"),
         answer: t("items.approvalProcess.answer"),

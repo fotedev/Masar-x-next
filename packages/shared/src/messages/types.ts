@@ -28,7 +28,6 @@
 export const MESSAGE_NAMESPACES = [
   "addFile",
   "addSubjectModal",
-  "addSummary",
   "addVideo",
   "adminDashboard",
   "aiAssistant",
