@@ -29,6 +29,21 @@
 | I9 | **No direct file deletion.** Agents never run `rm`/`git rm`/`del` on project files. To retire a dead or obsolete file: ask the user explicitly first, and on approval **move it to `.trash/`** (mirroring its original path; `.trash/` is gitignored) instead of deleting | Deletion from the working tree is irreversible; the user audits every removal and keeps a local archive |
 | I10 | **Pasted model output is welcome — Validate & Adapt.** Raw copy-pasted text from other AI models is accepted as normal input (this is the user's primary phone-first workflow), but the agent must run full engineering validation before executing: match every snippet and claim against the actual repo state and real installed library versions, fix errors and hallucinations, adapt paths/names/APIs to project conventions — never blind application, never absolute rejection | Pasted model answers routinely reference files/APIs/states that don't exist here; validating and adapting before executing is what prevents AI-spaghetti accumulation |
 | I11 | **Spec-first workflow.** No writing or modifying code for any task beyond trivial, direct fixes without a technical spec prepared and **approved by the user** first | Prevents unplanned dives into large/complex files and unreviewed architectural drift; see §10 Spec-First development standard |
+| I12 | **MVP Lock** — no trivial/cosmetic/refactor work until MVP launch (see MVP Lock section below) | Owner directive 2026-09-14; school year starts within days |
+
+---
+
+## MVP Lock: Zero Trivial Modifications
+
+> حتى إطلاق النسخة الأولية (MVP) وبداية العام الدراسي، يُحظر على جميع الوكلاء (Agents) القيام بأي تعديلات تافهة، أو تحسينات تجميلية هامشية، أو إعادة كتابة أكواد تعمل بالفعل (Refactoring)، أو نقاشات بصرية دقيقة.
+>
+> يقتصر العمل حصراً على:
+> 1. الوظائف الأساسية المعطلة (Blocking / Functional Bugs).
+> 2. استقرار تصفح وعرض المواد والمحاضرات (Core Study Flow).
+> 3. تسجيل الدخول وحفظ البيانات الأساسية للطلاب والمشرفين.
+> 4. جاهزية النشر (Production Deployment Readiness).
+
+**English gloss:** Until the MVP launch and the start of the academic year, agents must not make trivial edits, marginal cosmetic improvements, refactors of already-working code, or pixel-level visual debates. Allowed work ONLY: (1) blocking/functional bugs; (2) stability of the core study flow (browsing and viewing subjects & lectures); (3) login and saving essential student/staff data; (4) production deployment readiness. This lock is lifted only by an explicit owner decision.
 
 ---
 
