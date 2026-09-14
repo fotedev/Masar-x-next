@@ -103,11 +103,20 @@ export function useAddSubjectForm({
           : t("saveSuccessNewDesc"),
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("saveErrorFallback");
-      setError(message);
+      // subjects.name is UNIQUE (migration 003): a 409/23505 here means the
+      // name is taken — tell the user to rename instead of a generic error.
+      const pgError = err as { code?: string; message?: string };
+      const message = err instanceof Error ? err.message : "";
+      const isDuplicateName =
+        pgError?.code === "23505" ||
+        message.includes("duplicate key") ||
+        message.includes("subjects_name_key");
+      const finalMessage = isDuplicateName
+        ? t("duplicateName")
+        : message || t("saveErrorFallback");
+      setError(finalMessage);
       toast.error(t("saveErrorTitle"), {
-        description:
-          message || t("saveErrorDesc"),
+        description: finalMessage || t("saveErrorDesc"),
       });
     } finally {
       setLoading(false);
