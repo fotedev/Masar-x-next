@@ -112,5 +112,17 @@
   "secondOptionCorrect": "Second choice is correct",
   "thirdOptionCorrect": "Third choice is correct",
   "fourthOptionCorrect": "Fourth choice is correct",
-  "viewCount": "Show {start}-{end} of {total} exams"
+  "viewCount": "Show {start}-{end} of {total} exams",
+  "importFeedback": {
+    "invalidJson": "Invalid JSON format",
+    "invalidJsonDesc": "It must be an array of questions.",
+    "invalidQuestions": "Invalid questions format",
+    "invalidQuestionsDesc": "Make sure the question exists, at least two options, and the correct answer is within the available options.",
+    "success": "Questions created successfully!",
+    "jsonParseError": "An error occurred while parsing the JSON",
+    "jsonParseErrorDesc": "Make sure the format is correct.",
+    "aiSuccess": "Questions generated successfully using AI!",
+    "aiError": "An error occurred while generating the questions",
+    "aiErrorDesc": "Please try again."
+  }
 }
