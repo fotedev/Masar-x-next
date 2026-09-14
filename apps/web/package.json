@@ -18,7 +18,7 @@
     "lint:strict": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:watch": "vitest",
-    "setup-subjects": "node setup-subjects.js",
+    "setup-subjects": "node scripts/setup-subjects.js",
     "check:auth-routes": "node scripts/auth-route-check.mjs",
     "db:diagnose": "node scripts/db-diagnose.cjs",
     "migrate:academic": "node scripts/migrate-academic-metadata.mjs",
