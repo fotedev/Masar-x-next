@@ -19,5 +19,7 @@
   "updateSuccessDesc": "تم تحديث الملخص \"{title}\"",
   "updateError": "حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مجدداً.",
   "redirecting": "جاري التحويل لصفحة الملخص...",
-  "pdfOnlyError": "يرجى اختيار ملف PDF فقط"
+  "pdfOnlyError": "يرجى اختيار ملف PDF فقط",
+  "selectLevel": "اختر المستوى",
+  "department": "التخصص"
 }
