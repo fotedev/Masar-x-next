@@ -3,10 +3,8 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import {
-  BookOpen,
   CheckCircle2,
   ChevronRight,
-  FileText,
   Flag,
   HelpCircle,
   Inbox,
@@ -23,11 +21,11 @@ import type { AdminTabId } from "@/lib/admin-shell/navigation";
 /**
  * AdminOverviewTab - the admin landing view.
  *
- * Identity note (BRANDING.md / spec 006): Masar X is a study platform
- * (subjects + summaries + quizzes), NOT a summaries board — so this view
- * leads with subjects and treats summaries, quizzes and news as equal
+ * Identity note (spec 006): Masar X is a study platform (subjects +
+ * lectures + quizzes + the ZANE assistant); summaries are retired from
+ * admin. This view leads with subjects and treats quizzes and news as the
  * content streams in the activity feed. Full management grids live in
- * their own tabs; this view only summarizes and links into them.
+ * their own views; this view only summarizes and links into them.
  *
  * Layout: a 4-up KPI grid, then a 2/3 + 1/3 split — one compact
  * "Recent activity" feed next to Quick Actions / review-queue panels.
@@ -39,14 +37,6 @@ import type { AdminTabId } from "@/lib/admin-shell/navigation";
 export interface SubjectLike {
   id: string;
   name: string;
-  created_at?: string | null;
-}
-
-export interface SummaryLike {
-  id: string;
-  title?: string | null;
-  subject?: string | null;
-  status?: string | null;
   created_at?: string | null;
 }
 
@@ -68,7 +58,6 @@ export interface QuizLike {
 
 export interface AdminOverviewTabProps {
   subjects: SubjectLike[];
-  summaries: SummaryLike[];
   news: NewsLike[];
   quizzes: QuizLike[];
   appealsCount: number;
@@ -148,7 +137,7 @@ function isWithinLastWeek(value: string | null | undefined): boolean {
   return Date.now() - time <= 7 * 24 * 60 * 60 * 1000;
 }
 
-type ActivityKind = "summary" | "news" | "quiz";
+type ActivityKind = "news" | "quiz";
 
 interface RecentItem {
   id: string;
@@ -180,7 +169,6 @@ function overviewCardClass() {
 
 export function AdminOverviewTab({
   subjects,
-  summaries,
   news,
   quizzes,
   appealsCount,
@@ -191,20 +179,6 @@ export function AdminOverviewTab({
   const t = useTranslations("adminDashboard");
 
   const recentItems = useMemo<RecentItem[]>(() => {
-    const summaryItems: RecentItem[] = summaries.map((row) => {
-      const status = row.status ?? "";
-      return {
-        id: `summary-${row.id}`,
-        kind: "summary",
-        title: row.title ?? "\u2014",
-        subject: row.subject ?? "",
-        statusLabel: reviewLabel(status, t),
-        tone: reviewTone(status),
-        createdAt: row.created_at ?? null,
-        tab: "summaries",
-      };
-    });
-
     const newsItems: RecentItem[] = news.map((row) => ({
       id: `news-${row.id}`,
       kind: "news",
@@ -232,30 +206,26 @@ export function AdminOverviewTab({
       };
     });
 
-    return [...summaryItems, ...newsItems, ...quizItems]
+    return [...newsItems, ...quizItems]
       .sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return bTime - aTime;
       })
       .slice(0, 6);
-  }, [summaries, news, quizzes, t]);
+  }, [news, quizzes, t]);
 
   const newSubjectsThisWeek = useMemo(
     () => subjects.filter((row) => isWithinLastWeek(row.created_at)).length,
     [subjects],
   );
-  const newSummariesThisWeek = useMemo(
-    () => summaries.filter((row) => isWithinLastWeek(row.created_at)).length,
-    [summaries],
+  const newNewsThisWeek = useMemo(
+    () => news.filter((row) => isWithinLastWeek(row.created_at)).length,
+    [news],
   );
   const newQuizzesThisWeek = useMemo(
     () => quizzes.filter((row) => isWithinLastWeek(row.created_at)).length,
     [quizzes],
-  );
-  const pendingSummariesCount = useMemo(
-    () => summaries.filter((row) => (row.status ?? "") === "pending").length,
-    [summaries],
   );
 
   const weekChip = (count: number): KpiChip | undefined =>
@@ -294,12 +264,6 @@ export function AdminOverviewTab({
       count: appealsCount,
       tab: "appeals" as AdminTabId,
     },
-    {
-      id: "pending-summaries",
-      label: t("overview.pendingSummaries"),
-      count: pendingSummariesCount,
-      tab: "summaries" as AdminTabId,
-    },
   ];
 
   return (
@@ -313,11 +277,11 @@ export function AdminOverviewTab({
           chip={weekChip(newSubjectsThisWeek)}
         />
         <KpiCard
-          icon={BookOpen}
-          label={t("kpi.activeSummaries")}
-          value={summaries.length}
+          icon={Newspaper}
+          label={t("kpi.totalNews")}
+          value={news.length}
           tone="info"
-          chip={weekChip(newSummariesThisWeek)}
+          chip={weekChip(newNewsThisWeek)}
         />
         <KpiCard
           icon={HelpCircle}
@@ -383,12 +347,7 @@ export function AdminOverviewTab({
           ) : (
             <ul className="divide-y divide-ax-edge">
               {recentItems.map((item) => {
-                const KindIcon =
-                  item.kind === "summary"
-                    ? FileText
-                    : item.kind === "news"
-                      ? Newspaper
-                      : HelpCircle;
+                const KindIcon = item.kind === "news" ? Newspaper : HelpCircle;
                 return (
                   <li
                     key={item.id}
@@ -405,11 +364,9 @@ export function AdminOverviewTab({
                         {item.title}
                       </p>
                       <p className="truncate text-xs text-ax-muted">
-                        {item.kind === "summary"
-                          ? t("overview.kindSummary")
-                          : item.kind === "news"
-                            ? t("overview.kindNews")
-                            : t("overview.kindQuiz")}
+                        {item.kind === "news"
+                          ? t("overview.kindNews")
+                          : t("overview.kindQuiz")}
                         {item.subject ? ` · ${item.subject}` : ""}
                       </p>
                     </div>
@@ -484,7 +441,7 @@ export function AdminOverviewTab({
                 {t("overview.needsAttention")}
               </h2>
             </div>
-            {appealsCount === 0 && pendingSummariesCount === 0 ? (
+            {appealsCount === 0 ? (
               <div className="flex items-center gap-3 px-5 py-5">
                 <span
                   aria-hidden="true"

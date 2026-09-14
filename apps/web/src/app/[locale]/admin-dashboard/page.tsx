@@ -8,16 +8,16 @@ import { useSubjects } from "@/hooks/useSubjects";
 import { useNews } from "@/hooks/useNews";
 import { useAppeals } from "@/hooks/useAppeals";
 import { useQuizzes } from "@/hooks/useQuizzes";
-import { SummariesTab } from "@/components/SummariesTab";
 import { NewsTab } from "@/components/NewsTab";
 import { AppealsTab } from "@/components/AppealsTab";
 import { QuizzesTab } from "@/components/QuizzesTab";
 import { AddNewsModal } from "@/components/AddNewsModal";
-import { EditSummaryModal } from "@/components/EditSummaryModal";
 import { AdminAnalyticsPage } from "./AdminAnalyticsPage";
 import { PageManagementTab } from "@/components/PageManagementTab";
-import { CoursesTab } from "@/components/CoursesTab";
-import { EnrollmentsTab } from "@/components/EnrollmentsTab";
+import {
+  CoursesEnrollmentsView,
+  type CoursesTabCourse,
+} from "@/components/admin/CoursesEnrollmentsView";
 import { AddCourseModal } from "@/components/AddCourseModal";
 import { SubjectsTab } from "@/components/SubjectsTab";
 import { AddSubjectModal } from "@/components/AddSubjectModal";
@@ -30,10 +30,6 @@ import { AdminOverviewTab } from "@/components/admin-shell/AdminOverviewTab";
 import type { AdminTabId } from "@/lib/admin-shell/navigation";
 import type { SummaryWithRatings } from "@/types/database";
 import { usePathname } from "next/navigation";
-
-type CoursesTabCourse = Parameters<
-  NonNullable<ComponentProps<typeof CoursesTab>["onEditCourse"]>
->[0];
 
 type SubjectsTabSubject = Parameters<
   NonNullable<ComponentProps<typeof SubjectsTab>["onEdit"]>
@@ -56,14 +52,11 @@ type EditingCourse = {
 };
 
 // Memoized tab components to prevent unnecessary re-renders
-const MemoizedSummariesTab = memo(SummariesTab);
 const MemoizedNewsTab = memo(NewsTab);
 const MemoizedAppealsTab = memo(AppealsTab);
 const MemoizedQuizzesTab = memo(QuizzesTab);
 const MemoizedPageManagementTab = memo(PageManagementTab);
 const MemoizedAdminAnalyticsPage = memo(AdminAnalyticsPage);
-const MemoizedCoursesTab = memo(CoursesTab);
-const MemoizedEnrollmentsTab = memo(EnrollmentsTab);
 const MemoizedSubjectsTab = memo(SubjectsTab);
 
 function AdminDashboard() {
@@ -133,6 +126,9 @@ function AdminDashboardContent() {
   const [activeTab, setActiveTab] = useState<AdminTabId>("overview");
 
   const newsHook = useNews({ includeInactive: true });
+  // Read-only summaries fetch: appeals filtering joins appeal content_id to
+  // summaries for subject/department/year context. Summaries management is
+  // retired (spec 006) — nothing below renders or mutates summaries.
   const summariesHook = useSummaries();
   const subjectsHook = useSubjects();
   const appealsHook = useAppeals();
@@ -142,7 +138,6 @@ function AdminDashboardContent() {
     globalFilters,
     setGlobalFilters,
     availableDepartments,
-    filteredSummaries,
     filteredNews,
     filteredQuizzes,
     filteredAppeals,
@@ -180,20 +175,6 @@ function AdminDashboardContent() {
       quizzesHook.loading,
     ],
   );
-
-  const handleUpdateSummaryStatus = async (
-    id: string,
-    status: "approved" | "rejected",
-  ) => {
-    const oldSummary = (summariesHook.summaries as SummaryWithRatings[]).find(
-      (s: SummaryWithRatings) => s.id === id,
-    );
-    await summariesHook.updateStatus(id, status);
-
-    if (status === "approved" && oldSummary) {
-      // notifyAllUsers logic would go here if needed
-    }
-  };
 
   const handleCreateCourse = () => {
     setEditingCourse(null);
@@ -253,20 +234,28 @@ function AdminDashboardContent() {
     switch (activeTab) {
       case "overview":
         return (
-          <AdminOverviewTab
-            subjects={subjectsHook.subjects}
-            summaries={summariesHook.summaries}
-            news={newsHook.news}
-            quizzes={quizzesHook.quizzes}
-            appealsCount={appealsHook.appeals.length}
-            onNavigate={(tab) => setActiveTab(tab)}
-            onAddNew={() => newsHook.setShowAddNews(true)}
-            onAddSubject={handleCreateSubject}
-          />
+          <>
+            <AdminOverviewTab
+              subjects={subjectsHook.subjects}
+              news={newsHook.news}
+              quizzes={quizzesHook.quizzes}
+              appealsCount={appealsHook.appeals.length}
+              onNavigate={(tab) => setActiveTab(tab)}
+              onAddNew={() => newsHook.setShowAddNews(true)}
+              onAddSubject={handleCreateSubject}
+            />
+            {/* Usage analytics (RPC) composed into the same landing view;
+                the delegate pass unifies both under one StatCard grid. */}
+            <MemoizedAdminAnalyticsPage
+              onNavigate={(page) =>
+                router.push(page === "home" ? "/" : `/${page}`)
+              }
+            />
+          </>
         );
-      case "courses":
+      case "courses_enrollments":
         return adminRole === "doctor" ? (
-          <MemoizedCoursesTab
+          <CoursesEnrollmentsView
             onCreateCourse={handleCreateCourse}
             onEditCourse={handleEditCourse}
           />
@@ -283,16 +272,6 @@ function AdminDashboardContent() {
             onEdit={handleEditSubject}
             onAdd={handleCreateSubject}
             onManageLectures={handleManageLectures}
-          />
-        );
-      case "summaries":
-        return (
-          <MemoizedSummariesTab
-            summaries={filteredSummaries}
-            onUpdateStatus={handleUpdateSummaryStatus}
-            onDeleteSummary={summariesHook.deleteSummary}
-            onEditSummary={handleEditSummary}
-            onClearAllSummaries={summariesHook.clearAllSummaries}
           />
         );
       case "news":
@@ -321,22 +300,6 @@ function AdminDashboardContent() {
             onUpdateStatus={quizzesHook.updateStatus}
           />
         );
-      case "enrollments":
-        return adminRole === "doctor" ? (
-          <MemoizedEnrollmentsTab />
-        ) : (
-          <div className="p-8 text-center text-gray-500">
-            {t("noAccess.enrollments")}
-          </div>
-        );
-      case "analytics":
-        return (
-          <MemoizedAdminAnalyticsPage
-            onNavigate={(page) =>
-              router.push(page === "home" ? "/" : `/${page}`)
-            }
-          />
-        );
       case "page_management":
         return adminRole === "doctor" ? (
           <MemoizedPageManagementTab />
@@ -348,24 +311,6 @@ function AdminDashboardContent() {
       default:
         return null;
     }
-  };
-
-  const [editingSummary, setEditingSummary] =
-    useState<SummaryWithRatings | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  const handleEditSummary = (summary: SummaryWithRatings) => {
-    setEditingSummary(summary);
-    setShowEditModal(true);
-  };
-
-  const handleSaveSummary = async (
-    id: string,
-    updates: Partial<SummaryWithRatings>,
-  ) => {
-    await summariesHook.editSummary(id, updates);
-    setShowEditModal(false);
-    setEditingSummary(null);
   };
 
   if (isLoading || !isMounted) {
@@ -383,7 +328,13 @@ function AdminDashboardContent() {
       activeTab={activeTab as AdminTabId}
       onSelectTab={(id) => setActiveTab(id)}
       adminRole={adminRole}
-      sectionLabel={t(`tabs.${activeTab === "page_management" ? "pageManagement" : activeTab}`)}
+      sectionLabel={t(
+        activeTab === "page_management"
+          ? "tabs.pageManagement"
+          : activeTab === "courses_enrollments"
+            ? "tabs.coursesEnrollments"
+            : `tabs.${activeTab}`,
+      )}
       onAddNew={() => newsHook.setShowAddNews(true)}
     >
     <div className="space-y-6">
@@ -424,13 +375,6 @@ function AdminDashboardContent() {
             customCategory,
           )
         }
-      />
-
-      <EditSummaryModal
-        summary={editingSummary}
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        onSave={handleSaveSummary}
       />
 
       <AddCourseModal

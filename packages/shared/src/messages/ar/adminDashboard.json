@@ -11,17 +11,18 @@
     "courses": "الدورات",
     "subjects": "المواد",
     "enrollments": "التسجيلات",
-    "summaries": "الملخصات",
+    "coursesEnrollments": "الدورات والتسجيلات",
     "news": "الأخبار",
     "appeals": "الطعون",
     "quizzes": "الاختبارات",
     "analytics": "التحليلات",
     "pageManagement": "إدارة الصفحات",
-    "overview": "نظرة عامة"
+    "overview": "الرئيسية والتحليلات",
+    "zane": "مساعد زين الذكي",
+    "zaneSoon": "قريباً"
   },
   "noAccess": {
     "courses": "ليس لديك صلاحية الوصول لإدارة الكورسات",
-    "enrollments": "ليس لديك صلاحية الوصول لإثباتات الدفع",
     "pageManagement": "ليس لديك صلاحية الوصول لإدارة الصفحة"
   },
   "auth": {
@@ -94,10 +95,9 @@
     "emptySearch": "لا توجد مواد تطابق بحثك"
   },
   "groups": {
-    "content": "المحتوى",
-    "learning": "التعليم",
-    "insights": "التحليلات",
-    "system": "النظام"
+    "content": "المحتوى الأكاديمي",
+    "insights": "الرئيسية والتحليلات",
+    "system": "الإشراف والنظام"
   },
   "shell": {
     "navigation": "التنقل",
@@ -127,8 +127,7 @@
     "recentActivity": "النشاط الأخير",
     "recentActivityHint": "أحدث المحتوى المضاف على المنصة",
     "emptyTitle": "لا يوجد شيء بعد",
-    "emptyHint": "ستظهر المواد والملخصات والأخبار الجديدة هنا فور إضافتها.",
-    "kindSummary": "ملخص",
+    "emptyHint": "ستظهر المواد والأخبار والاختبارات الجديدة هنا فور إضافتها.",
     "kindNews": "خبر",
     "kindQuiz": "اختبار",
     "quickActions": "إجراءات سريعة",
@@ -136,7 +135,6 @@
     "reviewAppeals": "مراجعة الطلبات",
     "addSubject": "إضافة مادة",
     "needsAttention": "يحتاج انتباهك",
-    "pendingSummaries": "ملخصات بانتظار المراجعة",
     "allClear": "كل شيء محدّث",
     "newThisWeek": "جديد هذا الأسبوع"
   },
@@ -144,7 +142,7 @@
     "pendingAppeals": "الطلبات المعلقة",
     "placeholder": "—",
     "quizzesTaken": "الاختبارات المكتملة",
-    "activeSummaries": "الملخصات النشطة",
+    "totalNews": "إجمالي الأخبار",
     "totalUsers": "إجمالي المستخدمين",
     "totalSubjects": "إجمالي المواد",
     "totalQuizzes": "إجمالي الاختبارات",
@@ -157,8 +155,6 @@
     "actions": "إجراءات",
     "empty": "لا توجد بيانات لعرضها",
     "view": "عرض",
-    "recentSummaries": "أحدث الملخصات",
-    "recentSummariesCaption": "أحدث الملخصات المضافة إلى المنصة",
     "recentNews": "أحدث الأخبار",
     "recentNewsCaption": "أحدث الأخبار المنشورة على المنصة",
     "colTitle": "العنوان",
