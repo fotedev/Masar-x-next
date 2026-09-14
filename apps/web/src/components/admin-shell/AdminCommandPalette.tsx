@@ -47,7 +47,7 @@ export function AdminCommandPalette({
   const items = useMemo<PaletteItem[]>(() => {
     const navItems: PaletteItem[] = adminNavGroups.flatMap((group) =>
       group.items
-        .filter((item) => !item.doctorOnly || isDoctor)
+        .filter((item) => !item.disabled && (!item.doctorOnly || isDoctor))
         .map((item) => ({
           id: `tab-${item.id}`,
           icon: item.icon,

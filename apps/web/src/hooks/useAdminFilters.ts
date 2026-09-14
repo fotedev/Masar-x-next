@@ -34,15 +34,6 @@ export function useAdminFilters({ summaries, news, quizzes, appeals }: UseAdminF
     }
   }, [activeSemester, globalFilters.year, levels]);
 
-  const filteredSummaries = useMemo(() => {
-    return summaries.filter((s) => {
-      const matchSubject = !globalFilters.subject || s.subject === globalFilters.subject;
-      const matchDepartment = !globalFilters.department || s.department === globalFilters.department;
-      const matchYear = !globalFilters.year || s.year === globalFilters.year;
-      return matchSubject && matchDepartment && matchYear;
-    });
-  }, [summaries, globalFilters]);
-
   const filteredNews = useMemo(() => {
     return news.filter((n) => {
       const matchSubject = !globalFilters.subject || n.subject === globalFilters.subject;
@@ -97,7 +88,6 @@ export function useAdminFilters({ summaries, news, quizzes, appeals }: UseAdminF
     globalFilters,
     setGlobalFilters,
     availableDepartments,
-    filteredSummaries,
     filteredNews,
     filteredQuizzes,
     filteredAppeals,

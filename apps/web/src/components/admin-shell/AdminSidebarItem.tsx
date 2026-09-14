@@ -32,6 +32,10 @@ export interface AdminSidebarItemProps {
   rail: boolean;
   hint?: string;
   badge?: AdminSidebarBadge;
+  /** Disabled entries render inert (e.g. the ZANE placeholder). */
+  disabled?: boolean;
+  /** Static chip text for disabled entries, e.g. "Coming soon". */
+  soonLabel?: string;
   onSelect: (id: AdminTabId) => void;
 }
 
@@ -61,6 +65,8 @@ export function AdminSidebarItem({
   rail,
   hint,
   badge,
+  disabled,
+  soonLabel,
   onSelect,
 }: AdminSidebarItemProps) {
   const tone = badge?.tone ?? "info";
@@ -68,16 +74,20 @@ export function AdminSidebarItem({
   const button = (triggerProps?: NavTooltipTriggerProps) => (
     <button
       type="button"
-      onClick={() => onSelect(id)}
+      onClick={disabled ? undefined : () => onSelect(id)}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
         "group relative flex h-11 items-center gap-3 rounded-md text-sm font-medium outline-none",
         "transition-colors duration-150 ease-ax-standard",
         "focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface",
         rail ? "mx-auto w-11 justify-center" : "mx-1 w-[calc(100%-0.5rem)] px-3",
-        active
-          ? "bg-ax-accent-soft text-ax-accent"
-          : "text-ax-secondary hover:bg-ax-surface-hover hover:text-ax-primary",
+        disabled
+          ? "cursor-not-allowed text-ax-muted"
+          : active
+            ? "bg-ax-accent-soft text-ax-accent"
+            : "text-ax-secondary hover:bg-ax-surface-hover hover:text-ax-primary",
       )}
       {...triggerProps}
     >
@@ -106,7 +116,17 @@ export function AdminSidebarItem({
       ) : (
         <>
           <span className="min-w-0 flex-1 truncate text-start">{label}</span>
-          {badge ? (
+          {disabled && soonLabel ? (
+            <span
+              className={cn(
+                "ms-auto flex h-5 shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-medium",
+                badgeToneClasses.info,
+              )}
+            >
+              {soonLabel}
+            </span>
+          ) : null}
+          {!disabled && badge ? (
             <span
               className={cn(
                 "ms-auto flex h-5 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums",

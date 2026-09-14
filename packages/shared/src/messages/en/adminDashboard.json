@@ -11,17 +11,18 @@
     "courses": "Courses",
     "subjects": "Subjects",
     "enrollments": "Enrollments",
-    "summaries": "Summaries",
+    "coursesEnrollments": "Courses & Enrollments",
     "news": "News",
     "appeals": "Appeals",
     "quizzes": "Quizzes",
     "analytics": "Analytics",
     "pageManagement": "Page Management",
-    "overview": "Overview"
+    "overview": "Overview & Analytics",
+    "zane": "ZANE AI Assistant",
+    "zaneSoon": "Coming soon"
   },
   "noAccess": {
     "courses": "You do not have permission to manage courses",
-    "enrollments": "You do not have permission to view enrollments",
     "pageManagement": "You do not have permission to manage the page"
   },
   "auth": {
@@ -94,10 +95,9 @@
     "emptySearch": "No subjects match your search"
   },
   "groups": {
-    "content": "Content",
-    "learning": "Learning",
-    "insights": "Insights",
-    "system": "System"
+    "content": "Academic Content",
+    "insights": "Overview & Analytics",
+    "system": "Moderation & System"
   },
   "shell": {
     "navigation": "Navigation",
@@ -127,8 +127,7 @@
     "recentActivity": "Recent activity",
     "recentActivityHint": "Latest content added across the platform",
     "emptyTitle": "Nothing here yet",
-    "emptyHint": "New subjects, summaries, and news will appear here as soon as they are added.",
-    "kindSummary": "Summary",
+    "emptyHint": "New subjects, news, and quizzes will appear here as soon as they are added.",
     "kindNews": "News",
     "kindQuiz": "Quiz",
     "quickActions": "Quick actions",
@@ -136,7 +135,6 @@
     "reviewAppeals": "Review appeals",
     "addSubject": "Add subject",
     "needsAttention": "Needs your attention",
-    "pendingSummaries": "Summaries awaiting review",
     "allClear": "Everything is up to date",
     "newThisWeek": "new this week"
   },
@@ -144,7 +142,7 @@
     "pendingAppeals": "Pending Appeals",
     "placeholder": "—",
     "quizzesTaken": "Quizzes Taken",
-    "activeSummaries": "Active Summaries",
+    "totalNews": "Total News",
     "totalUsers": "Total Users",
     "totalSubjects": "Total Subjects",
     "totalQuizzes": "Total Quizzes",
@@ -157,8 +155,6 @@
     "actions": "Actions",
     "empty": "No data to display",
     "view": "View",
-    "recentSummaries": "Recent Summaries",
-    "recentSummariesCaption": "Most recently added summaries on the platform",
     "recentNews": "Recent News",
     "recentNewsCaption": "Most recently published news items",
     "colTitle": "Title",

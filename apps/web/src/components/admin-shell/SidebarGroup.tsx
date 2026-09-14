@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId } from "react";
+import { useTranslations } from "next-intl";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AdminNavGroup, AdminTabId } from "@/lib/admin-shell/navigation";
@@ -42,6 +43,7 @@ export function AdminSidebarGroup({
   badges,
 }: AdminSidebarGroupProps) {
   const { state, actions } = useAdminShell();
+  const t = useTranslations("adminDashboard");
   const panelId = useId();
 
   const items = group.items.filter((item) => !item.doctorOnly || isDoctor);
@@ -68,6 +70,8 @@ export function AdminSidebarGroup({
                 active={activeTab === item.id}
                 rail
                 badge={badges?.[item.id]}
+                disabled={item.disabled}
+                soonLabel={item.soonLabelKey ? t(item.soonLabelKey) : undefined}
                 onSelect={onSelectTab}
               />
             </li>
@@ -109,6 +113,8 @@ export function AdminSidebarGroup({
                 active={activeTab === item.id}
                 rail={false}
                 badge={badges?.[item.id]}
+                disabled={item.disabled}
+                soonLabel={item.soonLabelKey ? t(item.soonLabelKey) : undefined}
                 onSelect={onSelectTab}
               />
             </li>
