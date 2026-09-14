@@ -2,6 +2,7 @@ import { User, Camera } from "lucide-react";
 import { updateAvatar } from "@/actions/profile";
 import { useAuth } from "../contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { FileDropzone } from "./FileDropzone";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export function AdminProfileImage({
   editable = false,
 }: AdminProfileImageProps) {
   const { user, profile, isAdmin } = useAuth();
+  const tProfile = useTranslations("profile");
   const [isUploading, setIsUploading] = useState(false);
   const avatarUrl = profile?.avatarUrl || user?.user_metadata?.avatar_url;
 
@@ -53,13 +55,13 @@ export function AdminProfileImage({
   const handleFileSelect = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("يرجى اختيار ملف صورة فقط");
+      toast.error(tProfile("avatarOnlyImages"));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("حجم الصورة يجب أن يكون أقل من 5 ميجابايت");
+      toast.error(tProfile("avatarTooLarge"));
       return;
     }
 
@@ -70,8 +72,8 @@ export function AdminProfileImage({
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       logger.error("Upload error in component", error);
-      toast.error("حدث خطأ في رفع الصورة", {
-        description: "يرجى المحاولة مرة أخرى.",
+      toast.error(tProfile("avatarUploadError"), {
+        description: tProfile("tryAgain"),
       });
     } finally {
       setIsUploading(false);
@@ -121,7 +123,7 @@ export function AdminProfileImage({
             <Image
               key={avatarUrl}
               src={avatarUrl}
-              alt="الصورة الشخصية"
+              alt={tProfile("avatarAlt")}
               fill
               sizes={
                 size === "sm"

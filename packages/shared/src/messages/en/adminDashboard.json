@@ -1,6 +1,5 @@
 {
   "title": "Admin Dashboard",
-  "subtitle": "Manage and review content, news, and exams",
   "globalFilter": "Global Filter:",
   "levelTwo": "Level 2",
   "allLevels": "All Levels",
@@ -11,16 +10,18 @@
     "courses": "Courses",
     "subjects": "Subjects",
     "enrollments": "Enrollments",
-    "summaries": "Summaries",
+    "coursesEnrollments": "Courses & Enrollments",
     "news": "News",
     "appeals": "Appeals",
     "quizzes": "Quizzes",
     "analytics": "Analytics",
-    "pageManagement": "Page Management"
+    "pageManagement": "Page Management",
+    "overview": "Overview & Analytics",
+    "zane": "ZANE AI Assistant",
+    "zaneSoon": "Coming soon"
   },
   "noAccess": {
     "courses": "You do not have permission to manage courses",
-    "enrollments": "You do not have permission to view enrollments",
     "pageManagement": "You do not have permission to manage the page"
   },
   "auth": {
@@ -55,7 +56,6 @@
     "noData": "No data available",
     "recentActivity": "Recent Activity",
     "noRecentActivity": "No recent activity",
-    "backHome": "Back to Home",
     "action": {
       "page_view": "Page Visit",
       "click": "Click",
@@ -76,5 +76,120 @@
       "unknown": "Unknown",
       "fallback": "Unspecified"
     }
+  },
+  "enrollmentsTab": {
+    "loading": "Loading enrollments...",
+    "empty": "No matching enrollment requests",
+    "imageError": "Failed to display the image"
+  },
+  "pageManagementTab": {
+    "title": "Home Page Content Management",
+    "subtitle": "Control which subjects appear to students on the home page",
+    "searchPlaceholder": "Search for a subject...",
+    "visible": "Visible to students",
+    "hidden": "Hidden",
+    "hide": "Hide",
+    "show": "Show",
+    "emptySearch": "No subjects match your search"
+  },
+  "groups": {
+    "content": "Academic Content",
+    "insights": "Overview & Analytics",
+    "system": "Moderation & System"
+  },
+  "shell": {
+    "navigation": "Navigation",
+    "mainNavigation": "Admin navigation",
+    "sidebarLabel": "Admin sidebar",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "toggleTheme": "Toggle theme",
+    "skipToContent": "Skip to main content",
+    "breadcrumb": "Breadcrumb",
+    "breadcrumbAdmin": "Admin",
+    "quickSearch": "Quick search",
+    "searchPlaceholder": "Search sections and actions…",
+    "userMenu": "Account menu",
+    "signedInAs": "Signed in as",
+    "signOut": "Sign out",
+    "viewSite": "View site",
+    "language": "Language",
+    "roleAdmin": "System Admin",
+    "roleDoctor": "Doctor",
+    "roleStudentAdmin": "Student Admin"
+  },
+  "filterBar": {
+    "openFilters": "Filters",
+    "sheetTitle": "Filter content",
+    "activeCount": "{count, plural, one {# active filter} other {# active filters}}",
+    "level": "Level",
+    "department": "Department",
+    "subject": "Subject",
+    "clearAll": "Clear all",
+    "apply": "Apply filters",
+    "done": "Done",
+    "clearPill": "Remove {name} filter"
+  },
+  "trends": {
+    "up": "Up {value}%",
+    "down": "Down {value}%",
+    "flat": "No change",
+    "vsPrevious": "vs previous 7 days"
+  },
+  "notifications": {
+    "label": "Notifications",
+    "emptyTitle": "No notifications",
+    "emptyHint": "Operational alerts will appear here"
+  },
+  "commandPalette": {
+    "title": "Quick navigation",
+    "inputPlaceholder": "Type to search sections…",
+    "noResults": "No matching sections"
+  },
+  "overview": {
+    "recentActivity": "Recent activity",
+    "recentActivityHint": "Latest content added across the platform",
+    "emptyTitle": "Nothing here yet",
+    "emptyHint": "New subjects, news, and quizzes will appear here as soon as they are added.",
+    "kindNews": "News",
+    "kindQuiz": "Quiz",
+    "quickActions": "Quick actions",
+    "createAnnouncement": "Create announcement",
+    "reviewAppeals": "Review appeals",
+    "addSubject": "Add subject",
+    "needsAttention": "Needs your attention",
+    "allClear": "Everything is up to date",
+    "newThisWeek": "new this week"
+  },
+  "kpi": {
+    "pendingAppeals": "Pending Appeals",
+    "placeholder": "—",
+    "quizzesTaken": "Quizzes Taken",
+    "totalNews": "Total News",
+    "totalUsers": "Total Users",
+    "totalSubjects": "Total Subjects",
+    "totalQuizzes": "Total Quizzes",
+    "needsReview": "needs review"
+  },
+  "table": {
+    "search": "Search",
+    "searchPlaceholder": "Search the table…",
+    "addNew": "Add New",
+    "actions": "Actions",
+    "empty": "No data to display",
+    "view": "View",
+    "recentNews": "Recent News",
+    "recentNewsCaption": "Most recently published news items",
+    "colTitle": "Title",
+    "colSubject": "Subject",
+    "colStatus": "Status",
+    "colDate": "Date",
+    "colViews": "Views",
+    "statusPublished": "Published",
+    "statusPending": "Pending",
+    "statusDraft": "Draft",
+    "statusRejected": "Rejected"
   }
 }

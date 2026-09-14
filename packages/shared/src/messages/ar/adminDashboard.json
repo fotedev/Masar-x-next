@@ -1,6 +1,5 @@
 {
   "title": "لوحة تحكم المشرفين",
-  "subtitle": "إدارة ومراجعة المحتوى والأخبار والامتحانات",
   "globalFilter": "فلتر شامل:",
   "levelTwo": "المستوى الثاني",
   "allLevels": "كل المستويات",
@@ -8,19 +7,21 @@
   "allSubjects": "كل المواد",
   "clearFilters": "مسح الفلاتر",
   "tabs": {
-    "courses": "الكورسات",
+    "courses": "الدورات",
     "subjects": "المواد",
-    "enrollments": "إثباتات الدفع",
-    "summaries": "الملخصات",
+    "enrollments": "التسجيلات",
+    "coursesEnrollments": "الدورات والتسجيلات",
     "news": "الأخبار",
     "appeals": "الطعون",
-    "quizzes": "الامتحانات",
+    "quizzes": "الاختبارات",
     "analytics": "التحليلات",
-    "pageManagement": "إدارة الصفحة"
+    "pageManagement": "إدارة الصفحات",
+    "overview": "الرئيسية والتحليلات",
+    "zane": "مساعد زين الذكي",
+    "zaneSoon": "قريباً"
   },
   "noAccess": {
     "courses": "ليس لديك صلاحية الوصول لإدارة الكورسات",
-    "enrollments": "ليس لديك صلاحية الوصول لإثباتات الدفع",
     "pageManagement": "ليس لديك صلاحية الوصول لإدارة الصفحة"
   },
   "auth": {
@@ -55,7 +56,6 @@
     "noData": "لا توجد بيانات متاحة",
     "recentActivity": "النشاط الأخير",
     "noRecentActivity": "لا توجد نشاطات حديثة",
-    "backHome": "العودة للرئيسية",
     "action": {
       "page_view": "زيارة صفحة",
       "click": "نقرة",
@@ -76,5 +76,120 @@
       "unknown": "غير معروف",
       "fallback": "غير محدد"
     }
+  },
+  "enrollmentsTab": {
+    "loading": "جاري تحميل الطلبات...",
+    "empty": "لا توجد طلبات تسجيل مطابقة",
+    "imageError": "حدث خطأ في عرض الصورة"
+  },
+  "pageManagementTab": {
+    "title": "إدارة محتوى الصفحة الرئيسية",
+    "subtitle": "تحكم في المواد التي تظهر للطلاب في الصفحة الرئيسية",
+    "searchPlaceholder": "البحث عن مادة...",
+    "visible": "ظاهرة للطلاب",
+    "hidden": "مخفية",
+    "hide": "إخفاء",
+    "show": "إظهار",
+    "emptySearch": "لا توجد مواد تطابق بحثك"
+  },
+  "groups": {
+    "content": "المحتوى الأكاديمي",
+    "insights": "الرئيسية والتحليلات",
+    "system": "الإشراف والنظام"
+  },
+  "shell": {
+    "navigation": "التنقل",
+    "mainNavigation": "تنقل لوحة التحكم",
+    "sidebarLabel": "الشريط الجانبي للوحة التحكم",
+    "openNavigation": "فتح القائمة",
+    "closeNavigation": "إغلاق القائمة",
+    "collapseSidebar": "طي الشريط الجانبي",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "toggleTheme": "تبديل المظهر",
+    "skipToContent": "تخطي إلى المحتوى الرئيسي",
+    "breadcrumb": "مسار التنقل",
+    "breadcrumbAdmin": "لوحة الإدارة",
+    "quickSearch": "بحث سريع",
+    "searchPlaceholder": "ابحث عن الأقسام والإجراءات…",
+    "userMenu": "قائمة الحساب",
+    "signedInAs": "مسجّل الدخول باسم",
+    "signOut": "تسجيل الخروج",
+    "viewSite": "عرض الموقع",
+    "language": "اللغة",
+    "roleAdmin": "مدير النظام",
+    "roleDoctor": "دكتور",
+    "roleStudentAdmin": "مشرف طلابي"
+  },
+  "filterBar": {
+    "openFilters": "الفلاتر",
+    "sheetTitle": "تصفية المحتوى",
+    "activeCount": "{count, plural, zero {لا فلاتر نشطة} one {فلتر واحد نشط} two {فلاتران نشطان} few {# فلاتر نشطة} many {# فلتراً نشطاً} other {# فلاتر نشطة}}",
+    "level": "المستوى",
+    "department": "القسم",
+    "subject": "المادة",
+    "clearAll": "مسح الكل",
+    "apply": "تطبيق الفلاتر",
+    "done": "تم",
+    "clearPill": "إزالة فلتر {name}"
+  },
+  "trends": {
+    "up": "زيادة {value}٪",
+    "down": "انخفاض {value}٪",
+    "flat": "بدون تغيير",
+    "vsPrevious": "مقارنة بالـ 7 أيام السابقة"
+  },
+  "notifications": {
+    "label": "الإشعارات",
+    "emptyTitle": "لا توجد إشعارات",
+    "emptyHint": "ستظهر التنبيهات التشغيلية هنا"
+  },
+  "commandPalette": {
+    "title": "التنقل السريع",
+    "inputPlaceholder": "اكتب للبحث بين الأقسام…",
+    "noResults": "لا توجد أقسام مطابقة"
+  },
+  "overview": {
+    "recentActivity": "النشاط الأخير",
+    "recentActivityHint": "أحدث المحتوى المضاف على المنصة",
+    "emptyTitle": "لا يوجد شيء بعد",
+    "emptyHint": "ستظهر المواد والأخبار والاختبارات الجديدة هنا فور إضافتها.",
+    "kindNews": "خبر",
+    "kindQuiz": "اختبار",
+    "quickActions": "إجراءات سريعة",
+    "createAnnouncement": "إنشاء إعلان",
+    "reviewAppeals": "مراجعة الطلبات",
+    "addSubject": "إضافة مادة",
+    "needsAttention": "يحتاج انتباهك",
+    "allClear": "كل شيء محدّث",
+    "newThisWeek": "جديد هذا الأسبوع"
+  },
+  "kpi": {
+    "pendingAppeals": "الطلبات المعلقة",
+    "placeholder": "—",
+    "quizzesTaken": "الاختبارات المكتملة",
+    "totalNews": "إجمالي الأخبار",
+    "totalUsers": "إجمالي المستخدمين",
+    "totalSubjects": "إجمالي المواد",
+    "totalQuizzes": "إجمالي الاختبارات",
+    "needsReview": "بانتظار المراجعة"
+  },
+  "table": {
+    "search": "بحث",
+    "searchPlaceholder": "ابحث في الجدول…",
+    "addNew": "إضافة جديد",
+    "actions": "إجراءات",
+    "empty": "لا توجد بيانات لعرضها",
+    "view": "عرض",
+    "recentNews": "أحدث الأخبار",
+    "recentNewsCaption": "أحدث الأخبار المنشورة على المنصة",
+    "colTitle": "العنوان",
+    "colSubject": "المادة",
+    "colStatus": "الحالة",
+    "colDate": "التاريخ",
+    "colViews": "المشاهدات",
+    "statusPublished": "منشور",
+    "statusPending": "قيد المراجعة",
+    "statusDraft": "مسودة",
+    "statusRejected": "مرفوض"
   }
 }
