@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useBrowserNotifications } from "./NotificationProvider";
 import { NotificationToggle } from "./NotificationToggle";
 
 export function NotificationSettings() {
+  const t = useTranslations("notifications");
   const { permission, requestPermission, isSupported } = useBrowserNotifications();
   const [settings, setSettings] = useState({
     newSummaries: true,
@@ -28,7 +30,7 @@ export function NotificationSettings() {
     return (
       <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
         <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          متصفحك لا يدعم الإشعارات
+          {t("toggle.unsupported")}
         </p>
       </div>
     );
@@ -39,10 +41,10 @@ export function NotificationSettings() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            إعدادات الإشعارات
+            {t("settings.title")}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            تحكم في الإشعارات التي تريد تلقيها
+            {t("settings.subtitle")}
           </p>
         </div>
         <NotificationToggle />
@@ -53,7 +55,7 @@ export function NotificationSettings() {
           onClick={requestPermission}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors"
         >
-          تفعيل الإشعارات
+          {t("promptTitle")}
         </button>
       )}
 
@@ -64,7 +66,7 @@ export function NotificationSettings() {
               htmlFor="new-summaries-notification"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              ملخصات جديدة
+              {t("settings.newSummaries")}
             </label>
             <input
               id="new-summaries-notification"
@@ -82,7 +84,7 @@ export function NotificationSettings() {
               htmlFor="new-news-notification"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              أخبار جديدة
+              {t("settings.newNews")}
             </label>
             <input
               id="new-news-notification"
@@ -100,7 +102,7 @@ export function NotificationSettings() {
               htmlFor="appeals-notification"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              الاستفسارات الجديدة
+              {t("settings.newAppeals")}
             </label>
             <input
               id="appeals-notification"
@@ -118,7 +120,7 @@ export function NotificationSettings() {
               htmlFor="system-updates-notification"
               className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
-              تحديثات النظام
+              {t("settings.systemUpdates")}
             </label>
             <input
               id="system-updates-notification"
