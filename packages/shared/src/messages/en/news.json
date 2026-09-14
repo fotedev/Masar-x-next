@@ -86,5 +86,11 @@
   "reviewRequired": "New news needs review",
   "reviewRequiredDesc": "A new news item titled \"{title}\" of type {type} has been added",
   "newNewsTitle": "New news!",
-  "newNewsDesc": "A new news item has been published: \"{title}\""
+  "newNewsDesc": "A new news item has been published: \"{title}\"",
+  "addSuccess": "News added successfully",
+  "addError": "An error occurred while adding the news",
+  "statusUpdateSuccess": "News status updated",
+  "statusUpdateError": "An error occurred while updating the news status",
+  "deleteSuccess": "News deleted successfully",
+  "deleteError": "An error occurred while deleting the news"
 }
