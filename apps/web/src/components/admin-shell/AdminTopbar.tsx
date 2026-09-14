@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
+  Bell,
   ChevronDown,
   ChevronRight,
   ExternalLink,
@@ -56,8 +57,10 @@ export function AdminTopbar({
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isApple, setIsApple] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsApple(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
@@ -87,6 +90,21 @@ export function AdminTopbar({
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [menuOpen]);
 
+  // Close notifications popover on outside pointerdown.
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [notificationsOpen]);
+
   const isOverview = activeTab === "overview";
   const email = user?.email ?? "";
   const displayName =
@@ -99,6 +117,24 @@ export function AdminTopbar({
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b border-ax-edge bg-ax-surface px-3 sm:px-4 lg:px-6">
+        {/* Masar X logo mark - mobile only, jumps to overview */}
+        <button
+          type="button"
+          onClick={() => onSelectTab("overview")}
+          aria-label={t("tabs.overview")}
+          className={cn(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors duration-150 hover:bg-ax-surface-hover lg:hidden",
+            focusRing,
+          )}
+        >
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ax-accent text-sm font-bold text-ax-on-accent"
+          >
+            M
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => actions.setMobileOpen(true)}
@@ -192,6 +228,46 @@ export function AdminTopbar({
           <Moon aria-hidden="true" className="h-5 w-5 dark:hidden" />
         </button>
 
+        {/* Notifications trigger + empty-state popover */}
+        <div ref={notificationsRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={notificationsOpen}
+            aria-label={t("notifications.label")}
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+              focusRing,
+            )}
+          >
+            <Bell aria-hidden="true" className="h-5 w-5" />
+          </button>
+
+          {notificationsOpen ? (
+            <div
+              role="menu"
+              aria-label={t("notifications.label")}
+              className="absolute end-0 top-full z-popover mt-2 w-64 overflow-hidden rounded-xl border border-ax-edge bg-ax-surface p-4 shadow-ax-lg sm:w-72"
+            >
+              <div className="flex flex-col items-center justify-center gap-2 py-4 text-center">
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-ax-surface-inset text-ax-muted"
+                >
+                  <Bell className="h-5 w-5" />
+                </span>
+                <p className="text-sm font-semibold text-ax-primary">
+                  {t("notifications.emptyTitle")}
+                </p>
+                <p className="text-xs text-ax-muted">
+                  {t("notifications.emptyHint")}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <span
           aria-hidden="true"
           className="mx-1 hidden h-6 w-px shrink-0 bg-ax-edge sm:block"
@@ -205,7 +281,7 @@ export function AdminTopbar({
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             className={cn(
-              "flex h-10 items-center gap-2 rounded-full border border-ax-edge bg-ax-surface ps-1 pe-2 outline-none transition-colors duration-150 hover:bg-ax-surface-hover",
+              "flex h-11 items-center gap-2 rounded-full border border-ax-edge bg-ax-surface ps-1 pe-2 outline-none transition-colors duration-150 hover:bg-ax-surface-hover",
               focusRing,
             )}
           >

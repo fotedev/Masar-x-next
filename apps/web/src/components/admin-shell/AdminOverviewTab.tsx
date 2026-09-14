@@ -12,10 +12,10 @@ import {
   Newspaper,
   Plus,
   School,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminStatusBadge, type AdminBadgeTone } from "./AdminDataTable";
+import { StatCard, type StatCardBadge } from "./StatCard";
 import type { AdminTabId } from "@/lib/admin-shell/navigation";
 
 /**
@@ -64,63 +64,6 @@ export interface AdminOverviewTabProps {
   onNavigate?: (tab: AdminTabId) => void;
   onAddNew?: () => void;
   onAddSubject?: () => void;
-}
-
-interface KpiChip {
-  label: string;
-  tone: "success" | "warning";
-}
-
-interface KpiCardProps {
-  icon: LucideIcon;
-  label: string;
-  value: number;
-  tone: "neutral" | "accent" | "warning" | "info";
-  chip?: KpiChip;
-}
-
-const KPI_TONE: Record<KpiCardProps["tone"], { icon: string }> = {
-  neutral: { icon: "bg-ax-surface-inset text-ax-secondary" },
-  accent: { icon: "bg-ax-accent-soft text-ax-accent" },
-  warning: { icon: "bg-ax-warning-soft text-ax-warning" },
-  info: { icon: "bg-ax-info-soft text-ax-info" },
-};
-
-const CHIP_TONE: Record<KpiChip["tone"], string> = {
-  success: "bg-ax-success-soft text-ax-success",
-  warning: "bg-ax-warning-soft text-ax-warning",
-};
-
-function KpiCard({ icon: Icon, label, value, tone, chip }: KpiCardProps) {
-  return (
-    <div className="flex items-start gap-4 rounded-xl border border-ax-edge bg-ax-surface p-5 shadow-ax-sm">
-      <span
-        aria-hidden="true"
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg",
-          KPI_TONE[tone].icon,
-        )}
-      >
-        <Icon className="h-5 w-5" />
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-ax-secondary">{label}</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums text-ax-primary">
-          {value.toLocaleString()}
-        </p>
-        {chip ? (
-          <span
-            className={cn(
-              "mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
-              CHIP_TONE[chip.tone],
-            )}
-          >
-            {chip.label}
-          </span>
-        ) : null}
-      </div>
-    </div>
-  );
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -228,7 +171,7 @@ export function AdminOverviewTab({
     [quizzes],
   );
 
-  const weekChip = (count: number): KpiChip | undefined =>
+  const weekChip = (count: number): StatCardBadge | undefined =>
     count > 0
       ? { label: `+${count} ${t("overview.newThisWeek")}`, tone: "success" }
       : undefined;
@@ -268,34 +211,34 @@ export function AdminOverviewTab({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
           icon={School}
           label={t("kpi.totalSubjects")}
           value={subjects.length}
           tone="accent"
-          chip={weekChip(newSubjectsThisWeek)}
+          badge={weekChip(newSubjectsThisWeek)}
         />
-        <KpiCard
+        <StatCard
           icon={Newspaper}
           label={t("kpi.totalNews")}
           value={news.length}
           tone="info"
-          chip={weekChip(newNewsThisWeek)}
+          badge={weekChip(newNewsThisWeek)}
         />
-        <KpiCard
+        <StatCard
           icon={HelpCircle}
           label={t("kpi.totalQuizzes")}
           value={quizzes.length}
           tone="neutral"
-          chip={weekChip(newQuizzesThisWeek)}
+          badge={weekChip(newQuizzesThisWeek)}
         />
-        <KpiCard
+        <StatCard
           icon={Flag}
           label={t("kpi.pendingAppeals")}
           value={appealsCount}
           tone="warning"
-          chip={
+          badge={
             appealsCount > 0
               ? { label: t("kpi.needsReview"), tone: "warning" }
               : undefined
@@ -380,7 +323,7 @@ export function AdminOverviewTab({
                       type="button"
                       onClick={() => onNavigate?.(item.tab)}
                       aria-label={`${t("table.view")}: ${item.title}`}
-                      className="shrink-0 rounded-md p-1.5 text-ax-muted outline-none transition-colors duration-150 hover:bg-ax-accent-soft hover:text-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-muted outline-none transition-colors duration-150 hover:bg-ax-accent-soft hover:text-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
                     >
                       <ChevronRight
                         aria-hidden="true"
@@ -461,7 +404,7 @@ export function AdminOverviewTab({
                       type="button"
                       onClick={() => onNavigate?.(row.tab)}
                       disabled={row.count === 0}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-start outline-none transition-colors duration-150 hover:bg-ax-surface-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent disabled:opacity-50 disabled:hover:bg-transparent"
+                      className="flex min-h-[44px] w-full items-center gap-3 px-5 py-3 text-start outline-none transition-colors duration-150 hover:bg-ax-surface-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent disabled:opacity-50 disabled:hover:bg-transparent"
                     >
                       <span
                         aria-hidden="true"
