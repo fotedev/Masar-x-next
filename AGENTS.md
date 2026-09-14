@@ -20,7 +20,7 @@
 |---|---|---|
 | I1 | Service-role and AI provider keys stay **server-side only** | RLS depends on it; CI runs `ai-endpoint-grep` + gitleaks on built artifacts |
 | I2 | TypeScript end-to-end: `Database` types + Zod schemas in `packages/shared` | One source of truth across web/desktop/mobile |
-| I3 | i18n for **every** user-facing string. No hardcoded Arabic in components | 45 namespaces already in `packages/shared/src/messages/{ar,en}/` |
+| I3 | i18n for **every** user-facing string. No hardcoded Arabic in components | 46 namespaces in `packages/shared/src/messages/{ar,en}/` |
 | I4 | All OAuth callbacks live under `[locale]/auth/callback/` | See gotcha #3 |
 | I5 | `pnpm.neverBuiltDependencies` lives in root `package.json` under `"pnpm"` | See gotcha #8 |
 | I6 | Electron version pinned exact (no `^`/`~`) in `apps/desktop/package.json` | See gotcha #11 |

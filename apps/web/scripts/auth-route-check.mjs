@@ -68,7 +68,6 @@ const routesToCheck = [
   '/non-academic',
   '/profile',
   '/quiz-attempts',
-  '/add-summary',
   '/add-video',
   '/add-file',
   '/ar/admin-dashboard',
@@ -76,7 +75,6 @@ const routesToCheck = [
   '/ar/non-academic',
   '/ar/profile',
   '/ar/quiz-attempts',
-  '/ar/add-summary',
   '/ar/add-video',
   '/ar/add-file',
   '/en/admin-dashboard',
@@ -84,7 +82,6 @@ const routesToCheck = [
   '/en/non-academic',
   '/en/profile',
   '/en/quiz-attempts',
-  '/en/add-summary',
   '/en/add-video',
   '/en/add-file',
 ];
@@ -112,7 +109,6 @@ function isProtected(path) {
   return [
     '/profile',
     '/quiz-attempts',
-    '/add-summary',
     '/add-video',
     '/add-file',
   ].some((r) => withoutLocale.startsWith(r));

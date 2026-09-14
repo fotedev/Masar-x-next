@@ -10,7 +10,6 @@ Disallow: /signup
 Disallow: /reset-password
 Disallow: /add
 Disallow: /add-file
-Disallow: /add-summary
 Disallow: /add-video
 Disallow: /edit-summary
 Disallow: /quiz-play

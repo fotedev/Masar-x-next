@@ -7,7 +7,6 @@ declare global {
 type Messages = {
   addFile: typeof import("./messages/ar/addFile.json");
   addSubjectModal: typeof import("./messages/ar/addSubjectModal.json");
-  addSummary: typeof import("./messages/ar/addSummary.json");
   addVideo: typeof import("./messages/ar/addVideo.json");
   adminDashboard: typeof import("./messages/ar/adminDashboard.json");
   aiAssistant: typeof import("./messages/ar/aiAssistant.json");

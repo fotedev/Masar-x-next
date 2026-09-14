@@ -33,7 +33,6 @@ import type { SupportedLocale } from "../messages/types";
 // ---------------------------------------------------------------------------
 import arAddFile from "../messages/ar/addFile.json";
 import arAddSubjectModal from "../messages/ar/addSubjectModal.json";
-import arAddSummary from "../messages/ar/addSummary.json";
 import arAddVideo from "../messages/ar/addVideo.json";
 import arAdminDashboard from "../messages/ar/adminDashboard.json";
 import arAiAssistant from "../messages/ar/aiAssistant.json";
@@ -81,7 +80,6 @@ import arTrwRedeem from "../messages/ar/trwRedeem.json";
 // ---------------------------------------------------------------------------
 import enAddFile from "../messages/en/addFile.json";
 import enAddSubjectModal from "../messages/en/addSubjectModal.json";
-import enAddSummary from "../messages/en/addSummary.json";
 import enAddVideo from "../messages/en/addVideo.json";
 import enAdminDashboard from "../messages/en/adminDashboard.json";
 import enAiAssistant from "../messages/en/aiAssistant.json";
@@ -132,7 +130,6 @@ import enTrwRedeem from "../messages/en/trwRedeem.json";
 const arMessages = {
   addFile: arAddFile,
   addSubjectModal: arAddSubjectModal,
-  addSummary: arAddSummary,
   addVideo: arAddVideo,
   adminDashboard: arAdminDashboard,
   aiAssistant: arAiAssistant,
@@ -194,7 +191,6 @@ export type I18nNamespace = keyof typeof arMessages;
 const enMessages: Record<I18nNamespace, unknown> = {
   addFile: enAddFile,
   addSubjectModal: enAddSubjectModal,
-  addSummary: enAddSummary,
   addVideo: enAddVideo,
   adminDashboard: enAdminDashboard,
   aiAssistant: enAiAssistant,

@@ -109,7 +109,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // 3. Protect Profile and Protected User routes
-    const protectedUserRoutes = ['/profile', '/quiz-attempts', '/add-summary', '/add-video', '/add-file'];
+    const protectedUserRoutes = ['/profile', '/quiz-attempts', '/add-video', '/add-file'];
     if (protectedUserRoutes.some(route => pathWithoutLocale.startsWith(route))) {
         if (!user) {
             return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
