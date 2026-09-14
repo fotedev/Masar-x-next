@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   AcademicLevelOption,
@@ -33,14 +34,17 @@ export function SummaryFormFields({
   semester,
   setSemester,
 }: SummaryFormFieldsProps) {
+  const t = useTranslations("editSummary");
+  const onboardingT = useTranslations("onboarding");
+
   return (
     <>
       <div>
-        <label 
+        <label
           htmlFor="summary-title"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
         >
-          عنوان الملخص <span className="text-red-500">*</span>
+          {t("summaryTitle")} <span className="text-red-500">*</span>
         </label>
         <input
           id="summary-title"
@@ -57,12 +61,12 @@ export function SummaryFormFields({
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <label 
-            htmlFor="summary-year"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            المستوى الدراسي <span className="text-red-500">*</span>
-          </label>
+        <label
+          htmlFor="summary-year"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          {onboardingT("academicLevel")} <span className="text-red-500">*</span>
+        </label>
           <select
             id="summary-year"
             name="year"
@@ -78,7 +82,7 @@ export function SummaryFormFields({
             }
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="">اختر المستوى</option>
+            <option value="">{t("selectLevel")}</option>
             {levels.map((level) => (
               <option key={level.id} value={level.name}>
                 {level.name}
@@ -88,12 +92,12 @@ export function SummaryFormFields({
         </div>
 
         <div>
-          <label 
-            htmlFor="summary-semester"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            الترم <span className="text-red-500">*</span>
-          </label>
+        <label
+          htmlFor="summary-semester"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          {t("semester")} <span className="text-red-500">*</span>
+        </label>
           <select
             id="summary-semester"
             name="semester"
@@ -111,18 +115,18 @@ export function SummaryFormFields({
             disabled={!formData.year}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-60"
           >
-            <option value={1}>ترم 1</option>
-            <option value={2}>ترم 2</option>
+            <option value={1}>{t("semester1")}</option>
+            <option value={2}>{t("semester2")}</option>
           </select>
         </div>
 
         <div>
-          <label 
-            htmlFor="summary-department"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            التخصص <span className="text-red-500">*</span>
-          </label>
+        <label
+          htmlFor="summary-department"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+        >
+          {t("department")} <span className="text-red-500">*</span>
+        </label>
           <select
             id="summary-department"
             name="department"
@@ -137,7 +141,7 @@ export function SummaryFormFields({
             disabled={!formData.year || availableDepartments.length === 0}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="">اختر التخصص</option>
+            <option value="">{onboardingT("selectDepartment")}</option>
             {availableDepartments.map((dept) => (
               <option key={dept.id} value={dept.name}>
                 {dept.name}
@@ -148,11 +152,11 @@ export function SummaryFormFields({
       </div>
 
       <div>
-        <label 
+        <label
           htmlFor="summary-subject"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
         >
-          اسم المادة <span className="text-red-500">*</span>
+          {t("subjectName")} <span className="text-red-500">*</span>
         </label>
         <select
           id="summary-subject"
@@ -164,7 +168,7 @@ export function SummaryFormFields({
           }
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          <option value="">اختر المادة</option>
+          <option value="">{t("selectSubject")}</option>
           {subjects.map((subject) => (
             <option key={subject.id} value={subject.name}>
               {subject.name}
@@ -174,11 +178,11 @@ export function SummaryFormFields({
       </div>
 
       <div>
-        <label 
+        <label
           htmlFor="summary-content"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
         >
-          محتوى الملخص <span className="text-red-500">*</span>
+          {t("summaryContent")} <span className="text-red-500">*</span>
         </label>
         <textarea
           id="summary-content"

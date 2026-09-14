@@ -19,5 +19,7 @@
   "updateSuccessDesc": "Summary \"{title}\" has been updated",
   "updateError": "An error occurred while updating the summary. Please try again.",
   "redirecting": "Redirecting to the summary page...",
-  "pdfOnlyError": "Please select a PDF file only"
+  "pdfOnlyError": "Please select a PDF file only",
+  "selectLevel": "Select level",
+  "department": "Department"
 }
