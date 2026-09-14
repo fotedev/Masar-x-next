@@ -21,5 +21,12 @@
   "redirecting": "Redirecting to the summary page...",
   "pdfOnlyError": "Please select a PDF file only",
   "selectLevel": "Select level",
-  "department": "Department"
+  "department": "Department",
+  "attachmentsLabel": "Update attachments (optional)",
+  "chooseAttachmentType": "Choose attachment type:",
+  "uploadPdfRadio": "Upload a PDF file",
+  "googleDriveLink": "Google Drive link",
+  "clickToUpdatePdf": "Click to update the PDF file",
+  "pdfLimitNoteShort": "PDF only (up to 10MB)",
+  "driveLinkPublicNote": "Make sure the link is publicly accessible"
 }

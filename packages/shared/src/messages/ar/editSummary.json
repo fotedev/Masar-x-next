@@ -21,5 +21,12 @@
   "redirecting": "جاري التحويل لصفحة الملخص...",
   "pdfOnlyError": "يرجى اختيار ملف PDF فقط",
   "selectLevel": "اختر المستوى",
-  "department": "التخصص"
+  "department": "التخصص",
+  "attachmentsLabel": "تحديث المرفقات (اختياري)",
+  "chooseAttachmentType": "اختر نوع المرفق:",
+  "uploadPdfRadio": "رفع ملف PDF",
+  "googleDriveLink": "رابط Google Drive",
+  "clickToUpdatePdf": "اضغط لتحديث ملف PDF",
+  "pdfLimitNoteShort": "PDF فقط (حتى 10MB)",
+  "driveLinkPublicNote": "تأكد من أن الرابط قابل للوصول للجميع (عام)"
 }
