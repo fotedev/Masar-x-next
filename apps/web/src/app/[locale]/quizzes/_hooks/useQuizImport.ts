@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { QuizFormData, QuizQuestionForm } from "../_types";
@@ -42,6 +43,7 @@ export function useQuizImport(args: {
 }) {
   const { importJson, formData, setFormData, resetImportState, setIsGenerating } =
     args;
+  const t = useTranslations("quizzes");
 
   const handleImport = useCallback(
     async (mode: "json" | "text") => {
@@ -49,8 +51,8 @@ export function useQuizImport(args: {
         try {
           const questions = JSON.parse(importJson) as unknown;
           if (!Array.isArray(questions)) {
-            toast.error("تنسيق JSON غير صحيح", {
-              description: "يجب أن يكون مصفوفة من الأسئلة.",
+            toast.error(t("importFeedback.invalidJson"), {
+              description: t("importFeedback.invalidJsonDesc"),
             });
             return;
           }
@@ -61,9 +63,8 @@ export function useQuizImport(args: {
           const isValid = normalized.length === questions.length;
 
           if (!isValid) {
-            toast.error("تنسيق الأسئلة غير صحيح", {
-              description:
-                "تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة.",
+            toast.error(t("importFeedback.invalidQuestions"), {
+              description: t("importFeedback.invalidQuestionsDesc"),
             });
             return;
           }
@@ -73,10 +74,10 @@ export function useQuizImport(args: {
             questions: [...prevFormData.questions, ...normalized],
           }));
           resetImportState();
-          toast.success("تم إنشاء الأسئلة بنجاح!");
+          toast.success(t("importFeedback.success"));
         } catch {
-          toast.error("حدث خطأ أثناء تحليل JSON", {
-            description: "تأكد من صحة التنسيق.",
+          toast.error(t("importFeedback.jsonParseError"), {
+            description: t("importFeedback.jsonParseErrorDesc"),
           });
         }
 
@@ -109,20 +110,20 @@ export function useQuizImport(args: {
               questions: resultQuestions,
             });
             resetImportState();
-            toast.success("تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!");
+            toast.success(t("importFeedback.aiSuccess"));
           } else {
             throw new Error("Invalid format received from AI");
           }
         } catch {
-          toast.error("حدث خطأ أثناء إنشاء الأسئلة", {
-            description: "حاول مرة أخرى.",
+          toast.error(t("importFeedback.aiError"), {
+            description: t("importFeedback.aiErrorDesc"),
           });
         } finally {
           setIsGenerating(false);
         }
       }
     },
-    [formData, importJson, resetImportState, setFormData, setIsGenerating],
+    [formData, importJson, resetImportState, setFormData, setIsGenerating, t],
   );
 
   return { handleImport };

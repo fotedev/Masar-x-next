@@ -112,5 +112,17 @@
   "createQuiz": "إنشاء امتحان",
   "editQuiz": "تعديل الامتحان",
   "options": "خيارات",
-  "removeImage": "إزالة الصورة"
+  "removeImage": "إزالة الصورة",
+  "importFeedback": {
+    "invalidJson": "تنسيق JSON غير صحيح",
+    "invalidJsonDesc": "يجب أن يكون مصفوفة من الأسئلة.",
+    "invalidQuestions": "تنسيق الأسئلة غير صحيح",
+    "invalidQuestionsDesc": "تأكد من وجود السؤال، خيارين على الأقل، والإجابة الصحيحة ضمن الخيارات المتاحة.",
+    "success": "تم إنشاء الأسئلة بنجاح!",
+    "jsonParseError": "حدث خطأ أثناء تحليل JSON",
+    "jsonParseErrorDesc": "تأكد من صحة التنسيق.",
+    "aiSuccess": "تم إنشاء الأسئلة بنجاح باستخدام الذكاء الاصطناعي!",
+    "aiError": "حدث خطأ أثناء إنشاء الأسئلة",
+    "aiErrorDesc": "حاول مرة أخرى."
+  }
 }
