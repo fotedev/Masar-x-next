@@ -17,5 +17,11 @@
   "saveSuccessNewDesc": "The new subject was added to the system.",
   "saveErrorFallback": "An error occurred while saving the subject",
   "saveErrorTitle": "Save error",
-  "saveErrorDesc": "An error occurred while saving the subject, please try again."
+  "saveErrorDesc": "An error occurred while saving the subject, please try again.",
+  "scheduleLabel": "Class Schedule",
+  "schedulePlaceholder": "Example: Monday 08:00 AM - 10:00 AM",
+  "locationLabel": "Lecture Location",
+  "locationPlaceholder": "Example: Hall 3 - Second Floor",
+  "descriptionLabel": "About the Subject",
+  "descriptionPlaceholder": "Write a brief description of the subject's objectives and its core topics..."
 }
