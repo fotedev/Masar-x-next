@@ -2,5 +2,10 @@
   "title": "Student Reviews",
   "addReview": "Add Review",
   "empty": "No reviews yet. Be the first to review this course!",
-  "anonymous": "Anonymous User"
+  "anonymous": "Anonymous User",
+  "heading": "Reviews & Ratings ({count})",
+  "confirmDelete": "Are you sure you want to delete this review?",
+  "delete": "Delete",
+  "emptyTitle": "No reviews yet.",
+  "emptyHint": "Be the first to review this content!"
 }
