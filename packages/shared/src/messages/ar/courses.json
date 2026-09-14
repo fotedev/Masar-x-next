@@ -31,5 +31,15 @@
   "academicCourseLabel": "كورس أكاديمي (مرتبط بالمواد الدراسية)",
   "savingInProgress": "جاري الحفظ...",
   "update": "تحديث",
-  "create": "إنشاء"
+  "create": "إنشاء",
+  "toasts": {
+    "addSuccess": "تم إضافة الكورس بنجاح",
+    "addError": "فشل في إضافة الكورس",
+    "updateSuccess": "تم تحديث الكورس بنجاح",
+    "updateError": "فشل في تحديث الكورس",
+    "publishSuccess": "تم تحديث حالة النشر",
+    "publishError": "فشل في تغيير حالة النشر",
+    "deleteSuccess": "تم حذف الكورس بنجاح",
+    "deleteError": "فشل في حذف الكورس"
+  }
 }
