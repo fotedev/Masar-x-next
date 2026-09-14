@@ -141,5 +141,14 @@
   "confirmDeleteTitle": "حذف الاختبار؟",
   "confirmDeleteMessageWithTitle": "سيتم حذف \"{title}\" نهائيًا ولا يمكن التراجع عن هذا الإجراء.",
   "confirmDeleteMessage": "سيتم حذف الاختبار نهائيًا ولا يمكن التراجع عن هذا الإجراء.",
-  "deleting": "جارٍ الحذف..."
+  "deleting": "جارٍ الحذف...",
+  "form": {
+    "minQuestionsError": "يجب أن يحتوي الامتحان على سؤال واحد على الأقل",
+    "trueOption": "صح",
+    "falseOption": "خطأ",
+    "imageTooLarge": "حجم الصورة كبير جداً",
+    "imageTooLargeDesc": "حجم الصورة \"{name}\" يتجاوز الحد المسموح به (5MB)",
+    "imageUploadError": "حدث خطأ أثناء رفع الصورة",
+    "tryAgain": "يرجى المحاولة مرة أخرى."
+  }
 }

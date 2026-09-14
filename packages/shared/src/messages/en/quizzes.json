@@ -141,5 +141,14 @@
   "confirmDeleteTitle": "Delete the exam?",
   "confirmDeleteMessageWithTitle": "The exam \"{title}\" will be permanently deleted and this action cannot be undone.",
   "confirmDeleteMessage": "The exam will be permanently deleted and this action cannot be undone.",
-  "deleting": "Deleting..."
+  "deleting": "Deleting...",
+  "form": {
+    "minQuestionsError": "The exam must contain at least one question",
+    "trueOption": "True",
+    "falseOption": "False",
+    "imageTooLarge": "The image is too large",
+    "imageTooLargeDesc": "The image \"{name}\" exceeds the allowed limit (5MB)",
+    "imageUploadError": "An error occurred while uploading the image",
+    "tryAgain": "Please try again."
+  }
 }
