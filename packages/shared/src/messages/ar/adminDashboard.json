@@ -116,7 +116,34 @@
     "userMenu": "قائمة الحساب",
     "signedInAs": "مسجّل الدخول باسم",
     "signOut": "تسجيل الخروج",
-    "viewSite": "عرض الموقع"
+    "viewSite": "عرض الموقع",
+    "language": "اللغة",
+    "roleAdmin": "مدير النظام",
+    "roleDoctor": "دكتور",
+    "roleStudentAdmin": "مشرف طلابي"
+  },
+  "filterBar": {
+    "openFilters": "الفلاتر",
+    "sheetTitle": "تصفية المحتوى",
+    "activeCount": "{count, plural, zero {لا فلاتر نشطة} one {فلتر واحد نشط} two {فلاتران نشطان} few {# فلاتر نشطة} many {# فلتراً نشطاً} other {# فلاتر نشطة}}",
+    "level": "المستوى",
+    "department": "القسم",
+    "subject": "المادة",
+    "clearAll": "مسح الكل",
+    "apply": "تطبيق الفلاتر",
+    "done": "تم",
+    "clearPill": "إزالة فلتر {name}"
+  },
+  "trends": {
+    "up": "زيادة {value}٪",
+    "down": "انخفاض {value}٪",
+    "flat": "بدون تغيير",
+    "vsPrevious": "مقارنة بالـ 7 أيام السابقة"
+  },
+  "notifications": {
+    "label": "الإشعارات",
+    "emptyTitle": "لا توجد إشعارات",
+    "emptyHint": "ستظهر التنبيهات التشغيلية هنا"
   },
   "commandPalette": {
     "title": "التنقل السريع",
