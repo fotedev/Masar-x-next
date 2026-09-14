@@ -1,6 +1,6 @@
 
 import { Card, CardContent, Button, Badge } from "../ui";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { formatDate } from "masarx-shared/format";
 import { CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 
@@ -27,27 +27,28 @@ export function EnrollmentCard({
   processingId,
 }: EnrollmentCardProps) {
   const locale = useLocale();
+  const t = useTranslations("enrollments");
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
         return (
           <Badge className="bg-green-100 text-green-800">
             <CheckCircle className="w-3 h-3 ml-1" />
-            نشط
+            {t("statusActive")}
           </Badge>
         );
       case "pending":
         return (
           <Badge className="bg-yellow-100 text-yellow-800">
             <Clock className="w-3 h-3 ml-1" />
-            في الانتظار
+            {t("statusPending")}
           </Badge>
         );
       case "rejected":
         return (
           <Badge className="bg-red-100 text-red-800">
             <XCircle className="w-3 h-3 ml-1" />
-            مرفوض
+            {t("statusRejected")}
           </Badge>
         );
       default:
@@ -87,7 +88,7 @@ export function EnrollmentCard({
                 onClick={() => onViewImage(enrollment.payment_screenshot_url!)}
               >
                 <Eye className="w-4 h-4 ml-1" />
-                عرض الإثبات
+                {t("viewProof")}
               </Button>
             )}
 
@@ -101,7 +102,7 @@ export function EnrollmentCard({
                   onClick={() => onAction(enrollment.id, "approve")}
                 >
                   <CheckCircle className="w-4 h-4 ml-1" />
-                  قبول
+                  {t("accept")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -110,7 +111,7 @@ export function EnrollmentCard({
                   onClick={() => onAction(enrollment.id, "reject")}
                 >
                   <XCircle className="w-4 h-4 ml-1" />
-                  رفض
+                  {t("reject")}
                 </Button>
               </>
             )}

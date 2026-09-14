@@ -1,0 +1,8 @@
+{
+  "statusActive": "Active",
+  "statusPending": "Pending",
+  "statusRejected": "Rejected",
+  "viewProof": "View Proof",
+  "accept": "Accept",
+  "reject": "Reject"
+}
