@@ -40,5 +40,13 @@
     "titleGranted": "Notifications enabled - click to test",
     "titleDenied": "Notifications blocked - click to try again",
     "titleDefault": "Click to enable notifications"
+  },
+  "settings": {
+    "title": "Notification settings",
+    "subtitle": "Control which notifications you want to receive",
+    "newSummaries": "New summaries",
+    "newNews": "New news",
+    "newAppeals": "New appeals",
+    "systemUpdates": "System updates"
   }
 }
