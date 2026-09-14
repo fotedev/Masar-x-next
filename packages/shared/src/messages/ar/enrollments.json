@@ -1,0 +1,8 @@
+{
+  "statusActive": "نشط",
+  "statusPending": "في الانتظار",
+  "statusRejected": "مرفوض",
+  "viewProof": "عرض الإثبات",
+  "accept": "قبول",
+  "reject": "رفض"
+}
