@@ -31,5 +31,15 @@
   "academicCourseLabel": "Academic course (linked to study materials)",
   "savingInProgress": "Saving in progress...",
   "update": "Update",
-  "create": "Create"
+  "create": "Create",
+  "toasts": {
+    "addSuccess": "Course added successfully",
+    "addError": "Failed to add the course",
+    "updateSuccess": "Course updated successfully",
+    "updateError": "Failed to update the course",
+    "publishSuccess": "Publish status updated",
+    "publishError": "Failed to change the publish status",
+    "deleteSuccess": "Course deleted successfully",
+    "deleteError": "Failed to delete the course"
+  }
 }

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +8,7 @@ import { CourseWithInstructor, CourseInsert, Course } from "@/types/database";
 import { CourseWithInstructorSchema } from "@/lib/validations";
 
 export function useCourses() {
+  const t = useTranslations("courses");
   const queryClient = useQueryClient();
 
   const { data: courses = [], isLoading: loading, refetch: fetchCourses } = useQuery({
@@ -57,7 +59,7 @@ export function useCourses() {
             : 0;
 
           const instructor = course.profiles;
-          const instructorName = instructor?.display_name || instructor?.full_name || instructor?.username || "مدرب";
+          const instructorName = instructor?.display_name || instructor?.full_name || instructor?.username || t("instructor");
 
           const courseToValidate = {
             ...course,
@@ -91,11 +93,11 @@ export function useCourses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success("تم إضافة الكورس بنجاح");
+      toast.success(t("toasts.addSuccess"));
     },
     onError: (error) => {
       logger.error("Failed to add course", error);
-      toast.error("فشل في إضافة الكورس");
+      toast.error(t("toasts.addError"));
     }
   });
 
@@ -106,11 +108,11 @@ export function useCourses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success("تم تحديث الكورس بنجاح");
+      toast.success(t("toasts.updateSuccess"));
     },
     onError: (error) => {
       logger.error("Failed to update course", error);
-      toast.error("فشل في تحديث الكورس");
+      toast.error(t("toasts.updateError"));
     }
   });
 
@@ -121,11 +123,11 @@ export function useCourses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success("تم تحديث حالة النشر");
+      toast.success(t("toasts.publishSuccess"));
     },
     onError: (error) => {
       logger.error("Failed to toggle publish status", error);
-      toast.error("فشل في تغيير حالة النشر");
+      toast.error(t("toasts.publishError"));
     }
   });
 
@@ -136,11 +138,11 @@ export function useCourses() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success("تم حذف الكورس بنجاح");
+      toast.success(t("toasts.deleteSuccess"));
     },
     onError: (error) => {
       logger.error("Failed to delete course", error);
-      toast.error("فشل في حذف الكورس");
+      toast.error(t("toasts.deleteError"));
     }
   });
 
