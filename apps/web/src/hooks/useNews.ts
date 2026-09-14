@@ -4,6 +4,7 @@ import { News, NewsInsert } from "../types/database";
 import { logger } from "../lib/logger";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 type UseNewsOptions = {
   includeInactive?: boolean;
@@ -11,6 +12,7 @@ type UseNewsOptions = {
 
 export function useNews(options: UseNewsOptions = {}) {
   const { includeInactive = false } = options;
+  const t = useTranslations("news");
   const queryClient = useQueryClient();
   const [showAddNews, setShowAddNews] = useState(false);
   const [newNews, setNewNews] = useState<NewsInsert>({
@@ -63,10 +65,10 @@ export function useNews(options: UseNewsOptions = {}) {
         created_by: null,
       });
       setShowAddNews(false);
-      toast.success("تمت إضافة الخبر بنجاح");
+      toast.success(t("addSuccess"));
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء إضافة الخبر";
+      const errorMessage = error instanceof Error ? error.message : t("addError");
       logger.error(`Failed to add news: ${errorMessage}`, { error });
       toast.error(errorMessage);
     },
@@ -83,10 +85,10 @@ export function useNews(options: UseNewsOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["news"] });
-      toast.success("تم تحديث حالة الخبر");
+      toast.success(t("statusUpdateSuccess"));
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء تحديث حالة الخبر";
+      const errorMessage = error instanceof Error ? error.message : t("statusUpdateError");
       logger.error(`Failed to toggle news status: ${errorMessage}`, { error });
       toast.error(errorMessage);
     },
@@ -99,10 +101,10 @@ export function useNews(options: UseNewsOptions = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["news"] });
-      toast.success("تم حذف الخبر بنجاح");
+      toast.success(t("deleteSuccess"));
     },
     onError: (error: unknown) => {
-      const errorMessage = error instanceof Error ? error.message : "حدث خطأ أثناء حذف الخبر";
+      const errorMessage = error instanceof Error ? error.message : t("deleteError");
       logger.error(`Failed to delete news: ${errorMessage}`, { error });
       toast.error(errorMessage);
     },

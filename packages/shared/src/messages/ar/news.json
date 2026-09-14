@@ -86,5 +86,11 @@
   "reviewRequired": "خبر جديد يحتاج مراجعة",
   "reviewRequiredDesc": "تم إضافة خبر جديد بعنوان \"{title}\" من نوع {type}",
   "newNewsTitle": "خبر جديد!",
-  "newNewsDesc": "تم نشر خبر جديد: \"{title}\""
+  "newNewsDesc": "تم نشر خبر جديد: \"{title}\"",
+  "addSuccess": "تمت إضافة الخبر بنجاح",
+  "addError": "حدث خطأ أثناء إضافة الخبر",
+  "statusUpdateSuccess": "تم تحديث حالة الخبر",
+  "statusUpdateError": "حدث خطأ أثناء تحديث حالة الخبر",
+  "deleteSuccess": "تم حذف الخبر بنجاح",
+  "deleteError": "حدث خطأ أثناء حذف الخبر"
 }
