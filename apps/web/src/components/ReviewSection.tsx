@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import { MessageSquare } from "lucide-react";
 import { useReviews } from "../hooks/useReviews";
 import { useAuth } from "../contexts/AuthContext";
@@ -17,6 +18,8 @@ export function ReviewSection({
   contentId,
   contentType = "summary",
 }: ReviewSectionProps) {
+  const t = useTranslations("reviews");
+  const tCommon = useTranslations("common");
   const { user, isAdmin } = useAuth();
   const { reviews, loading, stats, addReview, deleteReview } = useReviews(
     contentId,
@@ -40,9 +43,9 @@ export function ReviewSection({
   };
 
   const handleDeleteReview = async (reviewId: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذه المراجعة؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("confirmDelete"), {
+      confirmLabel: t("delete"),
+      cancelLabel: tCommon("cancel"),
     });
     if (!confirmed) return;
     try {
@@ -57,7 +60,7 @@ export function ReviewSection({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
           <MessageSquare className="w-6 h-6 text-brand-blue" />
-          المراجعات والتقييمات ({reviews.length})
+          {t("heading", { count: reviews.length })}
         </h2>
       </div>
 
@@ -84,10 +87,10 @@ export function ReviewSection({
           <div className="text-center py-16 modern-card border-dashed">
             <MessageSquare className="w-16 h-16 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400 font-bold text-lg">
-              لا توجد مراجعات بعد.
+              {t("emptyTitle")}
             </p>
             <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">
-              كن أول من يقيم هذا المحتوى!
+              {t("emptyHint")}
             </p>
           </div>
         )}
