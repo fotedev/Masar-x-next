@@ -124,5 +124,18 @@
     "aiSuccess": "Questions generated successfully using AI!",
     "aiError": "An error occurred while generating the questions",
     "aiErrorDesc": "Please try again."
+  },
+  "saveFeedback": {
+    "success": "Exam saved successfully",
+    "successEditDesc": "The exam data was updated successfully.",
+    "successNewDesc": "The new exam was added to the platform.",
+    "error": "Failed to save the exam",
+    "errorDesc": "An unexpected error occurred, please try again."
+  },
+  "deleteFeedback": {
+    "success": "Exam deleted",
+    "successDesc": "The exam was deleted successfully.",
+    "error": "Could not delete the exam",
+    "errorDesc": "An error occurred while deleting. Please try again."
   }
 }
