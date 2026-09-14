@@ -51,19 +51,13 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
 
   return (
     <>
-      <div className="rounded-xl border border-ax-edge bg-ax-surface p-4 shadow-ax-sm transition-colors sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-ax-primary sm:text-2xl">
-              {t("title")}
-            </h1>
-            <p className="mt-0.5 text-xs text-ax-muted sm:text-sm">
-              {t("subtitle")}
-            </p>
-          </div>
-
+      {/* Filter-only bar: the topbar breadcrumb and each view's own header
+          carry the page identity — repeating the dashboard banner here
+          duplicated every view's title (spec 006 review fix). */}
+      <div className="rounded-xl border border-ax-edge bg-ax-surface p-3 shadow-ax-sm transition-colors sm:p-4">
+        <div className="flex items-center lg:justify-end">
           {/* Mobile/Tablet (<lg): ONE Filter trigger button */}
-          <div className="flex lg:hidden">
+          <div className="flex w-full lg:hidden">
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
