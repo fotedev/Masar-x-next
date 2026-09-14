@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Database } from "../types/database";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ export function useAddSubjectForm({
   onSave,
   onClose,
 }: UseAddSubjectFormProps) {
+  const t = useTranslations("addSubjectModal");
   const [formData, setFormData] = useState<SubjectFormData>({
     name: "",
     professor: "",
@@ -86,7 +88,7 @@ export function useAddSubjectForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      setError("يرجى إدخال اسم المادة");
+      setError(t("nameRequired"));
       return;
     }
 
@@ -95,17 +97,17 @@ export function useAddSubjectForm({
       setError(null);
       await onSave(formData);
       onClose();
-      toast.success("تم حفظ المادة بنجاح", {
+      toast.success(t("saveSuccess"), {
         description: editingSubject
-          ? "تم تحديث بيانات المادة."
-          : "تمت إضافة المادة الجديدة إلى النظام.",
+          ? t("saveSuccessEditDesc")
+          : t("saveSuccessNewDesc"),
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "حدث خطأ أثناء حفظ المادة";
+      const message = err instanceof Error ? err.message : t("saveErrorFallback");
       setError(message);
-      toast.error("خطأ في الحفظ", {
+      toast.error(t("saveErrorTitle"), {
         description:
-          message || "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى.",
+          message || t("saveErrorDesc"),
       });
     } finally {
       setLoading(false);

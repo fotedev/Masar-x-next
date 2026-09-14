@@ -10,5 +10,12 @@
   "cancel": "إلغاء",
   "levelOption": "المستوى {level}",
   "semester1": "الترم الأول",
-  "semester2": "الترم الثاني"
+  "semester2": "الترم الثاني",
+  "nameRequired": "يرجى إدخال اسم المادة",
+  "saveSuccess": "تم حفظ المادة بنجاح",
+  "saveSuccessEditDesc": "تم تحديث بيانات المادة.",
+  "saveSuccessNewDesc": "تمت إضافة المادة الجديدة إلى النظام.",
+  "saveErrorFallback": "حدث خطأ أثناء حفظ المادة",
+  "saveErrorTitle": "خطأ في الحفظ",
+  "saveErrorDesc": "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى."
 }

@@ -10,5 +10,12 @@
   "cancel": "Cancel",
   "levelOption": "Level {level}",
   "semester1": "First semester",
-  "semester2": "Second semester"
+  "semester2": "Second semester",
+  "nameRequired": "Please enter the subject name",
+  "saveSuccess": "Subject saved successfully",
+  "saveSuccessEditDesc": "The subject data was updated.",
+  "saveSuccessNewDesc": "The new subject was added to the system.",
+  "saveErrorFallback": "An error occurred while saving the subject",
+  "saveErrorTitle": "Save error",
+  "saveErrorDesc": "An error occurred while saving the subject, please try again."
 }
