@@ -1,6 +1,5 @@
 {
   "title": "Admin Dashboard",
-  "subtitle": "Manage and review content, news, and exams",
   "globalFilter": "Global Filter:",
   "levelTwo": "Level 2",
   "allLevels": "All Levels",
@@ -57,7 +56,6 @@
     "noData": "No data available",
     "recentActivity": "Recent Activity",
     "noRecentActivity": "No recent activity",
-    "backHome": "Back to Home",
     "action": {
       "page_view": "Page Visit",
       "click": "Click",

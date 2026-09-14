@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FC } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Eye,
@@ -16,10 +16,6 @@ import { analyticsHelpers } from "@/lib/analyticsHelpers";
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/admin-shell/StatCard";
 import { PageHeader } from "@/components/admin-shell/PageHeader";
-
-interface AdminAnalyticsPageProps {
-  onNavigate: (page: string) => void;
-}
 
 interface AnalyticsSummary {
   totalUsers: number;
@@ -133,9 +129,7 @@ function calculateMicroTrends(
   };
 }
 
-export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
-  onNavigate,
-}) => {
+export const AdminAnalyticsPage = () => {
   const locale = useLocale();
   const t = useTranslations("adminDashboard.analytics");
   const tTrends = useTranslations("adminDashboard.trends");
@@ -472,19 +466,6 @@ export const AdminAnalyticsPage: FC<AdminAnalyticsPageProps> = ({
         </div>
       </section>
 
-      {/* Navigation button */}
-      <div className="flex justify-center pt-2">
-        <button
-          type="button"
-          onClick={() => onNavigate("home")}
-          className={cn(
-            "flex h-11 items-center justify-center gap-2 rounded-lg border border-ax-edge bg-ax-surface px-6 text-sm font-medium text-ax-secondary transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
-            focusRing,
-          )}
-        >
-          {t("backHome")}
-        </button>
-      </div>
     </div>
   );
 };

@@ -114,7 +114,6 @@ function AdminDashboard() {
 
 function AdminDashboardContent() {
   const t = useTranslations("adminDashboard");
-  const router = useRouter();
   const { user } = useAuth();
   const adminRole = user?.app_metadata?.role;
   const [isMounted, setIsMounted] = useState(false);
@@ -244,13 +243,8 @@ function AdminDashboardContent() {
               onAddNew={() => newsHook.setShowAddNews(true)}
               onAddSubject={handleCreateSubject}
             />
-            {/* Usage analytics (RPC) composed into the same landing view;
-                the delegate pass unifies both under one StatCard grid. */}
-            <MemoizedAdminAnalyticsPage
-              onNavigate={(page) =>
-                router.push(page === "home" ? "/" : `/${page}`)
-              }
-            />
+            {/* Usage analytics (RPC) composed into the same landing view. */}
+            <MemoizedAdminAnalyticsPage />
           </>
         );
       case "courses_enrollments":
