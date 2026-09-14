@@ -17,5 +17,11 @@
   "saveSuccessNewDesc": "تمت إضافة المادة الجديدة إلى النظام.",
   "saveErrorFallback": "حدث خطأ أثناء حفظ المادة",
   "saveErrorTitle": "خطأ في الحفظ",
-  "saveErrorDesc": "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى."
+  "saveErrorDesc": "حدث خطأ أثناء حفظ المادة، يرجى المحاولة مرة أخرى.",
+  "scheduleLabel": "الجدول الدراسي",
+  "schedulePlaceholder": "مثال: الاثنين 08:00 ص - 10:00 ص",
+  "locationLabel": "موقع المحاضرة",
+  "locationPlaceholder": "مثال: مدرج 3 - الدور الثاني",
+  "descriptionLabel": "نبذة عن المادة",
+  "descriptionPlaceholder": "اكتب وصفاً موجزاً لأهداف المادة ومواضيعها الأساسية..."
 }

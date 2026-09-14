@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction } from "react";
+import { useTranslations } from "next-intl";
 
 
 type ScheduleShape = {
@@ -16,6 +17,8 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
   formData,
   setFormData,
 }: ScheduleFieldsProps<TFormData>) {
+  const t = useTranslations("addSubjectModal");
+
   return (
     <>
       <div>
@@ -23,7 +26,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
           htmlFor="subject-schedule"
           className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          الجدول الدراسي
+          {t("scheduleLabel")}
         </label>
         <input
           id="subject-schedule"
@@ -36,7 +39,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
             )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
-          placeholder="مثال: الاثنين 08:00 ص - 10:00 ص"
+          placeholder={t("schedulePlaceholder")}
         />
       </div>
 
@@ -45,7 +48,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
           htmlFor="subject-location"
           className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          موقع المحاضرة
+          {t("locationLabel")}
         </label>
         <input
           id="subject-location"
@@ -58,7 +61,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
             )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
-          placeholder="مثال: مدرج 3 - الدور الثاني"
+          placeholder={t("locationPlaceholder")}
         />
       </div>
 
@@ -67,7 +70,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
           htmlFor="subject-description"
           className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          نبذة عن المادة
+          {t("descriptionLabel")}
         </label>
         <textarea
           id="subject-description"
@@ -83,7 +86,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
             )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none min-h-[100px]"
-          placeholder="اكتب وصفاً موجزاً لأهداف المادة ومواضيعها الأساسية..."
+          placeholder={t("descriptionPlaceholder")}
         />
       </div>
     </>
