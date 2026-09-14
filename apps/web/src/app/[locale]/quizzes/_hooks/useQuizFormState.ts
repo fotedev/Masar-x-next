@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { QuizFormData, QuizQuestionForm } from "../_types";
@@ -25,6 +26,7 @@ const EMPTY_FORM_DATA: QuizFormData = {
 };
 
 export function useQuizFormState() {
+  const t = useTranslations("quizzes");
   const [formData, setFormData] = useState<QuizFormData>(EMPTY_FORM_DATA);
 
   const resetForm = useCallback(() => {
@@ -41,7 +43,7 @@ export function useQuizFormState() {
   const deleteQuestion = useCallback((index: number) => {
     setFormData((prev: QuizFormData) => {
       if (prev.questions.length <= 1) {
-        toast.error("يجب أن يحتوي الامتحان على سؤال واحد على الأقل");
+        toast.error(t("form.minQuestionsError"));
         return prev;
       }
       return {
@@ -49,7 +51,7 @@ export function useQuizFormState() {
         questions: prev.questions.filter((_: QuizQuestionForm, i: number) => i !== index),
       };
     });
-  }, []);
+  }, [t]);
 
   const updateQuestion = useCallback(
     (index: number, field: string, value: unknown) => {
@@ -63,7 +65,7 @@ export function useQuizFormState() {
             updatedQuestions[index] = {
               ...current,
               type: "true-false",
-              options: ["صح", "خطأ"],
+              options: [t("form.trueOption"), t("form.falseOption")],
               correctAnswer: 0,
             };
           } else {
@@ -84,7 +86,7 @@ export function useQuizFormState() {
         return { ...prev, questions: updatedQuestions };
       });
     },
-    [],
+    [t],
   );
 
   const updateOption = useCallback(
@@ -113,8 +115,8 @@ export function useQuizFormState() {
       try {
         const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_IMAGE_SIZE) {
-          toast.error("حجم الصورة كبير جداً", {
-            description: `حجم الصورة "${file.name}" يتجاوز الحد المسموح به (5MB)`,
+          toast.error(t("form.imageTooLarge"), {
+            description: t("form.imageTooLargeDesc", { name: file.name }),
           });
           return;
         }
@@ -126,13 +128,13 @@ export function useQuizFormState() {
 
         updateQuestion(index, "imageUrl", result.url);
       } catch (err) {
-        toast.error("حدث خطأ أثناء رفع الصورة", {
+        toast.error(t("form.imageUploadError"), {
           description:
-            err instanceof Error ? err.message : "يرجى المحاولة مرة أخرى.",
+            err instanceof Error ? err.message : t("form.tryAgain"),
         });
       }
     },
-    [updateQuestion],
+    [updateQuestion, t],
   );
 
   const selectedFormYear = formData.year;
