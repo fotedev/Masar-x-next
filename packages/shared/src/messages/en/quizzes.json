@@ -137,5 +137,9 @@
     "successDesc": "The exam was deleted successfully.",
     "error": "Could not delete the exam",
     "errorDesc": "An error occurred while deleting. Please try again."
-  }
+  },
+  "confirmDeleteTitle": "Delete the exam?",
+  "confirmDeleteMessageWithTitle": "The exam \"{title}\" will be permanently deleted and this action cannot be undone.",
+  "confirmDeleteMessage": "The exam will be permanently deleted and this action cannot be undone.",
+  "deleting": "Deleting..."
 }

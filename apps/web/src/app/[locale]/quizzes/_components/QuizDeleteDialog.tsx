@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 
 type QuizDeleteDialogProps = {
@@ -10,6 +11,7 @@ type QuizDeleteDialogProps = {
 
 export function QuizDeleteDialog(props: QuizDeleteDialogProps) {
   const { open, quizTitle, isDeleting, onCancel, onConfirm } = props;
+  const t = useTranslations("quizzes");
 
   if (!open) return null;
 
@@ -18,7 +20,7 @@ export function QuizDeleteDialog(props: QuizDeleteDialogProps) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="تأكيد حذف الاختبار"
+      aria-label={t("confirmDeleteTitle")}
       onMouseDown={(e) => {
         if (e.target !== e.currentTarget) return;
         if (isDeleting) return;
@@ -35,12 +37,12 @@ export function QuizDeleteDialog(props: QuizDeleteDialogProps) {
             </div>
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                حذف الاختبار؟
+                {t("confirmDeleteTitle")}
               </h2>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {quizTitle
-                  ? `سيتم حذف "${quizTitle}" نهائيًا ولا يمكن التراجع عن هذا الإجراء.`
-                  : "سيتم حذف الاختبار نهائيًا ولا يمكن التراجع عن هذا الإجراء."}
+                  ? t("confirmDeleteMessageWithTitle", { title: quizTitle })
+                  : t("confirmDeleteMessage")}
               </p>
             </div>
           </div>
@@ -56,7 +58,7 @@ export function QuizDeleteDialog(props: QuizDeleteDialogProps) {
             className="flex-1 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-bold"
             disabled={isDeleting}
           >
-            إلغاء
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -64,7 +66,7 @@ export function QuizDeleteDialog(props: QuizDeleteDialogProps) {
             className="flex-1 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors font-bold disabled:opacity-70 disabled:cursor-not-allowed"
             disabled={isDeleting}
           >
-            {isDeleting ? "جارٍ الحذف..." : "حذف"}
+            {isDeleting ? t("deleting") : t("delete")}
           </button>
         </div>
       </div>
