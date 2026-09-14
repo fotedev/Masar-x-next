@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
@@ -25,6 +26,7 @@ export function useManageLectures({
   subjectName,
   standardizedSubject,
 }: UseManageLecturesProps) {
+  const t = useTranslations("subjectPage");
   const [lectures, setLectures] = useState<SubjectLecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function useManageLectures({
     if (!admin) {
       const errorMsg = "Unauthorized: Only admins can add lectures";
       logger.error(errorMsg, null, { userId: user.id });
-      toast.error("غير مصرح لك بإضافة محاضرات");
+      toast.error(t("manageLectures.unauthorizedAdd"));
       return;
     }
 
@@ -104,22 +106,22 @@ export function useManageLectures({
 
       setNewLecture({ title: "", orderIndex: "" });
       fetchLectures();
-      toast.success("تمت إضافة المحاضرة بنجاح");
+      toast.success(t("manageLectures.addSuccess"));
     } catch (error) {
       logger.error("Error adding lecture", error, {
         subjectName,
         lectureTitle: newLecture.title,
       });
-      toast.error("حدث خطأ أثناء إضافة المحاضرة");
+      toast.error(t("manageLectures.addError"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    const confirmed = await confirmToast("هل أنت متأكد من حذف هذه المحاضرة؟", {
-      confirmLabel: "حذف",
-      cancelLabel: "إلغاء",
+    const confirmed = await confirmToast(t("manageLectures.deleteConfirm"), {
+      confirmLabel: t("lectureForm.delete"),
+      cancelLabel: t("lectureForm.cancel"),
     });
     if (!confirmed) return;
     try {
@@ -133,10 +135,10 @@ export function useManageLectures({
       queryCache.invalidate(cacheKeys.subjectLectures(subjectName));
 
       fetchLectures();
-      toast.success("تم حذف المحاضرة");
+      toast.success(t("manageLectures.deleteSuccess"));
     } catch (error) {
       logger.error("Error deleting lecture", error, { id });
-      toast.error("حدث خطأ أثناء حذف المحاضرة");
+      toast.error(t("manageLectures.deleteError"));
     }
   };
 
@@ -153,10 +155,10 @@ export function useManageLectures({
 
       setEditingId(null);
       fetchLectures();
-      toast.success("تم تحديث المحاضرة");
+      toast.success(t("manageLectures.updateSuccess"));
     } catch (error) {
       logger.error("Error updating lecture", error, { id, updates });
-      toast.error("حدث خطأ أثناء تحديث المحاضرة");
+      toast.error(t("manageLectures.updateError"));
     }
   };
 

@@ -165,5 +165,15 @@
   "progress": {
     "markedComplete": "تم تحديد المحاضرة كمكتملة",
     "unmarked": "تم إلغاء التحديد كمكتمل"
+  },
+  "manageLectures": {
+    "unauthorizedAdd": "غير مصرح لك بإضافة محاضرات",
+    "addSuccess": "تمت إضافة المحاضرة بنجاح",
+    "addError": "حدث خطأ أثناء إضافة المحاضرة",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه المحاضرة؟",
+    "deleteSuccess": "تم حذف المحاضرة",
+    "deleteError": "حدث خطأ أثناء حذف المحاضرة",
+    "updateSuccess": "تم تحديث المحاضرة",
+    "updateError": "حدث خطأ أثناء تحديث المحاضرة"
   }
 }
