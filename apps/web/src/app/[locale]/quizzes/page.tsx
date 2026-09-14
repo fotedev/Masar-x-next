@@ -179,19 +179,19 @@ function QuizDashboardInternal() {
       });
 
       await loadQuizzes(true);
-      toast.success("تم حفظ الامتحان بنجاح", {
+      toast.success(t("saveFeedback.success"), {
         description: editingQuiz
-          ? "تم تحديث بيانات الامتحان بنجاح."
-          : "تمت إضافة الامتحان الجديد إلى المنصة.",
+          ? t("saveFeedback.successEditDesc")
+          : t("saveFeedback.successNewDesc"),
       });
       setShowCreateForm(false);
       setEditingQuiz(null);
       resetForm();
     } catch (error: unknown) {
-      toast.error("فشل حفظ الامتحان", {
+      toast.error(t("saveFeedback.error"), {
         description:
           getErrorMessage(error) ||
-          "حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.",
+          t("saveFeedback.errorDesc"),
       });
     }
   };
@@ -221,13 +221,13 @@ function QuizDashboardInternal() {
       await deleteQuiz(quizToDelete.id);
 
       await loadQuizzes(true);
-      toast.success("تم حذف الاختبار", {
-        description: "تم حذف الاختبار بنجاح.",
+      toast.success(t("deleteFeedback.success"), {
+        description: t("deleteFeedback.successDesc"),
       });
       closeDeleteDialog();
     } catch {
-      toast.error("تعذر حذف الاختبار", {
-        description: "حدث خطأ أثناء الحذف. حاول مرة أخرى.",
+      toast.error(t("deleteFeedback.error"), {
+        description: t("deleteFeedback.errorDesc"),
       });
     } finally {
       setIsDeletingQuiz(false);
