@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -29,21 +30,23 @@ export default function SubscribeModal({
   onFileChange,
   onSubmit,
 }: SubscribeModalProps) {
+  const t = useTranslations("courseDetail.page");
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>التسجيل في الكورس</CardTitle>
+          <CardTitle>{t("actions.enroll")}</CardTitle>
           <CardDescription>
-            يرجى رفع إثبات دفع للكورس ({course.price} جنيه مصري)
+            {t("subscribe.description", { price: course.price })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">
-              إثبات الدفع (صورة أو لقطة شاشة)
+              {t("subscribe.paymentProofLabel")}
             </label>
             <input
               type="file"
@@ -55,11 +58,10 @@ export default function SubscribeModal({
 
           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
             <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-              طريقة الدفع
+              {t("subscribe.paymentMethod")}
             </h4>
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              يرجى تحويل المبلغ ثم رفع صورة إثبات الدفع. سيتم مراجعة طلبك خلال
-              24-48 ساعة.
+              {t("subscribe.paymentInstructions")}
             </p>
           </div>
 
@@ -70,16 +72,16 @@ export default function SubscribeModal({
               className="flex-1"
             >
               {uploading ? (
-                "جاري الرفع..."
+                t("actions.uploading")
               ) : (
                 <>
                   <Upload className="w-4 h-4 ml-2" />
-                  إرسال الطلب
+                  {t("subscribe.submitRequest")}
                 </>
               )}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={uploading}>
-              إلغاء
+              {t("actions.cancel")}
             </Button>
           </div>
         </CardContent>

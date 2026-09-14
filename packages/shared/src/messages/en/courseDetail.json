@@ -57,6 +57,13 @@
     "fallback": {
       "instructor": "Instructor",
       "student": "Student"
+    },
+    "subscribe": {
+      "description": "Please upload proof of payment for the course ({price} EGP)",
+      "paymentProofLabel": "Payment proof (image or screenshot)",
+      "paymentMethod": "Payment method",
+      "paymentInstructions": "Please transfer the amount, then upload a payment proof image. Your request will be reviewed within 24-48 hours.",
+      "submitRequest": "Send Request"
     }
   },
   "content": {

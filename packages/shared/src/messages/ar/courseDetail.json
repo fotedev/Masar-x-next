@@ -57,6 +57,13 @@
     "fallback": {
       "instructor": "مدرب",
       "student": "طالب"
+    },
+    "subscribe": {
+      "description": "يرجى رفع إثبات دفع للكورس ({price} جنيه مصري)",
+      "paymentProofLabel": "إثبات الدفع (صورة أو لقطة شاشة)",
+      "paymentMethod": "طريقة الدفع",
+      "paymentInstructions": "يرجى تحويل المبلغ ثم رفع صورة إثبات الدفع. سيتم مراجعة طلبك خلال 24-48 ساعة.",
+      "submitRequest": "إرسال الطلب"
     }
   },
   "content": {
