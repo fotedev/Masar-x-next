@@ -1,5 +1,6 @@
 
 import { Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { FileDropzone } from "../FileDropzone";
 
 interface AttachmentSectionProps {
@@ -21,15 +22,17 @@ export function AttachmentSection({
   setDriveLink,
   setError,
 }: AttachmentSectionProps) {
+  const t = useTranslations("editSummary");
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        تحديث المرفقات (اختياري)
+        {t("attachmentsLabel")}
       </label>
 
       <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-3">
-          اختر نوع المرفق:
+          {t("chooseAttachmentType")}
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <label className="flex items-center cursor-pointer">
@@ -43,7 +46,7 @@ export function AttachmentSection({
               className="ml-2 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
-              رفع ملف PDF
+              {t("uploadPdfRadio")}
             </span>
           </label>
           <label className="flex items-center cursor-pointer">
@@ -57,7 +60,7 @@ export function AttachmentSection({
               className="ml-2 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
-              رابط Google Drive
+              {t("googleDriveLink")}
             </span>
           </label>
         </div>
@@ -66,7 +69,7 @@ export function AttachmentSection({
       {attachmentType === "file" && (
         <div className="mb-4">
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-            تحديث ملف PDF
+            {t("updatePdf")}
           </label>
           <FileDropzone
             onFileSelect={(files: File[]) => {
@@ -76,7 +79,7 @@ export function AttachmentSection({
                   setPdfFile(file);
                   setError("");
                 } else {
-                  setError("يرجى اختيار ملف PDF فقط");
+                  setError(t("pdfOnlyError"));
                   setPdfFile(null);
                 }
               }
@@ -94,10 +97,10 @@ export function AttachmentSection({
                 ) : (
                   <>
                     <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-semibold">اضغط لتحديث ملف PDF</span>
+                      <span className="font-semibold">{t("clickToUpdatePdf")}</span>
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-500">
-                      PDF فقط (حتى 10MB)
+                      {t("pdfLimitNoteShort")}
                     </p>
                   </>
                 )}
@@ -109,11 +112,11 @@ export function AttachmentSection({
 
       {attachmentType === "link" && (
         <div className="mb-4">
-          <label 
+          <label
             htmlFor="drive-link"
             className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2"
           >
-            رابط Google Drive
+            {t("googleDriveLink")}
           </label>
           <input
             id="drive-link"
@@ -125,7 +128,7 @@ export function AttachmentSection({
             className="w-full px-3 sm:px-4 py-3 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-base"
           />
           <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-            تأكد من أن الرابط قابل للوصول للجميع (عام)
+            {t("driveLinkPublicNote")}
           </p>
         </div>
       )}
