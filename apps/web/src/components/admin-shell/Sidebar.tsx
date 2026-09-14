@@ -9,12 +9,12 @@ import { AdminSidebarGroup } from "./SidebarGroup";
 import type { AdminSidebarBadge } from "./AdminSidebarItem";
 
 /**
- * AdminSidebar — the admin navigation rail.
+ * Sidebar — the admin navigation rail.
  *
  * desktop variant (default): fixed inline-start column, visible from lg up.
  *   expanded -> 264px (labels + badges)
  *   collapsed -> 72px icon rail (sr-only labels + floating tooltips)
- * mobile variant: rendered inside MobileDrawer; always expanded, includes a
+ * mobile variant: rendered inside MobileNav; always expanded, includes a
  *   close button; selecting an entry closes the drawer.
  *
  * Width transitions ~200ms and only after hydration (no first-paint flash).
@@ -30,7 +30,7 @@ export interface AdminSidebarProps {
   badges?: Partial<Record<AdminTabId, AdminSidebarBadge>>;
 }
 
-export function AdminSidebar({
+export function Sidebar({
   variant = "desktop",
   activeTab,
   onSelectTab,

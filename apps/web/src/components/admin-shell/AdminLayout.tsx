@@ -4,19 +4,19 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import type { AdminTabId } from "@/lib/admin-shell/navigation";
 import { AdminShellProvider, useAdminShell } from "./AdminShellProvider";
-import { AdminSidebar } from "./AdminSidebar";
+import { Sidebar } from "./Sidebar";
 import { AdminTopbar } from "./AdminTopbar";
-import { MobileDrawer } from "./MobileDrawer";
+import { MobileNav } from "./MobileNav";
 import { SkipLink } from "./SkipLink";
 import type { AdminSidebarBadge } from "./AdminSidebarItem";
 
 /**
- * AdminDashboardShell - composition root for the admin experience.
+ * AdminLayout - composition root for the admin experience.
  *
  *   <div class="flex h-full w-full overflow-hidden">   <- owns the viewport
  *     <SkipLink />                                     first focusable
- *     <AdminSidebar />                                 in-flow column (lg+)
- *     <MobileDrawer><AdminSidebar variant="mobile" /></MobileDrawer>
+ *     <Sidebar />                                 in-flow column (lg+)
+ *     <MobileNav><Sidebar variant="mobile" /></MobileNav>
  *     <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
  *       <AdminTopbar />
  *       <main class="flex-1 overflow-y-auto">{children}</main>
@@ -36,7 +36,7 @@ import type { AdminSidebarBadge } from "./AdminSidebarItem";
  * app/[locale]/admin-dashboard/layout.tsx, which is intentionally unchanged.
  */
 
-export interface AdminDashboardShellProps {
+export interface AdminLayoutProps {
   activeTab: AdminTabId;
   onSelectTab: (id: AdminTabId) => void;
   adminRole: string | null | undefined;
@@ -47,7 +47,7 @@ export interface AdminDashboardShellProps {
   children: ReactNode;
 }
 
-export function AdminDashboardShell(props: AdminDashboardShellProps) {
+export function AdminLayout(props: AdminLayoutProps) {
   return (
     <AdminShellProvider>
       <AdminShellChrome {...props} />
@@ -63,7 +63,7 @@ function AdminShellChrome({
   badges,
   onAddNew,
   children,
-}: AdminDashboardShellProps) {
+}: AdminLayoutProps) {
   const t = useTranslations("adminDashboard");
   const { state, actions } = useAdminShell();
 
@@ -84,26 +84,26 @@ function AdminShellChrome({
     <div className="flex h-full min-h-0 w-full overflow-hidden bg-ax-canvas text-ax-primary">
       <SkipLink label={t("shell.skipToContent")} />
 
-      <AdminSidebar
+      <Sidebar
         activeTab={activeTab}
         onSelectTab={onSelectTab}
         adminRole={adminRole}
         badges={badges}
       />
 
-      <MobileDrawer
+      <MobileNav
         open={state.mobileOpen}
         onClose={() => actions.setMobileOpen(false)}
         label={t("shell.navigation")}
       >
-        <AdminSidebar
+        <Sidebar
           variant="mobile"
           activeTab={activeTab}
           onSelectTab={onSelectTab}
           adminRole={adminRole}
           badges={badges}
         />
-      </MobileDrawer>
+      </MobileNav>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar

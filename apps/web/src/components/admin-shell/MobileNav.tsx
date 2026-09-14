@@ -7,7 +7,7 @@ import { useFocusTrap } from "@/hooks/admin-shell/useFocusTrap";
 import { useScrollLock } from "@/hooks/admin-shell/useScrollLock";
 
 /**
- * MobileDrawer — off-canvas admin navigation drawer (< lg viewports only).
+ * MobileNav — off-canvas admin navigation drawer (< lg viewports only).
  *
  * Contract with the Topbar hamburger:
  *   hamburger carries aria-controls="ax-mobile-drawer" + aria-expanded;
@@ -35,7 +35,7 @@ export interface MobileDrawerProps {
   label?: string;
 }
 
-export function MobileDrawer({
+export function MobileNav({
   open,
   onClose,
   children,
