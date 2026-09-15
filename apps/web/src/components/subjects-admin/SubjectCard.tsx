@@ -98,7 +98,7 @@ export function SubjectCard({
       </p>
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
-        <div className="flex gap-x-2">
+        <div className="flex flex-wrap gap-x-2 gap-y-1">
           <span className="text-xs font-bold px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
             {t("levelLabel", {
               level: subject.level ?? 0,
@@ -109,6 +109,17 @@ export function SubjectCard({
               semester: subject.semester ?? 0,
             })}
           </span>
+          {subject.status !== "approved" && (
+            <span
+              className={`text-xs font-bold px-2 py-1 rounded-md ${
+                subject.status === "rejected"
+                  ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                  : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+              }`}
+            >
+              {subject.status === "rejected" ? t("filters.statusRejected") : t("filters.statusPending")}
+            </span>
+          )}
         </div>
 
         {subject.status === "pending" && (

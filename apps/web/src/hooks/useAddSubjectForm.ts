@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Database } from "../types/database";
 import { toast } from "sonner";
 import { resolveSubjectSaveError } from "../lib/subjectErrorMessages";
+import { usePlatformSettings } from "./usePlatformSettings";
 
 type SubjectInsert = Database["public"]["Tables"]["subjects"]["Insert"];
 
@@ -34,6 +35,9 @@ export function useAddSubjectForm({
   onClose,
 }: UseAddSubjectFormProps) {
   const t = useTranslations("addSubjectModal");
+  // New subjects default to the platform's active term — semester 1 is
+  // invisible to students while active_semester is 2 (public grid filter).
+  const { activeSemester } = usePlatformSettings();
   const [formData, setFormData] = useState<SubjectFormData>({
     name: "",
     professor: "",
@@ -42,7 +46,7 @@ export function useAddSubjectForm({
     schedule: "",
     location: "",
     level: 1,
-    semester: 1,
+    semester: Number(activeSemester) || 1,
     is_academic: true,
     show_on_home: true,
     // Admin-created subjects are published immediately; "pending" stranded
@@ -51,6 +55,22 @@ export function useAddSubjectForm({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const resetForm = useCallback(() => {
+    setFormData({
+      name: "",
+      professor: "",
+      professor_gender: "male",
+      description: "",
+      schedule: "",
+      location: "",
+      level: 1,
+      semester: Number(activeSemester) || 1,
+      is_academic: true,
+      show_on_home: true,
+      status: "approved",
+    });
+  }, [activeSemester]);
 
   useEffect(() => {
     if (editingSubject) {
@@ -70,23 +90,7 @@ export function useAddSubjectForm({
     } else {
       resetForm();
     }
-  }, [editingSubject, show]);
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      professor: "",
-      professor_gender: "male",
-      description: "",
-      schedule: "",
-      location: "",
-      level: 1,
-      semester: 1,
-      is_academic: true,
-      show_on_home: true,
-      status: "approved",
-    });
-  };
+  }, [editingSubject, show, resetForm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
