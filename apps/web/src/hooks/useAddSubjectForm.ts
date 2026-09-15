@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Database } from "../types/database";
 import { toast } from "sonner";
+import { resolveSubjectSaveError } from "../lib/subjectErrorMessages";
 
 type SubjectInsert = Database["public"]["Tables"]["subjects"]["Insert"];
 
@@ -105,17 +106,10 @@ export function useAddSubjectForm({
           : t("saveSuccessNewDesc"),
       });
     } catch (err) {
-      // subjects.name is UNIQUE (migration 003): a 409/23505 here means the
-      // name is taken — tell the user to rename instead of a generic error.
-      const pgError = err as { code?: string; message?: string };
-      const message = err instanceof Error ? err.message : "";
-      const isDuplicateName =
-        pgError?.code === "23505" ||
-        message.includes("duplicate key") ||
-        message.includes("subjects_name_key");
-      const finalMessage = isDuplicateName
-        ? t("duplicateName")
-        : message || t("saveErrorFallback");
+      // Supabase returns PostgrestError plain objects (NOT Error instances) and
+      // subjects.name is UNIQUE (migration 003): map duplicates to a clear
+      // localized message, otherwise surface the raw backend text.
+      const finalMessage = resolveSubjectSaveError(err, t);
       setError(finalMessage);
       toast.error(t("saveErrorTitle"), {
         description: finalMessage || t("saveErrorDesc"),
