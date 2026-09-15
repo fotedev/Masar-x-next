@@ -101,10 +101,12 @@ export function Layout({ children }: LayoutProps) {
             ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden"
             : isAdminRoute
               ? "h-full w-full min-h-0"
-              : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
+              : isAssistantRoute
+                ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden"
+                : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
         }
       >
-        {isLightRoute || isAdminRoute ? (
+        {isLightRoute || isAdminRoute || isAssistantRoute ? (
           <div className="w-full h-full min-h-0">{children}</div>
         ) : (
           <PageTransition pathname={pathname || "/"}>{children}</PageTransition>
