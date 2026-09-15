@@ -12,6 +12,8 @@
   "summarize": "Summarize",
   "clear": "Clear",
   "clearChat": "Clear chat",
+  "tools": "ZANE tools",
+  "model": "Model",
   "responseFromPlatform": "Response from platform data",
   "onlineReady": "Online • Ready",
   "offline": "Offline",

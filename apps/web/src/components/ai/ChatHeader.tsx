@@ -1,18 +1,10 @@
-import { useEffect, useState } from "react";
 import {
   Bot,
   Brain,
-  Trash2,
   MessagesSquare,
-  ChevronDown,
-  Check,
-  BookOpen,
-  MessageSquareCode,
-  Users,
   Settings,
 } from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
-import { motion, AnimatePresence } from "framer-motion";
 import type { useTranslations } from "next-intl";
 
 type StudentSubjectOption = { id: string; name: string };
@@ -21,7 +13,6 @@ type LocalGeneratedQuiz = { data?: { title?: string } };
 
 interface ChatHeaderProps {
   mode: AiAssistantMode;
-  setMode: (mode: AiAssistantMode) => void;
   studentSelectedSubject: string;
   setStudentSelectedSubject: (subject: string) => void;
   studentSubjects: StudentSubjectOption[];
@@ -30,23 +21,16 @@ interface ChatHeaderProps {
   studentQuizzes: StudentQuizOption[];
   studentQuizzesLoading: boolean;
   onStartQuiz: () => void;
-  onSummarizeChat: () => void;
-  onClearChat: () => void;
-  isSummarizing: boolean;
-  hasChatData: boolean;
   generatedQuiz: LocalGeneratedQuiz | null;
   onShowGeneratedQuizModal: () => void;
   safeLocalGeneratedQuizzesCount: number;
   t: ReturnType<typeof useTranslations<"aiAssistant">>;
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
   onOpenPuterSettings: () => void;
   isPuterSignedIn: boolean;
 }
 
 export function ChatHeader({
   mode,
-  setMode,
   studentSelectedSubject,
   setStudentSelectedSubject,
   studentSubjects,
@@ -55,234 +39,51 @@ export function ChatHeader({
   studentQuizzes,
   studentQuizzesLoading,
   onStartQuiz,
-  onSummarizeChat,
-  onClearChat,
-  isSummarizing,
-  hasChatData,
   generatedQuiz,
   onShowGeneratedQuizModal,
   safeLocalGeneratedQuizzesCount,
   t,
-  selectedModel,
-  setSelectedModel,
   onOpenPuterSettings,
   isPuterSignedIn,
 }: ChatHeaderProps) {
-  const [isDropdownOpen, setIsMobileDropdownOpen] = useState(false);
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
-  const modeMenuId = "chat-mode-menu";
-  const modelMenuId = "chat-model-menu";
-
   const modes = [
-    { id: "cs_assistant", icon: Bot, label: t("assistantProgramming") },
-    { id: "student_agent", icon: Brain, label: t("assistantStudent") },
-    { id: "group_rag", icon: MessagesSquare, label: t("assistantGroupChat") },
+    { id: "cs_assistant" as AiAssistantMode, icon: Bot, label: t("assistantProgramming") },
+    { id: "student_agent" as AiAssistantMode, icon: Brain, label: t("assistantStudent") },
+    { id: "group_rag" as AiAssistantMode, icon: MessagesSquare, label: t("assistantGroupChat") },
   ];
-
-  const models = [
-    { id: "gpt-5-nano", label: "GPT-5 nano", provider: "OpenAI" },
-    { id: "gpt-4o", label: "GPT-4o", provider: "OpenAI" },
-    {
-      id: "claude-sonnet-4-6",
-      label: "Claude 4.6 Sonnet",
-      provider: "Anthropic",
-    },
-    { id: "o1-mini", label: "o1-mini", provider: "OpenAI" },
-  ];
-
   const currentMode = modes.find((m) => m.id === mode) || modes[0];
-  const currentModel = models.find((m) => m.id === selectedModel) || models[0];
-
-  const getSummaryConfig = () => {
-    switch (mode) {
-      case "student_agent":
-        return {
-          icon: BookOpen,
-          title: t("summarizeAcademicSubjects"),
-        };
-      case "cs_assistant":
-        return {
-          icon: MessageSquareCode,
-          title: t("summarizeCsChat"),
-        };
-      case "group_rag":
-      default:
-        return {
-          icon: Users,
-          title: t("summarizeGroupChat"),
-        };
-    }
-  };
-
-  const summaryConfig = getSummaryConfig();
-  const SummaryIcon = summaryConfig.icon;
-
-  useEffect(() => {
-    if (!isDropdownOpen && !isModelDropdownOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsMobileDropdownOpen(false);
-        setIsModelDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isDropdownOpen, isModelDropdownOpen]);
 
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-2 sm:p-4 mb-2 sm:mb-4 border border-slate-200/70 dark:border-slate-700/70 shadow-sm flex flex-col md:flex-row items-center justify-between shrink-0 z-20 gap-2 sm:gap-3">
-      <div className="flex items-center justify-between w-full md:w-auto gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-11 sm:h-11 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 relative overflow-hidden group shrink-0">
+    <div className="w-full px-2 sm:px-4 py-1.5 shrink-0 z-20">
+      <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-2">
+        {/* Left: mode icon + label + status */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20 relative overflow-hidden group shrink-0">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
             <currentMode.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
           </div>
           <div className="flex flex-col min-w-0">
-            <div className="relative">
-              <button
-                onClick={() => setIsMobileDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-1.5 text-sm sm:text-lg font-black text-slate-900 dark:text-white tracking-tight hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors group py-0.5 max-w-full"
-                aria-expanded={isDropdownOpen}
-                aria-controls={modeMenuId}
-                type="button"
-              >
-                <span className="text-slate-900 dark:text-white truncate">
-                  {currentMode.label}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-300 shrink-0 ${isDropdownOpen ? "rotate-180" : ""} text-cyan-500`}
-                />
-              </button>
-
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
-                      onClick={() => setIsMobileDropdownOpen(false)}
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full start-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden z-40"
-                      id={modeMenuId}
-                      role="menu"
-                    >
-                      <div className="p-2 space-y-1">
-                        {modes.map((m) => {
-                          const Icon = m.icon;
-                          const isActive = mode === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              onClick={() => {
-                                setMode(m.id as AiAssistantMode);
-                                setIsMobileDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all ${
-                                isActive
-                                  ? "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-bold"
-                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
-                              }`}
-                              role="menuitem"
-                              type="button"
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <Icon className="w-5 h-5" />
-                                <span className="font-bold text-xs sm:text-sm">
-                                  {m.label}
-                                </span>
-                              </div>
-                              {isActive && <Check className="w-4 h-4 text-cyan-500" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <div className="flex items-center gap-1.5 mr-1">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                  {t("onlineReady")}
-                </span>
-              </div>
-
-              <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-0.5"></div>
-
-              <div className="relative">
-                <button
-                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                  className="text-[11px] sm:text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:opacity-80 flex items-center gap-1 transition-all py-1 px-2 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-lg border border-cyan-500/20 whitespace-nowrap"
-                  aria-expanded={isModelDropdownOpen}
-                  aria-controls={modelMenuId}
-                  type="button"
-                >
-                  {currentModel.label}
-                  <ChevronDown
-                    className={`w-3 h-3 transition-transform ${isModelDropdownOpen ? "rotate-180" : ""}`}
-                  />
-                </button>
-
-                <AnimatePresence>
-                  {isModelDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
-                        onClick={() => setIsModelDropdownOpen(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        className="absolute top-full start-0 mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden z-40 p-1.5"
-                        id={modelMenuId}
-                        role="menu"
-                      >
-                        {models.map((m) => (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              setSelectedModel(m.id);
-                              setIsModelDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg transition-colors ${
-                              selectedModel === m.id
-                                ? "bg-cyan-500/10 dark:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 font-bold"
-                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200"
-                            }`}
-                            role="menuitem"
-                            type="button"
-                          >
-                            <span className="font-bold text-xs sm:text-sm">{m.label}</span>
-                            {selectedModel === m.id && (
-                              <Check className="w-4 h-4 text-cyan-500" />
-                            )}
-                          </button>
-                        ))}
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
+            <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight truncate">
+              {currentMode.label}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap ms-1">
+                {t("onlineReady")}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Mobile Header Actions (Clear/Summarize) */}
-        <div className="flex items-center gap-1.5 md:hidden">
+        {/* Right: AI settings + student toolset + last-exam chip */}
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 sm:gap-2 justify-end">
+          {/* AI Settings button — mobile icon */}
           <button
             onClick={onOpenPuterSettings}
-            className={`p-2 rounded-xl transition-all active:scale-95 text-white shadow-sm ${
+            className={`p-2 rounded-xl transition-all active:scale-95 text-white shadow-sm md:hidden ${ 
               isPuterSignedIn
                 ? "bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-500/40"
                 : "bg-indigo-600 hover:bg-indigo-700"
@@ -293,154 +94,97 @@ export function ChatHeader({
           >
             <Settings className="w-4 h-4" />
           </button>
-          <button
-            onClick={onSummarizeChat}
-            disabled={isSummarizing || !hasChatData}
-            className={`p-2 rounded-xl transition-all border ${
-              isSummarizing || !hasChatData
-                ? "text-slate-300 dark:text-slate-600 border-slate-100 dark:border-slate-800"
-                : "text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/60 hover:text-purple-600 hover:bg-white dark:hover:bg-slate-800 active:scale-95"
-            }`}
-            title={summaryConfig.title}
-            aria-label={summaryConfig.title}
-            type="button"
-          >
-            {isSummarizing ? (
-              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <SummaryIcon className="w-4 h-4" />
-            )}
-          </button>
-          <button
-            onClick={onClearChat}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all border border-slate-200/60 dark:border-slate-700/60 active:scale-95"
-            aria-label={t("clearChat")}
-            type="button"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
 
-      <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 sm:gap-2 w-full md:w-auto justify-end">
-        <button
-          type="button"
-          onClick={onOpenPuterSettings}
-          className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white hidden md:flex items-center gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
-          title={t("puterMode")}
-        >
-          <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>{t("puterMode")}</span>
-        </button>
+          {/* AI Settings button — desktop label */}
+          <button
+            type="button"
+            onClick={onOpenPuterSettings}
+            className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white hidden md:flex items-center gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
+            title={t("puterMode")}
+          >
+            <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>{t("puterMode")}</span>
+          </button>
 
-        {mode === "student_agent" && (
-          <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none flex-1 sm:flex-none">
-            <label htmlFor="chat-student-subject" className="sr-only">
-              {t("selectSubject")}
-            </label>
-            <select
-              id="chat-student-subject"
-              name="chatStudentSubject"
-              value={studentSelectedSubject}
-              onChange={(e) => setStudentSelectedSubject(e.target.value)}
-              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
-            >
-              <option value="">{t("selectSubject")}</option>
-              {studentSubjects?.map((s) => (
-                <option key={s.id} value={s.name}>
-                  {s.name}
+          {/* Student toolset — only in student_agent mode */}
+          {mode === "student_agent" && (
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none flex-1 sm:flex-none">
+              <label htmlFor="chat-student-subject" className="sr-only">
+                {t("selectSubject")}
+              </label>
+              <select
+                id="chat-student-subject"
+                name="chatStudentSubject"
+                value={studentSelectedSubject}
+                onChange={(e) => setStudentSelectedSubject(e.target.value)}
+                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
+              >
+                <option value="">{t("selectSubject")}</option>
+                {studentSubjects?.map((s) => (
+                  <option key={s.id} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="chat-student-quiz" className="sr-only">
+                {t("selectExam")}
+              </label>
+              <select
+                id="chat-student-quiz"
+                name="chatStudentQuiz"
+                value={studentSelectedQuizId}
+                onChange={(e) => setStudentSelectedQuizId(e.target.value)}
+                disabled={
+                  !studentSelectedSubject ||
+                  studentQuizzesLoading ||
+                  studentQuizzes.length === 0
+                }
+                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
+              >
+                <option value="">
+                  {studentQuizzesLoading
+                    ? t("loadingExams")
+                    : studentQuizzes.length === 0
+                      ? t("noExams")
+                      : t("selectExam")}
                 </option>
-              ))}
-            </select>
+                {studentQuizzes.map((qz) => (
+                  <option key={qz.id} value={qz.id}>
+                    {qz.title}
+                  </option>
+                ))}
+              </select>
 
-            <label htmlFor="chat-student-quiz" className="sr-only">
-              {t("selectExam")}
-            </label>
-            <select
-              id="chat-student-quiz"
-              name="chatStudentQuiz"
-              value={studentSelectedQuizId}
-              onChange={(e) => setStudentSelectedQuizId(e.target.value)}
-              disabled={
-                !studentSelectedSubject ||
-                studentQuizzesLoading ||
-                studentQuizzes.length === 0
-              }
-              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
-            >
-              <option value="">
-                {studentQuizzesLoading
-                  ? t("loadingExams")
-                  : studentQuizzes.length === 0
-                    ? t("noExams")
-                    : t("selectExam")}
-              </option>
-              {studentQuizzes.map((qz) => (
-                <option key={qz.id} value={qz.id}>
-                  {qz.title}
-                </option>
-              ))}
-            </select>
+              <button
+                onClick={onStartQuiz}
+                disabled={!studentSelectedQuizId}
+                className="px-3 py-1.5 text-[11px] sm:text-xs font-black rounded-xl bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50 shadow-md shadow-cyan-600/20 transition-all active:scale-95 whitespace-nowrap shrink-0"
+                type="button"
+              >
+                {t("start")}
+              </button>
+            </div>
+          )}
 
-            <button
-              onClick={onStartQuiz}
-              disabled={!studentSelectedQuizId}
-              className="px-3 py-1.5 text-[11px] sm:text-xs font-black rounded-xl bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50 shadow-md shadow-cyan-600/20 transition-all active:scale-95 whitespace-nowrap shrink-0"
-              type="button"
-            >
-              {t("start")}
-            </button>
-          </div>
-        )}
-
-        <div className="hidden md:flex items-center gap-1 sm:gap-2">
-          <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-
-          <button
-            onClick={onSummarizeChat}
-            disabled={isSummarizing || !hasChatData}
-            className={`p-2 rounded-xl transition-all ${
-              isSummarizing || !hasChatData
-                ? "text-slate-300 dark:text-slate-600"
-                : "text-slate-500 dark:text-slate-400 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95"
-            }`}
-            title={summaryConfig.title}
-            aria-label={summaryConfig.title}
-            type="button"
-          >
-            {isSummarizing ? (
-              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <SummaryIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-            )}
-          </button>
-          <button
-            onClick={onClearChat}
-            className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all active:scale-95"
-            title={t("clearChat")}
-            aria-label={t("clearChat")}
-            type="button"
-          >
-            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
+          {/* Last-exam chip */}
+          {generatedQuiz?.data && (
+            <div className="flex items-center">
+              <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block"></div>
+              <button
+                onClick={onShowGeneratedQuizModal}
+                className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-[11px] sm:text-xs font-bold whitespace-nowrap"
+                title={t("lastGeneratedQuizTooltip", { title: generatedQuiz.data.title ?? "" })}
+                type="button"
+              >
+                {t("lastExam")}
+                {safeLocalGeneratedQuizzesCount > 1
+                  ? ` (${safeLocalGeneratedQuizzesCount})`
+                  : ""}
+              </button>
+            </div>
+          )}
         </div>
-
-        {generatedQuiz?.data && (
-          <div className="flex items-center">
-            <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden md:block"></div>
-            <button
-              onClick={onShowGeneratedQuizModal}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-[11px] sm:text-xs font-bold whitespace-nowrap"
-              title={t("lastGeneratedQuizTooltip", { title: generatedQuiz.data.title ?? "" })}
-              type="button"
-            >
-              {t("lastExam")}
-              {safeLocalGeneratedQuizzesCount > 1
-                ? ` (${safeLocalGeneratedQuizzesCount})`
-                : ""}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

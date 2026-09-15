@@ -201,9 +201,6 @@ export default function AiAssistantPage() {
         {!isInitialState && (
           <ChatHeader
             mode={mode}
-            setMode={setMode}
-            selectedModel={selectedModel}
-            setSelectedModel={handleModelChange}
             onOpenPuterSettings={() => {
               initPuterDiagnostics();
               setShowPuterSettings(true);
@@ -216,10 +213,6 @@ export default function AiAssistantPage() {
             studentQuizzes={studentQuizzes}
             studentQuizzesLoading={studentQuizzesLoading}
             onStartQuiz={handleStartQuiz}
-            onSummarizeChat={handleSummarizeChat}
-            onClearChat={clearChat}
-            isSummarizing={isSummarizing}
-            hasChatData={messages.length > 0}
             generatedQuiz={generatedQuiz}
             onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
             safeLocalGeneratedQuizzesCount={0}
@@ -256,6 +249,14 @@ export default function AiAssistantPage() {
           t={t}
           isInitialState={isInitialState}
           user={user}
+          mode={mode}
+          setMode={setMode}
+          selectedModel={selectedModel}
+          setSelectedModel={handleModelChange}
+          onSummarizeChat={handleSummarizeChat}
+          onClearChat={clearChat}
+          isSummarizing={isSummarizing}
+          hasChatData={messages.length > 0}
         />
 
         {showPuterSettings && (
