@@ -53,6 +53,13 @@ export function Layout({ children }: LayoutProps) {
     pathWithoutLocale === "/admin-dashboard" ||
     pathWithoutLocale.startsWith("/admin-dashboard/");
 
+  // AI assistant route isolation: /ai-assistant (and any nested paths) must
+  // render as a fixed-viewport chat app — no marketing footer, no overscroll.
+  // The startsWith guard covers trailing-slash variants and future sub-routes.
+  const isAssistantRoute =
+    pathWithoutLocale === "/ai-assistant" ||
+    pathWithoutLocale.startsWith("/ai-assistant/");
+
   // Spec 005 / US2 / T024 — FR-019: web-only chrome surfaces are skipped
   // when the desktop shell is active. The desktop app does not have a
   // marketing footer, no "install as PWA" prompt (it IS installed), and
@@ -81,7 +88,9 @@ export function Layout({ children }: LayoutProps) {
           ? "flex h-screen w-screen flex-col overflow-hidden bg-background pt-8"
           : isAdminRoute
             ? "h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-900"
-            : "min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
+            : isAssistantRoute
+              ? "h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col overflow-hidden pt-[calc(72px+env(safe-area-inset-top))]"
+              : "min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
       }
     >
       {!isDesktop && !isAdminRoute && <Header />}
@@ -105,7 +114,7 @@ export function Layout({ children }: LayoutProps) {
           and must not leak into the Electron shell (FR-019, FR-011). */}
       {!isDesktop && !isAdminRoute && <PWAInstallPrompt />}
       {!isDesktop && !isAdminRoute && <NotificationPrompt />}
-      {!isDesktop && !isAdminRoute && <Footer />}
+      {!isDesktop && !isAdminRoute && !isAssistantRoute && <Footer />}
     </div>
   );
 }
