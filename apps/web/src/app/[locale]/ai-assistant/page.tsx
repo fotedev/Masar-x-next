@@ -196,10 +196,10 @@ export default function AiAssistantPage() {
   return (
     <AIErrorBoundary>
       <div
-        className={`flex flex-col max-w-5xl mx-auto transition-all duration-500 ${
+        className={`flex flex-col max-w-5xl mx-auto transition-[padding] duration-500 ${
           isInitialState
-            ? "h-[calc(100dvh-6.5rem)] sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-8.5rem)] justify-center items-center px-2 sm:px-4 py-2"
-            : "h-[calc(100dvh-6.5rem)] sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-8.5rem)] pt-0 pb-1 sm:pb-2 px-0 sm:px-4"
+            ? "h-[calc(100dvh_-_6.5rem_-_env(safe-area-inset-top))] sm:h-[calc(100dvh_-_7.5rem_-_env(safe-area-inset-top))] lg:h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-top))] items-center px-2 sm:px-4 py-2"
+            : "h-[calc(100dvh_-_6.5rem_-_env(safe-area-inset-top))] sm:h-[calc(100dvh_-_7.5rem_-_env(safe-area-inset-top))] lg:h-[calc(100dvh_-_8.5rem_-_env(safe-area-inset-top))] pt-0 pb-1 sm:pb-2 px-0 sm:px-4"
         }`}
       >
         {!isInitialState && (
