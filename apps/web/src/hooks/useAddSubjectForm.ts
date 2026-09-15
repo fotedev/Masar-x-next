@@ -44,7 +44,9 @@ export function useAddSubjectForm({
     semester: 1,
     is_academic: true,
     show_on_home: true,
-    status: "pending",
+    // Admin-created subjects are published immediately; "pending" stranded
+    // them out of the default views.
+    status: "approved",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export function useAddSubjectForm({
       semester: 1,
       is_academic: true,
       show_on_home: true,
-      status: "pending",
+      status: "approved",
     });
   };
 
