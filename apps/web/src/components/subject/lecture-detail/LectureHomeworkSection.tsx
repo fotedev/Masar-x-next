@@ -101,7 +101,7 @@ export function LectureHomeworkSection(props: {
             <button
               onClick={() => {
                 if (item.file_url) {
-                  window.open(item.file_url, "_blank");
+                  window.open(item.file_url, "_blank", "noopener,noreferrer");
                 }
               }}
               className="w-full py-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 font-black text-sm hover:bg-white/30 transition-all"

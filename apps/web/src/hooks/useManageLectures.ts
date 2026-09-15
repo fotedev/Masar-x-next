@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
+import { getPostgrestMessage, isUniqueViolation } from "@/lib/postgrestError";
 import { confirmToast } from "@/lib/confirmToast";
 import { queryCache, cacheKeys } from "@/lib/queryCache";
 import { logger } from "@/lib/logger";
@@ -55,10 +56,11 @@ export function useManageLectures({
       setLectures(data || []);
     } catch (error) {
       logger.error("Error fetching lectures", error, { subjectName });
+      toast.error(t("manageLectures.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [subjectName]);
+  }, [subjectName, t]);
 
   useEffect(() => {
     if (show && subjectName) {
@@ -112,7 +114,11 @@ export function useManageLectures({
         subjectName,
         lectureTitle: newLecture.title,
       });
-      toast.error(t("manageLectures.addError"));
+      toast.error(t("manageLectures.addError"), {
+        description: isUniqueViolation(error, "subject_lectures")
+          ? t("manageLectures.duplicateLecture")
+          : getPostgrestMessage(error) || undefined,
+      });
     } finally {
       setLoading(false);
     }
@@ -138,7 +144,9 @@ export function useManageLectures({
       toast.success(t("manageLectures.deleteSuccess"));
     } catch (error) {
       logger.error("Error deleting lecture", error, { id });
-      toast.error(t("manageLectures.deleteError"));
+      toast.error(t("manageLectures.deleteError"), {
+        description: getPostgrestMessage(error) || undefined,
+      });
     }
   };
 
@@ -158,7 +166,11 @@ export function useManageLectures({
       toast.success(t("manageLectures.updateSuccess"));
     } catch (error) {
       logger.error("Error updating lecture", error, { id, updates });
-      toast.error(t("manageLectures.updateError"));
+      toast.error(t("manageLectures.updateError"), {
+        description: isUniqueViolation(error, "subject_lectures")
+          ? t("manageLectures.duplicateLecture")
+          : getPostgrestMessage(error) || undefined,
+      });
     }
   };
 
