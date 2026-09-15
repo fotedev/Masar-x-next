@@ -19,7 +19,7 @@ type UseSubjectsParams = {
 export function useSubjects(params: UseSubjectsParams = {}) {
   const { academic, loading: academicLoading } = useUserAcademic();
   const { activeSemester } = usePlatformSettings();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   const isAcademicParam =
@@ -38,6 +38,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       level: effectiveLevel,
       semester: effectiveSemester,
       isAnonymous,
+      isAdmin,
       isAcademic: isAcademicParam,
     },
   ];
@@ -48,8 +49,12 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     refetch: fetchSubjects,
   } = useQuery({
     queryKey,
-    enabled:
-      !academicLoading && (isAcademicParam ? params.level !== null : true),
+    // Admins manage every subject regardless of their own academic profile —
+    // scoping the admin grid to the signed-in admin's level/semester hid
+    // subjects they had just created (MVP launch blocker).
+    enabled: isAdmin
+      ? true
+      : !academicLoading && (isAcademicParam ? params.level !== null : true),
     staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
     queryFn: async () => {
       try {
@@ -60,14 +65,16 @@ export function useSubjects(params: UseSubjectsParams = {}) {
           )
           .order("name", { ascending: true });
 
-        if (isAcademicParam === true) {
-          query = query.or("is_academic.eq.true,is_academic.is.null");
-        } else {
-          query = query.or("is_academic.eq.false,is_academic.is.null");
-        }
+        if (!isAdmin) {
+          if (isAcademicParam === true) {
+            query = query.or("is_academic.eq.true,is_academic.is.null");
+          } else {
+            query = query.or("is_academic.eq.false,is_academic.is.null");
+          }
 
-        query = query.or(`level.eq.${effectiveLevel},level.is.null`);
-        query = query.or(`semester.eq.${effectiveSemester},semester.is.null`);
+          query = query.or(`level.eq.${effectiveLevel},level.is.null`);
+          query = query.or(`semester.eq.${effectiveSemester},semester.is.null`);
+        }
 
         if (isAnonymous) {
           query = query.eq("show_on_home", true);
