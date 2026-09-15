@@ -200,8 +200,8 @@ export function ChatContainer({
       ref={messagesContainerRef}
       className={`flex-1 p-2 sm:p-4 space-y-3 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
         isInitialState
-          ? "flex flex-col items-center overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-2 py-2 sm:py-4"
-          : "overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pb-6 sm:pb-12"
+          ? "flex flex-col items-center overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-2 py-2 sm:py-4"
+          : "overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pb-6 sm:pb-12"
       }`}
     >
       {messages.length === 0 ? (

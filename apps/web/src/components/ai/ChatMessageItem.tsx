@@ -307,13 +307,13 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     return (
       <button
         onClick={handleCopy}
-        className="p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
+        className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
         title={tAi("copyContent")}
       >
         {isCopied ? (
-          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <Check className="w-4 h-4 text-emerald-400" />
         ) : (
-          <Copy className="w-3.5 h-3.5" />
+          <Copy className="w-4 h-4" />
         )}
       </button>
     );
@@ -458,7 +458,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       className={`flex w-full px-1 sm:px-0 ${alignmentClass}`}
     >
       <div
-        className={`flex gap-2.5 sm:gap-4 w-[95%] sm:w-auto max-w-[95%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%] ${directionClass}`}
+        className={`flex gap-2.5 sm:gap-4 max-w-[85%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%] ${directionClass}`}
       >
         <div
           className={`shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
@@ -484,7 +484,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             />
           )}
         </div>
-        <div className="flex flex-col gap-1 w-[calc(100%-3.5rem)] sm:w-auto">
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
           <div
             className={`px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl text-[14.5px] sm:text-[15px] leading-relaxed shadow-sm relative group/bubble break-words ${
               isUser
@@ -493,7 +493,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             }`}
             dir={getTextDirection(displayContent)}
           >
-            <div className={`absolute -top-3.5 ${isUser ? (isRTL ? "right-3" : "left-3") : (isRTL ? "left-3" : "right-3")} flex gap-1.5 sm:gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
+            <div className={`absolute -top-3.5 ${isUser ? (isRTL ? "right-3" : "left-3") : (isRTL ? "left-3" : "right-3")} hidden sm:flex gap-1.5 sm:gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
               {/* Global Copy Button for all messages */}
               <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity duration-200 pointer-events-none group-hover/bubble:pointer-events-auto">
                 <CopyButton content={displayContent} />
@@ -615,6 +615,20 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
                   </div>
                 )}
               </div>
+            )}
+          </div>
+          <div className="mt-1 flex items-center justify-end gap-1.5 sm:hidden">
+            <CopyButton content={displayContent} />
+            {!isUser && hasMarkdownContent(displayContent) && (
+              <button
+                onClick={() => setIsRawView(!isRawView)}
+                className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
+                title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
+                aria-label={isRawView ? tAi("viewRendered") : tAi("viewSource")}
+                type="button"
+              >
+                {isRawView ? <Eye className="w-4 h-4" /> : <Code className="w-4 h-4" />}
+              </button>
             )}
           </div>
           <div

@@ -41,6 +41,7 @@ interface ChatHeaderProps {
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   onOpenPuterSettings: () => void;
+  isPuterSignedIn: boolean;
 }
 
 export function ChatHeader({
@@ -65,6 +66,7 @@ export function ChatHeader({
   selectedModel,
   setSelectedModel,
   onOpenPuterSettings,
+  isPuterSignedIn,
 }: ChatHeaderProps) {
   const [isDropdownOpen, setIsMobileDropdownOpen] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
@@ -130,12 +132,12 @@ export function ChatHeader({
   }, [isDropdownOpen, isModelDropdownOpen]);
 
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-3 sm:p-4 mb-2 sm:mb-4 border border-slate-200/70 dark:border-slate-700/70 shadow-sm flex flex-col md:flex-row items-center justify-between shrink-0 z-20 gap-3">
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-2 sm:p-4 mb-2 sm:mb-4 border border-slate-200/70 dark:border-slate-700/70 shadow-sm flex flex-col md:flex-row items-center justify-between shrink-0 z-20 gap-2 sm:gap-3">
       <div className="flex items-center justify-between w-full md:w-auto gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 relative overflow-hidden group shrink-0">
+          <div className="w-8 h-8 sm:w-11 sm:h-11 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/20 relative overflow-hidden group shrink-0">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
-            <currentMode.icon className="w-5 h-5 sm:w-5 sm:h-5 text-white relative z-10" />
+            <currentMode.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
           </div>
           <div className="flex flex-col min-w-0">
             <div className="relative">
@@ -210,12 +212,12 @@ export function ChatHeader({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                <span className="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   {t("onlineReady")}
                 </span>
               </div>
 
-              <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-0.5"></div>
+              <div className="hidden sm:block w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-0.5"></div>
 
               <div className="relative">
                 <button
@@ -279,6 +281,19 @@ export function ChatHeader({
         {/* Mobile Header Actions (Clear/Summarize) */}
         <div className="flex items-center gap-1.5 md:hidden">
           <button
+            onClick={onOpenPuterSettings}
+            className={`p-2 rounded-xl transition-all active:scale-95 text-white shadow-sm ${
+              isPuterSignedIn
+                ? "bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-500/40"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
+            title={t("puterMode")}
+            aria-label={t("puterMode")}
+            type="button"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+          <button
             onClick={onSummarizeChat}
             disabled={isSummarizing || !hasChatData}
             className={`p-2 rounded-xl transition-all border ${
@@ -311,7 +326,7 @@ export function ChatHeader({
         <button
           type="button"
           onClick={onOpenPuterSettings}
-          className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
+          className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white hidden md:flex items-center gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
           title={t("puterMode")}
         >
           <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -328,7 +343,7 @@ export function ChatHeader({
               name="chatStudentSubject"
               value={studentSelectedSubject}
               onChange={(e) => setStudentSelectedSubject(e.target.value)}
-              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all truncate"
+              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
             >
               <option value="">{t("selectSubject")}</option>
               {studentSubjects?.map((s) => (
@@ -351,7 +366,7 @@ export function ChatHeader({
                 studentQuizzesLoading ||
                 studentQuizzes.length === 0
               }
-              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all truncate"
+              className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
             >
               <option value="">
                 {studentQuizzesLoading

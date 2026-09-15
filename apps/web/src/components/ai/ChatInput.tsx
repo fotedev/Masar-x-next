@@ -101,8 +101,8 @@ export function ChatInput({
             onClick={() => setIsQuickQuizOpen(true)}
             disabled={isLoading}
             title={t("quickQuizFromText")}
-            className={`rounded-2xl transition-colors duration-300 shrink-0 flex items-center justify-center border backdrop-blur-md self-stretch ${
-              isInitialState ? "w-12 sm:w-14" : "w-10 sm:w-12"
+            className={`rounded-2xl transition-colors duration-300 shrink-0 flex items-center justify-center border backdrop-blur-md self-center ${
+              isInitialState ? "w-12 h-12 sm:w-14 sm:h-14" : "w-10 h-10 sm:w-11 sm:h-11"
             } ${
               isLoading
                 ? "text-slate-300 dark:text-slate-600 bg-white/5 dark:bg-slate-800/5 border-slate-200/30 dark:border-slate-700/30"
@@ -139,7 +139,7 @@ export function ChatInput({
                 onBlur={() => setIsFocused(false)}
                 placeholder={placeholder}
                 dir="auto"
-                className={`flex-1 max-h-36 bg-transparent border-0 focus:ring-0 resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base ${isRTL ? "text-right placeholder:text-right" : "text-left placeholder:text-left"} ${
+                className={`flex-1 max-h-36 bg-transparent border-0 focus:ring-0 outline-none focus:outline-none resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base ${isRTL ? "text-right placeholder:text-right" : "text-left placeholder:text-left"} ${
                   isInitialState 
                     ? "min-h-[52px] sm:min-h-[60px] py-3.5 px-4 sm:px-6 text-base sm:text-lg" 
                     : "min-h-[40px] sm:min-h-[44px] py-2 px-3 text-base"
