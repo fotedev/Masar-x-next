@@ -196,11 +196,7 @@ export function ChatInput({
   const placeholder = getInputPlaceholder();
 
   return (
-    <div className={`shrink-0 p-2.5 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-[background-color,border-color] duration-500 ${
-      isInitialState
-        ? "bg-transparent border-t-0 w-full max-w-4xl mx-auto"
-        : "bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-slate-700/60"
-    }`}>
+    <div className="shrink-0 p-2 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="mx-auto w-full max-w-4xl space-y-2 sm:space-y-3">
         {/* Input area */}
         <motion.div
