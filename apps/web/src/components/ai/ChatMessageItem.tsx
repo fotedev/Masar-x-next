@@ -439,21 +439,25 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </li>
       ),
       // GFM tables: scroll horizontally instead of squeezing, isolate bidi
-      // per cell (mixed Arabic/English cells), theme-consistent borders.
+      // per cell (mixed Arabic/English cells), strong header/row structure
+      // with zebra striping for scannability.
       table: ({ children }: { children?: ReactNode }) => (
-        <div className="my-4 overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 shadow-sm">
-          <table className="w-full min-w-[420px] border-collapse text-sm">
+        <div className="my-4 w-full overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-900/40 shadow-sm">
+          <table className="w-full min-w-[520px] border-collapse text-sm">
             {children}
           </table>
         </div>
       ),
+      tr: ({ children }: { children?: ReactNode }) => (
+        <tr className="even:bg-slate-50/80 dark:even:bg-slate-800/30">{children}</tr>
+      ),
       thead: ({ children }: { children?: ReactNode }) => (
-        <thead className="bg-slate-50 dark:bg-slate-800/60">{children}</thead>
+        <thead className="bg-slate-100 dark:bg-slate-800/80">{children}</thead>
       ),
       th: ({ children }: { children?: ReactNode }) => (
         <th
           dir="auto"
-          className="px-3 py-2 text-start font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap"
+          className="px-3.5 py-2.5 text-start font-bold text-slate-800 dark:text-slate-100 border-b border-slate-300 dark:border-slate-700 whitespace-nowrap"
         >
           {children}
         </th>
@@ -461,7 +465,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       td: ({ children }: { children?: ReactNode }) => (
         <td
           dir="auto"
-          className="px-3 py-2 text-start align-top text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800/60"
+          className="px-3.5 py-2.5 text-start align-top text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700/60"
         >
           {children}
         </td>
@@ -470,7 +474,9 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         <strong className="font-bold text-slate-900 dark:text-white">{children}</strong>
       ),
       em: ({ children }: { children?: ReactNode }) => (
-        <em className="italic opacity-90">{children}</em>
+        // Arabic UI fonts have no true oblique glyphs — synthetic italics are
+        // near-invisible, so color carries the emphasis too.
+        <em className="italic text-cyan-700 dark:text-cyan-300/90">{children}</em>
       ),
       code: ({ children, ...props }: MarkdownCodeProps) => {
         // react-markdown v10 dropped the `inline` prop: bare `code` is always
@@ -572,7 +578,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       className={`flex w-full px-1 sm:px-0 ${alignmentClass}`}
     >
       <div
-        className={`flex gap-2.5 sm:gap-4 max-w-[85%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%] ${directionClass}`}
+        className={`flex gap-2.5 sm:gap-4 ${
+          // Assistant messages take the full 4xl column (tables/code need the
+          // room); user messages stay content-hugging chat style.
+          isUser ? "max-w-[85%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%]" : "w-full"
+        } ${directionClass}`}
       >
         <div
           className={`shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
