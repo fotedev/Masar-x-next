@@ -86,7 +86,7 @@ export function ChatHeader({
                 name="chatStudentSubject"
                 value={studentSelectedSubject}
                 onChange={(e) => setStudentSelectedSubject(e.target.value)}
-                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
+                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none transition-colors truncate"
               >
                 <option value="">{t("selectSubject")}</option>
                 {studentSubjects?.map((s) => (
@@ -109,7 +109,7 @@ export function ChatHeader({
                   studentQuizzesLoading ||
                   studentQuizzes.length === 0
                 }
-                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none focus:text-base transition-all truncate"
+                className="px-2 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-60 flex-1 sm:flex-none min-w-[90px] max-w-[140px] focus:ring-2 focus:ring-cyan-500/20 outline-none transition-colors truncate"
               >
                 <option value="">
                   {studentQuizzesLoading
