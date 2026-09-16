@@ -24,11 +24,23 @@ function getAllowedOrigin(request: Request): string {
 
 function isAuthorized(request: Request): boolean {
   const secret = process.env.VERCEL_MCP_BYPASS_SECRET;
+  // Production gate (fail-closed): missing secret in production = unauthorized.
+  if (!secret && process.env.NODE_ENV === "production") {
+    if (!mcpSecretWarned) {
+      mcpSecretWarned = true;
+      logger.error(
+        "[api/mcp] VERCEL_MCP_BYPASS_SECRET is not set in production; /api/mcp is closed until configured. " +
+          "Set it in the Vercel project env to enable.",
+      );
+    }
+    return false;
+  }
+  // Dev/preview: missing secret = open (with warn) so local dev works without setup.
   if (!secret) {
     if (!mcpSecretWarned) {
       mcpSecretWarned = true;
       logger.warn(
-        "[api/mcp] VERCEL_MCP_BYPASS_SECRET is not set; /api/mcp is unauthenticated (acceptable for local dev only).",
+        "[api/mcp] VERCEL_MCP_BYPASS_SECRET is not set; /api/mcp is unauthenticated (dev/preview only).",
       );
     }
     return true;
