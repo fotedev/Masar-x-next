@@ -51,6 +51,23 @@ const DEFAULT_GATEWAY_MODEL = 'anthropic/claude-sonnet-4.6';
 
 export async function POST(request: NextRequest) {
   try {
+    // Fail-closed early: if the AI Gateway isn't configured, surface a
+    // machine-readable code so the client (`assistant.ts`) can decide
+    // whether to attempt the Puter.js fallback or skip the call entirely.
+    // Placed BEFORE auth + rate-limit so a misconfigured deployment does
+    // not spend cycles on JWT verification, DB role lookups, or rate-limit
+    // budget that the user cannot consume anyway.
+    if (!process.env.AI_GATEWAY_API_KEY) {
+      return NextResponse.json(
+        {
+          error: 'ai_chat_disabled',
+          message:
+            'AI_GATEWAY_API_KEY is not set on the server. Set it in Vercel/env.local before calling this endpoint.',
+        },
+        { status: 503 },
+      );
+    }
+
     // T021: Authenticate user using getUser() for JWT verification
     const auth = await requireAuthenticatedUser();
     if (!('user' in auth)) return auth.response;
@@ -74,18 +91,6 @@ export async function POST(request: NextRequest) {
 
     // Record this request for rate limiting
     recordAIChatRequest(user.id);
-
-    // Explicit 503 if the AI Gateway isn't configured — fail loud rather than
-    // silently returning a fake response (would defeat the purpose of the route).
-    if (!process.env.AI_GATEWAY_API_KEY) {
-      return NextResponse.json(
-        {
-          error: 'AI gateway not configured',
-          message: 'AI_GATEWAY_API_KEY is not set on the server. Set it in Vercel/env.local before calling this endpoint.',
-        },
-        { status: 503 }
-      );
-    }
 
     // Stream a real LLM response via the Vercel AI Gateway.
     // The AI SDK reads AI_GATEWAY_API_KEY automatically and resolves
