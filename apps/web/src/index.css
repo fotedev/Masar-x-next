@@ -522,39 +522,19 @@ html[dir="rtl"] [lang="en"] {
   }
 }
 
-/* AI Assistant Chat Scrollbar Styling */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
+/* AI Assistant chat: hide the messages scrollbar in BOTH states (hero and
+   chat) — Gemini-style. Must be real, unlayered CSS: layered Tailwind
+   utilities lose to unlayered rules in the cascade (and Tailwind's arbitrary
+   ::-webkit-scrollbar variants were being beaten by any plain rule here).
+   Hiding the scrollbar — instead of reserving a gutter — keeps the message
+   column exactly as wide as the header and composer columns, with no shift
+   when a classic scrollbar would otherwise appear or disappear. */
+.chat-scrollbar-hidden {
+  scrollbar-width: none;
 }
 
-.chat-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3); /* slate-400/30 */
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5); /* slate-400/50 */
-}
-
-/* For Firefox (and Chrome 121+): colors only here — scrollbar-width is set
-   per state (.chat-scrollbar-gutter for chat, Tailwind none-utility for hero) */
-.chat-messages {
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-}
-
-/* Chat state only: thin styled scrollbar + symmetric gutter reservation so
-   the message column stays centered on the window axis (matching the
-   composer and header). Kept out of .chat-messages because the hero state
-   hides its scrollbar entirely — an unlayered scrollbar-width here would
-   override Tailwind's [scrollbar-width:none] utility in the cascade. */
-.chat-scrollbar-gutter {
-  scrollbar-gutter: stable both-edges;
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-  scrollbar-width: thin;
+.chat-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 /* dvh-based min-height with vh fallback (spec 003 FR-002) */

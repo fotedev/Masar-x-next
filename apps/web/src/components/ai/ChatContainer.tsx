@@ -170,8 +170,8 @@ export function ChatContainer({
       dir="ltr"
       className={`flex-1 w-full min-h-0 p-2 sm:p-4 space-y-3 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
         isInitialState
-          ? "flex flex-col items-center overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-2 py-2 sm:py-4"
-          : "overflow-y-auto overflow-x-hidden chat-scrollbar-gutter scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 pb-6 sm:pb-12"
+          ? "flex flex-col items-center overflow-y-auto overflow-x-hidden chat-scrollbar-hidden px-2 py-2 sm:py-4"
+          : "overflow-y-auto overflow-x-hidden chat-scrollbar-hidden pb-6 sm:pb-12"
       }`}
     >
       <div dir={isRTL ? "rtl" : "ltr"} className="flex min-h-full w-full max-w-4xl mx-auto flex-col">
