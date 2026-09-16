@@ -135,9 +135,12 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     };
   }, []);
 
-  // Persist messages to localStorage (only for guests)
+  // Persist messages to localStorage (only for guests). `user === undefined`
+  // means auth is still resolving — skip entirely, otherwise this effect
+  // wipes the guest key before the restore effect gets to read it (the
+  // restore skips undefined too).
   useEffect(() => {
-    if (typeof window === 'undefined' || user) return;
+    if (typeof window === 'undefined' || user === undefined || user) return;
     if (messages.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     } else {
