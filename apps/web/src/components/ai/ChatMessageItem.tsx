@@ -103,6 +103,10 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lottiePlayerRef = useRef<DotLottie | null>(null);
   const wasLoadingRef = useRef(false);
+  // Long-press (touch) reveals the per-message actions row below the bubble.
+  // Mobile shows nothing by default; desktop relies on hover instead.
+  const [showTouchActions, setShowTouchActions] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Stable per-instance key for the bubble's LottiePlayer. The key changes
   // every time the parent re-mounts the bubble (e.g. when switching between
   // assistants with messages), which forces a clean rebuild of the WASM
@@ -154,6 +158,54 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       window.removeEventListener("storage", onStorage);
     };
   }, [isPuterAuthRequiredMessage, refreshPuterStatus]);
+
+  // Clear the long-press timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    };
+  }, []);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleBubbleTouchStart = useCallback(() => {
+    clearLongPressTimer();
+    longPressTimerRef.current = setTimeout(() => {
+      setShowTouchActions((prev) => !prev);
+      try {
+        navigator.vibrate?.(10);
+      } catch {
+        // vibrate not available; ignore
+      }
+    }, 500);
+  }, [clearLongPressTimer]);
+
+  const handleBubbleTouchMove = useCallback(() => {
+    // Finger is scrolling, not long-pressing.
+    clearLongPressTimer();
+  }, [clearLongPressTimer]);
+
+  const handleBubbleTouchEnd = useCallback(() => {
+    clearLongPressTimer();
+  }, [clearLongPressTimer]);
+
+  const handleBubbleContextMenu = useCallback((e: React.MouseEvent) => {
+    // Touch long-press fires contextmenu on mobile — use it as a fallback
+    // reveal signal. On hover-capable (desktop) devices keep the native menu.
+    try {
+      if (typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches) {
+        e.preventDefault();
+        setShowTouchActions(true);
+      }
+    } catch {
+      // matchMedia unavailable; ignore
+    }
+  }, []);
 
   // Drive the bubble avatar's Lottie state machine based on chat state.
   // Only the latest assistant message reacts (thinking / yes / no / alert / jump).
@@ -272,6 +324,34 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       .replace(/\\\(([\s\S]*?)\\\)/g, "$$1$");
   };
 
+  // CommonMark treats `** نص **` (space just inside the delimiters) as
+  // literal text, so Arabic model output leaks raw `**` into the bubble.
+  // Trim the inner padding so it parses as bold. Fenced code blocks are
+  // excluded — `a ** b ** c` inside code must stay untouched.
+  const repairSpacedBold = (text: string) => {
+    return String(text ?? "")
+      .split(/(```[\s\S]*?```)/g)
+      .map((segment) =>
+        segment.startsWith("```")
+          ? segment
+          : segment.replace(/\*\*(\s+)([^*]+?)(\s+)\*\*/g, "**$2**"),
+      )
+      .join("");
+  };
+
+  // react-markdown hands p/li children with inline elements ALREADY replaced
+  // by our styled components. Flattening them to plain text (as before) threw
+  // that inline formatting away — bold/italic/inline code inside paragraphs
+  // and list items silently vanished. Pass elements through and apply LaTeX
+  // handling only to the text runs.
+  const renderInlineChildren = (children: ReactNode): ReactNode =>
+    Children.toArray(children).map((child, i) => {
+      if (typeof child === "string" || typeof child === "number") {
+        return <LatexRenderer key={i} text={String(child)} />;
+      }
+      return child;
+    });
+
   const flattenChildren = (children: ReactNode): string => {
     return Children.toArray(children).reduce<string>((text, child) => {
       if (typeof child === "string" || typeof child === "number") {
@@ -307,8 +387,9 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     return (
       <button
         onClick={handleCopy}
-        className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
+        className="p-2 sm:p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
         title={tAi("copyContent")}
+        aria-label={tAi("copyContent")}
       >
         {isCopied ? (
           <Check className="w-4 h-4 text-emerald-400" />
@@ -321,7 +402,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
 
   const renderAssistantContent = (content: string) => {
     const raw = String(content ?? "");
-    const normalized = normalizeLatexDelimiters(raw);
+    const normalized = repairSpacedBold(normalizeLatexDelimiters(raw));
 
     const markdownComponents = {
       h1: ({ children }: { children?: ReactNode }) => (
@@ -341,7 +422,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       ),
       p: ({ children }: { children?: ReactNode }) => (
         <div className="mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
-          <LatexRenderer text={flattenChildren(children)} />
+          {renderInlineChildren(children)}
         </div>
       ),
       ul: ({ children }: { children?: ReactNode }) => (
@@ -353,9 +434,37 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         <li className="flex gap-2 items-start group">
           <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
           <div className="flex-1 text-slate-700 dark:text-slate-300">
-            <LatexRenderer text={flattenChildren(children)} />
+            {renderInlineChildren(children)}
           </div>
         </li>
+      ),
+      // GFM tables: scroll horizontally instead of squeezing, isolate bidi
+      // per cell (mixed Arabic/English cells), theme-consistent borders.
+      table: ({ children }: { children?: ReactNode }) => (
+        <div className="my-4 overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 shadow-sm">
+          <table className="w-full min-w-[420px] border-collapse text-sm">
+            {children}
+          </table>
+        </div>
+      ),
+      thead: ({ children }: { children?: ReactNode }) => (
+        <thead className="bg-slate-50 dark:bg-slate-800/60">{children}</thead>
+      ),
+      th: ({ children }: { children?: ReactNode }) => (
+        <th
+          dir="auto"
+          className="px-3 py-2 text-start font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 whitespace-nowrap"
+        >
+          {children}
+        </th>
+      ),
+      td: ({ children }: { children?: ReactNode }) => (
+        <td
+          dir="auto"
+          className="px-3 py-2 text-start align-top text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800/60"
+        >
+          {children}
+        </td>
       ),
       strong: ({ children }: { children?: ReactNode }) => (
         <strong className="font-bold text-slate-900 dark:text-white">{children}</strong>
@@ -363,36 +472,41 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       em: ({ children }: { children?: ReactNode }) => (
         <em className="italic opacity-90">{children}</em>
       ),
-      code: ({ inline, className, children, ...props }: MarkdownCodeProps) => {
-        if (inline) {
-          return (
-            <code
-              className="bg-slate-100 dark:bg-slate-900/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono font-medium border border-slate-200/50 dark:border-slate-700/50"
-              {...props}
-            >
-              {children}
-            </code>
-          );
-        }
-
+      code: ({ children, ...props }: MarkdownCodeProps) => {
+        // react-markdown v10 dropped the `inline` prop: bare `code` is always
+        // inline here (block code arrives via our `pre` handler below).
+        return (
+          <code
+            className="bg-slate-100 dark:bg-slate-900/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono font-medium border border-slate-200/50 dark:border-slate-700/50"
+            {...props}
+          >
+            {children}
+          </code>
+        );
+      },
+      pre: ({ children }: { children?: ReactNode }) => {
+        // Block code: react-markdown wraps the fenced block as
+        // <pre><code class="language-x">…</code></pre>. Handle the block
+        // styling here (shared <CodeBlock /> adds a per-snippet copy button)
+        // and keep the language-markdown escape hatch that re-renders
+        // markdown blocks the model nested inside a fence.
+        const codeEl = Children.toArray(children).find(
+          (c): c is React.ReactElement<MarkdownCodeProps> =>
+            isValidElement(c) && (c.props as MarkdownCodeProps).className !== undefined,
+        );
+        const className = (codeEl?.props as MarkdownCodeProps)?.className || "";
+        const inner = flattenChildren(codeEl ? (codeEl.props as MarkdownCodeProps).children : children);
         const match = /language-([\w-]+)/.exec(className || "");
         const lang = (match?.[1] || "").toLowerCase();
         if (lang === "markdown" || lang === "md") {
-          const inner = normalizeLatexDelimiters(flattenChildren(children));
           return (
             <div className="my-4">
-              <LazyMarkdown content={inner} components={markdownComponents} />
+              <LazyMarkdown content={normalizeLatexDelimiters(inner)} components={markdownComponents} />
             </div>
           );
         }
-
-        // Block code → render via the shared <CodeBlock /> which adds a
-        // per-snippet copy button (so users can copy the code alone instead
-        // of the whole message).
-        const codeText = flattenChildren(children);
-        return <CodeBlock code={codeText} />;
+        return <CodeBlock code={inner} />;
       },
-      pre: ({ children }: { children?: ReactNode }) => <>{children}</>,
     };
 
     return (
@@ -484,33 +598,20 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             />
           )}
         </div>
-        <div className="flex flex-col gap-1 min-w-0 flex-1">
+        <div className="flex flex-col gap-1 min-w-0 flex-1 group/bubble">
           <div
-            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl text-[14.5px] sm:text-[15px] leading-relaxed shadow-sm relative group/bubble break-words ${
+            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl text-[14.5px] sm:text-[15px] leading-relaxed shadow-sm relative break-words ${
               isUser
                 ? `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
                 : `bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/90 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 ${roundedClass}`
             }`}
             dir={getTextDirection(displayContent)}
+            onTouchStart={handleBubbleTouchStart}
+            onTouchMove={handleBubbleTouchMove}
+            onTouchEnd={handleBubbleTouchEnd}
+            onTouchCancel={handleBubbleTouchEnd}
+            onContextMenu={handleBubbleContextMenu}
           >
-            <div className={`absolute -top-3.5 ${isUser ? (isRTL ? "right-3" : "left-3") : (isRTL ? "left-3" : "right-3")} hidden sm:flex gap-1.5 sm:gap-2 z-20 ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
-              {/* Global Copy Button for all messages */}
-              <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity duration-200 pointer-events-none group-hover/bubble:pointer-events-auto">
-                <CopyButton content={displayContent} />
-              </div>
-
-              {/* Source Toggle for Assistant messages with Markdown */}
-              {!isUser && hasMarkdownContent(displayContent) && (
-                <button
-                  onClick={() => setIsRawView(!isRawView)}
-                  className="p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
-                  title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
-                >
-                  {isRawView ? <Eye className="w-3.5 h-3.5" /> : <Code className="w-3.5 h-3.5" />}
-                </button>
-              )}
-            </div>
-
             {isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
             ) : (
@@ -617,17 +718,28 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
               </div>
             )}
           </div>
-          <div className="mt-1 flex items-center justify-end gap-1.5 sm:hidden">
+          {/* Per-message actions below the bubble:
+              - Mobile/touch: hidden until long-press on the bubble reveals them.
+              - Desktop: hidden until the message is hovered/focused. */}
+          <div
+            className={`flex items-center gap-1.5 overflow-hidden transition-all duration-200 ${
+              isUser !== isRTL ? "justify-end" : "justify-start"
+            } ${
+              showTouchActions
+                ? "mt-1 max-h-10 opacity-100"
+                : "mt-0 max-h-0 opacity-0 pointer-events-none sm:group-hover/bubble:mt-1 sm:group-hover/bubble:max-h-10 sm:group-hover/bubble:opacity-100 sm:group-hover/bubble:pointer-events-auto sm:focus-within:mt-1 sm:focus-within:max-h-10 sm:focus-within:opacity-100 sm:focus-within:pointer-events-auto"
+            }`}
+          >
             <CopyButton content={displayContent} />
             {!isUser && hasMarkdownContent(displayContent) && (
               <button
                 onClick={() => setIsRawView(!isRawView)}
-                className="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
+                className="p-2 sm:p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
                 title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
                 aria-label={isRawView ? tAi("viewRendered") : tAi("viewSource")}
                 type="button"
               >
-                {isRawView ? <Eye className="w-4 h-4" /> : <Code className="w-4 h-4" />}
+                {isRawView ? <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> : <Code className="w-4 h-4 sm:w-3.5 sm:h-3.5" />}
               </button>
             )}
           </div>
