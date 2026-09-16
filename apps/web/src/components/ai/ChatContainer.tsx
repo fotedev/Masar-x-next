@@ -5,8 +5,6 @@ import {
   Code,
   Calendar,
   MessageCircle,
-  LogIn,
-  Settings,
 } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
@@ -30,8 +28,6 @@ interface ChatContainerProps {
   isInitialState?: boolean;
   mode?: AiAssistantMode;
   onSuggestionClick?: (suggestion: string) => void;
-  onOpenPuterSettings?: () => void;
-  isPuterSignedIn?: boolean;
   onUiMessage?: (message: string) => void;
   hasUserInput?: boolean;
 }
@@ -45,8 +41,6 @@ export function ChatContainer({
   isInitialState = false,
   mode = "cs_assistant",
   onSuggestionClick,
-  onOpenPuterSettings,
-  isPuterSignedIn = false,
   onUiMessage,
   hasUserInput = false,
 }: ChatContainerProps) {
@@ -193,7 +187,7 @@ export function ChatContainer({
                   },
                 }
           }
-          className="flex flex-col items-center justify-center text-center space-y-3 sm:space-y-5 max-w-2xl px-2 sm:px-4 my-auto w-full"
+          className="flex flex-col items-center justify-center text-center space-y-3 sm:space-y-5 max-w-2xl px-2 sm:px-4 my-auto w-full mx-auto"
         >
           {/* Lottie AI Hero Animation */}
           <motion.div
@@ -327,31 +321,6 @@ export function ChatContainer({
               </motion.button>
             ))}
           </motion.div>
-
-          {/* Puter CTA (visible in initial state as well) */}
-          {typeof onOpenPuterSettings === "function" && (
-            <motion.div
-              variants={
-                shouldReduceMotion
-                  ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
-                  : { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { delay: 0.55 } } }
-              }
-              className="w-full flex items-center justify-center mt-1 sm:mt-2"
-            >
-              <button
-                type="button"
-                onClick={onOpenPuterSettings}
-                className="inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white/60 dark:bg-slate-800/40 backdrop-blur-md text-slate-800 dark:text-slate-100 font-extrabold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
-              >
-                {isPuterSignedIn ? (
-                  <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                ) : (
-                  <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                )}
-                <span>{isPuterSignedIn ? t("puterSettings") : t("puterEnable")}</span>
-              </button>
-            </motion.div>
-          )}
         </motion.div>
       ) : (
         <>
