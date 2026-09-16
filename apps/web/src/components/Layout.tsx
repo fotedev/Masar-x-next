@@ -106,7 +106,13 @@ export function Layout({ children }: LayoutProps) {
                 : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
         }
       >
-        {isLightRoute || isAdminRoute || isAssistantRoute ? (
+        {/* NOTE: the assistant route must keep rendering through PageTransition
+            (ssr:false). Rendering its children in a plain div makes Next 16
+            evaluate the "use client" page in the RSC layer during SSR, which
+            crashes on useRouter ("not supported in Server Components").
+            PageTransition's own root is already a full-height flex column, so
+            the chat page's flex chain is preserved without the bypass. */}
+        {isLightRoute || isAdminRoute ? (
           <div className="w-full h-full min-h-0">{children}</div>
         ) : (
           <PageTransition pathname={pathname || "/"}>{children}</PageTransition>

@@ -540,8 +540,19 @@ html[dir="rtl"] [lang="en"] {
   background: rgba(148, 163, 184, 0.5); /* slate-400/50 */
 }
 
-/* For Firefox */
+/* For Firefox (and Chrome 121+): colors only here — scrollbar-width is set
+   per state (.chat-scrollbar-gutter for chat, Tailwind none-utility for hero) */
 .chat-messages {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+/* Chat state only: thin styled scrollbar + symmetric gutter reservation so
+   the message column stays centered on the window axis (matching the
+   composer and header). Kept out of .chat-messages because the hero state
+   hides its scrollbar entirely — an unlayered scrollbar-width here would
+   override Tailwind's [scrollbar-width:none] utility in the cascade. */
+.chat-scrollbar-gutter {
+  scrollbar-gutter: stable both-edges;
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
   scrollbar-width: thin;
 }
