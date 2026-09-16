@@ -77,3 +77,12 @@ Owner screenshot (assistant message with a table + inline formatting next to an 
 - [x] 9.4 **react-markdown v10 dropped the `inline` prop**: inline code fell into the block path and rendered as a full code box mid-sentence. Block rendering (CodeBlock + language-markdown escape hatch) moved into `pre`; bare `code` is always inline. Verified: inline chips render, block path intact.
 - [x] 9.5 **Guest cache wipe race (found while testing, commit `778f627`)**: the persist effect ran while `user` was still `undefined` and deleted the localStorage chat key before the restore effect re-ran on `user=null` — guest chat survival across reload depended on auth timing. Guard: persist skips `user === undefined` (same as restore). Note: numeric-verify each visible cluster — a centered/working container says nothing about the block inside it (round-8 lesson, again).
 - [x] 9.6 Persistence strategy answer for the owner (no code): saving to Supabase is already live for authenticated users and the free tier can carry ~5000 users IF capped — capture as **spec 008 draft** (migration + RLS tracking, 100-message load cap + prune, guest cache cap, DB types). `conversation_id` deferred.
+
+## 10. Bubble width / table structure round (owner feedback, 2026-09-17)
+
+Owner relayed a second model's review of the round-9 screenshot. Commit: single `fix(web)` on ChatMessageItem (bubble width + table + em).
+
+- [x] 10.1 **Rejected: "raw `**bold with spaces**` leak"** — not reproducible; live-DOM probe of that exact line: innerText `English cell: bold with spaces and code` with 0 stars and a real `<strong>`. The pasted diagnosis misread rendered bold as raw asterisks. `repairSpacedBold` unchanged (its `\s+` anchors are correct; zero-space pairs parse natively).
+- [x] 10.2 **Assistant bubble width**: the row capped both roles at `max-w-[75..88%]` (round-8 content-hugging legacy), squeezing tables into ~60% of the column. Assistant rows now `w-full` (measured 816px = full column minus avatar); user bubbles keep the caps.
+- [x] 10.3 **Table structure**: wrapper border+tint, `min-w-[520px]`, thead `bg-slate-100 dark:bg-slate-800/80`, stronger row borders, zebra striping via new `tr` component. Verified computed styles + screenshot.
+- [x] 10.4 **Arabic italic emphasis**: `em` = italic + cyan color (synthetic oblique invisible in Arabic fonts). Rejected `font-serif` (font-identity break).
