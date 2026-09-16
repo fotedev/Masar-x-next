@@ -251,7 +251,7 @@ export const initPuterDiagnostics = () => {
   window.addEventListener(
     'error',
     (event: ErrorEvent) => {
-      const msg = event.message.toLowerCase();
+      const msg = String(event.message || '').toLowerCase();
       if (errorPatterns.some((p) => p.test(msg))) {
         event.preventDefault();
       }
