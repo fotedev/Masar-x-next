@@ -201,10 +201,6 @@ export default function AiAssistantPage() {
         {!isInitialState && (
           <ChatHeader
             mode={mode}
-            onOpenPuterSettings={() => {
-              initPuterDiagnostics();
-              setShowPuterSettings(true);
-            }}
             studentSelectedSubject={studentSelectedSubject}
             setStudentSelectedSubject={setStudentSelectedSubject}
             studentSubjects={studentSubjects}
@@ -216,7 +212,6 @@ export default function AiAssistantPage() {
             generatedQuiz={generatedQuiz}
             onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
             safeLocalGeneratedQuizzesCount={0}
-            isPuterSignedIn={isPuterSignedIn}
             t={t}
           />
         )}
@@ -229,7 +224,6 @@ export default function AiAssistantPage() {
           t={t}
           isInitialState={isInitialState}
           mode={mode}
-          setMode={setMode}
           onSuggestionClick={handleSuggestionClick}
           onOpenPuterSettings={() => {
             initPuterDiagnostics();
@@ -257,6 +251,10 @@ export default function AiAssistantPage() {
           onClearChat={clearChat}
           isSummarizing={isSummarizing}
           hasChatData={messages.length > 0}
+          onOpenPuterSettings={() => {
+            initPuterDiagnostics();
+            setShowPuterSettings(true);
+          }}
         />
 
         {showPuterSettings && (

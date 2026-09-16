@@ -1,12 +1,6 @@
-import { useEffect, useState, useId, useRef, useMemo, useCallback, type RefObject } from "react";
+import { useEffect, useId, useRef, useMemo, useCallback, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import {
-  Bot,
-  Brain,
-  MessagesSquare,
-  ChevronDown,
-  Check,
-  type LucideIcon,
   BookOpen,
   Code,
   Calendar,
@@ -16,7 +10,7 @@ import {
 } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { LottiePlayer, type DotLottie } from "./LottiePlayer";
 import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
 
@@ -35,7 +29,6 @@ interface ChatContainerProps {
   t: (key: string) => string;
   isInitialState?: boolean;
   mode?: AiAssistantMode;
-  setMode?: (mode: AiAssistantMode) => void;
   onSuggestionClick?: (suggestion: string) => void;
   onOpenPuterSettings?: () => void;
   isPuterSignedIn?: boolean;
@@ -51,21 +44,18 @@ export function ChatContainer({
   t,
   isInitialState = false,
   mode = "cs_assistant",
-  setMode,
   onSuggestionClick,
   onOpenPuterSettings,
   isPuterSignedIn = false,
   onUiMessage,
   hasUserInput = false,
 }: ChatContainerProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   // Stable per-instance key for the hero LottiePlayer. The key is derived
   // from both the mode and a unique id so that switching between
   // assistants always forces a clean re-mount of the WASM player and
   // avoids the "Failed to load animation" race condition.
   const heroLottieInstanceId = useId();
-  const menuId = "chat-initial-mode-menu";
   const locale = useLocale();
   const isRTL = locale === "ar";
   const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
@@ -174,27 +164,6 @@ export function ChatContainer({
     return -1;
   }, [messages]);
 
-  const modes: { id: AiAssistantMode; icon: LucideIcon; label: string }[] = [
-    { id: "cs_assistant", icon: Bot, label: t("assistantProgramming") },
-    { id: "student_agent", icon: Brain, label: t("assistantStudent") },
-    { id: "group_rag", icon: MessagesSquare, label: t("assistantGroupChat") },
-  ];
-
-  const currentMode = modes.find((m) => m.id === mode) || modes[0];
-
-  useEffect(() => {
-    if (!isDropdownOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isDropdownOpen]);
-
   return (
     <div
       ref={messagesContainerRef}
@@ -274,93 +243,6 @@ export function ChatContainer({
             >
               {t("welcomeTitle")}
             </h2>
-          </motion.div>
-
-          {/* Refined Dropdown with Cyan Inset/Border Glow */}
-          <motion.div
-            variants={
-              shouldReduceMotion
-                ? { hidden: { opacity: 0 }, visible: { opacity: 1 } }
-                : { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } }
-            }
-            className="relative mt-2"
-          >
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center gap-3 px-5 py-3 bg-white dark:bg-slate-800/40 rounded-2xl border-2 transition-[colors,box-shadow,border-color] duration-300 group min-w-[220px] justify-between shadow-sm backdrop-blur-md ${
-                isDropdownOpen
-                  ? "border-cyan-500/50 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-                  : "border-slate-200/60 dark:border-slate-700/40 hover:border-cyan-500/30"
-              }`}
-              aria-expanded={isDropdownOpen}
-              aria-controls={menuId}
-              type="button"
-            >
-              <div className="flex items-center gap-3">
-                <currentMode.icon
-                  className={`w-5 h-5 transition-colors duration-300 ${isDropdownOpen ? "text-cyan-500" : "text-cyan-500"}`}
-                />
-                <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                  {currentMode.label}
-                </span>
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-cyan-500" : ""}`}
-              />
-            </button>
-
-            <AnimatePresence>
-              {isDropdownOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-30 bg-slate-900/30 dark:bg-black/60 backdrop-blur-[2px] transition-opacity duration-200"
-                    onClick={() => setIsDropdownOpen(false)}
-                  />
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95, x: "-50%" }}
-                    animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95, x: "-50%" }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute bottom-full left-1/2 mb-3 w-[min(16rem,calc(100vw-2rem))] bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden z-40 backdrop-blur-xl"
-                    id={menuId}
-                    role="menu"
-                  >
-                    <div className="p-1.5 space-y-1">
-                      {modes.map((m) => {
-                        const Icon = m.icon;
-                        const isActive = mode === m.id;
-                        return (
-                          <button
-                            key={m.id}
-                            onClick={() => {
-                              setMode?.(m.id);
-                              setIsDropdownOpen(false);
-                            }}
-                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-[colors,opacity,transform] ${
-                              isActive
-                                ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
-                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
-                            }`}
-                            role="menuitem"
-                            type="button"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Icon
-                                className={`w-4 h-4 ${isActive ? "text-cyan-500" : ""}`}
-                              />
-                              <span className="font-bold text-xs sm:text-sm">
-                                {m.label}
-                              </span>
-                            </div>
-                            {isActive && <Check className="w-3.5 h-3.5" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
           </motion.div>
 
           {/* Suggested Prompt Cards Grid with Framer Motion Stagger */}

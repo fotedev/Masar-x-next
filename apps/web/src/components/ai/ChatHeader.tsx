@@ -2,7 +2,6 @@ import {
   Bot,
   Brain,
   MessagesSquare,
-  Settings,
 } from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import type { useTranslations } from "next-intl";
@@ -25,8 +24,6 @@ interface ChatHeaderProps {
   onShowGeneratedQuizModal: () => void;
   safeLocalGeneratedQuizzesCount: number;
   t: ReturnType<typeof useTranslations<"aiAssistant">>;
-  onOpenPuterSettings: () => void;
-  isPuterSignedIn: boolean;
 }
 
 export function ChatHeader({
@@ -43,8 +40,6 @@ export function ChatHeader({
   onShowGeneratedQuizModal,
   safeLocalGeneratedQuizzesCount,
   t,
-  onOpenPuterSettings,
-  isPuterSignedIn,
 }: ChatHeaderProps) {
   const modes = [
     { id: "cs_assistant" as AiAssistantMode, icon: Bot, label: t("assistantProgramming") },
@@ -78,34 +73,8 @@ export function ChatHeader({
           </div>
         </div>
 
-        {/* Right: AI settings + student toolset + last-exam chip */}
+        {/* Right: student toolset + last-exam chip */}
         <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 sm:gap-2 justify-end">
-          {/* AI Settings button — mobile icon */}
-          <button
-            onClick={onOpenPuterSettings}
-            className={`p-2 rounded-xl transition-all active:scale-95 text-white shadow-sm md:hidden ${ 
-              isPuterSignedIn
-                ? "bg-emerald-600 hover:bg-emerald-700 ring-2 ring-emerald-500/40"
-                : "bg-indigo-600 hover:bg-indigo-700"
-            }`}
-            title={t("puterMode")}
-            aria-label={t("puterMode")}
-            type="button"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-
-          {/* AI Settings button — desktop label */}
-          <button
-            type="button"
-            onClick={onOpenPuterSettings}
-            className="px-2.5 py-1.5 sm:px-3 sm:py-2 text-[11px] sm:text-xs font-black rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white hidden md:flex items-center gap-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap shrink-0"
-            title={t("puterMode")}
-          >
-            <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>{t("puterMode")}</span>
-          </button>
-
           {/* Student toolset — only in student_agent mode */}
           {mode === "student_agent" && (
             <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none flex-1 sm:flex-none">
