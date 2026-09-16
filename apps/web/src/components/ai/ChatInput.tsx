@@ -277,8 +277,8 @@ export function ChatInput({
                           className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-start text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
                         >
                           <Bot className="w-4 h-4 shrink-0" />
-                          <span className="flex-1 text-start">{t("assistantPersona")}</span>
-                          <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-md px-1.5 py-0.5 whitespace-nowrap">
+                          <span className="flex-1 min-w-0 text-start">{t("assistantPersona")}</span>
+                          <span className="min-w-0 truncate max-w-[120px] sm:max-w-[150px] text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-md px-1.5 py-0.5">
                             {t(currentMode.labelKey)}
                           </span>
                           <ChevronDown className={`w-3.5 h-3.5 shrink-0 transition-transform ${isPersonaExpanded ? "rotate-180" : ""}`} />
@@ -352,7 +352,12 @@ export function ChatInput({
                             setIsToolsOpen(false);
                             onClearChat();
                           }}
-                          className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-start text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          disabled={!hasChatData}
+                          className={`flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-start text-xs sm:text-sm font-bold transition-colors ${
+                            !hasChatData
+                              ? "text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                              : "text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
+                          }`}
                         >
                           <Trash2 className="w-4 h-4 shrink-0" />
                           {t("clearChat")}
