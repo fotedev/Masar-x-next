@@ -226,6 +226,18 @@ export default async function middleware(request: NextRequest) {
     });
     fallbackResponse.headers.set("x-pathname", pathname);
     fallbackResponse.headers.set("x-middleware-error", "true");
+
+    // Fix audit §1.4: the error fallback previously returned without any
+    // security headers (CSP, X-Frame-Options, Referrer-Policy) or the
+    // locale/session cookies from the middleware chain. We generate a
+    // fresh nonce here because the original `nonce` is out of scope at
+    // this point; we also re-read the Host header for the CSP directive
+    // that depends on it (see getCspHeader).
+    const fallbackNonce = generateNonce();
+    const fallbackHost = request.headers.get("host");
+    fallbackResponse.headers.set("x-nonce", fallbackNonce);
+    addSecurityHeaders(fallbackResponse, fallbackNonce, fallbackHost);
+
     return fallbackResponse;
   }
 }
