@@ -18,10 +18,10 @@
 
 ## 4. Runbooks: env sweep, AI smoke, role propagation (G3.5, G2.1, G3.4)
 
-- [ ] 4.1 Execute `checklists/env-sweep.md` (vercel env ls diff vs .env.example; record result)
-- [ ] 4.2 Owner-assisted: AI chat round-trip + rate-limit rejection in prod (`ai_chat_disabled` confirmed); record in checklist
+- [x] 4.1 Executed `checklists/env-sweep.md` — **GAPS FOUND**: 2 real missing vars (Cloudinary public pair — no source of truth anywhere, `getCloudinaryUrl` hard-throws), 2 likely-intentional absences (`AI_GATEWAY_API_KEY` = the `ai_chat_disabled` gate, Puter fallback primary; `VERCEL_MCP_BYPASS_SECRET` = MCP fail-closed). `SUPABASE_SERVICE_ROLE_KEY` ✅ present. Owner action list recorded in the checklist
+- [ ] 4.2 Owner-assisted: AI chat round-trip + rate-limit rejection in prod (expected via Puter fallback); record in checklist
 - [ ] 4.3 Owner-assisted: admin demotion propagation test; record in `checklists/role-propagation.md`
-- [ ] 4.4 Commit results: `docs(specs): record 009 runbook results`
+- [x] 4.4 Commit results: `docs(specs): record 009 runbook results`
 
 ## 5. Dependabot (G3.6)
 
