@@ -67,7 +67,11 @@ export default function HeavyLatexRenderer({
   };
 
   return (
-    <span className={className}>
+    // dir="ltr" (HTML dir implies bidi isolation) keeps formulas intact
+    // inside Arabic bubbles — katex 0.16's CSS ships no direction rule, so
+    // without this the math inherits the bubble's rtl and renders mirrored
+    // (`E = mc^2` came out as `²mc = E`).
+    <span className={className} dir="ltr">
       {parts.map((p, idx) => {
         if (p.type === "block") {
           return <BlockMath key={idx} math={p.value} />;

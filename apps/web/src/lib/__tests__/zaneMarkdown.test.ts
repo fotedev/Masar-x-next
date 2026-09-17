@@ -83,6 +83,20 @@ describe('repairListGlue — glued hyphen bullet', () => {
   });
 });
 
+describe('repairListGlue — bare task markers', () => {
+  it('restores the hyphen on line-leading bare task items (round-13 screenshot: `[x]` glued as literal text)', () => {
+    expect(repairListGlue('[x] مهمة مكتملة')).toBe('- [x] مهمة مكتملة');
+    expect(repairListGlue('[ ] مهمة معلقة')).toBe('- [ ] مهمة معلقة');
+    expect(repairListGlue('[X] done')).toBe('- [X] done');
+  });
+
+  it('keeps already-valid task items and non-task brackets untouched', () => {
+    expect(repairListGlue('- [x] مهمة منجزة')).toBe('- [x] مهمة منجزة');
+    expect(repairListGlue('[x]بلا مسافة')).toBe('[x]بلا مسافة');
+    expect(repairListGlue('انظر [1] للمرجع')).toBe('انظر [1] للمرجع');
+  });
+});
+
 describe('repairListGlue — end-to-end with the real remark chain', () => {
   it('produces an ordered list AST for the round-12 failing input', async () => {
     const { unified } = await import('unified');
@@ -97,6 +111,25 @@ describe('repairListGlue — end-to-end with the real remark chain', () => {
 
     const after = proc.parse(repairListGlue(raw));
     expect(after.children.map((n) => n.type)).toEqual(['paragraph', 'list']);
+  });
+});
+
+describe('HeavyLatexRenderer — bidi isolation (round 13)', () => {
+  // The owner's screenshot showed `E = mc^2` mirrored to `²mc = E`: katex
+  // 0.16 ships no direction rule of its own, so the math inherited the
+  // Arabic bubble's rtl. Pin the isolation here — no DOM needed.
+  it('renders math inside a dir="ltr" span', async () => {
+    const React = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: HeavyLatexRenderer } = await import(
+      '@/components/HeavyLatexRenderer'
+    );
+
+    const html = renderToStaticMarkup(
+      React.createElement(HeavyLatexRenderer, { text: '$E = mc^2$' }),
+    );
+    expect(html).toContain('dir="ltr"');
+    expect(html).toContain('katex');
   });
 });
 
