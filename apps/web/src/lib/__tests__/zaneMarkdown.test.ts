@@ -99,3 +99,41 @@ describe('repairListGlue — end-to-end with the real remark chain', () => {
     expect(after.children.map((n) => n.type)).toEqual(['paragraph', 'list']);
   });
 });
+
+describe('react-markdown v10 hands `start` to the ol component', () => {
+  // The live DOM check for this was environment-blocked (flaky headless),
+  // so pin the integration point here: our ol override can only seed the
+  // CSS counter if react-markdown actually forwards the list's start.
+  it('forwards start for a list beginning at N ≠ 1 and omits it at 1', async () => {
+    const React = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { default: ReactMarkdown } = await import('react-markdown');
+
+    const starts: Array<number | string | undefined> = [];
+    const components = {
+      ol: (props: { start?: number; children?: React.ReactNode }) => {
+        starts.push(props.start);
+        return React.createElement('ol', null, props.children);
+      },
+    };
+
+    renderToStaticMarkup(
+      React.createElement(
+        ReactMarkdown,
+        { remarkPlugins: [(await import('remark-gfm')).default], components },
+        '3. أولاً\n4. ثانياً',
+      ),
+    );
+    expect(starts).toEqual([3]);
+
+    starts.length = 0;
+    renderToStaticMarkup(
+      React.createElement(
+        ReactMarkdown,
+        { remarkPlugins: [(await import('remark-gfm')).default], components },
+        '1. أولاً\n2. ثانياً',
+      ),
+    );
+    expect(starts).toEqual([undefined]);
+  });
+});
