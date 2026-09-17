@@ -690,3 +690,31 @@ html.dark {
 }
 
 
+
+/* Zane chat markdown list markers. Unlayered on purpose — these must win
+   over the layered prose/utilities cascade (established gotcha). The dot
+   for unordered lists and a CSS counter for ordered lists replace the old
+   JSX marker span, which erased ordered-list numbers. */
+.zane-ul > li::before {
+  content: "";
+  margin-top: 0.5rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: #06b6d4;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+  flex-shrink: 0;
+}
+
+.zane-ol {
+  counter-reset: zane-item;
+}
+
+.zane-ol > li::before {
+  counter-increment: zane-item;
+  content: counter(zane-item) ".";
+  color: #06b6d4;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
