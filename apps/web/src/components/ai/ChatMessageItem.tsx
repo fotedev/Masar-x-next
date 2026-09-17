@@ -35,7 +35,15 @@ interface ChatMessageItemProps {
  * code snippet (not the whole message). Defined at the module level so
  * its internal `isCopied` state isn't reset on every parent re-render.
  */
-const CodeBlock = ({ code }: { code: string }) => {
+const CodeBlock = ({
+  code,
+  language,
+  children,
+}: {
+  code: string;
+  language?: string;
+  children?: ReactNode;
+}) => {
   const tAi = useTranslations("aiAssistant");
   const [isCopied, setIsCopied] = useState(false);
 
@@ -50,12 +58,15 @@ const CodeBlock = ({ code }: { code: string }) => {
   };
 
   return (
-    <div className="relative group/codeblock my-4">
-      <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/codeblock:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+    <div className="relative group/codeblock my-4 overflow-hidden rounded-xl border border-slate-200/70 dark:border-slate-700/70 shadow-lg bg-slate-950">
+      <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900/80 dark:bg-slate-800/60 border-b border-slate-700/60">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+          {language || "code"}
+        </span>
         <button
           type="button"
           onClick={handleCopy}
-          className="p-1.5 rounded-md bg-slate-800/90 dark:bg-slate-700/90 border border-slate-600 shadow-sm text-slate-300 hover:text-cyan-400 hover:bg-slate-700 dark:hover:bg-slate-600 transition-all duration-200 backdrop-blur-sm flex items-center gap-1"
+          className="p-1 rounded-md text-slate-400 hover:text-cyan-400 hover:bg-slate-700/60 transition-all duration-200 flex items-center gap-1"
           title={tAi("copyCode")}
           aria-label={tAi("copyCode")}
         >
@@ -68,7 +79,7 @@ const CodeBlock = ({ code }: { code: string }) => {
       </div>
       <pre
         dir="ltr"
-        className="w-full overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-700/70 bg-slate-950 p-4 text-[13px] leading-relaxed shadow-lg transition-all duration-200 group-hover/codeblock:border-slate-500/50"
+        className="w-full overflow-x-auto p-4 text-[13px] leading-relaxed transition-all duration-200"
       >
         <code
           className="block text-slate-100/95 font-mono"
@@ -78,7 +89,7 @@ const CodeBlock = ({ code }: { code: string }) => {
             overflowWrap: "anywhere",
           }}
         >
-          {code}
+          {children ?? code}
         </code>
       </pre>
     </div>
@@ -426,17 +437,36 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </div>
       ),
       ul: ({ children }: { children?: ReactNode }) => (
-        <ul className="space-y-2 my-4 list-none p-0">
+        <ul className="zane-ul my-4 space-y-2 list-none p-0">
           {children}
         </ul>
       ),
+      ol: ({ children }: { children?: ReactNode }) => (
+        <ol className="zane-ol my-4 space-y-2 list-none p-0">
+          {children}
+        </ol>
+      ),
       li: ({ children }: { children?: ReactNode }) => (
         <li className="flex gap-2 items-start group">
-          <span className="shrink-0 mt-2 w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]" />
           <div className="flex-1 text-slate-700 dark:text-slate-300">
             {renderInlineChildren(children)}
           </div>
         </li>
+      ),
+      blockquote: ({ children }: { children?: ReactNode }) => (
+        // border-s is logical: right edge in RTL, left edge in LTR.
+        <blockquote className="my-4 border-s-4 border-cyan-500 bg-slate-100/70 dark:bg-slate-800/40 ps-4 pe-3 py-2.5 rounded-e-xl text-slate-600 dark:text-slate-300">
+          {children}
+        </blockquote>
+      ),
+      del: ({ children }: { children?: ReactNode }) => (
+        <del className="line-through decoration-slate-400/70 text-slate-500 dark:text-slate-400/80">
+          {children}
+        </del>
+      ),
+      input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+        // GFM task-list checkboxes render as real disabled inputs.
+        <input {...props} className="mt-1.5 accent-cyan-500 w-3.5 h-3.5" />
       ),
       // GFM tables: scroll horizontally instead of squeezing, isolate bidi
       // per cell (mixed Arabic/English cells), strong header/row structure
@@ -492,9 +522,10 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       },
       pre: ({ children }: { children?: ReactNode }) => {
         // Block code: react-markdown wraps the fenced block as
-        // <pre><code class="language-x">…</code></pre>. Handle the block
-        // styling here (shared <CodeBlock /> adds a per-snippet copy button)
-        // and keep the language-markdown escape hatch that re-renders
+        // <pre><code class="language-x">…</code></pre>. With rehype-highlight
+        // active the code children are already highlighted spans — pass them
+        // through to CodeBlock as-is and keep flattenChildren output only for
+        // the copy button. The language-markdown escape hatch re-renders
         // markdown blocks the model nested inside a fence.
         const codeEl = Children.toArray(children).find(
           (c): c is React.ReactElement<MarkdownCodeProps> =>
@@ -511,7 +542,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             </div>
           );
         }
-        return <CodeBlock code={inner} />;
+        return (
+          <CodeBlock code={inner} language={lang || undefined}>
+            {codeEl ? (codeEl.props as MarkdownCodeProps).children : null}
+          </CodeBlock>
+        );
       },
     };
 
