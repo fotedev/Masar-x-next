@@ -1,0 +1,101 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  normalizeLatexDelimiters,
+  repairListGlue,
+  repairSpacedBold,
+} from '@/lib/ai/zaneMarkdown';
+
+describe('normalizeLatexDelimiters', () => {
+  it('rewrites display and inline LaTeX delimiters to $ forms', () => {
+    expect(normalizeLatexDelimiters('\\[x^2\\]')).toBe('$$x^2$$');
+    expect(normalizeLatexDelimiters('\\(x^2\\)')).toBe('$x^2$');
+  });
+
+  it('leaves text without LaTeX delimiters untouched', () => {
+    expect(normalizeLatexDelimiters('نص عادي بدون رياضيات')).toBe('نص عادي بدون رياضيات');
+  });
+});
+
+describe('repairSpacedBold', () => {
+  it('trims inner padding so Arabic spaced bold parses', () => {
+    expect(repairSpacedBold('** نص عريض **')).toBe('**نص عريض**');
+  });
+
+  it('keeps already-tight bold intact', () => {
+    expect(repairSpacedBold('ملاحظة:**النص المهم.**')).toBe('ملاحظة:**النص المهم.**');
+  });
+
+  it('never touches fenced code blocks', () => {
+    const fenced = '```\na ** b ** c\n```';
+    expect(repairSpacedBold(fenced)).toBe(fenced);
+  });
+});
+
+describe('repairListGlue — label glued to ordered marker', () => {
+  it('splits `label:1. item` so the sequence parses as a list (round-12 proof: raw input is one paragraph)', () => {
+    const raw = 'مرتبة:1. تحليل المشكلة\n2. تصميم الخوارزمية\n3. كتابة الكود\n4. الاختبار';
+    const fixed = repairListGlue(raw);
+    expect(fixed).toBe('مرتبة:\n\n1. تحليل المشكلة\n2. تصميم الخوارزمية\n3. كتابة الكود\n4. الاختبار');
+  });
+
+  it('works when the glued marker does not start at 1', () => {
+    const fixed = repairListGlue('مرتبة:3. أولاً\n4. ثانياً');
+    expect(fixed).toBe('مرتبة:\n\n3. أولاً\n4. ثانياً');
+  });
+
+  it('does not split when no numbered continuation follows (could be plain text)', () => {
+    expect(repairListGlue('الدرجة:3. من 5')).toBe('الدرجة:3. من 5');
+  });
+
+  it('leaves table-like and URL-ish colons alone', () => {
+    const line = 'https://example.com/page';
+    expect(repairListGlue(line)).toBe(line);
+  });
+});
+
+describe('repairListGlue — bare label line before N≠1 list', () => {
+  it('inserts the blank line a non-1 list needs to start', () => {
+    expect(repairListGlue('غير مرتبة:\n3. أولاً\n4. ثانياً')).toBe('غير مرتبة:\n\n3. أولاً\n4. ثانياً');
+  });
+
+  it('keeps a 1-starting list tight (it already interrupts the paragraph)', () => {
+    expect(repairListGlue('مرتبة:\n1. أولاً\n2. ثانياً')).toBe('مرتبة:\n1. أولاً\n2. ثانياً');
+  });
+});
+
+describe('repairListGlue — glued hyphen bullet', () => {
+  it('pads `-**Bold**` so the line becomes a list item (round-12 proof: raw input is a paragraph)', () => {
+    expect(repairListGlue('-**Bold Text** — نص عريض')).toBe('- **Bold Text** — نص عريض');
+    expect(repairListGlue('-Bold Text — نص عريض')).toBe('- Bold Text — نص عريض');
+  });
+
+  it('leaves horizontal rules, negative numbers, blockquote-ish arrows and spaced bullets alone', () => {
+    expect(repairListGlue('---')).toBe('---');
+    expect(repairListGlue('-5 درجات')).toBe('-5 درجات');
+    expect(repairListGlue('-> متابعة')).toBe('-> متابعة');
+    expect(repairListGlue('- [x] مهمة منجزة')).toBe('- [x] مهمة منجزة');
+  });
+
+  it('never touches fenced code blocks', () => {
+    const fenced = '```\n-negative\n```';
+    expect(repairListGlue(fenced)).toBe(fenced);
+  });
+});
+
+describe('repairListGlue — end-to-end with the real remark chain', () => {
+  it('produces an ordered list AST for the round-12 failing input', async () => {
+    const { unified } = await import('unified');
+    const remarkParse = (await import('remark-parse')).default;
+    const remarkGfm = (await import('remark-gfm')).default;
+    const remarkBreaks = (await import('remark-breaks')).default;
+    const proc = unified().use(remarkParse).use(remarkGfm).use(remarkBreaks);
+
+    const raw = 'مرتبة:1. تحليل المشكلة\n2. تصميم الخوارزمية\n3. كتابة الكود\n4. الاختبار';
+    const before = proc.parse(raw);
+    expect(before.children.map((n) => n.type)).toEqual(['paragraph']);
+
+    const after = proc.parse(repairListGlue(raw));
+    expect(after.children.map((n) => n.type)).toEqual(['paragraph', 'list']);
+  });
+});

@@ -11,6 +11,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LottiePlayer, type DotLottie } from "./LottiePlayer";
 import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
+import {
+  normalizeLatexDelimiters,
+  repairListGlue,
+  repairSpacedBold,
+} from "@/lib/ai/zaneMarkdown";
 
 interface ChatMessage {
   id: string;
@@ -329,27 +334,6 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     );
   };
 
-  const normalizeLatexDelimiters = (text: string) => {
-    return String(text ?? "")
-      .replace(/\\\[([\s\S]*?)\\\]/g, "$$$1$$")
-      .replace(/\\\(([\s\S]*?)\\\)/g, "$$1$");
-  };
-
-  // CommonMark treats `** نص **` (space just inside the delimiters) as
-  // literal text, so Arabic model output leaks raw `**` into the bubble.
-  // Trim the inner padding so it parses as bold. Fenced code blocks are
-  // excluded — `a ** b ** c` inside code must stay untouched.
-  const repairSpacedBold = (text: string) => {
-    return String(text ?? "")
-      .split(/(```[\s\S]*?```)/g)
-      .map((segment) =>
-        segment.startsWith("```")
-          ? segment
-          : segment.replace(/\*\*(\s+)([^*]+?)(\s+)\*\*/g, "**$2**"),
-      )
-      .join("");
-  };
-
   // react-markdown hands p/li children with inline elements ALREADY replaced
   // by our styled components. Flattening them to plain text (as before) threw
   // that inline formatting away — bold/italic/inline code inside paragraphs
@@ -413,7 +397,9 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
 
   const renderAssistantContent = (content: string) => {
     const raw = String(content ?? "");
-    const normalized = repairSpacedBold(normalizeLatexDelimiters(raw));
+    const normalized = repairListGlue(
+      repairSpacedBold(normalizeLatexDelimiters(raw)),
+    );
 
     const markdownComponents = {
       h1: ({ children }: { children?: ReactNode }) => (
@@ -441,11 +427,22 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           {children}
         </ul>
       ),
-      ol: ({ children }: { children?: ReactNode }) => (
-        <ol className="zane-ol my-4 space-y-2 list-none p-0">
-          {children}
-        </ol>
-      ),
+      ol: ({ start, children }: { start?: number | string; children?: ReactNode }) => {
+        // Model output can start a list at N ≠ 1 (`3. …`). The CSS counter
+        // defaults to 0, so seed it from the list's own `start` or every
+        // such list renders as 1..n.
+        const first = Number(start);
+        const seed = Number.isFinite(first) && first > 1 ? Math.floor(first) : null;
+        return (
+          <ol
+            className="zane-ol my-4 space-y-2 list-none p-0"
+            start={seed ?? undefined}
+            style={seed ? { counterReset: `zane-item ${seed - 1}` } : undefined}
+          >
+            {children}
+          </ol>
+        );
+      },
       li: ({ children }: { children?: ReactNode }) => (
         <li className="flex gap-2 items-start group">
           <div className="flex-1 text-slate-700 dark:text-slate-300">
