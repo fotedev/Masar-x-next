@@ -1,0 +1,39 @@
+# Dependabot configuration (Spec 009 §5 / MVP report G3.6).
+# npm "/" is recursive across all pnpm workspace manifests (root, apps/*, packages/*).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+    reviewers:
+      - fotedev
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Major bumps stay ungrouped (Electron pinned exact per I6 — majors need a spec).
+    ignore:
+      # Electron major/minor bumps require the better-sqlite3 ABI + release-pipeline
+      # work (spec 005 / 02-release-pipeline.md) — handle via a dedicated upgrade,
+      # not autodrift. Patch-level security fixes still come through.
+      - dependency-name: electron
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+    reviewers:
+      - fotedev
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch
