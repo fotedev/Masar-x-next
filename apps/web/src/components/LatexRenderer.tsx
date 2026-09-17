@@ -38,5 +38,7 @@ export const LatexRenderer: FC<LatexRendererProps> = ({
     return <span className={className}>{input}</span>;
   }
 
+  // HeavyLatexRenderer's root carries dir="ltr" — math must not inherit the
+  // surrounding bubble direction.
   return <HeavyLatexRenderer text={input} className={className} />;
 };

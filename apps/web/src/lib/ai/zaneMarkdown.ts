@@ -38,6 +38,11 @@ const ORDERED_MARKER = /^\s*(\d{1,2})\.\s/;
 // whole sequence into one run-on paragraph.
 const LABEL_GLUED_MARKER = /^([^:\n]{1,60}):\s*(\d{1,2})\.\s+(.+)$/;
 const LABEL_LINE = /:\s*$/;
+// Models frequently drop the hyphen from GFM task items (`[x] مهمة` at
+// line start), which renders the marker as literal text glued onto the
+// previous list item. A line-leading bare `[ ]`/`[x]`/`[X]` followed by a
+// space is unambiguously a task item, so restore the bullet.
+const BARE_TASK_MARKER = /^(\[[ xX]\] )/;
 const FENCE_SPLIT = /(```[\s\S]*?```)/g;
 
 const nextNonEmptyLine = (lines: string[], from: number): string | undefined => {
@@ -55,7 +60,8 @@ const nextNonEmptyLine = (lines: string[], from: number): string | undefined => 
 //    insert the blank line the list needs to start (N = 1 already
 //    interrupts a paragraph, so it is left untouched to keep lists tight).
 // Also pads a line-leading hyphen glued to its text (`-**Bold**`) with the
-// space the bullet marker requires. Dashes (`---`), negative numbers and
+// space the bullet marker requires, and restores the hyphen on bare
+// line-leading task markers. Dashes (`---`), negative numbers and
 // `->` arrows are excluded.
 export const repairListGlue = (text: string): string => {
   return String(text ?? "")
@@ -79,7 +85,11 @@ export const repairListGlue = (text: string): string => {
             continue;
           }
         }
-        out.push(line.replace(/^-(?![-\s\d>])/, "- "));
+        out.push(
+          line
+            .replace(BARE_TASK_MARKER, "- $1")
+            .replace(/^-(?![-\s\d>])/, "- "),
+        );
       }
       return out.join("\n");
     })

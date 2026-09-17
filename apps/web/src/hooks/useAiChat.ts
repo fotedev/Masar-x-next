@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "@supabase/supabase-js";
-import { useState, useEffect, useLayoutEffect, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { useLocale } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
@@ -135,16 +135,26 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     };
   }, []);
 
-  // Persist messages to localStorage (only for guests). `user === undefined`
-  // means auth is still resolving — skip entirely, otherwise this effect
-  // wipes the guest key before the restore effect gets to read it (the
-  // restore skips undefined too).
+  // Guest persistence is EVENT-driven, not state-synced. The old effect
+  // wrote on every `messages` change, and since `user` starts as `null`
+  // (AuthContext never passes undefined — the `undefined` guards were dead
+  // code), the first mount commit saw `messages=[]` and REMOVED the guest
+  // key before the restored state re-rendered, re-saving it a beat later.
+  // Every page load deleted and rewrote the conversation, and a mode
+  // switch briefly wrote the OLD conversation under the NEW mode's key.
+  // Now `pendingPersistRef` is raised only by real append events; the
+  // effect consumes it once and skips every other commit (mount, mode
+  // switch, auth transitions). Deletion stays exclusive to clearChat.
+  const pendingPersistRef = useRef(false);
   useEffect(() => {
-    if (typeof window === 'undefined' || user === undefined || user) return;
+    if (typeof window === "undefined" || user === undefined || user) {
+      pendingPersistRef.current = false;
+      return;
+    }
+    if (!pendingPersistRef.current) return;
+    pendingPersistRef.current = false;
     if (messages.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
-    } else {
-      localStorage.removeItem(storageKey);
     }
   }, [messages, user, storageKey]);
 
@@ -152,6 +162,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     if (!content.trim() || isLoading) return;
 
     if (mode === 'student_agent' && !studentSelectedSubject) {
+      pendingPersistRef.current = true;
       setMessages((prev) => [
         ...prev,
         {
@@ -172,6 +183,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     };
 
     const currentMode = mode;
+    pendingPersistRef.current = true;
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
@@ -232,6 +244,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         content: response,
         timestamp: new Date(),
       };
+      pendingPersistRef.current = true;
       setMessages(prev => [...prev, assistantMsg]);
 
       // Background save assistant response to Supabase
@@ -246,6 +259,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     } catch (_e) {
       logger.error("Failed to send AI message", _e);
+      pendingPersistRef.current = true;
       setMessages(prev => [...prev, {
         id: `error_${Date.now()}`,
         type: "assistant",

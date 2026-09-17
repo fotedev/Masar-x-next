@@ -457,7 +457,9 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </blockquote>
       ),
       del: ({ children }: { children?: ReactNode }) => (
-        <del className="line-through decoration-slate-400/70 text-slate-500 dark:text-slate-400/80">
+        // slate-300 in dark mode: slate-400/80 was near-unreadable on the
+        // dark bubble while still visibly struck through.
+        <del className="line-through decoration-slate-400/70 text-slate-500 dark:text-slate-300">
           {children}
         </del>
       ),
