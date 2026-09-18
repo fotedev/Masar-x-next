@@ -1,7 +1,8 @@
 # Spec 008 — Chat Persistence Hardening
 
-> **Status: DRAFT — awaiting owner approval (I11). Nothing here is implemented yet.**
+> **Status: APPROVED 2026-09-18 (owner approval, I11 — incl. direct prod application of the migration).**
 > Prepared 2026-09-17 after the owner asked how chat saving works and whether the free Supabase plan can take it (~5000 users).
+> **Live-DB ground truth at approval (2026-09-18 introspection):** the out-of-band `ai_chat_messages` table already matches this spec's column contract exactly (id/user_id/role/content/mode/created_at, FK→auth.users cascade, role CHECK, RLS enabled; 35 rows, all `cs_assistant`). Gaps this spec closes: no `mode` CHECK, no composite `(user_id, mode, created_at)` index, policies `TO public` instead of `TO authenticated`, unbounded load, no prune, untyped rows.
 
 ## 1. Context & problem statement
 
