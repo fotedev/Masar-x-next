@@ -60,6 +60,16 @@ regexes = [
   # artifacts job will fail again — update the value, do NOT widen this
   # to a directory rule.
   '''cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp''',
+
+  # Next.js 16 redaction marker: newer `next build` output writes the
+  # literal value `"REDACTED"` for internal key fields in
+  # `.next/cache/.rscinfo` and `server-reference-manifest.json`
+  # (server-reference encryption-key placeholders). Diagnosed
+  # 2026-09-18 from the failing run on c518734: every finding's
+  # captured secret is exactly the quoted word REDACTED — nothing
+  # secret-shaped. Pinned to that exact value so any real key value
+  # still trips the T015 artifact scan.
+  '''"REDACTED"''',
 ]
 paths = [
   # Env templates with placeholder values
