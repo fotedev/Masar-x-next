@@ -198,35 +198,24 @@ export const Header = memo(function Header() {
 
     try {
       setIsVerifying(true);
-      const now = new Date().toISOString();
 
-      const { data, error } = await supabase
-        .from("system_access_codes")
-        .select("*")
-        .eq("access_key", accessKey.trim())
-        .gt("expires_at", now)
-        .single();
+      // Verification runs server-side via a security-definer RPC so the key
+      // values never cross the wire and used_count is consumed atomically
+      // (migration 010: the direct client-read policy was removed).
+      const { data: status, error } = await supabase.rpc(
+        "verify_system_access_code",
+        { p_access_key: accessKey.trim() },
+      );
 
-      if (data && !error) {
-        if (data.used_count >= data.max_uses) {
-          toast.error(tHeader("access.systemErrorTitle"), {
-            description: tHeader("access.maxUsesDescription"),
-          });
-          setAttempts((prev) => prev + 1);
-          return;
-        }
-
+      if (!error && status === "valid") {
         setAttempts(0);
         setLockoutUntil(null);
-
-        const { error: updateError } = await supabase
-          .from("system_access_codes")
-          .update({ used_count: data.used_count + 1 })
-          .eq("id", data.id);
-
-        if (updateError) throw updateError;
-
         enterMatrix();
+      } else if (!error && status === "exhausted") {
+        toast.error(tHeader("access.systemErrorTitle"), {
+          description: tHeader("access.maxUsesDescription"),
+        });
+        setAttempts((prev) => prev + 1);
       } else {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
