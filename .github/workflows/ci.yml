@@ -394,8 +394,8 @@ jobs:
       - name: Start production server
         run: |
           nohup pnpm --filter web start > /tmp/next-start.log 2>&1 &
-          for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:3000/ar > /dev/null && echo "server up" && exit 0
+          for _ in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3000/ar > /dev/null && echo "server up (attempt $((SECONDS / 2)))" && exit 0
             sleep 2
           done
           echo "server failed to start"; tail -50 /tmp/next-start.log; exit 1
