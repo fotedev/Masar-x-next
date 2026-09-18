@@ -448,23 +448,17 @@ export default function SubjectPage() {
           onViewContent={handleViewContent}
           onAddVideo={() => {
             if (isAdmin) {
-              router.push(
-                `/${locale}/subjects/${rawSubjectName}/admin?action=add-video&lecture=${selectedLecture?.key}`,
-              );
+              router.push(`/${locale}/add-video`);
             }
           }}
           onAddFile={() => {
             if (isAdmin) {
-              router.push(
-                `/${locale}/subjects/${rawSubjectName}/admin?action=add-file&lecture=${selectedLecture?.key}`,
-              );
+              router.push(`/${locale}/add-file`);
             }
           }}
           onAddExam={() => {
             if (isAdmin) {
-              router.push(
-                `/${locale}/subjects/${rawSubjectName}/admin?action=add-exam&lecture=${selectedLecture?.key}`,
-              );
+              router.push(`/${locale}/quizzes`);
             }
           }}
         />
