@@ -25,19 +25,19 @@
 
 ## 5. Dependabot (G3.6)
 
-- [ ] 5.1 `.github/dependabot.yml` (npm `/` recursive + github-actions, weekly, reviewer fotedev, minor/patch group) → commit `chore(ci): add dependabot config`
+- [x] 5.1 `.github/dependabot.yml` (npm `/` recursive + github-actions, weekly, reviewer fotedev, minor/patch group; Electron major/minor ignored per I6) + `.gitignore` whitelist entry (`!.github/dependabot.yml` — `.github/*` was ignore-all) → `8e88cd2`
 
 ## 6. Route hygiene (G1.4, G1.5)
 
-- [ ] 6.1 `/add`: i18n-router redirect (locale-prefixed target) + loader string from messages (no new keys needed if `common.loading` exists) — verify_i18n count must go DOWN
-- [ ] 6.2 `الرئيسية`: grep src+sitemap for references → redirect page to `/home` if referenced, else `.trash/` move (both pre-approved)
-- [ ] 6.3 Gates (typecheck/lint/test/translations/verify_i18n) → commit `fix(web): localize /add redirect and retire الرئيسية route`
+- [x] 6.1 `/add`: i18n-router redirect + `common.loading` string (no new keys) — verify_i18n 162→161 → `08fee5d`
+- [x] 6.2 `الرئيسية`: zero references found (grep) → moved to `.trash/` (pre-approved disposition) → `08fee5d`. Post-run: stale `.next/dev/types` validator broke typecheck — fixed by `rm -rf apps/web/.next/dev/types` (known pattern from admin-shell rework)
+- [x] 6.3 Gates green: typecheck ✓, lint 52/52 ratchet ✓, web vitest 46/46 ✓, translations ✓, verify_i18n 161 ✓
 
 ## 7. Sentry cleanup (G7.1)
 
-- [ ] 7.1 DSN check (env files + vercel env ls); if configured, one test error event confirmed
-- [ ] 7.2 Retire `api/sentry-example-api/` → `.trash/` (mirrored path) + git-add deletion → commit `chore(web): retire sentry-example-api route`
+- [x] 7.1 DSN check: `SENTRY_DSN` absent locally AND in Vercel prod (env sweep) → Sentry dormant by config; no test event possible/needed
+- [x] 7.2 `api/sentry-example-api/` retired → `.trash/` (mirrored path); typecheck+lint green → `d8c56f8`
 
 ## 8. Report pass 3
 
-- [ ] 8.1 Flip G3.1, G3.2, G3.5, G2.1, G3.4, G3.6, G1.4, G1.5, G7.1 states per evidence; changelog row → commit `docs(mvp-report): pass 3`
+- [x] 8.1 States flipped for G1.4, G1.5, G2.1, G3.1, G3.2, G3.4, G3.5, G3.6, G6.1, G7.1; new finding G3.9 (prod/migration drift); §8 re-ranked; changelog pass 3
