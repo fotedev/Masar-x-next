@@ -25,7 +25,7 @@
     "expo-file-system": "~16.0.9",
     "expo-linking": "~6.2.2",
     "expo-localization": "~15.0.3",
-    "expo-secure-store": "~13.0.2",
+    "expo-secure-store": "~57.0.4",
     "expo-status-bar": "~1.12.1",
     "masarx-shared": "workspace:*",
     "react": "18.2.0",
