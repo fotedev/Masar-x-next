@@ -61,7 +61,10 @@ export function QuizPlayer({
     error: attemptError,
   } = useQuizAttempt({
     quizId: quizId ?? "local",
-    userId: forceLocalAttempt ? undefined : user?.id || "guest",
+    // Guests must stay undefined: the attempt hook skips DB sync for
+    // !userId, and a literal "guest" was being cast against a uuid column
+    // (PGRST 400 on every guest mount).
+    userId: forceLocalAttempt ? undefined : user?.id,
     totalQuestions: questions.length,
     quizTitle: quiz?.title || "Quiz",
     localOnly: forceLocalAttempt,
