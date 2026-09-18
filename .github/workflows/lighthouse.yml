@@ -95,8 +95,13 @@ jobs:
         # apps/web/.next/standalone/apps/web/server.js after copying
         # .next/static alongside it - see electron-builder.yml
         # extraResources).
+        # NOTE: no `--` arg forwarding — pnpm 9+ forwards the literal
+        # `--` to the script, so `next start "--" "--port" "3000"`
+        # parses `--port` as a project directory and dies (diagnosed
+        # 2026-09-18, run 35379816855). Port 3000 is next start's
+        # default; same invocation as the ci.yml `e2e` job.
         run: |
-          nohup pnpm --filter web run start -- --port 3000 > "$RUNNER_TEMP/next-start.log" 2>&1 &
+          nohup pnpm --filter web start > "$RUNNER_TEMP/next-start.log" 2>&1 &
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:3000/ > /dev/null; then
               echo "next start answered on :3000 (attempt $i)"
