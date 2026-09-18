@@ -24,6 +24,8 @@ Also checked: no AI provider keys / service-role key exposed in any `NEXT_PUBLIC
 
 **Gap analysis (RESOLVED 2026-09-17)**: the Cloudinary public pair was provisioned after discovery via the Cloudinary Admin API using the locally-held `CLOUDINARY_URL` creds (cloud `de3emq8l3`, pre-existing unsigned preset `masarx-uploads`) — no values had to be owner-typed. AI intent confirmed Puter-only (item 2 closed). Item 3 (MCP secret) intentionally not provisioned.
 
+**CLI gotcha for future env additions (preview environment)**: `vercel env add NAME preview` prompts interactively for a git branch and **piped stdin does not answer it** — pass an empty string as the third positional: `printf 'value' | vercel env add NAME preview '' --yes --project <project>` (empty = all branches). Note `vercel env pull` now returns `[SENSITIVE]` for sensitive-flagged vars; real values live in local `.env*`.
+
 ## AI production smoke (owner-assisted browser session)
 
 - [ ] Logged-in chat round-trip returns a streamed answer (expected path: Puter.js client fallback while `AI_GATEWAY_API_KEY` is absent) — **owner's normal usage covers this; not separately gated**

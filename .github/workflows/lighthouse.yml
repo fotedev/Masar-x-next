@@ -119,7 +119,7 @@ jobs:
           uploadArtifacts: true
           temporaryPublicStorage: false
 
-      - name: Assert category thresholds (SC-009: >5-point regression fails)
+      - name: "Assert category thresholds (SC-009: >5-point regression fails)"
         env:
           RESULTS_PATH: ${{ steps.lhci.outputs.resultsPath }}
           BASELINE_PERFORMANCE: ${{ vars.LHCI_BASELINE_PERFORMANCE || '0' }}

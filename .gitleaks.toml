@@ -67,9 +67,11 @@ regexes = [
   # (server-reference encryption-key placeholders). Diagnosed
   # 2026-09-18 from the failing run on c518734: every finding's
   # captured secret is exactly the quoted word REDACTED — nothing
-  # secret-shaped. Pinned to that exact value so any real key value
-  # still trips the T015 artifact scan.
-  '''"REDACTED"''',
+  # secret-shaped. ANCHORED full-match (gitleaks allowlist regexes are
+  # substring matches, so unanchored could swallow a real secret that
+  # merely contains the marker) — any real key value still trips the
+  # T015 artifact scan.
+  '''^"REDACTED"$''',
 ]
 paths = [
   # Env templates with placeholder values
