@@ -22,6 +22,16 @@ checks report `success` from the latest commit on the PR head:
 | `Vercel`      | Vercel GitHub App (integration `8329`) | Production build + preview deploy |
 | `ESLint`      | GitHub Actions — workflow `CI` (`ESLint` job) | Lint via `pnpm lint` |
 | `next build`  | GitHub Actions — workflow `CI` (`next-build` job) | Build via `pnpm build` (with placeholder env vars) |
+| `ai-endpoint-grep` | GitHub Actions — workflow `CI` (`ai-endpoint-grep` job) | Spec 004 T014 — no direct AI provider endpoints |
+| `gitleaks-artifacts` | GitHub Actions — workflow `CI` (`gitleaks-artifacts` job) | Secret scan on the built bundle |
+
+> **Pending owner action (Spec 010 §2.4):** the `e2e` job (workflow `CI`, Playwright
+> study-flow smoke) is wired in `ci.yml` but NOT yet in this ruleset — the API token
+> used on 2026-09-17 lacked ruleset write (`404` on PATCH). Add `e2e` via
+> *Settings → Rules → Rulesets → Main Branch Protection → Require status checks*
+> once the job has reported once on a PR (checks must exist before they can be required).
+> This table should then gain: `e2e` — workflow `CI` (`e2e` job) — Playwright public
+> happy path (Spec 010 / MVP report G6.1).
 
 - `strict_required_status_checks_policy`: `false` — a missing check on a PR
   does not block the merge; the requirement is only enforced once a check

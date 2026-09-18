@@ -338,3 +338,79 @@ jobs:
 
       - name: Run workspace tests
         run: pnpm -r --if-present test
+
+  # ---------------------------------------------------------------------
+  # E2E study-flow smoke (Spec 010 — MVP report G6.1).
+  # Builds with placeholder envs EXCEPT the two Supabase client values.
+  # NEXT_PUBLIC_* are inlined at build time; the anon key/URL are
+  # publishable-by-design (client scope), so they come from repository
+  # Variables — NOT Secrets, and NOT hardcoded here (the gitleaks rules
+  # flag Supabase key patterns, and gitleaks-artifacts scans only its own
+  # placeholder build, so the real values never enter its view).
+  # Runs the Playwright happy path against `next start` on localhost.
+  # ---------------------------------------------------------------------
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require public Supabase variables
+        if: ${{ vars.NEXT_PUBLIC_SUPABASE_URL == '' || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY == '' }}
+        run: |
+          echo "::error::Set repository Variables NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions → Variables tab; public-by-design, NOT secrets) to enable the e2e job."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Build web app (placeholders + public Supabase variables)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: cloudinary-cloud-name
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: cloudinary-upload-preset
+          NEXT_PUBLIC_SITE_URL: https://example.com
+          NEXT_PUBLIC_COLLEGE_NAME: CI
+          NEXT_PUBLIC_GA_ID: ""
+          ANALYZE: "false"
+          DATABASE_URL: postgresql://user:replace@localhost:5432/dbname
+          VERCEL_MCP_BYPASS_SECRET: replace-with-real-secret
+        run: pnpm --filter web build
+
+      - name: Start production server
+        run: |
+          nohup pnpm --filter web start > /tmp/next-start.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3000/ar > /dev/null && echo "server up" && exit 0
+            sleep 2
+          done
+          echo "server failed to start"; tail -50 /tmp/next-start.log; exit 1
+
+      - name: Run e2e smoke
+        env:
+          E2E_BASE_URL: http://127.0.0.1:3000
+        run: pnpm --filter web test:e2e
+
+      - name: Upload e2e artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          retention-days: 7
