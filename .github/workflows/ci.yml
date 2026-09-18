@@ -414,3 +414,28 @@ jobs:
             apps/web/test-results/
             apps/web/playwright-report/
           retention-days: 7
+
+  # ---------------------------------------------------------------------
+  # Workflow lint (actionlint) — added 2026-09-18 after the Lighthouse
+  # incident: an unparseable workflow YAML fails on ANY triggering event
+  # with zero jobs and no logs ("invalid workflow file"), which no
+  # required check caught. actionlint validates every file in
+  # .github/workflows/ (syntax + expression semantics) so this class of
+  # failure is caught here, on the PR that introduces it.
+  # ---------------------------------------------------------------------
+  workflow-lint:
+    name: workflow-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install actionlint (pinned)
+        run: |
+          AL_VERSION="v1.7.7"
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/${AL_VERSION}/actionlint_${AL_VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin actionlint
+          actionlint --version
+
+      - name: Lint all workflow files
+        run: actionlint -color

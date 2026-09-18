@@ -119,7 +119,7 @@ jobs:
         with:
           urls: |
             http://127.0.0.1:3000/
-          runs: 3
+          runs: 5
           # Full JSON/HTML reports are uploaded as workflow artifacts.
           uploadArtifacts: true
           temporaryPublicStorage: false
@@ -164,7 +164,14 @@ jobs:
             process.exit(1);
           }
 
-          const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+          // Median, not average: cold-start outliers dragged the mean from 84 to
+          // 61 in observed runs (2026-09-18) — a 5-point budget over that noise
+          // would false-fail on schedule. Median absorbs them.
+          const median = (xs) => {
+            const s = [...xs].sort((a, b) => a - b);
+            const mid = Math.floor(s.length / 2);
+            return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+          };
 
           for (const category of ["performance", "accessibility"]) {
             const points = reports
@@ -174,8 +181,8 @@ jobs:
               console.error("::error::Category missing from Lighthouse reports:", category);
               process.exit(1);
             }
-            const score = Math.floor(avg(points));
-            console.log(category + ": runs=" + points.map((x) => Math.round(x)).join(",") + " average=" + score);
+            const score = Math.floor(median(points));
+            console.log(category + ": runs=" + points.map((x) => Math.round(x)).join(",") + " median=" + score);
 
             if (baseline[category] > 0) {
               const floor = baseline[category] - budget;
