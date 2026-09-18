@@ -19,12 +19,54 @@ interface ChatMessage {
 
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
 
+// Spec 008: retention cap — load the newest 100 rows per (user, mode) and
+// prune older rows after each assistant reply.
+const CHAT_HISTORY_CAP = 100;
+
 interface SupabaseChatMessage {
   id: string;
   role: string;
   content: string;
   created_at: string;
 }
+
+// Spec 008: fire-and-forget inserts must never throw into the chat flow, but
+// failures are surfaced to the logger (previously the .then() was discarded).
+const insertChatRow = (userId: string, chatMode: string, row: { role: "user" | "assistant"; content: string }) => {
+  supabase
+    .from("ai_chat_messages")
+    .insert({ user_id: userId, role: row.role, content: row.content, mode: chatMode })
+    .then(({ error }) => {
+      if (error) logger.warn("ai_chat_messages insert failed", { error });
+    });
+};
+
+// Keep each (user, mode) thread at the newest CHAT_HISTORY_CAP rows: probe the
+// overflow window (rows 101–200 newest) and delete it when present.
+const pruneChatOverflow = (userId: string, chatMode: string) => {
+  supabase
+    .from("ai_chat_messages")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("mode", chatMode)
+    .order("created_at", { ascending: false })
+    .range(CHAT_HISTORY_CAP, CHAT_HISTORY_CAP + 99)
+    .then(({ data: overflow, error }) => {
+      if (error) {
+        logger.warn("ai_chat_messages prune probe failed", { error });
+        return;
+      }
+      const ids = ((overflow || []) as { id: string }[]).map((row) => row.id);
+      if (ids.length === 0) return;
+      supabase
+        .from("ai_chat_messages")
+        .delete()
+        .in("id", ids)
+        .then(({ error: deleteError }) => {
+          if (deleteError) logger.warn("ai_chat_messages prune delete failed", { error: deleteError });
+        });
+    });
+};
 
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const locale = useLocale();
@@ -88,22 +130,28 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     const loadSupabaseMessages = async () => {
       try {
+        // desc + limit loads the NEWEST cap rows; asc + limit would return
+        // the oldest 100 instead (spec 008 §4's contract is "newest 100
+        // readable"). Reversed back to chronological order for rendering.
         const { data, error } = await supabase
           .from("ai_chat_messages")
           .select("*")
           .eq("user_id", user.id)
           .eq("mode", mode)
-          .order("created_at", { ascending: true });
+          .order("created_at", { ascending: false })
+          .limit(CHAT_HISTORY_CAP);
 
         if (cancelled) return;
         if (error) throw error;
 
-        const loadedMessages = (data || []).map((msg: SupabaseChatMessage) => ({
-          id: msg.id,
-          type: msg.role as "user" | "assistant",
-          content: msg.content,
-          timestamp: new Date(msg.created_at)
-        })) || [];
+        const loadedMessages = ((data || []) as SupabaseChatMessage[])
+          .map((msg) => ({
+            id: msg.id,
+            type: msg.role as "user" | "assistant",
+            content: msg.content,
+            timestamp: new Date(msg.created_at)
+          }))
+          .reverse();
 
         setMessages(loadedMessages);
       } catch (e) {
@@ -189,12 +237,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     // Save user message to Supabase if authenticated
     if (user) {
-      supabase.from("ai_chat_messages").insert({
-        user_id: user.id,
-        role: "user",
-        content: content.trim(),
-        mode: mode
-      }).then();
+      insertChatRow(user.id, mode, { role: "user", content: content.trim() });
     }
 
     trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn, model: modelOverride });
@@ -247,14 +290,11 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       pendingPersistRef.current = true;
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Background save assistant response to Supabase
+      // Background save assistant response to Supabase, then enforce the
+      // retention cap (spec 008 §2)
       if (user) {
-        supabase.from("ai_chat_messages").insert({
-          user_id: user.id,
-          role: "assistant",
-          content: response,
-          mode: mode
-        }).then();
+        insertChatRow(user.id, mode, { role: "assistant", content: response });
+        pruneChatOverflow(user.id, mode);
       }
 
     } catch (_e) {
