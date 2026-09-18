@@ -24,6 +24,13 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+      # better-sqlite3 ANY bump is held: its prebuilt .node binaries must match the
+      # pinned Electron's ABI (v128 for Electron 32 — see electron-builder.yml
+      # npmRebuild note). Desktop vitest fails environmentally (G5.2), so CI cannot
+      # catch a broken electron↔better-sqlite3 pairing — a clean-merging PR would
+      # be a silent desktop break. Bump it together with Electron in the G5.1
+      # post-MVP upgrade.
+      - dependency-name: better-sqlite3
   - package-ecosystem: github-actions
     directory: /
     schedule:

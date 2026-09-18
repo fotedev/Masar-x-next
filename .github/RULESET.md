@@ -32,6 +32,11 @@ checks report `success` from the latest commit on the PR head:
 > once the job has reported once on a PR (checks must exist before they can be required).
 > This table should then gain: `e2e` — workflow `CI` (`e2e` job) — Playwright public
 > happy path (Spec 010 / MVP report G6.1).
+>
+> **Also recommended (2026-09-18):** add the `workflow-lint` check (workflow `CI`,
+> actionlint over `.github/workflows/`) to required checks at the same time — it
+> catches unparseable workflow YAML on the introducing PR (the failure class that
+> left Lighthouse silently broken; see MVP report pass 5/6).
 
 - `strict_required_status_checks_policy`: `false` — a missing check on a PR
   does not block the merge; the requirement is only enforced once a check
