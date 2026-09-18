@@ -433,7 +433,7 @@ jobs:
       - name: Install actionlint (pinned)
         run: |
           AL_VERSION="v1.7.7"
-          curl -sSL "https://github.com/rhysd/actionlint/releases/download/${AL_VERSION}/actionlint_${AL_VERSION}_linux_x64.tar.gz" \
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/${AL_VERSION}/actionlint_${AL_VERSION#v}_linux_amd64.tar.gz" \
             | sudo tar -xz -C /usr/local/bin actionlint
           actionlint --version
 
