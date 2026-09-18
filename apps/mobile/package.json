@@ -14,7 +14,7 @@
     "lint": "echo '[mobile] ESLint config (eslint.config.mjs) is created by the T013 parity pass; the lint script is wired when that config lands.'"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "3.1.1",
     "@react-native-community/netinfo": "11.3.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
