@@ -151,9 +151,14 @@ export function useQuizzesData(props: {
           title: formData.title,
           description: fullDescription,
           summary_id: formData.summaryId || null,
-          created_by: userId,
+          // user_id is the column every live quizzes RLS policy checks;
+          // created_by does not exist in the live table.
+          user_id: userId,
           source_type: "manual",
           duration_seconds: durationSeconds,
+          // Admin-authored content should not need self-moderation; student
+          // submissions keep the DB default 'pending'.
+          status: "approved",
         })
         .select()
         .single();
