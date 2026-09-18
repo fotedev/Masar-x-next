@@ -256,3 +256,7 @@ apps/desktop/release.__stale*/
 .tmp_old_*.txt
 .vercel/
 sandbox/
+
+# Playwright artifacts (Spec 010) — regenerated per run, never committed.
+apps/web/test-results/
+apps/web/playwright-report/
