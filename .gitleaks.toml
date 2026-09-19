@@ -62,16 +62,24 @@ regexes = [
   '''cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp''',
 
   # Next.js 16 redaction marker: newer `next build` output writes the
-  # literal value `"REDACTED"` for internal key fields in
+  # literal value "REDACTED" for internal key fields in
   # `.next/cache/.rscinfo` and `server-reference-manifest.json`
   # (server-reference encryption-key placeholders). Diagnosed
   # 2026-09-18 from the failing run on c518734: every finding's
-  # captured secret is exactly the quoted word REDACTED — nothing
-  # secret-shaped. ANCHORED full-match (gitleaks allowlist regexes are
-  # substring matches, so unanchored could swallow a real secret that
-  # merely contains the marker) — any real key value still trips the
-  # T015 artifact scan.
-  '''^"REDACTED"$''',
+  # captured secret was exactly the quoted word REDACTED — nothing
+  # secret-shaped. RECURRENCE 2026-09-19 (CI run 35406478737 on
+  # 3ea0d6e): 3 findings, same files, but the generic-api-key capture
+  # span shifted with the surrounding minified JSON (Match
+  # `key":"REDACTED"` / `Key":"REDACTED"`) and the captured secret came
+  # back WITHOUT the quotes, so the `^"REDACTED"$` anchor missed it.
+  # The regex now tolerates optional surrounding quotes but stays
+  # anchored to the full secret: a finding only passes when the entire
+  # captured secret is exactly the (optionally quoted) word REDACTED —
+  # any real key value still trips the T015 artifact scan. Second
+  # bundle-level FP in a week: a third shape change triggers a policy
+  # decision on a scoped ruleset for the artifact scan instead of
+  # further regex growth.
+  '''^"?REDACTED"?$''',
 ]
 paths = [
   # Env templates with placeholder values
