@@ -36,7 +36,12 @@ checks report `success` from the latest commit on the PR head:
 > **Also recommended (2026-09-18):** add the `workflow-lint` check (workflow `CI`,
 > actionlint over `.github/workflows/`) to required checks at the same time — it
 > catches unparseable workflow YAML on the introducing PR (the failure class that
-> left Lighthouse silently broken; see MVP report pass 5/6).
+> left Lighthouse silently broken; see MVP report pass 5/6). Proven 2026-09-19
+> against the actual pre-fix `lighthouse.yml` (`d2b4e3a^`): actionlint 1.7.7
+> rejects it with `could not parse as YAML: yaml: line 122: mapping values are
+> not allowed in this context [syntax-check]`. actionlint also runs shellcheck on
+> inline run scripts (preinstalled on `ubuntu-latest` runners), so contributors
+> will see `SC*` findings on new workflow steps — that is the gate working.
 
 - `strict_required_status_checks_policy`: `false` — a missing check on a PR
   does not block the merge; the requirement is only enforced once a check
