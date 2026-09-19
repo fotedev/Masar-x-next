@@ -61,25 +61,8 @@ regexes = [
   # to a directory rule.
   '''cl_HYyOPBNtFMfHhaUn9L4QPfTZz6TP47bp''',
 
-  # Next.js 16 redaction marker: newer `next build` output writes the
-  # literal value "REDACTED" for internal key fields in
-  # `.next/cache/.rscinfo` and `server-reference-manifest.json`
-  # (server-reference encryption-key placeholders). Diagnosed
-  # 2026-09-18 from the failing run on c518734: every finding's
-  # captured secret was exactly the quoted word REDACTED — nothing
-  # secret-shaped. RECURRENCE 2026-09-19 (CI run 35406478737 on
-  # 3ea0d6e): 3 findings, same files, but the generic-api-key capture
-  # span shifted with the surrounding minified JSON (Match
-  # `key":"REDACTED"` / `Key":"REDACTED"`) and the captured secret came
-  # back WITHOUT the quotes, so the `^"REDACTED"$` anchor missed it.
-  # The regex now tolerates optional surrounding quotes but stays
-  # anchored to the full secret: a finding only passes when the entire
-  # captured secret is exactly the (optionally quoted) word REDACTED —
-  # any real key value still trips the T015 artifact scan. Second
-  # bundle-level FP in a week: a third shape change triggers a policy
-  # decision on a scoped ruleset for the artifact scan instead of
-  # further regex growth.
-  '''^"?REDACTED"?$''',
+  # (The `^"?REDACTED"?$` entry that used to live here was removed
+  # 2026-09-19 — see the paths section below for the real story.)
 ]
 paths = [
   # Env templates with placeholder values
@@ -135,7 +118,27 @@ paths = [
   # `next build` itself, but gitleaks scans the entire source tree
   # on this CI job, and a previous local `next dev` run can leave
   # them in the working tree.
-  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
-  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json)$''',
+  #
+  # 2026-09-19 REAL ROOT CAUSE of the intermittent gitleaks-artifacts
+  # failures (runs on c518734, 3ea0d6e, 144832c): `next build` also
+  # writes a random RSC/server-action encryption key —
+  # `encryption.key` in `cache/.rscinfo` and `encryptionKey` in
+  # `server/server-reference-manifest.json` (+ the standalone copy).
+  # Same nature as the Preview Mode keys: regenerated every build,
+  # shipped inside the deployed output, no secrecy value. It trips
+  # generic-api-key on only ~50% of builds because the rule's capture
+  # class is [0-9a-z\-_.=]{10,150} — `/` is EXCLUDED, so a 44-char
+  # base64 key that happens to contain no `/` is fully captured
+  # (entropy > 3.5 → fires), while a key containing `/` breaks the
+  # capture before the closing quote (no match). The earlier
+  # `^"?REDACTED"?$` regexes here matched nothing: the "REDACTED"
+  # seen in CI scan.json reports was gitleaks' OWN `--redact`
+  # placeholder rewriting every reported secret, not a literal in the
+  # build output — the greens after those entries were coin flips.
+  # Verified locally 2026-09-19: slash-free key fixture fires,
+  # slash-containing fixture doesn't; with these paths allowlisted,
+  # any key shape passes and real secrets elsewhere still fire.
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
 ]
