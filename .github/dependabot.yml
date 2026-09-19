@@ -31,6 +31,20 @@ updates:
       # be a silent desktop break. Bump it together with Electron in the G5.1
       # post-MVP upgrade.
       - dependency-name: better-sqlite3
+      # Expo SDK majors are held (owner-flagged 2026-09-19, reversible — same
+      # precedent as the Cloudinary preset): mobile is pinned to Expo SDK 51,
+      # has no test suite yet, and the SDK upgrade belongs to the post-MVP
+      # mobile queue. PRs #34 (expo-secure-store 13→57) / #36
+      # (expo-document-picker 12→57) would break against SDK 51 with no test
+      # to catch it. Minors/patches keep flowing. expo* packages exist only in
+      # apps/mobile, so the name patterns scope this hold to mobile without
+      # splitting the recursive npm entry.
+      - dependency-name: expo
+        update-types:
+          - version-update:semver-major
+      - dependency-name: expo-*
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
