@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import type { Notification, NotificationInsert } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
+import { logger } from "../lib/logger";
 
 // Keep track of inflight requests per user to deduplicate simultaneous calls
 const inflightRequests = new Map<string, Promise<Notification[]>>();
@@ -219,33 +220,20 @@ export function useNotifications() {
       relatedType?: "summary" | "news" | "appeal",
     ) => {
       try {
-        // الحصول على جميع المدراء
-        const { data: admins, error } = await supabase
-          .from("admins")
-          .select("user_id");
-
+        // Fan-out runs server-side via a security-definer RPC (migration 011):
+        // the old client-side flow read the admins table in the browser and
+        // inserted rows for arbitrary user_ids. The RPC only delivers when
+        // the caller filed an appeal against the content or is an admin.
+        const { error } = await supabase.rpc("notify_admins_of_content", {
+          p_type: type,
+          p_related_type: relatedType ?? "",
+          p_related_id: relatedId ?? null,
+          p_title: title,
+          p_message: message,
+        });
         if (error) throw error;
-
-        if (!admins || admins.length === 0) {
-          return;
-        }
-
-        // إنشاء إشعارات لجميع المدراء
-        const notificationsToInsert = admins.map(
-          (admin: { user_id: string }) => ({
-            user_id: admin.user_id,
-            title,
-            message,
-            type,
-            related_id: relatedId,
-            related_type: relatedType,
-            read: false,
-          }),
-        );
-
-        await supabase.from("notifications").insert(notificationsToInsert);
-      } catch {
-        // ignore
+      } catch (err) {
+        logger.error("notifyAdmins failed:", err);
       }
     },
     [],
