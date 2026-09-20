@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -74,7 +74,10 @@ export default function AiAssistantPage() {
     return "claude-sonnet-4-6";
   });
 
-  const handleModelChange = (model: string) => {
+  // Spec 012: every callback below is useCallback-stable so that typing (the
+  // only state that changes per keystroke) re-renders just ChatInput — the
+  // memoized ChatContainer and every ChatMessageItem keep their identities.
+  const handleModelChange = useCallback((model: string) => {
     const isPuterBackedModel = model.startsWith("claude");
     if (isPuterBackedModel && typeof window !== "undefined") {
       const key = "puter_diagnostics_initialized";
@@ -85,17 +88,23 @@ export default function AiAssistantPage() {
     }
     setSelectedModel(model);
     localStorage.setItem("zane_ai_selected_model", model);
-  };
+  }, []);
 
   const isInitialState = messages.length === 0;
 
-  const handleSuggestionClick = async (suggestion: string) => {
-    await sendMessage(suggestion, selectedModel);
-  };
+  const handleSuggestionClick = useCallback(
+    async (suggestion: string) => {
+      await sendMessage(suggestion, selectedModel);
+    },
+    [sendMessage, selectedModel],
+  );
 
-  const handleUiMessage = async (content: string) => {
-    await sendMessage(content, selectedModel);
-  };
+  const handleUiMessage = useCallback(
+    async (content: string) => {
+      await sendMessage(content, selectedModel);
+    },
+    [sendMessage, selectedModel],
+  );
 
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");
@@ -123,14 +132,14 @@ export default function AiAssistantPage() {
   const [inputMessage, setInputMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null!);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!inputMessage.trim()) return;
     const content = inputMessage;
     setInputMessage("");
     await sendMessage(content, selectedModel);
-  };
+  }, [inputMessage, sendMessage, selectedModel]);
 
-  const handleSummarizeChat = async () => {
+  const handleSummarizeChat = useCallback(async () => {
     try {
       setIsSummarizing(true);
 
@@ -171,13 +180,22 @@ export default function AiAssistantPage() {
     } finally {
       setIsSummarizing(false);
     }
-  };
+  }, [mode, messages, studentSelectedSubject, t]);
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = useCallback(() => {
     if (studentSelectedQuizId) {
       router.push(`/quiz-play/${studentSelectedQuizId}`);
     }
-  };
+  }, [router, studentSelectedQuizId]);
+
+  const handleShowGeneratedQuizModal = useCallback(() => {
+    setShowGeneratedQuizModal(true);
+  }, []);
+
+  const handleOpenPuterSettings = useCallback(() => {
+    initPuterDiagnostics();
+    setShowPuterSettings(true);
+  }, []);
 
   if (!isReady) {
     return (
@@ -204,7 +222,7 @@ export default function AiAssistantPage() {
             studentQuizzesLoading={studentQuizzesLoading}
             onStartQuiz={handleStartQuiz}
             generatedQuiz={generatedQuiz}
-            onShowGeneratedQuizModal={() => setShowGeneratedQuizModal(true)}
+            onShowGeneratedQuizModal={handleShowGeneratedQuizModal}
             safeLocalGeneratedQuizzesCount={0}
             t={t}
           />
@@ -258,10 +276,7 @@ export default function AiAssistantPage() {
           onClearChat={clearChat}
           isSummarizing={isSummarizing}
           hasChatData={messages.length > 0}
-          onOpenPuterSettings={() => {
-            initPuterDiagnostics();
-            setShowPuterSettings(true);
-          }}
+          onOpenPuterSettings={handleOpenPuterSettings}
         />
 
         {showPuterSettings && (

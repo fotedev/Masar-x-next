@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useMemo, useCallback, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useMemo, useCallback, memo, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import {
   BookOpen,
@@ -39,7 +39,10 @@ interface ChatContainerProps {
   onLoadOlder?: () => void;
 }
 
-export function ChatContainer({
+// Spec 012: memoized so typing in the composer (page-level input state)
+// re-renders only ChatInput — the message list, and the markdown re-parse of
+// every bubble with it, is skipped while all props hold their identity.
+export const ChatContainer = memo(function ChatContainer({
   messages,
   isLoading,
   messagesContainerRef,
@@ -444,4 +447,4 @@ export function ChatContainer({
       <ChatScrollbar containerRef={messagesContainerRef} />
     </div>
   );
-}
+});
