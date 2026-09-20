@@ -60,6 +60,9 @@ export default function AiAssistantPage() {
     setMode,
     studentSelectedSubject,
     setStudentSelectedSubject,
+    loadOlder,
+    hasMoreOlder,
+    loadingOlder,
   } = useAiChat(user, trackEvent);
 
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -219,6 +222,9 @@ export default function AiAssistantPage() {
             onSuggestionClick={handleSuggestionClick}
             onUiMessage={handleUiMessage}
             hasUserInput={inputMessage.trim().length > 0}
+            hasMoreOlder={hasMoreOlder}
+            loadingOlder={loadingOlder}
+            onLoadOlder={loadOlder}
           />
 
           {/* Spec 011: floating jump-to-latest pill while scrolled away from

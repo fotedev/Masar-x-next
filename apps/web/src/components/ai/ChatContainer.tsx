@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useMemo, useCallback, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useMemo, useCallback, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import {
   BookOpen,
@@ -33,6 +33,10 @@ interface ChatContainerProps {
   onSuggestionClick?: (suggestion: string) => void;
   onUiMessage?: (message: string) => void;
   hasUserInput?: boolean;
+  /** Spec 011 lazy sync: older pages remain inside the retained window. */
+  hasMoreOlder?: boolean;
+  loadingOlder?: boolean;
+  onLoadOlder?: () => void;
 }
 
 export function ChatContainer({
@@ -46,6 +50,9 @@ export function ChatContainer({
   onSuggestionClick,
   onUiMessage,
   hasUserInput = false,
+  hasMoreOlder = false,
+  loadingOlder = false,
+  onLoadOlder,
 }: ChatContainerProps) {
   const shouldReduceMotion = useReducedMotion();
   // Stable per-instance key for the hero LottiePlayer. The key is derived
@@ -160,6 +167,51 @@ export function ChatContainer({
     }
     return -1;
   }, [messages]);
+
+  // ── Spec 011: lazy history sync ────────────────────────────────────────────
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const prependAnchorRef = useRef<{ firstId: string | null; scrollHeight: number } | null>(null);
+
+  const requestLoadOlder = useCallback(() => {
+    if (loadingOlder) return;
+    const el = messagesContainerRef.current;
+    if (el) {
+      // Anchor: captured BEFORE the prepend so the layout effect can restore
+      // the exact viewport (scrollTop += scrollHeight delta).
+      prependAnchorRef.current = {
+        firstId: messages[0]?.id ?? null,
+        scrollHeight: el.scrollHeight,
+      };
+    }
+    onLoadOlder?.();
+  }, [loadingOlder, messages, messagesContainerRef, onLoadOlder]);
+
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    if (!sentinel || !hasMoreOlder || !onLoadOlder) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) requestLoadOlder();
+      },
+      { rootMargin: "200px 0px 0px 0px" },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [hasMoreOlder, onLoadOlder, requestLoadOlder]);
+
+  useLayoutEffect(() => {
+    const el = messagesContainerRef.current;
+    const anchor = prependAnchorRef.current;
+    if (messages.length === 0) {
+      // Mode switch / clear: a stale anchor must never fire on a new thread.
+      prependAnchorRef.current = null;
+      return;
+    }
+    if (el && anchor && anchor.firstId !== null && messages[0]?.id !== anchor.firstId) {
+      el.scrollTop += el.scrollHeight - anchor.scrollHeight;
+      prependAnchorRef.current = null;
+    }
+  }, [messages, messagesContainerRef]);
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col">
@@ -328,6 +380,15 @@ export function ChatContainer({
         </motion.div>
       ) : (
         <>
+          {hasMoreOlder && (
+            <div ref={topSentinelRef} className="h-1 w-full" aria-hidden="true">
+              {loadingOlder && (
+                <p className="text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                  {t("loadingOlder")}
+                </p>
+              )}
+            </div>
+          )}
           {messages.map((message, index) => (
             <ChatMessageItem
               key={message.id}
