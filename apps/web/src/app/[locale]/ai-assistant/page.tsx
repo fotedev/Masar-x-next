@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -12,6 +12,8 @@ import { ChatHeader } from "@/components/ai/ChatHeader";
 import { ChatContainer } from "@/components/ai/ChatContainer";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { AIErrorBoundary } from "@/components/AIErrorBoundary";
+import { useChatScroll } from "@/hooks/useChatScroll";
+import { ArrowDown } from "lucide-react";
 import { aiAssistant } from "@/lib/ai-assistant";
 import { toast } from "sonner";
 import { useRouter } from '@/navigation';
@@ -104,26 +106,16 @@ export default function AiAssistantPage() {
     null,
   );
 
-  const messagesContainerRef = useRef<HTMLDivElement>(null!);
   const messagesEndRef = useRef<HTMLDivElement>(null!);
 
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    // Check if the user is already at the bottom of the internal container
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop <=
-      container.clientHeight + 100;
-
-    if (isAtBottom || isLoading) {
-      // Direct scroll on the container element itself to avoid page-level jumping
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages, isLoading]);
+  // Spec 011: stick-when-near-bottom scrolling (streaming + new messages),
+  // instant jump to the newest message after a history sync, and the
+  // isNearBottom flag that drives the scroll-to-end pill.
+  const {
+    containerRef: messagesContainerRef,
+    isNearBottom,
+    stickToBottom,
+  } = useChatScroll(messages);
 
   const [inputMessage, setInputMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null!);
@@ -215,18 +207,33 @@ export default function AiAssistantPage() {
           />
         )}
 
-        <ChatContainer
-          messages={messages}
-          isLoading={isLoading}
-          messagesContainerRef={messagesContainerRef}
-          messagesEndRef={messagesEndRef}
-          t={t}
-          isInitialState={isInitialState}
-          mode={mode}
-          onSuggestionClick={handleSuggestionClick}
-          onUiMessage={handleUiMessage}
-          hasUserInput={inputMessage.trim().length > 0}
-        />
+        <div className="relative flex min-h-0 w-full flex-1 flex-col">
+          <ChatContainer
+            messages={messages}
+            isLoading={isLoading}
+            messagesContainerRef={messagesContainerRef}
+            messagesEndRef={messagesEndRef}
+            t={t}
+            isInitialState={isInitialState}
+            mode={mode}
+            onSuggestionClick={handleSuggestionClick}
+            onUiMessage={handleUiMessage}
+            hasUserInput={inputMessage.trim().length > 0}
+          />
+
+          {/* Spec 011: floating jump-to-latest pill while scrolled away from
+              the bottom. Hidden while detached during the hero state. */}
+          {!isInitialState && !isNearBottom && (
+            <button
+              type="button"
+              onClick={() => stickToBottom("smooth")}
+              className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-600 shadow-lg backdrop-blur-md transition-colors hover:border-cyan-500/40 hover:text-cyan-600 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-300 dark:hover:text-cyan-400"
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+              {t("scrollToEnd")}
+            </button>
+          )}
+        </div>
 
         <ChatInput
           inputMessage={inputMessage}
