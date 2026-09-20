@@ -17,6 +17,8 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  /** True while this message is still receiving streamed deltas (spec 011). */
+  streaming?: boolean;
 }
 
 interface ChatContainerProps {
@@ -334,7 +336,9 @@ export function ChatContainer({
               mode={mode}
             />
           ))}
-          {isLoading && (
+          {/* Once the first streamed delta lands, the growing bubble replaces
+              the typing indicator (spec 011). */}
+          {isLoading && !messages.some((m) => m.streaming) && (
             <div
               className={`flex gap-2.5 sm:gap-4 w-[95%] sm:w-auto max-w-[95%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%] ${isRTL ? "justify-end flex-row-reverse" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}
             >

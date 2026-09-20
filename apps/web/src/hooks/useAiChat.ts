@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
+import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { logger } from "@/lib/logger";
@@ -15,6 +16,8 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  /** True while this message is still receiving streamed deltas (spec 011). */
+  streaming?: boolean;
 }
 
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
@@ -235,6 +238,40 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
+    // ── Streaming (spec 011) ────────────────────────────────────────────────
+    // The first delta appends the assistant message (streaming: true); later
+    // deltas update its content at most once per frame. The persist effect
+    // consumes pendingPersistRef once, so intermediate renders stay
+    // write-free — only the finalize below persists.
+    const assistantMsgId = `assistant_${Date.now()}`;
+    let streamStarted = false;
+    const flushStream = (full: string) => {
+      if (mode !== currentMode) return;
+      if (!streamStarted) {
+        streamStarted = true;
+        setMessages(prev => [
+          ...prev,
+          { id: assistantMsgId, type: "assistant", content: full, timestamp: new Date(), streaming: true },
+        ]);
+      } else {
+        setMessages(prev => prev.map(m => (m.id === assistantMsgId ? { ...m, content: full } : m)));
+      }
+    };
+    const deltaThrottle = createDeltaThrottle(flushStream, (cb) => {
+      const frame = requestAnimationFrame(cb);
+      return () => cancelAnimationFrame(frame);
+    });
+    const finalizeStream = (finalContent: string): boolean => {
+      deltaThrottle.cancel();
+      if (!streamStarted) return false;
+      streamStarted = false;
+      pendingPersistRef.current = true;
+      setMessages(prev => prev.map(m => (
+        m.id === assistantMsgId ? { ...m, content: finalContent, streaming: false } : m
+      )));
+      return true;
+    };
+
     // Save user message to Supabase if authenticated
     if (user) {
       insertChatRow(user.id, mode, { role: "user", content: content.trim() });
@@ -276,19 +313,26 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         platformContext,
         model: modelOverride,
         locale,
+        onDelta: (full) => deltaThrottle.update(full),
       });
 
       // Avoid setting state if another request was started or mode changed
-      if (mode !== currentMode) return;
+      if (mode !== currentMode) {
+        deltaThrottle.cancel();
+        return;
+      }
 
-      const assistantMsg: ChatMessage = {
-        id: `assistant_${Date.now()}`,
-        type: "assistant",
-        content: response,
-        timestamp: new Date(),
-      };
-      pendingPersistRef.current = true;
-      setMessages(prev => [...prev, assistantMsg]);
+      const streamed = finalizeStream(response);
+      if (!streamed) {
+        const assistantMsg: ChatMessage = {
+          id: assistantMsgId,
+          type: "assistant",
+          content: response,
+          timestamp: new Date(),
+        };
+        pendingPersistRef.current = true;
+        setMessages(prev => [...prev, assistantMsg]);
+      }
 
       // Background save assistant response to Supabase, then enforce the
       // retention cap (spec 008 §2)
@@ -299,13 +343,22 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     } catch (_e) {
       logger.error("Failed to send AI message", _e);
+      deltaThrottle.cancel();
       pendingPersistRef.current = true;
-      setMessages(prev => [...prev, {
-        id: `error_${Date.now()}`,
-        type: "assistant",
-        content: "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
-        timestamp: new Date()
-      }]);
+      if (streamStarted) {
+        // Rare: an error after partial text was shown (streamPuterChat returns
+        // partial content instead of throwing once text arrived). Keep what
+        // the user saw; appending the generic error bubble on top of visible
+        // content would read as a second failed answer.
+        setMessages(prev => prev.map(m => (m.id === assistantMsgId ? { ...m, streaming: false } : m)));
+      } else {
+        setMessages(prev => [...prev, {
+          id: `error_${Date.now()}`,
+          type: "assistant",
+          content: "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
+          timestamp: new Date()
+        }]);
+      }
     } finally {
       setIsLoading(false);
     }

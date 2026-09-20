@@ -22,6 +22,8 @@ interface ChatMessage {
   type: "user" | "assistant";
   content: string;
   timestamp: Date;
+  /** True while this message is still receiving streamed deltas (spec 011). */
+  streaming?: boolean;
 }
 
 interface ChatMessageItemProps {
@@ -658,6 +660,12 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           >
             {isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
+            ) : message.streaming ? (
+              // While deltas are still arriving: plain text only. Re-parsing
+              // growing markdown (plus rehype-highlight) per frame is costly
+              // and mid-fence states render as junk; the full pipeline takes
+              // over at finalize.
+              <div className="whitespace-pre-wrap">{displayContent}</div>
             ) : (
               <div className="space-y-3">
                 {renderAssistantContent(displayContent)}
