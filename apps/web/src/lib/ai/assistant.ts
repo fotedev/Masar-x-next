@@ -33,13 +33,16 @@ import {
 import {
   assertPuterSignedIn,
   extractPuterChatText,
+  extractPuterChunkText,
   getPuterClient,
+  hasAsyncIterator,
   isPuterSdkSignedIn,
   isRecord,
   resetPuterClientCache,
   resolvePuterModel,
   warmupPuterClient,
 } from './puter-client';
+import type { PuterClientLike } from './puter-client';
 import { sanitizeAssistantReply } from './sanitize';
 import { consumeTextStream } from './stream-reader';
 import { cannedMessagesFor } from './canned-messages';
@@ -129,6 +132,70 @@ const getExplicitSignedIn = (): boolean => {
   }
 };
 
+/**
+ * Streamed chat call (spec 011): requests stream:true and reports the
+ * accumulated text through onDelta after every chunk. The timeout bounds
+ * setup + time-to-first-chunk; once text is flowing there is no overall cap.
+ * A provider that ignores stream:true falls back to the full-response
+ * extractor. A mid-stream failure returns the partial text when any arrived
+ * (the user keeps what they saw) and only rethrows when nothing was
+ * extracted, so pre-content failures keep their retry/fallback ladder.
+ */
+const streamPuterChat = async (
+  puter: PuterClientLike,
+  prompt: string,
+  model: string,
+  onDelta: ((fullSoFar: string) => void) | undefined,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<string> => {
+  const response = await withTimeout(
+    puter.ai.chat(prompt, { model, stream: true }),
+    timeoutMs,
+    timeoutMessage,
+  );
+
+  if (!hasAsyncIterator(response)) {
+    return extractPuterChatText(response);
+  }
+
+  const iterator = response[Symbol.asyncIterator]();
+  let full = '';
+  try {
+    const first = await withTimeout(iterator.next(), timeoutMs, timeoutMessage);
+    if (!first.done) {
+      const delta = extractPuterChunkText(first.value);
+      if (delta) {
+        full += delta;
+        onDelta?.(full);
+      }
+      for (;;) {
+        const next = await iterator.next();
+        if (next.done) break;
+        const chunk = extractPuterChunkText(next.value);
+        if (!chunk) continue;
+        full += chunk;
+        onDelta?.(full);
+      }
+    }
+  } catch (error) {
+    if (!full) throw error;
+    logger.warn('Puter stream interrupted after partial text', {
+      chars: full.length,
+      error: asErrorMessage(error),
+    });
+  } finally {
+    // Best-effort close so an interrupted iterator does not keep the
+    // underlying connection alive.
+    try {
+      await iterator.return?.(undefined);
+    } catch {
+      // ignore
+    }
+  }
+  return full;
+};
+
 export class AiAssistant {
   private buildChatHistoryContext(history?: AiChatHistoryTurn[], maxTurns: number = 20) {
     const safeHistory = (history || [])
@@ -151,6 +218,7 @@ export class AiAssistant {
       platformContext?: string;
       model?: string;
       locale?: string;
+      onDelta?: (fullSoFar: string) => void;
     },
   ): Promise<string> {
     const canned = cannedMessagesFor(options?.locale);
@@ -186,30 +254,43 @@ ${platformContext}
       if (isClaudeLikeModel(selectedModel)) assertPuterSignedIn(puter);
       const model = await resolvePuterModel(puter, selectedModel);
 
-      try {
-        return await withPuterRetry(
-          () => puter.ai.chat(prompt, { model, stream: false }),
-          {
-            maxAttempts: 3,
-            baseDelayMs: 800,
-            onRetry: (err) => {
-              if (isPuterTransportError(err)) {
-                resetPuterClientCache();
-              }
+    try {
+      return await withPuterRetry(
+        () => streamPuterChat(
+          puter,
+          prompt,
+          model,
+          options?.onDelta,
+          30000,
+          `AI request timed out using model: ${model}`,
+        ),
+        {
+          maxAttempts: 3,
+          baseDelayMs: 800,
+          onRetry: (err) => {
+            if (isPuterTransportError(err)) {
+              resetPuterClientCache();
             }
           }
-        );
-      } catch (err) {
-        if (isPuterModelNotAvailableError(err) && model !== 'gpt-5.4-nano') {
-          return puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false });
         }
-        throw err;
+      );
+    } catch (err) {
+      if (isPuterModelNotAvailableError(err) && model !== 'gpt-5.4-nano') {
+        return streamPuterChat(
+          puter,
+          prompt,
+          'gpt-5.4-nano',
+          options?.onDelta,
+          30000,
+          'Fallback AI request timed out',
+        );
       }
-    };
+      throw err;
+    }
+  };
 
     try {
-      const response = await executeWithPuter();
-      return await extractPuterChatText(response);
+      return await executeWithPuter();
     } catch (error) {
       notePuterTransportFailure(error);
       if (isPuterCircuitOpen() && isPuterTransportError(error)) return getPuterUnavailableMessage(options?.locale);
@@ -227,6 +308,7 @@ ${platformContext}
       platformContext?: string;
       model?: string;
       locale?: string;
+      onDelta?: (fullSoFar: string) => void;
     }
   ): Promise<string> {
     const mode: AiAssistantMode = options?.mode || 'group_rag';
@@ -281,10 +363,13 @@ ${platformContext}
 
       try {
         return await withPuterRetry(
-          () => withTimeout(
-            puter.ai.chat(prompt, { model: resolvedModel, stream: false }),
-            isPremium ? 25000 : 30000, // Shorter timeout for premium models
-            `AI request timed out using model: ${resolvedModel}`
+          () => streamPuterChat(
+            puter,
+            prompt,
+            resolvedModel,
+            options?.onDelta,
+            isPremium ? 25000 : 30000,
+            `AI request timed out using model: ${resolvedModel}`,
           ),
           {
             maxAttempts: 3,
@@ -301,17 +386,23 @@ ${platformContext}
         // Auto-fallback to GPT model for premium model failures
         if (isClaudeLikeModel(resolvedModel) && (isPuterTransportError(err) || asErrorMessage(err).includes('timed out'))) {
           console.warn(`[Puter] Auto-falling back from ${resolvedModel} to gpt-5.4-nano due to error:`, asErrorMessage(err));
-          return await withTimeout(
-            puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false }),
+          return streamPuterChat(
+            puter,
+            prompt,
+            'gpt-5.4-nano',
+            options?.onDelta,
             30000,
-            'Fallback AI request timed out'
+            'Fallback AI request timed out',
           );
         }
         if (isPuterModelNotAvailableError(err) && resolvedModel !== 'gpt-5.4-nano') {
-          return await withTimeout(
-            puter.ai.chat(prompt, { model: 'gpt-5.4-nano', stream: false }),
+          return streamPuterChat(
+            puter,
+            prompt,
+            'gpt-5.4-nano',
+            options?.onDelta,
             30000,
-            'Fallback AI request timed out'
+            'Fallback AI request timed out',
           );
         }
         throw err;
@@ -333,10 +424,11 @@ ${ZANE_UI_INSTRUCTION}
 
 سؤال المستخدم: ${query}${historyContext}`;
 
-        const response = await executeWithPuter(prompt, selectedModel);
-        if (response === null) return getPuterUnavailableMessage(options?.locale);
+        const text = await executeWithPuter(prompt, selectedModel);
+        if (text === null) return getPuterUnavailableMessage(options?.locale);
 
-        const text = await extractPuterChatText(response);
+        // onDelta reported the raw stream; the returned (persisted) message is
+        // the sanitized one — useAiChat swaps it in at finalize.
         return sanitizeAssistantReply(query, text);
       }
 
@@ -345,7 +437,8 @@ ${ZANE_UI_INSTRUCTION}
         chatHistory: options?.chatHistory,
         platformContext: options?.platformContext,
         model: selectedModel,
-        locale: options?.locale
+        locale: options?.locale,
+        onDelta: options?.onDelta
       });
 
     } catch (error: unknown) {
@@ -367,9 +460,9 @@ ${ZANE_UI_INSTRUCTION}
         logger.error('Puter AI error', error, { mode, selectedModel });
       }
 
-      // Try server-side fallback if Puter failed
+      // Try server-side fallback if Puter failed (also streamed)
       if (isPuterTransportError(error)) {
-        const fallbackResponse = await tryServerSideFallback(query, mode);
+        const fallbackResponse = await tryServerSideFallback(query, mode, options?.onDelta);
         if (fallbackResponse) {
           return fallbackResponse;
         }

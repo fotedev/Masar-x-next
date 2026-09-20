@@ -166,7 +166,7 @@ export const warmupPuterClient = async (): Promise<void> => {
   return cachedPuterWarmup;
 };
 
-const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
+export const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
   if (!value) return false;
   if (typeof value !== 'object') return false;
   return Symbol.asyncIterator in (value as Record<string, unknown>);
