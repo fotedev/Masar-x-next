@@ -629,14 +629,16 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         } ${directionClass}`}
       >
         <div
-          className={`shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
+          className={`shrink-0 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
             isUser
-              ? "bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20"
-              : "bg-transparent"
+              ? // Spec 012: 32/36px user avatar — the 48/64px circle dwarfed
+                // short messages. The bot avatar keeps its size (Lottie room).
+                "w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20"
+              : "w-12 h-12 sm:w-16 sm:h-16 bg-transparent"
           }`}
         >
           {isUser ? (
-            <User className="w-5 h-5 sm:w-6 sm:h-6" />
+            <User className="w-4 h-4 sm:w-5 sm:h-5" />
           ) : (
             <LottiePlayer
               key={lottieInstanceId}
@@ -654,10 +656,13 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </div>
         <div className="flex flex-col gap-1 min-w-0 flex-1 group/bubble">
           <div
-            className={`px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl text-[14.5px] sm:text-[15px] leading-relaxed shadow-sm relative break-words ${
+            className={`relative break-words text-[14.5px] sm:text-[15px] leading-relaxed ${
               isUser
-                ? `bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
-                : `bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/90 dark:to-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 ${roundedClass}`
+                ? `px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
+                : // Spec 012: assistant replies flow on the canvas (ChatGPT-
+                  // style clean reading surface) — no card box. Code blocks,
+                  // the raw view and zane-ui blocks keep their own containers.
+                  "text-slate-800 dark:text-slate-200"
             }`}
             dir={getTextDirection(displayContent)}
             onTouchStart={handleBubbleTouchStart}
@@ -778,16 +783,17 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
               </div>
             )}
           </div>
-          {/* Per-message actions below the bubble:
-              - Mobile/touch: hidden until long-press on the bubble reveals them.
-              - Desktop: hidden until the message is hovered/focused. */}
+          {/* Per-message actions under the message (spec 012): the row's
+              height is always reserved so revealing it never shifts layout —
+              only opacity + pointer-events transition. Desktop reveals on
+              hover/focus; touch stays long-press. */}
           <div
-            className={`flex items-center gap-1.5 overflow-hidden transition-all duration-200 ${
+            className={`flex h-8 items-center gap-1.5 transition-opacity duration-150 ${
               isUser !== isRTL ? "justify-end" : "justify-start"
             } ${
               showTouchActions
-                ? "mt-1 max-h-10 opacity-100"
-                : "mt-0 max-h-0 opacity-0 pointer-events-none sm:group-hover/bubble:mt-1 sm:group-hover/bubble:max-h-10 sm:group-hover/bubble:opacity-100 sm:group-hover/bubble:pointer-events-auto sm:focus-within:mt-1 sm:focus-within:max-h-10 sm:focus-within:opacity-100 sm:focus-within:pointer-events-auto"
+                ? "opacity-100"
+                : "opacity-0 pointer-events-none sm:group-hover/bubble:opacity-100 sm:group-hover/bubble:pointer-events-auto sm:focus-within:opacity-100 sm:focus-within:pointer-events-auto"
             }`}
           >
             <CopyButton content={displayContent} />
