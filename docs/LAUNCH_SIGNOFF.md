@@ -20,9 +20,11 @@ Each risk below is accepted **for the MVP phase**, with the trigger that reopens
 
 ### Owner approval
 
+> [x] **Launch authorized — owner chat directive, 2026-09-20:** the owner reviewed this ledger in the interactive closure session and instructed the official transition from *Conditional GO* to **GO** (including the S5 delegation and the ruleset completion).
+>
 > [ ] **Signed off by:** ________________ (fotedev)  **Date:** ____________
 >
-> By signing, the owner accepts risks R1–R5 for the MVP launch phase and acknowledges the revisit triggers above.
+> By signing, the owner accepts risks R1–R5 for the MVP launch phase and acknowledges the revisit triggers above. The ink line above is kept for the permanent record; per the owner's 2026-09-20 directive it does not block the GO stamp.
 
 ---
 
@@ -46,7 +48,7 @@ Each risk below is accepted **for the MVP phase**, with the trigger that reopens
 **Expected:** every admin account receives an `admin_submission` notification pointing at the appealed content. SQL: `SELECT title, user_id, type, related_type FROM notifications ORDER BY created_at DESC LIMIT <number of admins>;` — one row per admin. (Delivered via the `notify_admins_of_content` RPC; a student can only trigger it for content they actually appealed.)
 
 ### S5 — Role invalidation (fail-closed check)
-Follow `specs/009-launch-hardening/checklists/role-propagation.md`. Summary: grant a second test admin, log in, then revoke: `DELETE FROM admins WHERE user_id = '<test-user>';` (the 008 trigger strips the JWT claim). **Expected:** the admin dashboard route redirects after token refresh and all admin-gated writes fail via RLS/`ensureAdmin()` immediately — the UI lag (R4) must never grant a working write path.
+Follow `specs/009_mvp-launch-ops-hardening/checklists/role-propagation.md`. Summary: grant a second test admin, log in, then revoke: `DELETE FROM admins WHERE user_id = '<test-user>';` — with migration `012_jwt_role_sync` deployed, the `on_admin_delete` trigger strips the JWT role claim and refreshed tokens lose it. **Expected:** all admin-gated writes fail via RLS/`is_admin()` immediately (UI lag must never grant a working write path), the dashboard route's live `admins` lookup denies on next load, and the claim disappears at token refresh. Executed **automated** 2026-09-20 with a disposable temp account (full cleanup, baseline re-verified) — see §3 and the evidence block below. ⚠ Execution finding: the 008 trigger set this runbook assumed was **never deployed to prod**; fixed in-flight by migration `012_jwt_role_sync` (triggers + one-time claim backfill), then the full procedure was re-run to ALL PASS.
 
 ---
 
@@ -54,10 +56,10 @@ Follow `specs/009-launch-hardening/checklists/role-propagation.md`. Summary: gra
 
 | Checklist item | Status | Notes |
 |---|---|---|
-| Risk Register Sign-Off (R1–R3) | 🟡 **Doc drafted — signature pending** | This file §1; R4/R5 added from the audit register for completeness. |
+| Risk Register Sign-Off (R1–R3) | ✅ **Owner GO directive 2026-09-20** | This file §1; R4/R5 added from the audit register for completeness. The owner reviewed the ledger in the closure session and instructed the official GO transition (chat directive 2026-09-20); the ink-signature line in §1 remains for the permanent record and is non-blocking. R4 was re-validated with hard data by S5 (see below). |
 | Live Browser Smoke (S1–S4) | ✅ **Automated verification PASS 2026-09-20** | S1: Playwright against `https://masarx.vercel.app` (real data, no mocks) — start screen renders, guest banner visible, **zero** `quiz_attempts` requests, zero REST ≥400 (`apps/web/e2e/prod-smoke.spec.ts`, opt-in via `E2E_PROD_URL`). S2: `verify_system_access_code` RPC returned `valid` as a real authenticated user; `used_count` 1→2 atomically (restored to 1 after the test). S3: temp admin (`role:'admin'`) inserted an exam via the dashboard insert contract under its own JWT — row persisted with `user_id` = that admin and `status='approved'`; the anon role sees it. S4: student appeal inserted own-row under RLS; `notify_admins_of_content` delivered to **3/3 admins** (`admin_submission`); a forged reference was rejected (403). DB state restored to baseline after the run (0 notifications/appeals/summaries, no temp users). Note: S3/S4 verified at the API level — the exact insert contracts the UI forms submit; visual click-through remains optional. |
-| Session & Role Invalidation (S5) | 🟡 **Owner executes** | `specs/009` runbook + procedure above. Granting an admin via SQL requires **explicit `role`** — the live default `'student'` violates `admins_role_check`. |
-| GitHub Branch Protection (`e2e` required) | 🔴 **Owner manual — API path exhausted** | Attempted 2026-09-19 via `gh` (OAuth token, `repo` scope, repo `admin:true`): ruleset PATCH returns 404 even for a name-only body — this token class cannot write rulesets (same failure as 2026-09-17). **Options:** (a) UI — GitHub → repo **Settings → Rules → Rulesets → Main Branch Protection** (`20299668`) → edit *Required status checks* → add `e2e` and `workflow-lint` → save, then update `.github/RULESET.md` in the next PR; or (b) create a **fine-grained PAT with Administration: write** on this repo only and share it for the agent to PATCH (classic `repo` scope is proven insufficient — it is the token *class*, not the scope). |
+| Session & Role Invalidation (S5) | ✅ **Automated verification PASS 2026-09-20** | Executed against production with a disposable temp account (`launch-smoke-s5-*`, explicit `role:'admin'`, full cleanup, baseline re-verified `admins=3/3`, 0 leftover users). Full lifecycle proven: grant → `app_metadata.role` claim synced by the `on_admin_upsert` trigger; pre-revocation admin writes succeed (`is_admin()` true, own-summary status flip `pending→approved` = 204); revoke **without logout** → same stale JWT: `is_admin()` immediately false, same status flip rejected **42501 "Only admins can change summary status"**, own `admins` row self-select returns 0 rows (the exact condition that makes `admin-dashboard/layout.tsx` redirect to `/unauthorized`); token refresh → new JWT carries **no** role claim (`AuthContext` `isAdmin=false` on next auth state). Server-side fail-closed is immediate (<1s); UI claim staleness is bounded by the old-JWT lifetime (3600s observed) and is claim-stripped at refresh. **Finding fixed in-flight:** the 008 trigger set had never been deployed to prod (G3.9 drift) — grants produced no claim and revocations stripped nothing; applied as migration **`012_jwt_role_sync`** (triggers + one-time claim backfill: `doctor` claim corrected, `student_admin` admin's missing claim restored) and the full procedure re-run to ALL PASS. Visual click-through remains optional (same precedent as S3/S4). |
+| GitHub Branch Protection (`e2e` required) | ✅ **DONE — owner UI action 2026-09-20, API-verified** | The owner added `e2e` + `workflow-lint` via the GitHub UI (Settings → Rules → Rulesets → Main Branch Protection `20299668`), bringing the required status checks to **7**: `Vercel`, `next build`, `ESLint`, `ai-endpoint-grep`, `gitleaks-artifacts`, `e2e`, `workflow-lint`. Verified via `gh api` GET (enforcement `active`; bypass actors: RepositoryRole Admin + Vercel + CodeRabbit integrations, `always`). `.github/RULESET.md` synced in the same session (the agent-side PATCH path remains a proven token-class dead end — UI or fine-grained PAT are the only write paths). |
 | Initial Course Seeding | ✅ **DONE & anon-verified 2026-09-19** | Two published placeholder courses inserted (free 0.00 + paid 150.00, instructor = admin account). The exact `/courses` page query returns **200 with 2 rows** under the anon key. Rename/replace during content entry. ⚠ Live `courses` has **no `subject_id`/`thumbnail_url`** (drift vs migration 004) — future course code/migrations must target the live shape. |
 
 ### Automated smoke evidence (2026-09-20 run, production)
@@ -73,4 +75,20 @@ PASS | S4 provenance-negative | forged reference rejected (403)
 ```
 Plus S1 Playwright against prod (`1 passed`). Counter and all test artifacts restored/removed — final state re-verified: 0 notifications / 0 appeals / 0 summaries / 0 leftover `launch-smoke-*` auth users; access code `1/3`, valid to 2026-10-19. S2-prep note: the sole access code had **expired** and was extended to 2026-10-19 to make S2 executable.
 
-**Once the three 🟡/🔴 items are closed, the platform meets every criterion for the official GO launch** (audit verdict 2026-09-19: conditional GO → GO on completion of this ledger).
+### S5 role-invalidation evidence (2026-09-20 run, production; after `012_jwt_role_sync`)
+
+```
+PASS | setup                  | temp user=2ad57613… baseline admins=3
+PASS | S5 grant+claim-sync    | JWT_A app_metadata.role=admin (008 upsert trigger) old-JWT lifetime=3600s
+PASS | S5 pre own-row         | admins self-select=1 row (admin-dashboard layout gate satisfied)
+PASS | S5 pre is-admin        | rpc is_admin=true
+PASS | S5 pre status-flip     | pending->approved = 204 (admin authority via live is_admin())
+PASS | S5 post is-admin       | stale JWT: rpc is_admin=false (immediate fail-closed)
+PASS | S5 post status-flip-denied | approved->pending rejected 403 code=42501 "Only admins can change summary status"
+PASS | S5 post own-row        | admins self-select=0 rows (layout.tsx redirect->/unauthorized condition)
+PASS | S5 token-refresh       | JWT_B app_metadata.role=ABSENT — UI isAdmin=false on next auth state
+PASS | cleanup+baseline       | admins=3/3 summary-left=0 s5-users-left=0
+```
+(First run before the fix scored 9/10 — the `grant+claim-sync` check FAILED, which exposed the never-deployed 008 trigger set; `012_jwt_role_sync` was applied, prod claims backfilled to match the `admins` table, and the full procedure re-run to ALL PASS.)
+
+**GO — stamped 2026-09-20.** Every ledger item is ✅: S1–S5 automated PASS against production, ruleset `20299668` active with all 7 required checks, seeding verified, and the risk register accepted by owner directive (chat, 2026-09-20). The audit verdict transitions **conditional GO → GO**.
