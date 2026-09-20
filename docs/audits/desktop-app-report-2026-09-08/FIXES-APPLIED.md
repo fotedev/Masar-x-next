@@ -107,7 +107,7 @@ These were flagged in the audit but excluded from this PR:
 ### Gap F1 — Missing `desktopStudyWorkspace` i18n namespace
 
 **Severity:** High (workspace screens currently fail at runtime in any locale other than English-fallback).
-**Status:** Out of scope for this PR per user direction. Stub for a dedicated i18n PR.
+**Status:** ✅ **RESOLVED 2026-09-20** — `packages/shared/src/messages/{ar,en}/desktopStudyWorkspace.json` restored in commit `3abb667` (2026-09-09, "fix(i18n): restore desktopStudyWorkspace namespaces lost as untracked files") and the namespace registered in `apps/web/src/i18n/request.ts` `MESSAGE_LOADERS`. ar/en parity verified (42 leaf keys per locale). The "Required fix (next PR)" list below is historical.
 **Audit reference:** `docs/audits/desktop-app-report-2026-09-08/09-StudyWorkspace-feature.md` "i18n parity" claim and `appendix-A-file-inventory.md` row "i18n parity verified" — both are **incorrect**. The `packages/shared/src/messages/{ar,en}/desktopStudyWorkspace.json` files **do not exist in this repository's source tree** (verified 2026-09-08 by `find` and `grep -rln`). The components call `useTranslations("desktopStudyWorkspace")` against a namespace that has no source-defined messages.
 
 #### Components that depend on this namespace
