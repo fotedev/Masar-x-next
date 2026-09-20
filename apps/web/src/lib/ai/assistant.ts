@@ -41,6 +41,7 @@ import {
   warmupPuterClient,
 } from './puter-client';
 import { sanitizeAssistantReply } from './sanitize';
+import { consumeTextStream } from './stream-reader';
 import { cannedMessagesFor } from './canned-messages';
 import { BREVITY_INSTRUCTION, ZANE_UI_INSTRUCTION } from './prompts';
 
@@ -82,11 +83,14 @@ const isGeneratedQuiz = (value: unknown): value is GeneratedQuiz => {
 };
 
 /**
- * Fallback: Call server-side AI endpoint when Puter is unavailable
+ * Fallback: Call server-side AI endpoint when Puter is unavailable.
+ * The route answers with a plain-text chunked stream (toTextStreamResponse),
+ * so consume it incrementally — reading it as JSON can never succeed.
  */
 const tryServerSideFallback = async (
   prompt: string,
   mode: AiAssistantMode = 'group_rag',
+  onDelta?: (fullSoFar: string) => void,
 ): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
 
@@ -105,8 +109,8 @@ const tryServerSideFallback = async (
       return null;
     }
 
-    const data = await response.json() as { message?: string };
-    return data.message || null;
+    const text = await consumeTextStream(response, onDelta);
+    return text || null;
   } catch (error) {
     console.warn('[AI Fallback] Error calling server endpoint:', error instanceof Error ? error.message : String(error));
     return null;
