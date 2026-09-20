@@ -1,5 +1,10 @@
 -- Trigger to sync user role from admins table to auth.users app_metadata
 -- This allows Middleware to read roles directly from the JWT without DB hits.
+--
+-- ⚠ APPLIED-AS-012: this file was never recorded in the prod migration history
+-- (G3.9 drift) — discovered 2026-09-20 by the S5 role-invalidation validation.
+-- Its content (plus a one-time claim backfill) was applied to prod as
+-- 012_jwt_role_sync. This file stays for history; do not re-run it.
 
 CREATE OR REPLACE FUNCTION public.sync_user_role_to_metadata()
 RETURNS trigger AS $$
