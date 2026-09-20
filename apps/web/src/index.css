@@ -537,6 +537,16 @@ html[dir="rtl"] [lang="en"] {
   display: none;
 }
 
+/* Spec 011 bidi isolation: mixed-direction markdown. `unicode-bidi:
+   plaintext` gives each block its own first-strong base direction, so a
+   fully-English sentence inside an Arabic reply lays out LTR (its colon and
+   labels stop flipping to the far right) while Arabic blocks stay RTL. The
+   bubble-level dir=getTextDirection() remains the fallback for non-markdown
+   content. Real unlayered CSS per the cascade lessons (rounds 3/7). */
+.zane-bidi-plaintext {
+  unicode-bidi: plaintext;
+}
+
 /* dvh-based min-height with vh fallback (spec 003 FR-002) */
 @layer utilities {
   .min-h-dvh-safe {
