@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
 import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
+import { CHAT_HISTORY_CAP, CHAT_PAGE_SIZE, hasMoreAfterLoad, nextOlderRange } from "@/lib/chat-pagination";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { logger } from "@/lib/logger";
@@ -21,10 +22,6 @@ interface ChatMessage {
 }
 
 const CHAT_STORAGE_KEY_PREFIX = "ai_assistant_chat_messages";
-
-// Spec 008: retention cap — load the newest 100 rows per (user, mode) and
-// prune older rows after each assistant reply.
-const CHAT_HISTORY_CAP = 100;
 
 interface SupabaseChatMessage {
   id: string;
@@ -77,6 +74,12 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
   const [isPuterSignedIn, setIsPuterSignedIn] = useState(false);
+  // Spec 011: lazy history sync — the newest page renders first; older rows
+  // inside the retained window (spec 008 prune cap) load on scroll-to-top.
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const loadedCountRef = useRef(0);
+  const loadingOlderRef = useRef(false);
   const [mode, setModeState] = useState<AiAssistantMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("zane_ai_last_mode");
@@ -128,26 +131,30 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     setIsReady(false);
     setMessages([]);
+    loadedCountRef.current = 0;
+    setHasMoreOlder(false);
 
     let cancelled = false;
 
     const loadSupabaseMessages = async () => {
       try {
-        // desc + limit loads the NEWEST cap rows; asc + limit would return
-        // the oldest 100 instead (spec 008 §4's contract is "newest 100
-        // readable"). Reversed back to chronological order for rendering.
+        // Spec 011: load only the newest page (CHAT_PAGE_SIZE rows); the
+        // retained window is walked backwards via loadOlder. desc + range
+        // keeps the "newest rows readable" contract from spec 008 §4.
+        // Reversed back to chronological order for rendering.
         const { data, error } = await supabase
           .from("ai_chat_messages")
           .select("*")
           .eq("user_id", user.id)
           .eq("mode", mode)
           .order("created_at", { ascending: false })
-          .limit(CHAT_HISTORY_CAP);
+          .range(0, CHAT_PAGE_SIZE - 1);
 
         if (cancelled) return;
         if (error) throw error;
 
-        const loadedMessages = ((data || []) as SupabaseChatMessage[])
+        const rows = (data || []) as SupabaseChatMessage[];
+        const loadedMessages = rows
           .map((msg) => ({
             id: msg.id,
             type: msg.role as "user" | "assistant",
@@ -156,6 +163,8 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
           }))
           .reverse();
 
+        loadedCountRef.current = loadedMessages.length;
+        setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
         setMessages(loadedMessages);
       } catch (e) {
         if (!cancelled) {
@@ -169,6 +178,53 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     loadSupabaseMessages();
     return () => { cancelled = true; };
+  }, [user?.id, mode]);
+
+  // Spec 011: fetch the next older page inside the retained window and
+  // PREPEND it. The scroll anchor is preserved by ChatContainer's layout
+  // effect (scrollHeight delta), not here.
+  const loadOlder = useCallback(async () => {
+    if (!user?.id || loadingOlderRef.current) return;
+    const range = nextOlderRange(loadedCountRef.current);
+    if (!range) {
+      setHasMoreOlder(false);
+      return;
+    }
+
+    loadingOlderRef.current = true;
+    setLoadingOlder(true);
+    try {
+      const { data, error } = await supabase
+        .from("ai_chat_messages")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("mode", mode)
+        .order("created_at", { ascending: false })
+        .range(range.start, range.end);
+
+      if (error) throw error;
+
+      const rows = (data || []) as SupabaseChatMessage[];
+      const older = rows
+        .map((msg) => ({
+          id: msg.id,
+          type: msg.role as "user" | "assistant",
+          content: msg.content,
+          timestamp: new Date(msg.created_at)
+        }))
+        .reverse();
+
+      loadedCountRef.current = range.start + older.length;
+      setHasMoreOlder(hasMoreAfterLoad(older.length, range.end - range.start + 1, loadedCountRef.current));
+      if (older.length > 0) {
+        setMessages(prev => [...older, ...prev]);
+      }
+    } catch (e) {
+      logger.error("Failed to load older chat messages", e);
+    } finally {
+      loadingOlderRef.current = false;
+      setLoadingOlder(false);
+    }
   }, [user?.id, mode]);
 
   // ── Puter polling ───────────────────────────────────────────────────────────
@@ -205,7 +261,10 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     if (!pendingPersistRef.current) return;
     pendingPersistRef.current = false;
     if (messages.length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(messages));
+      // Spec 008 leftover closed in 011: cap the guest array at the same
+      // CHAT_HISTORY_CAP the DB path enforces — oldest dropped first.
+      const capped = messages.slice(-CHAT_HISTORY_CAP);
+      localStorage.setItem(storageKey, JSON.stringify(capped));
     }
   }, [messages, user, storageKey]);
 
@@ -397,5 +456,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     setMode,
     studentSelectedSubject,
     setStudentSelectedSubject,
+    // Spec 011: lazy history sync
+    loadOlder,
+    hasMoreOlder,
+    loadingOlder,
   };
 }
