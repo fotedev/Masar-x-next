@@ -24,24 +24,17 @@ checks report `success` from the latest commit on the PR head:
 | `next build`  | GitHub Actions — workflow `CI` (`next-build` job) | Build via `pnpm build` (with placeholder env vars) |
 | `ai-endpoint-grep` | GitHub Actions — workflow `CI` (`ai-endpoint-grep` job) | Spec 004 T014 — no direct AI provider endpoints |
 | `gitleaks-artifacts` | GitHub Actions — workflow `CI` (`gitleaks-artifacts` job) | Secret scan on the built bundle |
+| `e2e` | GitHub Actions — workflow `CI` (`e2e` job) | Playwright public study-flow smoke (Spec 010 / MVP report G6.1) |
+| `workflow-lint` | GitHub Actions — workflow `CI` (`workflow-lint` job) | actionlint over `.github/workflows/` + shellcheck on inline run scripts |
 
-> **Pending owner action (Spec 010 §2.4):** the `e2e` job (workflow `CI`, Playwright
-> study-flow smoke) is wired in `ci.yml` but NOT yet in this ruleset — the API token
-> used on 2026-09-17 lacked ruleset write (`404` on PATCH). Add `e2e` via
-> *Settings → Rules → Rulesets → Main Branch Protection → Require status checks*
-> once the job has reported once on a PR (checks must exist before they can be required).
-> This table should then gain: `e2e` — workflow `CI` (`e2e` job) — Playwright public
-> happy path (Spec 010 / MVP report G6.1).
->
-> **Also recommended (2026-09-18):** add the `workflow-lint` check (workflow `CI`,
-> actionlint over `.github/workflows/`) to required checks at the same time — it
-> catches unparseable workflow YAML on the introducing PR (the failure class that
-> left Lighthouse silently broken; see MVP report pass 5/6). Proven 2026-09-19
-> against the actual pre-fix `lighthouse.yml` (`d2b4e3a^`): actionlint 1.7.7
-> rejects it with `could not parse as YAML: yaml: line 122: mapping values are
-> not allowed in this context [syntax-check]`. actionlint also runs shellcheck on
-> inline run scripts (preinstalled on `ubuntu-latest` runners), so contributors
-> will see `SC*` findings on new workflow steps — that is the gate working.
+> **Both `e2e` and `workflow-lint` were added by the owner via the GitHub UI on
+> 2026-09-20** and verified via `gh api repos/fotedev/Masar-x-next/rulesets/20299668`
+> (enforcement `active`, 7 required contexts total). Background: the agent-side
+> ruleset PATCH path is a proven token-class dead end (404 with classic `repo`
+> scope, 2026-09-17 and 2026-09-19). The `workflow-lint` gate catches unparseable
+> workflow YAML on the introducing PR (the failure class that left Lighthouse
+> silently broken; see MVP report pass 5/6) — proven 2026-09-19 against the actual
+> pre-fix `lighthouse.yml` (`d2b4e3a^`).
 
 - `strict_required_status_checks_policy`: `false` — a missing check on a PR
   does not block the merge; the requirement is only enforced once a check
@@ -62,7 +55,7 @@ checks report `success` from the latest commit on the PR head:
 | `required_deployments`        | Required deployment environment: `Preview`. |
 | `code_scanning`               | Tool: `CodeQL`, alerts threshold: `errors`, security alerts: `high_or_higher`. |
 | `copilot_code_review`         | `review_on_push: false`, `review_draft_pull_requests: false`. |
-| `pull_request`                | `required_approving_review_count: 1`, `dismiss_stale_reviews_on_push: true`, `required_review_thread_resolution: true`, allowed merge methods: `merge`, `squash`, `rebase`. |
+| `pull_request`                | `required_approving_review_count: 0`, `dismiss_stale_reviews_on_push: true`, `required_review_thread_resolution: true`, `require_extra_approval_for_unattributed_changes: true`, allowed merge methods: `merge`, `squash`, `rebase`. |
 
 ---
 
