@@ -215,10 +215,15 @@ export function ChatContainer({
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col">
+      {/* Spec 012: no CSS scroll-smooth on the scroller — it makes the browser
+          animate programmatic scrollTop writes (incl. scrollbar drags), so the
+          thumb tracked the pointer only after release. All smoothness is
+          explicit in JS (pill/track-click pass behavior:"smooth"; stick and
+          prepend-anchor restores are instant by design). */}
       <div
         ref={messagesContainerRef}
         dir="ltr"
-        className={`flex-1 w-full min-h-0 p-2 sm:p-4 space-y-3 sm:space-y-6 scroll-smooth chat-messages transition-[background-color,border-color] duration-500 ${
+        className={`flex-1 w-full min-h-0 p-2 sm:p-4 space-y-3 sm:space-y-6 chat-messages transition-[background-color,border-color] duration-500 ${
           isInitialState
             ? "flex flex-col items-center overflow-y-auto overflow-x-hidden chat-scrollbar-hidden px-2 py-2 sm:py-4"
             : "overflow-y-auto overflow-x-hidden chat-scrollbar-hidden pb-6 sm:pb-12"
