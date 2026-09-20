@@ -13,6 +13,7 @@ import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import {
   normalizeLatexDelimiters,
+  repairBoldBoundaries,
   repairListGlue,
   repairSpacedBold,
 } from "@/lib/ai/zaneMarkdown";
@@ -400,7 +401,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const renderAssistantContent = (content: string) => {
     const raw = String(content ?? "");
     const normalized = repairListGlue(
-      repairSpacedBold(normalizeLatexDelimiters(raw)),
+      repairBoldBoundaries(repairSpacedBold(normalizeLatexDelimiters(raw))),
     );
 
     const markdownComponents = {

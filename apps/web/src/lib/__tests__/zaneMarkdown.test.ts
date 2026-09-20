@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   normalizeLatexDelimiters,
+  repairBoldBoundaries,
   repairListGlue,
   repairSpacedBold,
 } from '@/lib/ai/zaneMarkdown';
@@ -29,6 +30,77 @@ describe('repairSpacedBold', () => {
   it('never touches fenced code blocks', () => {
     const fenced = '```\na ** b ** c\n```';
     expect(repairSpacedBold(fenced)).toBe(fenced);
+  });
+});
+
+describe('repairBoldBoundaries — glued `**` onto words (spec 012, item 2)', () => {
+  it('spaces a bold opener glued to an Arabic word (owner smoke sentence)', () => {
+    expect(repairBoldBoundaries('عايزه**متعدد الصفحات**؟')).toBe(
+      'عايزه **متعدد الصفحات**؟',
+    );
+  });
+
+  it('spaces both boundaries of a Latin bold span glued into Arabic', () => {
+    expect(repairBoldBoundaries('أعمله**React**بدل الفانيلا')).toBe(
+      'أعمله **React** بدل الفانيلا',
+    );
+  });
+
+  it('leaves already-spaced bold untouched (no double spaces)', () => {
+    expect(repairBoldBoundaries('عايزه **متعدد الصفحات**')).toBe(
+      'عايزه **متعدد الصفحات**',
+    );
+    expect(repairBoldBoundaries('x **y** z')).toBe('x **y** z');
+  });
+
+  it('keeps punctuation attached to the bold span', () => {
+    expect(repairBoldBoundaries('ملاحظة:**النص المهم.**')).toBe(
+      'ملاحظة:**النص المهم.**',
+    );
+    expect(repairBoldBoundaries('كتب **شيئاً**.')).toBe('كتب **شيئاً**.');
+    expect(repairBoldBoundaries('**done.**? then')).toBe('**done.**? then');
+    expect(repairBoldBoundaries('سؤال **مهم؟**؟')).toBe('سؤال **مهم؟**؟');
+  });
+
+  it('never touches fenced code blocks', () => {
+    const fenced = '```\na**b**c\n```';
+    expect(repairBoldBoundaries(fenced)).toBe(fenced);
+  });
+
+  it('repairs multiple glued spans on one line', () => {
+    expect(repairBoldBoundaries('عايزه**React**بدل الفانيلا**متعدد الصفحات**أو')).toBe(
+      'عايزه **React** بدل الفانيلا **متعدد الصفحات** أو',
+    );
+  });
+});
+
+describe('repairBoldBoundaries — end-to-end with the real remark chain', () => {
+  // AST-probe verified: current remark (CommonMark 0.31) parses glued
+  // `عايزه**متعدد**` as strong — the defect is the MISSING SPACE in the DOM,
+  // not broken parsing. Pin that the repair adds the space while keeping
+  // the bold intact.
+  it('adds the boundary space without disturbing the strong node', async () => {
+    const { unified } = await import('unified');
+    const remarkParse = (await import('remark-parse')).default;
+    const remarkGfm = (await import('remark-gfm')).default;
+    const remarkBreaks = (await import('remark-breaks')).default;
+    const proc = unified().use(remarkParse).use(remarkGfm).use(remarkBreaks);
+
+    const raw = 'عايزه**متعدد الصفحات**بدل';
+    const repaired = repairBoldBoundaries(raw);
+    expect(repaired).toBe('عايزه **متعدد الصفحات** بدل');
+
+    const countStrong = (text: string): number => {
+      let count = 0;
+      const visit = (node: { type: string; children?: Array<{ type: string; children?: Array<unknown> }> }) => {
+        if (node.type === 'strong') count += 1;
+        node.children?.forEach((child) => visit(child as { type: string; children?: Array<{ type: string; children?: Array<unknown> }> }));
+      };
+      visit(proc.parse(text) as { type: string; children?: Array<{ type: string; children?: Array<unknown> }> });
+      return count;
+    };
+    expect(countStrong(raw)).toBe(1);
+    expect(countStrong(repaired)).toBe(1);
   });
 });
 
