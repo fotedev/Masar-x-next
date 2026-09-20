@@ -172,6 +172,38 @@ const hasAsyncIterator = (value: unknown): value is AsyncIterable<unknown> => {
   return Symbol.asyncIterator in (value as Record<string, unknown>);
 };
 
+/**
+ * Incremental counterpart of extractPuterChatText for one streaming chunk
+ * (spec 011). Shapes seen from Puter: plain `{ text }` chunks, OpenAI-style
+ * deltas `{ message: { content: string | Array<{ text }> } }`, and bare
+ * strings. Returns '' for anything unparseable so callers skip the chunk.
+ */
+export const extractPuterChunkText = (chunk: unknown): string => {
+  if (typeof chunk === 'string') return chunk;
+  if (!isRecord(chunk)) return '';
+
+  if (typeof chunk.text === 'string') return chunk.text;
+
+  const textFromContent = (content: unknown): string => {
+    if (typeof content === 'string') return content;
+    if (!Array.isArray(content)) return '';
+    return content
+      .map(item => {
+        if (typeof item === 'string') return item;
+        if (isRecord(item) && typeof item.text === 'string') return item.text;
+        return '';
+      })
+      .join('');
+  };
+
+  if (isRecord(chunk.message)) {
+    const fromMessage = textFromContent(chunk.message.content);
+    if (fromMessage) return fromMessage;
+  }
+
+  return textFromContent(chunk.content);
+};
+
 export const extractPuterChatText = async (response: unknown): Promise<string> => {
   if (typeof response === 'string') return response;
 
