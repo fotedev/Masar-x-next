@@ -30,6 +30,30 @@ export const repairSpacedBold = (text: string): string => {
     .join("");
 };
 
+// Models omit the space around `**` markers (`عايزه**متعدد الصفحات**`). The
+// current remark (CommonMark 0.31) still parses that as bold, but the DOM
+// then holds the two runs with no space between them, so in an RTL bubble
+// the final ه visually collides with the bold text (spec 012, item 2 —
+// AST-probe verified, not a flanking-parsing bug). Insert the missing space
+// ONLY where a letter or digit sits against a bold span's boundary:
+// punctuation stays attached (`ملاحظة:**نص**`, `**done.**`), and unpaired
+// `**` is never touched. Fenced code excluded.
+const GLUED_BOLD_OPENER = /([\p{L}\p{N}])(\*\*[^*\n]+?\*\*)/gu;
+const GLUED_BOLD_CLOSER = /(\*\*[^*\n]+?\*\*)([\p{L}\p{N}])/gu;
+
+export const repairBoldBoundaries = (text: string): string => {
+  return String(text ?? "")
+    .split(/(```[\s\S]*?```)/g)
+    .map((segment) =>
+      segment.startsWith("```")
+        ? segment
+        : segment
+            .replace(GLUED_BOLD_OPENER, "$1 $2")
+            .replace(GLUED_BOLD_CLOSER, "$1 $2"),
+    )
+    .join("");
+};
+
 const ORDERED_MARKER = /^\s*(\d{1,2})\.\s/;
 // Short label ending in ":", glued straight onto a numbered marker —
 // `مرتبة:1. تحليل المشكلة`. The marker lands mid-line, so the line parses
