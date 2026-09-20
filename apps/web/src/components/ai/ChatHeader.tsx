@@ -1,8 +1,3 @@
-import {
-  Bot,
-  Brain,
-  MessagesSquare,
-} from "lucide-react";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import type { useTranslations } from "next-intl";
 
@@ -41,41 +36,16 @@ export function ChatHeader({
   safeLocalGeneratedQuizzesCount,
   t,
 }: ChatHeaderProps) {
-  const modes = [
-    { id: "cs_assistant" as AiAssistantMode, icon: Bot, label: t("assistantProgramming") },
-    { id: "student_agent" as AiAssistantMode, icon: Brain, label: t("assistantStudent") },
-    { id: "group_rag" as AiAssistantMode, icon: MessagesSquare, label: t("assistantGroupChat") },
-  ];
-  const currentMode = modes.find((m) => m.id === mode) || modes[0];
+  // Spec 012: mode identity (icon + label + status) moved into the composer
+  // controls row as a compact chip — this bar renders ONLY when it carries
+  // real controls (student toolset / last-exam chip), reclaiming its vertical
+  // space in the chat modes.
+  if (mode !== "student_agent" && !generatedQuiz?.data) return null;
 
   return (
     <div className="w-full px-2 sm:px-4 py-1.5 shrink-0 z-20">
-      <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-2">
-        {/* Left: mode icon + label + status */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20 relative overflow-hidden group shrink-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
-            <currentMode.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white relative z-10" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight truncate">
-              {currentMode.label}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              <span className="hidden sm:inline text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap ms-1">
-                {t("onlineReady")}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: student toolset + last-exam chip */}
-        <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 sm:gap-2 justify-end">
-          {/* Student toolset — only in student_agent mode */}
+      <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-end gap-2">
+        {/* Student toolset — only in student_agent mode */}
           {mode === "student_agent" && (
             <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none flex-1 sm:flex-none">
               <label htmlFor="chat-student-subject" className="sr-only">
@@ -153,7 +123,6 @@ export function ChatHeader({
               </button>
             </div>
           )}
-        </div>
       </div>
     </div>
   );

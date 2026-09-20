@@ -222,8 +222,26 @@ export function ChatInput({
               }`}
             />
             <div className="flex items-center justify-between gap-2">
-              {/* Start side: (+) tools button + model pill */}
-              <div className="flex items-center gap-2">
+              {/* Start side: mode identity chip + (+) tools button + model pill.
+                  Spec 012: the top header's identity (icon + label + status)
+                  moved here as a compact chip — no separate bar above the
+                  stream. Visible in the hero state too. */}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 shrink-0">
+                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm shadow-cyan-500/20 shrink-0">
+                    <currentMode.icon className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="hidden sm:inline text-xs font-black text-slate-900 dark:text-white tracking-tight truncate max-w-[140px]">
+                    {t(currentMode.labelKey)}
+                  </span>
+                  <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  </span>
+                  <span className="hidden md:inline text-[10px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    {t("onlineReady")}
+                  </span>
+                </div>
                 {/* (+) Tools Button */}
                 <div className="relative" ref={toolsWrapRef}>
                   <motion.button
