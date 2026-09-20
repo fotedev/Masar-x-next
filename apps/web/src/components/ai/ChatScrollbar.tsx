@@ -80,6 +80,10 @@ export function ChatScrollbar({
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
+    // Belt-and-braces: even without the scroll-smooth class, any inherited
+    // smooth scroll-behavior would animate the direct scrollTop writes below
+    // and delay the drag (spec 012).
+    el.style.scrollBehavior = "auto";
     dragState.current = { startY: e.clientY, startScrollTop: el.scrollTop };
   };
 
@@ -95,6 +99,8 @@ export function ChatScrollbar({
   };
 
   const endDrag = () => {
+    const el = containerRef.current;
+    if (el) el.style.scrollBehavior = "";
     dragState.current = null;
   };
 
