@@ -404,23 +404,26 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     );
 
     const markdownComponents = {
+      // Spec 011 bidi: block-level plaintext isolation — see .zane-bidi-plaintext
+      // in index.css. Applied to every block container so each block picks its
+      // own first-strong direction instead of inheriting the bubble's.
       h1: ({ children }: { children?: ReactNode }) => (
-        <h1 className="text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
+        <h1 className="zane-bidi-plaintext text-xl sm:text-2xl font-black mt-6 mb-4 pb-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white tracking-tight">
           <LatexRenderer text={flattenChildren(children)} />
         </h1>
       ),
       h2: ({ children }: { children?: ReactNode }) => (
-        <h2 className="text-lg sm:text-xl font-bold mt-5 mb-3 text-slate-800 dark:text-slate-100 tracking-tight">
+        <h2 className="zane-bidi-plaintext text-lg sm:text-xl font-bold mt-5 mb-3 text-slate-800 dark:text-slate-100 tracking-tight">
           <LatexRenderer text={flattenChildren(children)} />
         </h2>
       ),
       h3: ({ children }: { children?: ReactNode }) => (
-        <h3 className="text-base sm:text-lg font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200">
+        <h3 className="zane-bidi-plaintext text-base sm:text-lg font-bold mt-4 mb-2 text-slate-800 dark:text-slate-200">
           <LatexRenderer text={flattenChildren(children)} />
         </h3>
       ),
       p: ({ children }: { children?: ReactNode }) => (
-        <div className="mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
+        <div className="zane-bidi-plaintext mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
           {renderInlineChildren(children)}
         </div>
       ),
@@ -447,14 +450,14 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       },
       li: ({ children }: { children?: ReactNode }) => (
         <li className="flex gap-2 items-start group">
-          <div className="flex-1 text-slate-700 dark:text-slate-300">
+          <div className="zane-bidi-plaintext flex-1 text-slate-700 dark:text-slate-300">
             {renderInlineChildren(children)}
           </div>
         </li>
       ),
       blockquote: ({ children }: { children?: ReactNode }) => (
         // border-s is logical: right edge in RTL, left edge in LTR.
-        <blockquote className="my-4 border-s-4 border-cyan-500 bg-slate-100/70 dark:bg-slate-800/40 ps-4 pe-3 py-2.5 rounded-e-xl text-slate-600 dark:text-slate-300">
+        <blockquote className="zane-bidi-plaintext my-4 border-s-4 border-cyan-500 bg-slate-100/70 dark:bg-slate-800/40 ps-4 pe-3 py-2.5 rounded-e-xl text-slate-600 dark:text-slate-300">
           {children}
         </blockquote>
       ),
@@ -512,8 +515,12 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       code: ({ children, ...props }: MarkdownCodeProps) => {
         // react-markdown v10 dropped the `inline` prop: bare `code` is always
         // inline here (block code arrives via our `pre` handler below).
+        // dir="auto" isolates the code run bidi-wise (HTML dir ⇒
+        // unicode-bidi: isolate) so tokens like `foo.bar()` keep LTR order
+        // inside an RTL sentence (spec 011).
         return (
           <code
+            dir="auto"
             className="bg-slate-100 dark:bg-slate-900/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono font-medium border border-slate-200/50 dark:border-slate-700/50"
             {...props}
           >
