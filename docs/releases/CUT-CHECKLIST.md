@@ -1,8 +1,10 @@
 ---
-description: "Step-by-step checklist for cutting a Masar X desktop release via the public-runner pipeline"
+description: "DEPRECATED (2026-09-20): historical checklist for the retired two-repo public-runner pipeline — current process is docs/agents/references/02-release-pipeline.md"
 ---
 
 # Masar X Desktop Release Cut Checklist
+
+> ⚠️ **DEPRECATED 2026-09-20 — historical only.** This checklist drives the **retired two-repo public-runner pipeline** (`gh workflow run build-release.yml --repo fotedev/masarx-releases`, `SOURCE_REPO_READ_TOKEN`, tag-mirror to the archived `fotedev/masarx-releases` repo). Those commands no longer work. Since the source repo went public (2026-09), releases publish directly to `fotedev/Masar-x-next`: bump the version, push tag `v*`, and `.github/workflows/release.yml` builds NSIS + Portable and creates the GitHub Release with the auto-update feed in one step. Follow **[docs/agents/references/02-release-pipeline.md](../agents/references/02-release-pipeline.md)** for the current process. The sections below are kept unmodified for historical reference.
 
 **Audience**: the user (FOTE) and the agent acting on their behalf.
 **Time budget**: 12-15 min total (7-8 min is the build, the rest is human/check time).
