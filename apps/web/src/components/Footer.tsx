@@ -51,7 +51,7 @@ export function Footer() {
             {tFooter("copyright", { year: new Date().getFullYear() })}
           </p>
           <div className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-500">
-            <span className="text-brand-blue font-bold">Aboalayoun</span>
+            <span className="text-brand-blue font-bold">fotedev</span>
             <span lang="en" dir="ltr" className="bidi-ltr">
               {tFooter("by")}
             </span>

@@ -67,6 +67,13 @@ export function Sidebar({
   const isDoctor = adminRole === "doctor";
 
   const nextLocale = locale === "ar" ? "en" : "ar";
+  // <html lang/dir> is server-rendered; flip it immediately so the sidebar
+  // follows a soft locale switch without a full reload.
+  const switchLocale = () => {
+    document.documentElement.lang = nextLocale;
+    document.documentElement.dir = nextLocale === "ar" ? "rtl" : "ltr";
+    router.replace(pathname, { locale: nextLocale });
+  };
   const email = user?.email ?? "";
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) || email;
@@ -209,9 +216,7 @@ export function Sidebar({
                 {(triggerProps) => (
                   <button
                     type="button"
-                    onClick={() =>
-                      router.replace(pathname, { locale: nextLocale })
-                    }
+                    onClick={switchLocale}
                     aria-label={t("shell.language")}
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
@@ -309,7 +314,7 @@ export function Sidebar({
               {/* Expanded: Language switch */}
               <button
                 type="button"
-                onClick={() => router.replace(pathname, { locale: nextLocale })}
+                onClick={switchLocale}
                 aria-label={t("shell.language")}
                 className={cn(
                   "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-none transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
