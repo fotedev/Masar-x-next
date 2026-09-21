@@ -7,6 +7,7 @@ import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
 import { initPuterDiagnostics, signInToPuter, getPuterStatus } from "@/lib/puter";
+import { CANNED_ERROR_PREFIXES } from "@/lib/ai/canned-messages";
 import { motion, AnimatePresence } from "framer-motion";
 import { LottiePlayer, type DotLottie } from "./LottiePlayer";
 import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
@@ -200,13 +201,12 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   // Errors reach the transcript two ways: useAiChat's catch appends a message
   // with an `error_` id, while assistant.ts's catch RESOLVES with a canned
   // string (a "successful" response) — those are only recognizable by content.
-  // The prefixes cover every canned error in both locales (⚠️ warnings, the
-  // 💳 insufficient-funds notice); keep in sync with `canned` in aiAssistant.json.
-  const ERROR_CONTENT_PREFIXES = ["⚠️", "💳"] as const;
+  // The shared prefix list covers every canned error in both locales; the
+  // guard test locks the contract (lib/__tests__/cannedErrorPrefixes.test.ts).
   const isErrorMessage =
     !isUser &&
     typeof message.content === "string" &&
-    (message.id.startsWith("error_") || ERROR_CONTENT_PREFIXES.some((p) => message.content.startsWith(p)));
+    (message.id.startsWith("error_") || CANNED_ERROR_PREFIXES.some((p) => message.content.startsWith(p)));
 
   // Sync puter auth state with the SDK + localStorage (cross-tab aware).
   // The Puter SDK is external, so we poll + listen to focus/storage events
@@ -678,10 +678,15 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
                   >
                     {displayContent}
                     {/* Retry re-sends the last user prompt as a fresh exchange
-                        (the old error stays in the transcript as history).
+                        (the old error stays in the transcript as history, and the
+                        resent prompt appears as a new user bubble — ChatGPT-style
+                        in-place regeneration was explicitly declined for this pass).
                         Gated to the latest assistant turn + not loading, so a
                         stale error never retries the wrong prompt and a second
-                        click can't double-fire while a request is in flight. */}
+                        click can't double-fire while a request is in flight.
+                        Unlimited user-paced retries are deliberate v1 scope (no
+                        cooldown or cap; the canned text itself directs to
+                        switching models on quota errors). */}
                     {onRetry && isLatestAssistant && !isLoading && (
                       <div className="mt-3 flex justify-end">
                         <button
