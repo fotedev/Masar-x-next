@@ -32,6 +32,8 @@ interface ChatContainerProps {
   mode?: AiAssistantMode;
   onSuggestionClick?: (suggestion: string) => void;
   onUiMessage?: (message: string) => void;
+  /** Re-sends the last user prompt (offered on the latest error bubble). */
+  onRetry?: () => void;
   hasUserInput?: boolean;
   /** Spec 011 lazy sync: older pages remain inside the retained window. */
   hasMoreOlder?: boolean;
@@ -52,6 +54,7 @@ export const ChatContainer = memo(function ChatContainer({
   mode = "cs_assistant",
   onSuggestionClick,
   onUiMessage,
+  onRetry,
   hasUserInput = false,
   hasMoreOlder = false,
   loadingOlder = false,
@@ -405,6 +408,7 @@ export const ChatContainer = memo(function ChatContainer({
               isLatestAssistant={index === lastAssistantIndex}
               isLoading={isLoading}
               mode={mode}
+              onRetry={onRetry}
             />
           ))}
           {/* Once the first streamed delta lands, the growing bubble replaces

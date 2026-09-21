@@ -707,7 +707,7 @@ html.dark {
    JSX marker span, which erased ordered-list numbers. */
 .zane-ul > li::before {
   content: "";
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 9999px;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useId, useRef, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { User, Copy, Check, Code, Eye, LogIn } from "lucide-react";
+import { User, Copy, Check, Code, Eye, LogIn, RotateCcw } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
@@ -36,12 +36,58 @@ interface ChatMessageItemProps {
   isLoading?: boolean;
   /** Current AI assistant mode (used to pick the right reaction event). */
   mode?: AiAssistantMode;
+  /** Re-sends the last user prompt. Only offered on the latest error bubble. */
+  onRetry?: () => void;
 }
 
 /**
- * Renders a fenced code block with a copy button that copies *only* the
- * code snippet (not the whole message). Defined at the module level so
- * its internal `isCopied` state isn't reset on every parent re-render.
+ * Dedicated copy button for chat messages. Module-scoped to preserve
+ * identity and avoid recreating on every parent re-render.
+ */
+const MessageCopyButton = ({ content }: { content: string }) => {
+  const tAi = useTranslations("aiAssistant");
+  const [isCopied, setIsCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur();
+    try {
+      await navigator.clipboard.writeText(content);
+      setIsCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      setIsCopied(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      type="button"
+      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/60 transition-colors"
+      title={isCopied ? tAi("copied") : tAi("copyContent")}
+      aria-label={isCopied ? tAi("copied") : tAi("copyContent")}
+    >
+      {isCopied ? (
+        <Check className="w-4 h-4 text-emerald-400" />
+      ) : (
+        <Copy className="w-4 h-4" />
+      )}
+    </button>
+  );
+};
+
+/**
+ * Renders a fenced code block styled like ChatGPT / Gemini:
+ * distinct dark background (#0d1117), clean top header bar with language label
+ * and dedicated copy button.
  */
 const CodeBlock = ({
   code,
@@ -54,43 +100,58 @@ const CodeBlock = ({
 }) => {
   const tAi = useTranslations("aiAssistant");
   const [isCopied, setIsCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCopy = async () => {
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.blur();
     try {
       await navigator.clipboard.writeText(code);
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setIsCopied(false), 2000);
     } catch {
       setIsCopied(false);
     }
   };
 
   return (
-    <div className="relative group/codeblock my-4 overflow-hidden rounded-xl border border-slate-200/70 dark:border-slate-700/70 shadow-lg bg-slate-950">
-      <div className="flex items-center justify-between px-4 py-1.5 bg-slate-900/80 dark:bg-slate-800/60 border-b border-slate-700/60">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+    <div className="relative group/codeblock my-4 overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1117] shadow-xl">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-800/80">
+        <span className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400">
           {language || "code"}
         </span>
         <button
           type="button"
           onClick={handleCopy}
-          className="p-1 rounded-md text-slate-400 hover:text-cyan-400 hover:bg-slate-700/60 transition-all duration-200 flex items-center gap-1"
+          className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
           title={tAi("copyCode")}
           aria-label={tAi("copyCode")}
         >
           {isCopied ? (
-            <Check className="w-3.5 h-3.5 text-emerald-400" />
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-emerald-400 font-semibold">{tAi("copied")}</span>
+            </>
           ) : (
-            <Copy className="w-3.5 h-3.5" />
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              <span>{tAi("copyCode")}</span>
+            </>
           )}
         </button>
       </div>
       <pre
         dir="ltr"
-        className="w-full overflow-x-auto p-4 text-[13px] leading-relaxed transition-all duration-200"
+        className="w-full overflow-x-auto p-4 sm:p-5 text-sm leading-relaxed"
       >
         <code
-          className="block text-slate-100/95 font-mono"
+          className="block text-slate-100 font-mono"
           style={{
             whiteSpace: "pre-wrap",
             wordBreak: "break-word",
@@ -110,6 +171,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   isLatestAssistant = false,
   isLoading = false,
   mode = "cs_assistant",
+  onRetry,
 }) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -122,10 +184,6 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lottiePlayerRef = useRef<DotLottie | null>(null);
   const wasLoadingRef = useRef(false);
-  // Long-press (touch) reveals the per-message actions row below the bubble.
-  // Mobile shows nothing by default; desktop relies on hover instead.
-  const [showTouchActions, setShowTouchActions] = useState(false);
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Stable per-instance key for the bubble's LottiePlayer. The key changes
   // every time the parent re-mounts the bubble (e.g. when switching between
   // assistants with messages), which forces a clean rebuild of the WASM
@@ -139,6 +197,16 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const PUTER_AUTH_MARKER = "__PUTER_AUTH_REQUIRED__";
   const isPuterAuthRequiredMessage =
     !isUser && typeof message.content === "string" && message.content.startsWith(PUTER_AUTH_MARKER);
+  // Errors reach the transcript two ways: useAiChat's catch appends a message
+  // with an `error_` id, while assistant.ts's catch RESOLVES with a canned
+  // string (a "successful" response) — those are only recognizable by content.
+  // The prefixes cover every canned error in both locales (⚠️ warnings, the
+  // 💳 insufficient-funds notice); keep in sync with `canned` in aiAssistant.json.
+  const ERROR_CONTENT_PREFIXES = ["⚠️", "💳"] as const;
+  const isErrorMessage =
+    !isUser &&
+    typeof message.content === "string" &&
+    (message.id.startsWith("error_") || ERROR_CONTENT_PREFIXES.some((p) => message.content.startsWith(p)));
 
   // Sync puter auth state with the SDK + localStorage (cross-tab aware).
   // The Puter SDK is external, so we poll + listen to focus/storage events
@@ -178,53 +246,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     };
   }, [isPuterAuthRequiredMessage, refreshPuterStatus]);
 
-  // Clear the long-press timer on unmount.
-  useEffect(() => {
-    return () => {
-      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-    };
-  }, []);
 
-  const clearLongPressTimer = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  }, []);
-
-  const handleBubbleTouchStart = useCallback(() => {
-    clearLongPressTimer();
-    longPressTimerRef.current = setTimeout(() => {
-      setShowTouchActions((prev) => !prev);
-      try {
-        navigator.vibrate?.(10);
-      } catch {
-        // vibrate not available; ignore
-      }
-    }, 500);
-  }, [clearLongPressTimer]);
-
-  const handleBubbleTouchMove = useCallback(() => {
-    // Finger is scrolling, not long-pressing.
-    clearLongPressTimer();
-  }, [clearLongPressTimer]);
-
-  const handleBubbleTouchEnd = useCallback(() => {
-    clearLongPressTimer();
-  }, [clearLongPressTimer]);
-
-  const handleBubbleContextMenu = useCallback((e: React.MouseEvent) => {
-    // Touch long-press fires contextmenu on mobile — use it as a fallback
-    // reveal signal. On hover-capable (desktop) devices keep the native menu.
-    try {
-      if (typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches) {
-        e.preventDefault();
-        setShowTouchActions(true);
-      }
-    } catch {
-      // matchMedia unavailable; ignore
-    }
-  }, []);
 
   // Drive the bubble avatar's Lottie state machine based on chat state.
   // Only the latest assistant message reacts (thinking / yes / no / alert / jump).
@@ -369,34 +391,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     }, "");
   };
 
-  const CopyButton = ({ content }: { content: string }) => {
-    const [isCopied, setIsCopied] = useState(false);
 
-    const handleCopy = async () => {
-      try {
-        await navigator.clipboard.writeText(content);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      } catch {
-        setIsCopied(false);
-      }
-    };
-
-    return (
-      <button
-        onClick={handleCopy}
-        className="p-2 sm:p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200 z-10 backdrop-blur-sm"
-        title={tAi("copyContent")}
-        aria-label={tAi("copyContent")}
-      >
-        {isCopied ? (
-          <Check className="w-4 h-4 text-emerald-400" />
-        ) : (
-          <Copy className="w-4 h-4" />
-        )}
-      </button>
-    );
-  };
 
   const renderAssistantContent = (content: string) => {
     const raw = String(content ?? "");
@@ -424,7 +419,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </h3>
       ),
       p: ({ children }: { children?: ReactNode }) => (
-        <div className="zane-bidi-plaintext mb-3 leading-relaxed last:mb-0 text-slate-700 dark:text-slate-300">
+        <div className="zane-bidi-plaintext mb-3 leading-7 sm:leading-[1.75] last:mb-0 text-slate-800 dark:text-slate-100">
           {renderInlineChildren(children)}
         </div>
       ),
@@ -450,8 +445,8 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         );
       },
       li: ({ children }: { children?: ReactNode }) => (
-        <li className="flex gap-2 items-start group">
-          <div className="zane-bidi-plaintext flex-1 text-slate-700 dark:text-slate-300">
+        <li dir="auto" className="flex gap-2.5 items-start group">
+          <div className="zane-bidi-plaintext flex-1 min-w-0 text-slate-800 dark:text-slate-100 leading-7 sm:leading-[1.75]">
             {renderInlineChildren(children)}
           </div>
         </li>
@@ -608,7 +603,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     ? (isRTL ? "rounded-tr-sm" : "rounded-tl-sm")
     : (isRTL ? "rounded-tl-sm" : "rounded-tr-sm");
   
-  const timestampAlignmentClass = (isUser !== isRTL) ? "text-right" : "text-left";
+
 
   return (
     <motion.div
@@ -656,20 +651,15 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         </div>
         <div className="flex flex-col gap-1 min-w-0 flex-1 group/bubble">
           <div
-            className={`relative break-words text-[14.5px] sm:text-[15px] leading-relaxed ${
+            className={`relative break-words text-[15px] sm:text-[16px] leading-7 sm:leading-[1.75] ${
               isUser
-                ? `px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
+                ? `px-3.5 sm:px-5 py-3 sm:py-3.5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 ${roundedClass}`
                 : // Spec 012: assistant replies flow on the canvas (ChatGPT-
                   // style clean reading surface) — no card box. Code blocks,
                   // the raw view and zane-ui blocks keep their own containers.
-                  "text-slate-800 dark:text-slate-200"
+                  "text-slate-900 dark:text-slate-100"
             }`}
             dir={getTextDirection(displayContent)}
-            onTouchStart={handleBubbleTouchStart}
-            onTouchMove={handleBubbleTouchMove}
-            onTouchEnd={handleBubbleTouchEnd}
-            onTouchCancel={handleBubbleTouchEnd}
-            onContextMenu={handleBubbleContextMenu}
           >
             {isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
@@ -681,7 +671,38 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
               <div className="whitespace-pre-wrap">{displayContent}</div>
             ) : (
               <div className="space-y-3">
-                {renderAssistantContent(displayContent)}
+                {isErrorMessage ? (
+                  <div
+                    aria-live="polite"
+                    className="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-sm sm:text-[15px] leading-relaxed whitespace-pre-wrap"
+                  >
+                    {displayContent}
+                    {/* Retry re-sends the last user prompt as a fresh exchange
+                        (the old error stays in the transcript as history).
+                        Gated to the latest assistant turn + not loading, so a
+                        stale error never retries the wrong prompt and a second
+                        click can't double-fire while a request is in flight. */}
+                    {onRetry && isLatestAssistant && !isLoading && (
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.currentTarget.blur();
+                            onRetry();
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-900 dark:text-amber-200 hover:bg-amber-500/20 transition-colors"
+                          title={tAi("retry")}
+                          aria-label={tAi("retry")}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                          {tAi("retry")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  renderAssistantContent(displayContent)
+                )}
 
                 {zaneUiBlocks.length > 0 && (
                   <div className="space-y-2">
@@ -783,40 +804,45 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
               </div>
             )}
           </div>
-          {/* Per-message actions under the message (spec 012): the row's
-              height is always reserved so revealing it never shifts layout —
-              only opacity + pointer-events transition. Desktop reveals on
-              hover/focus; touch stays long-press. */}
-          <div
-            className={`flex h-8 items-center gap-1.5 transition-opacity duration-150 ${
-              isUser !== isRTL ? "justify-end" : "justify-start"
-            } ${
-              showTouchActions
-                ? "opacity-100"
-                : "opacity-0 pointer-events-none sm:group-hover/bubble:opacity-100 sm:group-hover/bubble:pointer-events-auto sm:focus-within:opacity-100 sm:focus-within:pointer-events-auto"
-            }`}
-          >
-            <CopyButton content={displayContent} />
-            {!isUser && hasMarkdownContent(displayContent) && (
-              <button
-                onClick={() => setIsRawView(!isRawView)}
-                className="p-2 sm:p-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-400 hover:text-cyan-500 transition-all duration-200"
-                title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
-                aria-label={isRawView ? tAi("viewRendered") : tAi("viewSource")}
-                type="button"
-              >
-                {isRawView ? <Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> : <Code className="w-4 h-4 sm:w-3.5 sm:h-3.5" />}
-              </button>
-            )}
-          </div>
-          <div
-            className={`text-[11px] px-2 font-medium opacity-60 text-slate-500 ${timestampAlignmentClass}`}
-          >
-            {message.timestamp.toLocaleTimeString([locale], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
+          {/* Per-message actions under the message. Reveal is keyed to the
+              `hover-device` variant (@media (any-hover: hover)), NOT to `sm:`:
+              touch tablets are >= 640px but never fire :hover, so a breakpoint
+              key would leave this row permanently invisible there.
+              - Assistant: statically visible (subtle) on touch; hover/focus
+                reveal on hover-capable devices.
+              - User: hover/focus-only. On touch the dedicated button is
+                unreachable BY DESIGN (approved spec: the user's own text is
+                natively select-and-copyable; a permanent per-bubble button on
+                the sender's own messages is clutter).
+              - focus-within is scoped to hover-device deliberately: a global
+                focus-within re-introduces the mobile touch-latch bug where a
+                tapped button kept the row stuck visible. The cost — no Tab
+                reveal on touch-primary devices with a keyboard — is an
+                accepted tradeoff. */}
+          {!message.streaming && (
+            <div
+              className={`flex items-center gap-1 pt-1 transition-opacity duration-150 ${
+                isUser !== isRTL ? "justify-end" : "justify-start"
+              } ${
+                isUser
+                  ? "opacity-0 pointer-events-none hover-device:group-hover/bubble:opacity-100 hover-device:group-hover/bubble:pointer-events-auto hover-device:focus-within:opacity-100 hover-device:focus-within:pointer-events-auto"
+                  : "opacity-70 hover:opacity-100 pointer-events-auto hover-device:opacity-0 hover-device:group-hover/bubble:opacity-100 hover-device:focus-within:opacity-100"
+              }`}
+            >
+              <MessageCopyButton content={displayContent} />
+              {!isUser && hasMarkdownContent(displayContent) && (
+                <button
+                  onClick={() => setIsRawView(!isRawView)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800/60 transition-colors"
+                  title={isRawView ? tAi("viewRendered") : tAi("viewSource")}
+                  aria-label={isRawView ? tAi("viewRendered") : tAi("viewSource")}
+                  type="button"
+                >
+                  {isRawView ? <Eye className="w-4 h-4" /> : <Code className="w-4 h-4" />}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

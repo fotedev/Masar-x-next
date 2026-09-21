@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import plugin from "tailwindcss/plugin";
+
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
@@ -112,6 +114,15 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Capability-based hover variant. `sm:` breakpoints wrongly assume every
+    // viewport >= 640px has a cursor — touch tablets match the media query but
+    // never fire :hover, leaving hover-revealed UI permanently invisible there.
+    // `any-hover` (not `hover`) so a touch-primary device with an attached
+    // trackpad/keyboard (iPadOS) still counts as hover-capable.
+    plugin(({ addVariant }) => {
+      addVariant('hover-device', '@media (any-hover: hover)');
+    }),
+  ],
 };
 

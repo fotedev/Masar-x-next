@@ -106,6 +106,15 @@ export default function AiAssistantPage() {
     [sendMessage, selectedModel],
   );
 
+  // Retry on a failed response: re-send the last user prompt as a fresh
+  // exchange (the old error bubble stays in the transcript as history).
+  // The retry button only renders on the latest error bubble while not
+  // loading, so no in-flight guard is needed here.
+  const handleRetryLast = useCallback(() => {
+    const lastUser = [...messages].reverse().find((m) => m.type === "user");
+    if (lastUser) void sendMessage(lastUser.content, selectedModel);
+  }, [messages, sendMessage, selectedModel]);
+
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");
   const { quizzes: studentQuizzes, loading: studentQuizzesLoading } =
@@ -239,6 +248,7 @@ export default function AiAssistantPage() {
             mode={mode}
             onSuggestionClick={handleSuggestionClick}
             onUiMessage={handleUiMessage}
+            onRetry={handleRetryLast}
             hasUserInput={inputMessage.trim().length > 0}
             hasMoreOlder={hasMoreOlder}
             loadingOlder={loadingOlder}
