@@ -69,6 +69,8 @@
   "lastGeneratedQuizTooltip": "Last generated exam: {title}",
   "copyContent": "Copy content",
   "copyCode": "Copy code",
+  "copied": "Copied",
+  "retry": "Retry",
   "viewSource": "View Source",
   "viewRendered": "View Rendered",
   "signingIn": "Opening sign-in...",

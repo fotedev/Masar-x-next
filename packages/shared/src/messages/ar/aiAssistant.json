@@ -68,6 +68,8 @@
   "lastGeneratedQuizTooltip": "آخر اختبار مولّد: {title}",
   "copyContent": "نسخ المحتوى",
   "copyCode": "نسخ الكود",
+  "copied": "تم النسخ",
+  "retry": "إعادة المحاولة",
   "viewSource": "عرض المصدر",
   "viewRendered": "عرض التنسيق",
   "signingIn": "جاري فتح تسجيل الدخول...",
