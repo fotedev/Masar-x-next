@@ -28,7 +28,7 @@ export function FooterDeveloper({ tFooter }: FooterDeveloperProps) {
           </div>
         </div>
         <button
-          onClick={() => window.open("https://github.com/Aboalayoun", "_blank")}
+           onClick={() => window.open("https://github.com/fotedev", "_blank")}
           className="w-fit flex items-center justify-center gap-x-2 px-6 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group shadow-sm hover:shadow-md"
         >
           <Github className="w-4 h-4" />

@@ -15,6 +15,10 @@ export function LanguageToggle() {
 
   const toggle = useCallback(() => {
     const next: Locale = locale === "ar" ? "en" : "ar";
+    // <html lang/dir> is server-rendered; flip it immediately so the layout
+    // direction follows a soft locale switch without a full reload.
+    document.documentElement.lang = next;
+    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
     router.replace(pathname, { locale: next });
   }, [locale, pathname, router]);
 
