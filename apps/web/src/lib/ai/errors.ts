@@ -69,6 +69,16 @@ export const isPuterModelNotAvailableError = (error: unknown) => {
   );
 };
 
+export const isPuterInsufficientFundsError = (error: unknown) => {
+  const msg = asErrorMessage(error).toLowerCase();
+  return (
+    msg.includes('insufficient_funds') ||
+    msg.includes('no usage left') ||
+    msg.includes('payment required') ||
+    msg.includes('insufficient balance')
+  );
+};
+
 export const isPuterAuthError = (error: unknown) => {
   const msg = asErrorMessage(error).toLowerCase();
   return (
