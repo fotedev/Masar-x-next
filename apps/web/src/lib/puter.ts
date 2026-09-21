@@ -137,6 +137,14 @@ const loadRealPuterClient = async (): Promise<PuterClient> => {
         const m = await import('@heyputer/puter.js');
         const client = (m.puter as unknown as PuterClient) ?? null;
         if (!client) throw new Error('Failed to initialize Puter client');
+        // Spec 012: silence the SDK's startup banner ("Submit this app to
+        // the Puter App Store…"). The SDK documents `puter.quiet = true` as
+        // the switch; best-effort, guarded against a changed surface.
+        try {
+          (m.puter as unknown as { quiet?: boolean }).quiet = true;
+        } catch {
+          // banner suppression is cosmetic — never block init on it
+        }
         realPuterClient = client;
         return client;
       } catch (error) {
