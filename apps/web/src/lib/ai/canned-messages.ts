@@ -13,6 +13,17 @@ import enMessages from "masarx-shared/messages/en/aiAssistant.json";
 
 export type CannedMessages = typeof arMessages.canned;
 
+/**
+ * Emoji prefixes marking a canned string as an AI-service failure. Canned
+ * errors are RESOLVED content (assistant.ts's catch returns them as
+ * "successful" responses), so the UI can only recognize them by content —
+ * keep every error-flavored `canned` entry in aiAssistant.json starting with
+ * one of these (the guard test locks this contract:
+ * lib/__tests__/cannedErrorPrefixes.test.ts). Informational canned replies
+ * (noPlatformContext, groupRagNoData) deliberately start with plain text.
+ */
+export const CANNED_ERROR_PREFIXES = ["⚠️", "💳"] as const;
+
 export const cannedMessagesFor = (locale?: string): CannedMessages =>
   (locale || "ar").toLowerCase().startsWith("ar")
     ? arMessages.canned
