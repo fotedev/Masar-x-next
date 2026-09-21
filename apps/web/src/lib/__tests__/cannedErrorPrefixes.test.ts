@@ -35,7 +35,13 @@ describe("canned error prefix contract", () => {
     for (const [locale, canned] of Object.entries(locales)) {
       const all = Object.keys(canned).sort();
       const classified = [...AMBER_KEYS, AUTH_MARKER_KEY, ...INFO_KEYS].sort();
-      expect(all, `${locale}: unclassified canned key(s)`).toEqual(classified);
+      const unclassified = all.filter((k) => !classified.includes(k));
+      const message =
+        `${locale}: unclassified canned key(s): ${unclassified.join(", ") || "none"}. ` +
+        `Add the new canned message from aiAssistant.json to AMBER_KEYS (AI-service failure — ` +
+        `then make its content start with a CANNED_ERROR_PREFIX emoji), AUTH_MARKER_KEY ` +
+        `(Puter auth flow), or INFO_KEYS (normal reply) in cannedErrorPrefixes.test.ts.`;
+      expect(unclassified, message).toEqual([]);
     }
   });
 
