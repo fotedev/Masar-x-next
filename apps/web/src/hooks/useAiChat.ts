@@ -9,6 +9,7 @@ import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
 import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
 import { CHAT_HISTORY_CAP, CHAT_PAGE_SIZE, hasMoreAfterLoad, nextOlderRange } from "@/lib/chat-pagination";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
+import { cannedMessagesFor } from "@/lib/ai/canned-messages";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { logger } from "@/lib/logger";
 
@@ -414,7 +415,8 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         setMessages(prev => [...prev, {
           id: `error_${Date.now()}`,
           type: "assistant",
-          content: "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
+          // i18n (spec 012 drive-by): was a hardcoded Arabic string.
+          content: cannedMessagesFor(locale).genericError,
           timestamp: new Date()
         }]);
       }

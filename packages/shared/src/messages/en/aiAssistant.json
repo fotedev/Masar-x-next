@@ -105,6 +105,7 @@
     "serviceUnavailable": "⚠️ The AI service is currently unavailable due to connection issues.\n\n💡 Suggestions:\n1. Wait a few minutes and try again\n2. Check your internet connection\n\nThe issue will resolve itself shortly.",
     "serviceUnavailableShort": "⚠️ The AI service is currently unavailable due to connection issues.\n\n💡 Wait a few minutes and try again, or try a different model.",
     "genericError": "⚠️ The AI service encountered an error.\n\n💡 Try reloading the page or trying again later.",
+    "insufficientFunds": "💳 This model's usage quota is used up (Puter: no usage left for request).\n\n💡 Switch to a lighter model from the selector (e.g. GPT-5 nano) or top up the Puter account, then try again.",
     "puterUnavailable": "⚠️ The AI service is currently unavailable. Please try again later.",
     "needsLogin": "__PUTER_AUTH_REQUIRED__\n⚠️ Sign in to Puter to enable this model{modelSuffix}.\n\nPress the \"Sign In\" button below and try again."
   }

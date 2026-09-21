@@ -20,6 +20,7 @@ import {
   formatPuterNeedsLoginMessage,
   isClaudeLikeModel,
   isPuterAuthError,
+  isPuterInsufficientFundsError,
   isPuterModelNotAvailableError,
   isPuterTransportError,
 } from './errors';
@@ -49,6 +50,22 @@ import { cannedMessagesFor } from './canned-messages';
 import { BREVITY_INSTRUCTION, ZANE_UI_INSTRUCTION } from './prompts';
 
 export type AiAssistantMode = 'group_rag' | 'cs_assistant' | 'student_agent';
+
+// Spec 012: Puter 402 / insufficient_funds is a billing state, not an outage
+// (no circuit breaker, no retry helps). Remember the depleted model so repeat
+// sends with it return the canned message instantly instead of re-hitting the
+// network. Cleared on any successful response; switching models naturally
+// bypasses the gate because the comparison is per model.
+let puterFundsDepletedModel: string | null = null;
+
+const isPuterFundsDepletedForModel = (model?: string) => {
+  if (puterFundsDepletedModel === null) return false;
+  return (model || 'gpt-5.4-nano').toLowerCase() === puterFundsDepletedModel;
+};
+
+const clearPuterFundsDepleted = () => {
+  puterFundsDepletedModel = null;
+};
 
 export interface AiChatHistoryTurn {
   role: 'user' | 'assistant';
@@ -322,6 +339,12 @@ ${platformContext}
       return canned.groupRagNoData;
     }
 
+    // Spec 012: a depleted model short-circuits with the actionable canned
+    // message — no Puter call, no error bubble.
+    if (isPuterFundsDepletedForModel(selectedModel)) {
+      return canned.insufficientFunds;
+    }
+
     const executeWithPuter = async (prompt: string, model: string) => {
       if (isPuterCircuitOpen()) return null;
 
@@ -427,19 +450,23 @@ ${ZANE_UI_INSTRUCTION}
         const text = await executeWithPuter(prompt, selectedModel);
         if (text === null) return getPuterUnavailableMessage(options?.locale);
 
+        clearPuterFundsDepleted();
+
         // onDelta reported the raw stream; the returned (persisted) message is
         // the sanitized one — useAiChat swaps it in at finalize.
         return sanitizeAssistantReply(query, text);
       }
 
       // student_agent (the remaining reachable mode)
-      return await this.generateStudentAgentResponse(query, {
+      const studentReply = await this.generateStudentAgentResponse(query, {
         chatHistory: options?.chatHistory,
         platformContext: options?.platformContext,
         model: selectedModel,
         locale: options?.locale,
         onDelta: options?.onDelta
       });
+      clearPuterFundsDepleted();
+      return studentReply;
 
     } catch (error: unknown) {
       // Log all errors with appropriate levels
@@ -455,6 +482,16 @@ ${ZANE_UI_INSTRUCTION}
           mode,
           selectedModel,
           error: asErrorMessage(error),
+        });
+      } else if (isPuterInsufficientFundsError(error)) {
+        // Billing state, not an outage: remember the model, log a compact
+        // reason (never the opaque {} of logger.error with a raw payload),
+        // and return the actionable canned message below.
+        puterFundsDepletedModel = selectedModel.toLowerCase();
+        logger.warn('Puter funds depleted for model', {
+          mode,
+          selectedModel,
+          reason: asErrorMessage(error),
         });
       } else {
         logger.error('Puter AI error', error, { mode, selectedModel });
@@ -483,6 +520,9 @@ ${ZANE_UI_INSTRUCTION}
           }
           return canned.serviceUnavailable;
         }
+        if (isPuterInsufficientFundsError(error)) {
+          return canned.insufficientFunds;
+        }
         return canned.genericError;
       }
 
@@ -492,6 +532,10 @@ ${ZANE_UI_INSTRUCTION}
           return canned.claudeFallbackShort;
         }
         return canned.serviceUnavailableShort;
+      }
+
+      if (isPuterInsufficientFundsError(error)) {
+        return canned.insufficientFunds;
       }
 
       return canned.genericError;
