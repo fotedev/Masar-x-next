@@ -56,13 +56,25 @@ export const Header = memo(function Header() {
   useEffect(() => {
     if (!isMounted) return;
 
+    // rAF-throttled: without this, every scroll pixel fires setState and
+    // re-renders the whole header tree (incl. the MobileNav portal) while
+    // also toggling a fullscreen backdrop-blur layer — visible jank.
+    let rafId = 0;
     const update = () => {
-      setIsScrolled(window.scrollY > 20);
+      rafId = 0;
+      const scrolled = window.scrollY > 20;
+      setIsScrolled((prev) => (prev === scrolled ? prev : scrolled));
+    };
+    const onScroll = () => {
+      if (rafId === 0) rafId = window.requestAnimationFrame(update);
     };
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafId !== 0) window.cancelAnimationFrame(rafId);
+    };
   }, [isMounted]);
 
   useEffect(() => {
@@ -358,6 +370,7 @@ export const Header = memo(function Header() {
                 <DynamicLogo
                   width={48}
                   height={48}
+                  sizes="48px"
                   className="object-contain w-10 h-10 sm:w-12 sm:h-12"
                   priority
                 />

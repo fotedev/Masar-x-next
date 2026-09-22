@@ -25,8 +25,7 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.2,
+      staggerChildren: 0.03,
     },
   },
 };
@@ -118,7 +117,8 @@ export function SummariesSection({
               : containerVariants
           }
           initial="hidden"
-          animate="show"
+          whileInView="show"
+          viewport={{ once: true, margin: "0px 0px -64px 0px" }}
           className="summary-grid"
         >
           {displaySummaries.map((summary: SummaryWithRatingsOptimistic) => {
@@ -128,13 +128,10 @@ export function SummariesSection({
               <motion.div
                 key={summary.id}
                 variants={shouldReduceMotion ? { hidden: {}, show: {} } : itemVariants}
-                whileHover={
-                  !shouldReduceMotion && !summary.isOptimistic ? { y: -4 } : {}
-                }
                 className={`modern-card p-5 transition-[colors,transform,box-shadow,border-color] duration-300
                   ${summary.isOptimistic 
                     ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse" 
-                    : "cursor-pointer group hover:border-brand-blue/50"
+                    : "cursor-pointer group hover:border-brand-blue/50 hover:-translate-y-1"
                   }`}
                 onClick={() => {
                   if (summary.isOptimistic) return;

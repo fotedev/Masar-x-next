@@ -121,7 +121,9 @@ export default function HomeClient() {
             .select("*")
             .eq("status", "approved")
             .order("created_at", { ascending: false })
-            .limit(200);
+            // Home shows max 10 after filtering — 30 gives headroom for
+            // subject filtering without parsing 200 JSON blobs per load.
+            .limit(30);
 
           if (error) throw error;
           rows = (data || []) as Quiz[];

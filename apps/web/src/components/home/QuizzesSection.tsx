@@ -19,8 +19,7 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.2,
+      staggerChildren: 0.03,
     },
   },
 };
@@ -29,6 +28,41 @@ const itemVariants = {
   hidden: { opacity: 0 },
   show: { opacity: 1 },
 };
+
+// The quiz description column stores a JSON blob. Parsing it 3x per card on
+// every render (subject + dept/year + blurb) showed up as scripting cost on
+// the home page, so parse once per row object and cache it.
+interface QuizMeta {
+  subject: string;
+  deptYear: string;
+  blurb: string;
+}
+
+const quizMetaCache = new WeakMap<object, QuizMeta>();
+
+function getQuizMeta(quiz: Quiz): QuizMeta {
+  const cached = quizMetaCache.get(quiz);
+  if (cached) return cached;
+
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = JSON.parse(quiz.description || "{}") as Record<string, unknown>;
+  } catch {
+    // Non-JSON description — fall back to flat columns below.
+  }
+  const record = quiz as unknown as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const subject = str(parsed.subject) || str(quiz.subject) || "عام";
+  const dept = str(parsed.department) || str(record.department);
+  const year = str(parsed.year) || str(record.year);
+  const meta: QuizMeta = {
+    subject,
+    deptYear: `${year || ""}${dept ? ` - ${dept}` : ""}`.trim(),
+    blurb: str(parsed.description),
+  };
+  quizMetaCache.set(quiz, meta);
+  return meta;
+}
 
 export function QuizzesSection({
   loading,
@@ -104,15 +138,15 @@ export function QuizzesSection({
               : containerVariants
           }
           initial="hidden"
-          animate="show"
+          whileInView="show"
+          viewport={{ once: true, margin: "0px 0px -64px 0px" }}
           className="summary-grid"
         >
           {displayQuizzes.map((quiz) => (
             <motion.div
               key={quiz.id}
               variants={shouldReduceMotion ? { hidden: {}, show: {} } : itemVariants}
-              whileHover={!shouldReduceMotion ? { y: -4 } : {}}
-              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-[colors,transform,box-shadow,border-color] duration-300"
+              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 hover:-translate-y-1 transition-[colors,transform,box-shadow,border-color] duration-300"
               onClick={() => onNavigate("quiz-play", quiz.id)}
             >
               <div className="flex justify-between items-start mb-3">
@@ -126,14 +160,7 @@ export function QuizzesSection({
                   <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
                     <span className="truncate">
-                      {(() => {
-                        try {
-                          const parsed = JSON.parse(quiz.description || "{}");
-                          return parsed.subject || quiz.subject || "عام";
-                        } catch {
-                          return quiz.subject || "عام";
-                        }
-                      })()}
+                      {getQuizMeta(quiz).subject}
                     </span>
                   </div>
                 </div>
@@ -141,61 +168,14 @@ export function QuizzesSection({
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <Calendar className="w-3.5 h-3.5 text-brand-orange" />
                   <span className="truncate">
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(quiz.description || "{}");
-                        const quizRecord = quiz as unknown as Record<
-                          string,
-                          unknown
-                        >;
-                        const deptRaw =
-                          typeof parsed?.department === "string"
-                            ? parsed.department
-                            : quizRecord.department;
-                        const yearRaw =
-                          typeof parsed?.year === "string"
-                            ? parsed.year
-                            : quizRecord.year;
-
-                        const dept = typeof deptRaw === "string" ? deptRaw : "";
-                        const year = typeof yearRaw === "string" ? yearRaw : "";
-                        return (
-                          `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
-                          ""
-                        );
-                      } catch {
-                        const quizRecord = quiz as unknown as Record<
-                          string,
-                          unknown
-                        >;
-                        const dept =
-                          typeof quizRecord.department === "string"
-                            ? quizRecord.department
-                            : "";
-                        const year =
-                          typeof quizRecord.year === "string"
-                            ? quizRecord.year
-                            : "";
-                        return (
-                          `${year || ""}${dept ? ` - ${dept}` : ""}`.trim() ||
-                          ""
-                        );
-                      }
-                    })()}
+                    {getQuizMeta(quiz).deptYear}
                   </span>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                  {(() => {
-                    try {
-                      const parsed = JSON.parse(quiz.description || "{}");
-                      return parsed.description || "";
-                    } catch {
-                      return "";
-                    }
-                  })()}
+                  {getQuizMeta(quiz).blurb}
                 </p>
               </div>
             </motion.div>
