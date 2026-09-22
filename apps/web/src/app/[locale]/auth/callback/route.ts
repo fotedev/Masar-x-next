@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// Locales supported by the routing config in middleware.ts. Keep in sync.
+// Locales supported by the routing config in src/proxy.ts. Keep in sync.
 const SUPPORTED_LOCALES = ['ar', 'en'] as const
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 const DEFAULT_LOCALE: SupportedLocale = 'ar'

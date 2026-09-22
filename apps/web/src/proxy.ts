@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { defineRouting } from "next-intl/routing";
 
-import { updateSession } from "./lib/supabase/middleware";
+import { updateSession } from "./lib/supabase/proxy";
 import { logger } from "./lib/logger";
 
 const routing = defineRouting({
@@ -152,7 +152,7 @@ function addSecurityHeaders(response: NextResponse, nonce: string, host: string 
   );
 }
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   try {
     const pathname = request.nextUrl.pathname;
     const nonce = generateNonce();
@@ -211,8 +211,8 @@ export default async function middleware(request: NextRequest) {
     addSecurityHeaders(finalResponse, nonce, host);
     return finalResponse;
   } catch (error) {
-    // On middleware error, log and pass through to page (don't block request)
-    logger.error("Middleware error", error, {
+    // On proxy error, log and pass through to page (don't block request)
+    logger.error("Proxy error", error, {
       pathname: request.nextUrl.pathname,
     });
 
@@ -229,7 +229,7 @@ export default async function middleware(request: NextRequest) {
 
     // Fix audit §1.4: the error fallback previously returned without any
     // security headers (CSP, X-Frame-Options, Referrer-Policy) or the
-    // locale/session cookies from the middleware chain. We generate a
+    // locale/session cookies from the proxy chain. We generate a
     // fresh nonce here because the original `nonce` is out of scope at
     // this point; we also re-read the Host header for the CSP directive
     // that depends on it (see getCspHeader).
@@ -251,7 +251,7 @@ export const config = {
     //
     // .wasm is excluded so the dotlottie-web WebAssembly blob at
     // /dotlottie-player.wasm is served by Next.js as a static file
-    // instead of being routed through the middleware. Without this,
+    // instead of being routed through the proxy. Without this,
     // next-intl's locale detection treats the request as a missing
     // locale and returns the HTML 404 page (which starts with
     // `<!DOCTYPE html>`), and the library's WebAssembly.instantiate()
