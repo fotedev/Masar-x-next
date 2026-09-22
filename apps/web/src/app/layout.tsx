@@ -30,20 +30,31 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "metadata" });
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: t("title"),
       template: `%s | ${t("siteName")}`,
     },
     description: t("description"),
     keywords: t("keywords"),
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/favicon.svg", type: "image/svg+xml" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
     openGraph: {
       title: t("title"),
-      description: t("description"),
+      description: `${t("slogan")} — ${t("description")}`,
       siteName: t("siteName"),
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: t("siteName") }],
     },
     twitter: {
       title: t("title"),
-      description: t("description"),
+      description: `${t("slogan")} — ${t("description")}`,
+      card: "summary_large_image",
+      images: ["/og-image.png"],
     },
   };
 }
