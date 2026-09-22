@@ -264,3 +264,9 @@ sandbox/
 # Playwright artifacts (Spec 010) — regenerated per run, never committed.
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Promo asset generator helpers (download/query/submit scripts) — local-only
+promo_assets/**/*.py
+promo_assets/**/*.json
+promo_assets/**/*.png
+promo_assets/story.md
