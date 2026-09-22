@@ -182,7 +182,7 @@ export async function startMainProcess(): Promise<number> {
     //                                    the loopback host, the retry will
     //                                    land on plain HTTP and the page will
     //                                    render. The actual fix lives in
-    //                                    apps/web/src/middleware.ts (the
+    //                                    apps/web/src/proxy.ts (the
     //                                    CSP drops upgrade-insecure-requests
     //                                    for 127.0.0.1/localhost).
     //

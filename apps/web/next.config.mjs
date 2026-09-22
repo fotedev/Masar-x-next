@@ -125,7 +125,7 @@ const nextConfig = {
   },
   async headers() {
     // NOTE: Content-Security-Policy is intentionally omitted here.
-    // It is set per-request with a fresh nonce in src/middleware.ts,
+    // It is set per-request with a fresh nonce in src/proxy.ts,
     // which takes precedence for all page routes. Having two CSP headers
     // causes the browser to AND them (most-restrictive wins), which
     // breaks nonce-based policies when combined with unsafe-inline policies.
