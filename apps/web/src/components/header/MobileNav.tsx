@@ -137,7 +137,6 @@ export function MobileNav({
                   width={36}
                   height={36}
                   className="object-contain w-9 h-9"
-                  priority
                 />
                 <div className="flex flex-col">
                   <span className="text-lg font-black tracking-tight bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 dark:from-blue-400 dark:via-cyan-300 dark:to-sky-300 bg-clip-text text-transparent">
@@ -209,8 +208,8 @@ export function MobileNav({
                         onClick={() => handleNavigate(item.page)}
                         className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
                           active
-                            ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/12 border-s-4 border-brand-blue dark:border-cyan-400"
-                            : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
+                            ? "text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 border-s-4 border-brand-blue dark:border-cyan-400"
+                            : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                         } active:scale-[0.98]`}
                         type="button"
                       >
@@ -244,7 +243,7 @@ export function MobileNav({
                       className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
                         isMounted && currentPage === "non-academic"
                           ? "bg-gradient-to-r from-purple-500/15 to-transparent text-purple-600 dark:text-purple-400 border-s-4 border-purple-500 font-black"
-                          : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/8"
+                          : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                       } active:scale-[0.98]`}
                       type="button"
                     >
@@ -344,10 +343,6 @@ export function MobileNav({
             {/* Footer status badge */}
             <div className="px-5 py-3 bg-slate-100/50 dark:bg-slate-900/30 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 shrink-0">
               <span>{tMobileNav("version", { version: "0.5.6" })}</span>
-              <span className="flex items-center gap-1.5 text-emerald-500 dark:text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {tMobileNav("online")}
-              </span>
             </div>
           </motion.div>
         </div>
