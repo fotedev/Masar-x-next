@@ -35,7 +35,7 @@ describe("canned error prefix contract", () => {
     for (const [locale, canned] of Object.entries(locales)) {
       const all = Object.keys(canned).sort();
       const classified = [...AMBER_KEYS, AUTH_MARKER_KEY, ...INFO_KEYS].sort();
-      const unclassified = all.filter((k) => !classified.includes(k));
+      const unclassified = all.filter((k) => !(classified as string[]).includes(k));
       const message =
         `${locale}: unclassified canned key(s): ${unclassified.join(", ") || "none"}. ` +
         `Add the new canned message from aiAssistant.json to AMBER_KEYS (AI-service failure — ` +
