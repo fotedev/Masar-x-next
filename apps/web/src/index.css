@@ -189,11 +189,14 @@ html[dir="rtl"] [lang="en"] {
 }
 
 /* Enhanced card hover effects */
+/* NOTE: intentionally NO backdrop-filter here. A blur on every card forces
+   the GPU to re-composite dozens of layers on each scroll tick (home renders
+   30+ .modern-card nodes). Solid card bg + border/shadow keeps the look
+   without the repaint storm. Use .glass-card sparingly for hero-only frost. */
 .modern-card {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 24px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
+  background: hsl(var(--card));
   border: 1px solid var(--glass-border);
   box-shadow: var(--card-shadow);
 }

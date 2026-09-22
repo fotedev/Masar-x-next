@@ -19,8 +19,7 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.2,
+      staggerChildren: 0.03,
     },
   },
 };
@@ -104,15 +103,15 @@ export function VideosSection({
               : containerVariants
           }
           initial="hidden"
-          animate="show"
+          whileInView="show"
+          viewport={{ once: true, margin: "0px 0px -64px 0px" }}
           className="summary-grid"
         >
           {displayVideos.map((video) => (
             <motion.div
               key={video.id}
               variants={shouldReduceMotion ? { hidden: {}, show: {} } : itemVariants}
-              whileHover={!shouldReduceMotion ? { y: -4 } : {}}
-              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 transition-[colors,transform,box-shadow,border-color] duration-300"
+              className="modern-card p-5 cursor-pointer group hover:border-brand-blue/50 hover:-translate-y-1 transition-[colors,transform,box-shadow,border-color] duration-300"
               onClick={() =>
                 onNavigate("subjects", encodeURIComponent(video.subject))
               }
