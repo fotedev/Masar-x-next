@@ -19,4 +19,4 @@
 - **Storage**: Cloudinary (PDFs + images).
 - **Releases**: web → Vercel. Desktop + mobile → GitHub Releases on this same (public) repo via `.github/workflows/release.yml`. See [02-release-pipeline.md](./02-release-pipeline.md).
 
-**Back to:** [AGENTS.md §4](../../../../AGENTS.md)
+**Back to:** [AGENTS.md](../../../AGENTS.md)

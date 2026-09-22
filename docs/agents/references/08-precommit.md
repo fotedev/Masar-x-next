@@ -11,4 +11,4 @@ Before opening a PR:
 - [ ] If you touched `supabase/`: new migration uses the next sequential `NNN_` number + file order stays chronological
 - [ ] If you touched `ThemeScript.tsx`: re-read [01-gotchas.md](./01-gotchas.md) §19 before any change
 
-**Back to:** [AGENTS.md §8](../../../../AGENTS.md)
+**Back to:** [AGENTS.md](../../../AGENTS.md)

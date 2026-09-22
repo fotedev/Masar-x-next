@@ -7,4 +7,4 @@
 - **Hardcoded strings prohibition**: any Arabic string inside `.tsx`/`.ts` that's not in `messages/ar/*.json` is a defect — migrate on touch.
 - **Supabase migrations**: migrations use sequential `NNN_name.sql` prefixes (`001_` …). A new migration takes the next number in sequence — do not introduce timestamps, and do not reorder existing files.
 
-**Back to:** [AGENTS.md §7](../../../../AGENTS.md)
+**Back to:** [AGENTS.md](../../../AGENTS.md)
