@@ -13,6 +13,7 @@ import { LottiePlayer, type DotLottie } from "./LottiePlayer";
 import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
 import type { AiAssistantMode } from "@/lib/ai-assistant";
 import {
+  completeOpenFences,
   normalizeLatexDelimiters,
   repairBoldBoundaries,
   repairListGlue,
@@ -393,10 +394,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
 
 
 
-  const renderAssistantContent = (content: string) => {
+  const renderAssistantContent = (content: string, isStreaming = false) => {
     const raw = String(content ?? "");
+    const withFences = isStreaming ? completeOpenFences(raw) : raw;
     const normalized = repairListGlue(
-      repairBoldBoundaries(repairSpacedBold(normalizeLatexDelimiters(raw))),
+      repairBoldBoundaries(repairSpacedBold(normalizeLatexDelimiters(withFences))),
     );
 
     const markdownComponents = {
@@ -663,12 +665,6 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           >
             {isUser ? (
               <div className="whitespace-pre-wrap">{message.content}</div>
-            ) : message.streaming ? (
-              // While deltas are still arriving: plain text only. Re-parsing
-              // growing markdown (plus rehype-highlight) per frame is costly
-              // and mid-fence states render as junk; the full pipeline takes
-              // over at finalize.
-              <div className="whitespace-pre-wrap">{displayContent}</div>
             ) : (
               <div className="space-y-3">
                 {isErrorMessage ? (
@@ -706,7 +702,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
                     )}
                   </div>
                 ) : (
-                  renderAssistantContent(displayContent)
+                  renderAssistantContent(displayContent, !!message.streaming)
                 )}
 
                 {zaneUiBlocks.length > 0 && (

@@ -119,3 +119,17 @@ export const repairListGlue = (text: string): string => {
     })
     .join("");
 };
+
+/**
+ * Automatically closes unclosed markdown code fences during streaming
+ * so syntax highlighters and code block containers render live in real-time.
+ */
+export const completeOpenFences = (text: string): string => {
+  const str = String(text ?? "");
+  const matches = str.match(/```/g);
+  const count = matches ? matches.length : 0;
+  if (count % 2 !== 0) {
+    return str + "\n```";
+  }
+  return str;
+};

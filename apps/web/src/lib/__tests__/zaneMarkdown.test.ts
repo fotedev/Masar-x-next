@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  completeOpenFences,
   normalizeLatexDelimiters,
   repairBoldBoundaries,
   repairListGlue,
@@ -240,5 +241,31 @@ describe('react-markdown v10 hands `start` to the ol component', () => {
       ),
     );
     expect(starts).toEqual([undefined]);
+  });
+});
+
+describe('completeOpenFences — auto-close unclosed markdown code blocks during streaming', () => {
+  it('appends closing fence when an open code block fence has no matching closer', () => {
+    const streamingText = 'Here is the code:\n```html\n<!DOCTYPE html>\n<html>';
+    expect(completeOpenFences(streamingText)).toBe(
+      'Here is the code:\n```html\n<!DOCTYPE html>\n<html>\n```',
+    );
+  });
+
+  it('leaves complete code blocks untouched', () => {
+    const completeText = '```html\n<div>hello</div>\n```';
+    expect(completeOpenFences(completeText)).toBe(completeText);
+  });
+
+  it('leaves text without any code fences untouched', () => {
+    const plainText = 'هذا نص عادي بدون أي كود برمجي';
+    expect(completeOpenFences(plainText)).toBe(plainText);
+  });
+
+  it('handles multiple code blocks when only the last one is still open', () => {
+    const multiBlock = '```html\n<div/>\n```\nExplanation...\n```js\nconsole.log(1);';
+    expect(completeOpenFences(multiBlock)).toBe(
+      '```html\n<div/>\n```\nExplanation...\n```js\nconsole.log(1);\n```',
+    );
   });
 });
