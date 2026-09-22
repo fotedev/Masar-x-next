@@ -3,12 +3,13 @@
 ## Project Overview
 Masar X is a comprehensive learning platform built with Next.js (React/TypeScript) using the App Router, focused on delivering educational services for university students in the Middle East.
 
-### Core Features
-- **TRW System (The Road Within)**: A paid course system with subscriptions and access plans (Free/Full/Money).
-- **Summaries Platform**: A crowdsourced system for sharing and organizing academic summaries.
+### Core Features (canonical order — see `docs/BRANDING.md`; summaries are one part of the system, never the identity)
+- **Subjects & Study Materials**: Organized courses, subjects, lectures and explanations per semester — the entry point of the platform.
+- **Lectures & Explanations**: Subject lectures with videos, files, and linked content.
+- **Quizzes & Question Banks**: Interactive quizzes system supporting drafts, timers, and permission checks.
 - **Interactive Courses**: Full course management with enrollment, progress tracking, and an advanced reviews system.
+- **Summaries (part of the system)**: A crowdsourced system for sharing and organizing academic summaries.
 - **AI Assistant**: Powered by Puter.js and **GPT-5 nano** with Markdown, LaTeX, and RAG support.
-- **Quizzes**: Interactive quizzes system supporting drafts, timers, and permission checks.
 - **Multi-Role System**: Student/Instructor/Admin roles with comprehensive permissions management (RLS).
 - **Academic Onboarding**: Forces students to choose their specialization once, with advanced caching and flicker prevention.
 - **Localization (i18n)**: Full Arabic and English support (ar/en) using `next-intl` with JSON message files in `src/messages/`.

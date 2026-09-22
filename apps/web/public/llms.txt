@@ -1,6 +1,6 @@
 # Masar X
 
-> Masar X is an Arabic-first (RTL) university learning platform built with Next.js + Supabase, providing study summaries, quizzes, courses, and AI-assisted study tools.
+> Masar X — Integrated University Learning Platform (Arabic-first, RTL) built with Next.js + Supabase: organized study materials and lectures, question banks and quizzes, courses, summaries as part of the system, and AI-assisted study tools.
 >
 > Slogan: "Your university, one path." (AR: «كل جامعتك في مسار واحد»)
 

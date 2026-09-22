@@ -1,7 +1,7 @@
 {
   "name": "Masar X",
   "short_name": "Masar X",
-  "description": "منصة لمشاركة الملخصات الدراسية بين طلاب الجامعات",
+  "description": "مسار إكس — منصتك الجامعية المتكاملة: مواد، شروحات، ملخصات، بنوك أسئلة، ومساعد ذكي",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
