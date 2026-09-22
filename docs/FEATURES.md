@@ -1,6 +1,7 @@
 # Features — Masar X
-> Last updated: 2026-06-03
+> Last updated: 2026-09-22
 > Status: `[X]` Complete · `[-]` In Progress · `[!]` Blocked · `[ ]` Planned
+> Brand order (see `docs/BRANDING.md`): subjects & materials → lectures → quizzes → courses → summaries (one part of the system) → AI.
 
 ## Authentication & Authorization
 - `[X]` Email/password registration and login (`src/app/[locale]/login/page.tsx`)
@@ -21,7 +22,7 @@
 - `[X]` Admin role bypass for onboarding
 - `[!]` Hardcoded Arabic strings in onboarding page — not using i18n translation keys
 
-## Study Summaries
+## Study Materials & Summaries (summaries are one part of the system, not the platform identity)
 - `[X]` Crowdsourced summary submission with title, content, subject, department, level, semester
 - `[X]` PDF upload via Cloudinary with progress tracking (`src/lib/cloudinary.ts`)
 - `[X]` Image upload and Google Drive link support
