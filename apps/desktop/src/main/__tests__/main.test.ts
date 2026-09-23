@@ -81,6 +81,8 @@ const mockApp = {
   // R10 — single-instance lock. Tests run as the locked instance so the
   // rest of `startMainProcess` proceeds normally.
   requestSingleInstanceLock: vi.fn().mockReturnValue(true),
+  // Spec 014 R031 — masarx:// protocol registration (dev/packaged paths).
+  setAsDefaultProtocolClient: vi.fn(),
   // R14 — preload/main parity for `app:version`.
   getVersion: vi.fn().mockReturnValue('0.5.9-test'),
 };
@@ -539,5 +541,104 @@ describe('T017 — Electron main process contract', () => {
     // (The mock's instance was built before this test; BrowserWindowMock
     // was already called for prior tests in the file. We assert the
     // creation count did NOT increase by importing a fresh ref.)
+  });
+
+  // ==========================================================================
+  // Spec 014 (R037) — masarx:// deep-link contract.
+  // Registration, the cold-start buffer + rendererReady pull, the
+  // second-instance / open-url dispatch, and the openExternal validation.
+  // ==========================================================================
+
+  const lastRegistered = (channel: string) =>
+    mockIpcMain.handle.mock.calls.filter((c: unknown[]) => c[0] === channel).pop()?.[1];
+
+  const lastListener = (event: string) =>
+    mockApp.on.mock.calls.filter((c: unknown[]) => c[0] === event).pop()?.[1];
+
+  it('registers the masarx protocol and the spec-014 IPC handlers', async () => {
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    expect(mockApp.setAsDefaultProtocolClient).toHaveBeenCalledWith('masarx');
+    const registered = mockIpcMain.handle.mock.calls.map((c: unknown[]) => c[0]);
+    expect(registered).toEqual(
+      expect.arrayContaining(['auth:rendererReady', 'app:openExternal']),
+    );
+  });
+
+  it('buffers a cold-start deep link from argv and hands it over on rendererReady', async () => {
+    const mod = await import('../index');
+    const originalArgv = process.argv;
+    process.argv = [
+      'electron',
+      '.',
+      'masarx://auth/callback?code=cold-start-code',
+    ];
+    try {
+      await (mod as any).startMainProcess();
+      const readyHandler = lastRegistered('auth:rendererReady');
+      expect(await readyHandler?.()).toBe('masarx://auth/callback?code=cold-start-code');
+      // Consumed: the pull returns null afterwards.
+      expect(await readyHandler?.()).toBeNull();
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('routes a second-instance deep link: buffered pre-ready, pushed post-ready', async () => {
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    const secondInstance = lastListener('second-instance');
+    expect(secondInstance, 'second-instance listener registered').toBeTruthy();
+    const readyHandler = lastRegistered('auth:rendererReady');
+
+    // Warm-start link BEFORE the renderer announced readiness → buffered.
+    secondInstance?.({}, ['C:\\app\\Masar X.exe', 'masarx://auth/callback?code=warm1']);
+    expect(await readyHandler?.()).toBe('masarx://auth/callback?code=warm1');
+
+    // After readiness, a link is pushed straight to the renderer.
+    secondInstance?.({}, ['C:\\app\\Masar X.exe', 'masarx://auth/callback?code=warm2']);
+    expect(mockBrowserWindowInstance.webContents.send).toHaveBeenCalledWith(
+      'auth:deepLink',
+      'masarx://auth/callback?code=warm2',
+    );
+
+    // Non-deep-link argv never buffers anything.
+    secondInstance?.({}, ['C:\\app\\Masar X.exe', '--some-flag']);
+    expect(await readyHandler?.()).toBeNull();
+  });
+
+  it('routes open-url deep links (macOS parity) and rejects other URLs', async () => {
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    const openUrl = lastListener('open-url');
+    expect(openUrl, 'open-url listener registered').toBeTruthy();
+    const readyHandler = lastRegistered('auth:rendererReady');
+    const event = { preventDefault: vi.fn() };
+
+    openUrl?.(event, 'masarx://auth/callback?code=mac-code');
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(await readyHandler?.()).toBe('masarx://auth/callback?code=mac-code');
+
+    // A non-masarx URL delivered via open-url is dropped (no buffer).
+    openUrl?.(event, 'https://evil.example/callback?code=x');
+    expect(await readyHandler?.()).toBeNull();
+  });
+
+  it('validates app:openExternal to http(s) URLs only', async () => {
+    const { shell } = await import('electron');
+    const mod = await import('../index');
+    await (mod as any).startMainProcess();
+
+    const handler = lastRegistered('app:openExternal');
+    await handler?.({}, 'https://accounts.google.com/o/oauth2/auth?client_id=x');
+    expect(shell.openExternal).toHaveBeenCalledWith(
+      'https://accounts.google.com/o/oauth2/auth?client_id=x',
+    );
+    await expect(handler?.({}, 'javascript:alert(1)')).rejects.toThrow();
+    await expect(handler?.({}, 'file:///c:/sensitive.txt')).rejects.toThrow();
+    await expect(handler?.({}, 42)).rejects.toThrow();
   });
 });

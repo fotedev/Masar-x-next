@@ -3,6 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
 import { Updater, bootUpdater } from './updater.js';
+import {
+  parseDeepLinkUrl,
+  DEEP_LINK_PROTOCOL,
+} from './deepLink.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,14 +100,64 @@ export async function startMainProcess(): Promise<number> {
   }
   // The listener is registered on the locked instance. When a second
   // copy launches, the OS re-routes the argv here and we surface the
-  // existing window instead of opening a new one.
-  app.on('second-instance', () => {
+  // existing window instead of opening a new one. A deep link in that
+  // argv (masarx://auth/callback?code=… — warm-start OAuth callback,
+  // spec 014 R031) is routed to the renderer instead of being dropped.
+  //
+  // The deep-link state lives here, above the window creation, so the
+  // handler can never touch a `const` that is still in its temporal dead
+  // zone: `dispatchDeepLink` buffers when the renderer has not yet
+  // announced itself via `auth:rendererReady`, and flushes straight to the
+  // window once it has.
+  let pendingDeepLinkUrl: string | null = null;
+  let deepLinkRendererReady = false;
+  let mainWindowRef: BrowserWindow | null = null;
+  const dispatchDeepLink = (url: string) => {
+    if (deepLinkRendererReady && mainWindowRef && !mainWindowRef.isDestroyed()) {
+      mainWindowRef.webContents.send('auth:deepLink', url);
+    } else {
+      pendingDeepLinkUrl = url;
+    }
+  };
+
+  app.on('second-instance', (_event, argv) => {
+    const deepLink = parseDeepLinkUrl(argv);
     const existing = BrowserWindow.getAllWindows()[0];
+    if (deepLink) {
+      dispatchDeepLink(deepLink);
+    }
     if (!existing) return;
     if (existing.isMinimized()) existing.restore();
     existing.show();
     existing.focus();
   });
+
+  // macOS parity (untestable on this Windows host): the OS delivers
+  // deep links through the `open-url` event rather than argv.
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    const deepLink = parseDeepLinkUrl([url]);
+    if (deepLink) dispatchDeepLink(deepLink);
+  });
+
+  // Spec 014 (R031) — register the masarx:// protocol. In dev the app is
+  // launched as `electron .` (process.defaultApp), so the registration
+  // must point at the electron binary plus our script path; packaged
+  // builds register the installed exe itself (the NSIS installer writes
+  // the same HKCU keys — see build/installer.nsh). HKCU only, never a
+  // machine-wide write, and a failure must not block startup.
+  try {
+    if (process.defaultApp && process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL, process.execPath, [
+        path.resolve(process.argv[1]),
+      ]);
+    } else {
+      app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL);
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[masarx-desktop] masarx:// protocol registration failed:', err);
+  }
 
   // Start the local server BEFORE app.whenReady so that by the time the
   // window is created the URL is guaranteed reachable. This makes the
@@ -166,6 +220,20 @@ export async function startMainProcess(): Promise<number> {
   // equivalent and is what actually hides the bar on those platforms
   // when a default menu slipped through construction.
   win.setMenu(null);
+
+  // Spec 014 (R031) — the window now exists; deep links dispatched from
+  // here on reach the renderer (or buffer until `auth:rendererReady`).
+  mainWindowRef = win;
+  // Windows cold start: the OS launches the exe with the deep link in
+  // argv (e.g. a Google callback that arrives while the app is closed).
+  // The renderer has not subscribed yet, so this buffers until the
+  // renderer's `auth:rendererReady` pull.
+  const coldDeepLink = parseDeepLinkUrl(process.argv.slice(1));
+  if (coldDeepLink) {
+    // eslint-disable-next-line no-console
+    console.info('[masarx-desktop] Cold-start deep link received:', coldDeepLink);
+    dispatchDeepLink(coldDeepLink);
+  }
 
   // Track did-fail-load attempts across retries. Counter resets on every
   // successful navigation, so a one-off transient error after a healthy
@@ -277,6 +345,30 @@ export async function startMainProcess(): Promise<number> {
   ipcMain.handle('app:version', () => app.getVersion());
   ipcMain.handle('app:quit', () => {
     app.quit();
+  });
+
+  // Spec 014 (R032) — system-browser bridge for the OAuth consent window.
+  // The renderer hands us the Supabase authorize URL; we validate the
+  // scheme (R17-lite) and open it outside the shell. async so a guard
+  // rejection surfaces as an IPC rejection, like real handler errors.
+  ipcMain.handle('app:openExternal', async (_event, url: string) => {
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+      throw new Error('app:openExternal only accepts http(s) URLs');
+    }
+    return shell.openExternal(url);
+  });
+
+  // Spec 014 (R032) — deep-link readiness handshake. The renderer calls
+  // this once its `auth.onDeepLink` subscription is in place; the return
+  // value carries (and clears) any deep link that arrived before that —
+  // closing the cold-start race where the OS delivers the OAuth callback
+  // before the renderer could possibly listen. Subsequent links are
+  // pushed on `auth:deepLink`.
+  ipcMain.handle('auth:rendererReady', () => {
+    deepLinkRendererReady = true;
+    const url = pendingDeepLinkUrl;
+    pendingDeepLinkUrl = null;
+    return url;
   });
 
   // T040–T042 (spec 005 US3): window-control IPC surface exposed to the

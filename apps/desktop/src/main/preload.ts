@@ -31,6 +31,24 @@ const api = {
     version: (): Promise<string> => ipcRenderer.invoke('app:version'),
     platform: (): NodeJS.Platform => process.platform,
     quit: (): Promise<void> => ipcRenderer.invoke('app:quit'),
+    // Spec 014 (R032) — open a URL in the system browser. Used by the
+    // OAuth consent flow: main validates the http(s) scheme before
+    // calling shell.openExternal, so the renderer cannot be tricked into
+    // opening arbitrary schemes.
+    openExternal: (url: string): Promise<void> =>
+      ipcRenderer.invoke('app:openExternal', url),
+  },
+  // Spec 014 (R032) — masarx:// deep-link auth surface. `rendererReady`
+  // announces the renderer's subscription and returns (and clears) any
+  // deep link that arrived before it — the cold-start OAuth callback race
+  // is closed by pull, not by replay. `onDeepLink` receives every link
+  // dispatched after the renderer is ready (warm-start second-instance
+  // argv, macOS open-url).
+  auth: {
+    rendererReady: (): Promise<string | null> =>
+      ipcRenderer.invoke('auth:rendererReady'),
+    onDeepLink: (cb: (url: string) => void): Unsubscribe =>
+      subscribe<string>('auth:deepLink', cb),
   },
   updates: {
     check: (): Promise<unknown> => ipcRenderer.invoke('updates:check'),
