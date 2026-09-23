@@ -36,6 +36,7 @@
 
 ## G. Gates
 - [x] G1. `tsc`, eslint ratchet (≤52), web vitest, `pnpm build`
+- [x] G1b. Playwright e2e 2026-09-23: 5 passed / 0 failed (home + subjects shell, ar+en — the semester-filtered surfaces); 3 skipped by design (prod-smoke opt-in, subject-detail needs public seed data)
 - [x] G2. Server-side verification 2026-09-23 (read-only SQL on prod): RPC partition = 4 passive→migrate, 1 manual→protected, 3 admins→excluded; live `handle_new_user` prosrc confirmed inheriting `default_semester`. Remaining owner smoke: profile save + one real admin migrate click.
 
 ## H. Owner amendment — profile-only placement (2026-09-22)
