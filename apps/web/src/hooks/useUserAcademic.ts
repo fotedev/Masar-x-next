@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { queryCache } from "../lib/queryCache";
@@ -20,7 +19,6 @@ import {
 
 export function useUserAcademic() {
   const { user, loading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
 
   const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
   const [levels, setLevels] = useState<AcademicLevel[]>([]);
@@ -217,6 +215,8 @@ export function useUserAcademic() {
         academicCache.setUserAcademic(user.id, next);
         queryCache.invalidatePrefix("subjects");
 
+        const manuallySet =
+          options?.manualSemester ?? (options?.isProfileUpdate ?? false);
         await executeWithRetry(async () => {
           const { error } = await supabase
             .from("profiles")
@@ -228,8 +228,10 @@ export function useUserAcademic() {
                 // Spec 013: explicit profile-settings edits are the student's
                 // own choice (protected from bulk migration); onboarding is a
                 // passive default the admin migration may move later.
-                semester_manually_set:
-                  options?.manualSemester ?? (options?.isProfileUpdate ?? false),
+                semester_manually_set: manuallySet,
+                ...(manuallySet
+                  ? { semester_updated_at: new Date().toISOString() }
+                  : {}),
                 department_id: next.department_id,
                 updated_at: new Date().toISOString(),
               },
@@ -252,50 +254,6 @@ export function useUserAcademic() {
     [user, executeWithRetry],
   );
 
-  // Spec 013 — student semester switcher: targeted one-statement update that
-  // marks the choice as the student's own (bulk migrations skip it), keeps the
-  // academic cache in sync via the masarx_user_academic_updated event, and
-  // belt-and-braces invalidates the subjects caches so the visible grid
-  // updates immediately without a refresh.
-  const setUserSemester = useCallback(
-    async (semester: number): Promise<{ success: boolean; message?: string }> => {
-      if (!user) return { success: false };
-      if (![1, 2, 3].includes(semester)) return { success: false };
-
-      const previous = academic;
-      const next: UserAcademic = { ...academic, semester };
-      setAcademic(next);
-      academicCache.setUserAcademic(user.id, next);
-      queryCache.invalidatePrefix("subjects");
-      queryClient.invalidateQueries({ queryKey: ["subjects"] });
-
-      try {
-        await executeWithRetry(async () => {
-          const { error } = await supabase
-            .from("profiles")
-            .update({
-              semester,
-              semester_manually_set: true,
-              semester_updated_at: new Date().toISOString(),
-            })
-            .eq("id", user.id);
-          if (error) throw error;
-        });
-        return { success: true };
-      } catch (e: unknown) {
-        logger.error("Error setting user semester", e, {
-          userId: user.id,
-          semester,
-        });
-        setAcademic(previous);
-        academicCache.setUserAcademic(user.id, previous);
-        queryClient.invalidateQueries({ queryKey: ["subjects"] });
-        return { success: false };
-      }
-    },
-    [user, academic, executeWithRetry, queryClient],
-  );
-
   useEffect(() => {
     if (levels.length === 0) fetchOptions();
   }, [fetchOptions, levels.length]);
@@ -312,6 +270,5 @@ export function useUserAcademic() {
     fetchFailed,
     fetchAcademic: () => user && fetchProfileData(user.id),
     setUserAcademic,
-    setUserSemester,
   };
 }
