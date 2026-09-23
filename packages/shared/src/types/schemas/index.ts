@@ -26,6 +26,10 @@ export const ProfileSchema = z.object({
   avatar_url: z.string().nullable(),
   level: z.number().int().nullable(),
   semester: z.number().int().nullable(),
+  // Spec 013: semester_manually_set=true protects the student's own choice
+  // from admin bulk migrations (unless the admin forces it).
+  semester_manually_set: z.boolean().nullable().optional(),
+  semester_updated_at: z.string().nullable().optional(),
   department_id: z.string().nullable(),
 });
 

@@ -3,27 +3,32 @@ import { useState, useCallback, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 
+/**
+ * Spec 013 — read-only access to the platform DEFAULT semester, with local
+ * fallback logic if the Context fails or is missing. Writers go through the
+ * admin_migrate_student_semesters RPC; this hook never writes.
+ */
 export function usePlatformSettings() {
   const context = useOptionalPlatformSettingsContext();
 
   // Independent logic (identical to the old hook, used if Context fails or is missing)
   const getInitialSemester = () => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('activeSemester');
+      const saved = localStorage.getItem('defaultSemester');
       return saved ? Number(saved) : 1;
     }
     return 1;
   };
 
   const [localLoading, setLocalLoading] = useState(true);
-  const [localSettings, setLocalSettings] = useState<{ active_semester: number }>({ active_semester: getInitialSemester() });
+  const [localSettings, setLocalSettings] = useState<{ default_semester: number }>({ default_semester: getInitialSemester() });
 
   const fetchSettings = useCallback(async (skipCache = false) => {
     try {
       setLocalLoading(true);
       const cacheKey = cacheKeys.settings();
       if (!skipCache) {
-        const cached = queryCache.get<{ active_semester: number }>(cacheKey);
+        const cached = queryCache.get<{ default_semester: number }>(cacheKey);
         if (cached) {
           setLocalSettings(cached);
           setLocalLoading(false);
@@ -34,7 +39,7 @@ export function usePlatformSettings() {
       const { data, error } = await supabase
         .from("platform_settings")
         .select("key, value")
-        .eq("key", "active_semester")
+        .eq("key", "default_semester")
         .limit(1)
         .single();
 
@@ -45,11 +50,11 @@ export function usePlatformSettings() {
         newSemester = Number((data.value as any).semester ?? 1);
       }
 
-      const updatedSettings = { active_semester: newSemester };
+      const updatedSettings = { default_semester: newSemester };
       setLocalSettings(updatedSettings);
       queryCache.set(cacheKey, updatedSettings, cacheTTL.settings);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('activeSemester', newSemester.toString());
+        localStorage.setItem('defaultSemester', newSemester.toString());
       }
     } catch {
       // ignore
@@ -58,26 +63,18 @@ export function usePlatformSettings() {
     }
   }, []);
 
-  const setActiveSemester = useCallback(async (semester: number) => {
-    try {
-      setLocalLoading(true);
-      const { error } = await supabase
-        .from("platform_settings")
-        .upsert({ key: "active_semester", value: { semester }, updated_at: new Date().toISOString() }, { onConflict: "key" });
-
-      if (error) throw error;
-      setLocalSettings({ active_semester: semester });
-      queryCache.delete(cacheKeys.settings());
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('activeSemester', semester.toString());
-        window.dispatchEvent(new CustomEvent('activeSemesterChanged', { detail: semester }));
+  useEffect(() => {
+    const onLocalChange = (e: Event) => {
+      const detail = (e as CustomEvent<number>).detail;
+      if (typeof detail === "number" && detail >= 1 && detail <= 3) {
+        setLocalSettings({ default_semester: detail });
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('defaultSemester', detail.toString());
+        }
       }
-      return true;
-    } catch {
-      return false;
-    } finally {
-      setLocalLoading(false);
-    }
+    };
+    window.addEventListener("defaultSemesterChanged", onLocalChange);
+    return () => window.removeEventListener("defaultSemesterChanged", onLocalChange);
   }, []);
 
   useEffect(() => {
@@ -91,9 +88,8 @@ export function usePlatformSettings() {
     return {
       loading: context.loading,
       settings: context.settings,
-      activeSemester: context.activeSemester,
+      defaultSemester: context.defaultSemester,
       fetchSettings: context.fetchSettings,
-      setActiveSemester: context.setActiveSemester,
       isFallback: false,
     };
   }
@@ -101,9 +97,8 @@ export function usePlatformSettings() {
   return {
     loading: localLoading,
     settings: localSettings,
-    activeSemester: localSettings.active_semester || 1,
+    defaultSemester: localSettings.default_semester || 1,
     fetchSettings,
-    setActiveSemester,
     isFallback: true,
   };
 }

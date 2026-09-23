@@ -9,5 +9,10 @@
     "locked30Description": "محاولات فاشلة كثيرة. تم قفل النظام لمدة 30 ثانية.",
     "invalidOrExpiredDescription": "الكود الذي أدخلته غير صحيح أو منتهي الصلاحية.",
     "connectionError": "خطأ في الاتصال"
+  },
+  "semester": {
+    "label": "الترم",
+    "ariaLabel": "اختيار الترم الدراسي",
+    "updateFailed": "تعذر تحديث الترم. حاول مرة أخرى."
   }
 }

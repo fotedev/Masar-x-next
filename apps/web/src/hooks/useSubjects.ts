@@ -2,7 +2,7 @@ import { supabase } from "../lib/supabase";
 import { Subject as DBSubject } from "@/types/database";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { useAuth } from "../contexts/AuthContext";
-import { usePlatformSettings } from "./usePlatformSettings";
+import { useEffectiveSemester } from "./useEffectiveSemester";
 import { logger } from "../lib/logger";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -18,19 +18,25 @@ type UseSubjectsParams = {
 
 export function useSubjects(params: UseSubjectsParams = {}) {
   const { academic, loading: academicLoading } = useUserAcademic();
-  const { activeSemester } = usePlatformSettings();
+  // Spec 013: the STUDENT's own profile semester drives the catalog view
+  // (guests keep a localStorage choice; everyone falls back to the platform
+  // default). The old global active_semester override is gone.
+  const { effectiveSemester: resolvedSemester } = useEffectiveSemester(
+    academic.semester,
+  );
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
   const isAcademicParam =
     params.is_academic !== undefined ? params.is_academic : true;
   const isAnonymous = !user;
-  const effectiveLevel =
-    typeof params.level === "number" ? params.level : (academic.level ?? 1);
-  const effectiveSemester =
-    typeof params.semester === "number"
-      ? params.semester
-      : Number(activeSemester) || Number(academic.semester) || 1;
+  // Always coerced to a number — never undefined/null reaches PostgREST syntax.
+  const effectiveLevel = Number(
+    typeof params.level === "number" ? params.level : (academic.level ?? 1),
+  );
+  const effectiveSemester = Number(
+    typeof params.semester === "number" ? params.semester : resolvedSemester,
+  );
 
   const queryKey = [
     "subjects",

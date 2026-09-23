@@ -630,6 +630,7 @@ export default function ProfilePage() {
                     >
                       <option value={1}>{t("semester1")}</option>
                       <option value={2}>{t("semester2")}</option>
+                      <option value={3}>{t("semester3")}</option>
                     </select>
                   </div>
                   <button

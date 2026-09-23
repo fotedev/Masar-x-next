@@ -11,6 +11,7 @@
   "levelOption": "Level {level}",
   "semester1": "First semester",
   "semester2": "Second semester",
+  "semester3": "Summer semester",
   "nameRequired": "Please enter the subject name",
   "duplicateName": "A subject with this name already exists — please use a different name.",
   "saveSuccess": "Subject saved successfully",

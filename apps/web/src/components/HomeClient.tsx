@@ -9,7 +9,6 @@ import { useSummaries } from "@/hooks/useSummaries";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { usePlatformSettings } from "@/hooks/usePlatformSettings";
 import {
   SummaryWithRatings,
   Quiz,
@@ -36,7 +35,6 @@ export default function HomeClient() {
   const { user, isAdmin } = useAuth();
   const { summaries, editSummary, loading: summariesLoading } = useSummaries();
   const { subjects, loading: subjectsLoading } = useSubjects();
-  const { activeSemester } = usePlatformSettings();
   const { trackSummaryClick } = useAnalytics();
   const { videos: topVideos, loading: videosLoading } = useTopVideos(10);
   const [displayQuizzes, setDisplayQuizzes] = useState<Quiz[]>([]);
@@ -60,15 +58,14 @@ export default function HomeClient() {
     (value || "").trim().replace(/\s+/g, " "), []);
 
   const visibleSubjectSet = useMemo(() => {
+    // Spec 013: useSubjects already filters by the student's effective
+    // semester — home gating is visibility-only (plus general subjects that
+    // the query includes for every selection).
     const names = (subjects as Subject[])
-      .filter(
-        (s) =>
-          s.show_on_home &&
-          (!s.semester || Number(s.semester) === activeSemester),
-      )
+      .filter((s) => s.show_on_home)
       .map((s) => normalizeSubjectName(s.name));
     return new Set(names.filter(Boolean));
-  }, [subjects, activeSemester, normalizeSubjectName]);
+  }, [subjects, normalizeSubjectName]);
 
   const displaySummaries = useMemo(() => {
     const approvedSummaries = (summaries as SummaryWithRatings[]).filter(

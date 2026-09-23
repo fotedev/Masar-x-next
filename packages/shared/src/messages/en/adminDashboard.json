@@ -90,7 +90,17 @@
     "hidden": "Hidden",
     "hide": "Hide",
     "show": "Show",
-    "emptySearch": "No subjects match your search"
+    "emptySearch": "No subjects match your search",
+    "defaultSemesterLabel": "Default semester for new students",
+    "applyToStudents": "Set as default & migrate all students",
+    "applyConfirmTitle": "Migrate all students to {semester}?",
+    "applyConfirmDesc": "Every student will be moved except those who picked their semester manually (unless you enable the include option). Admin accounts are never touched.",
+    "includeManual": "Include students who set their semester manually",
+    "applying": "Migrating...",
+    "migratedToast": "Migrated {count} students to {semester}",
+    "migrateFailed": "Migration failed. Please try again.",
+    "confirm": "Confirm migration",
+    "cancel": "Cancel"
   },
   "groups": {
     "content": "Academic Content",
