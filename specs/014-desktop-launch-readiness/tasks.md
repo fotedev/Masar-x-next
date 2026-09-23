@@ -42,5 +42,5 @@ PNPM="node C:/Users/FOTE/AppData/Local/node/corepack/v1/pnpm/9.15.4/bin/pnpm.cjs
 - [x] R040 `docs/desktop-readiness.md`: Supabase redirect allow-list (`masarx://auth/callback`), Authenticode cert + `CSC_LINK` wiring, SmartScreen caveat copy, mac/linux Windows-only-by-design note.
 - [x] R041 Sync `docs/agents/references/02-release-pipeline.md` (drop better-sqlite3/install-app-deps, note protocol).
 - [x] R042 CHANGELOG: retro `[0.5.9]` + new `[0.6.0]`.
-- [ ] R043 Bump `apps/desktop/package.json` + root `package.json` to 0.6.0. **STOP before tag** — hand `git tag v0.6.0 && git push origin v0.6.0` to the owner.
+- [x] R043 Bump `apps/desktop/package.json` + root `package.json` to 0.6.0. **STOP before tag** — hand `git tag v0.6.0 && git push origin v0.6.0` to the owner.
 - [ ] R044 Update spec-completion dashboard + memory ledger.
