@@ -199,7 +199,7 @@ Run from the repository root:
 | Surface | Stack | Status |
 | --------- | ------- | -------- |
 | Web | Next.js 16, React 19, TypeScript, Tailwind, Framer Motion | **Live in production** |
-| Desktop | Electron, electron-builder, electron-updater, better-sqlite3 | In development |
+| Desktop | Electron, electron-builder, electron-updater | In development |
 | Mobile | Expo SDK 51, React Native 0.74.5 | In development |
 
 Active design work: [specs/004-multi-platform-expansion/](./specs/004-multi-platform-expansion/spec.md) — the spec, implementation plan, task breakdown, and developer quickstart live alongside it in the same directory.

@@ -52,15 +52,7 @@ extraMetadata:
   author:
     name: Masar X
     email: ops@masarx.ai
-# Pack the app source into a single app.asar archive. Re-enabled after
-# `scripts/prebuild.mjs` was updated to materialize the
-# `node_modules/masarx-shared` workspace symlink as a real directory
-# copy. Without that materialization, electron-builder's asar packager
-# follows the symlink during its `asarUnpack` pattern walk and rejects
-# the path as "must be under apps/desktop/". The desktop main process
-# only has a `import type` reference to masarx-shared (erased at
-# compile time), so the copy is small (~193 KB) and exists only to
-# satisfy the asar packager's path check.
+# Pack the app source into a single app.asar archive.
 #
 # Two benefits of asar:
 #   1. Installation speed — single ~80 MB archive extracted in
@@ -99,28 +91,12 @@ files:
   - "!**/node_modules/.bin"
   - "!**/{.git,.github,coverage,docs,specs,__tests__,test}"
 
-# Native modules (better-sqlite3) ship prebuilt .node binaries; they
-# must be unpacked from the asar archive so Node can dlopen them at
-# runtime via the standard require() path. Without asarUnpack, the
-# .node file is inside the asar and dlopen fails on Windows/Linux.
-asarUnpack:
-  - "**/node_modules/better-sqlite3/**"
-
-# Native dependencies — `npmRebuild: true` below is the current
-# mechanism: electron-builder 25.x dropped the `nativeDependencies`
-# array (replaced by the global flag). For better-sqlite3 specifically,
-# the prebuilt `.node` binary is unpacked from the asar archive
-# (`asarUnpack` above) so Node can dlopen it via the standard
-# `require()` path at runtime.
-
-# Use prebuilt better-sqlite3 binaries. v11.10.0 ships electron-v128
-# prebuilds (Electron 32's ABI) for win32-x64, downloaded via
-# `prebuild-install --runtime=electron --target=32.3.3`. The local
-# build/Release/better_sqlite3.node has been replaced with the
-# electron-v128 prebuild (verified by process.dlopen failing on Node
-# 24's ABI 137 with "compiled against NODE_MODULE_VERSION 128").
-# Toggling this to `true` would force a node-gyp source compile, which
-# requires Visual Studio Build Tools (not installed locally).
+# Native dependencies: none. better-sqlite3 (the last native module) was
+# removed with the LocalReadCache in ddb1612 and its dead dependency entry
+# was dropped in spec 014 — every runtime dependency is now pure JS, so
+# there is nothing to rebuild for Electron's ABI and nothing needs
+# asarUnpack. `npmRebuild: false` keeps electron-builder from attempting
+# any rebuild pass at all.
 npmRebuild: false
 
 # Extra resources bundled alongside the binary so the production main

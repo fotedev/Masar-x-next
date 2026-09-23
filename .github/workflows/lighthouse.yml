@@ -79,9 +79,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # Same posture as ci.yml: better-sqlite3's postinstall is
-        # skipped via the root .npmrc; everything else installs
-        # normally so the web build finds its platform binaries.
+        # Postinstalls run only for the pnpm-workspace.yaml allowlist;
+        # everything else installs normally so the web build finds its
+        # platform binaries.
         run: pnpm install --frozen-lockfile
 
       - name: Build web app

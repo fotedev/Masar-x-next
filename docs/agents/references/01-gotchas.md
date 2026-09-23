@@ -77,11 +77,11 @@
 
 ## 8. pnpm 9.x: `pnpm.neverBuiltDependencies` goes in root `package.json`, NOT `.npmrc`
 
-- **Trigger:** You add a package that needs to skip its postinstall (currently `better-sqlite3`).
-- **Why:** `pnpm 9.x` silently ignores the `.npmrc` form (`neverBuiltDependencies[]=pkg-name`) for workspace projects (pnpm/pnpm#5407). `--ignore-scripts` is the wrong substitute — it also skips `electron`'s postinstall and breaks `electron-builder install-app-deps`.
+- **Trigger:** You add a package whose postinstall must be skipped. (2026-09-23, spec 014: the last such package, `better-sqlite3`, was removed as a dead dependency — the `"pnpm"` key is currently absent from root `package.json`. This gotcha stays as the mechanism reference for the next native dep.)
+- **Why:** `pnpm 9.x` silently ignores the `.npmrc` form (`neverBuiltDependencies[]=pkg-name`) for workspace projects (pnpm/pnpm#5407). `--ignore-scripts` is the wrong substitute — it also skips `electron`'s postinstall and breaks the binary download the desktop packaging relies on.
 - **Fix:** Put it under the `"pnpm"` key in the root `package.json`:
   ```json
-  "pnpm": { "neverBuiltDependencies": ["better-sqlite3"] }
+  "pnpm": { "neverBuiltDependencies": ["<package-name>"] }
   ```
 
 ## 9. `gh secret set` from Windows `.env` keeps trailing `\r\n`

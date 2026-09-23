@@ -17,20 +17,15 @@ updates:
           - patch
     # Major bumps stay ungrouped (Electron pinned exact per I6 — majors need a spec).
     ignore:
-      # Electron major/minor bumps require the better-sqlite3 ABI + release-pipeline
-      # work (spec 005 / 02-release-pipeline.md) — handle via a dedicated upgrade,
-      # not autodrift. Patch-level security fixes still come through.
+      # Electron major/minor bumps require a dedicated upgrade spec (I11) with a
+      # packaged-launch + smoke verification pass — handle via a spec, not
+      # autodrift. Patch-level security fixes still come through. (Spec 014
+      # executed the 32→44 upgrade; the desktop has no native modules anymore,
+      # so future bumps no longer carry an ABI-pairing risk.)
       - dependency-name: electron
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
-      # better-sqlite3 ANY bump is held: its prebuilt .node binaries must match the
-      # pinned Electron's ABI (v128 for Electron 32 — see electron-builder.yml
-      # npmRebuild note). Desktop vitest fails environmentally (G5.2), so CI cannot
-      # catch a broken electron↔better-sqlite3 pairing — a clean-merging PR would
-      # be a silent desktop break. Bump it together with Electron in the G5.1
-      # post-MVP upgrade.
-      - dependency-name: better-sqlite3
       # Expo SDK majors are held (owner-flagged 2026-09-19, reversible — same
       # precedent as the Cloudinary preset): mobile is pinned to Expo SDK 51,
       # has no test suite yet, and the SDK upgrade belongs to the post-MVP

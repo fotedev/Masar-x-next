@@ -23,12 +23,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "better-sqlite3": "^11.5.0",
-    "electron-updater": "^6.3.9",
-    "masarx-shared": "workspace:*"
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^5.0.1",
     "electron": "32.2.0",
