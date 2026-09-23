@@ -4,6 +4,15 @@ import { setTimeout as wait } from 'node:timers/promises';
 import { request as httpRequest } from 'node:http';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
+// Spec 014 — resolve electron's launcher through Node's module resolution
+// instead of a relative `./node_modules/electron/cli.js` path: under the
+// hoisted node-linker the electron package lives in the ROOT node_modules,
+// so a cwd-relative path silently misses and the spawned node process
+// exits 1 before Electron even starts (the G5.2 environmental failure).
+const requireFromHere = createRequire(import.meta.url);
+const electronCliPath = requireFromHere.resolve('electron/cli.js');
 
 // ============================================================================
 // T018 — Smoke test for the desktop app
@@ -119,7 +128,7 @@ describeSmoke('T018 — Desktop app smoke test (red until T020)', () => {
       process.execPath,
       [
         '--no-warnings',
-        './node_modules/electron/cli.js',
+        electronCliPath,
         '.',
         '--masarx-smoke',
       ],
