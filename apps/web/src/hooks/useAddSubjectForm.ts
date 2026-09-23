@@ -35,9 +35,9 @@ export function useAddSubjectForm({
   onClose,
 }: UseAddSubjectFormProps) {
   const t = useTranslations("addSubjectModal");
-  // New subjects default to the platform's active term — semester 1 is
-  // invisible to students while active_semester is 2 (public grid filter).
-  const { activeSemester } = usePlatformSettings();
+  // New subjects default to the platform's default term — a semester the
+  // students aren't viewing yet would make the new subject invisible.
+  const { defaultSemester } = usePlatformSettings();
   const [formData, setFormData] = useState<SubjectFormData>({
     name: "",
     professor: "",
@@ -46,7 +46,7 @@ export function useAddSubjectForm({
     schedule: "",
     location: "",
     level: 1,
-    semester: Number(activeSemester) || 1,
+    semester: Number(defaultSemester) || 1,
     is_academic: true,
     show_on_home: true,
     // Admin-created subjects are published immediately; "pending" stranded
@@ -65,12 +65,12 @@ export function useAddSubjectForm({
       schedule: "",
       location: "",
       level: 1,
-      semester: Number(activeSemester) || 1,
+      semester: Number(defaultSemester) || 1,
       is_academic: true,
       show_on_home: true,
       status: "approved",
     });
-  }, [activeSemester]);
+  }, [defaultSemester]);
 
   useEffect(() => {
     if (editingSubject) {

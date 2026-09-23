@@ -1,14 +1,13 @@
 import { Layout, Eye, EyeOff, Search } from "lucide-react";
-import { logger } from "@/lib/logger";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useSubjects } from "../hooks/useSubjects";
-import { SemesterSwitcher } from "./SemesterSwitcher";
+import { SemesterAdminControl } from "./SemesterAdminControl";
 import { usePlatformSettings } from "../hooks/usePlatformSettings";
 
 export function PageManagementTab() {
   const t = useTranslations("adminDashboard.pageManagementTab");
-  const { activeSemester, loading: settingsLoading } = usePlatformSettings();
+  const { defaultSemester, loading: settingsLoading } = usePlatformSettings();
   const {
     subjects,
     loading: subjectsLoading,
@@ -18,15 +17,16 @@ export function PageManagementTab() {
 
   const isLoading = subjectsLoading || settingsLoading;
 
-  // Re-calculate filtered subjects whenever activeSemester or subjects change
+  // Re-calculate filtered subjects whenever the default semester changes —
+  // the admin manages the visibility of the term they are about to set.
   const filteredSubjects = useMemo(() => {
     if (!subjects || subjects.length === 0) return [];
 
-    // 1. Filter by active semester
+    // 1. Filter by the default (target) semester
     const semesterFiltered = subjects.filter((s) => {
       const subjectSem = s.semester ? Number(s.semester) : null;
       if (subjectSem === null) return true;
-      return subjectSem === activeSemester;
+      return subjectSem === defaultSemester;
     });
 
     // 2. Filter by search term
@@ -34,14 +34,7 @@ export function PageManagementTab() {
     return semesterFiltered.filter((s) =>
       s.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [subjects, searchTerm, activeSemester]);
-
-  // Effect to handle manual refresh if needed, though useSubjects should handle it
-  useEffect(() => {
-    // This effect ensures that when activeSemester changes,
-    // we are at least aware of it in this component
-    logger.debug("Active semester changed to:", { activeSemester });
-  }, [activeSemester]);
+  }, [subjects, searchTerm, defaultSemester]);
 
   if (isLoading && subjects.length === 0) {
     return (
@@ -64,7 +57,7 @@ export function PageManagementTab() {
           </p>
         </div>
         <div className="mt-3 sm:mt-0">
-          <SemesterSwitcher />
+          <SemesterAdminControl />
         </div>
       </div>
 

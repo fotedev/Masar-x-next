@@ -76,7 +76,7 @@ export default function AcademicOnboardingPage() {
       return;
     }
 
-    if (![1, 2].includes(semester)) {
+    if (![1, 2, 3].includes(semester)) {
       setError(t("invalidSemester"));
       return;
     }
@@ -163,6 +163,7 @@ export default function AcademicOnboardingPage() {
             >
               <option value={1}>{t("academic.term1")}</option>
               <option value={2}>{t("academic.term2")}</option>
+              <option value={3}>{t("academic.term3")}</option>
             </select>
           </div>
 

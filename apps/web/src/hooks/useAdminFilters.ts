@@ -11,7 +11,7 @@ interface UseAdminFiltersProps {
 }
 
 export function useAdminFilters({ summaries, news, quizzes, appeals }: UseAdminFiltersProps) {
-  const { activeSemester } = usePlatformSettings();
+  const { defaultSemester } = usePlatformSettings();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
 
   const [globalFilters, setGlobalFilters] = useState({
@@ -26,13 +26,13 @@ export function useAdminFilters({ summaries, news, quizzes, appeals }: UseAdminF
   }, [getDepartmentsForLevelName, globalFilters.year]);
 
   useEffect(() => {
-    if (globalFilters.year || !activeSemester) return;
-    const idx = activeSemester - 1;
+    if (globalFilters.year || !defaultSemester) return;
+    const idx = defaultSemester - 1;
     const defaultLevel = levels[idx]?.name;
     if (defaultLevel) {
       setGlobalFilters((prev) => ({ ...prev, year: defaultLevel }));
     }
-  }, [activeSemester, globalFilters.year, levels]);
+  }, [defaultSemester, globalFilters.year, levels]);
 
   const filteredNews = useMemo(() => {
     return news.filter((n) => {

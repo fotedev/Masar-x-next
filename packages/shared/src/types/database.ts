@@ -26,10 +26,13 @@ export interface Database {
           updated_at: string | null
           username: string | null
           full_name: string | null
+          display_name: string | null
           avatar_url: string | null
           website: string | null
           level: number | null
           semester: number | null
+          semester_manually_set: boolean
+          semester_updated_at: string | null
           department_id: string | null
           show_extra_assets: boolean | null
           show_extra_assets_updated_at: string | null
@@ -39,10 +42,13 @@ export interface Database {
           updated_at?: string | null
           username?: string | null
           full_name?: string | null
+          display_name?: string | null
           avatar_url?: string | null
           website?: string | null
           level?: number | null
           semester?: number | null
+          semester_manually_set?: boolean
+          semester_updated_at?: string | null
           department_id?: string | null
           show_extra_assets?: boolean | null
           show_extra_assets_updated_at?: string | null
@@ -52,10 +58,13 @@ export interface Database {
           updated_at?: string | null
           username?: string | null
           full_name?: string | null
+          display_name?: string | null
           avatar_url?: string | null
           website?: string | null
           level?: number | null
           semester?: number | null
+          semester_manually_set?: boolean
+          semester_updated_at?: string | null
           department_id?: string | null
           show_extra_assets?: boolean | null
           show_extra_assets_updated_at?: string | null

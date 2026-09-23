@@ -5,8 +5,6 @@ import { useSubjects } from "../hooks/useSubjects";
 import { useLocale, useTranslations } from "next-intl";
 import { Skeleton } from "./ui/Skeleton";
 
-import { usePlatformSettings } from "../hooks/usePlatformSettings";
-
 import { motion, useReducedMotion } from "framer-motion";
 
 interface SubjectsGridProps {
@@ -23,19 +21,12 @@ export function SubjectsGrid({
   const locale = useLocale();
   const shouldReduceMotion = useReducedMotion();
   const tSubjects = useTranslations("subjects");
-  const { activeSemester } = usePlatformSettings();
   const { subjects, loading } = useSubjects({ is_academic });
 
+  // Spec 013: the DB query already filters by the student's effective
+  // semester (profile-driven) — no client-side semester re-filter here.
   const filteredSubjects = subjects.filter((s) => {
-    // 1. Home visibility check
     if (showOnlyOnHome && !s.show_on_home) return false;
-
-    // 2. Semester filter (only for academic subjects)
-    if (is_academic) {
-      if (!s.semester) return true; // General subjects show in both semesters
-      return Number(s.semester) === activeSemester;
-    }
-
     return true;
   });
 

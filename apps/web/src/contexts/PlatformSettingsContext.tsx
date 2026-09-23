@@ -6,8 +6,21 @@ import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 import { RealtimePostgresChangesPayload, RealtimeChannel } from "@supabase/supabase-js";
 import { logger } from "@/lib/logger";
 
+/**
+ * Spec 013 — platform DEFAULT semester only.
+ *
+ * This context no longer decides what signed-in students see: their own
+ * profiles.semester does (see useEffectiveSemester). defaultSemester feeds
+ * anonymous visitors, new signups and the admin default. Writes go through
+ * the admin_migrate_student_semesters RPC (admin dashboard); this context is
+ * read-only and updates via Supabase Realtime or the local
+ * `defaultSemesterChanged` window event (optimistic admin update).
+ */
+
+const DEFAULT_SEMESTER_EVENT = "defaultSemesterChanged";
+
 interface PlatformSettings {
-  active_semester?: number;
+  default_semester?: number;
 }
 
 interface PlatformSettingsValue {
@@ -23,9 +36,8 @@ interface PlatformSettingsRow {
 interface PlatformSettingsContextType {
   loading: boolean;
   settings: PlatformSettings;
-  activeSemester: number;
+  defaultSemester: number;
   fetchSettings: (skipCache?: boolean) => Promise<void>;
-  setActiveSemester: (semester: number) => Promise<boolean>;
   error: Error | null;
 }
 
@@ -60,20 +72,19 @@ class PlatformSettingsErrorBoundary extends Component<{ children: ReactNode }, {
 function PlatformSettingsFallback({ children }: { children: ReactNode }) {
   const getInitialSemester = () => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("activeSemester");
+      const saved = localStorage.getItem("defaultSemester");
       return saved ? Number(saved) : 1;
     }
     return 1;
   };
 
-  const [settings] = useState<PlatformSettings>({ active_semester: getInitialSemester() });
+  const [settings] = useState<PlatformSettings>({ default_semester: getInitialSemester() });
 
   const value = useMemo(() => ({
     loading: false,
     settings,
-    activeSemester: settings.active_semester || 1,
+    defaultSemester: settings.default_semester || 1,
     fetchSettings: async () => {}, // No-op in fallback
-    setActiveSemester: async () => false, // No-op in fallback
     error: new Error("PlatformSettingsProvider failed, using fallback"),
   }), [settings]);
 
@@ -97,14 +108,14 @@ export function PlatformSettingsProvider({ children }: { children: ReactNode }) 
 function PlatformSettingsInternalProvider({ children }: { children: ReactNode }) {
   const getInitialSemester = () => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("activeSemester");
+      const saved = localStorage.getItem("defaultSemester");
       return saved ? Number(saved) : 1;
     }
     return 1;
   };
 
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<PlatformSettings>({ active_semester: getInitialSemester() });
+  const [settings, setSettings] = useState<PlatformSettings>({ default_semester: getInitialSemester() });
   const [error, setError] = useState<Error | null>(null);
 
   const fetchSettings = useCallback(async (skipCache = false) => {
@@ -124,7 +135,7 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
       const { data, error: fetchError } = await supabase
         .from("platform_settings")
         .select("key, value")
-        .eq("key", "active_semester")
+        .eq("key", "default_semester")
         .limit(1)
         .single();
 
@@ -142,12 +153,12 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
         newSemester = Number(semesterValue ?? 1);
       }
 
-      const updatedSettings = { active_semester: newSemester };
+      const updatedSettings = { default_semester: newSemester };
       setSettings(updatedSettings);
       queryCache.set(cacheKey, updatedSettings, cacheTTL.settings);
 
       if (typeof window !== "undefined") {
-        localStorage.setItem("activeSemester", newSemester.toString());
+        localStorage.setItem("defaultSemester", newSemester.toString());
       }
       setError(null);
     } catch (err) {
@@ -159,39 +170,24 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
     }
   }, []);
 
-  const setActiveSemester = useCallback(async (semester: number) => {
-    try {
-      setLoading(true);
-      const payload = { semester };
-      const { error: updateError } = await supabase
-        .from("platform_settings")
-        .upsert(
-          { key: "active_semester", value: payload, updated_at: new Date().toISOString() },
-          { onConflict: "key" }
-        );
-
-      if (updateError) throw updateError;
-
-      const updatedSettings = { active_semester: semester };
-      setSettings(updatedSettings);
-      queryCache.delete(cacheKeys.settings());
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("activeSemester", semester.toString());
-        window.dispatchEvent(new CustomEvent("activeSemesterChanged", { detail: semester }));
-      }
-      return true;
-    } catch (err) {
-      logger.error("Failed to update semester", err);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     void fetchSettings();
   }, [fetchSettings]);
+
+  // Optimistic local updates (admin RPC already committed server-side).
+  useEffect(() => {
+    const onLocalChange = (e: Event) => {
+      const detail = (e as CustomEvent<number>).detail;
+      if (typeof detail === "number" && detail >= 1 && detail <= 3) {
+        setSettings({ default_semester: detail });
+        if (typeof window !== "undefined") {
+          localStorage.setItem("defaultSemester", detail.toString());
+        }
+      }
+    };
+    window.addEventListener(DEFAULT_SEMESTER_EVENT, onLocalChange);
+    return () => window.removeEventListener(DEFAULT_SEMESTER_EVENT, onLocalChange);
+  }, []);
 
   // Realtime Subscription (Unified)
   useEffect(() => {
@@ -201,7 +197,7 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
     const setupRealtime = () => {
       const channelId = Math.random().toString(36).substring(7);
       const channelName = `platform_settings_global_${channelId}`;
-      
+
       logger.info(`Initializing global realtime channel: ${channelName}`);
       const newChannel = supabase.channel(channelName);
       channel = newChannel;
@@ -213,7 +209,7 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
             event: "*",
             schema: "public",
             table: "platform_settings",
-            filter: "key=eq.active_semester",
+            filter: "key=eq.default_semester",
           },
           (payload: RealtimePostgresChangesPayload<PlatformSettingsRow>) => {
             if (!mounted) return;
@@ -224,11 +220,10 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
 
             const newVal = Number(value.semester);
             if (!isNaN(newVal)) {
-              logger.info(`Realtime update received: Semester ${newVal}`);
-              setSettings({ active_semester: newVal });
+              logger.info(`Realtime update received: Default semester ${newVal}`);
+              setSettings({ default_semester: newVal });
               if (typeof window !== "undefined") {
-                localStorage.setItem("activeSemester", newVal.toString());
-                window.dispatchEvent(new CustomEvent("activeSemesterChanged", { detail: newVal }));
+                localStorage.setItem("defaultSemester", newVal.toString());
               }
             }
           }
@@ -257,11 +252,10 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
   const value = useMemo(() => ({
     loading,
     settings,
-    activeSemester: settings.active_semester || 1,
+    defaultSemester: settings.default_semester || 1,
     fetchSettings,
-    setActiveSemester,
     error,
-  }), [loading, settings, fetchSettings, setActiveSemester, error]);
+  }), [loading, settings, fetchSettings, error]);
 
   return (
     <PlatformSettingsContext.Provider value={value}>
