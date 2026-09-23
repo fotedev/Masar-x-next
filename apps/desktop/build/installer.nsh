@@ -1,17 +1,26 @@
-; installer.nsh — custom NSIS hooks for Masar X (T019)
+; installer.nsh — custom NSIS hooks for Masar X (T019, implemented in spec 014 R036)
 ;
-; This file is referenced by electron-builder.yml `nsis.include`. The
-; intended contents are documented in T019 (custom URL protocol
-; registration so the OAuth deep link from the system browser can
-; return to the desktop app). The implementation was deferred; the
-; file exists as a placeholder so the NSIS build does not fail.
+; Referenced by electron-builder.yml `nsis.include`. Registers the
+; masarx:// URL protocol under HKCU so the OS hands OAuth deep links
+; (masarx://auth/callback?code=...) back to the installed app — the PKCE
+; code the renderer exchanges after Google consent completes in the
+; system browser. The packaged main process also calls
+; app.setAsDefaultProtocolClient at startup (spec 014 R031); this
+; installer-time registration is the authoritative, elevated-less
+; (HKCU) record that survives without a first app launch.
 ;
-; The protocol to register: `masarx:` — used by the OAuth callback
-; flow documented in `apps/desktop/electron-builder.yml` and the
-; `src/navigation.ts` deep-link handler in the web app.
-;
-; T019.1 follow-up: implement the URL protocol registration here
-; (WriteRegStr HKCU "Software\Classes\masarx" "URL Protocol" ""
-;  + WriteRegStr HKCU "Software\Classes\masarx\shell\open\command"
-;  '"$INSTDIR\${PRODUCT_FILENAME}.exe" "%1"') and remove this
-; placeholder comment.
+; ${APP_EXECUTABLE_FILENAME} is an electron-builder NSIS define for the
+; packaged exe filename ("Masar X.exe").
+
+!macro customInstall
+  DetailPrint "Registering masarx:// URL protocol"
+  WriteRegStr HKCU "Software\Classes\masarx" "" "URL:masarx"
+  WriteRegStr HKCU "Software\Classes\masarx" "URL Protocol" ""
+  WriteRegStr HKCU "Software\Classes\masarx\DefaultIcon" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME},0"'
+  WriteRegStr HKCU "Software\Classes\masarx\shell\open\command" "" '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" "%1"'
+!macroend
+
+!macro customUnInstall
+  DetailPrint "Removing masarx:// URL protocol"
+  DeleteRegKey HKCU "Software\Classes\masarx"
+!macroend
