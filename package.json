@@ -18,10 +18,5 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "seed:launch": "node scripts/seed-mvp-launch.mjs"
-  },
-  "pnpm": {
-    "neverBuiltDependencies": [
-      "better-sqlite3"
-    ]
   }
 }

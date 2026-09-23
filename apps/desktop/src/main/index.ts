@@ -63,12 +63,12 @@ function recoveryPageUrl(originalUrl: string, lastError: string): string {
 //      local server.
 //   5. Wire the IPC handlers that preload.ts invokes.
 //
-// T021: `auth:*` IPC channels round-trip a `StoredSession` through
-// `LocalAuthSession` (an encrypted file in `userData/auth/session.bin`,
-// encrypted via `safeStorage`). The renderer holds the supabase client
-// and persists via `auth:setSession`; `auth:changed` is broadcast on
-// every write/clear for multi-window sync (v1 has a single window; the
-// channel is in place for v2).
+// Auth note: the original T021 `auth:*` IPC surface (LocalAuthSession
+// + safeStorage) was removed as dead code in ddb1612 (2026-09-12) — the
+// renderer holds the Supabase session itself and the app is online-only
+// by design. Deep-link auth callbacks arrive over `auth:deepLink`
+// (spec 014); the spec-014 register documents the Supabase allow-list
+// the flow needs.
 //
 // The contract (T017) asserts:
 //   - `startMainProcess` is a named export

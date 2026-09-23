@@ -95,11 +95,12 @@ vi.mock('electron', () => ({
   app: mockApp,
   BrowserWindow: BrowserWindowMock,
   ipcMain: mockIpcMain,
-  // T024 — `index.ts` imports `buildAppMenu` from `./menu.js`, which
-  // uses `Menu.buildFromTemplate` and `shell.openExternal` at
-  // module-load time. The T017 contract is about Electron startup,
-  // not the menu; stub both with no-op surfaces. The T024 contract
-  // test exercises the real `buildAppMenu` in `menu.test.ts`.
+  // index.ts imports Menu + shell: `Menu.setApplicationMenu(null)` strips
+  // the native menu before window creation (T040–T043), and
+  // `shell.openExternal` routes http(s) window.open calls to the system
+  // browser (audit R5). Both are stubbed with no-op surfaces here; the
+  // old `./menu.js` module referenced by the original T024 comment was
+  // deleted in ddb1612 (2026-09-12).
   Menu: {
     buildFromTemplate: vi.fn(() => ({ items: [] })),
     setApplicationMenu: vi.fn(),

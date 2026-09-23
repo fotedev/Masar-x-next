@@ -37,12 +37,11 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # better-sqlite3's `install` postinstall is skipped via the
-        # root `.npmrc`'s `neverBuiltDependencies[]=better-sqlite3`
-        # (it has no Node 24 prebuild on Linux x64, and node-gyp
-        # can't run in the CI sandbox). All other packages'
-        # postinstalls (sharp, esbuild, @swc/core) still run as
-        # normal so the web build can find their platform binaries.
+        # Postinstalls run only for the pnpm-workspace.yaml
+        # `onlyBuiltDependencies` allowlist (sharp, esbuild, @swc/core,
+        # electron, …) so the web build finds its platform binaries.
+        # The desktop has no native modules (spec 014 removed the dead
+        # better-sqlite3 dependency).
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint

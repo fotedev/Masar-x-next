@@ -39,22 +39,20 @@
 # What it does
 # ------------
 # 1. pnpm install (frozen lockfile) — installs all workspace deps.
-# 2. `electron-builder install-app-deps` for the desktop workspace —
-#    fetches the better-sqlite3 prebuild matched to Electron 32's ABI
-#    (v128). Without this, better-sqlite3's `install` script falls
-#    back to `node-gyp rebuild` against the system Node, producing a
-#    `.node` file with the wrong ABI that won't load inside Electron.
-# 3. Builds the Next.js web standalone bundle into
+#    Postinstalls run only for the pnpm-workspace.yaml allowlist; the
+#    desktop has no native modules since spec 014 removed the dead
+#    better-sqlite3 dependency, so no `install-app-deps` pass exists.
+# 2. Builds the Next.js web standalone bundle into
 #    `apps/web/.next/standalone/`. The desktop installer ships this
 #    bundle as an `extraResource` (see `electron-builder.yml`), so it
 #    must be built before the desktop step.
-# 4. Runs `pnpm --filter desktop run build:all`, which invokes
+# 3. Runs `pnpm --filter desktop run build:all`, which invokes
 #    `electron-builder --win --x64`. The yml lists both `nsis` and
 #    `portable` under `win.target`, so both files land in
 #    `apps/desktop/out/` in one pass. `GH_TOKEN` is the built-in
 #    `GITHUB_TOKEN` (`permissions: contents: write` below) so
 #    electron-builder can create the release and upload assets.
-# 5. Lists the build artifacts as a sanity check (fails fast if the
+# 4. Lists the build artifacts as a sanity check (fails fast if the
 #    build step silently produced no artifacts).
 #
 # Out of scope
@@ -102,24 +100,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # better-sqlite3's `install` postinstall is the only one we
-        # need to skip on windows-latest. It's listed in the root
-        # `package.json` under `pnpm.neverBuiltDependencies`, so pnpm
-        # skips it for us. All other packages (electron, esbuild,
-        # sharp, @swc/core, @parcel/watcher) still run their
-        # postinstalls — in particular, the electron postinstall
-        # downloads the Electron 32.2.0 binary, which the next step
-        # relies on.
+        # Postinstalls run only for the pnpm-workspace.yaml
+        # `onlyBuiltDependencies` allowlist — in particular, the electron
+        # postinstall downloads the Electron binary, which the next step
+        # relies on. The desktop has no native modules to rebuild for
+        # Electron's ABI (spec 014 removed the dead better-sqlite3
+        # dependency and with it the `install-app-deps` step).
         run: pnpm install --frozen-lockfile
-
-      - name: Install Electron native modules
-        # better-sqlite3 v11.10.0 ships electron-v128 prebuilds
-        # (Electron 32's ABI). The previous step intentionally
-        # skipped its postinstall (see the comment on
-        # `Install dependencies`), so better-sqlite3 has no `.node`
-        # binary on disk yet. This step fetches the correct prebuild
-        # (electron-v128, ABI 128) without falling back to node-gyp.
-        run: pnpm --filter desktop exec electron-builder install-app-deps
 
       - name: Build Web standalone app
         # NEXT_PUBLIC_* vars are inlined into the client bundle at build
