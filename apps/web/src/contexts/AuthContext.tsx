@@ -12,6 +12,7 @@ import {
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { ProfileRow } from "@/lib/admin-db/schema";
 import { supabase } from "../lib/supabase";
+import { isDesktopRuntime, getDesktopBridge } from "../lib/desktop/runtime";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
 import { logger } from "../lib/logger";
 import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
@@ -179,6 +180,47 @@ export function AuthProvider({
     };
   }, []);
 
+  // Spec 014 (R035) — masarx:// deep-link auth exchange, desktop shell only.
+  // The OS delivers `masarx://auth/callback?code=…` to main, main forwards
+  // it over the bridge, and the PKCE code is exchanged for a session here.
+  // On success the existing onAuthStateChange(SIGNED_IN) handler above
+  // updates the UI — no new user-facing strings are needed. Exchange
+  // failures log to console only; the user retries via the Google button.
+  useEffect(() => {
+    if (!isDesktopRuntime()) return;
+    const bridge = getDesktopBridge();
+    if (!bridge?.auth) return;
+
+    const handledCodes = new Set<string>();
+    const handleDeepLink = async (rawUrl: string) => {
+      try {
+        // Defense in depth: the IPC payload is an untrusted string (any
+        // web page can invoke masarx:// from a browser), so re-validate
+        // the shape before extracting the code — same gate as
+        // apps/desktop/src/main/deepLink.ts.
+        const url = new URL(rawUrl);
+        if (url.protocol !== "masarx:" || url.host !== "auth" || url.pathname !== "/callback") {
+          return;
+        }
+        const code = url.searchParams.get("code");
+        if (!code || handledCodes.has(code)) return;
+        handledCodes.add(code);
+        await supabase.auth.exchangeCodeForSession(code);
+      } catch (err) {
+        logger.error("[auth] Deep-link code exchange failed:", err);
+      }
+    };
+
+    // Pull any code that arrived before this effect subscribed (the
+    // cold-start race), then subscribe for subsequent links.
+    void bridge.auth.rendererReady().then((pending) => {
+      if (pending) void handleDeepLink(pending);
+    });
+    return bridge.auth.onDeepLink((url) => {
+      void handleDeepLink(url);
+    });
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -193,6 +235,40 @@ export function AuthProvider({
   };
 
   const signInWithGoogle = async () => {
+    // Desktop shell (spec 014 R034): the renderer is served from
+    // `http://127.0.0.1:<random port>`, so a loopback redirectTo can
+    // neither be allow-listed in Supabase (dynamic port) nor carry the
+    // session back into the app — and `will-navigate` in the shell
+    // (correctly) blocks any external top-level navigation. Use the
+    // masarx:// deep link with the PKCE flow instead: consent happens in
+    // the system browser, and the OS hands `masarx://auth/callback?code=…`
+    // back to the shell, where the effect below exchanges the code.
+    if (isDesktopRuntime()) {
+      const bridge = getDesktopBridge();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "masarx://auth/callback",
+          skipBrowserRedirect: true,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+      if (error) throw error;
+      if (!data?.url) return;
+      if (bridge?.app?.openExternal) {
+        await bridge.app.openExternal(data.url);
+      } else {
+        // Older shell without the openExternal bridge: main's
+        // setWindowOpenHandler routes http(s) window.open to the system
+        // browser anyway (audit R5).
+        window.open(data.url, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+
     const origin =
       typeof window !== "undefined" ? window.location.origin : "";
     const { error } = await supabase.auth.signInWithOAuth({
