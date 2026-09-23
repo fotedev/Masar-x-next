@@ -36,7 +36,7 @@
 
 ## G. Gates
 - [x] G1. `tsc`, eslint ratchet (≤52), web vitest, `pnpm build`
-- [ ] G2. Manual checklist: bulk preserves manually-set; admins excluded; new signup inherits default
+- [x] G2. Server-side verification 2026-09-23 (read-only SQL on prod): RPC partition = 4 passive→migrate, 1 manual→protected, 3 admins→excluded; live `handle_new_user` prosrc confirmed inheriting `default_semester`. Remaining owner smoke: profile save + one real admin migrate click.
 
 ## H. Owner amendment — profile-only placement (2026-09-22)
 - [x] H1. Remove switcher from Header.tsx + header/MobileNav.tsx; retire component to .trash/
