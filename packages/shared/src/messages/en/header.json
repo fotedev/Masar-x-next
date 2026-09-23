@@ -9,10 +9,5 @@
     "securityAlertTitle": "Security alert",
     "invalidOrExpiredDescription": "The code you entered is incorrect or expired.",
     "connectionError": "Connection error"
-  },
-  "semester": {
-    "label": "Semester",
-    "ariaLabel": "Choose your semester",
-    "updateFailed": "Couldn't update the semester. Please try again."
   }
 }
