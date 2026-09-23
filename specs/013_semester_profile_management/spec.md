@@ -75,3 +75,11 @@ After a migration students become passive again (`manually_set=false`), so the n
 ## 4. Out of scope (explicit)
 
 No new tables; no RLS participation gates; no URL/content blocking; no term lifecycle states or overrides; `active_semester` row stays in the DB but stops being read; quizzes/news semester facets keep 1|2 (summer facet later if needed).
+
+## 5. Post-implementation amendment (owner decision, 2026-09-22)
+
+The owner smoke-tested the header switcher and rejected it outright: the segmented control overlapped nav links (`Downloads`) and cluttered the navbar. Decision: **semester selection appears ONLY in the profile page's academic settings form** — never in the header or mobile nav. Implemented as a follow-up commit:
+
+- `StudentSemesterSwitcher` removed from `Header.tsx` + `header/MobileNav.tsx` and retired to `.trash/`.
+- Profile academic form (existing level/semester/department form) is the single student-facing entry point; its save path (`setUserAcademic`, `isProfileUpdate: true`) writes `semester_manually_set = true` + `semester_updated_at` and invalidates the subjects caches. `setUserSemester` removed as dead code (the profile path covers it via the `masarx_user_academic_updated` event sync).
+- Resolution layer (`useEffectiveSemester`) unchanged — profile → guest localStorage → default; guests simply see `default_semester` (owner accepted; no guest UI).

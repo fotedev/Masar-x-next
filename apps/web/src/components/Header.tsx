@@ -8,7 +8,6 @@ import { supabase } from "../lib/supabase";
 import { useTranslations, useLocale } from "next-intl";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
-import { StudentSemesterSwitcher } from "./StudentSemesterSwitcher";
 import { logger } from "@/lib/logger";
 
 import { DynamicLogo } from "./DynamicLogo";
@@ -389,7 +388,6 @@ export const Header = memo(function Header() {
 
             <div className="flex items-center ms-auto shrink-0 gap-2">
               <div className="hidden lg:flex items-center gap-2 xl:gap-3">
-                <StudentSemesterSwitcher />
                 <ThemeToggle />
                 <LanguageToggle />
 

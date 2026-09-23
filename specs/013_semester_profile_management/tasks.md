@@ -36,4 +36,9 @@
 
 ## G. Gates
 - [x] G1. `tsc`, eslint ratchet (≤52), web vitest, `pnpm build`
-- [ ] G2. Manual checklist: guest switch persists; bulk preserves manually-set; admins excluded; new signup inherits default
+- [ ] G2. Manual checklist: bulk preserves manually-set; admins excluded; new signup inherits default
+
+## H. Owner amendment — profile-only placement (2026-09-22)
+- [x] H1. Remove switcher from Header.tsx + header/MobileNav.tsx; retire component to .trash/
+- [x] H2. Profile academic form = single student entry (summer option live in 3a20ff2); setUserAcademic stamps semester_updated_at on manual path
+- [x] H3. Remove dead setUserSemester; resolution layer (useEffectiveSemester) unchanged

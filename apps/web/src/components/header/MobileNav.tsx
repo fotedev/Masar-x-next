@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LanguageToggle } from "../LanguageToggle";
 import { ThemeToggle } from "../ThemeToggle";
 import { DynamicLogo } from "../DynamicLogo";
-import { StudentSemesterSwitcher } from "../StudentSemesterSwitcher";
 import {
   Home,
   Newspaper,
@@ -189,13 +188,6 @@ export function MobileNav({
                     </p>
                   </div>
                 )}
-              </motion.div>
-
-              {/* Semester switcher (display filter — Spec 013) */}
-              <motion.div variants={itemVariants}>
-                <div className="flex justify-center py-1">
-                  <StudentSemesterSwitcher className="w-full justify-center" />
-                </div>
               </motion.div>
 
               {/* Primary Navigation Links */}
