@@ -12,9 +12,9 @@ commit; stage only own paths.
 - [ ] T064 `pnpm -r --if-present typecheck` green (incl. mobile).
 
 ## C3 — Scripts + dev client (G4)
-- [ ] T065 mobile `lint` script → `eslint .`; violations fixed (config is dependency-free flat config; install `eslint` as devDep).
-- [ ] T066 mobile `export` script (`expo export --platform android`) + root `build:mobile` → `pnpm --filter mobile export`; export exits 0.
-- [ ] T067 add `expo-dev-client ~4.0` devDep (SDK 51 line).
+- [x] T065 mobile `lint` script → `eslint .`; added `eslint` + `typescript-eslint` (parser) devDeps matching web/desktop; config header updated; violations: none.
+- [x] T066 mobile `export` script (`expo export --platform android`) + root `build:mobile` → `pnpm --filter mobile export`; export exits 0 (2.73 MB hbc). **Root cause found en route:** `"type": "module"` in `apps/mobile/package.json` broke the whole Expo toolchain (metro.config.js / babel.config.js / index.js are CJS; `expo start` had tolerated it, export did not) — flag removed; metro.config.js restored to CJS with an explanatory note. First successful bundle ever for this app.
+- [x] T067 add `expo-dev-client ~4.0.29` (SDK 51 line) as dependency.
 
 ## C4 — AI bearer token (G5, T054a)
 - [ ] T068 `packages/shared/src/ai`: additive `authToken?: string` option on `aiRequest`/`sendAiMessage`/`streamAiMessage`; header only when set.

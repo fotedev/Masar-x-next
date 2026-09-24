@@ -1,13 +1,15 @@
 // T013c (Spec 004, Phase 2): minimal ESLint 9 flat config for the
-// Expo / React Native mobile app. Deliberately dependency-free - no
-// parsers, no plugins, nothing to install (apps/mobile has no
-// devDependencies yet; add `eslint` only when the mobile `lint`
-// script is wired to run eslint). The single enforced rule is the
-// AI-boundary import restriction (FR-020): the mobile runtime must
-// never import an AI provider SDK or call a provider endpoint
-// directly - AI access goes through `packages/shared/**` (the shared
-// AI client) which routes via `supabase/functions/**`. Severity is
-// `error` so a slip becomes a build break, not a warning.
+// Expo / React Native mobile app. Originally dependency-free; spec 018
+// (C3/T065) wired the `lint` script, which requires a TypeScript
+// parser — `typescript-eslint` (parser only, no rules) matches the
+// pattern already used by apps/web and apps/desktop. The single
+// enforced rule is the AI-boundary import restriction (FR-020): the
+// mobile runtime must never import an AI provider SDK or call a
+// provider endpoint directly - AI access goes through
+// `packages/shared/**` (the shared AI client) which routes via
+// `supabase/functions/**`. Severity is `error` so a slip becomes a
+// build break, not a warning.
+import tseslint from "typescript-eslint";
 
 export default [
   {
@@ -23,6 +25,9 @@ export default [
   },
   {
     files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+    },
     rules: {
       "no-restricted-imports": [
         "error",
