@@ -9,11 +9,11 @@ staging on every commit (#3).
 - [x] T076 `specs/019_mobile_parity/{spec.md,tasks.md}` committed.
 
 ## C2 — Subject detail + lecture content (G1, read-only)
-- [ ] T077 shared types (I2): add `lecture_key`, `lecture_id` to the hand-typed `files` Row in `packages/shared/src/types/database.ts`; web typecheck verified (failures confined to pre-existing spec-017 WIP paths, ledgered).
-- [ ] T078 `src/lib/lecture-content.ts` pure matcher (lecture_id → trimmed lecture_key → "other" grouping; empty key ⇒ "other") + `lecture-content.test.ts`.
-- [ ] T079 `SubjectDetailScreen`: subject header (locale-aware professor/description, schedule, location) + lecture index (`subject_lectures` by order_index) + per-lecture content groups + unclassified group; video/file/summary-PDF via `Linking.openURL`, quiz → QuizPlay.
-- [ ] T080 wiring: `RootStackParamList.SubjectDetail`, RootStack screen mount, `SubjectsScreen` card → Pressable navigate.
-- [ ] T081 gates: mobile typecheck/lint/test/export + shared + desktop typecheck.
+- [x] T077 **CORRECTED during execution:** the hand-typed `packages/shared` Database has NO `files`/`videos` tables at all, and the shared client is schema-loose (no Database generic) — mobile already uses local row interfaces for such tables (`src/types/quiz.ts` precedent). C2 therefore defines local interfaces in `lib/lecture-content.ts` + the screen; **no shared edit, no web-typecheck dependency**. Spec §2.1's premise amended here rather than silently.
+- [x] T078 `src/lib/lecture-content.ts` pure matcher (lecture_id → trimmed lecture_key → "other"; keyless rows never key-match — web line-90 guard preserved) + global grouping with id-priority + `lecture-content.test.ts` (10 tests; the grouping test caught a list-order bug in the first draft — id must win globally, not by find-order).
+- [x] T079 `SubjectDetailScreen`: locale-aware subject header (professor/schedule/location/description) + lecture chips (`subject_lectures` by order_index) + per-lecture groups (summaries w/ PDF open, videos, files via `Linking.openURL`; quizzes → QuizPlay) + always-visible "unclassified" section when non-empty; single fetch-per-subject grouped client-side (instant lecture switching).
+- [x] T080 wiring: `RootStackParamList.SubjectDetail`, RootStack mount (slide_from_right, headerShown false), `SubjectsScreen` card → Pressable navigate with pressed state.
+- [x] T081 gates: mobile typecheck ✅ · lint ✅ · vitest 28/28 ✅ · `expo export` ✅ · shared exit=0 · desktop exit=0.
 
 ## C3 — Signup + forgot password (G2, G3)
 - [ ] T082 `app.config.js`: `EXPO_PUBLIC_WEB_ORIGIN` → `extra.webOrigin` (default `https://masarx.vercel.app`); typed consumption.
