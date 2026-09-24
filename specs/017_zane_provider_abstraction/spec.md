@@ -465,7 +465,27 @@ Regression proof strategy (per commit, per `08-precommit.md`):
   - 402 error path produces a `NormalizedError` with `kind: 'QuotaExceeded'`; policy tests cover the cross-adapter fallback.
   - Breaker state is per-provider: two PuterProvider instances have independent breaker windows (the breaker is NOT a module-scope `let` anymore).
 
-**`puterFundsDepletedModel` short-circuit (owner check 2 — AC21):**
+**5xx matching test reconciliation (Commit 2.5 ledger, measured):** `errors.test.ts` went from 27 tests (parent `27cc65c`, Commit 2) to **40 tests** (current `HEAD` after Commit 2.5). Net **+13** (1 test removed, **14 added**). Exact delta:
+
+- **Removed**: `5xx / server error → Unavailable` (replaced by the typed-status form below)
+- **Added — Positive → `Unavailable` (9)**:
+  - `server error → Unavailable`
+  - `service unavailable → Unavailable`
+  - `bad gateway → Unavailable`
+  - `gateway timeout → Unavailable`
+  - `error.status = 503 → Unavailable (typed status, not regex)`
+  - `error.statusCode = 503 → Unavailable`
+  - `"HTTP 503" phrase → Unavailable`
+  - `"status 503" phrase → Unavailable`
+  - `"status code 503" phrase → Unavailable`
+- **Added — Negative → `Fatal` (5): regression guards that bare numeric codes inside messages do NOT match the 5xx rule:
+  - `"context length 512 exceeded" → Fatal (NOT Unavailable)`
+  - `"limit of 500 tokens" → Fatal (NOT Unavailable)`
+  - `"batch size 256" → Fatal (NOT Unavailable)`
+  - `error.status = 200 → Fatal (NOT Unavailable; only 5xx counts)`
+  - `error.status = 404 → Fatal (NOT Unavailable; only 5xx counts)`
+
+`puterFundsDepletedModel` short-circuit (owner check 2 — AC21):**
 
 - Set `puterFundsDepletedModel = 'gpt-5-nano'` via the exported test setter.
 - Call `PuterProvider.stream({ ..., model: 'gpt-5-nano', ... })` and `PuterProvider.complete({ ..., model: 'gpt-5-nano', ... })`.
@@ -585,7 +605,7 @@ The following items are **explicitly out of scope** for this spec. No files, env
 - **Verification is only valid if backed by a committed test or a CI run.** Manual probes may be recorded in `checklists/verification.md` for the owner's smoke pass, but they do not count as AC proof.
 - **No `apps/desktop/**` edits.** Zane lives in `apps/web/src/lib/ai/` only; desktop has no Puter calls. If any cross-cutting IPC change is needed (it shouldn't be), stop and report to the owner before editing.
 - **No destructive git ops on a dirty tree** (AGENTS.md I8). The `specs/015_*` untracked files must remain untouched (spec 016 §"Git safety protocol").
-- **E2E baseline (updated 2026-09-24)**: 8 specs in `apps/web/e2e/` measured against the current `apps/web/src` working tree on `apps/web`'s playwright config. 7 pass and 1 is `test.skip(!PROD_URL, ...)` in `prod-smoke.spec.ts` (opt-in flag, pre-existing). Spec 017 Commit 5 adds `e2e/zane-degraded.spec.ts` (9 cases); commits 3–4 must NOT add to this skip count. Earlier runs reported "23 passed / 4 skipped" against a larger suite that existed before spec 009's e2e hardening.
+- **E2E baseline (measured 2026-09-24)**: `apps/web/e2e/` against the current `apps/web/src` working tree on `apps/web`'s playwright config: 8 specs, 7 pass, 1 is `test.skip(!PROD_URL, ...)` in `prod-smoke.spec.ts` (opt-in flag, pre-existing). Spec 017 Commit 5 adds `e2e/zane-degraded.spec.ts` (9 cases); commits 3–4 must NOT add to this skip count. `git log --diff-filter=D -- apps/web/e2e` shows zero deleted e2e specs in the working repo (no historical reconstruction needed).
 - **One concern per commit** (per `08-precommit.md`).
 - **Conventional commit messages** with `ai` scope.
 - **Lint ratchet 52** holds — never increase.
