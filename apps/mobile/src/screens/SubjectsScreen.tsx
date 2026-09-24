@@ -16,8 +16,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SupabaseClient } from "masarx-shared/supabase";
 
+import type { RootStackParamList } from "../../app/App";
 import { useI18n } from "../context/I18nContext";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
@@ -54,6 +57,7 @@ async function fetchSubjects(supabase: SupabaseClient): Promise<SubjectRow[]> {
 export default function SubjectsScreen() {
   const { t, isRTL } = useI18n();
   const { online } = useNetworkStatus();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data, loading, error, refetch } = useSupabaseQuery<SubjectRow[]>({
     cacheKey: "subjects:all",
     fetcher: fetchSubjects,
@@ -61,8 +65,13 @@ export default function SubjectsScreen() {
 
   const subjects = data ?? [];
 
+  // Spec 019 C2: the card is now the entry to SubjectDetail (the
+  // read-only lecture/content surface ported from the web subject page).
   const renderItem = ({ item }: { item: SubjectRow }) => (
-    <View style={styles.card}>
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      onPress={() => navigation.navigate("SubjectDetail", { subjectName: item.name })}
+    >
       <Text style={[styles.cardTitle, isRTL && styles.rtlText]}>{item.name}</Text>
       {item.name_en ? <Text style={styles.cardSubtitle}>{item.name_en}</Text> : null}
       {item.professor ? <Text style={styles.meta}>{item.professor}</Text> : null}
@@ -71,7 +80,7 @@ export default function SubjectsScreen() {
           {item.description}
         </Text>
       ) : null}
-    </View>
+    </Pressable>
   );
 
   return (
@@ -152,6 +161,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
   },
+  cardPressed: { opacity: 0.7 },
   cardTitle: { fontSize: 17, fontWeight: "700", color: COLORS.ink },
   cardSubtitle: { fontSize: 13, color: COLORS.subtle, marginTop: 2 },
   meta: { fontSize: 13, color: COLORS.subtle, marginTop: 6 },
