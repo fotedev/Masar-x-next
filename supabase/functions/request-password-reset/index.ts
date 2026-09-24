@@ -190,6 +190,35 @@ serve(async (req) => {
       const supabase = createClient(supabaseUrl, serviceKey);
 
       // =====================
+      // IP-based rate limit (enumeration protection, F4) — applied BEFORE the
+      // user lookup. Returns the SAME uniform response when throttled so the
+      // limit itself cannot leak account existence.
+      // =====================
+      try {
+        const { data: ipAllowed, error: ipRlError } = await supabase.rpc('check_rate_limit', {
+          p_identifier: ip,
+          p_endpoint: 'request-password-reset-ip',
+          p_max_requests: 10,
+          p_window_minutes: 60,
+        });
+        if (ipRlError) {
+          console.warn('[AUTH] IP rate limit check failed:', ipRlError.message);
+        } else if (ipAllowed === false) {
+          console.warn(`[AUTH] IP rate limit exceeded: ${ip}`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+            }),
+            { status: 200, headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" } }
+          );
+        }
+      } catch (ipRlEx) {
+        // Fail-open documented as accepted risk (security audit F12)
+        console.warn('[AUTH] IP rate limit exception:', ipRlEx);
+      }
+
+      // =====================
       // Get user by email (safe lookup)
       // =====================
       let user;
@@ -203,10 +232,11 @@ serve(async (req) => {
           console.log(`[AUTH] User search result for ${email}: ${user ? 'Found ID: ' + user.id : 'Not Found'}`);
           if (!user) {
             console.log(`[AUTH] No user found for email: ${email}`);
+            // SECURITY (F4): uniform response — the debug field previously
+            // leaked account existence to anyone calling this endpoint.
             return new Response(
               JSON.stringify({
                 success: true,
-                debug: "No user found in auth.users",
                 message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
               }),
               {
@@ -249,9 +279,14 @@ serve(async (req) => {
           console.warn('[AUTH] Rate limit check failed:', rlError.message);
         } else if (allowed === false) {
           console.warn(`[AUTH] Rate limit exceeded for email: ${email}`);
+          // SECURITY (F4): uniform response — a 429 here would confirm the
+          // account exists (only registered emails get rate-limited).
           return new Response(
-            JSON.stringify({ error: 'Too many requests. Try again later.' }),
-            { status: 429, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
+            JSON.stringify({
+              success: true,
+              message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+            }),
+            { status: 200, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
           );
         }
       } catch (rlEx) {
@@ -263,10 +298,12 @@ serve(async (req) => {
       const resetToken = nanoid(32);
       const tokenHash = await sha256(resetToken);
 
+      // SECURITY (F5): only the SHA-256 hash is persisted — the plaintext
+      // token is never stored, so a DB read/backup leak cannot be replayed.
+      // (Legacy `token` column NULLed + NOT NULL dropped in migration 014.)
       const tokenData = {
         user_id: user.id,
         email,
-        token: resetToken,
         token_hash: tokenHash,
         expires_at: new Date(Date.now() + 86400000).toISOString(),
       };
