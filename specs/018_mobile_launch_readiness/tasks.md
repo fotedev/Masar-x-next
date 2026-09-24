@@ -30,7 +30,7 @@ commit; stage only own paths.
 - [x] T074 ci.yml `mobile` job: install → lint → `expo export` bundle proof (placeholder `EXPO_PUBLIC_*`); mobile typecheck rides the existing `workspaces` job and the vitest suite rides `test` via `pnpm -r --if-present test`; actionlint 1.7.7 clean.
 
 ## C7 — Launch ledger
-- [ ] T075 `apps/mobile/README.md` spec-018 section: fixed-gaps ledger with evidence + owner checklist (`eas init`, Expo token, EAS secrets, production builds per platform, store listing assets, submit).
+- [x] T075 `apps/mobile/README.md` spec-018 section: fixed-gaps ledger with evidence + owner checklist (`eas init`, EAS secrets, production builds per platform, store listing assets, submit, device smoke).
 
 ## Owner actions (post-merge, not blocking this spec)
 - [ ] `eas init` → `projectId` into `eas.json`; repo secret `EXPO_TOKEN` if CI builds are wanted.
