@@ -400,13 +400,13 @@ When Puter works, Zane must behave exactly as today:
 - **`canned.insufficientFunds` path**: preserved when only Puter is configured.
 - **`canned.genericError` path**: preserved for `Fatal` errors (auth, model-not-available, malformed shape).
 - **Server fallback (`tryServerSideFallback`)**: kept as-is at `assistant.ts`; not promoted to a provider yet.
-- **Existing Zane tests**: all 81 vitest cases in `apps/web/src/lib/__tests__/` and `apps/web/src/lib/ai/__tests__/` (the spec 011 + 012 baselines) must pass unchanged in the commit that introduces `PuterProvider` and rewires `assistant.ts`. **This is the load-bearing gate**: the abstraction is correct iff no behavior test had to change.
+- **Existing Zane tests**: all **89** vitest cases across 11 files in `apps/web/src/lib/__tests__/` and `apps/web/src/lib/ai/__tests__/` (the spec 011 + 012 baselines; measured against parent commit `036eded`) must pass unchanged in the commit that introduces `PuterProvider` and rewires `assistant.ts`. **This is the load-bearing gate**: the abstraction is correct iff no behavior test had to change. Update: the original "81" count in this spec was stale; the actual baseline measured at parent `036eded` is **11 files / 89 tests**, and after Commit 2 (providers/ added) it is **13 files / 126 tests**, so Commit 2 contributed **+2 files / +37 tests**. Future commits (3, 4) must keep the 89 baseline green and add only new tests in their own files.
 
 Regression proof strategy (per commit, per `08-precommit.md`):
 
 - `pnpm typecheck` clean across all 4 projects.
 - `pnpm --filter web lint` — warnings ≤ 52 (current ratchet).
-- `pnpm --filter web test` — vitest baseline 81 + new tests, all green.
+- `pnpm --filter web test` — vitest baseline **89 (parent `036eded`, 11 files)** + new tests in `providers/__tests__/`, all green.
 - `pnpm --filter web test:e2e` — at 1 worker (current baseline), no new skipped tests.
 - Owner smoke checklist (added in this spec under `checklists/verification.md`): forced 402 (mock env), `canned.unavailable` rendered, materials / summaries / question banks still navigable; forced `Cancelled` does NOT render the banner.
 
@@ -526,12 +526,12 @@ Every commit must pass: `pnpm typecheck && pnpm --filter web lint` (≤52) `&& p
 |---|---|---|---|
 | 1 | `docs(ai): add specs/017 zane provider abstraction + graceful degradation` | `specs/017_zane_provider_abstraction/spec.md`, `tasks.md` | No |
 | 2 | `feat(ai): add AIProvider interface, error taxonomy, MockProvider (test-only, production-guarded)` | `providers/{types,errors,mock-provider}.ts`, `providers/__tests__/{errors,mock-provider}.test.ts` | No (unused yet) |
-| 3 | `feat(ai): add PuterProvider adapter; rewire assistant.ts through runWithFallback (behavior preserved)` | `providers/{puter-provider,policy,registry}.ts`, `providers/__tests__/{policy,puter-provider,abort-race,contract}.test.ts`, new `useAiChat.test.ts`, edits in `assistant.ts`, `useAiChat.ts`, `useQuizImport.ts`, `QuickQuizFromTextModal.tsx`, `ai-assistant.ts` | **No** (existing 81 vitest cases pass unchanged) |
+| 3 | `feat(ai): add PuterProvider adapter; rewire assistant.ts through runWithFallback (behavior preserved)` | `providers/{puter-provider,policy,registry}.ts`, `providers/__tests__/{policy,puter-provider,abort-race,contract}.test.ts`, new `useAiChat.test.ts`, edits in `assistant.ts`, `useAiChat.ts`, `useQuizImport.ts`, `QuickQuizFromTextModal.tsx`, `ai-assistant.ts` | **No** (existing 89 vitest cases across 11 files pass unchanged, per the corrected AC11 measurement) |
 | 4 | `feat(ai): degraded state UI + interrupted affordance + ar/en canned.unavailable + reconciliation with insufficientFunds` | `apps/web/src/app/[locale]/ai-assistant/page.tsx`, new `DegradedBanner.tsx`, `InterruptedChip.tsx`, `packages/shared/src/messages/{ar,en}/aiAssistant.json`, edits in `useAiChat.ts`, `ChatMessageItem.tsx` (action row update only) | **Yes** (banner + interrupted chip visible on specific terminal states) |
 | 5 | `test(ai): e2e for forced 402, cancelled, interrupted, and fatal paths (mock provider)` | `e2e/zane-degraded.spec.ts`, env docs in `docs/agents/references/00-setup.md` | No (tests only) |
 | 6 | `docs(ai): record specs/017 execution ledger` | `specs/017_zane_provider_abstraction/tasks.md` | No |
 
-Commit 3 is the load-bearing one. If the 81 vitest cases do not pass unchanged, the abstraction broke behavior and the commit is rejected (per `08-precommit.md` §"Behavior preservation"). **Commit 3 contains no schema change, no migration, no `database.ts` edit** — the interrupted state is client-side/in-memory per §3.9 and AC22. The persistence behavior for partial messages continues exactly as today (whatever `useAiChat.ts` and `ai_chat_messages` save today).
+Commit 3 is the load-bearing one. If the 89 vitest cases do not pass unchanged, the abstraction broke behavior and the commit is rejected (per `08-precommit.md` §"Behavior preservation"). **Commit 3 contains no schema change, no migration, no `database.ts` edit** — the interrupted state is client-side/in-memory per §3.9 and AC22. The persistence behavior for partial messages continues exactly as today (whatever `useAiChat.ts` and `ai_chat_messages` save today).
 
 ## 7. Acceptance criteria → test mapping
 
@@ -549,7 +549,7 @@ Each acceptance criterion below MUST be asserted by a named, committed test. The
 | AC8 | `canned.insufficientFunds` is still shown when only Puter is configured and Puter returns 402 — banner is NOT shown simultaneously | `policy.test.ts` "Provider A 402 only → insufficientFunds, no banner" + e2e "Insufficient funds reconciliation" |
 | AC9 | `Fatal` returns `canned.genericError` and does NOT trigger fallback or the banner | `policy.test.ts` "Provider A throws Fatal" + e2e "Chat forced Fatal" |
 | AC10 | `MockProvider` cannot be enabled in a production build | `mock-provider.test.ts` "production guard" + "registry guard" |
-| AC11 | All 81 existing Zane vitest cases pass unchanged in commit 3 | `pnpm --filter web test` baseline gate |
+| AC11 | All **89** existing Zane vitest cases across **11 files** pass unchanged in commit 3 (baseline measured at parent `036eded`) | `pnpm --filter web test` baseline gate |
 | AC12 | The rest of the app remains navigable while degraded (materials / summaries / question banks) | `e2e/zane-degraded.spec.ts` "Chat (AC12) navigation still works" |
 | AC13 | No new skipped e2e tests; any skip links the GitHub issue | CI gate (e2e run report) + spec 010 convention |
 | AC14 | **Owner note 3**: Abort during a stream chunk is normalized to `Cancelled`, NOT `Unavailable`, and the breaker-equivalent counter does NOT increment | `abort-race.test.ts` (regression) |
@@ -585,6 +585,7 @@ The following items are **explicitly out of scope** for this spec. No files, env
 - **Verification is only valid if backed by a committed test or a CI run.** Manual probes may be recorded in `checklists/verification.md` for the owner's smoke pass, but they do not count as AC proof.
 - **No `apps/desktop/**` edits.** Zane lives in `apps/web/src/lib/ai/` only; desktop has no Puter calls. If any cross-cutting IPC change is needed (it shouldn't be), stop and report to the owner before editing.
 - **No destructive git ops on a dirty tree** (AGENTS.md I8). The `specs/015_*` untracked files must remain untouched (spec 016 §"Git safety protocol").
+- **E2E baseline (updated 2026-09-24)**: 8 specs in `apps/web/e2e/` measured against the current `apps/web/src` working tree on `apps/web`'s playwright config. 7 pass and 1 is `test.skip(!PROD_URL, ...)` in `prod-smoke.spec.ts` (opt-in flag, pre-existing). Spec 017 Commit 5 adds `e2e/zane-degraded.spec.ts` (9 cases); commits 3–4 must NOT add to this skip count. Earlier runs reported "23 passed / 4 skipped" against a larger suite that existed before spec 009's e2e hardening.
 - **One concern per commit** (per `08-precommit.md`).
 - **Conventional commit messages** with `ai` scope.
 - **Lint ratchet 52** holds — never increase.

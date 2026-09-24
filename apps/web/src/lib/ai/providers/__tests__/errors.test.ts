@@ -73,9 +73,89 @@ describe('classifyPuterError (spec 017)', () => {
       expect(out.kind).toBe('Unavailable');
     });
 
-    it('5xx / server error → Unavailable', () => {
-      const out = classifyPuterError(new Error('503 service unavailable'), PROVIDER_ID);
+    it('server error → Unavailable', () => {
+      const out = classifyPuterError(new Error('server error'), PROVIDER_ID);
       expect(out.kind).toBe('Unavailable');
+    });
+
+    it('service unavailable → Unavailable', () => {
+      const out = classifyPuterError(new Error('Service Unavailable'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('bad gateway → Unavailable', () => {
+      const out = classifyPuterError(new Error('502 Bad Gateway'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('gateway timeout → Unavailable', () => {
+      const out = classifyPuterError(new Error('Gateway Timeout'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    // 5xx via typed status (read from error.status / error.statusCode), not
+    // via message-text regex. Spec §5.1 "5xx / server error → Unavailable".
+    it('error.status = 503 → Unavailable (typed status, not regex)', () => {
+      const e = new Error('boom') as Error & { status?: number };
+      e.status = 503;
+      const out = classifyPuterError(e, PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('error.statusCode = 503 → Unavailable', () => {
+      const e = new Error('boom') as Error & { statusCode?: number };
+      e.statusCode = 503;
+      const out = classifyPuterError(e, PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('"HTTP 503" phrase → Unavailable', () => {
+      const out = classifyPuterError(new Error('HTTP 503 from upstream'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('"status 503" phrase → Unavailable', () => {
+      const out = classifyPuterError(new Error('status 503'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+
+    it('"status code 503" phrase → Unavailable', () => {
+      const out = classifyPuterError(new Error('status code 503'), PROVIDER_ID);
+      expect(out.kind).toBe('Unavailable');
+    });
+  });
+
+  describe('Negatives — non-5xx numbers in message are NOT Unavailable (regression)', () => {
+    // Bare numeric codes inside the message body must NOT be matched as HTTP
+    // status. A wide \b5\d{2}\b would falsely classify these as Unavailable
+    // and trigger the fallback ladder; instead they fall through to Fatal.
+    it('"context length 512 exceeded" → Fatal (NOT Unavailable)', () => {
+      const out = classifyPuterError(new Error('context length 512 exceeded'), PROVIDER_ID);
+      expect(out.kind).toBe('Fatal');
+    });
+
+    it('"limit of 500 tokens" → Fatal (NOT Unavailable)', () => {
+      const out = classifyPuterError(new Error('limit of 500 tokens'), PROVIDER_ID);
+      expect(out.kind).toBe('Fatal');
+    });
+
+    it('"batch size 256" → Fatal (NOT Unavailable)', () => {
+      const out = classifyPuterError(new Error('batch size 256 too large'), PROVIDER_ID);
+      expect(out.kind).toBe('Fatal');
+    });
+
+    it('error.status = 200 → Fatal (NOT Unavailable; only 5xx counts)', () => {
+      const e = new Error('boom') as Error & { status?: number };
+      e.status = 200;
+      const out = classifyPuterError(e, PROVIDER_ID);
+      expect(out.kind).toBe('Fatal');
+    });
+
+    it('error.status = 404 → Fatal (NOT Unavailable; only 5xx counts)', () => {
+      const e = new Error('boom') as Error & { status?: number };
+      e.status = 404;
+      const out = classifyPuterError(e, PROVIDER_ID);
+      expect(out.kind).toBe('Fatal');
     });
   });
 
