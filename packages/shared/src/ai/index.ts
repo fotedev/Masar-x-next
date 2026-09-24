@@ -42,15 +42,30 @@ const DEFAULT_EDGE_FUNCTION_URL = "/api/ai-chat";
  * Internal: a thin `fetch` wrapper that injects the
  * `Content-Type: application/json` header and propagates an
  * `AbortSignal` through.
+ *
+ * `authToken` (spec 018 C4): when provided, requests carry
+ * `Authorization: Bearer <authToken>` so Edge Functions that
+ * authenticate the caller (`auth.getUser()`) accept non-web clients.
+ * The web app does NOT pass it — its Next.js proxy injects auth
+ * server-side from the session cookie; behavior without the option is
+ * unchanged.
  */
 async function aiRequest<T>(
   body: AiRequest,
-  options: { signal?: AbortSignal; edgeFunctionUrl?: string } = {},
+  options: {
+    signal?: AbortSignal;
+    edgeFunctionUrl?: string;
+    authToken?: string;
+  } = {},
 ): Promise<T> {
   const url = options.edgeFunctionUrl ?? DEFAULT_EDGE_FUNCTION_URL;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (options.authToken) {
+    headers.Authorization = `Bearer ${options.authToken}`;
+  }
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
     signal: options.signal,
   });
@@ -69,12 +84,19 @@ async function aiRequest<T>(
  * Send a single AI message and receive a full response.
  *
  * @param request   The `AiRequest` payload (see `./types.ts`).
- * @param options   Optional `signal` for cancellation, and an
- *                  optional `edgeFunctionUrl` override.
+ * @param options   Optional `signal` for cancellation, an optional
+ *                  `edgeFunctionUrl` override, and an optional
+ *                  `authToken` (attached as `Authorization: Bearer` —
+ *                  used by non-web clients whose Edge Function path is
+ *                  not wrapped by the web proxy).
  */
 export async function sendAiMessage(
   request: AiRequest,
-  options: { signal?: AbortSignal; edgeFunctionUrl?: string } = {},
+  options: {
+    signal?: AbortSignal;
+    edgeFunctionUrl?: string;
+    authToken?: string;
+  } = {},
 ): Promise<AiResponse> {
   return aiRequest<AiResponse>(request, options);
 }
@@ -91,19 +113,27 @@ export async function sendAiMessage(
  */
 export async function* streamAiMessage(
   request: AiRequest,
-  options: { signal?: AbortSignal; edgeFunctionUrl?: string } = {},
+  options: {
+    signal?: AbortSignal;
+    edgeFunctionUrl?: string;
+    authToken?: string;
+  } = {},
 ): AsyncIterable<AiResponseDelta> {
   if (options.signal?.aborted) {
     return;
   }
 
   const url = options.edgeFunctionUrl ?? DEFAULT_EDGE_FUNCTION_URL;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+  };
+  if (options.authToken) {
+    headers.Authorization = `Bearer ${options.authToken}`;
+  }
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "text/event-stream",
-    },
+    headers,
     body: JSON.stringify(request),
     signal: options.signal,
   });
