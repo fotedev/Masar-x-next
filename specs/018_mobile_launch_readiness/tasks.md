@@ -26,8 +26,8 @@ commit; stage only own paths.
 - [x] T072 `app.json`: icon/splash/adaptiveIcon keys + white backgrounds (matches web ladder; replaces the placeholder `#1d4ed8`); version → `0.6.0` (both `app.json` and `package.json`, aligns with desktop 0.6.0 release train).
 
 ## C6 — Tests + CI (G6)
-- [ ] T073 mobile vitest: `secure-store-text` chunking, `read-cache` TTL (mocked AsyncStorage).
-- [ ] T074 ci.yml `mobile` job: install → typecheck → lint → test → export (placeholder `EXPO_PUBLIC_*`); actionlint clean.
+- [x] T073 mobile vitest (^2.1.8, matching desktop): `secure-store-text` chunking (7 tests), `read-cache` TTL (7 tests, mocked AsyncStorage), shared AI bearer header (4 tests, stubbed fetch) — 18/18 green; `masarx-shared/ai` workspace import resolves under vitest.
+- [x] T074 ci.yml `mobile` job: install → lint → `expo export` bundle proof (placeholder `EXPO_PUBLIC_*`); mobile typecheck rides the existing `workspaces` job and the vitest suite rides `test` via `pnpm -r --if-present test`; actionlint 1.7.7 clean.
 
 ## C7 — Launch ledger
 - [ ] T075 `apps/mobile/README.md` spec-018 section: fixed-gaps ledger with evidence + owner checklist (`eas init`, Expo token, EAS secrets, production builds per platform, store listing assets, submit).
