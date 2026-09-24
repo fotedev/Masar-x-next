@@ -2,12 +2,18 @@
   "expo": {
     "name": "Masar X",
     "slug": "masarx",
-    "version": "0.5.6",
+    "version": "0.6.0",
     "orientation": "portrait",
     "scheme": "masarx",
     "userInterfaceStyle": "automatic",
     "supportsRTL": true,
     "platforms": ["ios", "android"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "bundleIdentifier": "com.masarx.app",
       "supportsTablet": false,
@@ -16,7 +22,8 @@
     "android": {
       "package": "com.masarx.app",
       "adaptiveIcon": {
-        "backgroundColor": "#1d4ed8"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       }
     },
     "plugins": ["expo-secure-store"]
