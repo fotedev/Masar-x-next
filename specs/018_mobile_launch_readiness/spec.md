@@ -15,7 +15,7 @@ stores** and is **currently broken** by a merged dependency bump:
 | # | Gap | Impact |
 |---|-----|--------|
 | G1 | `@react-navigation/native-stack` `^7.19.2` (dependabot PR #32, merged 2026-09-21 as `e562e5e`) has peer deps `@react-navigation/native ^7.4` + `react-native-screens >=4`; the app pins `6.1.18` / `~3.31.1` | Version skew — runtime breakage risk / broken type contract |
-| G2 | `@types/react ^19.2.14` against a React `18.2.0` runtime (SDK 51 pairs with React 18) | Type-level mismatch |
+| G2 | `@types/react ^19.2.14` against a React `18.2.0` runtime | Type-level-only mismatch — **CORRECTED during execution:** downgrading mobile's local copy to `~18.2` creates a dual-copy conflict with the workspace's single hoisted v19 copy (mobile's third-party d.ts compiles against it) and breaks `tsc`. The v19 types stay: they keep one copy workspace-wide and typecheck green; the runtime is untouched (React 18.2). No action taken. |
 | G3 | No `assets/`, no `icon`/`splash`/`adaptiveIcon` image keys in `app.json` | Store submission impossible |
 | G4 | Mobile `lint` script is a stale `echo` stub although `eslint.config.mjs` exists; `expo-dev-client` missing while `eas.json` development profile sets `developmentClient: true`; root `build:mobile` points at a `build` script mobile does not have | Dead automation, false confidence |
 | G5 | AI chat 401s from mobile (tasks.md **T054a**): `supabase/functions/ai-chat` authenticates via `Authorization` bearer → `auth.getUser()`; web injects it in its Next proxy, the shared AI client never attaches it | Core feature dead on mobile |
@@ -37,8 +37,7 @@ All changes are additive or revert-shaped; no new runtime surfaces.
 ### 2.1 Dependency repair (G1, G2, G4) — `apps/mobile/package.json`
 - `@react-navigation/native-stack`: `^7.19.2` → **`^6.11.0`** (revert of the
   dependabot skew; v6 is the family the app was built and verified against).
-- `@types/react`: `^19.2.14` → **`~18.2.79`** (matches the React 18.2 runtime
-  SDK 51 pairs with).
+- `@types/react` **kept at `^19.2.14`** (see corrected G2 above).
 - Add `expo-dev-client` (`~4.0.x`, SDK 51 line) so the `development` EAS
   profile's `developmentClient: true` is real.
 - Scripts: `lint` → `eslint .` (config exists); add `export` =

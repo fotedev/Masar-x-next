@@ -18,7 +18,7 @@
     "@react-native-community/netinfo": "11.3.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
-    "@react-navigation/native-stack": "^7.19.2",
+    "@react-navigation/native-stack": "^6.11.0",
     "expo": "~51.0.28",
     "expo-constants": "~16.0.2",
     "expo-document-picker": "~12.0.2",

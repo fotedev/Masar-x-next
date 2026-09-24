@@ -8,7 +8,7 @@ commit; stage only own paths.
 - [ ] T062 `specs/018_mobile_launch_readiness/{spec.md,tasks.md}` committed.
 
 ## C2 — Dependency repair (G1, G2)
-- [ ] T063 `@react-navigation/native-stack` → `^6.11.0`; `@types/react` → `~18.2.79` in `apps/mobile/package.json`; `pnpm install` updates root lockfile.
+- [x] T063 `@react-navigation/native-stack` → `^6.11.0` in `apps/mobile/package.json`; `pnpm install` updates root lockfile. **T063b (correction):** `@types/react` downgrade attempted and REVERTED — dual-copy conflict with the hoisted workspace v19 copy breaks `tsc`; kept `^19.2.14` (see spec G2 correction).
 - [ ] T064 `pnpm -r --if-present typecheck` green (incl. mobile).
 
 ## C3 — Scripts + dev client (G4)
