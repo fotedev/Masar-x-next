@@ -65,14 +65,24 @@ export const classifyPuterError = (
     return make('QuotaExceeded', error, providerId);
   }
 
-  // 5xx / server-error messages (spec §5.1 errors.test.ts "5xx / server error
-  // → Unavailable"). The existing `isPuterTransportError` doesn't match these
-  // literally, so we add the rule here without editing `../errors.ts`
-  // (per owner rule "NO edits to errors.ts").
+  // 5xx / server-error matching (spec §5.1 errors.test.ts "5xx / server error
+  // → Unavailable"). We intentionally do NOT match bare numeric codes in the
+  // message body (e.g. "context length 512 exceeded", "limit of 500 tokens"
+  // would falsely match a wide \b5\d{2}\b) — we read `error.status` /
+  // `error.statusCode` (typed HTTP codes) AND match only specific phrases.
+  // No edit to the existing `../errors.ts` classifier (owner rule).
+  const status = readHttpStatus(error);
+  if (status !== undefined && status >= 500 && status <= 599) {
+    return make('Unavailable', error, providerId);
+  }
   if (
-    /\b5\d{2}\b/.test(msg) ||
+    msg.includes('http 5') ||
+    msg.includes('status 5') ||
+    msg.includes('status code 5') ||
     msg.includes('server error') ||
-    msg.includes('service unavailable')
+    msg.includes('service unavailable') ||
+    msg.includes('bad gateway') ||
+    msg.includes('gateway timeout')
   ) {
     return make('Unavailable', error, providerId);
   }
@@ -92,6 +102,28 @@ export const classifyPuterError = (
 
   // Anything else is Fatal.
   return make('Fatal', error, providerId);
+};
+
+/**
+ * Read a numeric HTTP status (500–599) from the error if present.
+ * Looks at `error.status`, `error.statusCode`, and some nested shapes common
+ * to fetch-like libraries. Returns `undefined` when no typed status is
+ * available — we intentionally do NOT scan the message body for numeric codes
+ * (would falsely match "context length 512 exceeded", "limit of 500 tokens").
+ */
+const readHttpStatus = (error: unknown): number | undefined => {
+  if (!error || typeof error !== 'object') return undefined;
+  const candidates: unknown[] = [
+    (error as { status?: unknown }).status,
+    (error as { statusCode?: unknown }).statusCode,
+    (error as { code?: unknown }).code,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'number' && Number.isFinite(c) && c >= 100 && c < 1000) {
+      return c;
+    }
+  }
+  return undefined;
 };
 
 const make = (
