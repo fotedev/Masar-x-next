@@ -17,13 +17,13 @@ commit; stage only own paths.
 - [x] T067 add `expo-dev-client ~4.0.29` (SDK 51 line) as dependency.
 
 ## C4 — AI bearer token (G5, T054a)
-- [ ] T068 `packages/shared/src/ai`: additive `authToken?: string` option on `aiRequest`/`sendAiMessage`/`streamAiMessage`; header only when set.
-- [ ] T069 `apps/mobile/src/lib/ai.ts`: pass Supabase session `access_token` per call; update gap comments + T054a ledger to resolved.
-- [ ] T070 unit tests: header attached / header absent; web suite still green.
+- [x] T068 `packages/shared/src/ai`: additive `authToken?: string` option on `aiRequest`/`sendAiMessage`/`streamAiMessage`; header only when set.
+- [x] T069 `apps/mobile/src/lib/ai.ts`: pass Supabase session `access_token` per call; gap comment replaced (was mis-referenced as T054a — that task is SSE streaming); 56bd432.
+- [x] T070 unit tests: header attached / header absent — landed with C6 vitest suite (ai.test.ts).
 
 ## C5 — Store assets (G3, G7)
-- [ ] T071 generate `assets/icon.png` (1024), `assets/adaptive-icon.png`, `assets/splash.png` from brand knot mark (fallback path: placeholders + owner task, note in ledger).
-- [ ] T072 `app.json`: icon/splash/adaptiveIcon keys + brand colors; version → `0.6.0` (both `app.json` and `package.json`).
+- [x] T071 `apps/mobile/scripts/generate-assets.mjs` (deterministic, re-runnable) generated `assets/icon.png` (1024), `assets/adaptive-icon.png` (transparent safe-zone foreground), `assets/splash.png` from the brand knot mark — same master + scale conventions as the web icon ladder (0.76 / 0.56 / white bg); visually verified.
+- [x] T072 `app.json`: icon/splash/adaptiveIcon keys + white backgrounds (matches web ladder; replaces the placeholder `#1d4ed8`); version → `0.6.0` (both `app.json` and `package.json`, aligns with desktop 0.6.0 release train).
 
 ## C6 — Tests + CI (G6)
 - [ ] T073 mobile vitest: `secure-store-text` chunking, `read-cache` TTL (mocked AsyncStorage).
