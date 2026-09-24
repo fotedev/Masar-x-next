@@ -80,6 +80,53 @@
 5. **F14 + F16-ب:** `SET search_path` للدالة الإنتاجية + إسقاط سياسة `Users can view their own reset tokens`.
 6. التحقق التجريبي من F13 عبر `supabase functions logs` (ظهور أخطاء `check_rate_limit`).
 
-> **الدليل الخام الكامل محفوظ في** `%TEMP%\opencode-run-supabase-verify\events.jsonl` (16 استعلام + المخرجات الخام) للمراجعة المستقلة.
+> **الدليل الخام الكامل محفوظ في** `%TEMP%\opencode-run-supabase-verify\events.jsonl` (16 استعلام) و`%TEMP%\opencode-run-prod-round2\events.jsonl` (13 استعلام) للمراجعة المستقلة.
+
+---
+
+## 6) ملحق الجولة الثانية (2026-09-24) — تدقيق أعمق على الدوال والصلاحيات
+
+> الموديل: `opencode/muse-spark-1.3-contributor-free` (بموافقة صريحة من المالك) · `status: completed` · **صفر ملفات متغيرة** (`touchedFiles` = لا شيء).
+
+### 6.1 حقائق مؤكدة (W1–W7)
+
+| # | البُند | النتيجة | الدليل |
+|---|---|---|---|
+| W1 | البحث في **كل المخططات** عن `check_rate_limit` / `cleanup_rate_limits` | **صفر نتيجة** — الدالتان غير موجودتين في أي مخطط | `pg_proc ⋈ pg_namespace WHERE proname IN (…)` بلا فلترة مخطط |
+| W2 | صف الميغريشن `20251231200000` | **مسجّل** باسم `add_rate_limiting`، `stmt_count = 7`، ونصّه يحتوي فعلاً على إنشاء الجدول والدالة | `array_to_string(statements, E'\n')` |
+| W3 | أي صف تاريخي يحوي `DROP FUNCTION … check_rate_limit` | **`[]` — لا شيء** ⇒ **إزالة الدالة غير مسجّلة في تاريخ الميغريشنز** | regex على `statements` |
+| W4 | صفوف تذكر `check_rate_limit` | 4 صفوف: `add_rate_limiting` · `ensure_rate_limits_before_fix` · `fix_rate_limits_unique` · `ensure_rate_limits_table` (كلها 2025-12-31 → 2026-01-21) | نفس الاستعلام |
+| W5 | `pg_cron` | **غير مثبّت** (`pg_extension` فيه `pg_net 0.19.5` فقط) ⇒ **لا يوجد أي جدولة** | `pg_extension` |
+| W6 | صلاحيات `cleanup_expired_reset_tokens()` | `proacl = {=X/postgres, postgres=X/postgres, **anon=X**, **authenticated=X**, service_role=X}` ⇒ **`anon` و`authenticated` يملكان EXECUTE** | `pg_proc` + `has_function_privilege` |
+| W7 | صلاحيات `admin_migrate_student_semesters(int,bool)` | نفس الشيء: `anon=X, authenticated=X` — **لكن** الجسم محمي داخلياً: `IF NOT public.is_admin() THEN RAISE EXCEPTION 'unauthorized'` + `SET search_path = public` (013:77-84) ⇒ **غير مُستغَل** | `pg_proc` + كود 013 |
+| W8 | جرد دوال `public` بـ `SECURITY DEFINER` وقابلة للنداء بـ `anon` | **10+ دوال** (قائمة مقتطعة عند 900 حرف): `admin_migrate_student_semesters` · `audit_table_changes` · `cleanup_expired_reset_tokens` · `delete_old_ai_chat_messages` · `get_admin_analytics_summary` · `get_content_analytics_internal` · `handle_auth_user_update` · `handle_new_user` · `is_admin` · `is_trw_member` … | `has_function_privilege('anon', oid, 'EXECUTE')` |
+
+### 6.2 استنتاجات (وقائع ← استنتاج)
+
+- **الجدول `rate_limits` أُنشئ فعلاً** (W2/W8) لكن **الدالة لم تُنشأ أو أُزيلت بلا أثر في السجل** (W1/W3/W4). الوصف الأدق: *مسجّلة كمُطبَّقة، والدالة غائبة، والإزالة غير مفسّرة* — جزء من انحراف F10.
+- ملف `migrations.old/20260121055000_ensure_rate_limits_table.sql` يذكر صراحة أن الدالتين «يُفترض وجودهما» — أي أن الفريق كان يعرف الغياب ضمنياً في 2026-01-21 ولم يُصلحه. **الغياب قديم (8 أشهر) وليس حادثاً جديداً.**
+- **لا جدولة إطلاقاً** (W5) ⇒ لو كان مسار الاستعادة المخصص مُستخدمًا لكانت صفوف `password_reset_tokens` **تتراكم بلا تنظيف**. **صفر صف ⇒ المسار المخصص لم يُستخدم ولا مرة** (اتفاق تام مع نتيجة جولة الـ callers: الويب يستخدم GoTrue الأصلي).
+- **`get_admin_analytics_summary`** (`migrations.old/20251227074230…`) فيه تعليق المطوّر حرفياً: «Check if user is admin … The RLS policies will handle access control» و`SECURITY DEFINER` **بلا `search_path` وبلا فحص داخلي** ⇒ **RLS لا يُطبَّق داخل دالة `SECURITY DEFINER`** ⇒ نداء مجهول قد يُعيد ملخّص تحليلات المنصة. **مؤقّتاً غير مؤكد التنفيذ:** يحتاج تأكيد وجود جدولي `analytics` و`assistant_messages` في الإنتاج (لو غائبين فالدالة تفشل عند التشغيل).
+
+### 6.3 تصحيح شدّة F13 (بناءً على مراجعة مالك المشروع)
+| البند السابق | التصحيح |
+|---|---|
+| «brute-force بلا سقف على `reset-password` — أخطر بند» | **مبالغة.** التوكن = `nanoid(32)` بأبجدية 64 حرفاً = **192 بت إنتروبي** ⇒ تخمين التوكن مستحيل عملياً؛ الفشل الأمني ليس في حدود المعدّل بل في التحقق (وهو سليم بالـ hash). |
+| الأثر الحقيقي للحدود الميتة | (أ) `request-password-reset` = **مضخّم سبام إيميل** بلا سقف (كل نداء = إيميل Brevo فعلي + بحث admin في auth) على مسار عام بلا JWT؛ (ب) عمل غير محدود على القاعدة؛ (ج) لا تغطية ضد الإساءة الآلية. |
+| واقعة تخفّض الشدة | مسار الاستعادة المخصص **غير مستخدم في الويب**: `login/page.tsx:160` → `resetPasswordForEmail` ثم `reset-password/page.tsx:71-80` → `exchangeCodeForSession` + `updateUser` (GoTrue الأصلي). الدالتان تبقى **سطح هجوم عام** (`verify_jwt=false`) فيجب إصلاحهما لا حذفهما بلا تحقق. |
+
+### 6.4 F17 🟠 (جديد): `EXECUTE` ممنوح لـ `anon`/`authenticated` على دوال `SECURITY DEFINER` في `public`
+- **الواقع (W6/W8):** الجرد أظهر **10+ دوال** `SECURITY DEFINER` في `public` بقاعدة الصلاحيات الافتراضية (`=X/postgres`) ⇒ `anon` و`authenticated` يملكان EXECUTE ⇒ كل منها **قابلة للنداء من PostgREST بلا مصادقة** (`POST /rest/v1/rpc/<fn>`).
+- **خطر مؤكد على `cleanup_expired_reset_tokens`:** أي زائر مجهول ينفّذ حذفاً على `password_reset_tokens` (محدود بالمنتهية/المستخدمة — أثر منخفض، لكنه **حذف بلا مصادقة**).
+- **خطر محتمل غير مؤكد:** `get_admin_analytics_summary` · `get_content_analytics_internal` (تسريب تحليلات لو بلا فحص داخلي وجداولهما موجودة) · `delete_old_ai_chat_messages` (حذف) · `audit_table_changes` · `handle_auth_user_update`.
+- **مقابل مشرّف:** `admin_migrate_student_semesters` محمي داخلياً (`is_admin()` + `search_path=public`) — النمط الصحيح موجود في الكود الأحدث (013) والمطلوب تعميمه.
+- **الإصلاح القياسي:** `REVOKE EXECUTE ON FUNCTION … FROM PUBLIC, anon, authenticated;` + `GRANT EXECUTE … TO service_role` + `SET search_path = ''` بتأهيل كامل. **يجب جرد كل دالة على حدة**: بعضها يُنادى من الواجهة عبر `rpc()` (`is_admin`, `is_trw_member`) — سحب صلاحيته يكسر الواجهة.
+
+### 6.5 أسئلة مفتوحة (تحتاج جولة ثالثة قبل أي REVOKE)
+1. أجسام: `get_admin_analytics_summary` · `get_content_analytics_internal` · `delete_old_ai_chat_messages` · `audit_table_changes` · `handle_auth_user_update` — هل فيها فحص `is_admin()`/`auth.uid()` داخلي؟ وهل فيها `SET search_path`؟
+2. وجود جدولي `analytics` و`assistant_messages` في الإنتاج (يحدد إن كان تسريب التحليلات قابلاً للتنفيذ).
+3. أي دوال `rpc()` يناديها الكود فعلاً — لتحديد القائمة الآمنة للـ REVOKE.
+
+
 
 
