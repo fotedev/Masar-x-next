@@ -15,6 +15,11 @@
  *     without it, subpath imports like `masarx-shared/supabase` fail to
  *     resolve at bundle time even though tsc (moduleResolution: bundler)
  *     accepts them.
+ *
+ * CJS note (spec 018): this package must NOT declare `"type": "module"` —
+ * Node loads this file, `babel.config.js`, and the Metro/Babel toolchain as
+ * CJS; the ESM flag broke `expo export` with "module is not defined" in
+ * babel.config.js / index.js. App sources are compiled by Metro regardless.
  */
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");

@@ -13,7 +13,7 @@
     "build": "pnpm --filter web build",
     "build:web": "pnpm --filter web build",
     "build:desktop": "pnpm --filter desktop build",
-    "build:mobile": "pnpm --filter mobile build",
+    "build:mobile": "pnpm --filter mobile export",
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
