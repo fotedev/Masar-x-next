@@ -18,7 +18,16 @@ F7 (Cloudinary webhook HMAC), F8 (SECURITY DEFINER search_path), F9 (token TTL),
 - Stage files **by name** only; one commit per fix.
 - Untracked `specs/015_*` and both stashes must remain untouched.
 
-## Acceptance criteria
+## Delegation & production-access rule (owner-set 2026-09-24)
+
+Any delegation to an external model **or** any access to production (MCP/CLI/HTTP) requires **explicit owner approval**:
+
+1. **Ask first; a timeout means NO.** An unanswered approval question is a denial — do not proceed on a default (a round-1 model choice was made on timeout and corrected by the owner).
+2. **The owner picks the model.** Candidate models are only those the owner has configured/authorised; the orchestrator never guesses.
+3. **Briefs must be secret-free.** Verified: project-ref only, no key values (round-1 brief reviewed line by line).
+4. **Read-only by default.** Prod access uses a `--read-only` MCP server; the brief forbids file writes and git write commands; the orchestrator re-checks `git status` and `touchedFiles` afterwards.
+5. **Orchestrator verifies raw evidence**, never the implementer's self-report (round-1: the report claimed "11 queries" while the raw event log held 16).
+
 - [ ] `pnpm install` clean; `pnpm --filter web build` green; `pnpm --filter web test` green.
 - [ ] `pnpm audit` no longer lists critical next advisories; sharp advisories cleared or proven unpatched-upstream.
 - [ ] Edge function returns identical response for known/unknown emails; no `debug` field; no plaintext token insert.
