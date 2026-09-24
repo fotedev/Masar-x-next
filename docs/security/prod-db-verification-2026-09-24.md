@@ -130,3 +130,105 @@
 
 
 
+
+
+---
+
+## 7) ملحق الجولة الثالثة (2026-09-24) — بوابة ما قبل التنفيذ + تدقيق أجسام الدوال
+
+> الموديل: `opencode/muse-spark-1.3-contributor-free` (بطلب المالك) · `status: completed` · **صفر ملفات متغيرة** · 12 استعلام قراءة فقط · **لم يُنفَّذ أي `set role`/كتابة**.
+
+### 7.1 شروط المرحلة 1 — كلها مقروءة ومؤكدة
+
+| الفحص المطلوب | النتيجة | الحكم |
+|---|---|---|
+| أعمدة `rate_limits` | `id` · `identifier` · `endpoint` · `request_count` · `window_start` · `created_at` · **`updated_at` ✅ موجود** | `DO UPDATE SET updated_at = now()` صالح |
+| فهرس فريد لـ `ON CONFLICT (identifier, endpoint)` | **`ux_rate_limits_identifier_endpoint` = UNIQUE (identifier, endpoint)** ✅ | **المانع محلول** — الدالة ستشتغل وقت التشغيل |
+| RLS على `rate_limits` | `relrowsecurity = true` ✅ | مطابق |
+| صلاحيات `anon` على الجدول | SELECT/INSERT/UPDATE/DELETE = **true** (عبر PUBLIC) — لكن **RLS default-deny** (السياسة الوحيدة لـ `service_role`) ⇒ **لا وصول صفوف** | مطلوب **REVOKE** للدفاع في العمق كما طُلب |
+| صلاحيات `authenticated` | نفس الشيء (true ×4) | نفس الإجراء |
+| `role_table_grants` | رجع `[]` رغم أن `has_table_privilege` = true | **قصور في هذا العرض** للـ ACL الممنوح عبر PUBLIC؛ المرجع الحاسم `has_table_privilege` + `relacl` |
+
+### 7.2 تدقيق أجسام الدوال المكشوفة — النتيجة قاطعة
+
+| الدالة | فحص داخلي؟ | `search_path` | قابلة للنداء عبر PostgREST؟ | الحكم |
+|---|---|---|---|---|
+| `get_admin_analytics_summary()` | **❌ لا يوجد** — تعليق المطوّر «Check if user is admin … RLS policies will handle access control» بلا أي كود | **null** | ✅ نعم (`returns json`) | **🔴 F17-أ مؤكد: زيارة مجهولة تُعيد ملخّص تحليلات المنصة** (عدّاد المستخدمين النشطين من `auth.users`، المشاهدات/النقرات، أكثر 10 محتويات، آخر 20 نشاط). الجداول موجودة فعلاً ⇒ **قابل للتنفيذ، ليس نظرياً** |
+| `get_content_analytics_internal()` | ❌ لا يوجد | ✅ `public` | ✅ نعم (`returns table`) | 🟠 إحصاء مشاهدات/نقرات لكل محتوى بلا مصادقة |
+| `delete_old_ai_chat_messages()` | ❌ لا يوجد | **null** | ✅ نعم (`returns void`) | 🟠 **زائر مجهول يمسح رسائل الشات الأقدم من 30 يوماً** (`DELETE FROM public.ai_chat_messages`) |
+| `audit_table_changes()` | لا ينطبق (trigger) | **null** | ❌ `returns trigger` (غير مكشوف) | 🟡 يضاف `search_path` فقط |
+| `handle_auth_user_update()` | لا ينطبق (trigger) | **null** | ❌ `returns trigger` | 🟡 يضاف `search_path` فقط |
+| `is_admin()` / `is_trw_member()` | — | ✅ `search_path=public` | ✅ لكن **بلا أي باراميتر** ⇒ يقرأ `auth.uid()` فقط | **تُترك كما هي** — سؤال المالك محلول: لا توجد نسخة تقبل `user_id` |
+
+### 7.3 الجداول والصلاحيات
+- **صفر جدول في `public` بدون RLS** ✅ (`B7 = []`).
+- استعلام صلاحيات `anon` على الجداول (`role_table_grants`) رجع `[]` — نفس قصور العرض في 7.1؛ **لا يُقرأ كإثبات نفي**.
+
+### 7.4 المرحلة 1 (مُصحّحة بعد مراجعة المالك) — كل الشروط مؤكدة
+
+```sql
+begin;
+
+-- (1) فكّ القيد اللي هيمنع الإدراج الجديد  [آمن: 0 صف]
+alter table public.password_reset_tokens alter column token drop not null;
+
+-- (2) تقوية مفتاح البحث + منع الجلسات المتزامنة على نفس الـ token_hash
+alter table public.password_reset_tokens alter column token_hash set not null;
+create unique index if not exists ux_password_reset_tokens_token_hash
+  on public.password_reset_tokens (token_hash);
+
+-- (3) دفاع في العمق على جدول المعدّلات (RLS يحجب فعلاً، لكن الصلاحيات موجودة)
+revoke all on table public.rate_limits from anon, authenticated;
+
+-- (4) إحياء check_rate_limit — search_path فاضي + أسماء مؤهَّلة + make_interval
+create or replace function public.check_rate_limit(
+  p_identifier text, p_endpoint text,
+  p_max_requests integer default 10, p_window_minutes integer default 1
+) returns boolean language plpgsql security definer set search_path = '' as $$
+declare current_count integer; window_cutoff timestamptz;
+begin
+  window_cutoff := now() - make_interval(mins => p_window_minutes);
+  delete from public.rate_limits
+   where identifier = p_identifier and endpoint = p_endpoint
+     and window_start < window_cutoff;
+  select coalesce(request_count, 0) into current_count from public.rate_limits
+   where identifier = p_identifier and endpoint = p_endpoint
+     and window_start >= window_cutoff;
+  if current_count >= p_max_requests then return false; end if;
+  insert into public.rate_limits (identifier, endpoint, request_count, window_start, updated_at)
+  values (p_identifier, p_endpoint, 1, now(), now())
+  on conflict (identifier, endpoint) do update
+    set request_count = public.rate_limits.request_count + 1, updated_at = now()
+    where public.rate_limits.window_start >= window_cutoff;
+  return true;
+end $$;
+
+revoke all on function public.check_rate_limit(text,text,integer,integer) from public, anon, authenticated;
+grant execute on function public.check_rate_limit(text,text,integer,integer) to service_role;
+
+commit;
+```
+**الشروط المؤكدة لهذا الـ transaction:** `ux_rate_limits_identifier_endpoint` موجود (B2) · `updated_at` موجود (B1) · الدوال الثلاث تنادي بـ service_role (تحقق محلي) ⇒ الـ REVOKE آمن.
+
+**اختبار ما بعد التنفيذ وقبل نشر الدوال:**
+```sql
+select public.check_rate_limit('__t','__t',1,1);   -- المتوقع: true
+select public.check_rate_limit('__t','__t',1,1);   -- المتوقع: false  ← لو true، لا تنشر
+select has_function_privilege('anon','public.check_rate_limit(text,text,integer,integer)','EXECUTE'); -- false
+delete from public.rate_limits where identifier='__t';   -- كتابة متعمدة: تنظيف صف الاختبار
+```
+
+**بعد نشر الدوال فوراً (نافذة الـ plaintext):** تشغيل الـ SQL اللي طلبته المالك (تحديث `expires_at` ثم `token = null`) — نسخة 014 في المستودع؛ ثم إسقاط العمود بعد 24 ساعة، وتسجيل `supabase migration repair` لتجنّب انحراف جديد.
+
+**المراقبة:** الحدود تعمل لأول مرة ⇒ راقب لوج الثلاث دوال. الأخطر `reset-password` (30/د لكل IP) و`cloudinary-webhook` (120/د — و**Cloudinary ترسل من IPs مشتركة** ⇒ احتمال رفض دفعات شرعية قائم؛ يُنصح بإزالة الحد من الـ webhook والاعتماد على HMAC/F7).
+
+### 7.5 المرحلة 4 (مُصحّحة بجرد الأجسام)
+| الدالة | الإجراء النهائي |
+|---|---|
+| `get_admin_analytics_summary` | **إضافة `IF NOT public.is_admin() THEN RAISE EXCEPTION 'unauthorized'`** + `set search_path = ''` بتأهيل `public.analytics`, `public.assistant_messages`, `auth.users` + **REVOKE من `anon` فقط** (المتصفح يناديها كـ authenticated) |
+| `get_content_analytics_internal` | نفس الفحص + REVOKE من `anon, authenticated` (لا كود يناديها) |
+| `delete_old_ai_chat_messages` | `set search_path=''` + REVOKE من `public, anon, authenticated` + GRANT لـ `service_role` (لا cron ولا كود) |
+| `cleanup_expired_reset_tokens` | نفس المعالجة |
+| `audit_table_changes` / `handle_auth_user_update` | `set search_path=''` فقط (أسماء مؤهَّلة بالفعل: `public.audit_logs`, `public.profiles`) |
+| `is_admin` / `is_trw_member` | **بلا تغيير** (RLS تعتمد عليها، وبلا باراميتر) |
+
