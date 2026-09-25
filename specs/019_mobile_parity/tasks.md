@@ -41,7 +41,7 @@ staging on every commit (#3).
 - [x] T098 gates: mobile typecheck ✅ · lint ✅ · vitest 62/62 ✅ · export ✅.
 
 ## C7 — Release
-- [ ] T099 version 0.6.0 → 0.6.1 (`apps/mobile/package.json` + `app.json`); full gate suite; README/ledger notes.
+- [x] T099 version 0.6.0 → 0.6.1 (`apps/mobile/package.json` + `app.json`); full gate suite rerun on the release commit; README/ledger notes: spec 019 complete — C1–C7 all landed on `feat/019-mobile-parity`, Tier 2 (news, dark mode, summary reviews) tracked for spec 020.
 
 ## Owner actions (post-C7)
 - [ ] Review spec → approve C2–C7 execution (this ledger pauses after C1).
