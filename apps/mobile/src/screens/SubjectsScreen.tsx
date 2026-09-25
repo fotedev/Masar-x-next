@@ -5,7 +5,7 @@
  * RTL-aware layout, offline banner and LocalReadCache through
  * useSupabaseQuery (cached content stays readable while offline).
  */
-import React from "react";
+import React, { useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -21,7 +21,16 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { SupabaseClient } from "masarx-shared/supabase";
 
 import type { RootStackParamList } from "../../app/App";
+import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import {
+  isAcademicFilter,
+  levelOrNullFilter,
+  resolveEffectiveLevel,
+  resolveEffectiveSemester,
+  semesterOrNullFilter,
+} from "../lib/academic";
+import { useAcademicProfile } from "../hooks/useAcademicProfile";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
 
@@ -45,22 +54,44 @@ const COLORS = {
   danger: "#DC2626",
 };
 
-async function fetchSubjects(supabase: SupabaseClient): Promise<SubjectRow[]> {
-  const { data, error } = await supabase
-    .from("subjects")
-    .select("id, name, name_en, professor, description")
-    .order("name", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as unknown as SubjectRow[];
-}
-
 export default function SubjectsScreen() {
   const { t, isRTL } = useI18n();
+  const { user } = useAuth();
   const { online } = useNetworkStatus();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // Spec 019 C4: filter by the profile's academic path (web parity —
+  // effectiveLevel/effectiveSemester with defaults 1), gated on the
+  // profile load so the first fetch already uses the right filter. The
+  // cache key includes level+semester, so saving a new academic path
+  // (live-synced via useAcademicProfile) refetches under a new key.
+  const academic = useAcademicProfile(user?.id);
+  const level = resolveEffectiveLevel(academic.profile?.level);
+  const semester = resolveEffectiveSemester(academic.profile?.semester);
+
+  const fetchSubjects = useCallback(
+    async (supabase: SupabaseClient): Promise<SubjectRow[]> => {
+      // Owner note #1: the three .or() calls are chained INDEPENDENTLY —
+      // each is a top-level condition ANDed by PostgREST — matching web
+      // useSubjects verbatim (strings locked by academic.test.ts).
+      let query = supabase
+        .from("subjects")
+        .select("id, name, name_en, professor, description")
+        .order("name", { ascending: true });
+      query = query.or(isAcademicFilter());
+      query = query.or(levelOrNullFilter(level));
+      query = query.or(semesterOrNullFilter(semester));
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as unknown as SubjectRow[];
+    },
+    [level, semester],
+  );
+
   const { data, loading, error, refetch } = useSupabaseQuery<SubjectRow[]>({
-    cacheKey: "subjects:all",
+    cacheKey: `subjects:all:${level}:${semester}`,
     fetcher: fetchSubjects,
+    enabled: !academic.loading,
   });
 
   const subjects = data ?? [];

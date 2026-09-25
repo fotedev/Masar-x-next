@@ -23,10 +23,10 @@ staging on every commit (#3).
 - [x] T086 `signup-validation.test.ts` (7 tests: min-6, mismatch, empty-email, duplicate-email mapping, generic collapse, reset-email requirement) + gates: typecheck ✅ · lint ✅ · vitest 35/35 ✅ · export ✅ (validates the authPages JSON resolves through Metro).
 
 ## C4 — Academic path + filtered subjects (G4)
-- [ ] T087 **Owner note #1 verification**: reproduce web `useSubjects` PostgREST query shape (two separate chained `.or()` calls, each independent top-level) and diff against mobile's intended query before wiring.
-- [ ] T088 ProfileScreen Academic-path card: `academic_levels` + `departments` options, `profiles` read (`level, semester, department_id`) + `profiles_update_own` save; department filtered by `academic_level_id`; semester 1–3.
-- [ ] T089 SubjectsScreen: select += `level, semester, is_academic, show_on_home`; effective semester = profile (valid 1–3) ?? 1; two chained `.or()` filters; refetch after profile save.
-- [ ] T090 gates.
+- [x] T087 **Owner note #1 VERIFIED**: web `useSubjects` read directly (apps/web/src/hooks/useSubjects.ts) — two SEPARATE chained `.or()` calls, each `field.eq.X,field.is.null`, plus the `is_academic.eq.true,is_academic.is.null` branch. Mobile builds the identical strings via pure builders (`levelOrNullFilter`/`semesterOrNullFilter`/`isAcademicFilter` in lib/academic.ts) locked verbatim by `academic.test.ts`; each call is chained independently, never merged into one `.or()` argument.
+- [x] T088 ProfileScreen Academic-path card: `academic_levels` + `departments` option fetches (web useAcademicOptions selects/orders verbatim); `profiles` read via `useAcademicProfile` (`level, semester, department_id`, maybeSingle) and save via `saveAcademicProfile` (profiles_update_own); department filtered by `academic_level_id` with reset-on-level-change (web parity); "no department" allowed (web onboarding saves null); save button + inline saved/failed notes.
+- [x] T089 SubjectsScreen: select unchanged columns + filter `.or(isAcademicFilter())`/`.or(levelOrNullFilter(level))`/`.or(semesterOrNullFilter(semester))`; effective semester = profile (valid 1–3) ?? 1, effective level = profile ?? 1 (web formula); subjects fetch gated on profile load (`enabled: !academic.loading`); cache key `subjects:all:{level}:{semester}` + live subscriber sync (useAcademicProfile reloads on save) so a Profile edit refilters the Subjects tab without a restart.
+- [x] T090 gates: mobile typecheck ✅ · lint ✅ · vitest 44/44 ✅ (9 new academic tests) · export ✅.
 
 ## C5 — AI chat local history (G5, local-only)
 - [ ] T091 `src/lib/chat-history.ts`: AsyncStorage key `masarx_ai_chat_cs_assistant` (outside read-cache prefix), load/save/clear, cap 100 drop-oldest, `pending` excluded, malformed JSON ⇒ empty.
