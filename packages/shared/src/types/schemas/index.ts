@@ -86,3 +86,13 @@ export type ValidatedCourseWithInstructor = z.infer<typeof CourseWithInstructorS
 export type ValidatedNews = z.infer<typeof NewsSchema>;
 export type ValidatedQuiz = z.infer<typeof QuizSchema>;
 export type ValidatedProfile = z.infer<typeof ProfileSchema>;
+
+// --- Waitlist (spec 021) ---
+export const WaitlistSourceSchema = z.enum(["trw", "macos", "android"]);
+export type WaitlistSource = z.infer<typeof WaitlistSourceSchema>;
+
+export const WaitlistSignupSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  source: WaitlistSourceSchema,
+});
+export type WaitlistSignupInput = z.infer<typeof WaitlistSignupSchema>;
