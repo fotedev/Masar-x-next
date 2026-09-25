@@ -68,6 +68,7 @@ export const MESSAGE_NAMESPACES = [
   "theme",
   "trw",
   "trwRedeem",
+  "waitlist",
 ] as const;
 
 export type MessageNamespace = (typeof MESSAGE_NAMESPACES)[number];

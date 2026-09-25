@@ -25,13 +25,11 @@
     },
     "macos": {
       "name": "macOS",
-      "status": "Coming soon",
-      "notifyLabel": "Notify me when available"
+      "status": "Coming soon"
     },
     "android": {
       "name": "Android",
-      "status": "Coming soon",
-      "notifyLabel": "Notify me when available"
+      "status": "Coming soon"
     }
   },
   "features": {

@@ -1,0 +1,14 @@
+{
+  "placeholder": "Enter your email",
+  "invalidEmail": "Please enter a valid email address.",
+  "error": "Failed to join. Please try again.",
+  "success": "You're on the list! We'll notify you soon.",
+  "duplicate": "You're already on the waitlist!",
+  "trw": {
+    "caption": "Get early access to our private community & inner circle.",
+    "cta": "Join Waitlist"
+  },
+  "platform": {
+    "cta": "Notify me when available"
+  }
+}

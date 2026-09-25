@@ -545,6 +545,29 @@ export interface Database {
           created_at?: string
         }
       }
+      waitlist: {
+        Row: {
+          id: string
+          email: string
+          source: 'trw' | 'macos' | 'android'
+          user_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          source: 'trw' | 'macos' | 'android'
+          user_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          source?: 'trw' | 'macos' | 'android'
+          user_id?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       review_details: {
@@ -721,6 +744,11 @@ export type AiSummaryUpdate = Database['public']['Tables']['ai_summaries']['Upda
 export type Course = Database['public']['Tables']['courses']['Row']
 export type CourseInsert = Database['public']['Tables']['courses']['Insert']
 export type CourseUpdate = Database['public']['Tables']['courses']['Update']
+
+// Waitlist (spec 021)
+export type Waitlist = Database['public']['Tables']['waitlist']['Row']
+export type WaitlistInsert = Database['public']['Tables']['waitlist']['Insert']
+export type WaitlistUpdate = Database['public']['Tables']['waitlist']['Update']
 
 // View types
 export type ReviewDetails = Database['public']['Views']['review_details']['Row']
