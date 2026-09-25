@@ -29,9 +29,9 @@ staging on every commit (#3).
 - [x] T090 gates: mobile typecheck ✅ · lint ✅ · vitest 44/44 ✅ (9 new academic tests) · export ✅.
 
 ## C5 — AI chat local history (G5, local-only)
-- [ ] T091 `src/lib/chat-history.ts`: AsyncStorage key `masarx_ai_chat_cs_assistant` (outside read-cache prefix), load/save/clear, cap 100 drop-oldest, `pending` excluded, malformed JSON ⇒ empty.
-- [ ] T092 `AIAssistantScreen` event-driven wiring: `pendingPersistRef` raised only by send/finalize/failure, consumed once; zero writes on mount/clear/auth transitions (repo lesson #14); load-on-mount restores once; `clearChat` deletes key.
-- [ ] T093 `chat-history.test.ts` (round-trip, cap, pending exclusion, clear, corrupt JSON) + gates.
+- [x] T091 `src/lib/chat-history.ts`: AsyncStorage key `masarx_ai_chat_cs_assistant` (outside read-cache prefix — no TTL envelope, survives cacheClearAll), load/save/clear, cap 100 drop-oldest, `pending` excluded, corrupt/non-array/malformed JSON ⇒ empty (per-entry shape guard).
+- [x] T092 `AIAssistantScreen` event-driven wiring (lesson #14): `pendingPersistRef` raised at exactly the four real events (send append, unconfigured-failure append, success finalize, failure finalize) and consumed once by the persist effect; mount, history-restore, clear, and auth transitions write nothing; `clearChat` empties state WITHOUT raising AND deletes the stored key (deletion exclusive); load-on-mount restores once (pure read, no write-back). Stale "known 401 gap" header comment replaced (bearer fix landed in spec 018).
+- [x] T093 `chat-history.test.ts` (9 tests: pending exclusion, 100-cap drop-oldest, failed/retryText round-trip, missing key, corrupt JSON, non-array payload, malformed-entry filtering, clear semantics) + gates: typecheck ✅ · lint ✅ · vitest 53/53 ✅ · export ✅.
 
 ## C6 — Quiz timer + attempts review (G6)
 - [ ] T094 **Owner note #2 timer lifecycle**: `endTimeRef`-derived remaining each tick, interval cleared on unmount + finish, `finishingRef` single auto-finish, `AppState` foreground re-evaluation → exactly one resolution event.
