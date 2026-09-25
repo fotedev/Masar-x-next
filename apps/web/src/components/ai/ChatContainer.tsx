@@ -228,6 +228,7 @@ export const ChatContainer = memo(function ChatContainer({
           prepend-anchor restores are instant by design). */}
       <div
         ref={messagesContainerRef}
+        data-testid="chat-messages-scroller"
         dir="ltr"
         className={`flex-1 w-full min-h-0 p-2 sm:p-4 space-y-3 sm:space-y-6 chat-messages transition-[background-color,border-color] duration-500 ${
           isInitialState
