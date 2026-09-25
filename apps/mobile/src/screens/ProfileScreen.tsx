@@ -1,12 +1,14 @@
 /**
  * Profile tab: account info, sign out (Supabase auth through
  * AuthContext), language override (I18nContext - a direction flip
- * prompts for an app restart, the standard RN/RTL constraint), and
- * the PDF upload entry point (src/lib/upload.ts -> summaries-pdfs
- * bucket, the same backend path the web app uses).
+ * prompts for an app restart, the standard RN/RTL constraint), the
+ * academic path card (spec 019 C4 — level/department/semester on the
+ * profiles row, the same fields web's profile page edits), and the
+ * PDF upload entry point (src/lib/upload.ts -> summaries-pdfs bucket,
+ * the same backend path the web app uses).
  */
 import Constants from "expo-constants";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +22,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useAcademicProfile } from "../hooks/useAcademicProfile";
+import {
+  departmentsForLevel,
+  fetchAcademicOptions,
+  saveAcademicProfile,
+  type AcademicOptions,
+} from "../lib/academic";
 import { getSupabaseClient } from "../lib/supabase";
 import { pickPdf, uploadSummaryPdf, UploadError, type UploadProgress } from "../lib/upload";
 
@@ -48,6 +57,63 @@ export default function ProfileScreen() {
   const [uploading, setUploading] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
   const [uploadNote, setUploadNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Spec 019 C4: academic path (level -> department -> semester).
+  const academic = useAcademicProfile(user?.id);
+  const [options, setOptions] = useState<AcademicOptions | null>(null);
+  const [optionsError, setOptionsError] = useState(false);
+  const [selLevel, setSelLevel] = useState<number | null>(null);
+  const [selDept, setSelDept] = useState<string | null>(null);
+  const [selSemester, setSelSemester] = useState<number | null>(null);
+  const [savingAcademic, setSavingAcademic] = useState(false);
+  const [academicNote, setAcademicNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    // Adopt the saved profile as the selection whenever it (re)loads;
+    // local edits after that stay untouched until the next save/reload.
+    if (academic.profile) {
+      setSelLevel(academic.profile.level);
+      setSelDept(academic.profile.department_id);
+      setSelSemester(academic.profile.semester);
+    }
+  }, [academic.profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchAcademicOptions(getSupabaseClient());
+        if (!cancelled) {
+          setOptions(data);
+          setOptionsError(false);
+        }
+      } catch {
+        if (!cancelled) setOptionsError(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onSaveAcademic = async () => {
+    if (savingAcademic || !user || selLevel == null || selSemester == null) return;
+    setSavingAcademic(true);
+    setAcademicNote(null);
+    try {
+      await saveAcademicProfile(getSupabaseClient(), user.id, {
+        level: selLevel,
+        semester: selSemester,
+        department_id: selDept,
+      });
+      setAcademicNote({ ok: true, text: t("mobile", "profile.academicSaved") });
+      academic.reload(); // live-syncs the Subjects tab filter
+    } catch {
+      setAcademicNote({ ok: false, text: t("mobile", "profile.academicSaveFailed") });
+    } finally {
+      setSavingAcademic(false);
+    }
+  };
 
   const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
   const displayName =
@@ -165,6 +231,125 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.sectionTitle}>{t("mobile", "profile.academic")}</Text>
+          {optionsError ? (
+            <Text style={styles.noteError}>
+              {t("mobile", "profile.academicLoadFailed")}
+            </Text>
+          ) : !options ? (
+            <ActivityIndicator color={COLORS.primary} />
+          ) : (
+            <>
+              <Text style={styles.pickerLabel}>{t("mobile", "profile.level")}</Text>
+              <View style={styles.chipRow}>
+                {options.levels.map((lvl) => (
+                  <Pressable
+                    key={lvl.id}
+                    style={[styles.chip, selLevel === lvl.level_number && styles.chipActive]}
+                    onPress={() => {
+                      // Web parity: changing the level resets the department.
+                      setSelLevel(lvl.level_number);
+                      setSelDept(null);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selLevel === lvl.level_number && styles.chipTextActive,
+                      ]}
+                    >
+                      {lvl.level_number}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={styles.pickerLabel}>{t("mobile", "profile.department")}</Text>
+              <View style={styles.chipRow}>
+                {selLevel == null ? (
+                  <Text style={styles.hint}>{t("mobile", "profile.pickLevelFirst")}</Text>
+                ) : (
+                  <>
+                    <Pressable
+                      style={[styles.chip, selDept === null && styles.chipActive]}
+                      onPress={() => setSelDept(null)}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selDept === null && styles.chipTextActive,
+                        ]}
+                      >
+                        {t("mobile", "profile.noDepartment")}
+                      </Text>
+                    </Pressable>
+                    {departmentsForLevel(
+                      options,
+                      options.levels.find((l) => l.level_number === selLevel)?.id ?? null,
+                    ).map((dept) => (
+                      <Pressable
+                        key={dept.id}
+                        style={[styles.chip, selDept === dept.id && styles.chipActive]}
+                        onPress={() => setSelDept(dept.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.chipText,
+                            selDept === dept.id && styles.chipTextActive,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {dept.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </>
+                )}
+              </View>
+
+              <Text style={styles.pickerLabel}>{t("mobile", "profile.semester")}</Text>
+              <View style={styles.chipRow}>
+                {[1, 2, 3].map((sem) => (
+                  <Pressable
+                    key={sem}
+                    style={[styles.chip, selSemester === sem && styles.chipActive]}
+                    onPress={() => setSelSemester(sem)}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selSemester === sem && styles.chipTextActive,
+                      ]}
+                    >
+                      {sem}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                style={[styles.button, savingAcademic && styles.buttonDisabled]}
+                onPress={() => void onSaveAcademic()}
+                disabled={savingAcademic || selLevel == null || selSemester == null}
+              >
+                {savingAcademic ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    {t("mobile", "profile.saveAcademic")}
+                  </Text>
+                )}
+              </Pressable>
+              {academicNote ? (
+                <Text style={academicNote.ok ? styles.noteOk : styles.noteError}>
+                  {academicNote.text}
+                </Text>
+              ) : null}
+            </>
+          )}
+        </View>
+
+        <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("mobile", "upload.pickPdf")}</Text>
           <Text style={styles.hint}>
             {locale === "ar"
@@ -239,6 +424,25 @@ const styles = StyleSheet.create({
   languageButtonText: { color: COLORS.ink, fontWeight: "600" },
   languageButtonTextActive: { color: COLORS.primary, fontWeight: "800" },
   hint: { color: COLORS.subtle, fontSize: 12, marginTop: 8 },
+  pickerLabel: {
+    color: COLORS.ink,
+    fontWeight: "600",
+    fontSize: 13,
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  chipActive: { borderColor: COLORS.primary, backgroundColor: "#EEF2FF" },
+  chipText: { color: COLORS.ink, fontWeight: "600", fontSize: 13 },
+  chipTextActive: { color: COLORS.primary, fontWeight: "800" },
   button: {
     backgroundColor: COLORS.primary,
     borderRadius: 12,
