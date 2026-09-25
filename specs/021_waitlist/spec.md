@@ -38,4 +38,8 @@ The general footer WhatsApp **support** CTA is NOT touched.
 - [ ] Invalid email ⇒ inline validation message, no request sent.
 - [ ] All new strings exist in ar and en; no new i18n audit hits.
 - [ ] Gates: tsc, eslint, web vitest green.
-- [ ] Migration applied to the linked project (owner action: `supabase db push`).
+- [x] Migration applied to the linked project (2026-09-25, via Supabase Management API `database/query`). Smoke-tested: RLS anon INSERT OK, REST 201 / 409 duplicate / 400 invalid, anon read returns `[]` (rows unreadable), smoke rows cleaned.
+
+## Deployment note
+
+The remote migration history uses legacy timestamp names (`20260222104332`…) while local files are renumbered `0NN_*` — `supabase migration list` shows zero pairing. **NEVER run `supabase db push` / `migration up` against this project**: it would replay 001–013 onto an already-migrated database. Apply new migrations via the Management API `POST /v1/projects/{ref}/database/query` or the dashboard SQL editor. (Also: the Supabase CLI's stored login belongs to a different account and 403s on `--linked` SQL execution; and OpenCode's Supabase MCP runs with `--read-only`, so it cannot apply DDL either.)
