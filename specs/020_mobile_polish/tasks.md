@@ -8,8 +8,8 @@ the repo-wide task counter (spec 019 ended at T099).
 - [ ] T100 `specs/020_mobile_polish/{spec.md,tasks.md}` committed; pause for owner approval before C2.
 
 ## C2 — News tab (G1)
-- [ ] T101 `NewsScreen`: web `useNews` query verbatim (`news`, `is_active = true`, created_at desc, limit 30) via `useSupabaseQuery` (cache `news:active`); category chips (all/announcement/update/important + custom_category labels); card = title/date/content-preview/first `image_urls` image/`file_url` Linking row; expandable full content; `news` namespace imported (11th) + `tabs.news` MOBILE_STRINGS key; 6th tab in `MainTabsParamList`.
-- [ ] T102 `news-filter.test.ts` (category mapping incl. custom-category passthrough) + gates.
+- [x] T101 `NewsScreen`: web `useNews` query verbatim (`news`, `is_active = true`, created_at desc, limit 30) via `useSupabaseQuery` (cache `news:active`); category chips (all/announcement/update/important + custom_category labels); card = title/date/content-preview/first `image_urls` image/`file_url` Linking row; expandable full content; `news` namespace imported (11th) + `tabs.news` MOBILE_STRINGS key; 6th tab in `MainTabsParamList` (between Quizzes and AI).
+- [x] T102 `news-filter.test.ts` (6 tests: all-passes-everything, strict trimmed type equality, null/custom excluded from fixed tabs, custom-category label extraction) + gates: typecheck ✅ · lint ✅ · vitest 68/68 ✅ · export ✅.
 
 ## C3 — Dark mode (G2)
 - [ ] T103 `theme.ts` rebuilt: `lightColors`/`darkColors` (token names = today's hardcoded set), `ThemeContext` (system/light/dark override in AsyncStorage `masarx_theme_override`, resolved via `useColorScheme`), `useThemedColors()`; provider mounted in App; status bar scheme-aware.
