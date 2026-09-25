@@ -9,7 +9,7 @@
  */
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -26,6 +26,8 @@ import type { RootStackParamList } from "../../app/App";
 import MathText from "../components/MathText";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import {
   fetchQuizWithQuestions,
   listGuestResults,
@@ -34,17 +36,6 @@ import {
 import { getSupabaseClient } from "../lib/supabase";
 import { splitTime } from "../lib/quiz-timer";
 import type { PlayerQuestion } from "../types/quiz";
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  danger: "#DC2626",
-  success: "#16A34A",
-};
 
 interface AttemptAnswerLike {
   question_id: string;
@@ -148,6 +139,8 @@ interface AttemptReview {
 export default function QuizAttemptsScreen() {
   const { user } = useAuth();
   const { t, locale, isRTL } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [attempts, setAttempts] = useState<AttemptEntry[]>([]);
@@ -210,7 +203,7 @@ export default function QuizAttemptsScreen() {
   const renderReview = (attempt: AttemptEntry) => {
     if (!review) return null;
     if (review.loading) {
-      return <ActivityIndicator color={COLORS.primary} style={styles.reviewLoading} />;
+      return <ActivityIndicator color={colors.primary} style={styles.reviewLoading} />;
     }
     if (review.error) {
       return <Text style={styles.reviewError}>{review.error}</Text>;
@@ -321,7 +314,7 @@ export default function QuizAttemptsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -347,8 +340,9 @@ export default function QuizAttemptsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -357,15 +351,15 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
-  backText: { fontSize: 22, fontWeight: "700", color: COLORS.ink, paddingHorizontal: 4 },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: COLORS.ink },
+  backText: { fontSize: 22, fontWeight: "700", color: colors.ink, paddingHorizontal: 4 },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: colors.ink },
   list: { padding: 16, paddingBottom: 32 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -377,49 +371,49 @@ const styles = StyleSheet.create({
   },
   attemptPressed: { opacity: 0.7 },
   attemptMain: { flex: 1 },
-  attemptTitle: { fontSize: 15, fontWeight: "700", color: COLORS.ink },
+  attemptTitle: { fontSize: 15, fontWeight: "700", color: colors.ink },
   attemptMetaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
   localChip: {
     borderRadius: 6,
-    backgroundColor: "#EEF2FF",
+    backgroundColor: colors.accentBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     alignSelf: "flex-start",
   },
-  localChipText: { color: COLORS.primary, fontSize: 11, fontWeight: "700" },
-  attemptDate: { color: COLORS.subtle, fontSize: 12 },
+  localChipText: { color: colors.primary, fontSize: 11, fontWeight: "700" },
+  attemptDate: { color: colors.subtle, fontSize: 12 },
   attemptScore: { fontSize: 16, fontWeight: "800" },
-  attemptScoreOk: { color: COLORS.success },
-  attemptScoreLow: { color: COLORS.danger },
-  review: { marginTop: 10, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10 },
+  attemptScoreOk: { color: colors.success },
+  attemptScoreLow: { color: colors.danger },
+  review: { marginTop: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 },
   reviewLoading: { marginVertical: 12 },
-  reviewError: { color: COLORS.danger, fontSize: 13, marginTop: 8 },
-  reviewHeading: { fontSize: 13, fontWeight: "700", color: COLORS.subtle, marginBottom: 6 },
+  reviewError: { color: colors.danger, fontSize: 13, marginTop: 8 },
+  reviewHeading: { fontSize: 13, fontWeight: "700", color: colors.subtle, marginBottom: 6 },
   reviewQuestion: { marginBottom: 14 },
-  reviewQuestionIndex: { fontSize: 12, fontWeight: "700", color: COLORS.subtle, marginBottom: 4 },
+  reviewQuestionIndex: { fontSize: 12, fontWeight: "700", color: colors.subtle, marginBottom: 4 },
   reviewOption: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginTop: 6,
   },
-  reviewOptionCorrect: { borderColor: COLORS.success, backgroundColor: "#F0FDF4" },
-  reviewOptionWrong: { borderColor: COLORS.danger, backgroundColor: "#FEF2F2" },
-  reviewOptionCorrectKey: { borderColor: COLORS.primary, backgroundColor: "#EEF2FF" },
-  reviewOptionText: { color: COLORS.ink, fontSize: 13 },
-  reviewUnsolved: { color: COLORS.subtle, fontSize: 12, marginTop: 6 },
+  reviewOptionCorrect: { borderColor: colors.success, backgroundColor: colors.successBg },
+  reviewOptionWrong: { borderColor: colors.danger, backgroundColor: colors.dangerBg },
+  reviewOptionCorrectKey: { borderColor: colors.primary, backgroundColor: colors.accentBg },
+  reviewOptionText: { color: colors.ink, fontSize: 13 },
+  reviewUnsolved: { color: colors.subtle, fontSize: 12, marginTop: 6 },
   reviewExplanation: { marginTop: 8 },
-  reviewExplanationLabel: { fontSize: 12, fontWeight: "700", color: COLORS.subtle, marginBottom: 2 },
-  empty: { color: COLORS.subtle, textAlign: "center", paddingVertical: 32 },
-  errorText: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  reviewExplanationLabel: { fontSize: 12, fontWeight: "700", color: colors.subtle, marginBottom: 2 },
+  empty: { color: colors.subtle, textAlign: "center", paddingVertical: 32 },
+  errorText: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
+  retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
   rtlText: { textAlign: "right", writingDirection: "rtl" },
 });

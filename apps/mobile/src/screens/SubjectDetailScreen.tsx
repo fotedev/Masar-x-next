@@ -29,6 +29,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { SupabaseClient } from "masarx-shared/supabase";
 
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import {
   groupContentByLecture,
   type LectureRef,
@@ -73,20 +75,6 @@ interface SubjectContent {
   files: FileRow[];
   quizzes: QuizRow[];
 }
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  danger: "#DC2626",
-  chipActive: "#4F46E5",
-  chipInactive: "#EEF2FF",
-  chipActiveText: "#FFFFFF",
-  chipInactiveText: "#4F46E5",
-};
 
 type ContentKind = "summaries" | "videos" | "files" | "quizzes";
 
@@ -155,6 +143,8 @@ async function loadSubjectBundle(supabase: SupabaseClient, subjectName: string) 
 
 export default function SubjectDetailScreen() {
   const { t, isRTL, locale } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<{ key: string; name: "SubjectDetail"; params: RootStackParamList["SubjectDetail"] }>();
   const subjectName = route.params.subjectName;
@@ -265,7 +255,7 @@ export default function SubjectDetailScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -397,8 +387,9 @@ export default function SubjectDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -407,25 +398,25 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 4,
   },
-  backText: { fontSize: 22, fontWeight: "700", color: COLORS.ink, paddingHorizontal: 4 },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: COLORS.ink },
+  backText: { fontSize: 22, fontWeight: "700", color: colors.ink, paddingHorizontal: 4 },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: "700", color: colors.ink },
   list: { padding: 16, paddingBottom: 32 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 16,
   },
-  subjectName: { fontSize: 19, fontWeight: "800", color: COLORS.ink },
-  meta: { fontSize: 13, color: COLORS.subtle, marginTop: 6 },
-  description: { fontSize: 13, color: COLORS.subtle, marginTop: 8 },
+  subjectName: { fontSize: 19, fontWeight: "800", color: colors.ink },
+  meta: { fontSize: 13, color: colors.subtle, marginTop: 6 },
+  description: { fontSize: 13, color: colors.subtle, marginTop: 8 },
   sectionTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 8,
   },
   chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
@@ -434,24 +425,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     maxWidth: "100%",
   },
-  chipActive: { backgroundColor: COLORS.chipActive, borderColor: COLORS.chipActive },
-  chipInactive: { backgroundColor: COLORS.chipInactive },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipInactive: { backgroundColor: colors.accentBg },
   chipText: { fontSize: 13, fontWeight: "600" },
-  chipTextActive: { color: COLORS.chipActiveText },
-  chipTextInactive: { color: COLORS.chipInactiveText },
+  chipTextActive: { color: colors.onPrimary },
+  chipTextInactive: { color: colors.accentText },
   group: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
-  groupTitle: { fontSize: 15, fontWeight: "700", color: COLORS.ink, marginBottom: 8 },
-  unclassifiedTitle: { color: COLORS.subtle },
+  groupTitle: { fontSize: 15, fontWeight: "700", color: colors.ink, marginBottom: 8 },
+  unclassifiedTitle: { color: colors.subtle },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -459,15 +450,15 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   rowPressed: { opacity: 0.6 },
-  rowTitle: { flex: 1, fontSize: 14, color: COLORS.ink },
-  rowAction: { fontSize: 13, fontWeight: "600", color: COLORS.primary },
-  emptyGroup: { fontSize: 13, color: COLORS.subtle },
-  error: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  rowTitle: { flex: 1, fontSize: 14, color: colors.ink },
+  rowAction: { fontSize: 13, fontWeight: "600", color: colors.primary },
+  emptyGroup: { fontSize: 13, color: colors.subtle },
+  error: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,

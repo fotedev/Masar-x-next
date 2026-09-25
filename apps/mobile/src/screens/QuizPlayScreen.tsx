@@ -18,7 +18,7 @@
  */
 import { useNavigation, useRoute } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -34,6 +34,8 @@ import type { RootStackParamList } from "../../app/App";
 import MathText from "../components/MathText";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import {
   fetchQuizWithQuestions,
   finishAttempt,
@@ -66,17 +68,6 @@ interface FinishResult {
   savedToServer: boolean;
 }
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  danger: "#DC2626",
-  success: "#16A34A",
-};
-
 export default function QuizPlayScreen() {
   const route = useRoute();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -85,6 +76,8 @@ export default function QuizPlayScreen() {
 
   const { user } = useAuth();
   const { t, locale } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   const [phase, setPhase] = useState<Phase>("loading");
@@ -270,7 +263,7 @@ export default function QuizPlayScreen() {
   if (phase === "loading") {
     return (
       <SafeAreaView style={[styles.screen, styles.center]} edges={["top", "left", "right"]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.preparing}>{t("quizzes", "preparing")}</Text>
       </SafeAreaView>
     );
@@ -405,7 +398,7 @@ export default function QuizPlayScreen() {
             disabled={submitting || selected === null}
           >
             {submitting ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
               <Text style={[styles.footerButtonText, styles.footerButtonTextPrimary]}>
                 {t("quizzes", "confirmAnswer")}
@@ -428,22 +421,23 @@ export default function QuizPlayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: "center", justifyContent: "center" },
-  preparing: { color: COLORS.subtle, marginTop: 12 },
-  errorText: { color: COLORS.danger, textAlign: "center", marginBottom: 16, paddingHorizontal: 24 },
+  preparing: { color: colors.subtle, marginTop: 12 },
+  errorText: { color: colors.danger, textAlign: "center", marginBottom: 16, paddingHorizontal: 24 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.card,
   },
-  backText: { fontSize: 22, fontWeight: "700", color: COLORS.ink, paddingHorizontal: 8 },
-  headerTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: COLORS.ink, paddingHorizontal: 8 },
+  backText: { fontSize: 22, fontWeight: "700", color: colors.ink, paddingHorizontal: 8 },
+  headerTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: colors.ink, paddingHorizontal: 8 },
   guestChip: {
     backgroundColor: "#FEF3C7",
     borderRadius: 8,
@@ -452,91 +446,91 @@ const styles = StyleSheet.create({
   },
   guestChipText: { color: "#92400E", fontSize: 11, fontWeight: "700" },
   list: { padding: 16, paddingBottom: 24 },
-  progress: { color: COLORS.subtle, fontWeight: "600", marginBottom: 10 },
+  progress: { color: colors.subtle, fontWeight: "600", marginBottom: 10 },
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  progressRowText: { color: COLORS.subtle, fontWeight: "600" },
+  progressRowText: { color: colors.subtle, fontWeight: "600" },
   timerChip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  timerChipDanger: { borderColor: COLORS.danger, backgroundColor: "#FEF2F2" },
-  timerChipText: { color: COLORS.ink, fontWeight: "700", fontSize: 13 },
-  timerChipTextDanger: { color: COLORS.danger },
+  timerChipDanger: { borderColor: colors.danger, backgroundColor: colors.dangerBg },
+  timerChipText: { color: colors.ink, fontWeight: "700", fontSize: 13 },
+  timerChipTextDanger: { color: colors.danger },
   questionCard: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
-  questionIndex: { color: COLORS.subtle, fontSize: 12, fontWeight: "700", marginBottom: 6 },
+  questionIndex: { color: colors.subtle, fontSize: 12, fontWeight: "700", marginBottom: 6 },
   option: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 12,
     marginBottom: 10,
   },
-  optionActive: { borderColor: COLORS.primary, backgroundColor: "#EEF2FF" },
+  optionActive: { borderColor: colors.primary, backgroundColor: colors.accentBg },
   optionDot: {
     width: 16,
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: COLORS.subtle,
+    borderColor: colors.subtle,
     marginRight: 10,
   },
-  optionDotActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
-  optionText: { flex: 1, color: COLORS.ink, fontSize: 15 },
+  optionDotActive: { borderColor: colors.primary, backgroundColor: colors.primary },
+  optionText: { flex: 1, color: colors.ink, fontSize: 15 },
   optionTextActive: { fontWeight: "700" },
-  explanation: { color: COLORS.subtle, fontSize: 13, marginTop: 4, lineHeight: 19 },
+  explanation: { color: colors.subtle, fontSize: 13, marginTop: 4, lineHeight: 19 },
   footer: {
     flexDirection: "row",
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
   footerButton: {
     flex: 1,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingVertical: 12,
     alignItems: "center",
     marginHorizontal: 4,
   },
-  footerButtonPrimary: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  footerButtonPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
   footerButtonDisabled: { opacity: 0.5 },
-  footerButtonText: { color: COLORS.ink, fontWeight: "700" },
-  footerButtonTextPrimary: { color: "#FFFFFF" },
-  doneTitle: { fontSize: 22, fontWeight: "800", color: COLORS.ink, marginBottom: 8 },
-  scoreText: { fontSize: 40, fontWeight: "800", color: COLORS.primary, marginBottom: 8 },
-  praise: { color: COLORS.subtle, marginBottom: 12 },
+  footerButtonText: { color: colors.ink, fontWeight: "700" },
+  footerButtonTextPrimary: { color: colors.onPrimary },
+  doneTitle: { fontSize: 22, fontWeight: "800", color: colors.ink, marginBottom: 8 },
+  scoreText: { fontSize: 40, fontWeight: "800", color: colors.primary, marginBottom: 8 },
+  praise: { color: colors.subtle, marginBottom: 12 },
   saveNote: { fontSize: 13, marginBottom: 20 },
-  saveOk: { color: COLORS.success },
-  saveOffline: { color: COLORS.subtle },
+  saveOk: { color: colors.success },
+  saveOffline: { color: colors.subtle },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 12,
     marginBottom: 8,
   },
-  buttonText: { color: "#FFFFFF", fontWeight: "700" },
+  buttonText: { color: colors.onPrimary, fontWeight: "700" },
   linkButton: { paddingVertical: 8 },
-  linkText: { color: COLORS.primary, fontWeight: "600" },
+  linkText: { color: colors.primary, fontWeight: "600" },
 });

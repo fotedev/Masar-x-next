@@ -10,7 +10,7 @@
  */
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -27,20 +27,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RootStackParamList } from "../../app/App";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { validateResetEmail } from "../lib/signup-validation";
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  danger: "#DC2626",
-  border: "#CBD5E1",
-};
 
 export default function LoginScreen() {
   const { status, signIn, requestPasswordReset, retry } = useAuth();
   const { t, isRTL } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
 
@@ -168,7 +163,7 @@ export default function LoginScreen() {
                   autoComplete="email"
                   keyboardType="email-address"
                   placeholder="you@example.com"
-                  placeholderTextColor={COLORS.subtle}
+                  placeholderTextColor={colors.subtle}
                 />
 
                 {resetError ? (
@@ -183,7 +178,7 @@ export default function LoginScreen() {
                   disabled={resetSending}
                 >
                   {resetSending ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={colors.onPrimary} />
                   ) : (
                     <Text style={styles.buttonText}>
                       {t("authPages", "sendResetLink")}
@@ -216,7 +211,7 @@ export default function LoginScreen() {
               autoComplete="email"
               keyboardType="email-address"
               placeholder="you@example.com"
-              placeholderTextColor={COLORS.subtle}
+              placeholderTextColor={colors.subtle}
             />
 
             <Text style={styles.label}>{t("auth", "password")}</Text>
@@ -236,7 +231,7 @@ export default function LoginScreen() {
               disabled={submitting}
             >
               {submitting ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.onPrimary} />
               ) : (
                 <Text style={styles.buttonText}>{t("auth", "signIn")}</Text>
               )}
@@ -270,72 +265,73 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: COLORS.bg },
-  screen: { flexGrow: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.bg },
+  screen: { flexGrow: 1, backgroundColor: colors.bg },
   center: { alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
   brand: {
     fontSize: 36,
     fontWeight: "800",
-    color: COLORS.primary,
+    color: colors.primary,
     marginBottom: 8,
   },
   tagline: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginBottom: 32,
   },
   form: { width: "100%", maxWidth: 420 },
   label: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontWeight: "600",
     marginBottom: 6,
     marginTop: 14,
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.inputBorder,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: COLORS.ink,
+    color: colors.ink,
   },
-  error: { color: COLORS.danger, marginTop: 12, textAlign: "center" },
+  error: { color: colors.danger, marginTop: 12, textAlign: "center" },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center",
     marginTop: 18,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 16 },
+  buttonText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
   oauthNote: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginTop: 16,
     fontSize: 13,
   },
   linkButton: { alignItems: "center", marginTop: 14 },
-  linkText: { color: COLORS.primary, fontWeight: "600", textAlign: "center" },
+  linkText: { color: colors.primary, fontWeight: "600", textAlign: "center" },
   resetTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: COLORS.ink,
+    color: colors.ink,
     textAlign: "center",
     marginBottom: 6,
   },
   resetSubtitle: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginBottom: 12,
     lineHeight: 20,
   },
   rtlText: { textAlign: "right", writingDirection: "rtl" },
   unconfiguredText: {
-    color: COLORS.ink,
+    color: colors.ink,
     textAlign: "center",
     marginBottom: 20,
   },

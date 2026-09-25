@@ -5,7 +5,7 @@
  * RTL-aware layout, offline banner and LocalReadCache through
  * useSupabaseQuery (cached content stays readable while offline).
  */
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,6 +23,8 @@ import type { SupabaseClient } from "masarx-shared/supabase";
 import type { RootStackParamList } from "../../app/App";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import {
   isAcademicFilter,
   levelOrNullFilter,
@@ -42,22 +44,12 @@ interface SubjectRow {
   description: string | null;
 }
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  banner: "#FEF3C7",
-  bannerText: "#92400E",
-  danger: "#DC2626",
-};
-
 export default function SubjectsScreen() {
   const { t, isRTL } = useI18n();
   const { user } = useAuth();
   const { online } = useNetworkStatus();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Spec 019 C4: filter by the profile's academic path (web parity —
@@ -135,8 +127,8 @@ export default function SubjectsScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={refetch}
-            tintColor={COLORS.primary}
-            colors={[COLORS.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListFooterComponent={
@@ -147,7 +139,7 @@ export default function SubjectsScreen() {
         ListEmptyComponent={
           loading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : error ? (
             <View style={styles.center}>
@@ -167,51 +159,52 @@ export default function SubjectsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   list: { padding: 16, paddingBottom: 32 },
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 12,
   },
   banner: {
-    backgroundColor: COLORS.banner,
+    backgroundColor: colors.banner,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
   },
-  bannerText: { color: COLORS.bannerText, fontSize: 13, fontWeight: "600" },
+  bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
   cardPressed: { opacity: 0.7 },
-  cardTitle: { fontSize: 17, fontWeight: "700", color: COLORS.ink },
-  cardSubtitle: { fontSize: 13, color: COLORS.subtle, marginTop: 2 },
-  meta: { fontSize: 13, color: COLORS.subtle, marginTop: 6 },
-  description: { fontSize: 13, color: COLORS.subtle, marginTop: 6 },
+  cardTitle: { fontSize: 17, fontWeight: "700", color: colors.ink },
+  cardSubtitle: { fontSize: 13, color: colors.subtle, marginTop: 2 },
+  meta: { fontSize: 13, color: colors.subtle, marginTop: 6 },
+  description: { fontSize: 13, color: colors.subtle, marginTop: 6 },
   rtlText: { textAlign: "right", writingDirection: "rtl" },
   center: { alignItems: "center", paddingVertical: 32 },
-  empty: { color: COLORS.subtle, textAlign: "center" },
-  error: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  empty: { color: colors.subtle, textAlign: "center" },
+  error: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   footerError: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     paddingVertical: 10,
     fontSize: 12,
   },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
+  retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
 });
