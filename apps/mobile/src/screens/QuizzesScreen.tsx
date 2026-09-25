@@ -5,7 +5,7 @@
  */
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -20,6 +20,8 @@ import type { SupabaseClient } from "masarx-shared/supabase";
 
 import type { RootStackParamList } from "../../app/App";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
 
@@ -28,18 +30,6 @@ interface QuizRow {
   title: string;
   description: string | null;
 }
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  banner: "#FEF3C7",
-  bannerText: "#92400E",
-  danger: "#DC2626",
-};
 
 async function fetchQuizzes(supabase: SupabaseClient): Promise<QuizRow[]> {
   const { data, error } = await supabase
@@ -57,6 +47,8 @@ async function fetchQuizzes(supabase: SupabaseClient): Promise<QuizRow[]> {
 export default function QuizzesScreen() {
   const { t } = useI18n();
   const { online } = useNetworkStatus();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data, loading, error, refetch } = useSupabaseQuery<QuizRow[]>({
     cacheKey: "quizzes:approved",
@@ -115,14 +107,14 @@ export default function QuizzesScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={refetch}
-            tintColor={COLORS.primary}
-            colors={[COLORS.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
           loading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : error ? (
             <View style={styles.center}>
@@ -142,13 +134,14 @@ export default function QuizzesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   list: { padding: 16, paddingBottom: 32 },
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 12,
   },
   titleRow: {
@@ -160,25 +153,25 @@ const styles = StyleSheet.create({
   attemptsLink: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: "#FFFFFF",
+    borderColor: colors.border,
+    backgroundColor: colors.card,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  attemptsLinkText: { color: COLORS.primary, fontWeight: "700", fontSize: 12 },
+  attemptsLinkText: { color: colors.primary, fontWeight: "700", fontSize: 12 },
   banner: {
-    backgroundColor: COLORS.banner,
+    backgroundColor: colors.banner,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
   },
-  bannerText: { color: COLORS.bannerText, fontSize: 13, fontWeight: "600" },
+  bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
     flexDirection: "row",
@@ -186,23 +179,23 @@ const styles = StyleSheet.create({
   },
   cardPressed: { opacity: 0.85 },
   cardBody: { flex: 1, paddingRight: 8 },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: COLORS.ink },
-  cardDescription: { fontSize: 13, color: COLORS.subtle, marginTop: 4 },
+  cardTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
+  cardDescription: { fontSize: 13, color: colors.subtle, marginTop: 4 },
   startChip: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  startChipText: { color: "#FFFFFF", fontWeight: "700", fontSize: 12 },
+  startChipText: { color: colors.onPrimary, fontWeight: "700", fontSize: 12 },
   center: { alignItems: "center", paddingVertical: 32 },
-  empty: { color: COLORS.subtle, textAlign: "center" },
-  error: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  empty: { color: colors.subtle, textAlign: "center" },
+  error: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
+  retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
 });

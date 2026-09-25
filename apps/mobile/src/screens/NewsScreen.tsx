@@ -25,6 +25,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { SupabaseClient } from "masarx-shared/supabase";
 
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
 import {
@@ -45,19 +47,6 @@ interface NewsRow {
   custom_category: string | null;
 }
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  banner: "#FEF3C7",
-  bannerText: "#92400E",
-  danger: "#DC2626",
-  chipActiveText: "#FFFFFF",
-};
-
 const CATEGORIES: NewsCategory[] = ["all", "announcement", "update", "important"];
 
 async function fetchNews(supabase: SupabaseClient): Promise<NewsRow[]> {
@@ -75,6 +64,8 @@ async function fetchNews(supabase: SupabaseClient): Promise<NewsRow[]> {
 export default function NewsScreen() {
   const { t, isRTL, locale } = useI18n();
   const { online } = useNetworkStatus();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [category, setCategory] = useState<NewsCategory>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { data, loading, error, refetch } = useSupabaseQuery<NewsRow[]>({
@@ -185,14 +176,14 @@ export default function NewsScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={refetch}
-            tintColor={COLORS.primary}
-            colors={[COLORS.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={
           loading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : error ? (
             <View style={styles.center}>
@@ -214,40 +205,41 @@ export default function NewsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   list: { padding: 16, paddingBottom: 32 },
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 12,
   },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   chip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText: { color: COLORS.ink, fontWeight: "600", fontSize: 13 },
-  chipTextActive: { color: COLORS.chipActiveText },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
+  chipTextActive: { color: colors.onPrimary },
   banner: {
-    backgroundColor: COLORS.banner,
+    backgroundColor: colors.banner,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
   },
-  bannerText: { color: COLORS.bannerText, fontSize: 13, fontWeight: "600" },
+  bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -257,20 +249,20 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     borderRadius: 10,
     marginBottom: 10,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: COLORS.ink },
+  cardTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
   categoryChip: {
     borderRadius: 6,
-    backgroundColor: "#EEF2FF",
+    backgroundColor: colors.accentBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     alignSelf: "flex-start",
   },
-  categoryChipText: { color: COLORS.primary, fontSize: 11, fontWeight: "700" },
-  metaDate: { color: COLORS.subtle, fontSize: 12 },
-  content: { color: COLORS.subtle, fontSize: 13, marginTop: 8, lineHeight: 20 },
+  categoryChipText: { color: colors.primary, fontSize: 11, fontWeight: "700" },
+  metaDate: { color: colors.subtle, fontSize: 12 },
+  content: { color: colors.subtle, fontSize: 13, marginTop: 8, lineHeight: 20 },
   fileRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -279,19 +271,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
+    borderTopColor: colors.border,
   },
-  fileText: { flex: 1, color: COLORS.ink, fontSize: 13, fontWeight: "600" },
-  fileAction: { color: COLORS.primary, fontSize: 13, fontWeight: "700" },
+  fileText: { flex: 1, color: colors.ink, fontSize: 13, fontWeight: "600" },
+  fileAction: { color: colors.primary, fontSize: 13, fontWeight: "700" },
   center: { alignItems: "center", paddingVertical: 32 },
-  empty: { color: COLORS.subtle, textAlign: "center" },
-  error: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  empty: { color: colors.subtle, textAlign: "center" },
+  error: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
+  retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
   rtlText: { textAlign: "right", writingDirection: "rtl" },
 });

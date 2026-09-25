@@ -38,6 +38,8 @@ import { StatusBar } from "expo-status-bar";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { I18nProvider, useI18n } from "../src/context/I18nContext";
+import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import { darkColors, lightColors, type Palette } from "../src/lib/theme";
 import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
 import NewsScreen from "../src/screens/NewsScreen";
@@ -71,21 +73,15 @@ export type RootStackParamList = {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabsParamList>();
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-};
-
 function MainTabs() {
   const { t } = useI18n();
+  const { colors } = useTheme();
   return (
     <Tabs.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.subtle,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.subtle,
         tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
       }}
     >
@@ -102,6 +98,8 @@ function MainTabs() {
 function UnconfiguredScreen() {
   const { retry } = useAuth();
   const { t } = useI18n();
+  const { resolved } = useTheme();
+  const styles = resolved === "dark" ? darkStyles : lightStyles;
   return (
     <View style={styles.center}>
       <Text style={styles.brand}>Masar X</Text>
@@ -116,6 +114,8 @@ function UnconfiguredScreen() {
 function RootNavigator() {
   const { status } = useAuth();
   const { isRTL } = useI18n();
+  const { resolved, colors } = useTheme();
+  const styles = resolved === "dark" ? darkStyles : lightStyles;
 
   // FR-008: keep layout direction in step with the effective locale
   // (a direction flip takes effect on the next cold start).
@@ -127,7 +127,7 @@ function RootNavigator() {
   if (status === "loading") {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -180,40 +180,56 @@ function RootNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <I18nProvider>
-          <RootNavigator />
-          <StatusBar style="dark" />
-        </I18nProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <AppShell />
+          </I18nProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.bg,
-    padding: 24,
-  },
-  brand: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.primary,
-    marginBottom: 12,
-  },
-  unconfiguredText: {
-    color: COLORS.ink,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
-});
+/** Scheme-aware status bar + navigator, inside the ThemeProvider. */
+function AppShell() {
+  const { resolved } = useTheme();
+  return (
+    <>
+      <RootNavigator />
+      <StatusBar style={resolved === "dark" ? "light" : "dark"} />
+    </>
+  );
+}
+
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.bg,
+      padding: 24,
+    },
+    brand: {
+      fontSize: 32,
+      fontWeight: "800",
+      color: colors.primary,
+      marginBottom: 12,
+    },
+    unconfiguredText: {
+      color: colors.ink,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    retryButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
+  });
+
+const lightStyles = createStyles(lightColors);
+const darkStyles = createStyles(darkColors);

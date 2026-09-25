@@ -8,7 +8,7 @@
  * the same backend path the web app uses).
  */
 import Constants from "expo-constants";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +22,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
+import { useTheme, type ThemeMode } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { useAcademicProfile } from "../hooks/useAcademicProfile";
 import {
   departmentsForLevel,
@@ -39,20 +41,13 @@ const UPLOAD_STAGE_KEYS: Partial<Record<UploadProgress["stage"], string>> = {
   done: "upload.done",
 };
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  danger: "#DC2626",
-  success: "#16A34A",
-};
+const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { t, locale, changeLocale } = useI18n();
+  const { colors, mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [uploading, setUploading] = useState(false);
   const [stage, setStage] = useState<string | null>(null);
@@ -230,6 +225,29 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
+        {/* Spec 020 C3: theme mode — system/light/dark, applied live. */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>{t("mobile", "profile.theme")}</Text>
+          <View style={styles.languageRow}>
+            {THEME_MODES.map((modeOption) => (
+              <Pressable
+                key={modeOption}
+                style={[styles.languageButton, themeMode === modeOption && styles.languageButtonActive]}
+                onPress={() => setThemeMode(modeOption)}
+              >
+                <Text
+                  style={[
+                    styles.languageButtonText,
+                    themeMode === modeOption && styles.languageButtonTextActive,
+                  ]}
+                >
+                  {t("mobile", `profile.theme.${modeOption}`)}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>{t("mobile", "profile.academic")}</Text>
           {optionsError ? (
@@ -237,7 +255,7 @@ export default function ProfileScreen() {
               {t("mobile", "profile.academicLoadFailed")}
             </Text>
           ) : !options ? (
-            <ActivityIndicator color={COLORS.primary} />
+            <ActivityIndicator color={colors.primary} />
           ) : (
             <>
               <Text style={styles.pickerLabel}>{t("mobile", "profile.level")}</Text>
@@ -333,7 +351,7 @@ export default function ProfileScreen() {
                 disabled={savingAcademic || selLevel == null || selSemester == null}
               >
                 {savingAcademic ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={colors.onPrimary} />
                 ) : (
                   <Text style={styles.buttonText}>
                     {t("mobile", "profile.saveAcademic")}
@@ -362,7 +380,7 @@ export default function ProfileScreen() {
             disabled={uploading}
           >
             {uploading ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.onPrimary} />
             ) : (
               <Text style={styles.buttonText}>{t("mobile", "upload.pickPdf")}</Text>
             )}
@@ -385,15 +403,16 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   list: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: "800", color: COLORS.ink, marginBottom: 12 },
+  title: { fontSize: 24, fontWeight: "800", color: colors.ink, marginBottom: 12 },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
@@ -401,31 +420,31 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: { color: "#FFFFFF", fontSize: 20, fontWeight: "800" },
   accountText: { marginTop: 10 },
-  accountName: { fontSize: 16, fontWeight: "700", color: COLORS.ink },
-  accountEmail: { fontSize: 13, color: COLORS.subtle, marginTop: 2 },
-  sectionTitle: { fontSize: 15, fontWeight: "700", color: COLORS.ink, marginBottom: 8 },
+  accountName: { fontSize: 16, fontWeight: "700", color: colors.ink },
+  accountEmail: { fontSize: 13, color: colors.subtle, marginTop: 2 },
+  sectionTitle: { fontSize: 15, fontWeight: "700", color: colors.ink, marginBottom: 8 },
   languageRow: { flexDirection: "row" },
   languageButton: {
     flex: 1,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingVertical: 10,
     alignItems: "center",
     marginRight: 8,
   },
-  languageButtonActive: { borderColor: COLORS.primary, backgroundColor: "#EEF2FF" },
-  languageButtonText: { color: COLORS.ink, fontWeight: "600" },
-  languageButtonTextActive: { color: COLORS.primary, fontWeight: "800" },
-  hint: { color: COLORS.subtle, fontSize: 12, marginTop: 8 },
+  languageButtonActive: { borderColor: colors.primary, backgroundColor: "#EEF2FF" },
+  languageButtonText: { color: colors.ink, fontWeight: "600" },
+  languageButtonTextActive: { color: colors.primary, fontWeight: "800" },
+  hint: { color: colors.subtle, fontSize: 12, marginTop: 8 },
   pickerLabel: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontWeight: "600",
     fontSize: 13,
     marginTop: 10,
@@ -435,16 +454,16 @@ const styles = StyleSheet.create({
   chip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     backgroundColor: "#FFFFFF",
   },
-  chipActive: { borderColor: COLORS.primary, backgroundColor: "#EEF2FF" },
-  chipText: { color: COLORS.ink, fontWeight: "600", fontSize: 13 },
-  chipTextActive: { color: COLORS.primary, fontWeight: "800" },
+  chipActive: { borderColor: colors.primary, backgroundColor: "#EEF2FF" },
+  chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
+  chipTextActive: { color: colors.primary, fontWeight: "800" },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: "center",
@@ -452,18 +471,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: "#FFFFFF", fontWeight: "700" },
-  stageText: { color: COLORS.primary, marginTop: 8, fontSize: 13, fontWeight: "600" },
-  noteOk: { color: COLORS.success, marginTop: 8, fontSize: 13 },
-  noteError: { color: COLORS.danger, marginTop: 8, fontSize: 13 },
+  stageText: { color: colors.primary, marginTop: 8, fontSize: 13, fontWeight: "600" },
+  noteOk: { color: colors.success, marginTop: 8, fontSize: 13 },
+  noteError: { color: colors.danger, marginTop: 8, fontSize: 13 },
   signOutButton: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.danger,
+    borderColor: colors.danger,
     paddingVertical: 12,
     alignItems: "center",
     marginTop: 4,
     marginBottom: 12,
   },
-  signOutText: { color: COLORS.danger, fontWeight: "700" },
-  version: { color: COLORS.subtle, textAlign: "center", fontSize: 12 },
+  signOutText: { color: colors.danger, fontWeight: "700" },
+  version: { color: colors.subtle, textAlign: "center", fontSize: 12 },
 });

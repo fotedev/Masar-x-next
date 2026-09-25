@@ -12,10 +12,10 @@ the repo-wide task counter (spec 019 ended at T099).
 - [x] T102 `news-filter.test.ts` (6 tests: all-passes-everything, strict trimmed type equality, null/custom excluded from fixed tabs, custom-category label extraction) + gates: typecheck ✅ · lint ✅ · vitest 68/68 ✅ · export ✅.
 
 ## C3 — Dark mode (G2)
-- [ ] T103 `theme.ts` rebuilt: `lightColors`/`darkColors` (token names = today's hardcoded set), `ThemeContext` (system/light/dark override in AsyncStorage `masarx_theme_override`, resolved via `useColorScheme`), `useThemedColors()`; provider mounted in App; status bar scheme-aware.
-- [ ] T104 migrate all 11 `COLORS` consts (App, Subjects, SubjectDetail, Summaries, QuizAttempts, Quizzes, QuizPlay, Login, SignUp, Profile, AIAssistant) to themed tokens — light palette pixel-equivalent to today.
-- [ ] T105 Profile theme toggle card (system/light/dark chips) + 5 `profile.theme*` MOBILE_STRINGS keys (ar/en).
-- [ ] T106 `theme.test.ts` (resolution matrix, persistence round-trip, light/dark key-set parity, light values match today's) + gates.
+- [x] T103 `theme.ts` rebuilt: `lightColors`/`darkColors` with 17 ROLE tokens (the union of every former hardcoded value incl. Login's `#CBD5E1` input border → `inputBorder`); `resolveTheme` (system → useColorScheme, null = light) + `paletteFor`; override persistence (`masarx_theme_override`, locale-override pattern); `ThemeContext` (mode/resolved/colors/setMode) mounted in App; status bar scheme-aware via a new AppShell.
+- [x] T104 all **12** COLORS consts migrated (11 pre-existing + NewsScreen from C2) to `createStyles(colors)` factories + `useThemedColors` via `useTheme()`; zero `COLORS.` or stray hex left (grep-verified); App.tsx uses module-level light/dark style pairs (multi-component file). Light palette **pixel-equivalent**: locked hex-by-hex by `theme.test.ts`.
+- [x] T105 Profile theme toggle card (system/light/dark chips, live re-render — no restart) + 4 `profile.theme*` MOBILE_STRINGS keys (ar/en).
+- [x] T106 `theme.test.ts` (9 tests: **light-invariance hex lock**, light/dark key-set parity, real-palette difference, resolution matrix incl. null scheme, persistence round-trip + corrupted-value ignore) + gates: typecheck ✅ · lint ✅ · vitest 77/77 ✅ · export ✅. Known limitation (ledgered, not fixed): MathText's KaTeX WebView HTML keeps its own light background.
 
 ## C4 — Summary detail + reviews (G3)
 - [ ] T107 latent-bug fix: `SummariesScreen` `ratings_count` → `reviews_count` (view column); rating badge renders; rows become Pressable → `SummaryDetail` (RootStack param `{ summaryId }`).
