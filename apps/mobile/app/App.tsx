@@ -9,6 +9,8 @@
  *                                a retry button (AuthContext.retry)
  *   - status "signedOut"     -> Login screen (email/password; Google
  *                                OAuth is deferred for v1 - spec US4 T046)
+ *                                with SignUp pushed on the signed-out stack
+ *                                (spec 019 C3)
  *   - status "authenticated" -> MainTabs (Subjects, Summaries, Quizzes,
  *                                AI, Profile) with QuizPlay pushed on the
  *                                root stack so the player covers the tabs.
@@ -44,6 +46,7 @@ import QuizPlayScreen from "../src/screens/QuizPlayScreen";
 import SubjectDetailScreen from "../src/screens/SubjectDetailScreen";
 import SubjectsScreen from "../src/screens/SubjectsScreen";
 import SummariesScreen from "../src/screens/SummariesScreen";
+import SignUpScreen from "../src/screens/SignUpScreen";
 
 export type MainTabsParamList = {
   Subjects: undefined;
@@ -55,6 +58,7 @@ export type MainTabsParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
+  SignUp: undefined;
   MainTabs: undefined;
   QuizPlay: { quizId: string; title: string };
   SubjectDetail: { subjectName: string };
@@ -145,11 +149,18 @@ function RootNavigator() {
             />
           </>
         ) : (
-          <RootStack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false, gestureEnabled: false }}
-          />
+          <>
+            <RootStack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false, gestureEnabled: false }}
+            />
+            <RootStack.Screen
+              name="SignUp"
+              component={SignUpScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>

@@ -25,7 +25,7 @@ import {
   clearLocalAuthSession,
   saveLocalAuthSession,
 } from "../auth-storage";
-import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase";
+import { getSupabaseClient, isSupabaseConfigured, WEB_ORIGIN } from "../lib/supabase";
 
 type Session = NonNullable<
   Awaited<ReturnType<SupabaseClient["auth"]["getSession"]>>["data"]["session"]
@@ -43,6 +43,17 @@ export interface AuthContextValue {
   session: Session | null;
   user: User | null;
   signIn: (email: string, password: string) => Promise<void>;
+  /**
+   * Spec 019 C3: plain supabase.auth.signUp (web parity — no options;
+   * confirmation-email flow, no auto-login). Throws the Supabase
+   * AuthError so the screen can map it (already-registered etc.).
+   */
+  signUp: (email: string, password: string) => Promise<void>;
+  /**
+   * Spec 019 C3: sends the reset email; the link opens the web app's
+   * /reset-password page (spec 004 T047 — reset completes on web).
+   */
+  requestPasswordReset: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** Bump to re-run the session bootstrap (e.g. from a retry button). */
   retry: () => void;
@@ -111,6 +122,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const signUp = useCallback(async (email: string, password: string) => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${WEB_ORIGIN}/reset-password`,
+    });
+    if (error) throw error;
+  }, []);
+
   const signOut = useCallback(async () => {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
@@ -126,10 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       signIn,
+      signUp,
+      requestPasswordReset,
       signOut,
       retry,
     }),
-    [status, session, signIn, signOut, retry],
+    [status, session, signIn, signUp, requestPasswordReset, signOut, retry],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

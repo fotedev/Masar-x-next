@@ -37,12 +37,23 @@ import {
 interface MasarxExtra {
   supabaseUrl?: string;
   supabaseAnonKey?: string;
+  /** Web origin for auth hand-offs (spec 019 C3): reset-password link target. */
+  webOrigin?: string;
 }
 
 export const SUPABASE_URL: string =
   ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).supabaseUrl ?? "";
 export const SUPABASE_ANON_KEY: string =
   ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).supabaseAnonKey ?? "";
+
+/**
+ * Origin of the web app (spec 019 C3/T082). The password-reset email
+ * opens `${WEB_ORIGIN}/reset-password` — a URL already allowlisted in
+ * the Supabase dashboard because the web login form uses exactly it.
+ */
+export const WEB_ORIGIN: string =
+  ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).webOrigin ||
+  "https://masarx.vercel.app";
 
 export const MISSING_SUPABASE_ENV_VARS: string[] = [
   ...(SUPABASE_URL ? [] : ["EXPO_PUBLIC_SUPABASE_URL"]),
