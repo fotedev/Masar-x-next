@@ -90,7 +90,19 @@ export default function QuizzesScreen() {
         renderItem={renderItem}
         ListHeaderComponent={
           <View>
-            <Text style={styles.title}>{t("mobile", "tabs.quizzes")}</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{t("mobile", "tabs.quizzes")}</Text>
+              {/* Spec 019 C6: entry to the attempts history screen. */}
+              <Pressable
+                style={styles.attemptsLink}
+                onPress={() => navigation.navigate("QuizAttempts")}
+                hitSlop={6}
+              >
+                <Text style={styles.attemptsLinkText}>
+                  {t("quizAttempts", "pageTitle")}
+                </Text>
+              </Pressable>
+            </View>
             {!online ? (
               <View style={styles.banner}>
                 <Text style={styles.bannerText}>{t("mobile", "offline.banner")}</Text>
@@ -139,6 +151,21 @@ const styles = StyleSheet.create({
     color: COLORS.ink,
     marginBottom: 12,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  attemptsLink: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  attemptsLinkText: { color: COLORS.primary, fontWeight: "700", fontSize: 12 },
   banner: {
     backgroundColor: COLORS.banner,
     borderRadius: 10,

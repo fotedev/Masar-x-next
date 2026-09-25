@@ -43,6 +43,7 @@ import LoginScreen from "../src/screens/LoginScreen";
 import ProfileScreen from "../src/screens/ProfileScreen";
 import QuizzesScreen from "../src/screens/QuizzesScreen";
 import QuizPlayScreen from "../src/screens/QuizPlayScreen";
+import QuizAttemptsScreen from "../src/screens/QuizAttemptsScreen";
 import SubjectDetailScreen from "../src/screens/SubjectDetailScreen";
 import SubjectsScreen from "../src/screens/SubjectsScreen";
 import SummariesScreen from "../src/screens/SummariesScreen";
@@ -61,6 +62,7 @@ export type RootStackParamList = {
   SignUp: undefined;
   MainTabs: undefined;
   QuizPlay: { quizId: string; title: string };
+  QuizAttempts: undefined;
   SubjectDetail: { subjectName: string };
 };
 
@@ -140,6 +142,11 @@ function RootNavigator() {
             <RootStack.Screen
               name="QuizPlay"
               component={QuizPlayScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+            <RootStack.Screen
+              name="QuizAttempts"
+              component={QuizAttemptsScreen}
               options={{ headerShown: false, animation: "slide_from_right" }}
             />
             <RootStack.Screen

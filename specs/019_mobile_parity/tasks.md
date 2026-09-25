@@ -34,11 +34,11 @@ staging on every commit (#3).
 - [x] T093 `chat-history.test.ts` (9 tests: pending exclusion, 100-cap drop-oldest, failed/retryText round-trip, missing key, corrupt JSON, non-array payload, malformed-entry filtering, clear semantics) + gates: typecheck ✅ · lint ✅ · vitest 53/53 ✅ · export ✅.
 
 ## C6 — Quiz timer + attempts review (G6)
-- [ ] T094 **Owner note #2 timer lifecycle**: `endTimeRef`-derived remaining each tick, interval cleared on unmount + finish, `finishingRef` single auto-finish, `AppState` foreground re-evaluation → exactly one resolution event.
-- [ ] T095 `fetchQuizWithQuestions` selects `duration_seconds`; QuizPlay countdown UI + auto-finish through the existing finish path; `finishAttempt` extended with `timeTakenSeconds` + `answers` jsonb (web parity).
-- [ ] T096 `GuestResult` extended `{title, timeTakenSeconds, answers[]}`; local attempts enumerable (`quiz_guest_result:` prefix scan via `getAllKeys`).
-- [ ] T097 `QuizAttemptsScreen`: DB attempts (`quiz_attempts + quizzes(title)`, own-only) merged with local, dedup by id, newest first; expandable per-question review via `MathText` (selected vs correct + explanation); Quizzes header entry link; `quizAttempts` namespace imported (10th); `RootStackParamList.QuizAttempts`.
-- [ ] T098 `quiz-timer.test.ts` (remaining math, single auto-finish flag, foreground re-evaluation) + gates.
+- [x] T094 **Owner note #2 timer lifecycle**: `lib/quiz-timer.ts` pure wall-clock math (remaining = ceil((endTime−now)/1000) clamped 0; expired at boundary; timeTaken rounded) locked by `quiz-timer.test.ts` (9 tests); screen keeps `endTimeRef` + 1s interval + `finishingRef` single-finish guard, interval cleared on finish/unmount/phase change, and an `AppState` "active" listener re-evaluates so a deadline passed while backgrounded auto-finishes exactly once on foreground (the handler reuses the same tested pure functions).
+- [x] T095 `fetchQuizWithQuestions` selects `duration_seconds`; countdown chip in the player (danger styling ≤30s, minutesShort/secondsShort from quizAttempts); auto-finish routes through the manual finish path via a `finishRef` (no stale closures); `finishAttempt` extended with `timeTakenSeconds` + `answers` jsonb (`{question_id, selected_option, is_correct}`, unanswered = −1) — exact web-schema parity.
+- [x] T096 `GuestResult` extended `{title, timeTakenSeconds, answers[]}` (all optional — legacy stored results tolerated); `listGuestResults()` enumerates `quiz_guest_result:` keys via `getAllKeys` (one entry per quiz, malformed skipped).
+- [x] T097 `QuizAttemptsScreen`: DB attempts (`quiz_attempts` incl. answers jsonb + `quizzes(title)`, own-rows, created_at desc, limit 100) merged with local entries, dedup by id (DB wins), newest first; expandable per-question review via `MathText` (selected-correct green / selected-wrong red / correct-key blue, unsolved marker, explanation); entry link in the Quizzes tab header; `quizAttempts` namespace imported (10th, shared JSON reused verbatim); `RootStackParamList.QuizAttempts` mounted slide_from_right.
+- [x] T098 gates: mobile typecheck ✅ · lint ✅ · vitest 62/62 ✅ · export ✅.
 
 ## C7 — Release
 - [ ] T099 version 0.6.0 → 0.6.1 (`apps/mobile/package.json` + `app.json`); full gate suite; README/ledger notes.
