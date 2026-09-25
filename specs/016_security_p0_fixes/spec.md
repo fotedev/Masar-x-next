@@ -10,8 +10,28 @@
 3. **F4 — user enumeration:** `supabase/functions/request-password-reset/index.ts` — remove `debug` field, uniform response regardless of account existence, add IP-based rate limit applied **before** user lookup.
 4. **F5 — plaintext reset tokens:** stop inserting `token` (keep `token_hash` only) + migration `014` to drop NOT NULL, wipe stored plaintext tokens, and invalidate all outstanding tokens.
 
+6. **F17 — admin analytics RPC authorization:** replace the unguarded production definition of `public.get_admin_analytics_summary()` with a `SECURITY DEFINER` function that checks `public.is_admin()` before any analytics query, uses `SET search_path = ''`, and remains executable by `authenticated` but not `anon`. Preserve the existing JSON response shape for admins.
+7. **F7 — Cloudinary webhook authenticity:** keep gateway JWT verification disabled for external webhooks, but authenticate the exact raw request body with Cloudinary's `X-Cld-Timestamp` and `X-Cld-Signature` headers. Use `CLOUDINARY_API_SECRET`, support the account's SHA-1/SHA-256 signature format, reject malformed/stale/future timestamps, compare decoded digests in constant time, and fail closed with a generic `401` response.
+
+## Approved production-remediation expansion (2026-09-25)
+
+F7 and F17 are promoted into this owner-approved security/deployment-readiness scope after the gateway regression was reproduced in production.
+
+### Architecture and design
+
+- F17 guards the procedural `SECURITY DEFINER` entry point because RLS is bypassed by that function. All referenced tables are schema-qualified and `search_path` is empty.
+- F7 reads `req.text()` once, verifies the signature against those exact bytes, and only then parses JSON. It uses the existing `CLOUDINARY_API_SECRET`; it does not introduce or require the non-standard `CLOUDINARY_WEBHOOK_KEY` header.
+- The web client maps the RPC's `unauthorized` error to the existing bilingual analytics unauthorized message rather than showing a generic load failure or crashing.
+
+### Test and regression specification
+
+- Deno tests cover the official SHA-1 and SHA-256 Cloudinary vectors, body mismatch, wrong secret, missing/malformed headers, and stale/future timestamps.
+- F17 production preflight runs in a transaction and rolls back: an authenticated non-admin must receive `unauthorized`, while a real admin must receive the prior six-key JSON shape.
+- A valid non-upload signed request must return the existing success response without inserting data; unsigned, incorrectly signed, and stale signed requests must return `401`.
+- Existing upload processing remains unchanged after authentication.
+
 ## Non-goals (P1/P2 — later specs)
-F7 (Cloudinary webhook HMAC), F8 (SECURITY DEFINER search_path), F9 (token TTL), F2 (vitest), F6 (Electron).
+F8 (SECURITY DEFINER search_path beyond the F17 function), F9 (token TTL), F2 (vitest), F6 (Electron).
 
 ## Git safety protocol (owner-mandated)
 - No `reset --hard`, `clean -fd`, `stash pop/drop`.
