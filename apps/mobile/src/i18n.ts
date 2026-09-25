@@ -32,6 +32,7 @@ import arSubjects from "masarx-shared/messages/ar/subjects.json";
 import arSummaries from "masarx-shared/messages/ar/summaries.json";
 import arQuizzes from "masarx-shared/messages/ar/quizzes.json";
 import arFileDropzone from "masarx-shared/messages/ar/fileDropzone.json";
+import arAuthPages from "masarx-shared/messages/ar/authPages.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -40,6 +41,7 @@ import enSubjects from "masarx-shared/messages/en/subjects.json";
 import enSummaries from "masarx-shared/messages/en/summaries.json";
 import enQuizzes from "masarx-shared/messages/en/quizzes.json";
 import enFileDropzone from "masarx-shared/messages/en/fileDropzone.json";
+import enAuthPages from "masarx-shared/messages/en/authPages.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -57,6 +59,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     summaries: arSummaries,
     quizzes: arQuizzes,
     fileDropzone: arFileDropzone,
+    authPages: arAuthPages,
   },
   en: {
     common: enCommon,
@@ -67,6 +70,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     summaries: enSummaries,
     quizzes: enQuizzes,
     fileDropzone: enFileDropzone,
+    authPages: enAuthPages,
   },
 };
 

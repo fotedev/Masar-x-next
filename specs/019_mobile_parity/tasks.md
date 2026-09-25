@@ -16,11 +16,11 @@ staging on every commit (#3).
 - [x] T081 gates: mobile typecheck ✅ · lint ✅ · vitest 28/28 ✅ · `expo export` ✅ · shared exit=0 · desktop exit=0.
 
 ## C3 — Signup + forgot password (G2, G3)
-- [ ] T082 `app.config.js`: `EXPO_PUBLIC_WEB_ORIGIN` → `extra.webOrigin` (default `https://masarx.vercel.app`); typed consumption.
-- [ ] T083 i18n registry: import `authPages` namespace (9th; three-point contract).
-- [ ] T084 `SignUpScreen` (email/password/confirm; min-6 + mismatch; plain `signUp`; confirmation-sent UX; already-registered mapping) + Login "create account" link + `RootStackParamList.SignUp`.
-- [ ] T085 LoginScreen forgot-password two-phase inline state → `resetPasswordForEmail(email, { redirectTo: webOrigin + "/reset-password" })` → resetLinkSent state.
-- [ ] T086 `signup-validation.test.ts` (min-6, mismatch, error mapping) + gates.
+- [x] T082 `app.config.js`: `EXPO_PUBLIC_WEB_ORIGIN` → `extra.webOrigin` (default `https://masarx.vercel.app`); typed consumption via `MasarxExtra` + exported `WEB_ORIGIN` in `src/lib/supabase.ts`.
+- [x] T083 i18n registry: `authPages` imported as the 9th namespace (three-point contract; zero new translations — all keys existed verbatim).
+- [x] T084 `SignUpScreen` (email/password/confirm; `validateSignup` gate; plain `signUp` via `AuthContext.signUp` — no options, confirmation-email flow, no auto-login; confirmation-sent view + goBack to Login; `mapSignupError` for already-registered) + Login "create account" link + `RootStackParamList.SignUp` mounted in the signed-out stack fragment (slide_from_right).
+- [x] T085 LoginScreen two-phase inline reset: `validateResetEmail` → `AuthContext.requestPasswordReset` → `resetPasswordForEmail(email, { redirectTo: WEB_ORIGIN + "/reset-password" })` → resetLinkSent state + backToLogin; resetRequestFailed on error.
+- [x] T086 `signup-validation.test.ts` (7 tests: min-6, mismatch, empty-email, duplicate-email mapping, generic collapse, reset-email requirement) + gates: typecheck ✅ · lint ✅ · vitest 35/35 ✅ · export ✅ (validates the authPages JSON resolves through Metro).
 
 ## C4 — Academic path + filtered subjects (G4)
 - [ ] T087 **Owner note #1 verification**: reproduce web `useSubjects` PostgREST query shape (two separate chained `.or()` calls, each independent top-level) and diff against mobile's intended query before wiring.
