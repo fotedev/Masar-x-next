@@ -34,6 +34,7 @@ import arQuizzes from "masarx-shared/messages/ar/quizzes.json";
 import arFileDropzone from "masarx-shared/messages/ar/fileDropzone.json";
 import arAuthPages from "masarx-shared/messages/ar/authPages.json";
 import arQuizAttempts from "masarx-shared/messages/ar/quizAttempts.json";
+import arNews from "masarx-shared/messages/ar/news.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -44,6 +45,7 @@ import enQuizzes from "masarx-shared/messages/en/quizzes.json";
 import enFileDropzone from "masarx-shared/messages/en/fileDropzone.json";
 import enAuthPages from "masarx-shared/messages/en/authPages.json";
 import enQuizAttempts from "masarx-shared/messages/en/quizAttempts.json";
+import enNews from "masarx-shared/messages/en/news.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -63,6 +65,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     fileDropzone: arFileDropzone,
     authPages: arAuthPages,
     quizAttempts: arQuizAttempts,
+    news: arNews,
   },
   en: {
     common: enCommon,
@@ -75,6 +78,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     fileDropzone: enFileDropzone,
     authPages: enAuthPages,
     quizAttempts: enQuizAttempts,
+    news: enNews,
   },
 };
 
@@ -90,6 +94,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "tabs.subjects": "المواد",
     "tabs.summaries": "الملخصات",
     "tabs.quizzes": "الاختبارات",
+    "tabs.news": "الأخبار",
     "tabs.ai": "المساعد الذكي",
     "tabs.profile": "حسابي",
     "offline.banner": "غير متصل - يتم عرض نسخة محفوظة",
@@ -150,6 +155,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "tabs.subjects": "Subjects",
     "tabs.summaries": "Summaries",
     "tabs.quizzes": "Quizzes",
+    "tabs.news": "News",
     "tabs.ai": "AI Tutor",
     "tabs.profile": "Profile",
     "offline.banner": "Offline - showing saved version",

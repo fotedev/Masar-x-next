@@ -40,6 +40,7 @@ import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { I18nProvider, useI18n } from "../src/context/I18nContext";
 import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
+import NewsScreen from "../src/screens/NewsScreen";
 import ProfileScreen from "../src/screens/ProfileScreen";
 import QuizzesScreen from "../src/screens/QuizzesScreen";
 import QuizPlayScreen from "../src/screens/QuizPlayScreen";
@@ -53,6 +54,7 @@ export type MainTabsParamList = {
   Subjects: undefined;
   Summaries: undefined;
   Quizzes: undefined;
+  News: undefined;
   AI: undefined;
   Profile: undefined;
 };
@@ -90,6 +92,7 @@ function MainTabs() {
       <Tabs.Screen name="Subjects" component={SubjectsScreen} options={{ title: t("mobile", "tabs.subjects") }} />
       <Tabs.Screen name="Summaries" component={SummariesScreen} options={{ title: t("mobile", "tabs.summaries") }} />
       <Tabs.Screen name="Quizzes" component={QuizzesScreen} options={{ title: t("mobile", "tabs.quizzes") }} />
+      <Tabs.Screen name="News" component={NewsScreen} options={{ title: t("mobile", "tabs.news") }} />
       <Tabs.Screen name="AI" component={AIAssistantScreen} options={{ title: t("mobile", "tabs.ai") }} />
       <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: t("mobile", "tabs.profile") }} />
     </Tabs.Navigator>
