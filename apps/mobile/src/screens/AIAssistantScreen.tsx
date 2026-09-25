@@ -9,9 +9,13 @@
  * non-streaming sendAiMessageMobile round-trip; the streaming variant
  * (streamAiMessageMobile in lib/ai.ts) is ready for a follow-up pass.
  *
- * Known backend gap (see lib/ai.ts header): until the shared client
- * attaches an Authorization header, the Edge Function may answer 401 -
- * surfaced as a normal failed bubble with retry, never as a crash.
+ * History (spec 019 C5): conversations persist locally
+ * (lib/chat-history.ts, key outside the read-cache prefix) so they
+ * survive an app restart. Writes are EVENT-driven (repo lesson
+ * 2026-09-16 #14): a pendingPersistRef is raised only by real
+ * send/finalize/failure events and consumed once by the persist
+ * effect — mount, clear, and auth transitions write nothing; deletion
+ * happens exclusively in clearChat.
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -31,6 +35,11 @@ import MathText from "../components/MathText";
 import { useI18n } from "../context/I18nContext";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { createAiRequest, isAiConfigured, sendAiMessageMobile } from "../lib/ai";
+import {
+  clearChatHistory,
+  loadChatHistory,
+  saveChatHistory,
+} from "../lib/chat-history";
 
 interface ChatMessage {
   id: string;
@@ -66,12 +75,45 @@ export default function AIAssistantScreen() {
   // Cancel any in-flight request when the screen unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Spec 019 C5 — EVENT-DRIVEN persistence (lesson 2026-09-16 #14):
+  // the ref is raised ONLY by real send/finalize/failure events and
+  // consumed once by the effect below. Mount, load-from-history, clear,
+  // and auth transitions leave it false, so they never trigger a write;
+  // deletion is exclusive to clearChat.
+  const pendingPersistRef = useRef(false);
+  const queuePersist = useCallback(() => {
+    pendingPersistRef.current = true;
+  }, []);
+
+  // Restore the persisted conversation once on mount. Loading sets
+  // state WITHOUT raising the persist flag — a pure read must not
+  // rewrite the store.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const history = await loadChatHistory();
+      if (!cancelled && history.length > 0) {
+        setMessages(history.map((m) => ({ ...m, pending: false })));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPersistRef.current) return;
+    pendingPersistRef.current = false;
+    void saveChatHistory(messages);
+  }, [messages]);
+
   const send = useCallback(
     async (rawText: string) => {
       const text = rawText.trim();
       if (!text || sending) return;
 
       if (!isAiConfigured()) {
+        queuePersist();
         setMessages((prev) => [
           ...prev,
           { id: `u${Date.now()}`, role: "user", text },
@@ -87,6 +129,7 @@ export default function AIAssistantScreen() {
       }
 
       const assistantId = `a${Date.now()}`;
+      queuePersist();
       setMessages((prev) => [
         ...prev,
         { id: `u${Date.now()}`, role: "user", text },
@@ -101,6 +144,7 @@ export default function AIAssistantScreen() {
       try {
         const request = createAiRequest(text, locale);
         const response = await sendAiMessageMobile(request, { signal: controller.signal });
+        queuePersist();
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, text: response.content, pending: false } : m,
@@ -110,6 +154,7 @@ export default function AIAssistantScreen() {
         const message = err instanceof Error ? err.message : String(err);
         const offlineish =
           !online || /failed to fetch|network|fetch failed|timed?\s?out|401/i.test(message);
+        queuePersist();
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
@@ -173,7 +218,16 @@ export default function AIAssistantScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t("mobile", "tabs.ai")}</Text>
         {messages.length > 0 ? (
-          <Pressable onPress={() => setMessages([])} hitSlop={8}>
+          <Pressable
+            onPress={() => {
+              // Deletion is EXCLUSIVE to clear (spec 019 C5): empty the
+              // state without raising the persist flag, and remove the
+              // stored key so nothing is rewritten afterwards.
+              setMessages([]);
+              void clearChatHistory();
+            }}
+            hitSlop={8}
+          >
             <Text style={styles.clearText}>{t("aiAssistant", "clearChat")}</Text>
           </Pressable>
         ) : null}
