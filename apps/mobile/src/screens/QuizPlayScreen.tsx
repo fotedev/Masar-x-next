@@ -7,6 +7,13 @@
  *     quiz_attempts / quiz_answers (cross-device parity with web),
  *   - guest      -> result kept on-device only via saveGuestResult.
  *
+ * Spec 019 C6: timed quizzes render a countdown derived from an
+ * absolute endTime (wall-clock accurate across backgrounding) with an
+ * AppState foreground re-check and a finishingRef single-finish guard
+ * (owner note #2); finish writes time_taken_seconds + the answers
+ * jsonb (web parity) and guest results carry title/time/answers so
+ * they stay reviewable offline.
+ *
  * Ends on a score screen with the save outcome (server vs on-device).
  */
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -14,6 +21,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -32,13 +40,21 @@ import {
   saveAnswer,
   saveGuestResult,
   startAttempt,
+  type AttemptAnswerPayload,
 } from "../lib/quiz";
+import {
+  computeRemainingSeconds,
+  computeTimeTakenSeconds,
+  isTimeExpired,
+  splitTime,
+} from "../lib/quiz-timer";
 import { getSupabaseClient } from "../lib/supabase";
 import type { PlayerQuestion } from "../types/quiz";
 
 interface LoadedQuiz {
   title: string;
   description: string | null;
+  durationSeconds: number | null;
   questions: PlayerQuestion[];
 }
 
@@ -88,6 +104,17 @@ export default function QuizPlayScreen() {
     return supabaseRef.current;
   }, []);
 
+  // Spec 019 C6 (owner note #2): countdown state kept in refs + one
+  // state slot. Remaining time is always DERIVED from the absolute
+  // endTimeRef (wall-clock), so backgrounded intervals that never fire
+  // still resolve correctly on the next tick or AppState foreground
+  // re-check — exactly once, thanks to finishingRef.
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
+  const endTimeRef = useRef<number | null>(null);
+  const attemptStartRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const finishingRef = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
     setPhase("loading");
@@ -132,12 +159,25 @@ export default function QuizPlayScreen() {
   };
 
   const finish = async () => {
-    if (!quiz || submitting) return;
+    if (!quiz || submitting || finishingRef.current) return;
+    finishingRef.current = true;
     const questions = quiz.questions;
     const finalScore = questions.reduce(
       (acc, q, i) => acc + (answers[i] === q.correctAnswer ? 1 : 0),
       0,
     );
+    // Web parity: whole seconds of wall-clock attempt time + the
+    // per-question answers payload (unanswered questions recorded with
+    // selected_option -1 so review can show them as unsolved).
+    const timeTakenSeconds = computeTimeTakenSeconds(
+      attemptStartRef.current ?? Date.now(),
+      Date.now(),
+    );
+    const answersPayload: AttemptAnswerPayload[] = questions.map((q, i) => ({
+      question_id: q.id,
+      selected_option: answers[i] ?? -1,
+      is_correct: answers[i] === q.correctAnswer,
+    }));
     setSubmitting(true);
     let savedToServer = false;
     try {
@@ -154,7 +194,10 @@ export default function QuizPlayScreen() {
             choice === questions[i].correctAnswer,
           );
         }
-        await finishAttempt(getSupabase(), attempt.id, finalScore, questions.length);
+        await finishAttempt(getSupabase(), attempt.id, finalScore, questions.length, {
+          timeTakenSeconds,
+          answers: answersPayload,
+        });
         savedToServer = true;
       } else {
         await saveGuestResult(quizId, {
@@ -162,6 +205,13 @@ export default function QuizPlayScreen() {
           score: finalScore,
           total: questions.length,
           finishedAt: new Date().toISOString(),
+          title: quiz.title,
+          timeTakenSeconds,
+          answers: answersPayload.map((a) => ({
+            questionId: a.question_id,
+            selected: a.selected_option,
+            isCorrect: a.is_correct,
+          })),
         });
       }
     } catch {
@@ -172,6 +222,50 @@ export default function QuizPlayScreen() {
       setPhase("finished");
     }
   };
+
+  // The auto-finish path fires from timer ticks / AppState, which hold
+  // a stale closure — route them through a ref to the latest finish.
+  const finishRef = useRef<() => void>(() => {});
+  finishRef.current = () => {
+    void finish();
+  };
+
+  const evaluateRemaining = useCallback(() => {
+    if (endTimeRef.current == null) return;
+    const now = Date.now();
+    setTimeLeftSeconds(computeRemainingSeconds(endTimeRef.current, now));
+    if (isTimeExpired(endTimeRef.current, now)) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (!finishingRef.current) finishRef.current();
+    }
+  }, []);
+
+  // Start the countdown when the quiz enters "playing"; the interval is
+  // cleared on finish (evaluateRemaining) and on unmount/phase change
+  // (this effect's cleanup), and the AppState listener re-checks the
+  // deadline the moment the app is foregrounded.
+  useEffect(() => {
+    if (phase !== "playing" || !quiz || !quiz.durationSeconds || quiz.durationSeconds <= 0) {
+      return;
+    }
+    attemptStartRef.current = Date.now();
+    endTimeRef.current = Date.now() + quiz.durationSeconds * 1000;
+    setTimeLeftSeconds(quiz.durationSeconds);
+    intervalRef.current = setInterval(evaluateRemaining, 1000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") evaluateRemaining();
+    });
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      subscription.remove();
+    };
+  }, [phase, quiz, evaluateRemaining]);
 
   if (phase === "loading") {
     return (
@@ -242,9 +336,28 @@ export default function QuizPlayScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list}>
-        <Text style={styles.progress}>
-          {index + 1} / {total}
-        </Text>
+        <View style={styles.progressRow}>
+          <Text style={styles.progressRowText}>
+            {index + 1} / {total}
+          </Text>
+          {timeLeftSeconds != null ? (
+            <View
+              style={[styles.timerChip, timeLeftSeconds <= 30 && styles.timerChipDanger]}
+            >
+              <Text
+                style={[
+                  styles.timerChipText,
+                  timeLeftSeconds <= 30 && styles.timerChipTextDanger,
+                ]}
+              >
+                {(() => {
+                  const { minutes, seconds } = splitTime(timeLeftSeconds);
+                  return `${minutes}${t("quizAttempts", "minutesShort")} ${seconds}${t("quizAttempts", "secondsShort")}`;
+                })()}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         {question ? (
           <>
             <View style={styles.questionCard}>
@@ -340,6 +453,24 @@ const styles = StyleSheet.create({
   guestChipText: { color: "#92400E", fontSize: 11, fontWeight: "700" },
   list: { padding: 16, paddingBottom: 24 },
   progress: { color: COLORS.subtle, fontWeight: "600", marginBottom: 10 },
+  progressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  progressRowText: { color: COLORS.subtle, fontWeight: "600" },
+  timerChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.card,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  timerChipDanger: { borderColor: COLORS.danger, backgroundColor: "#FEF2F2" },
+  timerChipText: { color: COLORS.ink, fontWeight: "700", fontSize: 13 },
+  timerChipTextDanger: { color: COLORS.danger },
   questionCard: {
     backgroundColor: COLORS.card,
     borderRadius: 14,
