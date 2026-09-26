@@ -9,7 +9,7 @@ const { subjectsState } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/hooks/useSubjects", () => ({
-  useSubjects: (params: { is_academic?: boolean }) => {
+  useSubjects: (params?: Record<string, unknown>) => {
     (subjectsState as { lastParams?: unknown }).lastParams = params;
     return subjectsState;
   },
@@ -55,22 +55,9 @@ describe("SubjectsGrid", () => {
     ];
     render(<SubjectsGrid showOnlyOnHome />);
     expect(screen.getAllByRole("button")).toHaveLength(1);
-    // Legacy contract: the grid forwards is_academic to the hook (default
-    // true). @todo: remove after TRW refactor merge (spec 015 Contract B).
-    expect((subjectsState as { lastParams?: unknown }).lastParams).toEqual({
-      is_academic: true,
-    });
-  });
-
-  it("academic empty state shows the CTA; non-academic shows TRW copy", () => {
-    subjectsState.loading = false;
-    const { rerender } = render(<SubjectsGrid />);
-    expect(screen.getByText("subjects.emptyAcademicTitle")).toBeDefined();
-    expect(screen.getByText("subjects.studyWithZainCta")).toBeDefined();
-
-    rerender(<SubjectsGrid is_academic={false} />);
-    expect(screen.getByText("subjects.emptyNonAcademicTitle")).toBeDefined();
-    expect(screen.queryByText("subjects.studyWithZainCta")).toBeNull();
+    // Contract B (spec 015, post-TRW-refactor): the academic-only grid no
+    // longer forwards is_academic to the hook — TRW lives on /non-academic.
+    expect((subjectsState as { lastParams?: unknown }).lastParams).toBeUndefined();
   });
 
   it("optimistic subjects render disabled without click", async () => {

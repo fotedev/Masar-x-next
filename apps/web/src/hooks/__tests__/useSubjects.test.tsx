@@ -122,60 +122,7 @@ describe("useSubjects — shared behavior (survives the TRW refactor merge)", ()
   });
 });
 
-// ---------------------------------------------------------------------------
-// LEGACY CONTRACT — the CURRENT shipping behavior includes is_academic
-// filtering. These assertions LOCK today's behavior so any accidental change
-// (in either direction) is deliberate.
-//
-// @todo: remove after TRW refactor merge (spec 015 contracts A/B/C supersede
-// this block — refactor/decouple-trw-subjects drops is_academic entirely).
-// ---------------------------------------------------------------------------
-describe("LEGACY is_academic behavior — @todo: remove after TRW refactor merge (spec 015)", () => {
-  it("non-admin academic view adds is_academic.eq.true/is.null clauses", async () => {
-    chain.respondWith({ data: [], error: null });
-    renderHookWithProviders(() => useSubjects());
-    await waitFor(() =>
-      expect(chain.calls.filter((c) => c.method === "or").length).toBeGreaterThan(2),
-    );
-    const orArgs = chain.calls
-      .filter((c) => c.method === "or")
-      .map((c) => String(c.args[0]));
-    expect(orArgs[0]).toBe("is_academic.eq.true,is_academic.is.null");
-  });
-
-  it("non-admin is_academic=false view adds is_academic.eq.false/is.null", async () => {
-    chain.respondWith({ data: [], error: null });
-    renderHookWithProviders(() => useSubjects({ is_academic: false }));
-    await waitFor(() =>
-      expect(chain.calls.filter((c) => c.method === "or").length).toBeGreaterThan(2),
-    );
-    const orArgs = chain.calls
-      .filter((c) => c.method === "or")
-      .map((c) => String(c.args[0]));
-    expect(orArgs[0]).toBe("is_academic.eq.false,is_academic.is.null");
-  });
-
-  it("the select list includes the is_academic column", async () => {
-    chain.respondWith({ data: [], error: null });
-    renderHookWithProviders(() => useSubjects());
-    await waitFor(() =>
-      expect(chain.calls.some((c) => c.method === "select")).toBe(true),
-    );
-    const select = String(chain.calls.find((c) => c.method === "select")!.args[0]);
-    expect(select).toContain("is_academic");
-  });
-
-  it("admin queries carry NO is_academic clauses", async () => {
-    authState.user = { id: "admin-1" };
-    authState.isAdmin = true;
-    chain.respondWith({ data: [], error: null });
-    renderHookWithProviders(() => useSubjects());
-    await waitFor(() => expect(chain.calls.some((c) => c.method === "order")).toBe(true));
-    // Contract: admins get no is_academic FILTER clauses (the select column
-    // list may still mention it — filtering is what Phase 2 removes).
-    const orArgs = chain.calls
-      .filter((c) => c.method === "or")
-      .map((c) => String(c.args[0]));
-    expect(orArgs.some((a) => a.includes("is_academic"))).toBe(false);
-  });
-});
+// LEGACY is_academic contract block removed: the TRW refactor
+// (refactor/decouple-trw-subjects, merged via #52) dropped is_academic
+// entirely — its own @todo said to remove this block at that point.
+// Superseding contracts live in useTRW.test.tsx (spec 015 A/B/C).
