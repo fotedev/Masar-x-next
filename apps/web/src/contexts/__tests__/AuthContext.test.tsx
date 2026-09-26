@@ -7,17 +7,41 @@ const { chain, authMock } = await vi.hoisted(async () => {
   return {
     chain: createSupabaseMock(),
     authMock: {
-      getSession: vi.fn(async () => ({ data: { session: null }, error: null })),
-      onAuthStateChange: vi.fn(() => ({
-        data: {
-          subscription: { id: "sub", unsubscribe: vi.fn() },
-        },
-      })),
-      signInWithPassword: vi.fn(async () => ({ data: {}, error: null })),
-      signUp: vi.fn(async () => ({ data: {}, error: null })),
-      signInWithOAuth: vi.fn(async () => ({ data: { url: "https://oauth" }, error: null })),
-      signOut: vi.fn(async () => ({ error: null })),
-      exchangeCodeForSession: vi.fn(async () => ({ data: {}, error: null })),
+      getSession: vi.fn(
+        async (): Promise<{ data: { session: unknown }; error: unknown }> => ({
+          data: { session: null },
+          error: null,
+        }),
+      ),
+      onAuthStateChange: vi.fn(
+        (_cb?: unknown): { data: { subscription: { id: string; unsubscribe: () => void } } } => ({
+          data: { subscription: { id: "sub", unsubscribe: () => {} } },
+        }),
+      ),
+      signInWithPassword: vi.fn(
+        async (): Promise<{ data: unknown; error: { message: string } | null }> => ({
+          data: {},
+          error: null,
+        }),
+      ),
+      signUp: vi.fn(
+        async (): Promise<{ data: unknown; error: { message: string } | null }> => ({
+          data: {},
+          error: null,
+        }),
+      ),
+      signInWithOAuth: vi.fn(
+        async (): Promise<{ data: { url?: string }; error: { message: string } | null }> => ({
+          data: { url: "https://oauth" },
+          error: null,
+        }),
+      ),
+      signOut: vi.fn(
+        async (): Promise<{ error: { message: string } | null }> => ({ error: null }),
+      ),
+      exchangeCodeForSession: vi.fn(
+        async (): Promise<{ data: unknown; error: unknown }> => ({ data: {}, error: null }),
+      ),
     },
   };
 });
@@ -59,10 +83,8 @@ function renderAuth() {
 
 // Capture the onAuthStateChange callback so tests can drive auth events.
 function getAuthStateChangeCb() {
-  return authMock.onAuthStateChange.mock.calls[0][0] as (
-    event: string,
-    session: unknown,
-  ) => Promise<void>;
+  const cb = authMock.onAuthStateChange.mock.calls[0]?.[0];
+  return cb as (event: string, session: unknown) => Promise<void>;
 }
 
 const mkSession = (role?: string, provider = "email") => ({
