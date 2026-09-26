@@ -4,7 +4,7 @@
 >
 > **Per-commit gates (blocking):** `pnpm typecheck && pnpm --filter web lint` (≤52 ratchet) `&& pnpm --filter web test && pnpm --filter web test:e2e` (1 worker baseline).
 >
-> **Behavior preservation (AC11):** the 81 existing vitest cases in `apps/web/src/lib/__tests__/` + `apps/web/src/lib/ai/__tests__/` MUST pass unchanged in commit 3 (the abstraction wiring). If they regress, commit 3 is rejected.
+> **Behavior preservation (AC11):** the 89 existing vitest cases in `apps/web/src/lib/__tests__/` + `apps/web/src/lib/ai/__tests__/` MUST pass unchanged in commit 3 (the abstraction wiring). If they regress, commit 3 is rejected. (Baseline = 11 files / 89 tests measured at parent `036eded`; the spec originally said "81" which was stale, corrected in the docs-only follow-up.)
 
 ## 1. Spec landing
 
@@ -43,8 +43,8 @@ This is the load-bearing commit. **AC11 + AC14 + AC18 + AC20 + AC21 are enforced
 - [ ] 4.11 **Edit `ai-assistant.ts`**: re-exports unchanged.
 - [ ] 4.12 **NO schema change** — no migration, no `database.ts` edit. The interrupted affordance is client-side/in-memory per spec §3.9 and AC22. The persistence behavior for partial messages continues exactly as today.
 - [ ] 4.13 **New test `apps/web/src/hooks/__tests__/useAiChat.test.ts`** (or `apps/web/src/lib/__tests__/useAiChat.test.ts` — check existing location) — at minimum one case asserting "interrupted message renders chip + retry" per AC22.
-- [ ] 4.14 **AC11 enforced**: `pnpm --filter web test` returns 81 + new tests, all 81 pre-existing tests pass **unchanged**. The diff to existing test files is empty.
-- [ ] 4.15 Gates: typecheck ✓, lint ≤52, vitest green (81 + new), e2e green.
+- [ ] 4.14 **AC11 enforced**: `pnpm --filter web test` returns 89 baseline + new tests, all 89 pre-existing tests pass **unchanged**. The diff to existing test files is empty. (Baseline = 11 files / 89 tests measured at parent `036eded`; updated from the original "81" which was stale.)
+- [ ] 4.15 Gates: typecheck ✓, lint ≤52, vitest green (89 baseline + new), e2e green.
 
 ## 5. Commit 4 — `feat(ai): degraded state UI + interrupted affordance + ar/en canned.unavailable + reconciliation with insufficientFunds`
 
