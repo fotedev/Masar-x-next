@@ -50,6 +50,10 @@
     "composerAria": "Message to the assistant",
     "send": "Send",
     "sending": "Sending…",
+    "pastedText": "Pasted Text",
+    "pastedChars": "chars",
+    "removeAttachment": "Remove attachment",
+    "promptTooLong": "Message too long (max 10000 characters). Remove an attachment or shorten the text.",
     "role": {
       "you": "You",
       "zane": "Zane"

@@ -50,6 +50,10 @@
     "composerAria": "رسالة إلى المساعد",
     "send": "إرسال",
     "sending": "جارٍ الإرسال…",
+    "pastedText": "نص ملصق",
+    "pastedChars": "حرف",
+    "removeAttachment": "إزالة المرفق",
+    "promptTooLong": "الرسالة طويلة جداً (الحد 10000 حرف). احذف مرفقاً أو اختصر النص.",
     "role": {
       "you": "أنت",
       "zane": "زين"

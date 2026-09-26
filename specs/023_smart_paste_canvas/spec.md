@@ -22,7 +22,7 @@ Wrap as attachment when pasted text is **>4000 chars OR >15 lines**. (>15, not >
 
 ## Non-goals
 
-- Desktop `AssistantPanel.tsx` parity; mobile port.
+- Mobile port (Expo client has no shared composer yet).
 - Multipart upload / new backend route.
 - Multi-file drag-drop; editing attachment contents inline.
 
@@ -39,3 +39,4 @@ Wrap as attachment when pasted text is **>4000 chars OR >15 lines**. (>15, not >
 - [x] Send with chip + empty prompt works; full content reaches the model as a document block.
 - [x] Combined >10000 chars → `promptTooLong` toast, nothing sent.
 - [x] ar/en strings render; no new hardcoded-Arabic hits.
+- [x] Desktop parity (follow-up commit): `AssistantPanel.tsx` reuses the same helper/thresholds/payload pattern with `desktopStudyWorkspace.assistant.*` strings and theme-token chip styling.

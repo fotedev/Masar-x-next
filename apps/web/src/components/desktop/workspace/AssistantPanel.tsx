@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, type FormEvent } from "react";
+import { useEffect, useRef, useState, useCallback, type ClipboardEvent, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
+import { FileText, X } from "lucide-react";
+import { toast } from "sonner";
 import { useAiChat } from "@/hooks/useAiChat";
+import {
+  AI_PROMPT_MAX_CHARS,
+  combinePromptWithAttachments,
+  createPastedAttachment,
+  shouldWrapAsAttachment,
+  type PastedAttachment,
+} from "@/lib/ai/pasted-attachments";
 
 /**
  * T014 — Collapsible assistant panel scoped to the open lecture.
@@ -43,6 +52,9 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
   } = useAiChat(user, trackEvent);
 
   const [draft, setDraft] = useState("");
+  // Smart Paste Canvas parity with the standalone chat (spec 023): large
+  // pastes become attachment chips held alongside the typed draft.
+  const [pastedAttachments, setPastedAttachments] = useState<PastedAttachment[]>([]);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -61,11 +73,30 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
   // Enter-to-send shortcut both delegate here, so no KeyboardEvent needs
   // to masquerade as a FormEvent.
   const submitDraft = useCallback(async (): Promise<void> => {
-    const trimmed = draft.trim();
-    if (!trimmed || isLoading) return;
+    if ((!draft.trim() && pastedAttachments.length === 0) || isLoading) return;
+    const content = combinePromptWithAttachments(draft, pastedAttachments);
+    if (content.length > AI_PROMPT_MAX_CHARS) {
+      toast.error(t("assistant.promptTooLong"));
+      return;
+    }
     setDraft("");
-    await sendMessage(trimmed);
-  }, [draft, isLoading, sendMessage]);
+    setPastedAttachments([]);
+    await sendMessage(content);
+  }, [draft, pastedAttachments, isLoading, sendMessage, t]);
+
+  // Same thresholds as the standalone chat: big pastes become chips,
+  // small pastes fall through to the default behavior untouched.
+  const handlePaste = useCallback(
+    (event: ClipboardEvent<HTMLTextAreaElement>): void => {
+      const pasted = event.clipboardData?.getData("text");
+      if (!pasted || !shouldWrapAsAttachment(pasted)) return;
+      event.preventDefault();
+      setPastedAttachments((prev) => [...prev, createPastedAttachment(pasted)]);
+    },
+    [],
+  );
+
+  const canSend = draft.trim().length > 0 || pastedAttachments.length > 0;
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>): void => {
@@ -165,31 +196,64 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
 
       <form
         onSubmit={handleSubmit}
-        className="flex shrink-0 items-end gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
+        className="flex shrink-0 flex-col gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
       >
-        <textarea
-          ref={inputRef}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          // Enter sends, Shift+Enter inserts newline.
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              void submitDraft();
-            }
-          }}
-          rows={2}
-          placeholder={t("assistant.composerPlaceholder")}
-          aria-label={t("assistant.composerAria")}
-          className="selectable-content min-h-[2.5rem] flex-1 resize-none rounded-md border border-input bg-background px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim() || isLoading}
-          className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {isLoading ? t("assistant.sending") : t("assistant.send")}
-        </button>
+        {pastedAttachments.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {pastedAttachments.map((att) => (
+              <span
+                key={att.id}
+                className="inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-muted py-1.5 pe-1.5 ps-2.5 text-xs font-medium text-foreground"
+              >
+                <FileText className="h-4 w-4 shrink-0 text-primary" />
+                <span className="min-w-0">
+                  <span className="block max-w-[160px] truncate font-bold">
+                    {t("assistant.pastedText")}
+                  </span>
+                  <span className="block text-[10px] opacity-70">
+                    {att.sizeLabel} • {att.charCount} {t("assistant.pastedChars")}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPastedAttachments((prev) => prev.filter((a) => a.id !== att.id))
+                  }
+                  aria-label={t("assistant.removeAttachment")}
+                  className="shrink-0 rounded-md p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={inputRef}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            // Enter sends, Shift+Enter inserts newline.
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void submitDraft();
+              }
+            }}
+            onPaste={handlePaste}
+            rows={2}
+            placeholder={t("assistant.composerPlaceholder")}
+            aria-label={t("assistant.composerAria")}
+            className="selectable-content min-h-[2.5rem] flex-1 resize-none rounded-md border border-input bg-background px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <button
+            type="submit"
+            disabled={!canSend || isLoading}
+            className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {isLoading ? t("assistant.sending") : t("assistant.send")}
+          </button>
+        </div>
       </form>
     </section>
   );
