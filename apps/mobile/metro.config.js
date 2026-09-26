@@ -28,6 +28,10 @@
  *     import (including subpaths like `react/jsx-runtime`) lands on one
  *     canonical copy.
  *
+ *  5. Wrap the config with Sentry's Metro wrapper (spec 023) so bundles
+ *     and source maps carry a Debug ID that the EAS-build upload
+ *     (sentry.gradle, via the `@sentry/react-native/expo` plugin) keys on.
+ *
  * CJS note (spec 018): this package must NOT declare `"type": "module"` —
  * Node loads this file, `babel.config.js`, and the Metro/Babel toolchain as
  * CJS; the ESM flag broke `expo export` with "module is not defined" in
@@ -78,4 +82,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return fallback(context, moduleName, platform);
 };
 
-module.exports = config;
+// 5. Sentry Metro wrapper (spec 023): stamps a Debug ID onto the bundle
+//    and its source map so the Hermes map uploaded by sentry.gradle
+//    during EAS builds (Expo plugin `@sentry/react-native/expo`) matches
+//    the bundle embedded in the APK, and collapses Sentry-internal
+//    frames in LogBox. `includeWebReplay: false` — this config never
+//    bundles the web platform. Applied LAST so it wraps (not replaces)
+//    the resolver customization above.
+const { withSentryConfig } = require("@sentry/react-native/metro");
+
+module.exports = withSentryConfig(config, { includeWebReplay: false });

@@ -28,7 +28,10 @@ packages:
 # @swc/core, @parcel/watcher for fast file watching, unrs-resolver
 # for the workspace resolver, and electron which downloads a binary
 # during its postinstall). The desktop has no native modules since
-# spec 014 dropped the dead better-sqlite3 dependency.
+# spec 014 dropped the dead better-sqlite3 dependency. @sentry/cli
+# (spec 023, dependency of @sentry/react-native) downloads the
+# sentry-cli binary during its postinstall — without it the EAS-build
+# source-map upload silently loses its tool.
 onlyBuiltDependencies:
   - sharp
   - "@parcel/watcher"
@@ -36,3 +39,4 @@ onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
   - electron
+  - "@sentry/cli"
