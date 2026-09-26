@@ -59,7 +59,7 @@ export function createSupabaseMock(initial: SupabaseQueryResult = { data: [], er
 
   const makeBuilder = (table: string): unknown => {
     const target: Record<string, unknown> = {
-      select: (args: unknown[]) => (calls.push({ table, method: 'select', args }), builder),
+      select: (...args: unknown[]) => (calls.push({ table, method: 'select', args }), builder),
       then: (
         onFulfilled: (value: SupabaseQueryResult) => unknown,
         onRejected: (reason: unknown) => unknown,
