@@ -11,9 +11,11 @@ Expo SDK 51 / React Native 0.74 / React 18 client for Masar X, sharing its backe
    ```
    EXPO_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
    EXPO_PUBLIC_SUPABASE_ANON_KEY=<public anon key>
+   # optional — crash reporting (spec 023, see "Crash reporting" below)
+   # EXPO_PUBLIC_SENTRY_DSN=https://<key>@o<org>.ingest.sentry.io/<project>
    ```
 
-   `app.config.js` injects both into `expoConfig.extra`; `src/lib/supabase.ts` reads them at runtime via `expo-constants`. Missing vars produce a clear "cannot reach Masar X" state instead of a crash. Only the public anon key is ever referenced - never the service-role key (spec FR-017).
+   `app.config.js` injects both into `expoConfig.extra`; `src/lib/supabase.ts` reads them at runtime via `expo-constants`. Missing vars produce a clear "cannot reach Masar X" state instead of a crash. Only the public anon key is ever referenced - never the service-role key (spec FR-017). `EXPO_PUBLIC_SENTRY_DSN` (optional) flows the same way into `src/lib/sentry.ts`.
 4. Run in dev: `pnpm --filter mobile start` (or `cd apps/mobile && npx expo start`), then press `i` (iOS simulator) / `a` (Android emulator). For dev-client builds use the EAS `development` profile below.
 
 ## EAS profiles (`eas.json`)
@@ -22,15 +24,15 @@ Expo SDK 51 / React Native 0.74 / React 18 client for Masar X, sharing its backe
 - `preview` - internal distribution, Android APK.
 - `production` - store build (Android AAB, auto-increment).
 
-For cloud builds, expose the two `EXPO_PUBLIC_*` vars as EAS environment variables/secrets so `app.config.js` resolves them at build time.
+For cloud builds, expose the `EXPO_PUBLIC_*` vars as EAS environment variables/secrets so `app.config.js` resolves them at build time. `EXPO_PUBLIC_SENTRY_DSN` is optional — the app boots with crash reporting disabled when it is absent (see "Crash reporting" below).
 
 ## Structure
 
 - `index.js` - Expo entry (`"main"`), mounts `./app/App`.
 - `app/App.tsx` - `NavigationContainer` + auth gate (Login vs 5 bottom tabs) + RTL handling + QuizPlay root screen.
 - `src/screens/` - `LoginScreen`, `SubjectsScreen`, `SummariesScreen`, `QuizzesScreen`, `QuizPlayScreen`, `AIAssistantScreen`, `ProfileScreen`.
-- `src/components/MathText.tsx` - KaTeX auto-render WebView with a raw-text fallback.
-- `src/lib/` `src/context/` `src/hooks/` (earlier milestone) - supabase/ai/upload/quiz clients, auth + i18n providers, `useSupabaseQuery`, `useNetworkStatus`, `read-cache`, `share`, `i18n`, `theme`.
+- `src/components/` - `MathText.tsx` (KaTeX auto-render WebView with a raw-text fallback), `SentryBoundary.tsx` (root crash boundary, spec 023).
+- `src/lib/` `src/context/` `src/hooks/` (earlier milestone) - supabase/ai/upload/quiz/sentry clients, auth + i18n providers, `useSupabaseQuery`, `useNetworkStatus`, `read-cache`, `share`, `i18n`, `theme`.
 
 ## Implemented (v1)
 
@@ -57,11 +59,48 @@ Verification gates (all green on the spec branch): mobile `typecheck` / `lint` /
 ### Owner checklist to reach the stores
 
 1. `cd apps/mobile && npx eas init` — creates the Expo project; put the returned `projectId` into `eas.json` (all profiles or top level).
-2. EAS secrets: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (public-by-design client values, never the service-role key).
+2. EAS secrets: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (public-by-design client values, never the service-role key), plus the Sentry vars in "Crash reporting" below once the DSN is provisioned.
 3. Cloud builds: `npx eas build --profile production -p android` (AAB) and `-p ios` (IPA; Apple Developer account required). If CI builds are wanted, add repo secret `EXPO_TOKEN`.
 4. Store listings: Google Play Console + App Store Connect accounts, screenshots, descriptions (ar + en), privacy policy URL.
 5. Submit: `npx eas submit -p android --latest` / `npx eas submit -p ios --latest` (eas.json already has the `submit.production` profile).
 6. Device smoke before submission: login → subjects → summaries (share + PDF) → quiz attempt → AI chat (bearer fix) → language switch (RTL restart prompt).
+
+## Crash reporting (Sentry — spec 023)
+
+`@sentry/react-native` v6 is wired without ejecting:
+
+- **DSN** — `app.config.js` reads `EXPO_PUBLIC_SENTRY_DSN` at build time into `expoConfig.extra.sentryDsn`; `index.js` calls `initSentry()` (`src/lib/sentry.ts`) before mounting the app. No DSN ⇒ Sentry is inert and the app boots normally (same "unconfigured ≠ crash" contract as Supabase).
+- **Symbolication** — the `@sentry/react-native/expo` config plugin (app.json) writes `sentry.properties` and injects `sentry.gradle` during prebuild; the `withSentryConfig` Metro wrapper stamps a Debug ID onto the bundle + sourcemap. During EAS builds, `sentry.gradle` forces Hermes sourcemap generation on the `createBundle*JsAndAssets` task and uploads the map (plus native symbols) via `sentry-cli`, keyed by release. The legacy `sentry-expo` postPublish hook is deliberately NOT used — it only fires for `eas update`, never `eas build`.
+- **Error boundary** — `SentryBoundary` (`src/components/SentryBoundary.tsx`) wraps the app shell inside the provider stack; its fallback reuses the shared `errorBoundary` ar/en catalog with the standard retry button. Zero new i18n strings.
+- **pnpm** — `@sentry/cli` is allowlisted in `pnpm-workspace.yaml` `onlyBuiltDependencies` (its postinstall downloads the CLI binary the upload needs).
+
+### Owner setup (one-time, after creating the Sentry project)
+
+Create a React Native/Expo project in Sentry, generate an auth token (Sentry → Settings → Auth Tokens, `project:releases` scope), then:
+
+```bash
+cd apps/mobile
+eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "https://<key>@o<org>.ingest.sentry.io/<project>" --environment preview --environment production
+eas env:create --name SENTRY_AUTH_TOKEN --value "<token>" --environment preview --environment production
+```
+
+Nothing is hardcoded: the plugin ships without `organization`/`project` and the generated `sentry.properties` falls back to the `SENTRY_ORG` / `SENTRY_PROJECT` EAS env vars at build time. If a build log complains about a missing org/project, add those two as non-secret EAS env vars the same way.
+
+Local dev: uncomment `EXPO_PUBLIC_SENTRY_DSN` in `apps/mobile/.env.local` to test with Sentry debug logging. Note that adding Sentry adds native modules — rebuild dev-client installs after this change (`eas build --profile development`).
+
+### Verify
+
+1. Gates: `pnpm --filter mobile typecheck` / `lint` / `test` / `export` all green (export proves the Sentry-wrapped Metro bundle compiles; no upload happens locally — `sentry-cli` has no token).
+2. Local runtime: with a DSN in `.env.local`, `pnpm --filter mobile start` shows Sentry debug output; without it you see the `[masarx] EXPO_PUBLIC_SENTRY_DSN is not set` warning and everything else works.
+3. EAS: the preview build log shows the Sentry upload step, and the build's app version appears as a release in the Sentry dashboard.
+
+### Reading a crash (5 lines)
+
+1. Sentry dashboard → the Masar X mobile project → **Issues**, newest unhandled.
+2. Open the event — stack frames resolve to `file:line` from the uploaded Hermes map.
+3. Check the event's **release** matches the EAS build version; a mismatch means the symbols belong to another build.
+4. Use the breadcrumbs + device/OS tags to see the actions that preceded the crash.
+5. If frames show raw offsets like `useParentSafeAreaInsets@1:849472` instead of `file:line`, the sourcemap upload failed — check `SENTRY_AUTH_TOKEN` on EAS and the build log's Sentry step.
 
 ## Deferred / follow-ups
 
