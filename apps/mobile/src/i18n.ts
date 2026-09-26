@@ -35,6 +35,7 @@ import arFileDropzone from "masarx-shared/messages/ar/fileDropzone.json";
 import arAuthPages from "masarx-shared/messages/ar/authPages.json";
 import arQuizAttempts from "masarx-shared/messages/ar/quizAttempts.json";
 import arNews from "masarx-shared/messages/ar/news.json";
+import arReviews from "masarx-shared/messages/ar/reviews.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -46,6 +47,7 @@ import enFileDropzone from "masarx-shared/messages/en/fileDropzone.json";
 import enAuthPages from "masarx-shared/messages/en/authPages.json";
 import enQuizAttempts from "masarx-shared/messages/en/quizAttempts.json";
 import enNews from "masarx-shared/messages/en/news.json";
+import enReviews from "masarx-shared/messages/en/reviews.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -66,6 +68,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     authPages: arAuthPages,
     quizAttempts: arQuizAttempts,
     news: arNews,
+    reviews: arReviews,
   },
   en: {
     common: enCommon,
@@ -79,6 +82,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     authPages: enAuthPages,
     quizAttempts: enQuizAttempts,
     news: enNews,
+    reviews: enReviews,
   },
 };
 
@@ -152,6 +156,19 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "subjectDetail.emptyGroup": "لا يوجد محتوى في هذا القسم بعد",
     "subjectDetail.open": "فتح",
     "subjectDetail.startQuiz": "ابدأ الاختبار",
+    "summaryDetail.subject": "المادة",
+    "summaryDetail.year": "السنة",
+    "summaryDetail.department": "القسم",
+    "summaryDetail.contributor": "المساهم",
+    "summaryDetail.pdf": "فتح ملف PDF",
+    "summaryDetail.youtube": "مشاهدة على يوتيوب",
+    "summaryDetail.commentPlaceholder": "شاركنا رأيك (اختياري)",
+    "summaryDetail.submitting": "جارٍ النشر...",
+    "summaryDetail.notFound": "الملخص غير موجود",
+    "summaryDetail.postFailed": "تعذر إرسال التقييم. تحقق من الاتصال وحاول مجدداً.",
+    "summaryDetail.deleteFailed": "تعذر حذف التقييم. تحقق من الاتصال وحاول مجدداً.",
+    "summaryDetail.loginRequiredTitle": "تسجيل الدخول مطلوب",
+    "summaryDetail.loginRequired": "يجب عليك تسجيل الدخول لإضافة تقييم.",
     "common.retry": "إعادة المحاولة",
     "common.offline": "غير متصل",
   },
@@ -217,6 +234,19 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "subjectDetail.emptyGroup": "Nothing here yet",
     "subjectDetail.open": "Open",
     "subjectDetail.startQuiz": "Start quiz",
+    "summaryDetail.subject": "Subject",
+    "summaryDetail.year": "Year",
+    "summaryDetail.department": "Department",
+    "summaryDetail.contributor": "Contributor",
+    "summaryDetail.pdf": "Open PDF",
+    "summaryDetail.youtube": "Watch on YouTube",
+    "summaryDetail.commentPlaceholder": "Share your thoughts (optional)",
+    "summaryDetail.submitting": "Posting...",
+    "summaryDetail.notFound": "Summary not found",
+    "summaryDetail.postFailed": "Could not post the review. Check your connection and retry.",
+    "summaryDetail.deleteFailed": "Could not delete the review. Check your connection and retry.",
+    "summaryDetail.loginRequiredTitle": "Sign in required",
+    "summaryDetail.loginRequired": "You need to sign in to add a review.",
     "common.retry": "Retry",
     "common.offline": "Offline",
   },
