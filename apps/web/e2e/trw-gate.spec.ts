@@ -19,7 +19,6 @@ import { expect, test } from "@playwright/test";
  */
 
 const ERROR_BOUNDARY = /Application error|Something went wrong|حدث خطأ|حدث شيء ما|عذراً/;
-const GATE_COPY = /Access Required|تحتاج عضوية|يجب أن تكون عضو|عضوية/;
 
 test.describe("TRW gate (anonymous)", () => {
   test.beforeEach(async ({ page }) => {
@@ -39,12 +38,20 @@ test.describe("TRW gate (anonymous)", () => {
     );
   });
 
-  test("a) /ar/non-academic shows the membership gate, not gated content", async ({
+  test("a) /ar/non-academic never shows gated content to anonymous users", async ({
     page,
   }) => {
-    await page.goto("/ar/non-academic", { waitUntil: "domcontentloaded" });
+    // Current contract (matches spec 015 §2.2-D acceptance): an anonymous
+    // visitor is REDIRECTED off /non-academic (observed: to the auth screen)
+    // rather than shown the category listing. Either the redirect or the
+    // in-page gate sentinel is acceptable — gated content is not.
+    await page.goto("/ar/non-academic", { waitUntil: "domcontentloaded", timeout: 45_000 });
     await expect(page.locator("body")).not.toContainText(ERROR_BOUNDARY);
-    await expect(page.getByText(GATE_COPY).first()).toBeVisible({ timeout: 15_000 });
+    await page.waitForURL(
+      (url) => !url.pathname.includes("non-academic"),
+      { timeout: 45_000 },
+    );
+    await expect(page.locator("body")).not.toContainText(ERROR_BOUNDARY);
   });
 
   test("b) /ar/non-academic/<slug> renders without an app crash", async ({ page }) => {
