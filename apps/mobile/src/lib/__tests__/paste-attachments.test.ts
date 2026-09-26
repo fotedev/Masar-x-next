@@ -17,9 +17,10 @@ describe("paste-attachments (spec 024)", () => {
   });
 
   it("extracts a selection-overwrite paste, preserving context", () => {
-    const { inserted, stripped } = extractInserted("hello brave world", "hello PASTE world");
+    const { inserted, stripped, prefixLength } = extractInserted("hello brave world", "hello PASTE world");
     expect(inserted).toBe("PASTE");
     expect(stripped).toBe("hello  world");
+    expect(prefixLength).toBe(6);
   });
 
   it("yields empty inserted on deletion (passthrough)", () => {

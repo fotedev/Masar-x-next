@@ -28,6 +28,8 @@ import {
   Text,
   TextInput,
   View,
+  type NativeSyntheticEvent,
+  type TextInputSelectionChangeEventData,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,6 +39,14 @@ import { useTheme } from "../context/ThemeContext";
 import type { Palette } from "../lib/theme";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { createAiRequest, isAiConfigured, sendAiMessageMobile } from "../lib/ai";
+import {
+  AI_PROMPT_MAX_CHARS,
+  combinePromptWithAttachments,
+  createPastedAttachment,
+  extractInserted,
+  shouldWrapAsAttachment,
+  type PastedAttachment,
+} from "../lib/paste-attachments";
 import {
   clearChatHistory,
   loadChatHistory,
@@ -61,6 +71,11 @@ export default function AIAssistantScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  // Smart Paste (spec 024): large pasted chunks become attachments held
+  // alongside the typed input; `notice` surfaces the oversize guard.
+  const [attachments, setAttachments] = useState<PastedAttachment[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<FlatList<ChatMessage> | null>(null);
 
@@ -167,6 +182,50 @@ export default function AIAssistantScreen() {
     [sending, t, locale, online],
   );
 
+  // Spec 024 — diff-based paste detection (plan.md §2). Native TextInput
+  // has no onPaste event: every keystroke, autocorrect swap, IME commit,
+  // and paste arrives here as a prev→next transition. Only a transition
+  // whose inserted chunk clears the shared thresholds becomes an
+  // attachment; everything else takes today's setInput path untouched.
+  const handleChangeText = useCallback(
+    (next: string) => {
+      setNotice(null);
+      setSelection(undefined);
+      const { inserted, stripped, prefixLength } = extractInserted(input, next);
+      if (inserted && shouldWrapAsAttachment(inserted)) {
+        setInput(stripped);
+        setAttachments((prev) => [...prev, createPastedAttachment(inserted)]);
+        // Park the caret where the chunk was lifted out.
+        setSelection({ start: prefixLength, end: prefixLength });
+        return;
+      }
+      setInput(next);
+    },
+    [input],
+  );
+
+  const handleSelectionChange = useCallback(
+    (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+      // Don't clobber the one-frame caret restore above with the echo
+      // of the pre-strip position.
+      setSelection((prev) => (prev ? prev : e.nativeEvent.selection));
+    },
+    [],
+  );
+
+  const canSend = input.trim().length > 0 || attachments.length > 0;
+
+  const sendCurrent = useCallback(() => {
+    const combined = combinePromptWithAttachments(input, attachments);
+    if (combined.length > AI_PROMPT_MAX_CHARS) {
+      setNotice(t("aiAssistant", "promptTooLong"));
+      return;
+    }
+    setAttachments([]);
+    setNotice(null);
+    void send(combined);
+  }, [input, attachments, send, t]);
+
   const renderItem = ({ item }: { item: ChatMessage }) => (
     <View
       style={[
@@ -216,6 +275,8 @@ export default function AIAssistantScreen() {
               // state without raising the persist flag, and remove the
               // stored key so nothing is rewritten afterwards.
               setMessages([]);
+              setAttachments([]);
+              setNotice(null);
               void clearChatHistory();
             }}
             hitSlop={8}
@@ -245,19 +306,55 @@ export default function AIAssistantScreen() {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         />
 
+        <View style={styles.composerWrap}>
+        {attachments.length > 0 ? (
+          <View style={styles.chipsRow}>
+            {attachments.map((att) => (
+              <View key={att.id} style={styles.chip}>
+                <View style={styles.chipTextWrap}>
+                  <Text style={styles.chipText} numberOfLines={1}>
+                    {t("aiAssistant", "pastedText")}
+                  </Text>
+                  <Text style={styles.chipSub} numberOfLines={1}>
+                    {att.sizeLabel} • {att.charCount} {t("aiAssistant", "pastedChars")}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.chipRemove}
+                  accessibilityLabel={t("aiAssistant", "removeAttachment")}
+                  hitSlop={8}
+                  onPress={() =>
+                    setAttachments((prev) => prev.filter((a) => a.id !== att.id))
+                  }
+                >
+                  <Text style={styles.chipRemoveText}>✕</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {notice ? (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>{notice}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
             value={input}
-            onChangeText={setInput}
+            onChangeText={handleChangeText}
+            onSelectionChange={handleSelectionChange}
+            selection={selection}
             placeholder={t("aiAssistant", "inputPlaceholderMobile")}
             placeholderTextColor={colors.placeholder}
             multiline
           />
           <Pressable
-            style={[styles.sendButton, (sending || !input.trim()) && styles.sendDisabled]}
-            onPress={() => void send(input)}
-            disabled={sending || !input.trim()}
+            style={[styles.sendButton, (sending || !canSend) && styles.sendDisabled]}
+            onPress={sendCurrent}
+            disabled={sending || !canSend}
           >
             {sending ? (
               <ActivityIndicator size="small" color={colors.onPrimary} />
@@ -265,6 +362,7 @@ export default function AIAssistantScreen() {
               <Text style={styles.sendText}>{t("aiAssistant", "send")}</Text>
             )}
           </Pressable>
+        </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -332,12 +430,41 @@ const createStyles = (colors: Palette) =>
     paddingVertical: 4,
   },
   retryChipText: { color: colors.primary, fontWeight: "700", fontSize: 12 },
+  chipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    backgroundColor: colors.card,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    maxWidth: "100%",
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bg,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingLeft: 10,
+    paddingRight: 4,
+    gap: 8,
+  },
+  chipTextWrap: { flexShrink: 1, maxWidth: 220 },
+  chipText: { fontSize: 12, fontWeight: "700", color: colors.ink },
+  chipSub: { fontSize: 11, color: colors.subtle },
+  chipRemove: { padding: 4 },
+  chipRemoveText: { fontSize: 13, fontWeight: "800", color: colors.primary },
+  composerWrap: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
+  },
   inputRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
     backgroundColor: colors.card,
   },
   input: {

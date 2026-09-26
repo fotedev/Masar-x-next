@@ -61,7 +61,7 @@ export function createPastedAttachment(text: string, now = Date.now()): PastedAt
 export function extractInserted(
   prev: string,
   next: string,
-): { inserted: string; stripped: string } {
+): { inserted: string; stripped: string; prefixLength: number } {
   const minLen = Math.min(prev.length, next.length);
   let p = 0;
   while (p < minLen && prev[p] === next[p]) p++;
@@ -70,6 +70,7 @@ export function extractInserted(
   return {
     inserted: next.slice(p, next.length - s),
     stripped: prev.slice(0, p) + next.slice(next.length - s),
+    prefixLength: p,
   };
 }
 
