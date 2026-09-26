@@ -14,7 +14,7 @@ import type {
   QuizAttemptRow,
 } from "../types/quiz";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { cacheGet, cacheSet } from "../read-cache";
+import { CACHE_PREFIX, cacheGet, cacheSet } from "../read-cache";
 
 const GUEST_RESULTS_CACHE_PREFIX = "quiz_guest_result:";
 
@@ -211,11 +211,15 @@ export interface GuestResultEntry {
 export async function listGuestResults(): Promise<GuestResultEntry[]> {
   try {
     const keys = await AsyncStorage.getAllKeys();
+    // AsyncStorage keys carry the read-cache envelope prefix; strip it so
+    // cacheGet does not double-prefix (the history screen read an empty list
+    // before this fix — the raw 'quiz_guest_result:' filter never matched).
+    const storagePrefix = `${CACHE_PREFIX}${GUEST_RESULTS_CACHE_PREFIX}`;
     const entries = await Promise.all(
       keys
-        .filter((key) => key.startsWith(GUEST_RESULTS_CACHE_PREFIX))
+        .filter((key) => key.startsWith(storagePrefix))
         .map(async (key) => {
-          const hit = await cacheGet<GuestResult>(key);
+          const hit = await cacheGet<GuestResult>(key.slice(CACHE_PREFIX.length));
           if (!hit?.payload || typeof hit.payload.quizId !== "string") return null;
           return { quizId: hit.payload.quizId, result: hit.payload } satisfies GuestResultEntry;
         }),

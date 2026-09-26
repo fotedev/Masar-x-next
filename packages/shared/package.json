@@ -21,7 +21,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "echo '[shared] ESLint config co-located with consumers (apps/{web,desktop,mobile}/eslint.config.*); shared package sources are linted by the consumer that owns the build.'",
-    "build": "echo '[shared] no build step yet — consumers import directly from main: ./src/index.ts. A tsc-based build will be added when the source tree grows.'"
+    "build": "echo '[shared] no build step yet — consumers import directly from main: ./src/index.ts. A tsc-based build will be added when the source tree grows.'",
+    "test": "vitest run"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "2.1.8"
   }
 }

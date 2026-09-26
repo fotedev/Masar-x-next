@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { KeyboardEvent, RefObject } from "react";
+import type { KeyboardEvent, ClipboardEvent, RefObject } from "react";
 import {
   Send,
   Plus,
@@ -13,8 +13,14 @@ import {
   MessageSquareCode,
   Users,
   Settings,
+  FileText,
+  X,
 } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
+import {
+  shouldWrapAsAttachment,
+  type PastedAttachment,
+} from "@/lib/ai/pasted-attachments";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { QuickQuizFromTextModal } from "@/components/ai/QuickQuizFromTextModal";
@@ -53,6 +59,9 @@ interface ChatInputProps {
   isSummarizing: boolean;
   hasChatData: boolean;
   onOpenPuterSettings: () => void;
+  pastedAttachments: PastedAttachment[];
+  onAddPastedText: (text: string) => void;
+  onRemoveAttachment: (id: string) => void;
 }
 
 const modes = [
@@ -86,6 +95,9 @@ export function ChatInput({
   isSummarizing,
   hasChatData,
   onOpenPuterSettings,
+  pastedAttachments,
+  onAddPastedText,
+  onRemoveAttachment,
 }: Omit<ChatInputProps, "suggestions" | "onSuggestionClick">) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -171,6 +183,18 @@ export function ChatInput({
     }
   };
 
+  // Smart Paste Canvas (spec 022): intercept large pastes so they become
+  // attachment chips instead of flooding the textarea. Small pastes fall
+  // through to the default behavior untouched.
+  const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const pasted = e.clipboardData?.getData("text");
+    if (!pasted || !shouldWrapAsAttachment(pasted)) return;
+    e.preventDefault();
+    onAddPastedText(pasted);
+  };
+
+  const canSend = inputMessage.trim().length > 0 || pastedAttachments.length > 0;
+
   const getInputPlaceholder = () => {
     const inputDir = getTextDirection(inputMessage);
 
@@ -207,12 +231,41 @@ export function ChatInput({
           <div className={`flex flex-col gap-1 border backdrop-blur-xl shadow-lg transition-colors duration-300 rounded-3xl bg-white/90 dark:bg-slate-900/70 border-slate-200/80 dark:border-slate-700/50 focus-within:border-slate-300 dark:focus-within:border-slate-600 ${
             isInitialState ? "p-3" : "p-2 sm:p-2.5"
           }`}>
+            {pastedAttachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 px-0.5 sm:px-1 pt-1">
+                {pastedAttachments.map((att) => (
+                  <span
+                    key={att.id}
+                    className="inline-flex max-w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 py-1.5 ps-2.5 pe-1.5 text-xs font-medium text-slate-600 dark:border-slate-700/60 dark:bg-slate-800/60 dark:text-slate-300"
+                  >
+                    <FileText className="h-4 w-4 shrink-0 text-cyan-600 dark:text-cyan-400" />
+                    <span className="min-w-0">
+                      <span className="block max-w-[160px] sm:max-w-[220px] truncate font-bold">
+                        {t("pastedText")}
+                      </span>
+                      <span className="block text-[10px] opacity-70">
+                        {att.sizeLabel} • {att.charCount} {t("pastedChars")}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveAttachment(att.id)}
+                      aria-label={t("removeAttachment")}
+                      className="shrink-0 rounded-full p-1 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
             <textarea
               ref={inputRef}
               rows={1}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
                 placeholder={placeholder}
                 dir={inputMessage ? "auto" : isRTL ? "rtl" : "ltr"}
               className={`w-full max-h-[160px] bg-transparent border-0 focus:ring-0 outline-none focus:outline-none resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 ${
@@ -442,14 +495,14 @@ export function ChatInput({
 
               {/* Send Button — end side */}
               <motion.button
-                whileHover={!inputMessage.trim() || isLoading ? {} : { scale: 1.06 }}
-                whileTap={!inputMessage.trim() || isLoading ? {} : { scale: 0.94 }}
+                whileHover={!canSend || isLoading ? {} : { scale: 1.06 }}
+                whileTap={!canSend || isLoading ? {} : { scale: 0.94 }}
                 onClick={onSendMessage}
-                disabled={!inputMessage.trim() || isLoading}
+                disabled={!canSend || isLoading}
                 aria-label={t("send")}
                 type="button"
                 className={`shrink-0 flex items-center justify-center rounded-full transition-all duration-300 w-9 h-9 sm:w-10 sm:h-10 ${
-                  !inputMessage.trim() || isLoading
+                  !canSend || isLoading
                     ? "text-slate-400 dark:text-slate-500 bg-slate-200/80 dark:bg-slate-700/60"
                     : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-500 hover:to-blue-500 hover:shadow-cyan-500/40"
                 }`}

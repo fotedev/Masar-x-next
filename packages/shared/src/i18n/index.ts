@@ -74,6 +74,10 @@ import arSummaries from "../messages/ar/summaries.json";
 import arTheme from "../messages/ar/theme.json";
 import arTrw from "../messages/ar/trw.json";
 import arTrwRedeem from "../messages/ar/trwRedeem.json";
+import arDesktopStudyWorkspace from "../messages/ar/desktopStudyWorkspace.json";
+import arDesktopUpdates from "../messages/ar/desktopUpdates.json";
+import arEnrollments from "../messages/ar/enrollments.json";
+import arTitlebar from "../messages/ar/titlebar.json";
 import arWaitlist from "../messages/ar/waitlist.json";
 
 // ---------------------------------------------------------------------------
@@ -122,7 +126,12 @@ import enSummaries from "../messages/en/summaries.json";
 import enTheme from "../messages/en/theme.json";
 import enTrw from "../messages/en/trw.json";
 import enTrwRedeem from "../messages/en/trwRedeem.json";
+import enDesktopStudyWorkspace from "../messages/en/desktopStudyWorkspace.json";
+import enDesktopUpdates from "../messages/en/desktopUpdates.json";
+import enEnrollments from "../messages/en/enrollments.json";
+import enTitlebar from "../messages/en/titlebar.json";
 import enWaitlist from "../messages/en/waitlist.json";
+
 /**
  * Arabic registry. I18nNamespace below is derived from the ar/ JSON
  * directory: adding a namespace means adding ar/<name>.json + its import +
@@ -173,6 +182,10 @@ const arMessages = {
   theme: arTheme,
   trw: arTrw,
   trwRedeem: arTrwRedeem,
+  desktopStudyWorkspace: arDesktopStudyWorkspace,
+  desktopUpdates: arDesktopUpdates,
+  enrollments: arEnrollments,
+  titlebar: arTitlebar,
   waitlist: arWaitlist,
 };
 
@@ -235,6 +248,10 @@ const enMessages: Record<I18nNamespace, unknown> = {
   theme: enTheme,
   trw: enTrw,
   trwRedeem: enTrwRedeem,
+  desktopStudyWorkspace: enDesktopStudyWorkspace,
+  desktopUpdates: enDesktopUpdates,
+  enrollments: enEnrollments,
+  titlebar: enTitlebar,
   waitlist: enWaitlist,
 };
 

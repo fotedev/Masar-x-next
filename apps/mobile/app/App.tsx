@@ -1,7 +1,8 @@
 /**
  * Masar X mobile root (Expo SDK 51 + React Navigation v6).
  *
- * Provider stack: SafeAreaProvider > AuthProvider > I18nProvider, then
+ * Provider stack: SafeAreaProvider > ThemeProvider > AuthProvider >
+ * I18nProvider > SentryBoundary (spec 023 crash boundary), then
  * a NavigationContainer hosting the auth gate:
  *
  *   - status "loading"       -> minimal splash (no navigator mounted)
@@ -11,7 +12,7 @@
  *                                OAuth is deferred for v1 - spec US4 T046)
  *                                with SignUp pushed on the signed-out stack
  *                                (spec 019 C3)
- *   - status "authenticated" -> MainTabs (Subjects, Summaries, Quizzes,
+ *   - status "authenticated" -> MainTabs (Subjects, Quizzes, News,
  *                                AI, Profile) with QuizPlay pushed on the
  *                                root stack so the player covers the tabs.
  *
@@ -24,6 +25,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import {
   ActivityIndicator,
@@ -39,6 +41,7 @@ import { StatusBar } from "expo-status-bar";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { I18nProvider, useI18n } from "../src/context/I18nContext";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import SentryBoundary from "../src/components/SentryBoundary";
 import { darkColors, lightColors, type Palette } from "../src/lib/theme";
 import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
@@ -49,13 +52,11 @@ import QuizPlayScreen from "../src/screens/QuizPlayScreen";
 import QuizAttemptsScreen from "../src/screens/QuizAttemptsScreen";
 import SubjectDetailScreen from "../src/screens/SubjectDetailScreen";
 import SubjectsScreen from "../src/screens/SubjectsScreen";
-import SummariesScreen from "../src/screens/SummariesScreen";
 import SummaryDetailScreen from "../src/screens/SummaryDetailScreen";
 import SignUpScreen from "../src/screens/SignUpScreen";
 
 export type MainTabsParamList = {
   Subjects: undefined;
-  Summaries: undefined;
   Quizzes: undefined;
   News: undefined;
   AI: undefined;
@@ -75,20 +76,46 @@ export type RootStackParamList = {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabsParamList>();
 
+/**
+ * Bottom-tab icons (Ionicons — filled when focused, outline otherwise).
+ * Fixed map (not translated): route names are stable navigation keys.
+ */
+const TAB_ICONS: Record<
+  keyof MainTabsParamList,
+  { focused: keyof typeof Ionicons.glyphMap; unfocused: keyof typeof Ionicons.glyphMap }
+> = {
+  Subjects: { focused: "book", unfocused: "book-outline" },
+  Quizzes: { focused: "checkmark-circle", unfocused: "checkmark-circle-outline" },
+  News: { focused: "newspaper", unfocused: "newspaper-outline" },
+  AI: { focused: "sparkles", unfocused: "sparkles-outline" },
+  Profile: { focused: "person", unfocused: "person-outline" },
+};
+
 function MainTabs() {
   const { t } = useI18n();
   const { colors } = useTheme();
   return (
     <Tabs.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.subtle,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
-      }}
+        // Roomy bar + compact labels so five Arabic labels never overlap.
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarStyle: { height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons = TAB_ICONS[route.name];
+          return (
+            <Ionicons
+              name={focused ? icons.focused : icons.unfocused}
+              size={size}
+              color={color}
+            />
+          );
+        },
+      })}
     >
       <Tabs.Screen name="Subjects" component={SubjectsScreen} options={{ title: t("mobile", "tabs.subjects") }} />
-      <Tabs.Screen name="Summaries" component={SummariesScreen} options={{ title: t("mobile", "tabs.summaries") }} />
       <Tabs.Screen name="Quizzes" component={QuizzesScreen} options={{ title: t("mobile", "tabs.quizzes") }} />
       <Tabs.Screen name="News" component={NewsScreen} options={{ title: t("mobile", "tabs.news") }} />
       <Tabs.Screen name="AI" component={AIAssistantScreen} options={{ title: t("mobile", "tabs.ai") }} />
@@ -190,7 +217,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <I18nProvider>
-            <AppShell />
+            <SentryBoundary>
+              <AppShell />
+            </SentryBoundary>
           </I18nProvider>
         </AuthProvider>
       </ThemeProvider>

@@ -1,0 +1,302 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+build/
+out/
+.vercel/
+
+# Electron desktop build outputs (these can be 200+ MB and are
+# regenerated on every pnpm --filter desktop run build:installer /
+# build:portable; never commit them). The `apps/desktop/dist/`
+# entry above already catches the tsc output, but the `out/` and
+# `dist-release/` dirs are sibling roots to `dist/`, not children.
+apps/desktop/release/
+apps/desktop/dist-release/
+apps/desktop/out/
+
+# Generated Service Worker — produced from apps/web/public/sw.template.js
+# by scripts/inject-sw-version.mjs at prebuild/predev time. Keep the
+# template tracked; ignore the generated copy so it never gets
+# committed by accident (it changes per build — the cache-name SHA is
+# rewritten on every run, so a tracked copy would mutate working
+# trees continuously). Path is anchored to the monorepo root because
+# the file lives under apps/web/, not repo root.
+apps/web/public/sw.js
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+!.env.sample
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Caches and Runtime
+.cache/
+.npm
+.eslintcache
+.parcel-cache
+.turbo
+.node_repl_history
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Testing and Coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Local archive for agent-approved file removals (I9 — never committed)
+.trash/
+
+# Database and Supabase
+supabase/.temp/
+supabase/**/.temp/
+supabase/migrations.backup/
+*.sql
+!supabase/migrations/**/*.sql
+
+# Scripts and Tools
+notebooklm_extractor.js
+/notebooklm_extractor.js 
+deploy-functions.ps1
+fix-upload-issue.ps1
+check-supabase-secrets.ps1
+test-*.js
+check-*.js
+
+# Temporary and Local Files
+tmp/
+temp/
+sandbox/
+*.tgz
+test.html
+exam_resaults*.html
+exam_resaults_example_styles.css
+build_output.txt
+lint_full.txt
+lint_output.txt
+system_prmpt.txt
+AI_chat.txt
+markdown/
+
+# Sensitive or Personal Documentation
+SECURITY_CHECKLIST.md
+CLOUDINARY_SETUP.md
+SECURE_API_SETUP.md
+NOTEBOOKLM_IMPORT_GUIDE.md
+SETUP copy.md
+EMAILJS_SETUP.md
+email.js.template.html
+emailjs_template.txt
+prompt_1.txt
+report*.txt
+AUTHENTICATION_FIX.md
+CLOUDINARY_SETUP_GUIDE.md
+comprehensive_analysis.md
+TROUBLESHOODING.md
+SUPABASE_ENV_SETUP.md
+PROJECT_CONTEXT.md
+
+# Assets
+public/logo_alt*.png
+public/logo_alt*.svg
+/exam_resaults_example_styles.css
+/exam_resaults_example.html
+/exam_resaults.html
+/report_1.txt
+/report_2.txt
+/report_3.txt
+/system_prmpt.txt
+/supabase/migrations.backup
+/test_quiz
+/markdown
+/scripts/vizvibe.mmd
+/scripts/setup-subjects.js
+/scripts/generate-sitemap.js
+/scripts/test-request-password-reset.sh
+/.windsurf/plans/
+/src/messages/ar.json.bak
+/src/messages/en.json.bak
+/cloc-2.08.exe
+/hjkllllllllllllllllllllllllllllllllllllllllllllllhhjkhjhjkhjhjkhjk.txt
+/__pycache__
+.agents
+scripts/row-preview-notgoodforhtml.txt
+.vercel
+localhost-profile.log
+skills-lock.json
+
+# NOTE: src/app/[locale]/auth/ is no longer ignored — it now hosts
+# the OAuth callback route at src/app/[locale]/auth/callback/route.ts
+# (moved here from src/app/auth/callback/ on 2026-08-13 to fix the
+# 404 on /<locale>/auth/callback after the i18n refactor).
+
+# === Added by Reorganization Plan ===
+
+# Heavy transient files
+pnpm-list.json
+audit_log.md
+MASAR_X_AUDIT_REPORT.md
+BRANCH_ANALYSIS.md
+*.tsbuildinfo
+*.bak
+vite.config.ts.timestamp-*.mjs
+temp-prompt.txt
+structure.txt
+files.txt
+arena.txt
+compare.md
+vizvibe.mmd
+
+# Heavy local data
+/models/
+/sandbox/
+/supabase/blackbox/
+/supabase/migrations.old/
+
+# Env backups
+.env.local.bak
+.opencode
+/.zcode-share
+.github/*
+!.github/FUNDING.yml
+# Dependabot config (Spec 009 §5) — must be tracked or Dependabot never runs.
+!.github/dependabot.yml
+# Allow GitHub Actions workflows so CI config can be committed.
+# Keep agents/, prompts/, copilot-instructions.md, etc. untracked (they
+# remain covered by the .github/* ignore above).
+!.github/workflows/
+!.github/workflows/**
+# Allow .github/scripts/* (check-ai-provider-endpoints.sh,
+# check-doc-links.sh, check-translations.sh) so the CI jobs can
+# invoke them. Without this, new helper scripts are silently
+# ignored and the calling job fails with exit 127.
+!.github/scripts/
+!.github/scripts/**
+# Document the active branch protection Ruleset alongside this file.
+!.github/RULESET.md
+.specify
+.windsurf
+backup
+# Per-PR9 landing: scope the docs ignore to the obviously-scratch subdirs
+# so the new intentional deliverables (docs/{delivery,security,perf,releases}/)
+# can be tracked. PR1's /docs line was too broad — it blocked everything
+# including the spec 004 deliverable docs.
+/docs/scratch
+/docs/audits
+/context_output
+/.context
+/files.txt
+
+# === Lottie migration artifacts ===
+# Unpacked lottie source (5.8MB); use the bundled .lottie file instead
+public/animations/ai-robo/
+# Debug script used to verify the dotlottie-react patch
+scripts/test_patch.mjs
+/.trash
+
+# === Agent helper scripts and build verification artifacts (2026-08-23) ===
+# The agent that built the new app icon and resolved the @swc/helpers
+# standalone build fix created a series of .git-tmp-*.py / .git-tmp-*.log
+# helper files at the workspace root and inside apps/desktop/build. They
+# are transient debug artifacts and should never be committed.
+.git-tmp-*
+# 1024x1024 PNG used as a master source when generating icon.ico. Not
+# needed at runtime — the .ico is the actual deliverable, and the
+# generator script (if needed again) can re-create this from git history.
+apps/desktop/build/icon-master.png
+# Visual previews of every ICO size (used to verify contrast on light
+# and dark taskbars before packaging). Regenerable from icon.ico + a
+# 10-line Pillow script.
+apps/desktop/build/.icon-preview/
+# Stale release/ outputs from interrupted builds. The prebuild script
+# renames these to release.__stale_<timestamp>__/ when a file lock
+# (antivirus / Windows Search indexer) blocks the rmSync of the normal
+# release/ dir. They are safe to delete manually once the new build
+# is verified.
+apps/desktop/release.__stale*/
+/masarx-video-ad
+/masarx-remotion-ad
+/pattern.html
+.tmp_old_login.txt
+.tmp_old_signup.txt
+
+# Added by organize-root v2.3 (Phase 4)
+.tmp_old_*.txt
+.vercel/
+sandbox/
+
+# Playwright artifacts (Spec 010) — regenerated per run, never committed.
+apps/web/test-results/
+apps/web/playwright-report/
+
+# Promo asset generator helpers (download/query/submit scripts) — local-only
+promo_assets/**/*.py
+promo_assets/**/*.json
+promo_assets/**/*.png
+promo_assets/story.md
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）
