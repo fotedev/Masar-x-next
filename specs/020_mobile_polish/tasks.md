@@ -24,7 +24,7 @@ the repo-wide task counter (spec 019 ended at T099).
 - [x] T110 `review-validation.test.ts` (12 tests: content-column payload mapping, comment trim, empty + null comment allowed, rating bounds 0/6/4.5 rejected + full 1–5 accepted, delete-own guard matrix) + gates: typecheck ✅ · lint ✅ · vitest 89/89 ✅ · export ✅ · shared typecheck ✅ · desktop typecheck ✅.
 
 ## C5 — Release
-- [ ] T111 version 0.6.1 → 0.7.0 (package.json + app.json); full gate suite; ledger close.
+- [x] T111 version 0.6.1 → 0.7.0 (package.json + app.json); full gate suite rerun on the release tree; ledger close: **spec 020 complete — C1–C5 all landed on `feat/020-mobile-polish`** (C1 spec d2d2e06, C2 news 7c493d7, C3 dark mode 7beeca8, C4 summary detail + reviews d0799e6). Full gate suite on this commit: mobile typecheck ✅ · lint ✅ · vitest 89/89 ✅ · export ✅; shared typecheck ✅ · desktop typecheck ✅.
 
 ## Owner actions (post-C5)
 - [x] Review this spec → approve C2–C5 execution (owner signed off 2026-09-26).

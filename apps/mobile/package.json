@@ -1,6 +1,6 @@
 {
   "name": "mobile",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "private": true,
   "main": "index.js",
   "description": "Masar X mobile app - Expo (managed workflow) React Native client (research.md A3; spec FR-006..FR-013).",
