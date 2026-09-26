@@ -19,7 +19,14 @@ function useFakeQuery() {
     queryFn: async () => {
       // Realistic PostgREST chain shape — proves the thenable builder awaits.
       const { supabase } = await import('@/lib/supabase');
-      const { data } = await (supabase as never as ReturnType<typeof createSupabaseMock>['supabase'])
+      const client = supabase as unknown as {
+        from: (t: string) => {
+          select: (s: string) => {
+            or: (s: string) => PromiseLike<{ data: unknown[] | null }>;
+          };
+        };
+      };
+      const { data } = await client
         .from('subjects')
         .select('id')
         .or('is_academic.eq.true,is_academic.is.null');
@@ -42,7 +49,12 @@ describe('test infrastructure smoke (spec 022 Stage 1)', () => {
 
   it('records PostgREST chains via the supabase mock', async () => {
     const chain = createSupabaseMock();
-    const builder = chain.supabase.from('subjects') as { select: (s: string) => unknown } & Record<string, (...a: unknown[]) => unknown>;
+    type Builder = {
+      select: (s: string) => Builder;
+      order: (col: string, opts: { ascending: boolean }) => Builder;
+      or: (clause: string) => PromiseLike<unknown>;
+    };
+    const builder = chain.supabase.from('subjects') as unknown as Builder;
     await builder.select('id').order('name', { ascending: true }).or('level.eq.1,level.is.null');
     expect(chain.calls.map((c) => c.method)).toEqual(['from', 'select', 'order', 'or']);
     expect(orClauses(chain)).toContain('level.eq.1,level.is.null');

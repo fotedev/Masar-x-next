@@ -16,6 +16,8 @@ export interface SupabaseQueryResult<T = unknown> {
   count?: number | null;
 }
 
+import { vi } from "vitest";
+
 export interface RecordedChain {
   calls: RecordedCall[];
   supabase: {
