@@ -22,7 +22,7 @@ export const Header = memo(function Header() {
   const tMobileNav = useTranslations("mobileNav");
   const locale = useLocale();
   const dir = locale === "ar" ? "rtl" : "ltr";
-  const { user, loading, isAdmin, signOut } = useAuth();
+  const { user, profile: authProfile, loading, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -368,10 +368,9 @@ export const Header = memo(function Header() {
                 type="button"
               >
                 <DynamicLogo
-                  width={48}
-                  height={48}
-                  sizes="48px"
-                  className="object-contain w-10 h-10 sm:w-12 sm:h-12"
+                  width={116}
+                  height={40}
+                  className="object-contain h-10 sm:h-11 w-auto"
                   priority
                 />
               </button>
@@ -395,6 +394,7 @@ export const Header = memo(function Header() {
                   isMounted={isMounted}
                   loading={loading}
                   user={user}
+                  profile={authProfile}
                   isAdmin={isAdmin}
                   isAdminLoading={false}
                   handleNavigate={handleNavigate}
