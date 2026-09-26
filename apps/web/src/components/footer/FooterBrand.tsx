@@ -12,6 +12,7 @@ export function FooterBrand({ t }: FooterBrandProps) {
     <div className="space-y-4 text-start">
       <div className="flex items-center gap-x-3">
         <DynamicLogo
+          variant="mark"
           width={40}
           height={40}
           className="object-contain w-10 h-10"

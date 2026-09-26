@@ -1,75 +1,72 @@
 "use client";
 
 import { Suspense, useState, useEffect, useMemo } from "react";
+// NOTE: useMemo is still used above to memoize the supabase client.
+
 import { useParams, useRouter } from "next/navigation";
 import { ArrowRight, Monitor } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 
-type SubjectDetails = {
+// Phase 1 of refactor/decouple-trw-subjects:
+// /non-academic/[subject] is now exclusively backed by the trw_categories
+// table. The legacy code read this URL segment against the academic
+// `subjects` table, which is the wrong data source and would return rows
+// unrelated to the TRW membership context.
+type TRWCategory = {
   id: string;
+  slug: string;
   name: string;
-  professor: string | null;
-  description: string | null;
-  schedule: string | null;
-  location: string | null;
-  level: string | null;
-  semester: string | null;
-  status: string | null;
-  show_on_home: boolean | null;
-  created_at: string | null;
-  is_academic: boolean | null;
+  description?: string | null;
+  cover_url?: string | null;
 };
 
 function SubjectDetailsContent() {
   const params = useParams();
-  const subjectId = params?.subject as string;
+  const subjectSlug = params?.subject as string;
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
-  const [subjectDetails, setSubjectDetails] = useState<SubjectDetails | null>(
-    null,
-  );
+  const [category, setCategory] = useState<TRWCategory | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const subjectName = subjectId ? decodeURIComponent(subjectId) : "";
-  const normalizedSubjectName = useMemo(
-    () => subjectName.trim(),
-    [subjectName],
-  );
+  const normalizedSlug = subjectSlug ? decodeURIComponent(subjectSlug) : "";
 
   useEffect(() => {
-    async function fetchSubjectDetails() {
-      if (!normalizedSubjectName) return;
+    async function fetchTRWCategory() {
+      if (!normalizedSlug) return;
 
-      const cacheKey = cacheKeys.subjectDetails(normalizedSubjectName);
-      const cached = queryCache.get<SubjectDetails>(cacheKey);
+      const cacheKey = cacheKeys.subjectDetails(normalizedSlug);
+      const cached = queryCache.get<TRWCategory>(cacheKey);
       if (cached) {
-        setSubjectDetails(cached);
+        setCategory(cached);
         setLoading(false);
         return;
       }
 
       try {
+        // The [subject] segment is the trw_categories.slug, not a row in
+        // `subjects`. Filtering on is_published keeps unpublished drafts out
+        // of the public-facing gate even if the URL is guessed.
         const { data } = await supabase
-          .from("subjects")
-          .select(
-            "id, name, professor, description, schedule, location, level, semester, status, show_on_home, created_at, is_academic",
-          )
-          .eq("name", normalizedSubjectName)
+          .from("trw_categories")
+          .select("id, slug, name, description, cover_url")
+          .eq("slug", normalizedSlug)
+          .eq("is_published", true)
           .maybeSingle();
 
         if (data) {
-          setSubjectDetails(data as SubjectDetails);
-          queryCache.set(cacheKey, data as SubjectDetails, cacheTTL.subjects);
+          setCategory(data as TRWCategory);
+          queryCache.set(cacheKey, data as TRWCategory, cacheTTL.subjects);
         }
       } catch {
-        // console.error("Error fetching subject details:", error);
+        // Intentionally swallow — empty state already communicates "coming soon".
       } finally {
         setLoading(false);
       }
     }
-    fetchSubjectDetails();
-  }, [normalizedSubjectName]);
+    fetchTRWCategory();
+  }, [normalizedSlug, supabase]);
 
   if (loading) {
     return (
@@ -93,13 +90,13 @@ function SubjectDetailsContent() {
         <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start justify-between relative z-10">
           <div className="flex-1 space-y-6 text-right">
             <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
-              {normalizedSubjectName}
+              {category?.name || normalizedSlug}
             </h1>
             <p className="text-xl text-brand-blue font-bold tracking-widest uppercase">
               MONEY MAKING IS A SKILL
             </p>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
-              {subjectDetails?.description ||
+              {category?.description ||
                 "قسم مهارات عامة وكورسات تطويرية."}
             </p>
           </div>

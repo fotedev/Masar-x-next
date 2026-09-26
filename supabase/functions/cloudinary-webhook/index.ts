@@ -2,16 +2,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { verifyCloudinaryWebhookSignature } from './signature.ts';
 
 type AdminRow = {
   user_id: string;
 };
 
 function getClientIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
+  // x-forwarded-for, whose entries can be client-supplied.
+  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
+  //    real peer IP, so a spoofed value is replaced at the edge.
   const cfIp = req.headers.get('cf-connecting-ip');
   if (cfIp) return cfIp.trim();
+  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
+  const sbIp = req.headers.get('sb-forwarded-for');
+  if (sbIp) return sbIp.split(',')[0].trim();
+  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  // 4) nginx-style fallback.
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
   return 'unknown';
@@ -21,6 +31,13 @@ serve(async (req: Request) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: buildCorsHeaders(req) })
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json', 'Allow': 'POST, OPTIONS' } }
+    )
   }
 
   try {
@@ -39,23 +56,42 @@ serve(async (req: Request) => {
       serviceRoleKey
     )
 
-    const payload = await req.json()
-
-    // التحقق من API Key للأمان
-    const webhookKey = req.headers.get('x-api-key')
-    const expectedKey = Deno.env.get('CLOUDINARY_WEBHOOK_KEY')
-
-    if (!expectedKey) {
+    const cloudinaryApiSecret = Deno.env.get('CLOUDINARY_API_SECRET') ?? ''
+    if (!cloudinaryApiSecret) {
       return new Response(
         JSON.stringify({ error: 'Server misconfigured' }),
         { status: 500, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
-    if (webhookKey !== expectedKey) {
+    // Cloudinary signs the exact request bytes. Read once as text so parsing JSON
+    // cannot change whitespace or ordering after the signature check.
+    const rawBody = await req.text()
+    const signatureResult = await verifyCloudinaryWebhookSignature({
+      rawBody,
+      timestampHeader: req.headers.get('x-cld-timestamp'),
+      signatureHeader: req.headers.get('x-cld-signature'),
+      apiSecret: cloudinaryApiSecret,
+    })
+
+    if (!signatureResult.valid) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+
+    let payload: Record<string, unknown>
+    try {
+      const parsedPayload = JSON.parse(rawBody)
+      if (!parsedPayload || typeof parsedPayload !== 'object' || Array.isArray(parsedPayload)) {
+        throw new Error('Invalid JSON payload')
+      }
+      payload = parsedPayload
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON payload' }),
+        { status: 400, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
