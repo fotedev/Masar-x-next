@@ -25,13 +25,11 @@
     },
     "macos": {
       "name": "macOS",
-      "status": "قريباً",
-      "notifyLabel": "أعلمني عند التوفر"
+      "status": "قريباً"
     },
     "android": {
       "name": "Android",
-      "status": "قريباً",
-      "notifyLabel": "أعلمني عند التوفر"
+      "status": "قريباً"
     }
   },
   "features": {

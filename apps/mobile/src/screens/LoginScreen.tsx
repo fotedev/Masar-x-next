@@ -2,11 +2,15 @@
  * Login screen (spec FR-014): Supabase email/password sign-in through
  * AuthContext.signIn, with inline error mapping and a loading state.
  *
- * Google OAuth is DEFERRED for v1 (spec US4 / T046): native Google
- * sign-in needs an AS/OAuth browser session plus a deep-link callback;
- * the screen shows a "coming later" note instead of a dead button.
+ * Spec 019 C3 additions: a "forgot password?" inline phase (sends the
+ * reset email whose link opens the web app's /reset-password page —
+ * spec 004 T047: reset completes on web) and a "create account" link
+ * to the SignUp screen. Google OAuth remains DEFERRED for v1 (spec
+ * US4 / T046); the screen keeps the "coming later" note.
  */
-import React, { useState } from "react";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,27 +24,52 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import type { RootStackParamList } from "../../app/App";
 import { useAuth } from "../context/AuthContext";
 import { useI18n } from "../context/I18nContext";
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  danger: "#DC2626",
-  border: "#CBD5E1",
-};
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
+import { validateResetEmail } from "../lib/signup-validation";
 
 export default function LoginScreen() {
-  const { status, signIn, retry } = useAuth();
-  const { t } = useI18n();
+  const { status, signIn, requestPasswordReset, retry } = useAuth();
+  const { t, isRTL } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Spec 019 C3: inline forgot-password phase (two-phase, like the
+  // web login's inline form — no separate screen needed).
+  const [mode, setMode] = useState<"login" | "reset">("login");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const onSendReset = async () => {
+    if (resetSending) return;
+    const errorKey = validateResetEmail(resetEmail);
+    if (errorKey) {
+      setResetError(t("authPages", errorKey));
+      return;
+    }
+    setResetError(null);
+    setResetSending(true);
+    try {
+      await requestPasswordReset(resetEmail.trim());
+      setResetSent(true);
+    } catch {
+      setResetError(t("authPages", "resetRequestFailed"));
+    } finally {
+      setResetSending(false);
+    }
+  };
 
   const onSubmit = async () => {
     if (submitting) return;
@@ -96,100 +125,213 @@ export default function LoginScreen() {
         <Text style={styles.brand}>Masar X</Text>
         <Text style={styles.tagline}>{t("subjects", "description")}</Text>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>{t("auth", "email")}</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            placeholderTextColor={COLORS.subtle}
-          />
+        {mode === "reset" ? (
+          <View style={styles.form}>
+            <Text style={[styles.resetTitle, isRTL && styles.rtlText]}>
+              {t("authPages", "forgotPasswordTitle")}
+            </Text>
+            <Text style={[styles.resetSubtitle, isRTL && styles.rtlText]}>
+              {t("authPages", "forgotPasswordSubtitle")}
+            </Text>
 
-          <Text style={styles.label}>{t("auth", "password")}</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="password"
-          />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <Pressable
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={onSubmit}
-            disabled={submitting}
-          >
-            {submitting ? (
-              <ActivityIndicator color="#FFFFFF" />
+            {resetSent ? (
+              <>
+                <Text style={[styles.resetSubtitle, isRTL && styles.rtlText]}>
+                  {t("authPages", "resetLinkSent")}
+                </Text>
+                <Pressable
+                  style={styles.button}
+                  onPress={() => {
+                    setMode("login");
+                    setResetSent(false);
+                    setResetEmail("");
+                  }}
+                >
+                  <Text style={styles.buttonText}>
+                    {t("authPages", "backToLogin")}
+                  </Text>
+                </Pressable>
+              </>
             ) : (
-              <Text style={styles.buttonText}>{t("auth", "signIn")}</Text>
-            )}
-          </Pressable>
+              <>
+                <Text style={styles.label}>{t("authPages", "emailLabel")}</Text>
+                <TextInput
+                  style={styles.input}
+                  value={resetEmail}
+                  onChangeText={setResetEmail}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  placeholder="you@example.com"
+                  placeholderTextColor={colors.subtle}
+                />
 
-          {/* Google OAuth deferred for v1 (spec US4 / T046). */}
-          <Text style={styles.oauthNote}>{t("mobile", "login.googleDeferred")}</Text>
-        </View>
+                {resetError ? (
+                  <Text style={[styles.error, isRTL && styles.rtlText]}>
+                    {resetError}
+                  </Text>
+                ) : null}
+
+                <Pressable
+                  style={[styles.button, resetSending && styles.buttonDisabled]}
+                  onPress={onSendReset}
+                  disabled={resetSending}
+                >
+                  {resetSending ? (
+                    <ActivityIndicator color={colors.onPrimary} />
+                  ) : (
+                    <Text style={styles.buttonText}>
+                      {t("authPages", "sendResetLink")}
+                    </Text>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  style={styles.linkButton}
+                  onPress={() => {
+                    setMode("login");
+                    setResetError(null);
+                  }}
+                >
+                  <Text style={styles.linkText}>
+                    {t("authPages", "backToLogin")}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        ) : (
+          <View style={styles.form}>
+            <Text style={styles.label}>{t("auth", "email")}</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              placeholder="you@example.com"
+              placeholderTextColor={colors.subtle}
+            />
+
+            <Text style={styles.label}>{t("auth", "password")}</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="password"
+            />
+
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+
+            <Pressable
+              style={[styles.button, submitting && styles.buttonDisabled]}
+              onPress={onSubmit}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color={colors.onPrimary} />
+              ) : (
+                <Text style={styles.buttonText}>{t("auth", "signIn")}</Text>
+              )}
+            </Pressable>
+
+            <Pressable
+              style={styles.linkButton}
+              onPress={() => setMode("reset")}
+            >
+              <Text style={styles.linkText}>
+                {t("authPages", "forgotPassword")}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.linkButton}
+              onPress={() => navigation.navigate("SignUp")}
+            >
+              <Text style={styles.linkText}>
+                {t("authPages", "noAccountPrompt")}{" "}
+                {t("authPages", "createNewAccount")}
+              </Text>
+            </Pressable>
+
+            {/* Google OAuth deferred for v1 (spec US4 / T046). */}
+            <Text style={styles.oauthNote}>{t("mobile", "login.googleDeferred")}</Text>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: COLORS.bg },
-  screen: { flexGrow: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.bg },
+  screen: { flexGrow: 1, backgroundColor: colors.bg },
   center: { alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
   brand: {
     fontSize: 36,
     fontWeight: "800",
-    color: COLORS.primary,
+    color: colors.primary,
     marginBottom: 8,
   },
   tagline: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginBottom: 32,
   },
   form: { width: "100%", maxWidth: 420 },
   label: {
-    color: COLORS.ink,
+    color: colors.ink,
     fontWeight: "600",
     marginBottom: 6,
     marginTop: 14,
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.inputBorder,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: COLORS.ink,
+    color: colors.ink,
   },
-  error: { color: COLORS.danger, marginTop: 12, textAlign: "center" },
+  error: { color: colors.danger, marginTop: 12, textAlign: "center" },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center",
     marginTop: 18,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 16 },
+  buttonText: { color: colors.onPrimary, fontWeight: "700", fontSize: 16 },
   oauthNote: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginTop: 16,
     fontSize: 13,
   },
+  linkButton: { alignItems: "center", marginTop: 14 },
+  linkText: { color: colors.primary, fontWeight: "600", textAlign: "center" },
+  resetTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.ink,
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  resetSubtitle: {
+    color: colors.subtle,
+    textAlign: "center",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  rtlText: { textAlign: "right", writingDirection: "rtl" },
   unconfiguredText: {
-    color: COLORS.ink,
+    color: colors.ink,
     textAlign: "center",
     marginBottom: 20,
   },

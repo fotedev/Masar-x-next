@@ -9,7 +9,6 @@ import {
   Check,
   Clock,
   HardDrive,
-  Bell,
   Wifi,
   RefreshCw,
   AppWindow,
@@ -22,6 +21,7 @@ import {
   type Platform,
   type ReleaseUrls,
 } from "@/lib/github-releases";
+import { WaitlistSignup } from "@/components/waitlist/WaitlistSignup";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -130,13 +130,13 @@ export default async function DownloadsPage({ params }: Props) {
               icon={<Apple className="w-7 h-7" />}
               name={t("platforms.macos.name")}
               status={t("platforms.macos.status")}
-              cta={t("platforms.macos.notifyLabel")}
+              source="macos"
             />
             <ComingSoonCard
               icon={<Smartphone className="w-7 h-7" />}
               name={t("platforms.android.name")}
               status={t("platforms.android.status")}
-              cta={t("platforms.android.notifyLabel")}
+              source="android"
             />
           </div>
         ) : null}
@@ -272,12 +272,12 @@ function ComingSoonCard({
   icon,
   name,
   status,
-  cta,
+  source,
 }: {
   icon: React.ReactNode;
   name: string;
   status: string;
-  cta: string;
+  source: "macos" | "android";
 }) {
   return (
     <div className="modern-card p-6 flex flex-col gap-4 opacity-80 hover:opacity-100 transition-opacity">
@@ -294,15 +294,7 @@ function ComingSoonCard({
         </div>
       </div>
 
-      <button
-        type="button"
-        disabled
-        className="w-full h-10 px-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm font-bold text-slate-500 dark:text-slate-400 inline-flex items-center justify-center gap-2 cursor-not-allowed"
-        title={cta}
-      >
-        <Bell className="w-4 h-4" />
-        <span>{cta}</span>
-      </button>
+      <WaitlistSignup source={source} />
     </div>
   );
 }

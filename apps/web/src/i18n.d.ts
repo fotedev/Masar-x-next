@@ -44,4 +44,5 @@ type Messages = {
   theme: typeof import("./messages/ar/theme.json");
   trw: typeof import("./messages/ar/trw.json");
   trwRedeem: typeof import("./messages/ar/trwRedeem.json");
+  waitlist: typeof import("./messages/ar/waitlist.json");
 };

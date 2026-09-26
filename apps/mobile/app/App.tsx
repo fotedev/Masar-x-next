@@ -9,6 +9,8 @@
  *                                a retry button (AuthContext.retry)
  *   - status "signedOut"     -> Login screen (email/password; Google
  *                                OAuth is deferred for v1 - spec US4 T046)
+ *                                with SignUp pushed on the signed-out stack
+ *                                (spec 019 C3)
  *   - status "authenticated" -> MainTabs (Subjects, Summaries, Quizzes,
  *                                AI, Profile) with QuizPlay pushed on the
  *                                root stack so the player covers the tabs.
@@ -36,52 +38,59 @@ import { StatusBar } from "expo-status-bar";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { I18nProvider, useI18n } from "../src/context/I18nContext";
+import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import { darkColors, lightColors, type Palette } from "../src/lib/theme";
 import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
+import NewsScreen from "../src/screens/NewsScreen";
 import ProfileScreen from "../src/screens/ProfileScreen";
 import QuizzesScreen from "../src/screens/QuizzesScreen";
 import QuizPlayScreen from "../src/screens/QuizPlayScreen";
+import QuizAttemptsScreen from "../src/screens/QuizAttemptsScreen";
+import SubjectDetailScreen from "../src/screens/SubjectDetailScreen";
 import SubjectsScreen from "../src/screens/SubjectsScreen";
 import SummariesScreen from "../src/screens/SummariesScreen";
+import SummaryDetailScreen from "../src/screens/SummaryDetailScreen";
+import SignUpScreen from "../src/screens/SignUpScreen";
 
 export type MainTabsParamList = {
   Subjects: undefined;
   Summaries: undefined;
   Quizzes: undefined;
+  News: undefined;
   AI: undefined;
   Profile: undefined;
 };
 
 export type RootStackParamList = {
   Login: undefined;
+  SignUp: undefined;
   MainTabs: undefined;
   QuizPlay: { quizId: string; title: string };
+  QuizAttempts: undefined;
+  SubjectDetail: { subjectName: string };
+  SummaryDetail: { summaryId: string };
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<MainTabsParamList>();
 
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-};
-
 function MainTabs() {
   const { t } = useI18n();
+  const { colors } = useTheme();
   return (
     <Tabs.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.subtle,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.subtle,
         tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
       }}
     >
       <Tabs.Screen name="Subjects" component={SubjectsScreen} options={{ title: t("mobile", "tabs.subjects") }} />
       <Tabs.Screen name="Summaries" component={SummariesScreen} options={{ title: t("mobile", "tabs.summaries") }} />
       <Tabs.Screen name="Quizzes" component={QuizzesScreen} options={{ title: t("mobile", "tabs.quizzes") }} />
+      <Tabs.Screen name="News" component={NewsScreen} options={{ title: t("mobile", "tabs.news") }} />
       <Tabs.Screen name="AI" component={AIAssistantScreen} options={{ title: t("mobile", "tabs.ai") }} />
       <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: t("mobile", "tabs.profile") }} />
     </Tabs.Navigator>
@@ -91,6 +100,8 @@ function MainTabs() {
 function UnconfiguredScreen() {
   const { retry } = useAuth();
   const { t } = useI18n();
+  const { resolved } = useTheme();
+  const styles = resolved === "dark" ? darkStyles : lightStyles;
   return (
     <View style={styles.center}>
       <Text style={styles.brand}>Masar X</Text>
@@ -105,6 +116,8 @@ function UnconfiguredScreen() {
 function RootNavigator() {
   const { status } = useAuth();
   const { isRTL } = useI18n();
+  const { resolved, colors } = useTheme();
+  const styles = resolved === "dark" ? darkStyles : lightStyles;
 
   // FR-008: keep layout direction in step with the effective locale
   // (a direction flip takes effect on the next cold start).
@@ -116,7 +129,7 @@ function RootNavigator() {
   if (status === "loading") {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -136,13 +149,35 @@ function RootNavigator() {
               component={QuizPlayScreen}
               options={{ headerShown: false, animation: "slide_from_right" }}
             />
+            <RootStack.Screen
+              name="QuizAttempts"
+              component={QuizAttemptsScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+            <RootStack.Screen
+              name="SubjectDetail"
+              component={SubjectDetailScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+            <RootStack.Screen
+              name="SummaryDetail"
+              component={SummaryDetailScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
           </>
         ) : (
-          <RootStack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false, gestureEnabled: false }}
-          />
+          <>
+            <RootStack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false, gestureEnabled: false }}
+            />
+            <RootStack.Screen
+              name="SignUp"
+              component={SignUpScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>
@@ -152,40 +187,56 @@ function RootNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <I18nProvider>
-          <RootNavigator />
-          <StatusBar style="dark" />
-        </I18nProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <AppShell />
+          </I18nProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.bg,
-    padding: 24,
-  },
-  brand: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.primary,
-    marginBottom: 12,
-  },
-  unconfiguredText: {
-    color: COLORS.ink,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
-});
+/** Scheme-aware status bar + navigator, inside the ThemeProvider. */
+function AppShell() {
+  const { resolved } = useTheme();
+  return (
+    <>
+      <RootNavigator />
+      <StatusBar style={resolved === "dark" ? "light" : "dark"} />
+    </>
+  );
+}
+
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.bg,
+      padding: 24,
+    },
+    brand: {
+      fontSize: 32,
+      fontWeight: "800",
+      color: colors.primary,
+      marginBottom: 12,
+    },
+    unconfiguredText: {
+      color: colors.ink,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    retryButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
+  });
+
+const lightStyles = createStyles(lightColors);
+const darkStyles = createStyles(darkColors);

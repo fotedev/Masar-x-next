@@ -26,12 +26,19 @@ module.exports = ({ config }) => {
     );
   }
 
+  // Web origin for auth hand-offs that complete in the browser (spec 019
+  // C3/T082): the password-reset email link opens the web app's
+  // /reset-password page (spec 004 T047 decision — reset completes on
+  // web). Overridable via EXPO_PUBLIC_WEB_ORIGIN for local dev.
+  const webOrigin = process.env.EXPO_PUBLIC_WEB_ORIGIN || "https://masarx.vercel.app";
+
   return {
     ...config,
     extra: {
       ...(config.extra ?? {}),
       supabaseUrl,
       supabaseAnonKey,
+      webOrigin,
     },
   };
 };

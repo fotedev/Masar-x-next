@@ -5,15 +5,7 @@
     "outDir": "dist",
     "declaration": false,
     "sourceMap": true,
-    "baseUrl": ".",
-    "paths": {
-      "masarx-shared/supabase": ["../../packages/shared/src/supabase/index.ts"],
-      "masarx-shared/supabase/*": ["../../packages/shared/src/supabase/*"],
-      "masarx-shared/types": ["../../packages/shared/src/types/index.ts"],
-      "masarx-shared/types/*": ["../../packages/shared/src/types/*"],
-      "masarx-shared/ai": ["../../packages/shared/src/ai/index.ts"],
-      "masarx-shared/ai/*": ["../../packages/shared/src/ai/*"]
-    }
+    "rootDir": "../../"
   },
   "include": ["src/**/*"],
   "exclude": [

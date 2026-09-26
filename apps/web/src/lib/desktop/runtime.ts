@@ -25,6 +25,28 @@ export interface MasarxDesktopRuntimeBridge {
     version(): Promise<string>;
     platform(): string;
     quit(): Promise<void>;
+    /**
+     * Open a URL in the system browser (spec 014). Optional so an older
+     * shell still satisfies the type; the OAuth flow falls back to
+     * `window.open` (which main routes to the system browser anyway)
+     * when absent.
+     */
+    openExternal?(url: string): Promise<void>;
+  };
+  /**
+   * masarx:// deep-link auth surface (spec 014). Optional for the same
+   * aging reason as the other namespaces: shells shipped before spec 014
+   * expose no `auth` namespace.
+   */
+  auth?: {
+    /**
+     * Announce that the renderer's `onDeepLink` subscription is in place
+     * and receive (clearing) any deep link that arrived before it — the
+     * cold-start OAuth callback race is closed by pull.
+     */
+    rendererReady(): Promise<string | null>;
+    /** Push channel for deep links dispatched after the renderer is ready. */
+    onDeepLink(cb: (url: string) => void): () => void;
   };
   /**
    * Window controls for the custom frameless titlebar (spec 005, FR-004).

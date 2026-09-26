@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "../contexts/AuthContext";
 import { useTranslations, useLocale } from "next-intl";
 import { Heart } from "lucide-react";
 import { FooterBrand } from "./footer/FooterBrand";
@@ -12,15 +11,8 @@ export function Footer() {
   const tFooter = useTranslations("footer");
   const tNav = useTranslations("nav");
   const locale = useLocale();
-  const { user, profile } = useAuth();
-  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split("@")[0] || "";
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
-  const trwWhatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-    tFooter("trwWhatsappMessage", {
-      name: displayName || tFooter("guestName"),
-    }),
-  )}`;
 
   const localePrefix = locale === "en" ? "/en" : "/ar";
 
@@ -33,12 +25,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 mb-12">
           <FooterBrand t={tFooter} />
 
-          <FooterLinks
-            tFooter={tFooter}
-            tNav={tNav}
-            localePrefix={localePrefix}
-            trwWhatsappUrl={trwWhatsappUrl}
-          />
+          <FooterLinks tFooter={tFooter} tNav={tNav} localePrefix={localePrefix} />
 
           <FooterSupport tFooter={tFooter} whatsappUrl={whatsappUrl} />
 

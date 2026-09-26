@@ -60,6 +60,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     titlebar: () => import("masarx-shared/messages/ar/titlebar.json"),
     trw: () => import("masarx-shared/messages/ar/trw.json"),
     trwRedeem: () => import("masarx-shared/messages/ar/trwRedeem.json"),
+    waitlist: () => import("masarx-shared/messages/ar/waitlist.json"),
   },
   en: {
     addFile: () => import("masarx-shared/messages/en/addFile.json"),
@@ -111,6 +112,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     titlebar: () => import("masarx-shared/messages/en/titlebar.json"),
     trw: () => import("masarx-shared/messages/en/trw.json"),
     trwRedeem: () => import("masarx-shared/messages/en/trwRedeem.json"),
+    waitlist: () => import("masarx-shared/messages/en/waitlist.json"),
   },
 };
 const namespaceCache = new Map<string, Messages>();

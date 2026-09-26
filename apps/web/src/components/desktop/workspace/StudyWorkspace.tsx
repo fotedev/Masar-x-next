@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
 import { LectureListColumn } from "./LectureListColumn";
@@ -56,6 +56,26 @@ export function StudyWorkspace({
   });
 
   const [assistantOpen, setAssistantOpen] = useState(false);
+
+  // T050 — responsive collapse order (spec 005 Edge Cases). The shell
+  // window can shrink to its 800px minimum; below 1024px an open assistant
+  // (w-96) plus the lecture list (w-72) would squeeze the reader under a
+  // usable width, so the assistant collapses FIRST. The lecture list
+  // collapses below 768px — under the shell's own minimum, so in practice
+  // it always stays and the reader keeps its floor. `null` (pre-effect)
+  // means fully expanded: the component only mounts client-side inside the
+  // desktop runtime, so there is no SSR/hydration surface to protect.
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const update = () => setViewportWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const assistantVisible = assistantOpen && (viewportWidth === null || viewportWidth >= 1024);
+  const lectureListVisible = viewportWidth === null || viewportWidth >= 768;
 
   const handleSelect = useCallback(
     (lectureId: string) => {
@@ -133,8 +153,11 @@ export function StudyWorkspace({
           In LTR the row renders left → right, so this lands on the left.
           In RTL (dir=rtl) it lands on the right. No physical sides. */}
       <div
-        // Order 1 on the inline-start side
-        className="order-1 flex h-full w-72 shrink-0 flex-col border-e border-border/80 bg-muted/50"
+        // Order 1 on the inline-start side. T050: width collapses to 0
+        // below the 768px viewport floor (see comment above).
+        className={`order-1 flex h-full shrink-0 flex-col border-e border-border/80 bg-muted/50 ${
+          lectureListVisible ? "w-72" : "w-0 overflow-hidden"
+        }`}
       >
         <LectureListColumn
           lectures={lectures}
@@ -171,8 +194,12 @@ export function StudyWorkspace({
           end regardless of text direction, because flex `order` is
           directional and the platform already sets `dir`. */}
       <div
-        className={`order-3 flex h-full w-96 shrink-0 flex-col border-s border-border/80 bg-muted/40 transition-[width] duration-200 ${
-          assistantOpen ? "" : "w-0 overflow-hidden"
+        // T050: the assistant collapses first when the viewport drops
+        // below 1024px even while `assistantOpen` (reader priority); the
+        // state is preserved and the panel reappears when the window
+        // widens again. Width transition kept from US3.
+        className={`order-3 flex h-full shrink-0 flex-col border-s border-border/80 bg-muted/40 transition-[width] duration-200 ${
+          assistantVisible ? "w-96" : "w-0 overflow-hidden"
         }`}
       >
         <AssistantPanel

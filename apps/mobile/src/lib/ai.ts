@@ -11,14 +11,16 @@
  * (AiRequest / AiResponse / AiResponseDelta); streamAiMessage already
  * sends `Accept: text/event-stream` for the streaming variant.
  *
- * Known backend gap (tracked by tasks.md T054a): the ai-chat Edge
- * Function authenticates the caller via the `Authorization` bearer
- * header, which the web's Next.js proxy injects from the session
- * cookie. The shared client does not (yet) attach an Authorization
- * header itself, so until the shared client grows an authToken option
- * this wrapper surfaces the Edge Function's 401 as a normal chat error
- * with a retry affordance - no secret ever travels in a body or header
- * from here (contract: "What the apps are NOT allowed to do").
+ * Auth (spec 018 C4): the ai-chat Edge Function authenticates the
+ * caller via the `Authorization` bearer header (`auth.getUser()`).
+ * The web's Next.js proxy injects it from the session cookie; native
+ * has no proxy, so the shared client's `authToken` option now carries
+ * the Supabase session access token per call. No token (guest /
+ * unconfigured) simply omits the header — the Edge Function's 401
+ * surfaces as a normal retryable chat error. No secret ever travels in
+ * a body or header from here (contract: "What the apps are NOT allowed
+ * to do"). SSE streaming end-to-end remains a separate follow-up
+ * (spec 004 T054a).
  */
 import Constants from "expo-constants";
 
@@ -30,7 +32,7 @@ import {
   type AiResponseDelta,
 } from "masarx-shared/ai";
 
-import { SUPABASE_URL, isSupabaseConfigured } from "./supabase";
+import { SUPABASE_URL, getSupabaseClient, isSupabaseConfigured } from "./supabase";
 import { uuid4 } from "./uuid";
 
 export type { AiRequest, AiResponse, AiResponseDelta };
@@ -42,6 +44,23 @@ export const AI_EDGE_FUNCTION_URL = SUPABASE_URL
 
 export function isAiConfigured(): boolean {
   return isSupabaseConfigured && AI_EDGE_FUNCTION_URL.length > 0;
+}
+
+/**
+ * Resolve the current session's access token for the Edge Function's
+ * Authorization check. Best-effort: unconfigured backend, missing
+ * session, or storage failure all resolve to `undefined`, which makes
+ * the shared client omit the header (same wire behavior as before
+ * spec 018).
+ */
+async function getAuthToken(): Promise<string | undefined> {
+  if (!isSupabaseConfigured) return undefined;
+  try {
+    const { data } = await getSupabaseClient().auth.getSession();
+    return data.session?.access_token ?? undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Build a contract-shaped AiRequest with the mobile device context. */
@@ -62,7 +81,12 @@ export async function sendAiMessageMobile(
   request: AiRequest,
   options: { signal?: AbortSignal } = {},
 ): Promise<AiResponse> {
-  return sendAiMessage(request, { ...options, edgeFunctionUrl: AI_EDGE_FUNCTION_URL });
+  const authToken = await getAuthToken();
+  return sendAiMessage(request, {
+    ...options,
+    edgeFunctionUrl: AI_EDGE_FUNCTION_URL,
+    authToken,
+  });
 }
 
 /**
@@ -70,9 +94,14 @@ export async function sendAiMessageMobile(
  * terminal delta carries `done: true`. Cancellation propagates via the
  * AbortSignal (e.g. when the user leaves the chat screen).
  */
-export function streamAiMessageMobile(
+export async function* streamAiMessageMobile(
   request: AiRequest,
   options: { signal?: AbortSignal } = {},
 ): AsyncIterable<AiResponseDelta> {
-  return streamAiMessage(request, { ...options, edgeFunctionUrl: AI_EDGE_FUNCTION_URL });
+  const authToken = await getAuthToken();
+  yield* streamAiMessage(request, {
+    ...options,
+    edgeFunctionUrl: AI_EDGE_FUNCTION_URL,
+    authToken,
+  });
 }

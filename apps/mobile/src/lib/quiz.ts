@@ -13,6 +13,7 @@ import type {
   QuizAnswerRow,
   QuizAttemptRow,
 } from "../types/quiz";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { cacheGet, cacheSet } from "../read-cache";
 
 const GUEST_RESULTS_CACHE_PREFIX = "quiz_guest_result:";
@@ -20,12 +21,22 @@ const GUEST_RESULTS_CACHE_PREFIX = "quiz_guest_result:";
 export async function fetchQuizWithQuestions(
   supabase: SupabaseClient,
   quizId: string,
-): Promise<{ title: string; description: string | null; questions: PlayerQuestion[] }> {
+): Promise<{
+  title: string;
+  description: string | null;
+  durationSeconds: number | null;
+  questions: PlayerQuestion[];
+}> {
   const { data: quiz, error: quizError } = await supabase
     .from("quizzes")
-    .select("id, title, description")
+    .select("id, title, description, duration_seconds")
     .eq("id", quizId)
-    .maybeSingle<{ id: string; title: string; description: string | null }>();
+    .maybeSingle<{
+      id: string;
+      title: string;
+      description: string | null;
+      duration_seconds: number | null;
+    }>();
   if (quizError) throw quizError;
   if (!quiz) throw new Error("quiz_not_found");
 
@@ -50,6 +61,7 @@ export async function fetchQuizWithQuestions(
   return {
     title: quiz.title,
     description: quiz.description,
+    durationSeconds: typeof quiz.duration_seconds === "number" ? quiz.duration_seconds : null,
     questions: rows.map((row) => ({
       id: row.id,
       question: row.question,
@@ -112,11 +124,29 @@ export async function saveAnswer(
   if (error) throw error;
 }
 
+/** Per-question answer payload written into the attempt's `answers` jsonb (web parity). */
+export interface AttemptAnswerPayload {
+  question_id: string;
+  selected_option: number;
+  is_correct: boolean;
+}
+
+/**
+ * Finish the attempt (spec 019 C6/T095): now also writes
+ * `time_taken_seconds` and the `answers` jsonb — the exact columns the
+ * web finish flow writes, so the attempts history (web /quiz-attempts
+ * and the new mobile QuizAttemptsScreen) can review per-question
+ * answers without joining quiz_answers.
+ */
 export async function finishAttempt(
   supabase: SupabaseClient,
   attemptId: string,
   score: number,
   totalQuestions: number,
+  details: {
+    timeTakenSeconds?: number | null;
+    answers?: AttemptAnswerPayload[];
+  } = {},
 ): Promise<void> {
   const { error } = await supabase
     .from("quiz_attempts")
@@ -125,16 +155,35 @@ export async function finishAttempt(
       total_questions: totalQuestions,
       finished_at: new Date().toISOString(),
       status: "completed",
+      ...(details.timeTakenSeconds != null
+        ? { time_taken_seconds: details.timeTakenSeconds }
+        : {}),
+      ...(details.answers ? { answers: details.answers } : {}),
     })
     .eq("id", attemptId);
   if (error) throw error;
 }
 
+export interface GuestAnswerEntry {
+  questionId: string;
+  selected: number;
+  isCorrect: boolean;
+}
+
+/**
+ * Local guest attempt (spec 019 C6/T096). Extended with title,
+ * timeTakenSeconds and per-question answers so guest attempts remain
+ * fully reviewable offline. All fields optional for backward
+ * compatibility with results stored before spec 019.
+ */
 export interface GuestResult {
   quizId: string;
   score: number;
   total: number;
   finishedAt: string;
+  title?: string;
+  timeTakenSeconds?: number | null;
+  answers?: GuestAnswerEntry[];
 }
 
 /** Guest results stay on-device (parity with the web's sessionStorage flow). */
@@ -146,4 +195,33 @@ export async function getGuestResult(quizId: string): Promise<GuestResult | null
   return cacheGet<GuestResult>(`${GUEST_RESULTS_CACHE_PREFIX}${quizId}`).then(
     (hit) => hit?.payload ?? null,
   );
+}
+
+export interface GuestResultEntry {
+  quizId: string;
+  result: GuestResult;
+}
+
+/**
+ * Enumerate on-device guest results for the attempts history
+ * (spec §2.5): an AsyncStorage key scan over the
+ * `quiz_guest_result:` prefix. One entry per quiz (the latest attempt
+ * — the cache key is per-quiz). Malformed/legacy entries are skipped.
+ */
+export async function listGuestResults(): Promise<GuestResultEntry[]> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const entries = await Promise.all(
+      keys
+        .filter((key) => key.startsWith(GUEST_RESULTS_CACHE_PREFIX))
+        .map(async (key) => {
+          const hit = await cacheGet<GuestResult>(key);
+          if (!hit?.payload || typeof hit.payload.quizId !== "string") return null;
+          return { quizId: hit.payload.quizId, result: hit.payload } satisfies GuestResultEntry;
+        }),
+    );
+    return entries.filter((entry): entry is GuestResultEntry => entry !== null);
+  } catch {
+    return [];
+  }
 }

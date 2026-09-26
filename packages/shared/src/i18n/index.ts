@@ -74,6 +74,7 @@ import arSummaries from "../messages/ar/summaries.json";
 import arTheme from "../messages/ar/theme.json";
 import arTrw from "../messages/ar/trw.json";
 import arTrwRedeem from "../messages/ar/trwRedeem.json";
+import arWaitlist from "../messages/ar/waitlist.json";
 
 // ---------------------------------------------------------------------------
 // English (en) namespaces -- generated from src/messages/en/*.json
@@ -121,6 +122,7 @@ import enSummaries from "../messages/en/summaries.json";
 import enTheme from "../messages/en/theme.json";
 import enTrw from "../messages/en/trw.json";
 import enTrwRedeem from "../messages/en/trwRedeem.json";
+import enWaitlist from "../messages/en/waitlist.json";
 /**
  * Arabic registry. I18nNamespace below is derived from the ar/ JSON
  * directory: adding a namespace means adding ar/<name>.json + its import +
@@ -171,6 +173,7 @@ const arMessages = {
   theme: arTheme,
   trw: arTrw,
   trwRedeem: arTrwRedeem,
+  waitlist: arWaitlist,
 };
 
 /**
@@ -232,6 +235,7 @@ const enMessages: Record<I18nNamespace, unknown> = {
   theme: enTheme,
   trw: enTrw,
   trwRedeem: enTrwRedeem,
+  waitlist: enWaitlist,
 };
 
 /**

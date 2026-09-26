@@ -26,11 +26,9 @@ packages:
 # The list below covers every native module currently pulled in by
 # apps/{web,desktop,mobile} and packages/shared (sharp, esbuild,
 # @swc/core, @parcel/watcher for fast file watching, unrs-resolver
-# for the workspace resolver, electron which downloads a binary
-# during its postinstall, and better-sqlite3 which the desktop
-# build needs and is compiled via `electron-builder install-app-deps`
-# on Electron's Node ABI at build time — see
-# apps/desktop/electron-builder.yml `nativeDependencies`).
+# for the workspace resolver, and electron which downloads a binary
+# during its postinstall). The desktop has no native modules since
+# spec 014 dropped the dead better-sqlite3 dependency.
 onlyBuiltDependencies:
   - sharp
   - "@parcel/watcher"
@@ -38,4 +36,3 @@ onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
   - electron
-  - better-sqlite3

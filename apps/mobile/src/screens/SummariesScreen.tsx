@@ -2,10 +2,13 @@
  * Summaries tab: reads the same `summaries_with_ratings` view the web
  * app uses (top-rated first, limit 50), shares a card through the
  * native share sheet (src/share.ts) and opens the summary PDF with
- * Linking. Offline reads come from the LocalReadCache through
+ * Linking. Rows navigate to SummaryDetail (spec 020 C4/T107).
+ * Offline reads come from the LocalReadCache through
  * useSupabaseQuery, with the offline banner on top.
  */
-import React from "react";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,7 +25,10 @@ import type { SupabaseClient } from "masarx-shared/supabase";
 import { useI18n } from "../context/I18nContext";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { shareStudyContent } from "../share";
+import type { RootStackParamList } from "../../app/App";
 
 interface SummaryRow {
   id: string;
@@ -30,20 +36,8 @@ interface SummaryRow {
   content: string | null;
   pdf_url: string | null;
   avg_rating: number | null;
-  ratings_count: number | null;
+  reviews_count: number | null;
 }
-
-const COLORS = {
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  card: "#FFFFFF",
-  border: "#E2E8F0",
-  banner: "#FEF3C7",
-  bannerText: "#92400E",
-  danger: "#DC2626",
-};
 
 async function fetchSummaries(supabase: SupabaseClient): Promise<SummaryRow[]> {
   const { data, error } = await supabase
@@ -59,6 +53,10 @@ async function fetchSummaries(supabase: SupabaseClient): Promise<SummaryRow[]> {
 export default function SummariesScreen() {
   const { t } = useI18n();
   const { online } = useNetworkStatus();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data, loading, error, refetch } = useSupabaseQuery<SummaryRow[]>({
     cacheKey: "summaries:top",
     fetcher: fetchSummaries,
@@ -92,13 +90,16 @@ export default function SummariesScreen() {
       typeof item.avg_rating === "number" && item.avg_rating > 0
         ? item.avg_rating.toFixed(1)
         : null;
-    const count = item.ratings_count ?? 0;
+    const count = item.reviews_count ?? 0;
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => navigation.navigate("SummaryDetail", { summaryId: item.id })}
+      >
         <Text style={styles.cardTitle}>{item.title}</Text>
         {rating ? (
           <Text style={styles.rating}>
-            * {rating} ({count})
+            ★ {rating} ({count})
           </Text>
         ) : null}
         {excerpt ? (
@@ -116,7 +117,7 @@ export default function SummariesScreen() {
             </Pressable>
           ) : null}
         </View>
-      </View>
+      </Pressable>
     );
   };
 
@@ -141,8 +142,8 @@ export default function SummariesScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={refetch}
-            tintColor={COLORS.primary}
-            colors={[COLORS.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListFooterComponent={
@@ -153,7 +154,7 @@ export default function SummariesScreen() {
         ListEmptyComponent={
           loading ? (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : error ? (
             <View style={styles.center}>
@@ -173,60 +174,62 @@ export default function SummariesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
   list: { padding: 16, paddingBottom: 32 },
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: COLORS.ink,
+    color: colors.ink,
     marginBottom: 12,
   },
   banner: {
-    backgroundColor: COLORS.banner,
+    backgroundColor: colors.banner,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 12,
   },
-  bannerText: { color: COLORS.bannerText, fontSize: 13, fontWeight: "600" },
+  bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     padding: 14,
     marginBottom: 12,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: COLORS.ink },
-  rating: { fontSize: 13, color: COLORS.subtle, marginTop: 4 },
-  excerpt: { fontSize: 14, color: COLORS.subtle, marginTop: 8, lineHeight: 20 },
+  cardTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
+  cardPressed: { opacity: 0.85 },
+  rating: { fontSize: 13, color: colors.subtle, marginTop: 4 },
+  excerpt: { fontSize: 14, color: colors.subtle, marginTop: 8, lineHeight: 20 },
   actions: { flexDirection: "row", marginTop: 12 },
   chip: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
     marginRight: 8,
   },
-  chipPrimary: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText: { color: COLORS.ink, fontWeight: "600", fontSize: 13 },
-  chipTextPrimary: { color: "#FFFFFF" },
+  chipPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
+  chipTextPrimary: { color: colors.onPrimary },
   center: { alignItems: "center", paddingVertical: 32 },
-  empty: { color: COLORS.subtle, textAlign: "center" },
-  error: { color: COLORS.danger, marginBottom: 12, textAlign: "center" },
+  empty: { color: colors.subtle, textAlign: "center" },
+  error: { color: colors.danger, marginBottom: 12, textAlign: "center" },
   footerError: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     paddingVertical: 10,
     fontSize: 12,
   },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  retryButtonText: { color: "#FFFFFF", fontWeight: "700" },
+  retryButtonText: { color: colors.onPrimary, fontWeight: "700" },
 });

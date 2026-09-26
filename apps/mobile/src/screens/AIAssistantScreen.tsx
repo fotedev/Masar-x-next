@@ -9,11 +9,15 @@
  * non-streaming sendAiMessageMobile round-trip; the streaming variant
  * (streamAiMessageMobile in lib/ai.ts) is ready for a follow-up pass.
  *
- * Known backend gap (see lib/ai.ts header): until the shared client
- * attaches an Authorization header, the Edge Function may answer 401 -
- * surfaced as a normal failed bubble with retry, never as a crash.
+ * History (spec 019 C5): conversations persist locally
+ * (lib/chat-history.ts, key outside the read-cache prefix) so they
+ * survive an app restart. Writes are EVENT-driven (repo lesson
+ * 2026-09-16 #14): a pendingPersistRef is raised only by real
+ * send/finalize/failure events and consumed once by the persist
+ * effect — mount, clear, and auth transitions write nothing; deletion
+ * happens exclusively in clearChat.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -29,8 +33,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import MathText from "../components/MathText";
 import { useI18n } from "../context/I18nContext";
+import { useTheme } from "../context/ThemeContext";
+import type { Palette } from "../lib/theme";
 import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { createAiRequest, isAiConfigured, sendAiMessageMobile } from "../lib/ai";
+import {
+  clearChatHistory,
+  loadChatHistory,
+  saveChatHistory,
+} from "../lib/chat-history";
 
 interface ChatMessage {
   id: string;
@@ -42,20 +53,10 @@ interface ChatMessage {
   retryText?: string;
 }
 
-const COLORS = {
-  card: "#FFFFFF",
-  primary: "#4F46E5",
-  ink: "#111827",
-  subtle: "#6B7280",
-  bg: "#F8FAFC",
-  border: "#E2E8F0",
-  banner: "#FEF3C7",
-  bannerText: "#92400E",
-  danger: "#DC2626",
-};
-
 export default function AIAssistantScreen() {
   const { t, locale } = useI18n();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { online } = useNetworkStatus();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -66,12 +67,45 @@ export default function AIAssistantScreen() {
   // Cancel any in-flight request when the screen unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Spec 019 C5 — EVENT-DRIVEN persistence (lesson 2026-09-16 #14):
+  // the ref is raised ONLY by real send/finalize/failure events and
+  // consumed once by the effect below. Mount, load-from-history, clear,
+  // and auth transitions leave it false, so they never trigger a write;
+  // deletion is exclusive to clearChat.
+  const pendingPersistRef = useRef(false);
+  const queuePersist = useCallback(() => {
+    pendingPersistRef.current = true;
+  }, []);
+
+  // Restore the persisted conversation once on mount. Loading sets
+  // state WITHOUT raising the persist flag — a pure read must not
+  // rewrite the store.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const history = await loadChatHistory();
+      if (!cancelled && history.length > 0) {
+        setMessages(history.map((m) => ({ ...m, pending: false })));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPersistRef.current) return;
+    pendingPersistRef.current = false;
+    void saveChatHistory(messages);
+  }, [messages]);
+
   const send = useCallback(
     async (rawText: string) => {
       const text = rawText.trim();
       if (!text || sending) return;
 
       if (!isAiConfigured()) {
+        queuePersist();
         setMessages((prev) => [
           ...prev,
           { id: `u${Date.now()}`, role: "user", text },
@@ -87,6 +121,7 @@ export default function AIAssistantScreen() {
       }
 
       const assistantId = `a${Date.now()}`;
+      queuePersist();
       setMessages((prev) => [
         ...prev,
         { id: `u${Date.now()}`, role: "user", text },
@@ -101,6 +136,7 @@ export default function AIAssistantScreen() {
       try {
         const request = createAiRequest(text, locale);
         const response = await sendAiMessageMobile(request, { signal: controller.signal });
+        queuePersist();
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId ? { ...m, text: response.content, pending: false } : m,
@@ -110,6 +146,7 @@ export default function AIAssistantScreen() {
         const message = err instanceof Error ? err.message : String(err);
         const offlineish =
           !online || /failed to fetch|network|fetch failed|timed?\s?out|401/i.test(message);
+        queuePersist();
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
@@ -140,7 +177,7 @@ export default function AIAssistantScreen() {
       <View style={[styles.bubble, item.role === "user" ? styles.bubbleUser : styles.bubbleAssistant]}>
         {item.role === "assistant" && !item.failed ? (
           item.pending ? (
-            <ActivityIndicator size="small" color={COLORS.primary} />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <MathText text={item.text} rtl={locale === "ar"} />
           )
@@ -173,7 +210,16 @@ export default function AIAssistantScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t("mobile", "tabs.ai")}</Text>
         {messages.length > 0 ? (
-          <Pressable onPress={() => setMessages([])} hitSlop={8}>
+          <Pressable
+            onPress={() => {
+              // Deletion is EXCLUSIVE to clear (spec 019 C5): empty the
+              // state without raising the persist flag, and remove the
+              // stored key so nothing is rewritten afterwards.
+              setMessages([]);
+              void clearChatHistory();
+            }}
+            hitSlop={8}
+          >
             <Text style={styles.clearText}>{t("aiAssistant", "clearChat")}</Text>
           </Pressable>
         ) : null}
@@ -205,7 +251,7 @@ export default function AIAssistantScreen() {
             value={input}
             onChangeText={setInput}
             placeholder={t("aiAssistant", "inputPlaceholderMobile")}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={colors.placeholder}
             multiline
           />
           <Pressable
@@ -214,7 +260,7 @@ export default function AIAssistantScreen() {
             disabled={sending || !input.trim()}
           >
             {sending ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.onPrimary} />
             ) : (
               <Text style={styles.sendText}>{t("aiAssistant", "send")}</Text>
             )}
@@ -225,33 +271,34 @@ export default function AIAssistantScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: Palette) =>
+  StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, backgroundColor: COLORS.bg },
+  screen: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
   },
-  headerTitle: { fontSize: 24, fontWeight: "800", color: COLORS.ink },
-  clearText: { color: COLORS.primary, fontWeight: "600" },
+  headerTitle: { fontSize: 24, fontWeight: "800", color: colors.ink },
+  clearText: { color: colors.primary, fontWeight: "600" },
   banner: {
-    backgroundColor: COLORS.banner,
+    backgroundColor: colors.banner,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginHorizontal: 16,
     marginBottom: 8,
   },
-  bannerText: { color: COLORS.bannerText, fontSize: 13, fontWeight: "600" },
+  bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   list: { padding: 16, paddingBottom: 24 },
   welcome: { alignItems: "center", paddingVertical: 24 },
-  welcomeTitle: { fontSize: 18, fontWeight: "700", color: COLORS.ink, textAlign: "center" },
+  welcomeTitle: { fontSize: 18, fontWeight: "700", color: colors.ink, textAlign: "center" },
   disclaimer: {
-    color: COLORS.subtle,
+    color: colors.subtle,
     textAlign: "center",
     marginTop: 8,
     marginHorizontal: 12,
@@ -266,50 +313,50 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  bubbleUser: { backgroundColor: COLORS.primary, borderBottomRightRadius: 4 },
+  bubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   bubbleAssistant: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderBottomLeftRadius: 4,
   },
   userText: { color: "#FFFFFF", fontSize: 15 },
-  assistantText: { color: COLORS.ink, fontSize: 15, lineHeight: 22 },
+  assistantText: { color: colors.ink, fontSize: 15, lineHeight: 22 },
   retryChip: {
     alignSelf: "flex-start",
     marginTop: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
-  retryChipText: { color: COLORS.primary, fontWeight: "700", fontSize: 12 },
+  retryChipText: { color: colors.primary, fontWeight: "700", fontSize: 12 },
   inputRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.card,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
   input: {
     flex: 1,
     minHeight: 42,
     maxHeight: 120,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingHorizontal: 12,
     paddingTop: 10,
     paddingBottom: 10,
-    color: COLORS.ink,
+    color: colors.ink,
     fontSize: 15,
   },
   sendButton: {
     marginLeft: 8,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,

@@ -37,12 +37,11 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        # better-sqlite3's `install` postinstall is skipped via the
-        # root `.npmrc`'s `neverBuiltDependencies[]=better-sqlite3`
-        # (it has no Node 24 prebuild on Linux x64, and node-gyp
-        # can't run in the CI sandbox). All other packages'
-        # postinstalls (sharp, esbuild, @swc/core) still run as
-        # normal so the web build can find their platform binaries.
+        # Postinstalls run only for the pnpm-workspace.yaml
+        # `onlyBuiltDependencies` allowlist (sharp, esbuild, @swc/core,
+        # electron, …) so the web build finds its platform binaries.
+        # The desktop has no native modules (spec 014 removed the dead
+        # better-sqlite3 dependency).
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
@@ -340,6 +339,51 @@ jobs:
         run: pnpm -r --if-present test
 
   # ---------------------------------------------------------------------
+  # Mobile app checks (Spec 018 C6/T074).
+  #
+  # The mobile workspace already rides the cross-workspace typecheck
+  # (`workspaces` job) and the vitest suite (`test` job via
+  # `pnpm -r --if-present test`). This job adds the two mobile-specific
+  # gates: ESLint (the AI-boundary no-restricted-imports rule) and
+  # `expo export` — a headless Metro bundle proof that the whole RN
+  # graph (including `masarx-shared` subpath imports) resolves. No
+  # native toolchain needed; the EXPO_PUBLIC_* placeholders never reach
+  # a real backend (app.config.js degrades to its documented
+  # "unconfigured" state; they are inlined into a bundle that is not
+  # shipped anywhere).
+  #
+  # Not currently a required status check; promote in the branch
+  # ruleset once green (same policy as docs-lint).
+  # ---------------------------------------------------------------------
+  mobile:
+    name: mobile
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://example.com
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: replace-with-real-anon-key
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # See the ESLint job for the rationale.
+        run: pnpm install --frozen-lockfile
+
+      - name: Run mobile ESLint
+        run: pnpm --filter mobile lint
+
+      - name: Bundle proof (expo export)
+        run: pnpm --filter mobile export
+
+  # ---------------------------------------------------------------------
   # E2E study-flow smoke (Spec 010 — MVP report G6.1).
   # Builds with placeholder envs EXCEPT the two Supabase client values.
   # NEXT_PUBLIC_* are inlined at build time; the anon key/URL are
@@ -403,6 +447,10 @@ jobs:
       - name: Run e2e smoke
         env:
           E2E_BASE_URL: http://127.0.0.1:3000
+          # ai-chat-history.spec derives the supabase-js session-cookie name
+          # from the project ref of this URL (public-by-design; the same
+          # value the production build above was made with).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
         run: pnpm --filter web test:e2e
 
       - name: Upload e2e artifacts on failure

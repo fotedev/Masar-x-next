@@ -95,11 +95,10 @@ Retired: `GH_RELEASES_TOKEN` (source repo) and `SOURCE_REPO_READ_TOKEN`
 1. Trigger: push a tag matching `v*` (or manual `workflow_dispatch`)
 2. `actions/checkout@v4` (this repo, root — no subdir, so gotcha #18's pinning workaround is not needed; pnpm/Node versions still pinned explicitly)
 3. Setup pnpm 9.15.4 + Node 24
-4. `pnpm install --frozen-lockfile`
-5. `pnpm --filter desktop exec electron-builder install-app-deps` (fetches better-sqlite3's Electron 32 ABI prebuild)
-6. `pnpm --filter web build` (builds the Next.js standalone bundle that the desktop app ships as an `extraResource`)
-7. `pnpm --filter desktop run build:all` (electron-builder builds NSIS + Portable and publishes the GitHub Release using the built-in `GITHUB_TOKEN`)
-8. List build artifacts
+4. `pnpm install --frozen-lockfile` (postinstalls run only for the `pnpm-workspace.yaml` `onlyBuiltDependencies` allowlist; the desktop has no native modules since spec 014 removed the dead better-sqlite3 dependency, so there is no `install-app-deps` pass)
+5. `pnpm --filter web build` (builds the Next.js standalone bundle that the desktop app ships as an `extraResource`)
+6. `pnpm --filter desktop run build:all` (electron-builder builds NSIS + Portable and publishes the GitHub Release using the built-in `GITHUB_TOKEN`)
+7. List build artifacts
 
 No tag-mirror step: the tag already exists in this repo, which is exactly
 what GitHub's releases API requires.
@@ -112,11 +111,11 @@ CI and release are fully automated via GitHub Actions. Do NOT build installers o
 
 ### `ci.yml` — runs on every push to `main` and every PR
 
-5 jobs: ESLint, next build, gitleaks-artifacts, workspaces, ai-endpoint-grep. `pnpm install` uses `pnpm.neverBuiltDependencies: ["better-sqlite3"]` from root `package.json` (gotcha #8). No `--ignore-scripts` — all other postinstalls (electron, esbuild, sharp, @swc/core) still run.
+5 jobs: ESLint, next build, gitleaks-artifacts, workspaces, ai-endpoint-grep. `pnpm install` runs postinstalls only for the `pnpm-workspace.yaml` `onlyBuiltDependencies` allowlist (gotcha #8 documents the pnpm 9 syntax trap). No `--ignore-scripts`.
 
 ### `release.yml` — tag-triggered desktop release (ACTIVE)
 
-Trigger: push a tag matching `v*`. Steps: `pnpm install --frozen-lockfile` → `electron-builder install-app-deps` → `pnpm --filter web build` → `pnpm --filter desktop run build:all` (electron-builder creates the release and uploads `.exe` + `latest.yml` in one step).
+Trigger: push a tag matching `v*`. Steps: `pnpm install --frozen-lockfile` → `pnpm --filter web build` → `pnpm --filter desktop run build:all` (electron-builder creates the release and uploads `.exe` + `latest.yml` in one step). Desktop specifics: Electron pinned exact (44.4.5 since spec 014), no native modules to rebuild, installers **unsigned** until the owner's cert lands (`docs/desktop-readiness.md` §2), and the NSIS installer registers the `masarx://` URL protocol used by the shell's Google-login deep link (`docs/desktop-readiness.md` §1).
 
 To release: bump `package.json` + `apps/desktop/package.json`, commit, then:
 
