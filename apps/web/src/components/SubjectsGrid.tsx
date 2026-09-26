@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects } from "../hooks/useSubjects";
@@ -7,21 +6,24 @@ import { Skeleton } from "./ui/Skeleton";
 
 import { motion, useReducedMotion } from "framer-motion";
 
+// Phase 1 of refactor/decouple-trw-subjects:
+// SubjectsGrid is academic-only. The previous `is_academic` prop was a
+// tri-state leak from the legacy subjects table that conflated TRW content
+// with academic subjects. TRW now lives behind /non-academic and uses
+// useTRWCategories + useTRWMembership — not this component.
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
   showOnlyOnHome?: boolean;
-  is_academic?: boolean;
 }
 
 export function SubjectsGrid({
   onSubjectClick,
   showOnlyOnHome = false,
-  is_academic = true,
 }: SubjectsGridProps) {
   const locale = useLocale();
   const shouldReduceMotion = useReducedMotion();
   const tSubjects = useTranslations("subjects");
-  const { subjects, loading } = useSubjects({ is_academic });
+  const { subjects, loading } = useSubjects();
 
   // Spec 013: the DB query already filters by the student's effective
   // semester (profile-driven) — no client-side semester re-filter here.
@@ -116,39 +118,21 @@ export function SubjectsGrid({
 
       {filteredSubjects.length === 0 && (
         <div className="text-center py-16 flex flex-col items-center">
-          {is_academic ? (
-            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6">
-              <BookOpen className="w-10 h-10 text-slate-400" />
-            </div>
-          ) : (
-            <div className="relative w-24 h-24 mb-6 grayscale opacity-50">
-              <Image
-                src="https://framerusercontent.com/images/lVFqGPfJm0f8Q6XqNcyZnWvQUe8.webp?width=256&height=256"
-                alt="TRW Logo"
-                fill
-                sizes="96px"
-                className="object-contain"
-              />
-            </div>
-          )}
+          <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-3xl flex items-center justify-center mb-6">
+            <BookOpen className="w-10 h-10 text-slate-400" />
+          </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-            {is_academic
-              ? tSubjects("emptyAcademicTitle")
-              : tSubjects("emptyNonAcademicTitle")}
+            {tSubjects("emptyAcademicTitle")}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-8">
-            {is_academic
-              ? tSubjects("emptyAcademicDescription")
-              : tSubjects("emptyNonAcademicDescription")}
+            {tSubjects("emptyAcademicDescription")}
           </p>
-          {is_academic && (
-            <button
-              onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
-              className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
-            >
-              {tSubjects("studyWithZainCta")}
-            </button>
-          )}
+          <button
+            onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
+            className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
+          >
+            {tSubjects("studyWithZainCta")}
+          </button>
         </div>
       )}
     </div>

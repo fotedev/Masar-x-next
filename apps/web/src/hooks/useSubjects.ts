@@ -10,10 +10,14 @@ export interface Subject extends DBSubject {
   isOptimistic?: boolean;
 }
 
+// Phase 1 of refactor/decouple-trw-subjects:
+// subjects table is now exclusively for academic subjects.
+// TRW (non-academic) content lives behind /non-academic and is served
+// by useTRWCategories + useTRWMembership — see hooks/trw/*.
+// Therefore the is_academic param was removed from this hook entirely.
 type UseSubjectsParams = {
   level?: number | null;
   semester?: number | null;
-  is_academic?: boolean;
 };
 
 export function useSubjects(params: UseSubjectsParams = {}) {
@@ -27,8 +31,6 @@ export function useSubjects(params: UseSubjectsParams = {}) {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
-  const isAcademicParam =
-    params.is_academic !== undefined ? params.is_academic : true;
   const isAnonymous = !user;
   // Always coerced to a number — never undefined/null reaches PostgREST syntax.
   const effectiveLevel = Number(
@@ -45,7 +47,6 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       semester: effectiveSemester,
       isAnonymous,
       isAdmin,
-      isAcademic: isAcademicParam,
     },
   ];
 
@@ -60,24 +61,21 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     // subjects they had just created (MVP launch blocker).
     enabled: isAdmin
       ? true
-      : !academicLoading && (isAcademicParam ? params.level !== null : true),
+      : !academicLoading && params.level !== null,
     staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
     queryFn: async () => {
       try {
         let query = supabase
           .from("subjects")
           .select(
-            "id, name, name_en, is_academic, semester, level, show_on_home, created_at, professor, description, schedule, location, status",
+            "id, name, name_en, semester, level, show_on_home, created_at, professor, description, schedule, location, status",
           )
           .order("name", { ascending: true });
 
         if (!isAdmin) {
-          if (isAcademicParam === true) {
-            query = query.or("is_academic.eq.true,is_academic.is.null");
-          } else {
-            query = query.or("is_academic.eq.false,is_academic.is.null");
-          }
-
+          // subjects table is academic-only since refactor/decouple-trw-subjects.
+          // The NULL-OR filter is kept so legacy rows without level/semester
+          // remain visible (back-compat until Phase 2 migration drops them).
           query = query.or(`level.eq.${effectiveLevel},level.is.null`);
           query = query.or(`semester.eq.${effectiveSemester},semester.is.null`);
         }
@@ -204,7 +202,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
         id: `optimistic-${Date.now()}`,
         name: newSubject.name || "",
         name_en: newSubject.name_en || "",
-        is_academic: newSubject.is_academic ?? true,
+        // Phase 1: subjects are academic-only; explicitly null the legacy
+        // column so the type narrows cleanly until Phase 2 migration drops it.
+        is_academic: null,
         semester: newSubject.semester || 1,
         level: newSubject.level || 1,
         show_on_home: newSubject.show_on_home ?? true,
@@ -218,7 +218,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
         description_ar: null,
         schedule: newSubject.schedule || null,
         location: newSubject.location || null,
-        ...newSubject,
+        // Intentionally NO spread of newSubject — callers may still pass
+        // is_academic through newSubject (legacy admin form), but we don't
+        // want a legacy field to leak into the academic-only catalog.
       };
 
       queryClient.setQueriesData(
