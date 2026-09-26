@@ -36,6 +36,7 @@ import arAuthPages from "masarx-shared/messages/ar/authPages.json";
 import arQuizAttempts from "masarx-shared/messages/ar/quizAttempts.json";
 import arNews from "masarx-shared/messages/ar/news.json";
 import arReviews from "masarx-shared/messages/ar/reviews.json";
+import arErrorBoundary from "masarx-shared/messages/ar/errorBoundary.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -48,6 +49,7 @@ import enAuthPages from "masarx-shared/messages/en/authPages.json";
 import enQuizAttempts from "masarx-shared/messages/en/quizAttempts.json";
 import enNews from "masarx-shared/messages/en/news.json";
 import enReviews from "masarx-shared/messages/en/reviews.json";
+import enErrorBoundary from "masarx-shared/messages/en/errorBoundary.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -69,6 +71,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     quizAttempts: arQuizAttempts,
     news: arNews,
     reviews: arReviews,
+    errorBoundary: arErrorBoundary,
   },
   en: {
     common: enCommon,
@@ -83,6 +86,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     quizAttempts: enQuizAttempts,
     news: enNews,
     reviews: enReviews,
+    errorBoundary: enErrorBoundary,
   },
 };
 

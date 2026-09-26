@@ -1,7 +1,8 @@
 /**
  * Masar X mobile root (Expo SDK 51 + React Navigation v6).
  *
- * Provider stack: SafeAreaProvider > AuthProvider > I18nProvider, then
+ * Provider stack: SafeAreaProvider > ThemeProvider > AuthProvider >
+ * I18nProvider > SentryBoundary (spec 023 crash boundary), then
  * a NavigationContainer hosting the auth gate:
  *
  *   - status "loading"       -> minimal splash (no navigator mounted)
@@ -39,6 +40,7 @@ import { StatusBar } from "expo-status-bar";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { I18nProvider, useI18n } from "../src/context/I18nContext";
 import { ThemeProvider, useTheme } from "../src/context/ThemeContext";
+import SentryBoundary from "../src/components/SentryBoundary";
 import { darkColors, lightColors, type Palette } from "../src/lib/theme";
 import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
@@ -190,7 +192,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <I18nProvider>
-            <AppShell />
+            <SentryBoundary>
+              <AppShell />
+            </SentryBoundary>
           </I18nProvider>
         </AuthProvider>
       </ThemeProvider>
