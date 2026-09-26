@@ -7,7 +7,10 @@
     "scheme": "masarx",
     "userInterfaceStyle": "automatic",
     "supportsRTL": true,
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -26,6 +29,17 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "plugins": ["expo-secure-store"]
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "aa63101e-7933-40e9-9e57-2cf928b1e3e4"
+      },
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "webOrigin": "https://masarx.vercel.app"
+    },
+    "owner": "fotexpo"
   }
 }
