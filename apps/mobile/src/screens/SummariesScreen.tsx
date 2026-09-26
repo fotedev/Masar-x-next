@@ -2,9 +2,12 @@
  * Summaries tab: reads the same `summaries_with_ratings` view the web
  * app uses (top-rated first, limit 50), shares a card through the
  * native share sheet (src/share.ts) and opens the summary PDF with
- * Linking. Offline reads come from the LocalReadCache through
+ * Linking. Rows navigate to SummaryDetail (spec 020 C4/T107).
+ * Offline reads come from the LocalReadCache through
  * useSupabaseQuery, with the offline banner on top.
  */
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useMemo } from "react";
 import {
   ActivityIndicator,
@@ -25,6 +28,7 @@ import { useSupabaseQuery } from "../hooks/useSupabaseQuery";
 import { useTheme } from "../context/ThemeContext";
 import type { Palette } from "../lib/theme";
 import { shareStudyContent } from "../share";
+import type { RootStackParamList } from "../../app/App";
 
 interface SummaryRow {
   id: string;
@@ -32,7 +36,7 @@ interface SummaryRow {
   content: string | null;
   pdf_url: string | null;
   avg_rating: number | null;
-  ratings_count: number | null;
+  reviews_count: number | null;
 }
 
 async function fetchSummaries(supabase: SupabaseClient): Promise<SummaryRow[]> {
@@ -51,6 +55,8 @@ export default function SummariesScreen() {
   const { online } = useNetworkStatus();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data, loading, error, refetch } = useSupabaseQuery<SummaryRow[]>({
     cacheKey: "summaries:top",
     fetcher: fetchSummaries,
@@ -84,13 +90,16 @@ export default function SummariesScreen() {
       typeof item.avg_rating === "number" && item.avg_rating > 0
         ? item.avg_rating.toFixed(1)
         : null;
-    const count = item.ratings_count ?? 0;
+    const count = item.reviews_count ?? 0;
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+        onPress={() => navigation.navigate("SummaryDetail", { summaryId: item.id })}
+      >
         <Text style={styles.cardTitle}>{item.title}</Text>
         {rating ? (
           <Text style={styles.rating}>
-            * {rating} ({count})
+            ★ {rating} ({count})
           </Text>
         ) : null}
         {excerpt ? (
@@ -108,7 +117,7 @@ export default function SummariesScreen() {
             </Pressable>
           ) : null}
         </View>
-      </View>
+      </Pressable>
     );
   };
 
@@ -192,6 +201,7 @@ const createStyles = (colors: Palette) =>
     marginBottom: 12,
   },
   cardTitle: { fontSize: 16, fontWeight: "700", color: colors.ink },
+  cardPressed: { opacity: 0.85 },
   rating: { fontSize: 13, color: colors.subtle, marginTop: 4 },
   excerpt: { fontSize: 14, color: colors.subtle, marginTop: 8, lineHeight: 20 },
   actions: { flexDirection: "row", marginTop: 12 },

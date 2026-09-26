@@ -5,7 +5,7 @@ summary reviews). Verify the spec §4 gates before ticking. T100 continues
 the repo-wide task counter (spec 019 ended at T099).
 
 ## B1 — Spec landing
-- [ ] T100 `specs/020_mobile_polish/{spec.md,tasks.md}` committed; pause for owner approval before C2.
+- [x] T100 `specs/020_mobile_polish/{spec.md,tasks.md}` committed (d2d2e06); pause honored — owner approved C2–C5 execution 2026-09-26.
 
 ## C2 — News tab (G1)
 - [x] T101 `NewsScreen`: web `useNews` query verbatim (`news`, `is_active = true`, created_at desc, limit 30) via `useSupabaseQuery` (cache `news:active`); category chips (all/announcement/update/important + custom_category labels); card = title/date/content-preview/first `image_urls` image/`file_url` Linking row; expandable full content; `news` namespace imported (11th) + `tabs.news` MOBILE_STRINGS key; 6th tab in `MainTabsParamList` (between Quizzes and AI).
@@ -18,15 +18,15 @@ the repo-wide task counter (spec 019 ended at T099).
 - [x] T106 `theme.test.ts` (9 tests: **light-invariance hex lock**, light/dark key-set parity, real-palette difference, resolution matrix incl. null scheme, persistence round-trip + corrupted-value ignore) + gates: typecheck ✅ · lint ✅ · vitest 77/77 ✅ · export ✅. Known limitation (ledgered, not fixed): MathText's KaTeX WebView HTML keeps its own light background.
 
 ## C4 — Summary detail + reviews (G3)
-- [ ] T107 latent-bug fix: `SummariesScreen` `ratings_count` → `reviews_count` (view column); rating badge renders; rows become Pressable → `SummaryDetail` (RootStack param `{ summaryId }`).
-- [ ] T108 `SummaryDetailScreen`: detail row by id (maybeSingle), meta + PDF/YouTube via Linking + content via MathText; reviews fetch from `review_details` by `summary_id` (desc; reviewer_name/avatar, anonymous fallback).
-- [ ] T109 review post (star 1–5 + optional comment → `reviews.insert({rating, comment, user_id, summary_id})`, web payload shape) + delete-own with confirm; aggregates refetched via the detail row; `reviews` namespace imported (12th); guests: read-only + defensive login prompt.
-- [ ] T110 `review-validation.test.ts` (rating bounds, empty comment allowed, delete-own guard) + gates.
+- [x] T107 latent-bug fix: `SummariesScreen` `ratings_count` → `reviews_count` (view column); rating badge renders (★ avg (count)); rows become Pressable → `SummaryDetail` (RootStack param `{ summaryId }`).
+- [x] T108 `SummaryDetailScreen`: detail row by id (maybeSingle → explicit not-found state), meta (subject/year/department/contributor, shared `formatDate`, ★ avg_rating (reviews_count)) + PDF/YouTube via Linking (SubjectDetail `openLink` pattern) + content via MathText; reviews fetch from `review_details` by `summary_id` (desc; reviewer_name/avatar with `reviews.anonymous` fallback — data-layer in new `lib/reviews.ts` typed off the shared `SummaryWithRatings` Row).
+- [x] T109 review post (star 1–5 + optional comment → `reviews.insert(...)`; `buildReviewInsert` maps the web payload's `comment` onto the real `content` column — the shared type is stale, web `useReviews` maps identically) + delete-own with `Alert.alert` destructive confirm; aggregates refetched via the detail row after post/delete; `reviews` namespace imported (12th) + `summaryDetail.*` MOBILE_STRINGS (ar/en); guests: read-only list + guest chip → defensive login `Alert` (no route to the signed-out stack from the authed stack).
+- [x] T110 `review-validation.test.ts` (12 tests: content-column payload mapping, comment trim, empty + null comment allowed, rating bounds 0/6/4.5 rejected + full 1–5 accepted, delete-own guard matrix) + gates: typecheck ✅ · lint ✅ · vitest 89/89 ✅ · export ✅ · shared typecheck ✅ · desktop typecheck ✅.
 
 ## C5 — Release
 - [ ] T111 version 0.6.1 → 0.7.0 (package.json + app.json); full gate suite; ledger close.
 
 ## Owner actions (post-C5)
-- [ ] Review this spec → approve C2–C5 execution.
+- [x] Review this spec → approve C2–C5 execution (owner signed off 2026-09-26).
 - [ ] Push the fast-forwarded `main` (local ref already at 720b79a; origin still behind — push is owner-held).
 - [ ] EAS/store checklist (spec 018) + device smoke of v0.6.1 remain pending.

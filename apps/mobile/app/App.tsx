@@ -50,6 +50,7 @@ import QuizAttemptsScreen from "../src/screens/QuizAttemptsScreen";
 import SubjectDetailScreen from "../src/screens/SubjectDetailScreen";
 import SubjectsScreen from "../src/screens/SubjectsScreen";
 import SummariesScreen from "../src/screens/SummariesScreen";
+import SummaryDetailScreen from "../src/screens/SummaryDetailScreen";
 import SignUpScreen from "../src/screens/SignUpScreen";
 
 export type MainTabsParamList = {
@@ -68,6 +69,7 @@ export type RootStackParamList = {
   QuizPlay: { quizId: string; title: string };
   QuizAttempts: undefined;
   SubjectDetail: { subjectName: string };
+  SummaryDetail: { summaryId: string };
 };
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -155,6 +157,11 @@ function RootNavigator() {
             <RootStack.Screen
               name="SubjectDetail"
               component={SubjectDetailScreen}
+              options={{ headerShown: false, animation: "slide_from_right" }}
+            />
+            <RootStack.Screen
+              name="SummaryDetail"
+              component={SummaryDetailScreen}
               options={{ headerShown: false, animation: "slide_from_right" }}
             />
           </>

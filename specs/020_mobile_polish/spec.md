@@ -3,8 +3,8 @@
 > Branch: `feat/020-mobile-polish` — stacked on `feat/019-mobile-parity`
 > (= `main` @ `720b79a` after the approved fast-forward merge; main and the
 > 019 tip are identical, so the branch can cut from either).
-> Status: **DRAFT — awaiting owner approval** (Tier-2 scope + all three items
-> approved 2026-09-25; this spec's C1 lands, then C2–C5 wait for sign-off).
+> Status: **APPROVED — C2–C5 signed off by the owner 2026-09-26** (Tier-2 scope
+> + all three items approved 2026-09-25; C4–C5 executed on this branch).
 > MVP Lock note: owner explicitly queued Tier 2 as the next engineering phase.
 > Base: spec 019 complete (v0.6.1 — 62 mobile vitest tests, all gates green).
 
