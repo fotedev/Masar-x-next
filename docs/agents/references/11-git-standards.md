@@ -69,10 +69,15 @@ task assignment.
    commit, or discard those files, and do not switch branches in the shared
    tree. Work in a dedicated worktree instead:
    ```bash
-   git worktree add ../masarx_<task-name> -b <type>/<short-task-name> origin/main
+   git worktree add .worktrees/<task-name> -b <type>/<short-task-name> origin/main
    ```
    Perform all edits, tests, and commits inside that worktree; remove it
-   when merged (`git worktree remove ../masarx_<task-name>`).
+   when merged (`git worktree remove .worktrees/<task-name>`). Run worktree
+   commands from the repo root. `.worktrees/` is gitignored at the root
+   (dot-directory, so eslint/next/tsconfig do not traverse it) — but note
+   `git clean -fdx` deletes worktrees (I8 requires consent), and the
+   `.gitignore` entry must exist on your branch for the worktree to stay
+   invisible to `git status`.
 5. **Stage explicit paths only.** Never `git add .`, `git commit -a`, or
    `git checkout -- .` — blanket commands sweep other agents' uncommitted
    work into your commit. Verify every commit with `git show HEAD --stat`

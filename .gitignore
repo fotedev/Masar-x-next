@@ -83,6 +83,12 @@ coverage/
 # Local archive for agent-approved file removals (I9 — never committed)
 .trash/
 
+# Agent git worktrees (I14 branch isolation & multi-agent safety) — each
+# agent/session works in its own full checkout under this dot-directory
+# (eslint/next/tsconfig skip dot-dirs by default). Never commit. Caution:
+# `git clean -fdx` would delete these worktrees (I8 requires consent).
+.worktrees/
+
 # Database and Supabase
 supabase/.temp/
 supabase/**/.temp/
