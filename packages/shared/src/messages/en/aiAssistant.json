@@ -99,6 +99,10 @@
   "comingSoonNotice": "🤖 The AI Assistant is currently in limited beta. The full feature is rolling out soon.",
   "scrollToEnd": "Scroll to latest",
   "loadingOlder": "Loading older messages…",
+  "pastedText": "Pasted Text",
+  "pastedChars": "chars",
+  "removeAttachment": "Remove attachment",
+  "promptTooLong": "Message too long (max 10000 characters). Remove an attachment or shorten the text.",
   "canned": {
     "noPlatformContext": "I can't answer from the platform without enough context (subject/level/semester).",
     "groupRagNoData": "I couldn't find relevant information in the group chats to answer your question. Please:\n\n1. Rephrase the question differently\n2. Make sure the chats contain information about this topic\n3. Load more comprehensive data if needed.\n\n💡 Tip: switch to \"CS Assistant\" mode at the top of the page for general programming help.",
