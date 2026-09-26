@@ -83,11 +83,12 @@ coverage/
 # Local archive for agent-approved file removals (I9 — never committed)
 .trash/
 
-# Agent git worktrees (I14 branch isolation & multi-agent safety) — each
-# agent/session works in its own full checkout under this dot-directory
-# (eslint/next/tsconfig skip dot-dirs by default). Never commit. Caution:
-# `git clean -fdx` would delete these worktrees (I8 requires consent).
-.worktrees/
+# Agent file locking (I14 branch isolation & multi-agent safety) — each
+# agent/session writes a claim file (.agents/<task-name>.md: branch, locked
+# paths, status) before editing and deletes it after commit+push. Claims are
+# machine-local coordination only, never committed. The whole .agents/ tree
+# (skills, agent defs, claims) is local-only.
+.agents/
 
 # Database and Supabase
 supabase/.temp/
@@ -161,7 +162,6 @@ public/logo_alt*.svg
 /cloc-2.08.exe
 /hjkllllllllllllllllllllllllllllllllllllllllllllllhhjkhjhjkhjhjkhjk.txt
 /__pycache__
-.agents
 scripts/row-preview-notgoodforhtml.txt
 .vercel
 localhost-profile.log
