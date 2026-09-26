@@ -134,6 +134,7 @@ export function MobileNav({
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-3">
                 <DynamicLogo
+                  variant="mark"
                   width={36}
                   height={36}
                   className="object-contain w-9 h-9"

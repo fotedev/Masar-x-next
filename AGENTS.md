@@ -15,11 +15,7 @@
 
 ## Hard rules (one line each — full table in [03-invariants.md](./docs/agents/references/03-invariants.md))
 
-- I1 Service-role/AI keys server-side only · I2 `Database` types + Zod in `packages/shared` · I3 i18n for every user-facing string · I4 OAuth callbacks under `[locale]/auth/callback/` · I5 `pnpm.neverBuiltDependencies` in root `package.json` · I6 Electron version pinned exact · I7 `ThemeScript.tsx` native `<script>` + `suppressHydrationWarning` · I8 no destructive git ops on a dirty tree without consent · I9 no direct file deletion — move to `.trash/` on approval · I10 pasted model output: Validate & Adapt · **I11 spec-first: non-trivial work needs an approved spec** ([10-spec-first.md](./docs/agents/references/10-spec-first.md)) · **I12 MVP Lock active** ([09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md)) · **I13 brand frozen in `docs/BRANDING.md`** — never "summaries platform".
-
-## 🔒 MVP Lock (until launch — full text in [09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md))
-
-No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core study-flow stability, (3) login + essential data, (4) deployment readiness. Lifted only by explicit owner decision.
+- I1 Service-role/AI keys server-side only · I2 `Database` types + Zod in `packages/shared` · I3 i18n for every user-facing string · I4 OAuth callbacks under `[locale]/auth/callback/` · I5 `pnpm.neverBuiltDependencies` in root `package.json` · I6 Electron version pinned exact · I7 `ThemeScript.tsx` native `<script>` + `suppressHydrationWarning` · I8 no destructive git ops on a dirty tree without consent · I9 no direct file deletion — move to `.trash/` on approval · I10 pasted model output: Validate & Adapt · **I11 spec-first: non-trivial work needs an approved spec** ([10-spec-first.md](./docs/agents/references/10-spec-first.md)) · **I12 MVP Lock lifted 2026-09-22 by owner — normal work allowed** · **I13 brand frozen in `docs/BRANDING.md`** — never "summaries platform".
 
 ---
 
@@ -37,6 +33,5 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | [06-mcp-cli.md](./docs/agents/references/06-mcp-cli.md) | MCP and CLI quick map |
 | [07-quirks.md](./docs/agents/references/07-quirks.md) | Project-specific quirks |
 | [08-precommit.md](./docs/agents/references/08-precommit.md) | Pre-commit / pre-merge checklist |
-| [09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md) | MVP Lock full text (delete on lift) |
 | [10-spec-first.md](./docs/agents/references/10-spec-first.md) | Spec-First standard, spec anatomy |
 | [11-git-standards.md](./docs/agents/references/11-git-standards.md) | Conventional Commits, PR rules |

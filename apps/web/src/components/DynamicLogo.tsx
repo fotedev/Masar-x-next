@@ -1,34 +1,50 @@
 "use client";
 
 import Image, { ImageProps } from "next/image";
-import { useLocale } from "next-intl";
+
+const LOCKUP_PATH = "/logo_lockup.svg";
+const MARK_PATH = "/masarx-mark.svg";
 
 interface DynamicLogoProps extends Omit<ImageProps, "src" | "alt"> {
   alt?: string;
+  /** "lockup" = horizontal mark + MASARX wordmark (navbars); "mark" = standalone mark (square/icon slots). */
+  variant?: "lockup" | "mark";
 }
 
 /**
- * Utility function to get the logo path based on locale.
- * Useful for non-component contexts like notifications or server-side logic.
+ * Mark-only logo path (notification icons and other square contexts).
+ * Locale-independent since the global wordmark policy (owner decision 2026-09-23).
  */
-export function getLogoPath(locale: string) {
-  return locale === "ar" ? "/logo_AR.webp" : "/logo_EN.webp";
+export function getLogoPath(_locale?: string) {
+  return MARK_PATH;
 }
 
 /**
- * A reusable Image component that automatically switches its source
- * based on the current locale.
+ * Horizontal lockup (mark + «MASARX» wordmark) — the official navbar form
+ * for both locales per BRANDING.md §7.3 rule 3 (amended 2026-09-23).
  */
-export function DynamicLogo({ alt = "Masar X Logo", ...props }: DynamicLogoProps) {
-  const locale = useLocale();
-  const src = getLogoPath(locale);
+export function getLockupPath() {
+  return LOCKUP_PATH;
+}
+
+/**
+ * Reusable Image component for the brand logo. Source is locale-independent;
+ * pick `variant` per context ("lockup" for header-style rows, "mark" for
+ * square slots paired with adjacent text).
+ */
+export function DynamicLogo({
+  alt = "Masar X Logo",
+  variant = "lockup",
+  ...props
+}: DynamicLogoProps) {
+  const src = variant === "mark" ? MARK_PATH : LOCKUP_PATH;
 
   const eagerLoadingProps: Partial<ImageProps> = props.priority
     ? { loading: "eager" }
     : {};
 
-  const fetchPriorityProps: any =
-    props.priority && typeof (props as any).fetchPriority === "undefined"
+  const fetchPriorityProps: { fetchPriority?: "high" } =
+    props.priority && props.fetchPriority === undefined
       ? { fetchPriority: "high" }
       : {};
 
@@ -36,6 +52,7 @@ export function DynamicLogo({ alt = "Masar X Logo", ...props }: DynamicLogoProps
     <Image
       src={src}
       alt={alt}
+      unoptimized
       {...eagerLoadingProps}
       {...fetchPriorityProps}
       {...props}

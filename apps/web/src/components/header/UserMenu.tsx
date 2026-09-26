@@ -1,9 +1,16 @@
-import { Shield, User, LogOut, LogIn, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { Shield, LogOut, LogIn, UserPlus } from "lucide-react";
 
 interface UserMenuProps {
   isMounted: boolean;
   loading: boolean;
-  user: { id: string } | null;
+  user: {
+    id: string;
+    email?: string;
+    user_metadata?: { full_name?: string; avatar_url?: string };
+  } | null;
+  profile?: { avatarUrl?: string | null } | null;
   isAdmin: boolean;
   isAdminLoading: boolean;
   handleNavigate: (page: string) => void;
@@ -15,12 +22,25 @@ export function UserMenu({
   isMounted,
   loading,
   user,
+  profile,
   isAdmin,
   isAdminLoading,
   handleNavigate,
   handleSignOut,
   tNav,
 }: UserMenuProps) {
+  const avatarUrl =
+    profile?.avatarUrl || user?.user_metadata?.avatar_url || null;
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
+  const fullName = user?.user_metadata?.full_name;
+  const email = user?.email;
+  const initial = (fullName || email || "?").trim().charAt(0).toUpperCase();
+
   if (!isMounted || loading) {
     return (
       <div className="flex items-center gap-2 shrink-0">
@@ -45,11 +65,28 @@ export function UserMenu({
         )}
         <button
           onClick={() => handleNavigate("profile")}
-          className="inline-flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md"
+          className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all shadow-sm hover:shadow-md"
           type="button"
         >
-          <User className="w-4 h-4 shrink-0" />
-          <span>{tNav("profile")}</span>
+          {avatarUrl && !imgError ? (
+            <Image
+              src={avatarUrl}
+              alt=""
+              fill
+              unoptimized
+              sizes="36px"
+              className="object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white"
+            >
+              {initial}
+            </span>
+          )}
+          <span className="sr-only">{tNav("profile")}</span>
         </button>
         <button
           onClick={handleSignOut}

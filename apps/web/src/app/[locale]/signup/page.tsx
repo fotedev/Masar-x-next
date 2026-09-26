@@ -171,6 +171,7 @@ export default function SignUpPage() {
         <div className="text-center mb-10">
           <div className="bg-brand-blue/10 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-brand-blue/5">
             <DynamicLogo
+              variant="mark"
               width={56}
               height={56}
               className="object-contain w-14 h-14"
