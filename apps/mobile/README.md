@@ -80,14 +80,15 @@ Provisioned by the owner session; recorded here for reference:
 
 ```bash
 cd apps/mobile
-# DSN for the aboalayoun/javascript-nextjs project (owner's choice — a dedicated
-# react-native project later only needs a new DSN via one `eas env:set`)
-eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "https://5d2f…@o4511127807852544.ingest.de.sentry.io/4511127815192656" --type string --visibility sensitive --environment preview --environment production
+# DSN for the aboalayoun/react-native project (dedicated mobile project;
+# javascript-nextjs stays web-only). Rotate with one `eas env:set` per env.
+eas env:set preview --name EXPO_PUBLIC_SENTRY_DSN --value "https://466d…@o4511127807852544.ingest.de.sentry.io/4512151627300944" --visibility sensitive --non-interactive
+eas env:set production --name EXPO_PUBLIC_SENTRY_DSN --value "https://466d…@o4511127807852544.ingest.de.sentry.io/4512151627300944" --visibility sensitive --non-interactive
 # Auth token: secret visibility = write-only, readable only on EAS builders
 eas env:create --name SENTRY_AUTH_TOKEN --value "<token>" --type string --visibility secret --environment preview --environment production
 ```
 
-The Expo plugin is statically configured in app.json with `organization: aboalayoun`, `project: javascript-nextjs`, and **`url: https://de.sentry.io/`** — the DE-region base URL is required because the org is hosted on `ingest.de.sentry.io`; the default `sentry.io` endpoint would fail the upload auth. DSN ingest was verified end-to-end at provisioning (envelope POST → HTTP 200).
+The Expo plugin is statically configured in app.json with `organization: aboalayoun`, `project: react-native`, and **`url: https://de.sentry.io/`** — the DE-region base URL is required because the org is hosted on `ingest.de.sentry.io`; the default `sentry.io` endpoint would fail the upload auth. DSN ingest was verified end-to-end at provisioning (envelope POST → HTTP 200).
 
 Local dev: `apps/mobile/.env.local` already carries `EXPO_PUBLIC_SENTRY_DSN` (gitignored), so `pnpm --filter mobile start` runs with Sentry debug logging. Note that adding Sentry adds native modules — rebuild dev-client installs after this change (`eas build --profile development`).
 

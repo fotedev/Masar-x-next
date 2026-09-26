@@ -332,6 +332,29 @@ export function translateMessage(
   key: string,
   values?: MessageValues,
 ): string {
+  // The "mobile" namespace lives in the FLAT MOBILE_STRINGS supplement
+  // ("tabs.subjects" is a single key, not a path). A dot-splitting
+  // lookup of "mobile.tabs.subjects" searches tree["mobile"], which
+  // exists nowhere, and every mobile label degrades to its raw key
+  // (broken bottom-tab labels). So resolve "mobile" keys directly.
+  if (namespace === "mobile") {
+    const own = MOBILE_STRINGS[locale][key];
+    if (typeof own === "string") {
+      return interpolate(own, values);
+    }
+    const other: Locale = locale === "ar" ? "en" : "ar";
+    const rescue = MOBILE_STRINGS[other][key];
+    if (typeof rescue === "string") {
+      if (__DEV__) {
+        console.warn(`[i18n] missing message: ${locale}/mobile.${key} (rescued from ${other})`);
+      }
+      return interpolate(rescue, values);
+    }
+    if (__DEV__) {
+      console.warn(`[i18n] missing message: ${locale}/mobile.${key}`);
+    }
+    return key;
+  }
   const path = `${namespace}.${key}`;
   const fromShared = lookup(REGISTRY[locale], path);
   if (typeof fromShared === "string") {

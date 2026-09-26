@@ -35,7 +35,7 @@
         "@sentry/react-native/expo",
         {
           "organization": "aboalayoun",
-          "project": "javascript-nextjs",
+          "project": "react-native",
           "url": "https://de.sentry.io/"
         }
       ]
