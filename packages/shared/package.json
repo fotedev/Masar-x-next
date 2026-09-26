@@ -24,9 +24,9 @@
     "build": "echo '[shared] no build step yet — consumers import directly from main: ./src/index.ts. A tsc-based build will be added when the source tree grows.'"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.97.0",
-    "zod": "^4.3.6"
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
