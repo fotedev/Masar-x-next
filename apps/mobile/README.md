@@ -74,19 +74,22 @@ Verification gates (all green on the spec branch): mobile `typecheck` / `lint` /
 - **Error boundary** — `SentryBoundary` (`src/components/SentryBoundary.tsx`) wraps the app shell inside the provider stack; its fallback reuses the shared `errorBoundary` ar/en catalog with the standard retry button. Zero new i18n strings.
 - **pnpm** — `@sentry/cli` is allowlisted in `pnpm-workspace.yaml` `onlyBuiltDependencies` (its postinstall downloads the CLI binary the upload needs).
 
-### Owner setup (one-time, after creating the Sentry project)
+### Owner setup — DONE (2026-09-26)
 
-Create a React Native/Expo project in Sentry, generate an auth token (Sentry → Settings → Auth Tokens, `project:releases` scope), then:
+Provisioned by the owner session; recorded here for reference:
 
 ```bash
 cd apps/mobile
-eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "https://<key>@o<org>.ingest.sentry.io/<project>" --environment preview --environment production
-eas env:create --name SENTRY_AUTH_TOKEN --value "<token>" --environment preview --environment production
+# DSN for the aboalayoun/javascript-nextjs project (owner's choice — a dedicated
+# react-native project later only needs a new DSN via one `eas env:set`)
+eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "https://5d2f…@o4511127807852544.ingest.de.sentry.io/4511127815192656" --type string --visibility sensitive --environment preview --environment production
+# Auth token: secret visibility = write-only, readable only on EAS builders
+eas env:create --name SENTRY_AUTH_TOKEN --value "<token>" --type string --visibility secret --environment preview --environment production
 ```
 
-Nothing is hardcoded: the plugin ships without `organization`/`project` and the generated `sentry.properties` falls back to the `SENTRY_ORG` / `SENTRY_PROJECT` EAS env vars at build time. If a build log complains about a missing org/project, add those two as non-secret EAS env vars the same way.
+The Expo plugin is statically configured in app.json with `organization: aboalayoun`, `project: javascript-nextjs`, and **`url: https://de.sentry.io/`** — the DE-region base URL is required because the org is hosted on `ingest.de.sentry.io`; the default `sentry.io` endpoint would fail the upload auth. DSN ingest was verified end-to-end at provisioning (envelope POST → HTTP 200).
 
-Local dev: uncomment `EXPO_PUBLIC_SENTRY_DSN` in `apps/mobile/.env.local` to test with Sentry debug logging. Note that adding Sentry adds native modules — rebuild dev-client installs after this change (`eas build --profile development`).
+Local dev: `apps/mobile/.env.local` already carries `EXPO_PUBLIC_SENTRY_DSN` (gitignored), so `pnpm --filter mobile start` runs with Sentry debug logging. Note that adding Sentry adds native modules — rebuild dev-client installs after this change (`eas build --profile development`).
 
 ### Verify
 

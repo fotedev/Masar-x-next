@@ -31,7 +31,14 @@
     },
     "plugins": [
       "expo-secure-store",
-      "@sentry/react-native/expo"
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "aboalayoun",
+          "project": "javascript-nextjs",
+          "url": "https://de.sentry.io/"
+        }
+      ]
     ],
     "extra": {
       "eas": {

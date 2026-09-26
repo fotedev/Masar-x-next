@@ -20,7 +20,8 @@ The dual-React startup crash (fixed in `fcf9dfd`) reached the device dropbox wit
 ## Contracts
 
 - `extra.sentryDsn: string` (empty string = disabled); `initSentry()` called from `index.js` before `registerRootComponent(App)`; minimal init — `Sentry.init({ dsn, debug: __DEV__ })`, no tracing/PII options.
-- EAS env vars (owner-run, documented in `apps/mobile/README.md`): `EXPO_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` for `preview` and `production` environments; org/project slugs via `SENTRY_ORG`/`SENTRY_PROJECT` if the installed plugin requires them statically. Only public-by-design client values client-side; no service-role keys anywhere.
+- EAS env vars (provisioned 2026-09-26 by the owner session): `EXPO_PUBLIC_SENTRY_DSN` (sensitive) + `SENTRY_AUTH_TOKEN` (secret) for `preview` and `production`. Only public-by-design client values client-side; the token is write-only on EAS (`secret` visibility).
+- Plugin is statically configured (owner-provided creds): `organization: aboalayoun`, `project: javascript-nextjs`, `url: https://de.sentry.io/` — the DE-region base URL is required because the org is hosted on `ingest.de.sentry.io`; the default `sentry.io` URL would break the upload auth. Note: mobile events land in the `javascript-nextjs` project (owner's explicit choice; a dedicated react-native project would only need a new DSN + one `eas env:set`).
 
 ## Non-goals
 
@@ -31,11 +32,12 @@ The dual-React startup crash (fixed in `fcf9dfd`) reached the device dropbox wit
 
 ## Acceptance
 
-- [ ] Gates: `pnpm --filter mobile typecheck` / `lint` / `test` / `export` all green (export proves the Sentry-wrapped Metro bundle compiles; no upload happens locally without a token).
-- [ ] No DSN in source or app.json; app boots with Sentry inert when `EXPO_PUBLIC_SENTRY_DSN` is unset.
-- [ ] Error boundary shows ar/en title + retry from `masarx-shared` `errorBoundary` catalog; retry re-renders the app shell.
-- [ ] README documents the `eas env:create` commands + verify steps + the 5-line "reading a crash" guide.
-- [ ] Owner (post-merge): run the env var commands; first EAS preview build shows the Sentry upload step and the app version appears as a release in Sentry with symbolicated frames.
+- [x] Gates: `pnpm --filter mobile typecheck` / `lint` / `test` (89/89) / `export` all green (export proves the Sentry-wrapped Metro bundle compiles; no upload happens locally — `sentry-cli` has no local token).
+- [x] No DSN in source or app.json; app boots with Sentry inert when `EXPO_PUBLIC_SENTRY_DSN` is unset.
+- [x] Error boundary shows ar/en title + retry from `masarx-shared` `errorBoundary` catalog; retry re-renders the app shell.
+- [x] README documents the EAS env setup + verify steps + the 5-line "reading a crash" guide.
+- [x] EAS env vars created (`eas env:create`, 2026-09-26) for preview + production; DSN ingest verified end-to-end (envelope POST → HTTP 200, event `3e66419794644e669d46bf67712dc657` in `aboalayoun/javascript-nextjs`); token validated against `de.sentry.io` API (`project:releases` scope present).
+- [ ] First EAS preview build shows the Sentry upload step and the app version appears as a release in Sentry with symbolicated frames.
 
 ## Deployment note
 
