@@ -1,7 +1,7 @@
 # Masar X — Brand Identity (Single Source of Truth)
 
 > **القاعدة:** أي وصف للمنصة في الكود أو الوثائق أو الـ AI يجب أن يطابق هذا الملف حرفياً. ممنوع اختراع صياغات بديلة.
-> Last updated: 2026-09-22
+> Last updated: 2026-09-26
 
 ## 1. الاسم الرسمي
 
@@ -74,6 +74,7 @@
 | `logo.png` / `logo.svg` | الأصول الخام الأصلية (أرشيف — لا تُستخدم في الإنتاج) |
 
 إعادة توليد كل أصول الويب: `node apps/web/scripts/generate-icons.mjs` (بعد `node apps/web/scripts/brand/build-masters.mjs` عند تغيير الأصل).
+إعادة توليد أيقونة الديسكتوب: `pnpm --filter desktop icons:generate` (من `apps/desktop/scripts/generate-icon.mjs` — سلّم ICO 16–256 + الماستر، تايِل أبيض بزوايا مستديرة).
 
 ### 7.3 قواعد الاستخدام الإلزامية
 
@@ -83,7 +84,7 @@
 4. **النسخة الأحادية** (`masarx-mark-mono.svg` / `currentColor`) للتبويبات والرموز الأحادية والإشعارات.
 5. **مساحة التنفس:** على الأقل 12% من عرض العلامة فارغة حولها؛ لا تُوضع العلامة على خلفيات مزدحمة بلا تباين كافٍ.
 6. **ممنوع:** إعادة رسم/إعادة توليد العلامة بالـ AI، تمديدها بشكل غير متساوٍ، تغيير الألوان خارج الجدول أعلاه، أو إضافة تأثيرات.
-7. أصول الإنتاج: `favicon.svg` + `favicon.ico` (16/32/48) + `apple-touch-icon.png` (180) + `icons/icon-{192,512}.png` + `icons/maskable-{192,512}.png` + `og-image.png` (1200×630) — تُدار كلها من الـ masters فقط.
+7. أصول الإنتاج: `favicon.svg` + `favicon.ico` (16/32/48) + `apple-touch-icon.png` (180) + `icons/icon-{192,512}.png` + `icons/maskable-{192,512}.png` + `og-image.png` (1200×630) + أيقونة الديسكتوب `apps/desktop/build/icon.ico` (16–256) — تُدار كلها من الـ masters فقط.
 
 ## 8. السلوجان الرسمي (Slogan) — مقفل 2026-09-22
 
