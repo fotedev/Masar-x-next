@@ -447,6 +447,10 @@ jobs:
       - name: Run e2e smoke
         env:
           E2E_BASE_URL: http://127.0.0.1:3000
+          # ai-chat-history.spec derives the supabase-js session-cookie name
+          # from the project ref of this URL (public-by-design; the same
+          # value the production build above was made with).
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
         run: pnpm --filter web test:e2e
 
       - name: Upload e2e artifacts on failure
