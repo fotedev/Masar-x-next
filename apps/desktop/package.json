@@ -9,6 +9,7 @@
   "//": "dev: `electron .` runs the compiled main (dist/) which auto-detects dev mode via app.isPackaged and loads http://localhost:3000 - start `pnpm dev:web` first, and compile the main process once (pnpm --filter desktop build). JSON has no comments, so this field documents the dev script (spec 004 desktop-dev gap).",
   "scripts": {
     "dev": "electron .",
+    "icons:generate": "node scripts/generate-icon.mjs",
     "prebuild": "node scripts/prebuild.mjs",
     "prebuild:installer": "node scripts/prebuild.mjs",
     "prebuild:portable": "node scripts/prebuild.mjs",
@@ -26,10 +27,12 @@
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^5.0.1",
     "electron": "44.4.5",
     "electron-builder": "^25.1.8",
+    "sharp": "^0.35.4",
     "typescript": "^5.5.3",
     "vitest": "^2.1.8"
   }

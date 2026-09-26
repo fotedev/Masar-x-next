@@ -139,10 +139,12 @@ extraResources:
 
 # ----- Windows target -----
 win:
-  # T019 icon. Multi-size .ico (16/32/48/64/128/256) generated from
-  # public/logo_EN.png (1200x880 RGBA, restored from git history — it
-  # was replaced by logo_EN.webp in commit 2ccee68). electron-builder
-  # picks this up for the EXE icon shown in Explorer/Taskbar/Start Menu.
+  # Multi-size .ico (16/24/32/48/64/128/256) generated from the locked
+  # brand mark (promo_assets/brand-new/masarx-mark.svg) via
+  # `pnpm --filter desktop icons:generate` (scripts/generate-icon.mjs —
+  # white squircle tile + mark, same approach as the web icon ladder).
+  # electron-builder picks this up for the EXE icon shown in
+  # Explorer/Taskbar/Start Menu.
   icon: build/icon.ico
   target:
     - target: nsis
