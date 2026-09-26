@@ -84,7 +84,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.1",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
     "imagetracerjs": "^1.2.6",
