@@ -15,6 +15,12 @@ import { AIErrorBoundary } from "@/components/AIErrorBoundary";
 import { useChatScroll } from "@/hooks/useChatScroll";
 import { ArrowDown } from "lucide-react";
 import { aiAssistant } from "@/lib/ai-assistant";
+import {
+  AI_PROMPT_MAX_CHARS,
+  combinePromptWithAttachments,
+  createPastedAttachment,
+  type PastedAttachment,
+} from "@/lib/ai/pasted-attachments";
 import { toast } from "sonner";
 import { useRouter } from '@/navigation';
 import { initPuterDiagnostics } from "@/lib/puter";
@@ -141,12 +147,30 @@ export default function AiAssistantPage() {
   const [inputMessage, setInputMessage] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null!);
 
+  // Smart Paste Canvas (spec 022): large pastes become attachment objects
+  // held alongside the typed prompt. The AI payload is a plain string
+  // (Puter primary path), so attachments are injected as document blocks.
+  const [pastedAttachments, setPastedAttachments] = useState<PastedAttachment[]>([]);
+
+  const handleAddPastedText = useCallback((text: string) => {
+    setPastedAttachments((prev) => [...prev, createPastedAttachment(text)]);
+  }, []);
+
+  const handleRemoveAttachment = useCallback((id: string) => {
+    setPastedAttachments((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
   const handleSendMessage = useCallback(async () => {
-    if (!inputMessage.trim()) return;
-    const content = inputMessage;
+    if (!inputMessage.trim() && pastedAttachments.length === 0) return;
+    const content = combinePromptWithAttachments(inputMessage, pastedAttachments);
+    if (content.length > AI_PROMPT_MAX_CHARS) {
+      toast.error(t("promptTooLong"));
+      return;
+    }
     setInputMessage("");
+    setPastedAttachments([]);
     await sendMessage(content, selectedModel);
-  }, [inputMessage, sendMessage, selectedModel]);
+  }, [inputMessage, pastedAttachments, sendMessage, selectedModel, t]);
 
   const handleSummarizeChat = useCallback(async () => {
     try {
@@ -206,6 +230,12 @@ export default function AiAssistantPage() {
     setShowPuterSettings(true);
   }, []);
 
+  const handleClearChat = useCallback(() => {
+    setPastedAttachments([]);
+    setInputMessage("");
+    void clearChat();
+  }, [clearChat]);
+
   if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-dvh-safe">
@@ -249,7 +279,7 @@ export default function AiAssistantPage() {
             onSuggestionClick={handleSuggestionClick}
             onUiMessage={handleUiMessage}
             onRetry={handleRetryLast}
-            hasUserInput={inputMessage.trim().length > 0}
+            hasUserInput={inputMessage.trim().length > 0 || pastedAttachments.length > 0}
             hasMoreOlder={hasMoreOlder}
             loadingOlder={loadingOlder}
             onLoadOlder={loadOlder}
@@ -283,10 +313,13 @@ export default function AiAssistantPage() {
           selectedModel={selectedModel}
           setSelectedModel={handleModelChange}
           onSummarizeChat={handleSummarizeChat}
-          onClearChat={clearChat}
+          onClearChat={handleClearChat}
           isSummarizing={isSummarizing}
           hasChatData={messages.length > 0}
           onOpenPuterSettings={handleOpenPuterSettings}
+          pastedAttachments={pastedAttachments}
+          onAddPastedText={handleAddPastedText}
+          onRemoveAttachment={handleRemoveAttachment}
         />
 
         {showPuterSettings && (

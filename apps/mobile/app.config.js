@@ -2,9 +2,9 @@
  * Dynamic Expo config.
  *
  * Spreads the static `app.json` (name, slug, version, orientation, scheme,
- * supportsRTL, bundle identifiers, plugins) and injects the Supabase env
- * vars into `extra`, where `expo-constants` reads them at runtime
- * (apps/mobile/src/lib/supabase.ts). See
+ * supportsRTL, bundle identifiers, plugins) and injects env vars into
+ * `extra`, where `expo-constants` reads them at runtime
+ * (apps/mobile/src/lib/supabase.ts, src/lib/sentry.ts). See
  * specs/004-multi-platform-expansion/contracts/supabase-client.md:
  *
  *   "mobile: expo-constants.expoConfig.extra.supabaseUrl"
@@ -26,6 +26,11 @@ module.exports = ({ config }) => {
     );
   }
 
+  // Sentry DSN (spec 023): public-by-design client identifier, read from
+  // the EAS/build environment. Empty string = crash reporting disabled
+  // (src/lib/sentry.ts boots the app normally without it).
+  const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN ?? "";
+
   // Web origin for auth hand-offs that complete in the browser (spec 019
   // C3/T082): the password-reset email link opens the web app's
   // /reset-password page (spec 004 T047 decision — reset completes on
@@ -39,6 +44,7 @@ module.exports = ({ config }) => {
       supabaseUrl,
       supabaseAnonKey,
       webOrigin,
+      sentryDsn,
     },
   };
 };

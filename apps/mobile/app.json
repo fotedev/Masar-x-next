@@ -30,7 +30,15 @@
       }
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "aboalayoun",
+          "project": "react-native",
+          "url": "https://de.sentry.io/"
+        }
+      ]
     ],
     "extra": {
       "eas": {

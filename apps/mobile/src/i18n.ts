@@ -36,6 +36,7 @@ import arAuthPages from "masarx-shared/messages/ar/authPages.json";
 import arQuizAttempts from "masarx-shared/messages/ar/quizAttempts.json";
 import arNews from "masarx-shared/messages/ar/news.json";
 import arReviews from "masarx-shared/messages/ar/reviews.json";
+import arErrorBoundary from "masarx-shared/messages/ar/errorBoundary.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -48,6 +49,7 @@ import enAuthPages from "masarx-shared/messages/en/authPages.json";
 import enQuizAttempts from "masarx-shared/messages/en/quizAttempts.json";
 import enNews from "masarx-shared/messages/en/news.json";
 import enReviews from "masarx-shared/messages/en/reviews.json";
+import enErrorBoundary from "masarx-shared/messages/en/errorBoundary.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -69,6 +71,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     quizAttempts: arQuizAttempts,
     news: arNews,
     reviews: arReviews,
+    errorBoundary: arErrorBoundary,
   },
   en: {
     common: enCommon,
@@ -83,6 +86,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     quizAttempts: enQuizAttempts,
     news: enNews,
     reviews: enReviews,
+    errorBoundary: enErrorBoundary,
   },
 };
 
@@ -328,6 +332,29 @@ export function translateMessage(
   key: string,
   values?: MessageValues,
 ): string {
+  // The "mobile" namespace lives in the FLAT MOBILE_STRINGS supplement
+  // ("tabs.subjects" is a single key, not a path). A dot-splitting
+  // lookup of "mobile.tabs.subjects" searches tree["mobile"], which
+  // exists nowhere, and every mobile label degrades to its raw key
+  // (broken bottom-tab labels). So resolve "mobile" keys directly.
+  if (namespace === "mobile") {
+    const own = MOBILE_STRINGS[locale][key];
+    if (typeof own === "string") {
+      return interpolate(own, values);
+    }
+    const other: Locale = locale === "ar" ? "en" : "ar";
+    const rescue = MOBILE_STRINGS[other][key];
+    if (typeof rescue === "string") {
+      if (__DEV__) {
+        console.warn(`[i18n] missing message: ${locale}/mobile.${key} (rescued from ${other})`);
+      }
+      return interpolate(rescue, values);
+    }
+    if (__DEV__) {
+      console.warn(`[i18n] missing message: ${locale}/mobile.${key}`);
+    }
+    return key;
+  }
   const path = `${namespace}.${key}`;
   const fromShared = lookup(REGISTRY[locale], path);
   if (typeof fromShared === "string") {

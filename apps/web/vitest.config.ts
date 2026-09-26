@@ -10,7 +10,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/__tests__/**/*.test.ts'],
+    // Spec 022: .test.tsx files run under jsdom (React component/hook tests);
+    // .test.ts stays on node for speed.
+    environmentMatchGlobs: [['**/*.test.tsx', 'jsdom']],
+    include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
+    setupFiles: ['src/test/setup.ts'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     // masarx-shared is a workspace symlink exporting raw .ts — inline it

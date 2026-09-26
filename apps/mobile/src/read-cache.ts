@@ -17,7 +17,7 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const CACHE_PREFIX = "masarx_read_cache_";
+export const CACHE_PREFIX = "masarx_read_cache_";
 
 export const CACHE_VERSION = 1 as const;
 
