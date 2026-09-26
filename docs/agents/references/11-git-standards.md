@@ -42,14 +42,18 @@ task assignment.
    pending specs/tasks (`tasks.md` checkboxes, deferred checkpoints) as your
    own work unless the owner explicitly approves continuing that exact
    milestone — and record the approval in the spec ledger when they do.
-2. **Create a dedicated branch before writing code or committing.** Check
-   `git branch --show-current` first; if the branch's scope does not match
-   the task, create one:
+2. **Create a dedicated branch before writing code or committing — never
+   work or commit on `main` directly.** Check `git branch --show-current`
+   first; if the branch's scope does not match the task, create one:
    ```bash
    git checkout -b <type>/<short-task-name> origin/main
    ```
    Base new work on `main` — or on the integration branch the work stacks on
-   (feature branches that depend on unmerged earlier milestones).
+   (feature branches that depend on unmerged earlier milestones). The only
+   direct-`main` exception is owner-directed repo maintenance (docs,
+   invariants, governance) that the owner explicitly orders onto main.
+   Record the branch you created in your `.agents/` claim (rule 4) — never
+   assume the branch that happens to be checked out is yours.
 3. **Re-assert the branch at commit time, not just at task start.** A
    parallel session can switch branches mid-task (hit 2026-09-26: a commit
    landed on a freshly created sibling branch seconds after a branch check).
@@ -61,26 +65,33 @@ task assignment.
    git push origin <branch> && git log --oneline -1 origin/<branch>
    ```
    An "Everything up-to-date" push for a commit you just made means the
-   commit went somewhere else — stop and repair via a worktree cherry-pick;
-   never force-reset an actively committing branch.
-4. **Isolate concurrent work via git worktrees.** If the working tree holds
-   uncommitted changes you do not own (`git status --porcelain` is not
-   clean) or another agent is actively committing, do not stash, overwrite,
-   commit, or discard those files, and do not switch branches in the shared
-   tree. Work in a dedicated worktree instead:
-   ```bash
-   git worktree add .worktrees/<task-name> -b <type>/<short-task-name> origin/main
+   commit went somewhere else — stop and repair via a temporary worktree
+   cherry-pick (repair mechanics, not a working convention); never
+   force-reset an actively committing branch.
+4. **Claim the task in `.agents/` before your first edit (file locking).**
+   Read every existing claim file first (`ls .agents/`) so you know which
+   paths and branches other agents have locked. If your required paths are
+   free, create `.agents/<task-name>.md` — gitignored, machine-local,
+   never committed:
+   ```markdown
+   # <task-name>
+   - branch: <type>/<short-task-name>
+   - status: in-progress
+   - locked paths:
+     - apps/web/src/hooks/useChatScroll.ts
    ```
-   Perform all edits, tests, and commits inside that worktree; remove it
-   when merged (`git worktree remove .worktrees/<task-name>`). Run worktree
-   commands from the repo root. `.worktrees/` is gitignored at the root
-   (dot-directory, so eslint/next/tsconfig do not traverse it) — but note
-   `git clean -fdx` deletes worktrees (I8 requires consent), and the
-   `.gitignore` entry must exist on your branch for the worktree to stay
-   invisible to `git status`.
+   You may touch only your locked paths; conversely, never stash, overwrite,
+   commit, or discard files locked by another agent, and never switch
+   branches in the shared tree while another session is committing. Claims
+   coordinate agents sharing this clone only — they are invisible to git
+   and to other checkouts, so if you work from a secondary worktree/clone,
+   also read the primary clone's `.agents/`. When the task is committed and
+   pushed, delete your claim file immediately (self-cleanup) so the paths
+   unlock.
 5. **Stage explicit paths only.** Never `git add .`, `git commit -a`, or
    `git checkout -- .` — blanket commands sweep other agents' uncommitted
-   work into your commit. Verify every commit with `git show HEAD --stat`
+   work into your commit. Stage exactly the paths listed in your claim
+   file. Verify every commit with `git show HEAD --stat`
    (the file count must match what you staged). When a shared *dirty file*
    must carry both your hunk and another agent's, stage only your hunk via a
    filtered patch (`git diff` → extract → `git apply --cached`) and commit
@@ -89,9 +100,11 @@ task assignment.
 **Why:** 2026-09-26 — a web fix was committed to `feat/020-mobile-polish`
 (the session's starting branch), a CI fix landed on a freshly created
 `feat/023-mobile-sentry` via a mid-task branch switch, and shared-file
-commits twice absorbed parallel hunks. Explicit-path staging and worktrees
-made every incident repairable; this section makes those practices
-mandatory.
+commits twice absorbed parallel hunks. This section makes the defenses
+mandatory: dedicated branches, commit-time assertions, explicit-path
+staging, and (since 2026-09-26, replacing the brief mandatory-worktree
+rule) `.agents/` claim files that cost zero disk and stay in the tree the
+agent actually works in.
 
 See also the [pre-commit / pre-merge checklist](./08-precommit.md).
 
