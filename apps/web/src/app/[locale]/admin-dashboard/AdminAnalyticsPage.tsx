@@ -13,26 +13,11 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { analyticsHelpers } from "@/lib/analyticsHelpers";
+import type { AdminAnalyticsSummary } from "@/lib/analyticsHelpers";
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/admin-shell/StatCard";
 import { PageHeader } from "@/components/admin-shell/PageHeader";
 
-interface AnalyticsSummary {
-  totalUsers: number;
-  totalMessages: number;
-  totalViews: number;
-  totalClicks: number;
-  topContentTypes: Array<{
-    type: string;
-    count: number;
-  }>;
-  recentActivity: Array<{
-    action: string;
-    content_type: string;
-    created_at: string;
-    user_id?: string;
-  }>;
-}
 
 interface MicroTrend {
   direction: "up" | "down" | "flat";
@@ -141,7 +126,7 @@ export const AdminAnalyticsPage = () => {
   const intlLocale = locale === "ar" ? "ar-EG" : "en-US";
   const { isAdmin } = useAuth();
   const isAdminLoading = false;
-  const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
+  const [analytics, setAnalytics] = useState<AdminAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -226,14 +211,14 @@ export const AdminAnalyticsPage = () => {
         return;
       }
       const summary = await analyticsHelpers.getAdminAnalyticsSummary();
-      if (summary) {
+      if (summary.data) {
         setAnalytics({
-          totalUsers: summary.totalUsers || 0,
-          totalMessages: summary.totalMessages || 0,
-          totalViews: summary.totalViews || 0,
-          totalClicks: summary.totalClicks || 0,
-          topContentTypes: summary.topContentTypes || [],
-          recentActivity: summary.recentActivity || [],
+          totalUsers: summary.data.totalUsers || 0,
+          totalMessages: summary.data.totalMessages || 0,
+          totalViews: summary.data.totalViews || 0,
+          totalClicks: summary.data.totalClicks || 0,
+          topContentTypes: summary.data.topContentTypes || [],
+          recentActivity: summary.data.recentActivity || [],
         });
       } else {
         setAnalytics({

@@ -143,10 +143,19 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
 }
 
 function getClientIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
+  // x-forwarded-for, whose entries can be client-supplied.
+  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
+  //    real peer IP, so a spoofed value is replaced at the edge.
   const cfIp = req.headers.get('cf-connecting-ip');
   if (cfIp) return cfIp.trim();
+  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
+  const sbIp = req.headers.get('sb-forwarded-for');
+  if (sbIp) return sbIp.split(',')[0].trim();
+  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  // 4) nginx-style fallback.
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
   return 'unknown';
@@ -190,6 +199,35 @@ serve(async (req) => {
       const supabase = createClient(supabaseUrl, serviceKey);
 
       // =====================
+      // IP-based rate limit (enumeration protection, F4) — applied BEFORE the
+      // user lookup. Returns the SAME uniform response when throttled so the
+      // limit itself cannot leak account existence.
+      // =====================
+      try {
+        const { data: ipAllowed, error: ipRlError } = await supabase.rpc('check_rate_limit', {
+          p_identifier: ip,
+          p_endpoint: 'request-password-reset-ip',
+          p_max_requests: 10,
+          p_window_minutes: 60,
+        });
+        if (ipRlError) {
+          console.warn('[AUTH] IP rate limit check failed:', ipRlError.message);
+        } else if (ipAllowed === false) {
+          console.warn(`[AUTH] IP rate limit exceeded: ${ip}`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+            }),
+            { status: 200, headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" } }
+          );
+        }
+      } catch (ipRlEx) {
+        // Fail-open documented as accepted risk (security audit F12)
+        console.warn('[AUTH] IP rate limit exception:', ipRlEx);
+      }
+
+      // =====================
       // Get user by email (safe lookup)
       // =====================
       let user;
@@ -203,10 +241,11 @@ serve(async (req) => {
           console.log(`[AUTH] User search result for ${email}: ${user ? 'Found ID: ' + user.id : 'Not Found'}`);
           if (!user) {
             console.log(`[AUTH] No user found for email: ${email}`);
+            // SECURITY (F4): uniform response — the debug field previously
+            // leaked account existence to anyone calling this endpoint.
             return new Response(
               JSON.stringify({
                 success: true,
-                debug: "No user found in auth.users",
                 message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
               }),
               {
@@ -235,8 +274,13 @@ serve(async (req) => {
       }
 
       // =====================
-      // Rate limit check (basic abuse protection)
+      // BACKGROUND WORK (F4 timing follow-up): email rate limit, token
+      // creation, DB insert and email send all run in the background so the
+      // HTTP response time does NOT reveal whether the account exists.
+      // (Body below keeps its original indentation to minimize the diff.)
       // =====================
+      const backgroundWork = (async () => {
+      // Rate limit check (basic abuse protection)
       try {
         const { data: allowed, error: rlError } = await supabase.rpc('check_rate_limit', {
           p_identifier: email,
@@ -248,11 +292,10 @@ serve(async (req) => {
         if (rlError) {
           console.warn('[AUTH] Rate limit check failed:', rlError.message);
         } else if (allowed === false) {
+          // F4: silently skip sending — the uniform response was already
+          // returned to the client; a 429 here would confirm the account.
           console.warn(`[AUTH] Rate limit exceeded for email: ${email}`);
-          return new Response(
-            JSON.stringify({ error: 'Too many requests. Try again later.' }),
-            { status: 429, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' } }
-          );
+          return;
         }
       } catch (rlEx) {
         console.warn('[AUTH] Rate limit exception:', rlEx);
@@ -263,10 +306,12 @@ serve(async (req) => {
       const resetToken = nanoid(32);
       const tokenHash = await sha256(resetToken);
 
+      // SECURITY (F5): only the SHA-256 hash is persisted — the plaintext
+      // token is never stored, so a DB read/backup leak cannot be replayed.
+      // (Legacy `token` column NULLed + NOT NULL dropped in migration 014.)
       const tokenData = {
         user_id: user.id,
         email,
-        token: resetToken,
         token_hash: tokenHash,
         expires_at: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -305,6 +350,21 @@ serve(async (req) => {
       } catch (emailErr) {
         console.error(`[AUTH] Failed to send password reset email:`, emailErr);
         throw emailErr;
+      }
+      })().catch((bgErr) => {
+        // Errors are logged only — the uniform response was already returned.
+        console.error("[AUTH] Background reset processing failed:", bgErr);
+      });
+
+      // Schedule the background work and keep the isolate alive until it
+      // settles (Supabase Edge runtime). Local dev awaits it instead.
+      const edgeRuntime = (globalThis as {
+        EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+      }).EdgeRuntime;
+      if (edgeRuntime?.waitUntil) {
+        edgeRuntime.waitUntil(backgroundWork);
+      } else {
+        await backgroundWork;
       }
 
       return successResponse;

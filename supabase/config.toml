@@ -9,3 +9,8 @@ verify_jwt = false
 
 [functions.request-password-reset]
 verify_jwt = false
+
+# Cloudinary sends notification webhooks without a Supabase JWT. The function
+# authenticates the raw request with Cloudinary's signed headers instead.
+[functions.cloudinary-webhook]
+verify_jwt = false
