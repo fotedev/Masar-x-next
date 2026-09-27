@@ -276,3 +276,12 @@ promo_assets/**/*.py
 promo_assets/**/*.json
 promo_assets/**/*.png
 promo_assets/story.md
+
+# === Transient local dirs (2026-09-27 root cleanup) ===
+# Dead worktree leftovers (.worktrees/), Expo artifacts created when the CLI
+# runs from the repo root (.expo/), and Kilo's linked worktrees (.kilo/) are
+# all machine-local — before this they surfaced as ~100 fake untracked files
+# in the IDE's Source Control panel.
+.worktrees/
+.expo/
+.kilo/
