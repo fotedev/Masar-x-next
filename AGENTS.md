@@ -40,3 +40,14 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | [09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md) | MVP Lock full text (delete on lift) |
 | [10-spec-first.md](./docs/agents/references/10-spec-first.md) | Spec-First standard, spec anatomy |
 | [11-git-standards.md](./docs/agents/references/11-git-standards.md) | Conventional Commits, PR rules, branch isolation & multi-agent safety (I14) |
+
+---
+
+## Active specs (planning)
+
+| Spec | Plan | Status |
+|---|---|---|
+| [015-consolidate-shared-abstractions](./specs/015-consolidate-shared-abstractions/spec.md) | [plan.md](./specs/015-consolidate-shared-abstractions/plan.md) | Ready for `/speckit.tasks` — refactor blocked by MVP Lock (I12) pending owner lift |
+
+<!-- SPECKIT START -->
+<!-- SPECKIT END -->
