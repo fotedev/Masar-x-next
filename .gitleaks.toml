@@ -141,4 +141,18 @@ paths = [
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
   '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
+
+  # 2026-09-29 Turbopack build-cache false positive (PRs #63/#64):
+  # `gitleaks-artifacts` failed with `facebook-page-access-token`
+  # (entropy 3.42) inside RocksDB SST binaries at
+  # `apps/web/.next/cache/turbopack/<ver>/*.sst` — a different SST file
+  # per build (00000004.sst on #63, 00000007.sst on #64), so pinning an
+  # exact value is futile. Entire `cache/` is gitignored build cache,
+  # regenerated on every build and never shipped, while the shipped
+  # bundles (`.next/static/`, `.next/server/`) stay scanned — the T015
+  # artifact-scan contract is preserved. Decided with owner 2026-09-29
+  # (option ب, full `cache/` scope; SST churn makes value-pinning
+  # pointless). Surfaced when `main` switched the default build to
+  # Turbopack; the pre-Turbopack pipeline never produced these files.
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]cache[/\\]''',
 ]
