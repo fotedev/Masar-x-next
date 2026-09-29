@@ -48,6 +48,7 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | Spec | Plan | Status |
 |---|---|---|
 | [015-consolidate-shared-abstractions](./specs/015-consolidate-shared-abstractions/spec.md) | [plan.md](./specs/015-consolidate-shared-abstractions/plan.md) | Ready for `/speckit.tasks` — refactor blocked by MVP Lock (I12) pending owner lift |
+| [026-tailwind-v4-upgrade](./specs/026-tailwind-v4-upgrade/spec.md) | — | Draft — Tailwind v3→v4 (Oxide) upgrade; MVP Lock explicitly lifted for this track (owner, 2026-09-29); awaiting owner spec approval → `/speckit.plan` |
 
 <!-- SPECKIT START -->
 <!-- SPECKIT END -->
