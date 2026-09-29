@@ -55,6 +55,30 @@ updates:
       # mobile typecheck + expo export. Handled via the SDK upgrade spec.
       - dependency-name: react-native
         versions: ["> 0.74.5"]
+      # react-dom past 19.2.4 is held (2026-09-29, reversible): apps/web pins
+      # react AND react-dom to exactly 19.2.4, and the minor-and-patch group
+      # bumped only react-dom (PR #68), producing react 19.2.4 + react-dom
+      # 19.3.0 — "Incompatible React versions" across 34 vitest suites. The
+      # pair moves together in a dedicated React upgrade, never via autodrift.
+      - dependency-name: react-dom
+        versions: ["> 19.2.4"]
+      # @types/react-dom tracks the held react-dom runtime (types for 19.3
+      # would describe APIs the pinned 19.2.4 does not have).
+      - dependency-name: "@types/react-dom"
+        versions: [">= 19.3.0"]
+      # katex >= 0.17 is held (2026-09-29, reversible): react-katex@3.1.0
+      # hard-depends on katex ^0.16.0, so a 0.18.x bump (PR #68) yields a
+      # skewed duplicate KaTeX install (fonts/CSS version mismatch). katex
+      # moves together with a react-katex replacement decision, not solo.
+      - dependency-name: katex
+        versions: [">= 0.17.0"]
+      # dotlottie-react >= 0.19 is held (2026-09-29, reversible): the
+      # apps/web postinstall race-condition fix (scripts/apply-lottie-patch.mjs)
+      # matches only 0.18.x minified bundles — on 0.19.x it exits 0 without
+      # patching and the "Failed to load animation with id: Main Scene" worker
+      # race returns silently. Re-derive the patch for 0.19.x first, then lift.
+      - dependency-name: "@lottiefiles/dotlottie-react"
+        versions: [">= 0.19.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
