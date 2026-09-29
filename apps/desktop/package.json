@@ -24,6 +24,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "electron-log": "^5",
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
