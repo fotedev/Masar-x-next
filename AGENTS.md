@@ -48,7 +48,7 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | Spec | Plan | Status |
 |---|---|---|
 | [015-consolidate-shared-abstractions](./specs/015-consolidate-shared-abstractions/spec.md) | [plan.md](./specs/015-consolidate-shared-abstractions/plan.md) | Ready for `/speckit.tasks` — refactor blocked by MVP Lock (I12) pending owner lift |
-| [026-tailwind-v4-upgrade](./specs/026-tailwind-v4-upgrade/spec.md) | [plan.md](./specs/026-tailwind-v4-upgrade/plan.md) | Implemented (C1–C5, all automated gates green, Tailwind 4.3.3) — owner visual QA (T028 §5/§5.1) pending; MVP Lock explicitly lifted for this track (owner, 2026-09-29) |
+| [026-tailwind-v4-upgrade](./specs/026-tailwind-v4-upgrade/spec.md) | [plan.md](./specs/026-tailwind-v4-upgrade/plan.md) | Implemented + visual QA green (Tailwind 4.3.3, CSS −37%) — **PR #65 open**; MVP Lock explicitly lifted for this track (owner, 2026-09-29) |
 
 <!-- SPECKIT START -->
 - [026-tailwind-v4-upgrade](./specs/026-tailwind-v4-upgrade/plan.md) — Tailwind v3→v4 (Oxide) upgrade: research D1–D15, data-model, class-name contract, quickstart, atomic plan C1–C5, tasks T001–T029
