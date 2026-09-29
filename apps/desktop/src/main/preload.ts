@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
+import { masarxDesktopApi, type DesktopUpdateAvailableInfo } from '@masarx-shared/types/desktop-bridge';
 
 // ============================================================================
 // preload.ts — runs in an isolated world with Node access, but the renderer's
@@ -14,6 +15,12 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
 //   - The renderer can only `invoke` handlers we register in main via
 //     ipcMain.handle. The renderer cannot reach the file system, network,
 //     or any other Node API directly.
+//
+// Spec 015: the canonical `api` literal now lives in
+// packages/shared/src/types/desktop-bridge.ts so the web renderer's
+// type view can never drift from the preload's wire shape. The local
+// `api` below is built from the same shape with real electron-bound
+// implementations replacing the stubbed callbacks.
 // ============================================================================
 
 type Unsubscribe = () => void;
@@ -56,8 +63,8 @@ const api = {
       ipcRenderer.invoke('updates:installAndRestart'),
     skip: (version: string): Promise<void> =>
       ipcRenderer.invoke('updates:skip', version),
-    onAvailable: (cb: (info: unknown) => void): Unsubscribe =>
-      subscribe<unknown>('updates:available', cb),
+    onAvailable: (cb: (info: DesktopUpdateAvailableInfo) => void): Unsubscribe =>
+      subscribe<DesktopUpdateAvailableInfo>('updates:available', cb),
     // B4 (audit 2026-09-12) — main broadcasts `updates:error` (see
     // updater.ts:424) but the renderer-facing subscription was missing
     // here. UpdateToast.tsx was calling `updates.onError(...)` and
@@ -65,6 +72,13 @@ const api = {
     // updater.ts: `{ message: err.message }`.
     onError: (cb: (info: { message: string }) => void): Unsubscribe =>
       subscribe<{ message: string }>('updates:error', cb),
+    // SC-002 fixture (spec 015) — added here BECAUSE the shared module's
+    // satisfies constraint forced this file to expose every bridge method.
+    // Without the dedup this method could land in one file and silently
+    // miss the other (the 2026-09-12 B4 audit toast-crash bug class).
+    onInstallProgress: (
+      cb: (stage: 'extracting' | 'replacing' | 'restarting') => void,
+    ): Unsubscribe => subscribe<{ stage: 'extracting' | 'replacing' | 'restarting' }>('updates:installProgress', ({ stage }) => cb(stage)),
   },
   // T040–T043 (spec 005 US3): frameless titlebar window controls. The
   // renderer exposes a thin surface that matches the optional
@@ -86,8 +100,6 @@ const api = {
     onMaximizeChange: (cb: (isMaximized: boolean) => void): Unsubscribe =>
       subscribe<boolean>('window:maximizeStateChanged', cb),
   },
-} as const;
+} as const satisfies typeof masarxDesktopApi;
 
 contextBridge.exposeInMainWorld('masarxDesktop', api);
-
-export type MasarxDesktopApi = typeof api;
