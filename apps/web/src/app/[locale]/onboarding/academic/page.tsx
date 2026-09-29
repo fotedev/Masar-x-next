@@ -138,7 +138,7 @@ export default function AcademicOnboardingPage() {
               name="level"
               value={level}
               onChange={(e) => setLevel(Number(e.target.value))}
-              className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
+              className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-hidden transition-all"
             >
               <option value={1}>{t("academic.level1")}</option>
               <option value={2}>{t("academic.level2")}</option>
@@ -159,7 +159,7 @@ export default function AcademicOnboardingPage() {
               name="semester"
               value={semester}
               onChange={(e) => setSemester(Number(e.target.value))}
-              className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition-all"
+              className="w-full px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-hidden transition-all"
             >
               <option value={1}>{t("academic.term1")}</option>
               <option value={2}>{t("academic.term2")}</option>

@@ -12,7 +12,7 @@ export const Card = ({
 }: CardProps) => {
     return (
       <div
-        className={`rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm ${className}`}
+        className={`rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-xs ${className}`}
         {...props}
       >
         {children}

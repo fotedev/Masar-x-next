@@ -99,7 +99,7 @@ export function AdminDataTable<T>({
   renderActions,
 }: AdminDataTableProps<T>) {
   return (
-    <section className="overflow-hidden rounded-xl border border-ax-edge bg-ax-surface shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-ax-edge bg-ax-surface shadow-xs">
       <div className="flex flex-col gap-3 border-b border-ax-edge p-4 sm:flex-row sm:items-center sm:justify-between">
         <label className="relative flex w-full items-center sm:max-w-xs">
           <span className="sr-only">{searchLabel}</span>
@@ -112,14 +112,14 @@ export function AdminDataTable<T>({
             value={searchValue}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder={searchPlaceholder}
-            className="h-11 w-full rounded-md border border-ax-edge bg-ax-canvas ps-9 pe-3 text-sm text-ax-primary outline-none transition-colors duration-150 placeholder:text-ax-muted focus-visible:border-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
+            className="h-11 w-full rounded-md border border-ax-edge bg-ax-canvas ps-9 pe-3 text-sm text-ax-primary outline-hidden transition-colors duration-150 placeholder:text-ax-muted focus-visible:border-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
           />
         </label>
 
         <button
           type="button"
           onClick={onAction}
-          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-hidden transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
         >
           <Plus aria-hidden="true" className="h-4 w-4" />
           {actionLabel}
@@ -172,7 +172,7 @@ export function AdminDataTable<T>({
                       <button
                         type="button"
                         onClick={() => onEmptyAction?.()}
-                        className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
+                        className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-hidden transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
                       >
                         <Plus aria-hidden="true" className="h-4 w-4" />
                         {emptyActionLabel}

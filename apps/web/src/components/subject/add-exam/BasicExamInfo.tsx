@@ -40,7 +40,7 @@ export function BasicExamInfo({
             onChange={(e) =>
               setExamFormData((p) => ({ ...p, title: e.target.value }))
             }
-            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold text-gray-900 dark:text-white"
+            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold text-gray-900 dark:text-white"
           />
         </div>
         <div>
@@ -61,7 +61,7 @@ export function BasicExamInfo({
                 durationMinutes: e.target.value,
               }))
             }
-            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold text-gray-900 dark:text-white"
+            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold text-gray-900 dark:text-white"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ export function BasicExamInfo({
               !examFormData.year ||
               availableExamDepartments.length === 0
             }
-            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50"
+            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50"
           >
             <option value="" disabled>
               {tSubjectPage("exam.departmentPlaceholder")}
@@ -120,7 +120,7 @@ export function BasicExamInfo({
               }))
             }
             disabled={academicOptionsLoading || levels.length === 0}
-            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50"
+            className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold text-gray-900 dark:text-white disabled:opacity-50"
           >
             <option value="" disabled>
               {tSubjectPage("exam.yearPlaceholder")}

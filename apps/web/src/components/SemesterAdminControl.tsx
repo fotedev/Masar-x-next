@@ -93,7 +93,7 @@ export function SemesterAdminControl() {
                 index > 0 ? "ml-0.5" : ""
               } ${
                 value === semester
-                  ? "bg-blue-600 text-white shadow-sm scale-105"
+                  ? "bg-blue-600 text-white shadow-xs scale-105"
                   : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
               }`}
             >

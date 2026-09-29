@@ -43,7 +43,7 @@ export function DashboardHero({
       >
         <button
           onClick={onBackToSubjects}
-          className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
+          className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-xs"
         >
           <ArrowRight
             className={`w-5 h-5 ${isRTL ? "" : "rotate-180"} group-hover:-translate-x-1 transition-transform duration-300`}
@@ -56,7 +56,7 @@ export function DashboardHero({
         variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
         className="modern-card p-4 sm:p-10 relative overflow-hidden group shadow-2xl shadow-brand-blue/5 border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem]"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-transparent to-brand-orange/5 opacity-50" />
+        <div className="absolute inset-0 bg-linear-to-br from-brand-blue/5 via-transparent to-brand-orange/5 opacity-50" />
         <div className="absolute -top-24 -left-24 w-64 h-64 sm:w-96 sm:h-96 bg-brand-blue/10 rounded-full blur-[80px] sm:blur-[100px]" />
         <div className="absolute -bottom-24 -right-24 w-64 h-64 sm:w-96 sm:h-96 bg-brand-orange/10 rounded-full blur-[80px] sm:blur-[100px]" />
 
@@ -72,7 +72,7 @@ export function DashboardHero({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 dark:text-brand-blue-light text-[10px] sm:text-xs font-black shadow-sm ring-1 ring-brand-blue/20"
+                  className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 dark:text-brand-blue-light text-[10px] sm:text-xs font-black shadow-xs ring-1 ring-brand-blue/20"
                 >
                   <GraduationCap className="w-4 h-4" />
                   <motion.span layout>
@@ -158,7 +158,7 @@ export function DashboardHero({
                   <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">
                     {tSubjectPage("scheduleTitle")}
                   </span>
-                  <div className="flex items-center gap-2 sm:gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-base sm:text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center gap-2 sm:gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-base sm:text-lg shadow-xs border border-slate-200/50 dark:border-slate-700/50">
                     <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-brand-blue" />
                     {dashboardData.schedule}
                   </div>
@@ -167,7 +167,7 @@ export function DashboardHero({
                   <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">
                     {tSubjectPage("locationTitle")}
                   </span>
-                  <div className="flex items-center gap-2 sm:gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-base sm:text-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center gap-2 sm:gap-3 text-slate-700 dark:text-slate-200 font-black bg-slate-100 dark:bg-slate-800 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-base sm:text-lg shadow-xs border border-slate-200/50 dark:border-slate-700/50">
                     <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-brand-orange" />
                     {dashboardData.nextLecture}
                   </div>

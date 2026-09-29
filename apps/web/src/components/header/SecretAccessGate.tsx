@@ -97,7 +97,7 @@ export const SecretAccessGate: FC<SecretAccessGateProps> = ({
               value={accessKey}
               onChange={(e) => setAccessKey(e.target.value)}
               placeholder="Input key"
-              className="bg-slate-100 dark:bg-white/5 border-none rounded-lg px-3 py-2 text-sm w-full focus:ring-1 focus:ring-red-500 transition-all outline-none text-start"
+              className="bg-slate-100 dark:bg-white/5 border-none rounded-lg px-3 py-2 text-sm w-full focus:ring-1 focus:ring-red-500 transition-all outline-hidden text-start"
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && verifyAccessKey()}
             />

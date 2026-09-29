@@ -142,7 +142,7 @@ export function Sidebar({
             onClick={() => actions.setMobileOpen(false)}
             aria-label={t("shell.closeNavigation")}
             className={cn(
-              "ms-auto flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+              "ms-auto flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
               focusRing,
             )}
           >
@@ -190,7 +190,7 @@ export function Sidebar({
                     tabIndex={0}
                     aria-label={`${displayName} (${roleLabel})`}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-md outline-none",
+                      "flex h-11 w-11 items-center justify-center rounded-md outline-hidden",
                       focusRing,
                     )}
                     {...triggerProps}
@@ -219,7 +219,7 @@ export function Sidebar({
                     onClick={switchLocale}
                     aria-label={t("shell.language")}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
                       focusRing,
                     )}
                     {...triggerProps}
@@ -239,7 +239,7 @@ export function Sidebar({
                     aria-label={t("shell.toggleTheme")}
                     aria-pressed={theme === "dark"}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
                       focusRing,
                     )}
                     {...triggerProps}
@@ -259,7 +259,7 @@ export function Sidebar({
                     onClick={() => router.push("/")}
                     aria-label={t("shell.viewSite")}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
                       focusRing,
                     )}
                     {...triggerProps}
@@ -280,7 +280,7 @@ export function Sidebar({
                     }}
                     aria-label={t("shell.signOut")}
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-danger outline-none transition-colors duration-150 hover:bg-ax-danger-soft",
+                      "flex h-11 w-11 items-center justify-center rounded-md text-ax-danger outline-hidden transition-colors duration-150 hover:bg-ax-danger-soft",
                       focusRing,
                     )}
                     {...triggerProps}
@@ -317,7 +317,7 @@ export function Sidebar({
                 onClick={switchLocale}
                 aria-label={t("shell.language")}
                 className={cn(
-                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-none transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
+                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-hidden transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
                   focusRing,
                 )}
               >
@@ -337,7 +337,7 @@ export function Sidebar({
                 aria-label={t("shell.toggleTheme")}
                 aria-pressed={theme === "dark"}
                 className={cn(
-                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-none transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
+                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-hidden transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
                   focusRing,
                 )}
               >
@@ -355,7 +355,7 @@ export function Sidebar({
                 type="button"
                 onClick={() => router.push("/")}
                 className={cn(
-                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-none transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
+                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-secondary outline-hidden transition-colors duration-150 ease-ax-standard hover:bg-ax-surface-hover hover:text-ax-primary",
                   focusRing,
                 )}
               >
@@ -372,7 +372,7 @@ export function Sidebar({
                   await signOut();
                 }}
                 className={cn(
-                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-danger outline-none transition-colors duration-150 ease-ax-standard hover:bg-ax-danger-soft",
+                  "group mx-1 flex h-11 w-[calc(100%-0.5rem)] items-center gap-3 rounded-md px-3 text-sm font-medium text-ax-danger outline-hidden transition-colors duration-150 ease-ax-standard hover:bg-ax-danger-soft",
                   focusRing,
                 )}
               >
@@ -392,7 +392,7 @@ export function Sidebar({
               rail ? t("shell.expandSidebar") : t("shell.collapseSidebar")
             }
             className={cn(
-              "flex h-11 items-center justify-center gap-2 rounded-md text-xs font-medium text-ax-secondary outline-none",
+              "flex h-11 items-center justify-center gap-2 rounded-md text-xs font-medium text-ax-secondary outline-hidden",
               "transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
               focusRing,
               rail ? "w-11" : "mx-1 w-[calc(100%-0.5rem)]",

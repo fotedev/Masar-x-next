@@ -80,7 +80,7 @@ export function LectureHero(props: {
           }}
           className="relative overflow-hidden rounded-3xl sm:rounded-[3rem] bg-slate-900 text-white min-h-[250px] sm:min-h-[350px] flex items-center shadow-2xl shadow-brand-blue/20"
         >
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-brand-blue/20 to-transparent" />
+          <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-brand-blue/20 to-transparent" />
           <div className="relative z-10 w-full p-8 sm:p-12 lg:p-16 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
             <motion.div layout className="lg:col-span-8 space-y-4">
               <motion.div

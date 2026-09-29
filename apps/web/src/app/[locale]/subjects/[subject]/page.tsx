@@ -390,7 +390,7 @@ export default function SubjectPage() {
   // Desktop surface — spec 005 study workspace (FR-001).
   // One window: lecture list / reader / assistant side by side.
   // The wrapper guarantees the workspace fills the available height below
-  // the chrome; `flex-1` survives the outer Layout `flex-grow` so the
+  // the chrome; `flex-1` survives the outer Layout `grow` so the
   // page never overflows the viewport. `min-h-0` lets the flex chain
   // shrink past its content height (per spec 005 acceptance #1).
   if (isDesktop) {

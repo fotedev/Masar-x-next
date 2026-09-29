@@ -27,7 +27,7 @@ export function SummaryCard({
   const canDelete = user && (isAdmin || summary.user_id === user.id);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 transition-colors">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 border border-gray-100 dark:border-gray-700 transition-colors">
       <div className="flex flex-col gap-2 md:flex-row md:justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">

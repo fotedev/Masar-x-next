@@ -182,7 +182,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
       role="navigation"
       aria-label={tNav("primaryNavAria")}
       className={
-        "flex h-full flex-shrink-0 flex-col border-border bg-card transition-[width] duration-200 ease-out " +
+        "flex h-full shrink-0 flex-col border-border bg-card transition-[width] duration-200 ease-out " +
         "border-e " +
         (collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH)
       }
@@ -258,7 +258,7 @@ export function DesktopSidebar(): React.JSX.Element | null {
           className={
             "flex h-9 w-full items-center gap-3 rounded-lg px-3 text-xs font-medium " +
             "text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground " +
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           }
         >
           <span className="flex h-4 w-4 shrink-0 items-center justify-center">

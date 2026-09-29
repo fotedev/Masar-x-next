@@ -34,7 +34,7 @@ export function QuizDashboardFilters({
   t,
 }: QuizDashboardFiltersProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-x-3 gap-y-3">
           <div className="md:col-span-1">
             <input

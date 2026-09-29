@@ -34,7 +34,7 @@ export function AddFileForm() {
   if (authLoading) {
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center">
           <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto" />
         </div>
       </div>
@@ -44,7 +44,7 @@ export function AddFileForm() {
   if (!isAdmin) {
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center">
           <p className="text-red-500 font-bold">{t("adminOnly")}</p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AddFileForm() {
   if (state?.success) {
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center transition-colors">
           <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("success")}
@@ -69,7 +69,7 @@ export function AddFileForm() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 sm:p-6 lg:p-8 transition-colors">
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
             {t("title")}

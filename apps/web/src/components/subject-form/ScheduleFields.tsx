@@ -38,7 +38,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
               (prev) => ({ ...prev, schedule: e.target.value }) as TFormData,
             )
           }
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-hidden"
           placeholder={t("schedulePlaceholder")}
         />
       </div>
@@ -60,7 +60,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
               (prev) => ({ ...prev, location: e.target.value }) as TFormData,
             )
           }
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-hidden"
           placeholder={t("locationPlaceholder")}
         />
       </div>
@@ -85,7 +85,7 @@ export function ScheduleFields<TFormData extends ScheduleShape>({
                 }) as TFormData,
             )
           }
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-none min-h-[100px]"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-hidden min-h-[100px]"
           placeholder={t("descriptionPlaceholder")}
         />
       </div>

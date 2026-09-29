@@ -22,7 +22,7 @@ export function ReviewItem({
 }: ReviewItemProps) {
   return (
     <div className="group flex gap-4 p-6 rounded-3xl bg-white dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/50 hover:border-brand-blue/30 transition-colors transition-shadow hover:shadow-xl hover:shadow-brand-blue/5">
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         {review.reviewer_avatar ? (
           <div className="w-12 h-12 relative">
             <Image
@@ -30,7 +30,7 @@ export function ReviewItem({
               alt={review.reviewer_name || "User"}
               fill
               sizes="48px"
-              className="rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-sm"
+              className="rounded-2xl object-cover border-2 border-white dark:border-slate-800 shadow-xs"
               unoptimized
             />
           </div>
@@ -40,7 +40,7 @@ export function ReviewItem({
           </div>
         )}
       </div>
-      <div className="flex-grow">
+      <div className="grow">
         <div className="flex items-center justify-between mb-2">
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white text-base">
@@ -57,7 +57,7 @@ export function ReviewItem({
           {(isAdmin || (user && user.id === review.user_id)) && (
             <button
               onClick={() => review.id && onDelete(review.id)}
-              className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
+              className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors focus-visible:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/30"
               title="حذف المراجعة"
               aria-label="حذف المراجعة"
               type="button"

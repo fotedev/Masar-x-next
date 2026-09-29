@@ -301,7 +301,7 @@ export const AdminAnalyticsPage = () => {
           type="button"
           onClick={loadAnalytics}
           className={cn(
-            "inline-flex h-11 items-center justify-center rounded-lg bg-ax-accent px-5 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover",
+            "inline-flex h-11 items-center justify-center rounded-lg bg-ax-accent px-5 text-sm font-semibold text-ax-on-accent outline-hidden transition-colors duration-150 hover:bg-ax-accent-hover",
             focusRing,
           )}
         >

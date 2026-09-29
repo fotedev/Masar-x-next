@@ -45,10 +45,10 @@ export function CoursesEnrollmentsView({
             aria-selected={view === v.id}
             onClick={() => setView(v.id)}
             className={cn(
-              "flex h-11 min-w-[96px] items-center justify-center rounded-md px-4 text-sm font-medium outline-none transition-colors",
+              "flex h-11 min-w-[96px] items-center justify-center rounded-md px-4 text-sm font-medium outline-hidden transition-colors",
               "focus-visible:ring-2 focus-visible:ring-blue-500",
               view === v.id
-                ? "bg-white text-blue-600 shadow-sm dark:bg-gray-800 dark:text-blue-400"
+                ? "bg-white text-blue-600 shadow-xs dark:bg-gray-800 dark:text-blue-400"
                 : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200",
             )}
           >

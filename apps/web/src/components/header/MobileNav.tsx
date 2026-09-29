@@ -140,7 +140,7 @@ export function MobileNav({
                   className="object-contain w-9 h-9"
                 />
                 <div className="flex flex-col">
-                  <span className="text-lg font-black tracking-tight bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 dark:from-blue-400 dark:via-cyan-300 dark:to-sky-300 bg-clip-text text-transparent">
+                  <span className="text-lg font-black tracking-tight bg-linear-to-r from-blue-600 via-cyan-500 to-sky-400 dark:from-blue-400 dark:via-cyan-300 dark:to-sky-300 bg-clip-text text-transparent">
                     {tMobileNav("brand")}
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
@@ -153,7 +153,7 @@ export function MobileNav({
                 onClick={() => setIsMobileMenuOpen(false)}
                 type="button"
                 aria-label={tMobileNav("closeMenuAriaLabel")}
-                className="flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all focus:outline-none"
+                className="flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all focus:outline-hidden"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -164,8 +164,8 @@ export function MobileNav({
               {/* User Profile / Greeting Card */}
               <motion.div variants={itemVariants}>
                 {user ? (
-                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-900/80 dark:to-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
+                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-linear-to-br from-slate-100 to-slate-50 dark:from-slate-900/80 dark:to-slate-900/40 border border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+                    <div className="w-11 h-11 rounded-2xl bg-linear-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
                       <div className="w-full h-full rounded-[14px] bg-white dark:bg-slate-950 flex items-center justify-center text-blue-600 dark:text-cyan-400 font-black text-lg">
                         {user.email?.[0]?.toUpperCase() || "U"}
                       </div>
@@ -180,7 +180,7 @@ export function MobileNav({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-600/10 via-cyan-500/5 to-transparent border border-cyan-500/20 dark:border-cyan-500/10">
+                  <div className="p-4 rounded-2xl bg-linear-to-br from-blue-600/10 via-cyan-500/5 to-transparent border border-cyan-500/20 dark:border-cyan-500/10">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white mb-1">
                       {tMobileNav("welcomeHeading")}
                     </h3>
@@ -243,7 +243,7 @@ export function MobileNav({
                       onClick={() => handleNavigate("non-academic")}
                       className={`group relative flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-extrabold transition-all duration-200 ${
                         isMounted && currentPage === "non-academic"
-                          ? "bg-gradient-to-r from-purple-500/15 to-transparent text-purple-600 dark:text-purple-400 border-s-4 border-purple-500 font-black"
+                          ? "bg-linear-to-r from-purple-500/15 to-transparent text-purple-600 dark:text-purple-400 border-s-4 border-purple-500 font-black"
                           : "text-slate-600 dark:text-[#a1a1aa] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
                       } active:scale-[0.98]`}
                       type="button"
@@ -322,7 +322,7 @@ export function MobileNav({
                   <div className="flex flex-col gap-2.5">
                     <button
                       onClick={() => handleNavigate("signup")}
-                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-black bg-gradient-to-r from-blue-600 to-cyan-500 text-primary-foreground shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:opacity-95 active:scale-[0.98] transition-all"
+                      className="flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-2xl text-sm font-black bg-linear-to-r from-blue-600 to-cyan-500 text-primary-foreground shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:opacity-95 active:scale-[0.98] transition-all"
                       type="button"
                     >
                       <UserPlus className="w-5 h-5" />
