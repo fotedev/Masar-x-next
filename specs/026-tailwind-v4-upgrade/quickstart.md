@@ -49,6 +49,18 @@ git diff --stat main...HEAD -- . ':!apps/web' | wc -l    # must be 0 (FR-010 sco
 | Admin shell (drawer, tooltip, badge-pop) | ☐ | ☐ | ☐ | ☐ |
 | Desktop shell (custom titlebar, assistant panel) | ☐ | ☐ | ☐ | ☐ |
 
+### 5.1 Bare-border computed check (finding A1)
+
+Confirm via DevTools computed styles (or an automated probe) that `border-color` on three representative bare-`border` samples still resolves to gray-200 — `rgb(229, 231, 235)` — in light mode, never `currentColor`:
+
+| Sample | Where to look | Expected computed border-color |
+|---|---|---|
+| Card | any card element styled with a bare `border` utility | `rgb(229, 231, 235)` |
+| Input | a form input styled with a bare `border` utility | `rgb(229, 231, 235)` |
+| Divider | a `divide-y` list container (child border) | `rgb(229, 231, 235)` |
+
+A sample computing to `currentColor` means the v3-defaults restoration layer (research D2) is not applied — block merge until fixed.
+
 ## 6. CSS size comparison (SC-005)
 
 ```bash

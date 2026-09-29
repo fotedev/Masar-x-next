@@ -71,7 +71,7 @@
 - [ ] T012 [US2] In apps/web/src/index.css `@theme` add `--spacing-18/88/128` + `--spacing-ax-sidebar: var(--ax-space-sidebar)` + `--spacing-ax-sidebar-collapsed: var(--ax-space-sidebar-collapsed)`, `--shadow-ax-sm/md/lg: var(--ax-shadow-*)`, `--ease-ax-standard: var(--ax-ease-standard)`, `--animate-wiggle` + `--animate-ping-slow` with `@keyframes wiggle` defined INSIDE `@theme` (research D7–D9)
 - [ ] T013 [US2] In apps/web/src/index.css add static `@utility z-header/sidebar/modal/popover/toast/tooltip { z-index: 40/45/50/55/60/70 }` and `@utility duration-ax-fast/base/slow { transition-duration: var(--ax-dur-*) }` — NO namespaces exist for these in v4.3 (research D3/D4)
 - [ ] T014 [US2] Remove the `@config` line from apps/web/src/index.css and retire the JS config with `git rm apps/web/tailwind.config.js` (approved-deletion path, I9)
-- [ ] T015 [US2] Verify C2 gate (commit C2): build green; devtools spot-checks of identical computed values for `bg-ax-accent-soft/50` (alpha via color-mix), `text-brand-navy`, `tablet:` breakpoint, `text-5xl` line-height 1, `w-ax-sidebar`, `shadow-ax-md`, `animate-ping-slow` (ping keyframes present — fallback research D9), `ease-ax-standard`, `z-popover`, `duration-ax-fast`; `ls apps/web/tailwind.config.js` fails
+- [ ] T015 [US2] Verify C2 gate (commit C2): build green; devtools spot-checks of identical computed values for `bg-ax-accent-soft/50` (alpha via color-mix), `text-brand-navy`, `tablet:` breakpoint, `text-5xl` line-height 1, `w-ax-sidebar`, `shadow-ax-md`, `animate-ping-slow` (ping keyframes present — fallback research D9), `ease-ax-standard`, `z-popover`, `duration-ax-fast`; `ls apps/web/tailwind.config.js` fails; confirm the compiled CSS wraps `hover-device` utilities in `@media (any-hover: hover)` (the adopted variant expression — no degradation to a bare `:hover` that would break touch tablets) (finding C1)
 
 **Checkpoint**: CSS-first theme complete — `tailwind.config.js` gone, all 223 consumer files untouched.
 
@@ -113,7 +113,7 @@
 **Independent Test** (spec US4): all four gate commands green + parity matrix complete.
 
 - [ ] T027 [US4] Run the full gate suite: `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web test:e2e` (SC-003); run the FR-010 scope check `git diff --stat main...HEAD -- . ':(exclude)apps/web' ':(exclude)specs' ':(exclude)AGENTS.md'` and confirm 0 lines (SC-006)
-- [ ] T028 [US4] Produce the SC-005 comparison (compiled CSS size v3 from T002 vs v4) and complete the quickstart.md §5 parity matrix (dark/light × ar/en on home, subject, quiz, chat, admin, desktop shell); assemble the PR evidence table (baseline counts, greps, sizes, matrix)
+- [ ] T028 [US4] Produce the SC-005 comparison (compiled CSS size v3 from T002 vs v4) and complete the quickstart.md §5 parity matrix (dark/light × ar/en on home, subject, quiz, chat, admin, desktop shell) **including the §5.1 bare-border computed check (3 samples — Card, Input, Divider — `border-color` must remain `rgb(229, 231, 235)` / gray-200, never `currentColor`) (finding A1)**; assemble the PR evidence table (baseline counts, greps, sizes, matrix)
 
 **Checkpoint**: zero-visual-regression claim is evidence-backed.
 

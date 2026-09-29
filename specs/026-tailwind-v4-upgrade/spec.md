@@ -16,7 +16,7 @@
 
 ### User Story 1 - Build pipeline runs on Tailwind v4 (Priority: P1)
 
-apps/web compiles its stylesheet through Tailwind CSS v4.x (Oxide engine) using the PostCSS plugin `@tailwindcss/postcss` and the CSS-first entry `@import "tailwindcss"` in `src/index.css`. The v3 packages (`tailwindcss@^3.4.1`, `autoprefixer`) are removed from `apps/web/package.json`, and `postcss.config.js` references only `@tailwindcss/postcss`. Because v4 changes engine-level defaults (default border color `gray-200` → `currentColor`, default ring width `3px` → `1px`), this story includes a **temporary compat layer** neutralizing those engine deltas so the slice ships with zero visual change; the exact technique (base-layer bridge / `@utility` overrides / early pinning) is decided at plan phase, and Story 3 removes the layer. The existing JS config keeps working during this story through the official `@config` compatibility directive.
+apps/web compiles its stylesheet through Tailwind CSS v4.x (Oxide engine) using the PostCSS plugin `@tailwindcss/postcss` and the CSS-first entry `@import "tailwindcss"` in `src/index.css`. The v3 packages (`tailwindcss@^3.4.1`, `autoprefixer`) are removed from `apps/web/package.json`, and `postcss.config.js` references only `@tailwindcss/postcss`. Because v4 changes engine-level defaults (default border color `gray-200` → `currentColor`, default ring width `3px` → `1px`), this story introduces the **permanent engine-default restoration layer** (the compat layer) neutralizing those engine deltas — decided at plan phase per research D2 with the official v4 recipes (`@layer base` border-color rule + `@theme` `--default-ring-*`). The layer is a **permanent part of the stylesheet**: it is never removed, because removing it would re-expose the ~350 bare-border sites to the `currentColor` change. Story 3 does NOT remove it — it only pins explicit `ring-N` values at the bare-ring sites for determinism. The existing JS config keeps working during this story through the official `@config` compatibility directive.
 
 **Why this priority**: the engine swap is the foundation every later story compiles against; with the `@config` bridge + compat layer it is a zero-visual-change slice that can be merged alone.
 
@@ -82,7 +82,7 @@ All renamed/behavior-changed utilities are migrated to v4 spellings with v3-equi
 
 The sweep covers **147 dynamic className template literals across 71 files** and class strings held outside components in `src/constants/notifications.ts` and `src/constants/assistantUIStyles.ts`.
 
-**Why this priority**: without the sweep, v4's renamed/changed utilities silently change the UI; it must land with or before the compat-layer removal from Story 1.
+**Why this priority**: without the sweep, v4's renamed/changed utilities silently change the UI. The Story-1 restoration layer remains permanently (research D2); this story pins explicit `ring-3` (+ color) at the bare-`ring` sites for determinism and leaves the restoration layer standing as the documented default-color contract.
 
 **Independent Test**: targeted greps return zero occurrences of the v3-only spellings, and the spot-check pages render identically to the v3 baseline screenshots.
 
