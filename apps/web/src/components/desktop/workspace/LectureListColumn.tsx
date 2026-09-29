@@ -53,7 +53,7 @@ export function LectureListColumn({
       style={{ overflowY: "auto", scrollbarGutter: "stable" }}
       aria-label={t("sidebar.aria", { subject: subjectName })}
     >
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           {t("sidebar.heading")}
         </p>
@@ -72,7 +72,7 @@ export function LectureListColumn({
                 role="option"
                 aria-selected={isActive}
                 onClick={() => onSelect(lecture.id)}
-                className={`flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-start transition-colors hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${
                   isActive ? "bg-accent" : ""
                 }`}
               >

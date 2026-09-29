@@ -175,10 +175,10 @@ function NewsPage() {
   return (
     <div className="space-y-6" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-brand-navy to-brand-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-white/10">
+      <div className="bg-linear-to-r from-brand-navy to-brand-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-white/10">
         <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-start">
-            <Newspaper className="w-12 h-12 flex-shrink-0" />
+            <Newspaper className="w-12 h-12 shrink-0" />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                 {t("pageTitle")}
@@ -211,7 +211,7 @@ function NewsPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <label htmlFor="news-search" className="sr-only">
@@ -225,7 +225,7 @@ function NewsPage() {
               placeholder={t("searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full ${locale === 'ar' ? 'pr-12 pl-5' : 'pl-12 pr-5'} py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-none transition-all`}
+              className={`w-full ${locale === 'ar' ? 'pr-12 pl-5' : 'pl-12 pr-5'} py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 outline-hidden transition-all`}
             />
           </div>
         </div>
@@ -448,7 +448,7 @@ function NewsPage() {
       {/* Image Modal (Lightbox) */}
       {selectedImage && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xs p-4 animate-in fade-in duration-300"
           onClick={() => setSelectedImage(null)}
         >
           <button

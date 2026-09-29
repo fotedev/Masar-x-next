@@ -38,7 +38,7 @@ export function QuizFilters({
         </h2>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -54,7 +54,7 @@ export function QuizFilters({
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-start outline-none"
+                className="w-full ps-10 pe-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-start outline-hidden"
               />
             </div>
           </div>
@@ -63,7 +63,7 @@ export function QuizFilters({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "date" | "title")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent dark:bg-gray-700 dark:text-white transition-[border-color,box-shadow,background-color] duration-200 outline-hidden"
             >
               <option value="date">{t("dateOrder")}</option>
               <option value="title">{t("titleOrder")}</option>

@@ -91,7 +91,7 @@ export function DesktopAppBannerClient({
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-gradient-to-r from-slate-50 via-white to-brand-blue/5 dark:from-slate-900 dark:via-slate-900/90 dark:to-brand-blue/10 py-3.5 px-4 sm:px-5 mb-6 sm:mb-8 shadow-sm transition-all duration-300"
+      className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-linear-to-r from-slate-50 via-white to-brand-blue/5 dark:from-slate-900 dark:via-slate-900/90 dark:to-brand-blue/10 py-3.5 px-4 sm:px-5 mb-6 sm:mb-8 shadow-xs transition-all duration-300"
       dir="auto"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
@@ -122,7 +122,7 @@ export function DesktopAppBannerClient({
             <>
               <a
                 href={release.windowsInstaller}
-                className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-3.5 sm:px-4 rounded-xl bg-brand-blue text-white font-bold text-xs sm:text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-sm shadow-brand-blue/20"
+                className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-3.5 sm:px-4 rounded-xl bg-brand-blue text-white font-bold text-xs sm:text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-xs shadow-brand-blue/20"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{translations.primaryCta}</span>
@@ -144,7 +144,7 @@ export function DesktopAppBannerClient({
             <Link
               href="/downloads"
               dir={locale === "ar" ? "rtl" : "ltr"}
-              className="group inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-3.5 sm:px-4 rounded-xl bg-brand-blue text-white font-bold text-xs sm:text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-sm shadow-brand-blue/20"
+              className="group inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-3.5 sm:px-4 rounded-xl bg-brand-blue text-white font-bold text-xs sm:text-sm hover:bg-brand-blue/90 active:scale-[0.97] transition-all shadow-xs shadow-brand-blue/20"
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{translations.allPlatformsCta}</span>

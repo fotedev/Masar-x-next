@@ -58,7 +58,7 @@ export const Header = memo(function Header() {
 
     // rAF-throttled: without this, every scroll pixel fires setState and
     // re-renders the whole header tree (incl. the MobileNav portal) while
-    // also toggling a fullscreen backdrop-blur layer — visible jank.
+    // also toggling a fullscreen backdrop-blur-sm layer — visible jank.
     let rafId = 0;
     const update = () => {
       rafId = 0;
@@ -355,7 +355,7 @@ export const Header = memo(function Header() {
         dir={dir}
         className={`fixed top-0 inset-x-0 z-header transition-all duration-300 h-[72px] pt-[env(safe-area-inset-top)] ${
           isScrolled
-            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm"
+            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs"
             : "bg-transparent"
         }`}
       >
@@ -410,7 +410,7 @@ export const Header = memo(function Header() {
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-nav-drawer"
                 onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className={`lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] hover:bg-white/10 dark:hover:bg-white/10 transition-[background-color,opacity,visibility] duration-200 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+                className={`lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] hover:bg-white/10 dark:hover:bg-white/10 transition-[background-color,opacity,visibility] duration-200 focus:outline-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
                   isMobileMenuOpen
                     ? "invisible pointer-events-none opacity-0"
                     : "visible opacity-100"

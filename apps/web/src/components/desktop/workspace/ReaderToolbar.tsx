@@ -46,7 +46,7 @@ export function ReaderToolbar({
 
   return (
     <div
-      className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur"
+      className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm"
       // Chrome only — selection suppressed (FR-013)
       style={{ userSelect: "none" }}
     >
@@ -79,7 +79,7 @@ export function ReaderToolbar({
               ? `${t("toolbar.highlightTitle")} (coming soon)`
               : t("toolbar.highlightTitle")
           }
-          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("toolbar.highlight")}
         </button>
@@ -89,7 +89,7 @@ export function ReaderToolbar({
           onClick={onDownload}
           disabled={!downloadAvailable}
           title={t("toolbar.downloadTitle")}
-          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("toolbar.download")}
         </button>
@@ -102,7 +102,7 @@ export function ReaderToolbar({
             assistantOpen ? t("toolbar.assistantClose") : t("toolbar.assistantOpen")
           }
           data-masarx-assistant-toggle=""
-          className={`rounded-md px-2 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+          className={`rounded-md px-2 py-1 text-xs font-medium focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring ${
             assistantOpen
               ? "bg-accent text-foreground"
               : "text-foreground hover:bg-accent"

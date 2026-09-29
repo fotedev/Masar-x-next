@@ -112,7 +112,7 @@ export function ChatInput({
   const [isModelOpen, setIsModelOpen] = useState(false);
   const [isPersonaExpanded, setIsPersonaExpanded] = useState(false);
 
-  // Outside-click dismissal: the composer card uses backdrop-blur, which makes it
+  // Outside-click dismissal: the composer card uses backdrop-blur-sm, which makes it
   // the containing block for fixed-position children — viewport-size overlays
   // rendered inside it would only cover the card itself. A document-level
   // pointerdown listener with containment checks is the reliable dismissal.
@@ -268,7 +268,7 @@ export function ChatInput({
               onPaste={handlePaste}
                 placeholder={placeholder}
                 dir={inputMessage ? "auto" : isRTL ? "rtl" : "ltr"}
-              className={`w-full max-h-[160px] bg-transparent border-0 focus:ring-0 outline-none focus:outline-none resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 ${
+              className={`w-full max-h-[160px] bg-transparent border-0 focus:ring-0 outline-hidden focus:outline-hidden resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 ${
                 isInitialState
                   ? "min-h-[52px] sm:min-h-[60px] py-2 px-1 sm:px-1.5 text-base sm:text-lg"
                   : "min-h-[24px] py-1 px-0.5 sm:px-1 text-base"
@@ -504,7 +504,7 @@ export function ChatInput({
                 className={`shrink-0 flex items-center justify-center rounded-full transition-all duration-300 w-9 h-9 sm:w-10 sm:h-10 ${
                   !canSend || isLoading
                     ? "text-slate-400 dark:text-slate-500 bg-slate-200/80 dark:bg-slate-700/60"
-                    : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-500 hover:to-blue-500 hover:shadow-cyan-500/40"
+                    : "bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-500 hover:to-blue-500 hover:shadow-cyan-500/40"
                 }`}
               >
                 {isLoading ? (

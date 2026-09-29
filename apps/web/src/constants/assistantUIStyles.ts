@@ -1,13 +1,13 @@
 export const ASSISTANT_HEADER = {
   container:
-    "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-3xl p-4 sm:p-5 mb-4 border border-slate-200/50 dark:border-slate-700/50 shadow-sm flex items-center justify-between shrink-0 z-10 sticky top-0",
+    "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md rounded-3xl p-4 sm:p-5 mb-4 border border-slate-200/50 dark:border-slate-700/50 shadow-xs flex items-center justify-between shrink-0 z-10 sticky top-0",
   leftSection: "flex items-center gap-4",
   rightSection: "flex items-center gap-1 sm:gap-2",
 };
 
 export const ASSISTANT_AVATAR = {
   container:
-    "w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20",
+    "w-10 h-10 sm:w-12 sm:h-12 bg-linear-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20",
   icon: "w-5 h-5 sm:w-6 sm:h-6 text-white",
 };
 
@@ -29,7 +29,7 @@ export const ASSISTANT_CONTROLS_CONTAINER = {
 };
 
 export const ASSISTANT_MODE_BUTTON = {
-  base: "px-3 py-1.5 text-xs font-bold rounded-xl transition-all text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 hover:shadow-sm",
+  base: "px-3 py-1.5 text-xs font-bold rounded-xl transition-all text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 hover:shadow-xs",
   icon: "sm:hidden flex items-center justify-center",
   iconSvg: "w-4 h-4",
   text: "hidden sm:inline",

@@ -341,13 +341,13 @@ export default function ProfilePage() {
     >
       <div className="modern-card overflow-hidden sm:rounded-3xl border-0 sm:border">
         {/* Header Section */}
-        <div className="bg-gradient-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-12 sm:py-16 text-white relative overflow-hidden">
+        <div className="bg-linear-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-12 sm:py-16 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-sky/10 rounded-full -ml-24 -mb-24 blur-2xl" />
 
           <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
             <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-white/20 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
+              <div className="absolute -inset-1 bg-linear-to-r from-brand-sky to-white/20 rounded-full blur-sm opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200" />
               <AdminProfileImage
                 size="xl"
                 className="bg-white/10 backdrop-blur-md border-4 border-white/20 shadow-2xl relative"
@@ -355,7 +355,7 @@ export default function ProfilePage() {
               />
             </div>
             <div className="flex flex-col gap-2 min-w-0 flex-1">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-sm truncate">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-xs truncate">
                 {displayName}
               </h1>
               <div className="flex items-center justify-center sm:justify-start gap-3">
@@ -378,7 +378,7 @@ export default function ProfilePage() {
                 <button
                   onClick={refreshAdminStatus}
                   disabled={isRefreshingRole}
-                  className="p-2 hover:bg-white/20 rounded-xl transition-all active:scale-90 duration-300 disabled:opacity-60 bg-white/5 border border-white/10 shadow-sm"
+                  className="p-2 hover:bg-white/20 rounded-xl transition-all active:scale-90 duration-300 disabled:opacity-60 bg-white/5 border border-white/10 shadow-xs"
                   title={t("refreshRole")}
                 >
                   <RefreshCw
@@ -431,7 +431,7 @@ export default function ProfilePage() {
                               if (displayNameError) setDisplayNameError(null);
                             }}
                             dir="auto"
-                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-lg"
+                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 text-slate-900 dark:text-white font-bold focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-hidden transition-all text-lg"
                             maxLength={50}
                             autoFocus
                           />
@@ -562,7 +562,7 @@ export default function ProfilePage() {
                       name="level"
                       value={level}
                       onChange={(e) => setLevel(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-hidden disabled:opacity-50"
                       disabled={optionsLoading}
                     >
                       {optionsLoading ? (
@@ -588,7 +588,7 @@ export default function ProfilePage() {
                       name="departmentId"
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none disabled:opacity-50"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-hidden disabled:opacity-50"
                       disabled={optionsLoading}
                     >
                       <option value="">
@@ -626,7 +626,7 @@ export default function ProfilePage() {
                       name="semester"
                       value={semester}
                       onChange={(e) => setSemester(Number(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-none"
+                      className="w-full px-4 py-3 border-2 border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-brand-navy/50 font-bold outline-hidden"
                     >
                       <option value={1}>{t("semester1")}</option>
                       <option value={2}>{t("semester2")}</option>
@@ -667,7 +667,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col gap-4 sm:gap-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
                     <div className="flex items-start sm:items-center gap-3 sm:gap-5 min-w-0">
-                      <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-red-600/10 dark:bg-red-600/20 rounded-2xl flex items-center justify-center shadow-inner">
+                      <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-red-600/10 dark:bg-red-600/20 rounded-2xl flex items-center justify-center shadow-inner">
                         <Zap className="w-7 h-7 text-red-600" />
                       </div>
                       <div className="min-w-0">
@@ -685,7 +685,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between sm:justify-end gap-3">
                       {/* Cooldown indicator */}
                       {isCooldownActive && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-800 ring-1 ring-amber-200/70 shadow-sm dark:bg-amber-900/25 dark:text-amber-200 dark:ring-amber-700/30">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-800 ring-1 ring-amber-200/70 shadow-xs dark:bg-amber-900/25 dark:text-amber-200 dark:ring-amber-700/30">
                           <Clock className="w-3.5 h-3.5" />
                           <span className="text-xs font-black tabular-nums">
                             {formatCooldownTime(cooldownRemaining)}
@@ -699,7 +699,7 @@ export default function ProfilePage() {
                         disabled={isSaving || isCooldownActive}
                         dir={dir}
                         className={`
-                          group relative h-8 w-14 rounded-full outline-none
+                          group relative h-8 w-14 rounded-full outline-hidden
                           transition-all duration-300 ease-in-out
                           focus-visible:ring-2 focus-visible:ring-red-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-brand-navy
                           disabled:cursor-not-allowed disabled:opacity-50

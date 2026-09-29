@@ -56,7 +56,7 @@ export function LectureHomeworkSection(props: {
               show: { opacity: 1, y: 0 },
             }}
             whileHover={{ scale: 1.02, translateY: -4 }}
-            className="p-6 sm:p-8 rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group transition-all duration-500 text-right"
+            className="p-6 sm:p-8 rounded-3xl sm:rounded-[2.5rem] bg-linear-to-br from-brand-orange to-brand-orange-light text-white shadow-lg group transition-all duration-500 text-right"
           >
             <div className="flex justify-between items-start mb-4 sm:mb-6">
               <FileText className="w-8 h-8 sm:w-10 sm:h-10 opacity-40" />

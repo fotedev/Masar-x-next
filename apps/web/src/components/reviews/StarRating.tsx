@@ -35,7 +35,7 @@ export function StarRatingInput({ rating, setRating }: StarRatingInputProps) {
           key={star}
           type="button"
           onClick={() => setRating(star)}
-          className="focus:outline-none transition-transform hover:scale-110"
+          className="focus:outline-hidden transition-transform hover:scale-110"
         >
           <Star
             className={`w-6 h-6 ${

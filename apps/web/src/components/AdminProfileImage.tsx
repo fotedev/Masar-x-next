@@ -113,7 +113,7 @@ export function AdminProfileImage({
         <div
           className={`w-full h-full rounded-full flex items-center justify-center relative overflow-hidden ${
             isAdmin
-              ? "bg-gradient-to-br from-brand-blue to-brand-sky shadow-[0_0_15px_rgba(var(--brand-blue),0.6)] border-2 border-white/20"
+              ? "bg-linear-to-br from-brand-blue to-brand-sky shadow-[0_0_15px_rgba(var(--brand-blue),0.6)] border-2 border-white/20"
               : "bg-slate-200 dark:bg-slate-700"
           } ${
             editable ? "cursor-pointer hover:opacity-90 transition-opacity" : ""
@@ -152,13 +152,13 @@ export function AdminProfileImage({
           )}
 
           {editable && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
               <Camera className="w-6 h-6 text-white" />
             </div>
           )}
 
           {isUploading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
             </div>
           )}

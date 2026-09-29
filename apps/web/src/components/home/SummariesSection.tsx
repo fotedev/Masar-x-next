@@ -93,7 +93,7 @@ export function SummariesSection({
         </div>
       ) : displaySummaries.length === 0 ? (
         <div className="modern-card p-10 sm:p-12 text-center flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/20 border-dashed border-2 border-slate-200 dark:border-slate-800 rounded-[32px]">
-          <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl shadow-sm flex items-center justify-center mb-6 ring-8 ring-slate-50 dark:ring-slate-900/50">
+          <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl shadow-xs flex items-center justify-center mb-6 ring-8 ring-slate-50 dark:ring-slate-900/50">
             <FileText className="w-10 h-10 text-brand-blue opacity-40" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 leading-relaxed">

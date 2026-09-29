@@ -92,7 +92,7 @@ export function WaitlistSignup({
               : "flex items-center gap-2 rounded-lg bg-slate-500/10 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300"
           }
         >
-          <Check className="w-4 h-4 flex-shrink-0" />
+          <Check className="w-4 h-4 shrink-0" />
           <span>{state === "success" ? t("success") : t("duplicate")}</span>
         </p>
       </div>
@@ -123,15 +123,15 @@ export function WaitlistSignup({
           placeholder={resolvedPlaceholder}
           aria-label={resolvedPlaceholder}
           autoComplete="email"
-          className={`w-full ${controlHeight} px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-start focus:outline-none focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition-colors`}
+          className={`w-full ${controlHeight} px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-start focus:outline-hidden focus:ring-2 focus:ring-brand-blue/40 focus:border-brand-blue transition-colors`}
         />
         <button
           type="submit"
           disabled={state === "submitting"}
           className={`w-full ${controlHeight} px-4 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed ${
             isTrw
-              ? "bg-red-600 hover:bg-red-700 shadow-md shadow-red-600/20 focus:outline-none focus:ring-2 focus:ring-red-500/40"
-              : "bg-brand-blue hover:bg-brand-blue/90 shadow-md shadow-brand-blue/20 focus:outline-none focus:ring-2 focus:ring-brand-blue/40"
+              ? "bg-red-600 hover:bg-red-700 shadow-md shadow-red-600/20 focus:outline-hidden focus:ring-2 focus:ring-red-500/40"
+              : "bg-brand-blue hover:bg-brand-blue/90 shadow-md shadow-brand-blue/20 focus:outline-hidden focus:ring-2 focus:ring-brand-blue/40"
           }`}
         >
           {state === "submitting" ? (

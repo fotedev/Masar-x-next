@@ -116,7 +116,7 @@ function AdminShellChrome({
         <main
           id="ax-main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto p-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent sm:p-6"
+          className="flex-1 overflow-y-auto p-4 outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent sm:p-6"
         >
           <div className="ax-content-fade">{children}</div>
         </main>

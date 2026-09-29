@@ -22,7 +22,7 @@ export const NOTIFICATION_STYLES = {
     base: 'p-5 mx-3 my-1 rounded-2xl hover:bg-gray-100/80 dark:hover:bg-white/[0.03] cursor-pointer transition-all duration-300 border border-transparent hover:border-gray-200/50 dark:hover:border-white/5 group relative overflow-hidden',
     unread: 'bg-blue-50/40 dark:bg-blue-500/5 border-blue-100/30 dark:border-blue-400/10',
   },
-  badge: 'absolute -top-1 -right-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg shadow-blue-500/30 border-2 border-white dark:border-gray-900 animate-in zoom-in duration-500',
+  badge: 'absolute -top-1 -right-1 bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg shadow-blue-500/30 border-2 border-white dark:border-gray-900 animate-in zoom-in duration-500',
 } as const;
 
 /**

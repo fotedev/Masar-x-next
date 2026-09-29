@@ -55,7 +55,7 @@ export function QuestionItem({
           }))
         }
         placeholder={tSubjectPage("exam.questionPlaceholder")}
-        className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold mb-4 text-gray-900 dark:text-white"
+        className="w-full px-5 py-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold mb-4 text-gray-900 dark:text-white"
       />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {question.options.map((opt, optIdx) => (
@@ -80,7 +80,7 @@ export function QuestionItem({
               }))
             }
             placeholder={`${tSubjectPage("exam.option")} ${optIdx + 1}`}
-            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-none transition-all font-bold text-gray-900 dark:text-white"
+            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border-2 border-transparent focus:border-brand-blue outline-hidden transition-all font-bold text-gray-900 dark:text-white"
           />
         ))}
       </div>
@@ -102,7 +102,7 @@ export function QuestionItem({
               ),
             }))
           }
-          className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 font-bold outline-none text-gray-900 dark:text-white"
+          className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-900 font-bold outline-hidden text-gray-900 dark:text-white"
         >
           <option value={0}>{tSubjectPage("exam.option1Correct")}</option>
           <option value={1}>{tSubjectPage("exam.option2Correct")}</option>

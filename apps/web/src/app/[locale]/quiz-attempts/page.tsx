@@ -216,13 +216,13 @@ export default function QuizAttemptsPage() {
                 window.location.reload();
               });
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors text-sm font-medium focus:outline-hidden focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
           >
             {t("clearLocalHistory")}
           </button>
           <button
             onClick={() => router.push("/quizzes")}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors focus:outline-hidden focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
           >
             <ChevronLeft className="w-4 h-4" />
             {t("back")}
@@ -235,7 +235,7 @@ export default function QuizAttemptsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       ) : attemptsWithDerived.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6">
           <div className="text-gray-700 dark:text-gray-300">
             {t("noAttemptsFound")}
           </div>
@@ -256,7 +256,7 @@ export default function QuizAttemptsPage() {
                       prev === a.id ? null : (a.id ?? null),
                     )
                   }
-                  className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
+                  className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors focus:outline-hidden focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">

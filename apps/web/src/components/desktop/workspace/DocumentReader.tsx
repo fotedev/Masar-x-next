@@ -116,7 +116,7 @@ export function DocumentReader({ lectureTitle, document, loading }: DocumentRead
         <button
           type="button"
           onClick={handleRetry}
-          className="mt-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="mt-2 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("reader.retry")}
         </button>

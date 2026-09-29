@@ -155,7 +155,7 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
           type="button"
           onClick={onClose}
           aria-label={t("assistant.closeAria")}
-          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md px-2 py-1 text-xs font-medium text-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("assistant.close")}
         </button>
@@ -196,7 +196,7 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
 
       <form
         onSubmit={handleSubmit}
-        className="flex shrink-0 flex-col gap-2 border-t border-border bg-background/95 p-3 backdrop-blur"
+        className="flex shrink-0 flex-col gap-2 border-t border-border bg-background/95 p-3 backdrop-blur-sm"
       >
         {pastedAttachments.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -220,7 +220,7 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
                     setPastedAttachments((prev) => prev.filter((a) => a.id !== att.id))
                   }
                   aria-label={t("assistant.removeAttachment")}
-                  className="shrink-0 rounded-md p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="shrink-0 rounded-md p-1 transition-colors hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -244,12 +244,12 @@ export function AssistantPanel({ open, onClose, scope, user, trackEvent }: Assis
             rows={2}
             placeholder={t("assistant.composerPlaceholder")}
             aria-label={t("assistant.composerAria")}
-            className="selectable-content min-h-[2.5rem] flex-1 resize-none rounded-md border border-input bg-background px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="selectable-content min-h-[2.5rem] flex-1 resize-none rounded-md border border-input bg-background px-2 py-1.5 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           />
           <button
             type="submit"
             disabled={!canSend || isLoading}
-            className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             {isLoading ? t("assistant.sending") : t("assistant.send")}
           </button>

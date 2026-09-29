@@ -165,7 +165,7 @@ export default function CourseDetailsPage() {
                         alt={title}
                         fill
                         sizes="(max-width: 1024px) 100vw, 33vw"
-                        className="rounded-lg shadow-sm object-cover"
+                        className="rounded-lg shadow-xs object-cover"
                       />
                     </div>
                   );

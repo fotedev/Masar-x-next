@@ -103,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
               ? "h-full w-full min-h-0"
               : isAssistantRoute
                 ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden"
-                : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 flex-grow w-full relative"
+                : "max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 grow w-full relative"
         }
       >
         {/* NOTE: the assistant route must keep rendering through PageTransition

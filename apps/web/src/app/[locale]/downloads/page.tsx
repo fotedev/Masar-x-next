@@ -62,7 +62,7 @@ export default async function DownloadsPage({ params }: Props) {
   return (
     <div className="space-y-10 pb-12" dir="auto">
       {/* ───── Hero ───── */}
-      <section className="modern-card p-6 sm:p-10 text-center bg-gradient-to-br from-brand-blue/5 via-transparent to-purple-500/5">
+      <section className="modern-card p-6 sm:p-10 text-center bg-linear-to-br from-brand-blue/5 via-transparent to-purple-500/5">
         <div className="inline-flex items-center gap-2 rounded-full bg-brand-blue/10 px-3 py-1 text-xs font-bold text-brand-blue mb-4">
           <AppWindow className="w-3.5 h-3.5" />
           <span>{t("hero.badge")}</span>
@@ -96,7 +96,7 @@ export default async function DownloadsPage({ params }: Props) {
       <section id="platforms" className="space-y-4 scroll-mt-24">
         {fetchError ? (
           <div className="modern-card p-6 sm:p-8 flex items-start gap-3 border-amber-300/60 dark:border-amber-500/40">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="space-y-1.5">
@@ -232,7 +232,7 @@ function WindowsCard({
           href={installerUrl}
           className="group flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors"
         >
-          <div className="w-9 h-9 rounded-lg bg-brand-blue text-white flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-brand-blue text-white flex items-center justify-center shrink-0">
             <Download className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -250,7 +250,7 @@ function WindowsCard({
           href={portableUrl}
           className="group flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors"
         >
-          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shrink-0">
             <HardDrive className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">

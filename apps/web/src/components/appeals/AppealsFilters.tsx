@@ -29,7 +29,7 @@ export function AppealsFilters({
         </h2>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">

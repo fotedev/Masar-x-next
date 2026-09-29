@@ -56,7 +56,7 @@ export function UserMenu({
         {!isAdminLoading && isAdmin && (
           <button
             onClick={() => handleNavigate("admin-dashboard")}
-            className="inline-flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap text-brand-orange hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent hover:border-brand-orange/20 transition-all shadow-sm hover:shadow-md"
+            className="inline-flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap text-brand-orange hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent hover:border-brand-orange/20 transition-all shadow-xs hover:shadow-md"
             type="button"
           >
             <Shield className="w-4 h-4 shrink-0" />
@@ -65,7 +65,7 @@ export function UserMenu({
         )}
         <button
           onClick={() => handleNavigate("profile")}
-          className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all shadow-sm hover:shadow-md"
+          className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all shadow-xs hover:shadow-md"
           type="button"
         >
           {avatarUrl && !imgError ? (
@@ -81,7 +81,7 @@ export function UserMenu({
           ) : (
             <span
               aria-hidden
-              className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white"
+              className="flex h-full w-full items-center justify-center bg-linear-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white"
             >
               {initial}
             </span>

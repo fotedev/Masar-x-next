@@ -150,7 +150,7 @@ export function AdminCommandPalette({
         aria-hidden="true"
         tabIndex={-1}
         onClick={onClose}
-        className="absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 h-full w-full cursor-default bg-black/50 backdrop-blur-xs"
       />
 
       <div
@@ -178,7 +178,7 @@ export function AdminCommandPalette({
               setActiveIndex(0);
             }}
             placeholder={t("commandPalette.inputPlaceholder")}
-            className="h-12 w-full bg-transparent text-sm text-ax-primary outline-none placeholder:text-ax-muted"
+            className="h-12 w-full bg-transparent text-sm text-ax-primary outline-hidden placeholder:text-ax-muted"
           />
         </div>
 
@@ -204,7 +204,7 @@ export function AdminCommandPalette({
                   onClick={() => runItem(item)}
                   onMouseMove={() => setActiveIndex(index)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm outline-none transition-colors duration-150",
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm outline-hidden transition-colors duration-150",
                     index === activeIndex
                       ? "bg-ax-accent-soft text-ax-primary"
                       : "text-ax-secondary",

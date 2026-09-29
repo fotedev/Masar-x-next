@@ -123,7 +123,7 @@ export function AdminTopbar({
           onClick={() => onSelectTab("overview")}
           aria-label={t("tabs.overview")}
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md outline-none transition-colors duration-150 hover:bg-ax-surface-hover lg:hidden",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover lg:hidden",
             focusRing,
           )}
         >
@@ -142,7 +142,7 @@ export function AdminTopbar({
           aria-controls="ax-mobile-drawer"
           aria-expanded={state.mobileOpen}
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary lg:hidden",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary lg:hidden",
             focusRing,
           )}
         >
@@ -158,7 +158,7 @@ export function AdminTopbar({
                 onClick={() => onSelectTab("overview")}
                 aria-current={isOverview ? "page" : undefined}
                 className={cn(
-                  "truncate rounded-md px-1.5 py-1 font-medium outline-none transition-colors duration-150",
+                  "truncate rounded-md px-1.5 py-1 font-medium outline-hidden transition-colors duration-150",
                   isOverview
                     ? "text-ax-primary"
                     : "text-ax-muted hover:text-ax-primary",
@@ -190,7 +190,7 @@ export function AdminTopbar({
           onClick={() => setPaletteOpen(true)}
           aria-label={t("shell.quickSearch")}
           className={cn(
-            "hidden h-10 shrink-0 items-center gap-2 rounded-lg border border-ax-edge bg-ax-surface-inset ps-3 pe-2 text-sm text-ax-muted outline-none transition-colors duration-150 hover:border-ax-edge-strong hover:text-ax-secondary md:flex",
+            "hidden h-10 shrink-0 items-center gap-2 rounded-lg border border-ax-edge bg-ax-surface-inset ps-3 pe-2 text-sm text-ax-muted outline-hidden transition-colors duration-150 hover:border-ax-edge-strong hover:text-ax-secondary md:flex",
             focusRing,
           )}
         >
@@ -207,7 +207,7 @@ export function AdminTopbar({
           onClick={() => setPaletteOpen(true)}
           aria-label={t("shell.quickSearch")}
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary md:hidden",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary md:hidden",
             focusRing,
           )}
         >
@@ -220,7 +220,7 @@ export function AdminTopbar({
           aria-label={t("shell.toggleTheme")}
           aria-pressed={theme === "dark"}
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
             focusRing,
           )}
         >
@@ -237,7 +237,7 @@ export function AdminTopbar({
             aria-expanded={notificationsOpen}
             aria-label={t("notifications.label")}
             className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
               focusRing,
             )}
           >
@@ -281,7 +281,7 @@ export function AdminTopbar({
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             className={cn(
-              "flex h-11 items-center gap-2 rounded-full border border-ax-edge bg-ax-surface ps-1 pe-2 outline-none transition-colors duration-150 hover:bg-ax-surface-hover",
+              "flex h-11 items-center gap-2 rounded-full border border-ax-edge bg-ax-surface ps-1 pe-2 outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover",
               focusRing,
             )}
           >
@@ -324,7 +324,7 @@ export function AdminTopbar({
                   setMenuOpen(false);
                   router.push("/");
                 }}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent"
               >
                 <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
                 {t("shell.viewSite")}
@@ -336,7 +336,7 @@ export function AdminTopbar({
                   setMenuOpen(false);
                   await signOut();
                 }}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-ax-danger outline-none transition-colors duration-150 hover:bg-ax-danger-soft focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-ax-danger outline-hidden transition-colors duration-150 hover:bg-ax-danger-soft focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent"
               >
                 <LogOut aria-hidden="true" className="h-4 w-4 shrink-0" />
                 {t("shell.signOut")}

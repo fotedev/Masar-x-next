@@ -103,7 +103,7 @@ function ResetPasswordContent() {
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-8">
         <div className="text-center mb-8">
           <div className="bg-blue-100 dark:bg-blue-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />

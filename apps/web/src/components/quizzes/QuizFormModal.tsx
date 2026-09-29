@@ -58,7 +58,7 @@ export function QuizFormModal({
   const locale = useLocale();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 mb-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <div className="space-y-6" dir="auto">
         <QuizMetaFields
           editingQuiz={editingQuiz}

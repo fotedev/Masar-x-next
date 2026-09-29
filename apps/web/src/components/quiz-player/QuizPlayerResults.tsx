@@ -141,7 +141,7 @@ export function QuizPlayerResults(props: {
             className={`flex items-center justify-center gap-2 px-8 py-4 rounded-2xl font-bold transition-[background-color,transform,box-shadow,color] active:scale-95 ${
               !onSubmitForReview || isSubmittingForReview
                 ? "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
-                : "bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/30"
+                : "bg-linear-to-r from-cyan-600 to-blue-600 text-white hover:shadow-lg hover:shadow-cyan-500/30"
             }`}
           >
             {isSubmittingForReview ? (

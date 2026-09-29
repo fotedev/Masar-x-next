@@ -281,7 +281,7 @@ export function AdminOverviewTab({
               <button
                 type="button"
                 onClick={() => onAddSubject?.()}
-                className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
+                className="mt-2 inline-flex h-10 items-center gap-2 rounded-lg bg-ax-accent px-4 text-sm font-semibold text-ax-on-accent outline-hidden transition-colors duration-150 hover:bg-ax-accent-hover focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface"
               >
                 <Plus aria-hidden="true" className="h-4 w-4" />
                 {t("overview.addSubject")}
@@ -323,7 +323,7 @@ export function AdminOverviewTab({
                       type="button"
                       onClick={() => onNavigate?.(item.tab)}
                       aria-label={`${t("table.view")}: ${item.title}`}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-muted outline-none transition-colors duration-150 hover:bg-ax-accent-soft hover:text-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ax-muted outline-hidden transition-colors duration-150 hover:bg-ax-accent-soft hover:text-ax-accent focus-visible:ring-2 focus-visible:ring-ax-accent"
                     >
                       <ChevronRight
                         aria-hidden="true"
@@ -359,7 +359,7 @@ export function AdminOverviewTab({
                   onClick={action.onClick}
                   disabled={!action.onClick}
                   className={cn(
-                    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface disabled:opacity-50",
+                    "flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold outline-hidden transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface disabled:opacity-50",
                     action.variant === "primary"
                       ? "bg-ax-accent text-ax-on-accent hover:bg-ax-accent-hover"
                       : "border border-ax-edge bg-ax-surface-inset text-ax-primary hover:border-ax-edge-strong hover:bg-ax-surface-hover",
@@ -404,7 +404,7 @@ export function AdminOverviewTab({
                       type="button"
                       onClick={() => onNavigate?.(row.tab)}
                       disabled={row.count === 0}
-                      className="flex min-h-[44px] w-full items-center gap-3 px-5 py-3 text-start outline-none transition-colors duration-150 hover:bg-ax-surface-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent disabled:opacity-50 disabled:hover:bg-transparent"
+                      className="flex min-h-[44px] w-full items-center gap-3 px-5 py-3 text-start outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ax-accent disabled:opacity-50 disabled:hover:bg-transparent"
                     >
                       <span
                         aria-hidden="true"

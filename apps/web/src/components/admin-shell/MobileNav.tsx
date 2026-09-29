@@ -87,7 +87,7 @@ export function MobileNav({
         aria-hidden={!open}
         tabIndex={-1}
         className={cn(
-          "ax-drawer-panel fixed inset-y-0 start-0 z-[75] flex w-[min(84vw,320px)] flex-col bg-ax-surface shadow-lg outline-none lg:hidden",
+          "ax-drawer-panel fixed inset-y-0 start-0 z-[75] flex w-[min(84vw,320px)] flex-col bg-ax-surface shadow-lg outline-hidden lg:hidden",
           "ps-[env(safe-area-inset-left)]",
           open
             ? "visible translate-x-0"

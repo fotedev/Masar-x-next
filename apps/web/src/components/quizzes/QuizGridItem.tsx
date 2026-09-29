@@ -34,7 +34,7 @@ export function QuizGridItem({
     : null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow group">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow group">
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">

@@ -182,7 +182,7 @@ export default function HomeClient() {
         <Link
           href="/ai-assistant"
           aria-label={tHome("aiCardTitle")}
-          className="lg:col-span-5 relative group cursor-pointer overflow-hidden rounded-[28px] p-6 sm:p-7 bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 text-primary-foreground shadow-lg shadow-indigo-950/20 dark:shadow-indigo-950/40 hover:shadow-xl hover:shadow-indigo-900/30 transition-[colors,transform,box-shadow] duration-300 border border-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none text-left rtl:text-right flex flex-col justify-between h-full"
+          className="lg:col-span-5 relative group cursor-pointer overflow-hidden rounded-[28px] p-6 sm:p-7 bg-linear-to-br from-indigo-600 via-blue-700 to-blue-800 text-primary-foreground shadow-lg shadow-indigo-950/20 dark:shadow-indigo-950/40 hover:shadow-xl hover:shadow-indigo-900/30 transition-[colors,transform,box-shadow] duration-300 border border-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-hidden text-left rtl:text-right flex flex-col justify-between h-full"
         >
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-2xl group-hover:bg-white/15 transition-colors pointer-events-none" />
           <div className="relative z-10 flex flex-col justify-between h-full">
@@ -207,7 +207,7 @@ export default function HomeClient() {
                 {tHome("aiCardDescription")}
               </p>
             </div>
-            <div className="mt-6 flex items-center gap-2 font-bold text-sm bg-white/10 self-start px-4 py-2 rounded-xl backdrop-blur-sm hover:bg-white/20 transition-colors">
+            <div className="mt-6 flex items-center gap-2 font-bold text-sm bg-white/10 self-start px-4 py-2 rounded-xl backdrop-blur-xs hover:bg-white/20 transition-colors">
               <span>{tHome("aiCardCta")}</span>
               <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
             </div>
@@ -219,7 +219,7 @@ export default function HomeClient() {
           <Link
             href="/subjects"
             aria-label={tHome("actionSubjects")}
-            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
+            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-blue/50 transition-[colors,transform,box-shadow] duration-300 outline-hidden focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
           >
             <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-blue-600 transition-colors">
               <BookOpen className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
@@ -232,7 +232,7 @@ export default function HomeClient() {
           <Link
             href="/quizzes"
             aria-label={tHome("actionQuizzes")}
-            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
+            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-purple-500/50 transition-[colors,transform,box-shadow] duration-300 outline-hidden focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
           >
             <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-purple-600 transition-colors">
               <PlayCircle className="w-6 h-6 text-purple-600 group-hover:text-white transition-colors" />
@@ -245,7 +245,7 @@ export default function HomeClient() {
           <Link
             href="/news"
             aria-label={tHome("actionNews")}
-            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
+            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-brand-orange/50 transition-[colors,transform,box-shadow] duration-300 outline-hidden focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
           >
             <div className="w-12 h-12 bg-brand-orange/10 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-brand-orange transition-colors">
               <FileText className="w-6 h-6 text-brand-orange group-hover:text-white transition-colors" />
@@ -258,7 +258,7 @@ export default function HomeClient() {
           <Link
             href="/profile"
             aria-label={tHome("actionActivity")}
-            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-[colors,transform,box-shadow] duration-300 outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
+            className="modern-card p-5 sm:p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-emerald-500/50 transition-[colors,transform,box-shadow] duration-300 outline-hidden focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 rounded-[28px] h-full"
           >
             <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-3 group-hover:bg-emerald-600 transition-colors">
               <History className="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors" />

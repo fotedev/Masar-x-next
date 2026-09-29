@@ -89,7 +89,7 @@ export function SubjectsGrid({
               }
               whileTap={!subject.isOptimistic ? { scale: 0.95 } : {}}
               onClick={() => !subject.isOptimistic && onSubjectClick?.(subject.name)}
-              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color,outline-color] duration-300 w-full flex flex-col items-center justify-center min-h-[160px] outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 focus-visible:border-brand-blue/60
+              className={`modern-card p-6 transition-[colors,transform,box-shadow,border-color,outline-color] duration-300 w-full flex flex-col items-center justify-center min-h-[160px] outline-hidden focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 focus-visible:border-brand-blue/60
                 ${subject.isOptimistic
                   ? "opacity-60 cursor-not-allowed border-dashed border-brand-blue/30 animate-pulse"
                   : "cursor-pointer group hover:border-brand-blue/50"
@@ -97,7 +97,7 @@ export function SubjectsGrid({
               type="button"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
-                <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-[colors,transform] duration-300 flex-shrink-0
+                <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-[colors,transform] duration-300 shrink-0
                   ${!subject.isOptimistic ? "group-hover:bg-brand-blue/20 group-hover:scale-110" : ""}`}>
                   <IconComponent className="w-7 h-7 text-brand-blue" />
                 </div>
@@ -129,7 +129,7 @@ export function SubjectsGrid({
           </p>
           <button
             onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
-            className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
+            className="px-6 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
           >
             {tSubjects("studyWithZainCta")}
           </button>

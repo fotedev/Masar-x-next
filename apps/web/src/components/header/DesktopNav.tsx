@@ -30,7 +30,7 @@ export function DesktopNav({
               key={item.key}
               onClick={() => handleNavigate(item.page)}
               aria-current={active ? "page" : undefined}
-              className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
+              className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
                 active
                   ? `${item.activeText} font-semibold`
                   : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -48,7 +48,7 @@ export function DesktopNav({
         {isTRWVisible && (
           <button
             onClick={() => handleNavigate("non-academic")}
-            className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96] ${
+            className={`relative px-2 xl:px-3 py-2 rounded-[6px] text-[13px] xl:text-[14px] font-medium whitespace-nowrap tracking-[0.01em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] focus:outline-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] hover:-translate-y-[1px] active:translate-y-0 active:scale-[0.96] ${
               currentPage === "non-academic"
                 ? "text-slate-900 dark:text-slate-100 font-semibold"
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"

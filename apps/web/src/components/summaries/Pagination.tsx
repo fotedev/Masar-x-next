@@ -24,7 +24,7 @@ export function Pagination({
   const displayLabel = label || t("label");
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-600 dark:text-gray-400">
           {t("viewCount", {

@@ -79,7 +79,7 @@ export function AdminSidebarItem({
       aria-disabled={disabled || undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex h-11 items-center gap-3 rounded-md text-sm font-medium outline-none",
+        "group relative flex h-11 items-center gap-3 rounded-md text-sm font-medium outline-hidden",
         "transition-colors duration-150 ease-ax-standard",
         "focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface",
         rail ? "mx-auto w-11 justify-center" : "mx-1 w-[calc(100%-0.5rem)] px-3",

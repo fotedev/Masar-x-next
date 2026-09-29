@@ -109,7 +109,7 @@ export function LectureExplanationSection(props: {
                 show: { opacity: 1 },
               }}
               whileHover={{ scale: 1.01 }}
-              className="group flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-brand-blue/5"
+              className="group flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 sm:p-6 rounded-2xl sm:rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-all duration-500 shadow-xs hover:shadow-xl hover:shadow-brand-blue/5"
             >
               <div
                 className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shrink-0 ${

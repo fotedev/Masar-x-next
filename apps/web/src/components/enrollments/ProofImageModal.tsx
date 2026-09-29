@@ -25,7 +25,7 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -44,7 +44,7 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
         />
         <button
           onClick={onClose}
-          className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           aria-label="إغلاق"
           type="button"
         >

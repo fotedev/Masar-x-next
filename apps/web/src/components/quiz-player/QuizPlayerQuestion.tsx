@@ -61,7 +61,7 @@ export function QuizPlayerQuestion(props: {
     <div className="backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/30 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="h-2.5 bg-gray-100 dark:bg-gray-700/50 relative">
         <div
-          className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-[width] duration-700 ease-out relative"
+          className="h-full bg-linear-to-r from-blue-600 to-indigo-500 transition-[width] duration-700 ease-out relative"
           style={{
             width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`,
           }}

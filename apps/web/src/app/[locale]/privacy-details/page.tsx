@@ -151,7 +151,7 @@ export default function PrivacyDetailsPage() {
               className="modern-card p-8 sm:p-10 hover:shadow-2xl transition-all duration-500 group"
             >
               <div className="flex items-start gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-blue/10 to-brand-blue/20 dark:from-brand-blue/20 dark:to-brand-blue/30 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform text-2xl">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-brand-blue/10 to-brand-blue/20 dark:from-brand-blue/20 dark:to-brand-blue/30 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform text-2xl">
                   {getIcon(dataType.icon)}
                 </div>
                 <div className="flex-1">
@@ -204,7 +204,7 @@ export default function PrivacyDetailsPage() {
         </div>
 
         {/* Security Notice */}
-        <div className="mt-12 modern-card p-8 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
+        <div className="mt-12 modern-card p-8 bg-linear-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-900/40 flex items-center justify-center shrink-0">
               <Shield className="w-6 h-6 text-green-600 dark:text-green-400" />

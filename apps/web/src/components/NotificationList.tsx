@@ -42,7 +42,7 @@ function EmptyState(props: { tNotifications: (key: string) => string }) {
     <div className={NOTIFICATION_STYLES.emptyState}>
       <div className="relative group">
         <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full group-hover:bg-blue-500/30 transition-colors duration-500" />
-        <div className="relative z-10 w-24 h-24 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/[0.02] rounded-3xl flex items-center justify-center shadow-xl border border-white dark:border-white/5 transform group-hover:scale-110 transition-transform duration-500">
+        <div className="relative z-10 w-24 h-24 bg-linear-to-b from-gray-50 to-gray-100 dark:from-white/5 dark:to-white/[0.02] rounded-3xl flex items-center justify-center shadow-xl border border-white dark:border-white/5 transform group-hover:scale-110 transition-transform duration-500">
           <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 animate-wiggle" />
         </div>
       </div>

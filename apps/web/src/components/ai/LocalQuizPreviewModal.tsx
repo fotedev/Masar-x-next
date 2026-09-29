@@ -38,7 +38,7 @@ export function LocalQuizPreviewModal({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div className="w-full max-w-2xl modern-card p-6 shadow-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-slate-900 dark:text-white">

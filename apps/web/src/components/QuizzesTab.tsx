@@ -78,7 +78,7 @@ export function QuizzesTab({
   if (quizzes.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-12 text-center transition-colors">
           <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t("noExams")}
@@ -106,7 +106,7 @@ export function QuizzesTab({
       {/* Quizzes List */}
       <div className="space-y-4">
         {currentQuizzes.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-12 text-center transition-colors">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {t("noResults")}
             </h3>
@@ -128,7 +128,7 @@ export function QuizzesTab({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 {t("viewCount", {

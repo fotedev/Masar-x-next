@@ -166,7 +166,7 @@ export default function SummaryDetailPage() {
   if (error || !summary) {
     return (
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-8 text-center transition-colors">
           <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {error}
@@ -193,7 +193,7 @@ export default function SummaryDetailPage() {
       </button>
 
       <div className="modern-card overflow-hidden">
-        <div className="bg-gradient-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-10 text-white relative overflow-hidden">
+        <div className="bg-linear-to-br from-brand-navy to-brand-blue px-6 sm:px-10 py-10 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
           <div className="relative z-10">
             <h1 className="text-2xl sm:text-4xl font-extrabold mb-6 tracking-tight leading-tight">

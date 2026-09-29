@@ -75,7 +75,7 @@ export function UpdateToast(): React.JSX.Element | null {
         <button
           type="button"
           onClick={() => setErrorVisible(false)}
-          className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("dismiss")}
         </button>
@@ -102,14 +102,14 @@ export function UpdateToast(): React.JSX.Element | null {
           type="button"
           onClick={handleInstall}
           disabled={installing}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("install")}
         </button>
         <button
           type="button"
           onClick={handleLater}
-          className="rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t("later")}
         </button>

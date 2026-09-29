@@ -63,7 +63,7 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
               onClick={() => setSheetOpen(true)}
               aria-label={t("filterBar.openFilters")}
               className={cn(
-                "flex h-11 w-full items-center justify-between gap-2.5 rounded-lg border border-ax-edge bg-ax-surface-inset px-4 text-sm font-medium text-ax-primary outline-none transition-colors duration-150 hover:bg-ax-surface-hover",
+                "flex h-11 w-full items-center justify-between gap-2.5 rounded-lg border border-ax-edge bg-ax-surface-inset px-4 text-sm font-medium text-ax-primary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover",
                 focusRing,
               )}
             >
@@ -99,7 +99,7 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
               }
               aria-label={t("filterBar.level")}
               className={cn(
-                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-hidden transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
                 focusRing,
               )}
             >
@@ -124,7 +124,7 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
               disabled={!globalFilters.year || availableDepartments.length === 0}
               aria-label={t("filterBar.department")}
               className={cn(
-                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent disabled:opacity-50",
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-hidden transition-colors hover:border-ax-edge-strong focus:border-ax-accent disabled:opacity-50",
                 focusRing,
               )}
             >
@@ -148,7 +148,7 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
               }
               aria-label={t("filterBar.subject")}
               className={cn(
-                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-none transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
+                "h-11 rounded-lg border border-ax-edge bg-ax-surface px-3 text-xs text-ax-primary outline-hidden transition-colors hover:border-ax-edge-strong focus:border-ax-accent",
                 focusRing,
               )}
             >
@@ -167,7 +167,7 @@ export const AdminDashboardHeader: FC<AdminDashboardHeaderProps> = ({
                 aria-label={t("clearFilters")}
                 title={t("clearFilters")}
                 className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ax-muted outline-none transition-colors duration-150 hover:bg-ax-danger-soft hover:text-ax-danger",
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-ax-muted outline-hidden transition-colors duration-150 hover:bg-ax-danger-soft hover:text-ax-danger",
                   focusRing,
                 )}
               >

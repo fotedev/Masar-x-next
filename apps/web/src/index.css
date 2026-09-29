@@ -1,6 +1,119 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source "../src/**/*.{js,ts,jsx,tsx}";
+
+/* Custom variants (spec 026 research D10) */
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant hover-device (@media (any-hover: hover));
+
+/* v3 defaults restoration — PERMANENT (spec 026 research D2, official v4
+   compat recipes). v4 changed bare border/divide color to currentColor and
+   bare ring to 1px/currentColor; these rules keep v3 rendering forever.
+   Do NOT remove: ~323 bare-border call sites depend on it. */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    /* literal v3 gray-200: v4.3 re-expressed its palette in oklch and the
+       --color-gray-200 token now differs from #e5e7eb by ~dE 0.2 — pinned
+       literal for byte-exact v3 fidelity (probe-verified, spec 026 A1) */
+    border-color: #e5e7eb;
+  }
+}
+@theme {
+  /* v3 defaults restoration — PERMANENT (research D2) */
+  --default-ring-width: 3px;
+  --default-ring-color: color-mix(in oklab, var(--color-blue-500) 50%, transparent);
+
+  /* breakpoints (v3 screens additions) */
+  --breakpoint-xs: 475px;
+  --breakpoint-tablet: 820px;
+
+  /* colors — ax admin palette (runtime --ax-*-rgb triplets drive light/dark) */
+  --color-ax-canvas: rgb(var(--ax-canvas-rgb));
+  --color-ax-surface: rgb(var(--ax-surface-rgb));
+  --color-ax-surface-hover: rgb(var(--ax-surface-hover-rgb));
+  --color-ax-surface-inset: rgb(var(--ax-surface-inset-rgb));
+  --color-ax-primary: rgb(var(--ax-text-primary-rgb));
+  --color-ax-secondary: rgb(var(--ax-text-secondary-rgb));
+  --color-ax-muted: rgb(var(--ax-text-muted-rgb));
+  --color-ax-edge: rgb(var(--ax-border-default-rgb));
+  --color-ax-edge-strong: rgb(var(--ax-border-strong-rgb));
+  --color-ax-accent: rgb(var(--ax-accent-rgb));
+  --color-ax-accent-hover: rgb(var(--ax-accent-hover-rgb));
+  --color-ax-accent-soft: rgb(var(--ax-accent-soft-rgb));
+  --color-ax-accent-soft-hover: rgb(var(--ax-accent-soft-hover-rgb));
+  --color-ax-on-accent: rgb(var(--ax-on-accent-rgb));
+  --color-ax-success: rgb(var(--ax-success-rgb));
+  --color-ax-success-soft: rgb(var(--ax-success-soft-rgb));
+  --color-ax-warning: rgb(var(--ax-warning-rgb));
+  --color-ax-warning-soft: rgb(var(--ax-warning-soft-rgb));
+  --color-ax-danger: rgb(var(--ax-danger-rgb));
+  --color-ax-danger-soft: rgb(var(--ax-danger-soft-rgb));
+  --color-ax-info: rgb(var(--ax-info-rgb));
+  --color-ax-info-soft: rgb(var(--ax-info-soft-rgb));
+  --color-ax-tooltip-bg: rgb(var(--ax-tooltip-bg-rgb));
+  --color-ax-tooltip-fg: rgb(var(--ax-tooltip-fg-rgb));
+
+  /* colors — brand + shadcn remnant */
+  --color-brand-navy: rgb(var(--brand-navy));
+  --color-brand-blue: rgb(var(--brand-blue));
+  --color-brand-sky: rgb(var(--brand-sky));
+  --color-brand-orange: rgb(var(--brand-orange));
+  --color-brand-purple: #8b5cf6;
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  /* font sizes (v3 fontSize overrides — exact pairs) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+
+  /* spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+  --spacing-ax-sidebar: var(--ax-space-sidebar);
+  --spacing-ax-sidebar-collapsed: var(--ax-space-sidebar-collapsed);
+
+  /* shadows */
+  --shadow-ax-sm: var(--ax-shadow-sm);
+  --shadow-ax-md: var(--ax-shadow-md);
+  --shadow-ax-lg: var(--ax-shadow-lg);
+
+  /* easing + animation */
+  --ease-ax-standard: var(--ax-ease-standard);
+  --animate-wiggle: wiggle 1s ease-in-out infinite;
+  --animate-ping-slow: ping 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+  }
+}
+
+/* Static utilities for token groups v4 has no theme namespace for
+   (z-index, transition-duration) — spec 026 research D3/D4 */
+@utility z-header { z-index: 40; }
+@utility z-sidebar { z-index: 45; }
+@utility z-modal { z-index: 50; }
+@utility z-popover { z-index: 55; }
+@utility z-toast { z-index: 60; }
+@utility z-tooltip { z-index: 70; }
+@utility duration-ax-fast { transition-duration: var(--ax-dur-fast); }
+@utility duration-ax-base { transition-duration: var(--ax-dur-base); }
+@utility duration-ax-slow { transition-duration: var(--ax-dur-slow); }
 
 /* Font variables */
 :root {

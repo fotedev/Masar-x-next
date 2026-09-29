@@ -44,7 +44,7 @@ export default function FaqPage() {
     <div className="space-y-6">
       <div className="modern-card p-6 sm:p-8">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 text-brand-blue flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 text-brand-blue flex items-center justify-center shrink-0">
             <HelpCircle className="w-6 h-6" />
           </div>
           <div className="space-y-1">

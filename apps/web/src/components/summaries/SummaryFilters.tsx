@@ -25,7 +25,7 @@ export function SummaryFilters({
   const t = useTranslations("summaries.filters");
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <div className="flex-1">

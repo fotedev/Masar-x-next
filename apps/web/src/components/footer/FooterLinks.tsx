@@ -40,7 +40,7 @@ export function FooterLinks({
         {tFooter("quickLinks")}
       </h3>
       
-      <nav className="flex-grow w-full">
+      <nav className="grow w-full">
         <ul className="space-y-0.5">
           {links.map((link) => (
             <li key={link.href}>
@@ -65,7 +65,7 @@ export function FooterLinks({
 
       {/* Special Section: The Real World */}
       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 w-full">
-        <div className="relative group p-3 rounded-2xl bg-gradient-to-br from-red-50 to-white dark:from-red-950/20 dark:to-slate-900 border border-red-100 dark:border-red-900/30 overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10">
+        <div className="relative group p-3 rounded-2xl bg-linear-to-br from-red-50 to-white dark:from-red-950/20 dark:to-slate-900 border border-red-100 dark:border-red-900/30 overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-red-500/10">
           {/* Background Glow */}
           <div className="absolute -inline-end-4 -top-4 w-24 h-24 bg-red-500/10 rounded-full blur-2xl group-hover:bg-red-500/20 transition-all duration-500"></div>
 
