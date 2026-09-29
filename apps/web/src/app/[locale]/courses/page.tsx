@@ -127,7 +127,7 @@ export default function CoursesPage() {
             size="sm"
             className={
               filter === "all"
-                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-sm"
+                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-xs"
                 : "opacity-80"
             }
           >
@@ -139,7 +139,7 @@ export default function CoursesPage() {
             size="sm"
             className={
               filter === "free"
-                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-sm"
+                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-xs"
                 : "opacity-80"
             }
           >
@@ -151,7 +151,7 @@ export default function CoursesPage() {
             size="sm"
             className={
               filter === "paid"
-                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-sm"
+                ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-background shadow-xs"
                 : "opacity-80"
             }
           >

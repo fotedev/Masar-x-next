@@ -155,7 +155,7 @@ const PuterSettingsModal: FC<PuterSettingsModalProps> = ({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
       <div className="w-full max-w-lg modern-card overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
         {/* Decorative Header Background */}
-        <div className="h-24 bg-gradient-to-r from-indigo-600 to-purple-600 relative">
+        <div className="h-24 bg-linear-to-r from-indigo-600 to-purple-600 relative">
           <div
             className="absolute inset-0 opacity-20"
             style={{

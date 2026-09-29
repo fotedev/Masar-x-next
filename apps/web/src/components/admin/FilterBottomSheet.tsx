@@ -116,7 +116,7 @@ export function FilterBottomSheet({
         dragElastic={{ top: 0, bottom: 0.6 }}
         onDragEnd={handleDragEnd}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-[75] flex max-h-[85vh] flex-col rounded-t-2xl border-t border-ax-edge bg-ax-surface p-5 shadow-ax-lg outline-none lg:hidden",
+          "fixed inset-x-0 bottom-0 z-[75] flex max-h-[85vh] flex-col rounded-t-2xl border-t border-ax-edge bg-ax-surface p-5 shadow-ax-lg outline-hidden lg:hidden",
           "pb-[calc(1.25rem+env(safe-area-inset-bottom))]",
           open
             ? "visible pointer-events-auto"
@@ -139,7 +139,7 @@ export function FilterBottomSheet({
             onClick={onClose}
             aria-label={t("shell.closeNavigation")}
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+              "flex h-11 w-11 items-center justify-center rounded-md text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
               focusRing,
             )}
           >
@@ -169,7 +169,7 @@ export function FilterBottomSheet({
                 }))
               }
               className={cn(
-                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-none transition-colors focus:border-ax-accent",
+                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-hidden transition-colors focus:border-ax-accent",
                 focusRing,
               )}
             >
@@ -202,7 +202,7 @@ export function FilterBottomSheet({
               }
               disabled={!globalFilters.year || availableDepartments.length === 0}
               className={cn(
-                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-none transition-colors focus:border-ax-accent disabled:opacity-50",
+                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-hidden transition-colors focus:border-ax-accent disabled:opacity-50",
                 focusRing,
               )}
             >
@@ -234,7 +234,7 @@ export function FilterBottomSheet({
                 }))
               }
               className={cn(
-                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-none transition-colors focus:border-ax-accent",
+                "h-11 w-full rounded-lg border border-ax-edge bg-ax-surface px-3 text-sm text-ax-primary outline-hidden transition-colors focus:border-ax-accent",
                 focusRing,
               )}
             >
@@ -278,7 +278,7 @@ export function FilterBottomSheet({
                         name: globalFilters.year,
                       })}
                       className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-none transition-colors hover:text-ax-danger",
+                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-hidden transition-colors hover:text-ax-danger",
                         focusRing,
                       )}
                     >
@@ -304,7 +304,7 @@ export function FilterBottomSheet({
                         name: globalFilters.department,
                       })}
                       className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-none transition-colors hover:text-ax-danger",
+                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-hidden transition-colors hover:text-ax-danger",
                         focusRing,
                       )}
                     >
@@ -330,7 +330,7 @@ export function FilterBottomSheet({
                         name: globalFilters.subject,
                       })}
                       className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-none transition-colors hover:text-ax-danger",
+                        "flex h-11 w-11 items-center justify-center rounded-full text-ax-muted outline-hidden transition-colors hover:text-ax-danger",
                         focusRing,
                       )}
                     >
@@ -350,7 +350,7 @@ export function FilterBottomSheet({
               type="button"
               onClick={onClearFilters}
               className={cn(
-                "flex h-11 items-center justify-center rounded-lg border border-ax-edge bg-ax-surface-inset px-4 text-sm font-medium text-ax-secondary outline-none transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
+                "flex h-11 items-center justify-center rounded-lg border border-ax-edge bg-ax-surface-inset px-4 text-sm font-medium text-ax-secondary outline-hidden transition-colors duration-150 hover:bg-ax-surface-hover hover:text-ax-primary",
                 focusRing,
               )}
             >
@@ -361,7 +361,7 @@ export function FilterBottomSheet({
             type="button"
             onClick={onClose}
             className={cn(
-              "flex h-11 items-center justify-center rounded-lg bg-ax-accent px-5 text-sm font-semibold text-ax-on-accent outline-none transition-colors duration-150 hover:bg-ax-accent-hover",
+              "flex h-11 items-center justify-center rounded-lg bg-ax-accent px-5 text-sm font-semibold text-ax-on-accent outline-hidden transition-colors duration-150 hover:bg-ax-accent-hover",
               focusRing,
             )}
           >

@@ -93,7 +93,7 @@ export const NotificationDropdown = memo(function NotificationDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className={`relative p-2 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-offset-gray-900 group ${
+        className={`relative p-2 rounded-2xl transition-all duration-300 focus:outline-hidden focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-offset-gray-900 group ${
           isOpen
             ? "bg-blue-600 text-white shadow-lg shadow-blue-500/40"
             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"

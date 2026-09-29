@@ -85,7 +85,7 @@ export function NewsTab({
           </button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-12 text-center transition-colors">
           <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t("noNews")}
@@ -127,7 +127,7 @@ export function NewsTab({
       {/* News List */}
       <div className="space-y-4">
         {currentNews.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center transition-colors">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-12 text-center transition-colors">
             <Newspaper className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {t("noResults")}
@@ -151,7 +151,7 @@ export function NewsTab({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 transition-colors">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 transition-colors">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 عرض {startIndex + 1}-{Math.min(endIndex, filteredNews.length)}{" "}

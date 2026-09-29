@@ -8,7 +8,7 @@ export function QuizzesLoading() {
       {[...Array(6)].map((_, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden p-6"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden p-6"
         >
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">

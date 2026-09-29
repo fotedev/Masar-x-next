@@ -295,7 +295,7 @@ export const ChatContainer = memo(function ChatContainer({
               className="text-3xl sm:text-5xl font-black tracking-tight"
               dir="auto"
             >
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 dark:from-cyan-300 dark:via-sky-200 dark:to-blue-400">
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-cyan-400 via-sky-300 to-blue-500 dark:from-cyan-300 dark:via-sky-200 dark:to-blue-400">
                 {assistantName}
               </span>
             </h1>
@@ -373,10 +373,10 @@ export const ChatContainer = memo(function ChatContainer({
                 whileHover={shouldReduceMotion ? {} : { scale: 1.03, y: -3 }}
                 whileTap={shouldReduceMotion ? {} : { scale: 0.96 }}
                 onClick={() => onSuggestionClick?.(item.prompt)}
-                className="group relative flex flex-col items-center p-2.5 sm:p-3.5 bg-white/60 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl transition-colors duration-300 hover:shadow-xl hover:shadow-cyan-500/10 text-center min-h-[85px] sm:min-h-[110px] justify-center focus-visible:ring-2 focus-visible:ring-cyan-500/30 outline-none backdrop-blur-md overflow-hidden"
+                className="group relative flex flex-col items-center p-2.5 sm:p-3.5 bg-white/60 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 rounded-2xl transition-colors duration-300 hover:shadow-xl hover:shadow-cyan-500/10 text-center min-h-[85px] sm:min-h-[110px] justify-center focus-visible:ring-2 focus-visible:ring-cyan-500/30 outline-hidden backdrop-blur-md overflow-hidden"
                 type="button"
               >
-                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/15 flex items-center justify-center mb-1 sm:mb-1.5 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/15 flex items-center justify-center mb-1 sm:mb-1.5 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300 shadow-xs">
                   <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-500 group-hover:text-white transition-colors duration-300" />
                 </div>
                 <h3 className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white mb-0.5 line-clamp-1">
@@ -434,7 +434,7 @@ export const ChatContainer = memo(function ChatContainer({
                 />
               </div>
               <div
-                className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center`}
+                className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-xs border border-slate-100 dark:border-slate-700 flex items-center`}
               >
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>

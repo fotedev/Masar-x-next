@@ -474,7 +474,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
       // per cell (mixed Arabic/English cells), strong header/row structure
       // with zebra striping for scannability.
       table: ({ children }: { children?: ReactNode }) => (
-        <div className="my-4 w-full overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-900/40 shadow-sm">
+        <div className="my-4 w-full overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/70 bg-white/60 dark:bg-slate-900/40 shadow-xs">
           <table className="w-full min-w-[520px] border-collapse text-sm">
             {children}
           </table>
@@ -630,7 +630,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
             isUser
               ? // Spec 012: 32/36px user avatar — the 48/64px circle dwarfed
                 // short messages. The bot avatar keeps its size (Lottie room).
-                "w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20"
+                "w-8 h-8 sm:w-9 sm:h-9 bg-linear-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20"
               : "w-12 h-12 sm:w-16 sm:h-16 bg-transparent"
           }`}
         >
@@ -743,11 +743,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -4, scale: 0.96 }}
                           transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-500/30 font-bold text-sm shadow-sm"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-500/30 font-bold text-sm shadow-xs"
                           role="status"
                           aria-live="polite"
                         >
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white shadow-xs shadow-emerald-500/30">
                             <Check className="w-3 h-3" strokeWidth={3} />
                           </span>
                           <span>{tAi("signedIn")}</span>

@@ -60,7 +60,7 @@ export function QuickQuizFromTextModal(props: {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
       <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl overflow-hidden">
         <div className="p-5 sm:p-6 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center gap-3">
@@ -88,7 +88,7 @@ export function QuickQuizFromTextModal(props: {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder={tAi("pasteTextPlaceholder")}
-            className="w-full h-56 sm:h-64 px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/50 bg-white/70 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/40 font-medium leading-relaxed"
+            className="w-full h-56 sm:h-64 px-4 py-3 rounded-2xl border border-slate-200/80 dark:border-slate-700/50 bg-white/70 dark:bg-slate-800/60 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-500/40 font-medium leading-relaxed"
             dir="auto"
           />
 
@@ -106,7 +106,7 @@ export function QuickQuizFromTextModal(props: {
               disabled={!canGenerate}
               className={`px-6 py-2.5 rounded-2xl font-black transition-all active:scale-95 shadow-lg ${
                 canGenerate
-                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40"
+                  ? "bg-linear-to-r from-cyan-600 to-blue-600 text-white shadow-cyan-500/25 hover:shadow-cyan-500/40"
                   : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
               }`}
               type="button"

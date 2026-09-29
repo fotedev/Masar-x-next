@@ -79,7 +79,7 @@ function SubjectDetailsContent() {
       <div className="flex justify-start">
         <button
           onClick={() => router.push("/non-academic")}
-          className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-sm"
+          className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-xs"
         >
           <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
           العودة لـ TRW
