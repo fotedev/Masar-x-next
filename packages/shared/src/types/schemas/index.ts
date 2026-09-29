@@ -80,12 +80,12 @@ export const QuizSchema = z.object({
   created_at: dateSchema.optional().nullable(),
 });
 
-// Helper types inferred from schemas
-export type ValidatedCourse = z.infer<typeof CourseSchema>;
-export type ValidatedCourseWithInstructor = z.infer<typeof CourseWithInstructorSchema>;
-export type ValidatedNews = z.infer<typeof NewsSchema>;
-export type ValidatedQuiz = z.infer<typeof QuizSchema>;
-export type ValidatedProfile = z.infer<typeof ProfileSchema>;
+// Spec 015 US3 (T027) — Validated* helper types removed.
+// They were declared as `z.infer<typeof Schema>` aliases but had no
+// importers across apps/ or packages/. Consumers use the bare schema
+// names (CourseSchema, NewsSchema, etc.) directly. The type aliases
+// were dead exports; their inferred types live on the schemas
+// themselves if anyone needs them.
 
 // --- Waitlist (spec 021) ---
 export const WaitlistSourceSchema = z.enum(["trw", "macos", "android"]);

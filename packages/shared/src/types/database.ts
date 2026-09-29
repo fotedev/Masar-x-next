@@ -745,11 +745,6 @@ export type Course = Database['public']['Tables']['courses']['Row']
 export type CourseInsert = Database['public']['Tables']['courses']['Insert']
 export type CourseUpdate = Database['public']['Tables']['courses']['Update']
 
-// Waitlist (spec 021)
-export type Waitlist = Database['public']['Tables']['waitlist']['Row']
-export type WaitlistInsert = Database['public']['Tables']['waitlist']['Insert']
-export type WaitlistUpdate = Database['public']['Tables']['waitlist']['Update']
-
 // View types
 export type ReviewDetails = Database['public']['Views']['review_details']['Row']
 export type SummaryWithRatings = Database['public']['Views']['summaries_with_ratings']['Row']
