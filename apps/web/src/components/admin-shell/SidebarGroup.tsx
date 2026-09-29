@@ -90,7 +90,7 @@ export function AdminSidebarGroup({
         onClick={() => actions.toggleGroup(group.id)}
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-md px-3 text-start",
-          "text-[11px] font-semibold uppercase tracking-wider text-ax-muted outline-none",
+          "text-[11px] font-semibold uppercase tracking-wider text-ax-muted outline-hidden",
           "transition-colors duration-150 hover:text-ax-secondary",
           "focus-visible:ring-2 focus-visible:ring-ax-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ax-surface",
         )}

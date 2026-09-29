@@ -34,7 +34,7 @@ export function AddVideoForm() {
   if (authLoading) {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center">
           <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto" />
         </div>
       </div>
@@ -44,7 +44,7 @@ export function AddVideoForm() {
   if (!isAdmin) {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center">
           <p className="text-red-500 font-bold">{t("adminOnly")}</p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function AddVideoForm() {
   if (state?.success) {
     return (
       <div className="max-w-2xl mx-auto py-12">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 text-center transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 sm:p-8 text-center transition-colors">
           <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {t("success")}
@@ -89,7 +89,7 @@ export function AddVideoForm() {
         <input type="hidden" name="subject" value={subject} />
         <input type="hidden" name="lectureKey" value={lectureKey} />
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xs border border-gray-100 dark:border-gray-700 space-y-6">
           <div>
             <label
               htmlFor="video-title"

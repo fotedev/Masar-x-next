@@ -17,7 +17,7 @@ export function DashboardStats({
       variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
       className="grid grid-cols-1 md:grid-cols-4 gap-4"
     >
-      <div className="md:col-span-2 relative overflow-hidden group rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-br from-slate-900 to-slate-800 p-5 sm:p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-500">
+      <div className="md:col-span-2 relative overflow-hidden group rounded-[1.5rem] sm:rounded-[2rem] bg-linear-to-br from-slate-900 to-slate-800 p-5 sm:p-6 text-white shadow-lg hover:-translate-y-1 transition-all duration-500">
         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
         <div className="relative z-10 flex flex-col h-full justify-between">
           <div className="flex justify-between items-start">

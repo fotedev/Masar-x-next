@@ -346,7 +346,7 @@ function AdminDashboardContent() {
       {activeTab === "overview" ? (
         renderTabContent()
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-4 sm:p-6 transition-colors">
           {renderTabContent()}
         </div>
       )}

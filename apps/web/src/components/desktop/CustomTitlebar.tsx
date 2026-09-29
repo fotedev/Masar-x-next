@@ -102,7 +102,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
       aria-label={t("bannerAria")}
       // Height is owned by CSS (--masarx-titlebar-h in desktop-shell.css).
       // `masarx-titlebar` makes the whole strip a drag handle.
-      className="masarx-titlebar fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      className="masarx-titlebar fixed inset-x-0 top-0 z-[9999] flex h-8 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/70"
       dir="ltr"
     >
       {/* Drag-only lead slot: enough to grab but small enough that the
@@ -120,7 +120,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
           onClick={onMinimize}
           aria-label={t("minimizeAria")}
           title={t("minimize")}
-          className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="inline-flex h-8 w-10 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
         >
           <MinimizeGlyph />
         </button>
@@ -129,7 +129,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
           onClick={onToggleMaximize}
           aria-label={isMaximized ? t("restoreAria") : t("maximizeAria")}
           title={isMaximized ? t("restore") : t("maximize")}
-          className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="inline-flex h-8 w-10 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
         >
           {isMaximized ? <RestoreGlyph /> : <MaximizeGlyph />}
         </button>
@@ -138,7 +138,7 @@ export function CustomTitlebar(): React.JSX.Element | null {
           onClick={onClose}
           aria-label={t("closeAria")}
           title={t("close")}
-          className="inline-flex h-8 w-10 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="inline-flex h-8 w-10 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
         >
           <CloseGlyph />
         </button>

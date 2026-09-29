@@ -57,7 +57,7 @@ export function NotificationItem({
     >
       <div className="flex items-start gap-4">
         <div
-          className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-[colors,transform] duration-300 group-hover:scale-110 ${
+          className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-[colors,transform] duration-300 group-hover:scale-110 ${
             isHighlighted
               ? "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
               : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400"
@@ -80,7 +80,7 @@ export function NotificationItem({
                   {notification.title}
                 </h4>
                 {isHighlighted && (
-                  <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                  <span className="shrink-0 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                 )}
               </div>
               <p
@@ -108,7 +108,7 @@ export function NotificationItem({
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-300 rounded-xl opacity-0 group-hover:opacity-100 focus-visible:opacity-100 translate-x-2 group-hover:translate-x-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
+              className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors duration-300 rounded-xl opacity-0 group-hover:opacity-100 focus-visible:opacity-100 translate-x-2 group-hover:translate-x-0 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/30"
               title={tNotifications("deleteNotification")}
               aria-label={tNotifications("deleteNotificationAria", {
                 title: notification.title,

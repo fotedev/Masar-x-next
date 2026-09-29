@@ -32,7 +32,7 @@ export function confirmToast(
       description,
       duration: Infinity,
       className:
-        "!rounded-2xl !border !shadow-xl !backdrop-blur !bg-white/95 dark:!bg-slate-950/95 !text-slate-900 dark:!text-white " +
+        "!rounded-2xl !border !shadow-xl !backdrop-blur-sm !bg-white/95 dark:!bg-slate-950/95 !text-slate-900 dark:!text-white " +
         (isDanger
           ? "!border-red-200 dark:!border-red-900/50"
           : "!border-brand-blue/20 dark:!border-brand-blue/30"),

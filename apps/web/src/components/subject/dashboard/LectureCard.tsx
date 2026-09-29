@@ -25,7 +25,7 @@ export function LectureCard({
   return (
     <button
       onClick={() => onSelectLecture(lec.key)}
-      className="cursor-pointer text-start w-full group/btn focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-none rounded-[2.5rem]"
+      className="cursor-pointer text-start w-full group/btn focus-visible:ring-2 focus-visible:ring-brand-blue/30 outline-hidden rounded-[2.5rem]"
       type="button"
     >
       <motion.div
@@ -38,7 +38,7 @@ export function LectureCard({
         className="group relative flex flex-col p-6 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-brand-blue transition-[colors,box-shadow,border-color] duration-500 hover:shadow-2xl hover:shadow-brand-blue/10 text-right h-full"
       >
         <div className="flex justify-between items-start mb-6 w-full">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shadow-sm">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-blue transition-colors duration-500 shadow-xs">
             <span className="text-xl font-black text-slate-400 dark:text-slate-500 group-hover:text-white transition-colors">
               {(idx + 1).toString().padStart(2, "0")}
             </span>
