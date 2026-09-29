@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
-    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-async-storage/async-storage": "1.24.0",
     "@react-native-community/netinfo": "11.3.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
@@ -42,7 +42,7 @@
     "@types/react": "^19.2.14",
     "eslint": "^9.39.4",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.3.0",
+    "typescript-eslint": "^8.70.1",
     "vitest": "^2.1.8"
   }
 }
