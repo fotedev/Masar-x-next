@@ -5,7 +5,7 @@
  * Consumers SHOULD import the specific subpath:
  *   - `import type { Database, Profile } from "@masarx-shared/types"`
  *     for the row types
- *   - `import { ProfileSchema, type ValidatedProfile } from "@masarx-shared/types/schemas"`
+ *   - `import { ProfileSchema } from "@masarx-shared/types/schemas"`
  *     for the Zod schemas
  *
  * The re-export of `database.ts` here is for convenience when a single
