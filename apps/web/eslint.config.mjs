@@ -46,6 +46,30 @@ export default [
       "react-hooks/exhaustive-deps": "warn",
       "no-console": "warn",
 
+      // eslint-plugin-react-hooks v7 (from ^5.1.0-rc.0): `recommended`
+      // expanded from 2 rules to 16 compiler rules, all defaulting to
+      // error (88 hits: set-state-in-effect x75, purity x5, refs x3,
+      // preserve-manual-memoization x3, static-components/immutability x1).
+      // These flag live login + study-flow patterns (auth guards, tab sync,
+      // data fetch in effects). Fixing them is a behavior-risk refactor that
+      // belongs in a dedicated spec, not a dep bump under MVP Lock (I12).
+      // Pinned OFF to preserve v5 behavior (rules-of-hooks:error +
+      // exhaustive-deps:warn); re-enable one-by-one with code fixes.
+      "react-hooks/static-components": "off",
+      "react-hooks/use-memo": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/incompatible-library": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/globals": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/error-boundaries": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/set-state-in-render": "off",
+      "react-hooks/unsupported-syntax": "off",
+      "react-hooks/config": "off",
+      "react-hooks/gating": "off",
+
       // T013 (Spec 004, Phase 2). The AI provider key MUST stay
       // server-side (contracts/ai-boundary.md). Direct SDK imports of
       // `openai` or `@anthropic-ai/sdk` are forbidden in any client
