@@ -49,7 +49,7 @@
     "masarx-shared": "workspace:*",
     "mdast-util-from-markdown": "^2.0.3",
     "mdast-util-to-string": "^4.0.0",
-    "micromark": "^4.0.2",
+    "micromark": "^4.0.3",
     "micromark-util-decode-numeric-character-reference": "2.0.2",
     "micromark-util-decode-string": "^2.0.1",
     "micromark-util-normalize-identifier": "^2.0.1",
