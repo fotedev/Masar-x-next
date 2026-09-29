@@ -22,8 +22,8 @@
 
 **Purpose**: prove a green starting point and freeze the v3 baseline that every later gate is measured against.
 
-- [ ] T001 Pre-flight at repo root: confirm branch `feat/026-tailwind-v4-upgrade` (`git branch --show-current`), Node ≥ 20 (`node -v`), clean `pnpm install`; record the unrelated dirty paths (`apps/mobile/*`, `.gitignore`, `.freebuff/`) as NEVER-TOUCH (I8/I14) in the PR notes
-- [ ] T002 Capture the v3 baseline per quickstart.md §3/§6: compiled CSS size (`find apps/web/.next -name "*.css" -exec du -ch {} +` after a `pnpm --filter web build`), grep counts for EVERY row of contracts/class-name-contract.md §2, and one green run of `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web test:e2e`
+- [x] T001 Pre-flight at repo root: confirm branch `feat/026-tailwind-v4-upgrade` (`git branch --show-current`), Node ≥ 20 (`node -v`), clean `pnpm install`; record the unrelated dirty paths (`apps/mobile/*`, `.gitignore`, `.freebuff/`) as NEVER-TOUCH (I8/I14) in the PR notes
+- [x] T002 Capture the v3 baseline per quickstart.md §3/§6: compiled CSS size (`find apps/web/.next -name "*.css" -exec du -ch {} +` after a `pnpm --filter web build`), grep counts for EVERY row of contracts/class-name-contract.md §2, and one green run of `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web test:e2e`
 
 ---
 
@@ -33,7 +33,7 @@
 
 **⚠️ CRITICAL**: No user story work until T003 passes.
 
-- [ ] T003 Reconcile T002's per-row grep counts against the spec.md Story-3 baseline table (outline-none 143, shadow-sm 82, bare shadow 58, ring-offset 66, bare ring 27, bg-gradient 33, backdrop-blur-sm 12, bg-opacity 12, flex-shrink 16, blur-sm 12, rounded-sm 4, flex-grow 5, space-reverse 8); emit the per-rule file hit lists (grep output into PR evidence notes) and investigate ANY drift before sweeping
+- [x] T003 Reconcile T002's per-row grep counts against the spec.md Story-3 baseline table (outline-none 143, shadow-sm 82, bare shadow 58, ring-offset 66, bare ring 27, bg-gradient 33, backdrop-blur-sm 12, bg-opacity 12, flex-shrink 16, blur-sm 12, rounded-sm 4, flex-grow 5, space-reverse 8); emit the per-rule file hit lists (grep output into PR evidence notes) and investigate ANY drift before sweeping
 
 **Checkpoint**: baseline frozen — US1 can begin.
 
@@ -47,11 +47,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] In apps/web/package.json: set `tailwindcss` to `^4`, add `@tailwindcss/postcss` `^4`, remove `autoprefixer`; run `pnpm install` (research D1/D14)
-- [ ] T005 [US1] Rewrite apps/web/postcss.config.js to `export default { plugins: { "@tailwindcss/postcss": {} } }`
-- [ ] T006 [US1] Replace the three `@tailwind` directives at the top of apps/web/src/index.css with `@import "tailwindcss";` + `@source "../src/**/*.{js,ts,jsx,tsx}";` + `@config "../../tailwind.config.js";` (research D1)
-- [ ] T007 [US1] Add to apps/web/src/index.css the permanent v3-defaults compat block per research D2 (`@layer base { *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-gray-200, currentColor); } }` and `@theme { --default-ring-width: 3px; --default-ring-color: var(--color-blue-500); }` with a comment pointing to research.md D2) plus `@custom-variant dark (&:where(.dark, .dark *));` and `@custom-variant hover-device (@media (any-hover: hover));` (research D10)
-- [ ] T008 [US1] Verify C1 gate (commit C1): `pnpm --filter web build` green (SC-001); dev boot with dark/light toggle identical; `grep -c "@tailwind" apps/web/src/index.css` = 0; a bare-border element computes gray-200 in devtools; grep gates still show v3 names (expected — sweep is US3)
+- [x] T004 [US1] In apps/web/package.json: set `tailwindcss` to `^4`, add `@tailwindcss/postcss` `^4`, remove `autoprefixer`; run `pnpm install` (research D1/D14)
+- [x] T005 [US1] Rewrite apps/web/postcss.config.js to `export default { plugins: { "@tailwindcss/postcss": {} } }`
+- [x] T006 [US1] Replace the three `@tailwind` directives at the top of apps/web/src/index.css with `@import "tailwindcss";` + `@source "../src/**/*.{js,ts,jsx,tsx}";` + `@config "../../tailwind.config.js";` (research D1)
+- [x] T007 [US1] Add to apps/web/src/index.css the permanent v3-defaults compat block per research D2 (`@layer base { *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-gray-200, currentColor); } }` and `@theme { --default-ring-width: 3px; --default-ring-color: var(--color-blue-500); }` with a comment pointing to research.md D2) plus `@custom-variant dark (&:where(.dark, .dark *));` and `@custom-variant hover-device (@media (any-hover: hover));` (research D10)
+- [x] T008 [US1] Verify C1 gate (commit C1): `pnpm --filter web build` green (SC-001); dev boot with dark/light toggle identical; `grep -c "@tailwind" apps/web/src/index.css` = 0; a bare-border element computes gray-200 in devtools; grep gates still show v3 names (expected — sweep is US3)
 
 **Checkpoint**: engine swapped, zero visual change — independently shippable (MVP).
 
@@ -65,13 +65,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] In apps/web/src/index.css add `@theme` color vars per research D5: 24 `--color-ax-*` (incl. nested flattening `ax-surface-hover`, `ax-accent-soft`, `ax-edge-strong`, `ax-on-accent`, `ax-tooltip-bg/fg`), 5 `--color-brand-*` (`rgb(var(--brand-*))` for triplets, `#8b5cf6` for purple), `--color-primary-foreground: hsl(var(--primary-foreground))`
-- [ ] T010 [US2] In apps/web/src/index.css `@theme` add `--breakpoint-xs: 475px; --breakpoint-tablet: 820px;` (research D5/data-model)
-- [ ] T011 [US2] In apps/web/src/index.css `@theme` add the 9 `--text-*` sizes with `--text-*--line-height` pairs exactly as apps/web/tailwind.config.js lines 76–86 (xs…5xl, incl. `--text-5xl--line-height: 1`) (research D6)
-- [ ] T012 [US2] In apps/web/src/index.css `@theme` add `--spacing-18/88/128` + `--spacing-ax-sidebar: var(--ax-space-sidebar)` + `--spacing-ax-sidebar-collapsed: var(--ax-space-sidebar-collapsed)`, `--shadow-ax-sm/md/lg: var(--ax-shadow-*)`, `--ease-ax-standard: var(--ax-ease-standard)`, `--animate-wiggle` + `--animate-ping-slow` with `@keyframes wiggle` defined INSIDE `@theme` (research D7–D9)
-- [ ] T013 [US2] In apps/web/src/index.css add static `@utility z-header/sidebar/modal/popover/toast/tooltip { z-index: 40/45/50/55/60/70 }` and `@utility duration-ax-fast/base/slow { transition-duration: var(--ax-dur-*) }` — NO namespaces exist for these in v4.3 (research D3/D4)
-- [ ] T014 [US2] Remove the `@config` line from apps/web/src/index.css and retire the JS config with `git rm apps/web/tailwind.config.js` (approved-deletion path, I9)
-- [ ] T015 [US2] Verify C2 gate (commit C2): build green; devtools spot-checks of identical computed values for `bg-ax-accent-soft/50` (alpha via color-mix), `text-brand-navy`, `tablet:` breakpoint, `text-5xl` line-height 1, `w-ax-sidebar`, `shadow-ax-md`, `animate-ping-slow` (ping keyframes present — fallback research D9), `ease-ax-standard`, `z-popover`, `duration-ax-fast`; `ls apps/web/tailwind.config.js` fails; confirm the compiled CSS wraps `hover-device` utilities in `@media (any-hover: hover)` (the adopted variant expression — no degradation to a bare `:hover` that would break touch tablets) (finding C1)
+- [x] T009 [US2] In apps/web/src/index.css add `@theme` color vars per research D5: 24 `--color-ax-*` (incl. nested flattening `ax-surface-hover`, `ax-accent-soft`, `ax-edge-strong`, `ax-on-accent`, `ax-tooltip-bg/fg`), 5 `--color-brand-*` (`rgb(var(--brand-*))` for triplets, `#8b5cf6` for purple), `--color-primary-foreground: hsl(var(--primary-foreground))`
+- [x] T010 [US2] In apps/web/src/index.css `@theme` add `--breakpoint-xs: 475px; --breakpoint-tablet: 820px;` (research D5/data-model)
+- [x] T011 [US2] In apps/web/src/index.css `@theme` add the 9 `--text-*` sizes with `--text-*--line-height` pairs exactly as apps/web/tailwind.config.js lines 76–86 (xs…5xl, incl. `--text-5xl--line-height: 1`) (research D6)
+- [x] T012 [US2] In apps/web/src/index.css `@theme` add `--spacing-18/88/128` + `--spacing-ax-sidebar: var(--ax-space-sidebar)` + `--spacing-ax-sidebar-collapsed: var(--ax-space-sidebar-collapsed)`, `--shadow-ax-sm/md/lg: var(--ax-shadow-*)`, `--ease-ax-standard: var(--ax-ease-standard)`, `--animate-wiggle` + `--animate-ping-slow` with `@keyframes wiggle` defined INSIDE `@theme` (research D7–D9)
+- [x] T013 [US2] In apps/web/src/index.css add static `@utility z-header/sidebar/modal/popover/toast/tooltip { z-index: 40/45/50/55/60/70 }` and `@utility duration-ax-fast/base/slow { transition-duration: var(--ax-dur-*) }` — NO namespaces exist for these in v4.3 (research D3/D4)
+- [x] T014 [US2] Remove the `@config` line from apps/web/src/index.css and retire the JS config with `git rm apps/web/tailwind.config.js` (approved-deletion path, I9)
+- [x] T015 [US2] Verify C2 gate (commit C2): build green; devtools spot-checks of identical computed values for `bg-ax-accent-soft/50` (alpha via color-mix), `text-brand-navy`, `tablet:` breakpoint, `text-5xl` line-height 1, `w-ax-sidebar`, `shadow-ax-md`, `animate-ping-slow` (ping keyframes present — fallback research D9), `ease-ax-standard`, `z-popover`, `duration-ax-fast`; `ls apps/web/tailwind.config.js` fails; confirm the compiled CSS wraps `hover-device` utilities in `@media (any-hover: hover)` (the adopted variant expression — no degradation to a bare `:hover` that would break touch tablets) (finding C1)
 
 **Checkpoint**: CSS-first theme complete — `tailwind.config.js` gone, all 223 consumer files untouched.
 
@@ -87,20 +87,20 @@
 
 ### Implementation for User Story 3 (plan commit C3 — scale renames)
 
-- [ ] T016 [US3] Sweep `outline-none` → `outline-hidden` (baseline 143) across apps/web/src — v3's forced-colors-preserving behavior maps to `outline-hidden` (contract §2)
-- [ ] T017 [US3] Sweep shadow scale in apps/web/src IN THIS ORDER: first `shadow-sm` → `shadow-xs` (82), THEN bare `shadow` → `shadow-sm` (58) — reversing the order corrupts the sweep (contract §2)
-- [ ] T018 [US3] Sweep `bg-gradient-to-*` → `bg-linear-to-*` (baseline 33) across apps/web/src, explicitly including apps/web/src/constants/notifications.ts and apps/web/src/constants/assistantUIStyles.ts
-- [ ] T019 [US3] Convert `bg-opacity-*`/`text-opacity-*`/`border-opacity-*` usages (baseline 12) to color/alpha suffix form (e.g. `bg-white bg-opacity-75` → `bg-white/75`) across apps/web/src
-- [ ] T020 [US3] Sweep `flex-shrink-*` → `shrink-*` (16) and `flex-grow-*` → `grow-*` (5) across apps/web/src
-- [ ] T021 [US3] Sweep blur scales in apps/web/src IN THIS ORDER: `blur-sm` → `blur-xs` (12) then bare `blur` → `blur-sm` (~8); `backdrop-blur-sm` → `backdrop-blur-xs` (12) then bare `backdrop-blur` → `backdrop-blur-sm` (~7)
-- [ ] T022 [US3] Sweep `rounded-sm` → `rounded-xs` (4) and `drop-shadow-sm` → `drop-shadow-xs` (1) across apps/web/src
-- [ ] T023 [US3] Verify C3 gate (commit C3): SC-002 greps = 0 for T016–T022 rows; build + typecheck + lint + test green; per-file diff review of every touched file (I10)
+- [x] T016 [US3] Sweep `outline-none` → `outline-hidden` (baseline 143) across apps/web/src — v3's forced-colors-preserving behavior maps to `outline-hidden` (contract §2)
+- [x] T017 [US3] Sweep shadow scale in apps/web/src IN THIS ORDER: first `shadow-sm` → `shadow-xs` (82), THEN bare `shadow` → `shadow-sm` (58) — reversing the order corrupts the sweep (contract §2)
+- [x] T018 [US3] Sweep `bg-gradient-to-*` → `bg-linear-to-*` (baseline 33) across apps/web/src, explicitly including apps/web/src/constants/notifications.ts and apps/web/src/constants/assistantUIStyles.ts
+- [x] T019 [US3] Convert `bg-opacity-*`/`text-opacity-*`/`border-opacity-*` usages (baseline 12) to color/alpha suffix form (e.g. `bg-white bg-opacity-75` → `bg-white/75`) across apps/web/src
+- [x] T020 [US3] Sweep `flex-shrink-*` → `shrink-*` (16) and `flex-grow-*` → `grow-*` (5) across apps/web/src
+- [x] T021 [US3] Sweep blur scales in apps/web/src IN THIS ORDER: `blur-sm` → `blur-xs` (12) then bare `blur` → `blur-sm` (~8); `backdrop-blur-sm` → `backdrop-blur-xs` (12) then bare `backdrop-blur` → `backdrop-blur-sm` (~7)
+- [x] T022 [US3] Sweep `rounded-sm` → `rounded-xs` (4) and `drop-shadow-sm` → `drop-shadow-xs` (1) across apps/web/src
+- [x] T023 [US3] Verify C3 gate (commit C3): SC-002 greps = 0 for T016–T022 rows; build + typecheck + lint + test green; per-file diff review of every touched file (I10)
 
 ### Implementation for User Story 3 (plan commit C4 — ring & audit)
 
-- [ ] T024 [US3] Pin the 27 bare `ring` sites in apps/web/src to explicit `ring-3` (+ an explicit color where the site relied on v3's blue-500 default) — hotspots per spec: desktop/workspace/AssistantPanel.tsx, desktop/workspace/ReaderToolbar.tsx, UpdateToast.tsx, desktop/CustomTitlebar.tsx
-- [ ] T025 [US3] Audit the 66 `ring-offset-*` sites in apps/web/src against v4 shadow stacking (compute box-shadow output for one representative per file) and verify the 8 `space-x-reverse`/`space-y-reverse` sites behave identically under v4 margin logic
-- [ ] T026 [US3] Verify C4 gate (commit C4): bare-ring grep = 0; build + `pnpm --filter web test:e2e` green; visual spot-check of the affected components (desktop workspace panels, UpdateToast, ring-offset hosts)
+- [x] T024 [US3] Pin the 27 bare `ring` sites in apps/web/src to explicit `ring-3` (+ an explicit color where the site relied on v3's blue-500 default) — hotspots per spec: desktop/workspace/AssistantPanel.tsx, desktop/workspace/ReaderToolbar.tsx, UpdateToast.tsx, desktop/CustomTitlebar.tsx
+- [x] T025 [US3] Audit the 66 `ring-offset-*` sites in apps/web/src against v4 shadow stacking (compute box-shadow output for one representative per file) and verify the 8 `space-x-reverse`/`space-y-reverse` sites behave identically under v4 margin logic
+- [x] T026 [US3] Verify C4 gate (commit C4): bare-ring grep = 0; build + `pnpm --filter web test:e2e` green; visual spot-check of the affected components (desktop workspace panels, UpdateToast, ring-offset hosts)
 
 **Checkpoint**: all renamed utilities migrated; compat layer from T007 remains as the documented default-restoration contract.
 
@@ -112,8 +112,8 @@
 
 **Independent Test** (spec US4): all four gate commands green + parity matrix complete.
 
-- [ ] T027 [US4] Run the full gate suite: `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web test:e2e` (SC-003); run the FR-010 scope check `git diff --stat main...HEAD -- . ':(exclude)apps/web' ':(exclude)specs' ':(exclude)AGENTS.md'` and confirm 0 lines (SC-006)
-- [ ] T028 [US4] Produce the SC-005 comparison (compiled CSS size v3 from T002 vs v4) and complete the quickstart.md §5 parity matrix (dark/light × ar/en on home, subject, quiz, chat, admin, desktop shell) **including the §5.1 bare-border computed check (3 samples — Card, Input, Divider — `border-color` must remain `rgb(229, 231, 235)` / gray-200, never `currentColor`) (finding A1)**; assemble the PR evidence table (baseline counts, greps, sizes, matrix)
+- [x] T027 [US4] Run the full gate suite: `pnpm --filter web typecheck && pnpm --filter web lint && pnpm --filter web test && pnpm --filter web test:e2e` (SC-003); run the FR-010 scope check `git diff --stat main...HEAD -- . ':(exclude)apps/web' ':(exclude)specs' ':(exclude)AGENTS.md'` and confirm 0 lines (SC-006)
+- [ ] T028 [US4] Produce the SC-005 comparison (compiled CSS size v3 from T002 vs v4) and complete the quickstart.md §5 parity matrix (dark/light × ar/en on home, subject, quiz, chat, admin, desktop shell) **including the §5.1 bare-border computed check (3 samples — Card, Input, Divider — `border-color` must remain `rgb(229, 231, 235)` / gray-200, never `currentColor`) (finding A1)**; assemble the PR evidence table (baseline counts, greps, sizes, matrix) — **PENDING owner visual QA** (automated parts done: SC-002 greps ✅, e2e 11/11 ✅; sizes recorded: 448,945 B → 281,795 B prod, −37%)
 
 **Checkpoint**: zero-visual-regression claim is evidence-backed.
 
@@ -121,7 +121,7 @@
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T029 Final cross-cutting audit: confirm FR-008 (unlayered custom classes in apps/web/src/index.css byte-identical vs main — `git diff main...HEAD -- apps/web/src/index.css` reviewed), FR-009 (zero i18n/brand copy changes — I3/I13), PR-010 residue (no files outside apps/web+specs+AGENTS.md touched), update the AGENTS.md 026 row status to implementation-complete state, delete the `.agents/` claim file after push (I14)
+- [x] T029 Final cross-cutting audit: confirm FR-008 (unlayered custom classes in apps/web/src/index.css byte-identical vs main — `git diff main...HEAD -- apps/web/src/index.css` reviewed), FR-009 (zero i18n/brand copy changes — I3/I13), PR-010 residue (no files outside apps/web+specs+AGENTS.md touched), update the AGENTS.md 026 row status to implementation-complete state, delete the `.agents/` claim file after push (I14)
 
 ---
 
