@@ -40,6 +40,21 @@ updates:
       - dependency-name: expo-*
         update-types:
           - version-update:semver-major
+      # AsyncStorage 1.x→3.x is held (owner decision 2026-09-29, reversible):
+      # the isolated major skips two majors, needs RN >= 0.76 + Expo SDK 53+
+      # with the new expo plugin plus removeMany/getMany migration
+      # (read-cache.ts multiRemove). Mobile is pinned to SDK 51 + RN 0.74.5,
+      # so this belongs in the post-MVP SDK upgrade spec, not autodrift.
+      # PR #33 closed for this reason. 1.x patches still flow.
+      - dependency-name: "@react-native-async-storage/async-storage"
+        versions: [">= 2.0.0"]
+      # react-native past 0.74.5 is held (owner decision 2026-09-29,
+      # reversible): 0.x minors are breaking and 0.87.x needs new-arch RN +
+      # newer Expo + likely React 19, which breaks the SDK 51 pin. PR #58
+      # smuggled 0.74.5→0.87.1 through the minor-and-patch group and broke
+      # mobile typecheck + expo export. Handled via the SDK upgrade spec.
+      - dependency-name: react-native
+        versions: ["> 0.74.5"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
