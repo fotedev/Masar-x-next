@@ -1,6 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source "../src/**/*.{js,ts,jsx,tsx}";
+@config "../tailwind.config.js";
+
+/* Custom variants (spec 026 research D10) */
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant hover-device (@media (any-hover: hover));
+
+/* v3 defaults restoration — PERMANENT (spec 026 research D2, official v4
+   compat recipes). v4 changed bare border/divide color to currentColor and
+   bare ring to 1px/currentColor; these rules keep v3 rendering forever.
+   Do NOT remove: ~323 bare-border call sites depend on it. */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+@theme {
+  --default-ring-width: 3px;
+  --default-ring-color: color-mix(in oklab, var(--color-blue-500) 50%, transparent);
+}
 
 /* Font variables */
 :root {
