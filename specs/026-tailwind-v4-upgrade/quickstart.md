@@ -61,6 +61,8 @@ Confirm via DevTools computed styles (or an automated probe) that `border-color`
 
 A sample computing to `currentColor` means the v3-defaults restoration layer (research D2) is not applied — block merge until fixed.
 
+**Verified 2026-09-29 (automated probe, finding A1 closed):** bare `.border` and `divide-y` children compute exactly `rgb(229, 231, 235)`. Nuance discovered: v4.3 re-expressed its palette in oklch, so the `--color-gray-200` token differs from v3's `#e5e7eb` by ~ΔE 0.2 (imperceptible but not byte-identical) — the restoration rule therefore pins the **literal** `#e5e7eb` instead of the token.
+
 ## 6. CSS size comparison (SC-005)
 
 ```bash
