@@ -47,7 +47,7 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 
 | Spec | Plan | Status |
 |---|---|---|
-| [015-consolidate-shared-abstractions](./specs/015-consolidate-shared-abstractions/spec.md) | [plan.md](./specs/015-consolidate-shared-abstractions/plan.md) | Ready for `/speckit.tasks` — refactor blocked by MVP Lock (I12) pending owner lift |
+| [015-consolidate-shared-abstractions](./specs/015-consolidate-shared-abstractions/spec.md) | [plan.md](./specs/015-consolidate-shared-abstractions/plan.md) | **Closed — landed on main** (TRW decoupling PR #52 `de0b7a7`; `7fb17f4`/`3578828`/`27efc7c` bridge, paste-helpers, schema deletions; all 41 tasks complete `c5faa3b`) — row corrected 2026-09-30 (was stale "Ready for `/speckit.tasks`") |
 | [026-tailwind-v4-upgrade](./specs/026-tailwind-v4-upgrade/spec.md) | [plan.md](./specs/026-tailwind-v4-upgrade/plan.md) | **Merged (squash 708477f, PR #65)** — Tailwind 4.3.3, CSS −37%, visual QA green; MVP Lock explicitly lifted for this track (owner, 2026-09-29) |
 | [028-desktop-crashpad-logs](./specs/028-desktop-crashpad-logs/spec.md) | — | **Merged (squash 1b45490, PR #98)** — desktop Crashpad dumps (local-only, owner decision) + electron-log file logging; audit R7 closed locally, remote submission stays an owner decision |
 
