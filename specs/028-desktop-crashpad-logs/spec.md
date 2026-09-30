@@ -35,8 +35,9 @@ The desktop main process logs only via `console.*` (`[masarx-desktop]` prefix) �
 
 ## Acceptance
 
-- [ ] Gates green: `pnpm --filter desktop typecheck` / `lint` / `test` (existing suites stay green; electron mocks extended, not weakened).
-- [ ] `logging.test.ts` covers: path resolution (`logs/`, `crashDumps/` under userData), `crashReporter.start` called with `uploadToServer: false` after `setPath('crashDumps')`, child-server stdout→info / stderr→error routing, process-gone handlers registered and logging details.
-- [ ] Smoke suite (real Electron boot) passes with diagnostics wired at module scope.
-- [ ] Boot log line records both resolved paths (`logs/main.log`, `crashDumps/`) so support can locate artifacts in the field.
-- [ ] `docs/desktop-readiness.md` owner-action register updated: crash reporting + file logs implemented locally; remote submission remains an open owner decision.
+- [x] Gates green: `pnpm --filter desktop typecheck` / `lint` / `test` (existing suites stay green; electron mocks extended, not weakened). *(Re-verified 2026-09-30 on merged main: typecheck + eslint clean, 49/49 unit tests.)*
+- [x] `logging.test.ts` covers: path resolution (`logs/`, `crashDumps/` under userData), `crashReporter.start` called with `uploadToServer: false` after `setPath('crashDumps')`, process-gone handlers registered and logging details. *(Verified 2026-09-30 — the suite asserts all of these, including setPath-before-start ordering and the no-`submitURL` local-only contract.)*
+- [ ] `logging.test.ts` child-server stdout→info / stderr→error routing assertion — **gap found at closeout 2026-09-30**: the routing is implemented (`src/main/server.ts` pipes via `nextServerLog`) but no test asserts it; every other item of the original box above is covered.
+- [x] Smoke suite (real Electron boot) passes with diagnostics wired at module scope. *(Verified 2026-09-30: `MASARX_RUN_SMOKE=1` against a fresh `tsc` build + live dev server — 53/53 including smoke.)*
+- [x] Boot log line records both resolved paths (`logs/main.log`, `crashDumps/`) so support can locate artifacts in the field. *(`initDiagnostics` "Diagnostics ready…" line, asserted in `logging.test.ts`.)*
+- [x] `docs/desktop-readiness.md` owner-action register updated: crash reporting + file logs implemented locally; remote submission remains an open owner decision. *(Verified 2026-09-30 — R7 entry in the readiness register.)*

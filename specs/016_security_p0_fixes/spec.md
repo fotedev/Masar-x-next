@@ -48,8 +48,8 @@ Any delegation to an external model **or** any access to production (MCP/CLI/HTT
 4. **Read-only by default.** Prod access uses a `--read-only` MCP server; the brief forbids file writes and git write commands; the orchestrator re-checks `git status` and `touchedFiles` afterwards.
 5. **Orchestrator verifies raw evidence**, never the implementer's self-report (round-1: the report claimed "11 queries" while the raw event log held 16).
 
-- [ ] `pnpm install` clean; `pnpm --filter web build` green; `pnpm --filter web test` green.
-- [ ] `pnpm audit` no longer lists critical next advisories; sharp advisories cleared or proven unpatched-upstream.
-- [ ] Edge function returns identical response for known/unknown emails; no `debug` field; no plaintext token insert.
-- [ ] Migration 014 idempotent-safe and RLS-compatible.
-- [ ] `git status` shows only intended files staged per commit.
+- [x] `pnpm install` clean; `pnpm --filter web build` green; `pnpm --filter web test` green. *(Landed as squash `94df7f8`, PR #53, 2026-09-26; Vercel build+deploy confirmed in `docs/audits/git-cleanup-2026-09-26/delivery-report.md`, superseding the closure ledger's "F1 deployment not proven" caveat.)*
+- [x] `pnpm audit` no longer lists critical next advisories; sharp advisories cleared or proven unpatched-upstream. *(Re-verified 2026-09-30: zero `next` and zero `sharp` advisories in prod deps. 59 advisories remain in other packages; the single critical is `tar` via `apps/mobile>expo>@expo/cli` — patched ≥7.5.19 upstream, unrelated to spec 016's scope.)*
+- [x] Edge function returns identical response for known/unknown emails; no `debug` field; no plaintext token insert. *(Code-verified 2026-09-30: `debug` field removed, insert sends `token_hash` only; production state per closure ledger F5 — 0 stored plaintext tokens, column nullable.)*
+- [x] Migration 014 idempotent-safe and RLS-compatible. *(`014_password_reset_token_hardening.sql`: `DROP NOT NULL` + two idempotent `UPDATE`s, no RLS changes; ledger F5 confirms applied in production.)*
+- [x] `git status` shows only intended files staged per commit. *(Process gate — git-safety protocol above; squash `94df7f8` file list re-checked 2026-09-30, all entries spec/security-scoped.)*

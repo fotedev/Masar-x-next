@@ -38,6 +38,7 @@ The dual-React startup crash (fixed in `fcf9dfd`) reached the device dropbox wit
 - [x] README documents the EAS env setup + verify steps + the 5-line "reading a crash" guide.
 - [x] EAS env vars created (`eas env:create`, 2026-09-26) for preview + production; DSN ingest verified end-to-end (envelope POST → HTTP 200, event `3e66419794644e669d46bf67712dc657` in `aboalayoun/javascript-nextjs`); token validated against `de.sentry.io` API (`project:releases` scope present).
 - [ ] First EAS preview build shows the Sentry upload step and the app version appears as a release in Sentry with symbolicated frames.
+  *(Closeout note 2026-09-30: still open — a runtime/release check only the owner's first EAS preview build can prove. Code, DSN ingest, and EAS env vars are all verified above; `eas` must run from `apps/mobile`, and aborted cloud builds still complete server-side, so recheck `eas build:list` before submitting a new one.)*
 
 ## Deployment note
 
