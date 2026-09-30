@@ -33,7 +33,7 @@ Until signed, the honest wording for students: *"Windows may show a security pro
 ## 3. Already decided / by-design (no action, listed for completeness)
 
 - **macOS/Linux targets** stay unbuilt: the pipeline is Windows-only, `entitlements.mac.plist` is deliberately absent, and the audit's G5.3 keeps those targets non-promised. Add sibling release jobs when there's demand.
-- **Crash reporting / file logs** (audit R7, Medium): accepted for now; revisit post-launch with a lightweight solution (Sentry has an Electron SDK) — needs an owner account decision, hence out of spec 014.
+- **Crash reporting / file logs** (audit R7, Medium): **implemented locally in spec 028** (2026-09-29) — Crashpad minidumps land in `userData/crashDumps`, main-process + Next.js child logs in `userData/logs/main.log` (5 MB rotation). Remaining owner decision: **remote submission** (Sentry Electron SDK or minidump endpoint) if field telemetry is wanted post-launch; local-only capture makes no network calls.
 - **Workspace content**: the study workspace renders whatever lectures the admin enters (dummy rows like `33222` seen in verification are upstream data, not code). Content entry is the standing owner task from the MVP launch ledger.
 
 ## 4. Release mechanics (v0.6.0)

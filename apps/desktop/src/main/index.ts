@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startLocalServer } from './server.js';
 import { Updater, bootUpdater } from './updater.js';
+import { desktopLog, initDiagnostics } from './logging.js';
 import {
   parseDeepLinkUrl,
   DEEP_LINK_PROTOCOL,
@@ -10,6 +11,17 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Spec 028 — diagnostics boot (Crashpad dumps + file logging) runs at module
+// scope BEFORE the single-instance lock, so even a second instance's "already
+// running" warning lands in the log file. Must run before app ready:
+// crashReporter.start + app.setPath('crashDumps') are pre-ready APIs. The
+// process.versions.electron guard keeps the import side-effect-free under
+// Vitest/plain Node (same pattern as the auto-start block below). Every step
+// degrades instead of throwing — see logging.ts.
+if (process.versions && process.versions.electron) {
+  initDiagnostics();
+}
 
 // Resolve the window icon path for both dev and packaged builds.
 // - Dev:       apps/desktop/src/main/index.ts → ../../build/icon.ico
@@ -93,8 +105,7 @@ export async function startMainProcess(): Promise<number> {
   // handler registration) so a duplicate process exits cheaply.
   const gotTheLock = app.requestSingleInstanceLock();
   if (!gotTheLock) {
-    // eslint-disable-next-line no-console
-    console.warn('[masarx-desktop] Another instance is already running; quitting.');
+    desktopLog.warn('Another instance is already running; quitting.');
     app.quit();
     return 0;
   }
@@ -155,8 +166,7 @@ export async function startMainProcess(): Promise<number> {
       app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL);
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('[masarx-desktop] masarx:// protocol registration failed:', err);
+    desktopLog.warn('masarx:// protocol registration failed:', err);
   }
 
   // Start the local server BEFORE app.whenReady so that by the time the
@@ -230,8 +240,7 @@ export async function startMainProcess(): Promise<number> {
   // renderer's `auth:rendererReady` pull.
   const coldDeepLink = parseDeepLinkUrl(process.argv.slice(1));
   if (coldDeepLink) {
-    // eslint-disable-next-line no-console
-    console.info('[masarx-desktop] Cold-start deep link received:', coldDeepLink);
+    desktopLog.info('Cold-start deep link received:', coldDeepLink);
     dispatchDeepLink(coldDeepLink);
   }
 
@@ -263,9 +272,8 @@ export async function startMainProcess(): Promise<number> {
       const maxRetries = 3;
       didFailLoadAttempts += 1;
       if (didFailLoadAttempts > maxRetries) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `[masarx-desktop] Local server unreachable after ${maxRetries} retries ` +
+        desktopLog.error(
+          `Local server unreachable after ${maxRetries} retries ` +
             `(last error: ${errorDescription} / ${errorCode}). Showing recovery page.`,
         );
         if (!win.isDestroyed()) {
@@ -281,8 +289,7 @@ export async function startMainProcess(): Promise<number> {
         }
       }, 500);
     } else {
-      // eslint-disable-next-line no-console
-      console.warn(`[masarx-desktop] Window failed to load: ${errorDescription} (${errorCode})`);
+      desktopLog.warn(`Window failed to load: ${errorDescription} (${errorCode})`);
     }
   });
 
@@ -304,12 +311,10 @@ export async function startMainProcess(): Promise<number> {
   // anything else (mailto:, javascript:, file:, etc.) is dropped.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) {
-      // eslint-disable-next-line no-console
-      console.info(`[masarx-desktop] Routing window.open to system browser: ${url}`);
+      desktopLog.info(`Routing window.open to system browser: ${url}`);
       void shell.openExternal(url);
     } else {
-      // eslint-disable-next-line no-console
-      console.warn(`[masarx-desktop] Blocked window.open for non-http url: ${url}`);
+      desktopLog.warn(`Blocked window.open for non-http url: ${url}`);
     }
     return { action: 'deny' };
   });
@@ -323,8 +328,7 @@ export async function startMainProcess(): Promise<number> {
   win.webContents.on('will-navigate', (event, navUrl) => {
     if (!navUrl.startsWith(allowedOrigin)) {
       event.preventDefault();
-      // eslint-disable-next-line no-console
-      console.warn(`[masarx-desktop] Blocked navigation to: ${navUrl}`);
+      desktopLog.warn(`Blocked navigation to: ${navUrl}`);
     }
   });
 
@@ -332,8 +336,7 @@ export async function startMainProcess(): Promise<number> {
   // The web app renders inside the shell and has no need for any of
   // these; deny by default to reduce the blast radius of an XSS.
   win.webContents.session.setPermissionRequestHandler((_wc, _permission, callback) => {
-    // eslint-disable-next-line no-console
-    console.warn(`[masarx-desktop] Denied permission request: ${_permission}`);
+    desktopLog.warn(`Denied permission request: ${_permission}`);
     callback(false);
   });
 
@@ -449,8 +452,7 @@ export async function startMainProcess(): Promise<number> {
 // without the auto-start kicking in.
 if (process.versions && process.versions.electron) {
   startMainProcess().catch((err: unknown) => {
-    // eslint-disable-next-line no-console
-    console.error('[masarx-desktop] Failed to start:', err);
+    desktopLog.error('Failed to start:', err);
     app.quit();
   });
 }

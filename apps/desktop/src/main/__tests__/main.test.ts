@@ -110,7 +110,32 @@ vi.mock('electron', () => ({
   shell: {
     openExternal: vi.fn(async () => undefined),
   },
+  // Spec 028 — index.ts imports logging.ts which imports crashReporter.
+  // Diagnostics boot is guarded off under Vitest (process.versions.electron
+  // is undefined), so only the named-import surface must exist.
+  crashReporter: {
+    start: vi.fn(),
+  },
 }));
+
+// Spec 028 — logging.ts imports electron-log/main. The real module pulls
+// electron internals at import time, so vitest gets a stub surface that
+// mirrors the parts logging.ts touches (transports config, scopes, errorHandler).
+vi.mock('electron-log/main', () => {
+  const logStub: any = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    scope: vi.fn(() => logStub),
+    transports: {
+      file: { level: 'silly' as const, maxSize: 0, resolvePathFn: vi.fn() },
+      console: { level: 'silly' as const },
+    },
+    errorHandler: { startCatching: vi.fn() },
+  };
+  return { default: logStub };
+});
 
 // Mock `next` start so the test does not actually spawn a Next.js server.
 const mockNextPrepare = vi.fn().mockResolvedValue(undefined);

@@ -2,6 +2,7 @@ import path from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { findFreePort, writePortSidecar } from './port.js';
+import { nextServerLog } from './logging.js';
 
 export interface ServerOptions {
   /** Resolved `app.getPath('userData')` value. */
@@ -105,15 +106,15 @@ async function startProductionServer(userDataPath: string): Promise<RunningServe
     windowsHide: true,
   });
 
-  // Pipe child stdout/stderr through the main process so Electron's
-  // terminal / devtools console shows Next.js output, and so we can
-  // surface early-failure diagnostics if the server crashes on boot.
-  const tag = '[next-server]';
+  // Pipe child stdout/stderr into the diagnostics log (spec 028) under the
+  // `next-server` scope, so packaged builds record Next.js boot output and
+  // early-failure diagnostics. The console transport still mirrors it for
+  // the dev terminal. stderr → error level so crashes are unmissable.
   child.stdout?.on('data', (chunk: Buffer) => {
-    process.stdout.write(`${tag} ${chunk}`);
+    nextServerLog.info(chunk.toString().trimEnd());
   });
   child.stderr?.on('data', (chunk: Buffer) => {
-    process.stderr.write(`${tag} ${chunk}`);
+    nextServerLog.error(chunk.toString().trimEnd());
   });
 
   // Detect early spawn failures (e.g. wrong Node version, missing

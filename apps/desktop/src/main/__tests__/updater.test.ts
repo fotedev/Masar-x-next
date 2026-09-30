@@ -138,7 +138,32 @@ vi.mock('electron', () => ({
     setName: vi.fn(),
     isPackaged: true,
   },
+  // Spec 028 — updater.ts imports logging.ts, which imports crashReporter.
+  // Diagnostics boot never runs in this suite; only the named-import
+  // surface must exist for the module graph to resolve.
+  crashReporter: {
+    start: vi.fn(),
+  },
 }));
+
+// Spec 028 — logging.ts imports electron-log/main. Self-contained stub
+// (factory must not reference outer bindings: this file's import of
+// updater.js is static, so factories run during import resolution).
+vi.mock('electron-log/main', () => {
+  const logStub: any = {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    scope: vi.fn(() => logStub),
+    transports: {
+      file: { level: 'silly' as const, maxSize: 0, resolvePathFn: vi.fn() },
+      console: { level: 'silly' as const },
+    },
+    errorHandler: { startCatching: vi.fn() },
+  };
+  return { default: logStub };
+});
 
 // Import AFTER mocks. Vitest hoists vi.mock() so this is safe.
 import { Updater } from '../updater.js';
