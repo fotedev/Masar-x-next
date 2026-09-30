@@ -32,12 +32,12 @@ The general footer WhatsApp **support** CTA is NOT touched.
 
 ## Acceptance
 
-- [ ] Signed-out user can join from the footer TRW card and the downloads cards.
-- [ ] Signed-in user sees their email prefilled (editable).
-- [ ] Duplicate email+source ⇒ duplicate message, not an error.
-- [ ] Invalid email ⇒ inline validation message, no request sent.
-- [ ] All new strings exist in ar and en; no new i18n audit hits.
-- [ ] Gates: tsc, eslint, web vitest green.
+- [x] Signed-out user can join from the footer TRW card and the downloads cards. *(Verified 2026-09-30: `FooterLinks.tsx` TRW card + `/downloads` ComingSoonCards both render `WaitlistSignup`; anon insert proven by the migration smoke below.)*
+- [x] Signed-in user sees their email prefilled (editable). *(Verified 2026-09-30: `WaitlistSignup.tsx` prefills `user.email` until the visitor types their own.)*
+- [x] Duplicate email+source ⇒ duplicate message, not an error. *(Verified 2026-09-30: Postgres `23505` maps to the duplicate state, rendered in the same non-error style as success.)*
+- [x] Invalid email ⇒ inline validation message, no request sent. *(Verified 2026-09-30: Zod `safeParse` fails before any insert; `waitlist-schema.test.ts` 7/7 green.)*
+- [x] All new strings exist in ar and en; no new i18n audit hits. *(Verified 2026-09-30: `messages/{ar,en}/waitlist.json` both registered; `verify_i18n.mjs` parity issues 0 and no waitlist file among hardcoded hits.)*
+- [x] Gates: tsc, eslint, web vitest green. *(At landing via `ab55808` on main; waitlist vitest re-run 2026-09-30 — 7/7 green.)*
 - [x] Migration applied to the linked project (2026-09-25, via Supabase Management API `database/query`). Smoke-tested: RLS anon INSERT OK, REST 201 / 409 duplicate / 400 invalid, anon read returns `[]` (rows unreadable), smoke rows cleaned.
 
 ## Deployment note
