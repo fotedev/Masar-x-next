@@ -14,6 +14,7 @@ import { app } from 'electron';
 import electronUpdater from 'electron-updater';
 const { autoUpdater } = electronUpdater;
 import type { UpdateInfo } from 'electron-updater';
+import { desktopLog } from './logging.js';
 
 // ============================================================================
 // updater.ts — Auto-update with rollback (T023)
@@ -137,8 +138,7 @@ export class Updater {
    */
   async checkOnStartup(): Promise<UpdateAvailableInfo | null> {
     if (!isAutoUpdateEnabled()) {
-      // eslint-disable-next-line no-console
-      console.log('[masarx-desktop] Auto-updater disabled (dev or portable); skipping startup check.');
+      desktopLog.info('Auto-updater disabled (dev or portable); skipping startup check.');
       return null;
     }
 
@@ -159,8 +159,7 @@ export class Updater {
       previousVersion = await this.readVersionMarker();
       await this.writeVersionMarker(app.getVersion());
     } catch (err: unknown) {
-      // eslint-disable-next-line no-console
-      console.warn('[masarx-desktop] Update marker IO failed; skipping trial detection:', err);
+      desktopLog.warn('Update marker IO failed; skipping trial detection:', err);
     }
 
     // First-launch rollback: if a stale flag from a previous attempt
@@ -186,8 +185,7 @@ export class Updater {
         await this.writeFlag({ version: app.getVersion(), appliedAt: Date.now() });
         this.startTrialTimer();
       } catch (err: unknown) {
-        // eslint-disable-next-line no-console
-        console.warn('[masarx-desktop] Could not write update trial flag; rollback disabled for this update:', err);
+        desktopLog.warn('Could not write update trial flag; rollback disabled for this update:', err);
       }
     }
 
@@ -195,8 +193,7 @@ export class Updater {
       this.lastCheckAt = Date.now();
       await this.au.checkForUpdates();
     } catch (err: unknown) {
-      // eslint-disable-next-line no-console
-      console.warn('[masarx-desktop] Startup update check failed or skipped:', err);
+      desktopLog.warn('Startup update check failed or skipped:', err);
     }
     return null; // The update-available event is what tells the caller.
   }
@@ -218,8 +215,7 @@ export class Updater {
       this.lastCheckAt = now;
       await this.au.checkForUpdates();
     } catch (err: unknown) {
-      // eslint-disable-next-line no-console
-      console.warn('[masarx-desktop] Manual update check failed:', err);
+      desktopLog.warn('Manual update check failed:', err);
     }
     return null;
   }
@@ -301,8 +297,7 @@ export class Updater {
       // new version ever boots, making rollback unreachable. The trial
       // starts in checkOnStartup() when the recorded version differs from
       // the running one.
-      // eslint-disable-next-line no-console
-      console.log(`[masarx-desktop] Update downloaded: ${info.version}`);
+      desktopLog.info(`Update downloaded: ${info.version}`);
     });
 
     this.au.on('download-progress', (p: { percent: number }) => {
@@ -316,6 +311,9 @@ export class Updater {
     });
 
     this.au.on('error', (err: Error) => {
+      // Spec 028 — updater failures were previously broadcast-only; they now
+      // also land in the diagnostics log (audit R7's "update-failure telemetry").
+      desktopLog.error('Auto-update error:', err);
       for (const cb of this.errorSubs) {
         try {
           cb(err);
@@ -381,10 +379,7 @@ export class Updater {
    * keep N-1 on disk for exactly this case).
    */
   private async rollback(): Promise<void> {
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[masarx-desktop] Detected failed previous update; rolling back to N-1.',
-    );
+    desktopLog.warn('Detected failed previous update; rolling back to N-1.');
     // install(forceRunAfter = true, isSilent = true) per electron-updater docs.
     // `install` lives on BaseUpdater but isn't exposed in AppUpdater's type.
     const auAny = this.au as unknown as {
@@ -409,8 +404,7 @@ export interface UpdaterBootOptions {
 
 export function bootUpdater(opts: UpdaterBootOptions): void {
   if (!isAutoUpdateEnabled()) {
-    // eslint-disable-next-line no-console
-    console.log('[masarx-desktop] Auto-updater disabled (dev or portable); skipping boot.');
+    desktopLog.info('Auto-updater disabled (dev or portable); skipping boot.');
     return;
   }
 
@@ -431,8 +425,7 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
   // `isReady()` branches share one log line (audit 2026-09-12 F3).
   const checkStartupUpdates = (): void => {
     void opts.updater.checkOnStartup().catch((err: unknown) => {
-      // eslint-disable-next-line no-console
-      console.warn('[masarx-desktop] Startup update check crashed (non-fatal):', err);
+      desktopLog.warn('Startup update check crashed (non-fatal):', err);
     });
   };
   if (app.isReady()) {
