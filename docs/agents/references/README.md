@@ -15,6 +15,6 @@ Start here when AGENTS.md points you at a task. Read only what the task needs.
 | Working tree is dirty and a task wants a clean state | [01-gotchas.md](./01-gotchas.md) §20 |
 | Starting a non-trivial change (refactor, schema/API/auth, cross-cutting architecture, multi-component feature) | [10-spec-first.md](./10-spec-first.md) + existing example specs in `specs/` |
 | Committing, opening a PR, or checking pre-merge gates | [11-git-standards.md](./11-git-standards.md) + [08-precommit.md](./08-precommit.md) |
-| Need the full rule table (all 13 invariants) | [03-invariants.md](./03-invariants.md) |
+| Need the full rule table (all 14 invariants) | [03-invariants.md](./03-invariants.md) |
 
 **Back to:** [AGENTS.md](../../../AGENTS.md)
