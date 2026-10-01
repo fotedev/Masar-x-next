@@ -124,6 +124,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "profile.language": "اللغة",
     "profile.languageArabic": "العربية",
     "profile.languageEnglish": "English",
+    "profile.languageHint": "قد يتطلب تغيير الاتجاه إعادة تشغيل التطبيق.",
     "profile.restartRequiredTitle": "إعادة التشغيل مطلوبة",
     "profile.restartRequiredMessage":
       "تغيير اتجاه الواجهة (من اليمين لليسار/من اليسار لليمين) يتطلب إعادة تشغيل التطبيق.",
@@ -175,6 +176,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "summaryDetail.loginRequired": "يجب عليك تسجيل الدخول لإضافة تقييم.",
     "common.retry": "إعادة المحاولة",
     "common.offline": "غير متصل",
+    "common.cancel": "إلغاء",
   },
   en: {
     "tabs.subjects": "Subjects",
@@ -202,6 +204,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "profile.language": "Language",
     "profile.languageArabic": "العربية",
     "profile.languageEnglish": "English",
+    "profile.languageHint": "Direction changes may require restarting the app.",
     "profile.restartRequiredTitle": "Restart required",
     "profile.restartRequiredMessage":
       "Changing the layout direction (RTL/LTR) requires restarting the app.",
@@ -253,6 +256,7 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "summaryDetail.loginRequired": "You need to sign in to add a review.",
     "common.retry": "Retry",
     "common.offline": "Offline",
+    "common.cancel": "Cancel",
   },
 };
 
