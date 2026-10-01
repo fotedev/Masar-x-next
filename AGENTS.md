@@ -15,7 +15,7 @@
 
 ## Hard rules (one line each — full table in [03-invariants.md](./docs/agents/references/03-invariants.md))
 
-- I1 Service-role/AI keys server-side only · I2 `Database` types + Zod in `packages/shared` · I3 i18n for every user-facing string · I4 OAuth callbacks under `[locale]/auth/callback/` · I5 `pnpm.neverBuiltDependencies` in root `package.json` · I6 Electron version pinned exact · I7 `ThemeScript.tsx` native `<script>` + `suppressHydrationWarning` · I8 no destructive git ops on a dirty tree without consent · I9 no direct file deletion — move to `.trash/` on approval · I10 pasted model output: Validate & Adapt · **I11 spec-first: non-trivial work needs an approved spec** ([10-spec-first.md](./docs/agents/references/10-spec-first.md)) · **I12 MVP Lock active** ([09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md)) · **I13 brand frozen in `docs/BRANDING.md`** — never "summaries platform" · **I14 branch isolation & file locking** — dedicated branch per task; never work/commit on main except owner-directed maintenance; never assume the checked-out branch; claim the task in a local `.agents/<task>.md` (branch, locked paths, In Progress) before editing, stage explicit paths only (no `git add .`/`git commit -a`), delete the claim after push ([11-git-standards.md](./docs/agents/references/11-git-standards.md)).
+- I1 Service-role/AI keys server-side only · I2 `Database` types + Zod in `packages/shared` · I3 i18n for every user-facing string · I4 OAuth callbacks under `[locale]/auth/callback/` · I5 `pnpm.neverBuiltDependencies` in root `package.json` · I6 Electron version pinned exact · I7 `ThemeScript.tsx` native `<script>` + `suppressHydrationWarning` · I8 no destructive git ops on a dirty tree without consent · I9 no direct file deletion — move to `.trash/` on approval · I10 pasted model output: Validate & Adapt · **I11 spec-first: non-trivial work needs an approved spec** ([10-spec-first.md](./docs/agents/references/10-spec-first.md)) · **I12 MVP Lock active** ([09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md)) · **I13 brand frozen in `docs/BRANDING.md`** — never "summaries platform" · **I14 branch isolation & file locking** — dedicated branch per task; never work/commit on main except owner-directed maintenance; never assume the checked-out branch; claim the task in a local `.agents/<task>.md` (branch, locked paths, In Progress) before editing, stage explicit paths only (no `git add .`/`git commit -a`), delete the claim after push ([11-git-standards.md](./docs/agents/references/11-git-standards.md)) · **I15 identity lock** — never set or override git identity at command time (no `git -c user.*=…`, no `--author`, no `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env) and never bypass hooks (`--no-verify`, `-c core.hooksPath=`); identity comes from machine git config only — if `git var GIT_AUTHOR_IDENT` does not resolve to the owner's email, stop and ask. Enforced by `C:/Users/FOTE/.githooks/pre-commit` + `commit-msg` — hooks live **outside** the repo; repo-local `core.hooksPath` points to the absolute path so agent worktrees (`.kilo/worktrees/*`) are covered too ([11-git-standards.md](./docs/agents/references/11-git-standards.md) §Git Identity Lock).
 
 ## 🔒 MVP Lock (until launch — full text in [09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md))
 
@@ -31,7 +31,7 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | [00-setup.md](./docs/agents/references/00-setup.md) | Setup essentials + verify commands |
 | [01-gotchas.md](./docs/agents/references/01-gotchas.md) | 20 gotchas (Trigger/Why/Fix/Symptom) |
 | [02-release-pipeline.md](./docs/agents/references/02-release-pipeline.md) | Release pipeline, secrets model, CI summary |
-| [03-invariants.md](./docs/agents/references/03-invariants.md) | Full 14-rule invariants table |
+| [03-invariants.md](./docs/agents/references/03-invariants.md) | Full 15-rule invariants table |
 | [04-architecture.md](./docs/agents/references/04-architecture.md) | Architecture (30-second version) |
 | [05-repo-layout.md](./docs/agents/references/05-repo-layout.md) | Repository layout |
 | [06-mcp-cli.md](./docs/agents/references/06-mcp-cli.md) | MCP and CLI quick map |
@@ -39,7 +39,7 @@ No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core stu
 | [08-precommit.md](./docs/agents/references/08-precommit.md) | Pre-commit / pre-merge checklist |
 | [09-mvp-lock.md](./docs/agents/references/09-mvp-lock.md) | MVP Lock full text (delete on lift) |
 | [10-spec-first.md](./docs/agents/references/10-spec-first.md) | Spec-First standard, spec anatomy |
-| [11-git-standards.md](./docs/agents/references/11-git-standards.md) | Conventional Commits, PR rules, branch isolation & multi-agent safety (I14) |
+| [11-git-standards.md](./docs/agents/references/11-git-standards.md) | Conventional Commits, PR rules, branch isolation & multi-agent safety (I14), git identity lock (I15) |
 
 ---
 
