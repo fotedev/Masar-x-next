@@ -1,11 +1,9 @@
 /**
  * Profile tab: account info, sign out (Supabase auth through
  * AuthContext), language override (I18nContext - a direction flip
- * prompts for an app restart, the standard RN/RTL constraint), the
- * academic path card (spec 019 C4 — level/department/semester on the
- * profiles row, the same fields web's profile page edits), and the
- * PDF upload entry point (src/lib/upload.ts -> summaries-pdfs bucket,
- * the same backend path the web app uses).
+ * prompts for an app restart, the standard RN/RTL constraint), and
+ * the academic path card (spec 019 C4 — level/department/semester on
+ * the profiles row, the same fields web's profile page edits).
  */
 import Constants from "expo-constants";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -32,14 +30,6 @@ import {
   type AcademicOptions,
 } from "../lib/academic";
 import { getSupabaseClient } from "../lib/supabase";
-import { pickPdf, uploadSummaryPdf, UploadError, type UploadProgress } from "../lib/upload";
-
-const UPLOAD_STAGE_KEYS: Partial<Record<UploadProgress["stage"], string>> = {
-  reading: "upload.reading",
-  uploading: "upload.uploading",
-  finalizing: "upload.finalizing",
-  done: "upload.done",
-};
 
 const THEME_MODES: ThemeMode[] = ["system", "light", "dark"];
 
@@ -48,10 +38,6 @@ export default function ProfileScreen() {
   const { t, locale, changeLocale } = useI18n();
   const { colors, mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-
-  const [uploading, setUploading] = useState(false);
-  const [stage, setStage] = useState<string | null>(null);
-  const [uploadNote, setUploadNote] = useState<{ ok: boolean; text: string } | null>(null);
 
   // Spec 019 C4: academic path (level -> department -> semester).
   const academic = useAcademicProfile(user?.id);
@@ -117,15 +103,17 @@ export default function ProfileScreen() {
       : typeof meta.full_name === "string" && meta.full_name
         ? meta.full_name
         : null;
-  const email = user?.email ?? t("mobile", "profile.anonymousUser");
-  const initials = (displayName ?? email).charAt(0).toUpperCase();
+  // The name line must not fall back to the email — that duplicated the
+  // email rendered right below it for accounts without name metadata.
+  const email = user?.email ?? null;
+  const initials = (displayName ?? email ?? "?").charAt(0).toUpperCase();
 
   const onSignOut = () => {
     Alert.alert(
       t("mobile", "profile.signOutConfirmTitle"),
       t("mobile", "profile.signOutConfirmMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("mobile", "common.cancel"), style: "cancel" },
         {
           text: t("mobile", "profile.signOut"),
           style: "destructive",
@@ -135,38 +123,6 @@ export default function ProfileScreen() {
         },
       ],
     );
-  };
-
-  const onPickAndUpload = async () => {
-    if (uploading) return;
-    setUploading(true);
-    setUploadNote(null);
-    setStage(t("mobile", "upload.picking"));
-    try {
-      const pdf = await pickPdf();
-      await uploadSummaryPdf(getSupabaseClient(), pdf, (progress) => {
-        const key = UPLOAD_STAGE_KEYS[progress.stage];
-        if (key) setStage(t("mobile", key));
-      });
-      setStage(null);
-      setUploadNote({ ok: true, text: t("mobile", "upload.done") });
-    } catch (err) {
-      setStage(null);
-      if (err instanceof UploadError) {
-        if (err.code === "cancelled") return; // user backed out of the picker
-        const map: Record<typeof err.code, string> = {
-          "not-pdf": "upload.notPdf",
-          "too-large": "upload.tooLarge",
-          unauthenticated: "upload.needAuth",
-          "upload-failed": "upload.failed",
-        };
-        setUploadNote({ ok: false, text: t("mobile", map[err.code]) });
-      } else {
-        setUploadNote({ ok: false, text: t("mobile", "upload.failed") });
-      }
-    } finally {
-      setUploading(false);
-    }
   };
 
   return (
@@ -180,11 +136,13 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.accountText}>
             <Text style={styles.accountName} numberOfLines={1}>
-              {displayName ?? email}
+              {displayName ?? t("mobile", "profile.anonymousUser")}
             </Text>
-            <Text style={styles.accountEmail} numberOfLines={1}>
-              {email}
-            </Text>
+            {email ? (
+              <Text style={styles.accountEmail} numberOfLines={1}>
+                {email}
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -218,11 +176,7 @@ export default function ProfileScreen() {
               </Text>
             </Pressable>
           </View>
-          <Text style={styles.hint}>
-            {locale === "ar"
-              ? "May require restarting the app to apply the direction."
-              : "Direction changes may require restarting the app."}
-          </Text>
+          <Text style={styles.hint}>{t("mobile", "profile.languageHint")}</Text>
         </View>
 
         {/* Spec 020 C3: theme mode — system/light/dark, applied live. */}
@@ -367,30 +321,6 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t("mobile", "upload.pickPdf")}</Text>
-          <Text style={styles.hint}>
-            {locale === "ar"
-              ? "Upload a PDF to the Masar X storage (same as the web app)."
-              : "Upload a PDF to the Masar X storage (same as the web app)."}
-          </Text>
-          <Pressable
-            style={[styles.button, uploading && styles.buttonDisabled]}
-            onPress={() => void onPickAndUpload()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <ActivityIndicator color={colors.onPrimary} />
-            ) : (
-              <Text style={styles.buttonText}>{t("mobile", "upload.pickPdf")}</Text>
-            )}
-          </Pressable>
-          {stage ? <Text style={styles.stageText}>{stage}</Text> : null}
-          {uploadNote ? (
-            <Text style={uploadNote.ok ? styles.noteOk : styles.noteError}>{uploadNote.text}</Text>
-          ) : null}
-        </View>
-
         <Pressable style={styles.signOutButton} onPress={onSignOut}>
           <Text style={styles.signOutText}>{t("mobile", "profile.signOut")}</Text>
         </Pressable>
@@ -424,7 +354,7 @@ const createStyles = (colors: Palette) =>
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: "#FFFFFF", fontSize: 20, fontWeight: "800" },
+  avatarText: { color: colors.onPrimary, fontSize: 20, fontWeight: "800" },
   accountText: { marginTop: 10 },
   accountName: { fontSize: 16, fontWeight: "700", color: colors.ink },
   accountEmail: { fontSize: 13, color: colors.subtle, marginTop: 2 },
@@ -439,9 +369,9 @@ const createStyles = (colors: Palette) =>
     alignItems: "center",
     marginRight: 8,
   },
-  languageButtonActive: { borderColor: colors.primary, backgroundColor: "#EEF2FF" },
+  languageButtonActive: { borderColor: colors.primary, backgroundColor: colors.accentBg },
   languageButtonText: { color: colors.ink, fontWeight: "600" },
-  languageButtonTextActive: { color: colors.primary, fontWeight: "800" },
+  languageButtonTextActive: { color: colors.accentText, fontWeight: "800" },
   hint: { color: colors.subtle, fontSize: 12, marginTop: 8 },
   pickerLabel: {
     color: colors.ink,
@@ -457,11 +387,11 @@ const createStyles = (colors: Palette) =>
     borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.card,
   },
-  chipActive: { borderColor: colors.primary, backgroundColor: "#EEF2FF" },
+  chipActive: { borderColor: colors.primary, backgroundColor: colors.accentBg },
   chipText: { color: colors.ink, fontWeight: "600", fontSize: 13 },
-  chipTextActive: { color: colors.primary, fontWeight: "800" },
+  chipTextActive: { color: colors.accentText, fontWeight: "800" },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 12,
@@ -470,7 +400,7 @@ const createStyles = (colors: Palette) =>
     marginTop: 10,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: "#FFFFFF", fontWeight: "700" },
+  buttonText: { color: colors.onPrimary, fontWeight: "700" },
   stageText: { color: colors.primary, marginTop: 8, fontSize: 13, fontWeight: "600" },
   noteOk: { color: colors.success, marginTop: 8, fontSize: 13 },
   noteError: { color: colors.danger, marginTop: 8, fontSize: 13 },

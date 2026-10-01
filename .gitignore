@@ -285,3 +285,9 @@ promo_assets/story.md
 .worktrees/
 .expo/
 .kilo/
+
+# Aperant data directory
+.auto-claude/
+
+# Freebuff tool marker (per-project UUID the tool writes into the repo root)
+.freebuff/

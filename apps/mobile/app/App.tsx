@@ -22,11 +22,16 @@
  *
  * Mounted by index.js, which imports "./app/App" ("main": "index.js").
  */
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  type Theme,
+} from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
   I18nManager,
@@ -146,6 +151,26 @@ function RootNavigator() {
   const { resolved, colors } = useTheme();
   const styles = resolved === "dark" ? darkStyles : lightStyles;
 
+  // React Navigation defaults to its own light theme regardless of our
+  // palette — without this override the tab bar renders white while
+  // every screen is dark.
+  const navigationTheme = useMemo<Theme>(() => {
+    const base = resolved === "dark" ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      dark: resolved === "dark",
+      colors: {
+        ...base.colors,
+        primary: colors.primary,
+        background: colors.bg,
+        card: colors.card,
+        text: colors.ink,
+        border: colors.border,
+        notification: colors.primary,
+      },
+    };
+  }, [resolved, colors]);
+
   // FR-008: keep layout direction in step with the effective locale
   // (a direction flip takes effect on the next cold start).
   useEffect(() => {
@@ -166,7 +191,7 @@ function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <RootStack.Navigator>
         {status === "authenticated" ? (
           <>
