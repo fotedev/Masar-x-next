@@ -26,12 +26,15 @@ concurrency:
   group: fallow-${{ github.ref }}
   cancel-in-progress: true
 
-# PR comment + inline annotations need write on PRs and checks;
-# contents: read mirrors the least-privilege posture of ci.yml.
+# PR comment + inline annotations need pull-requests: write. checks:
+# write is deliberately NOT granted: with it, the Action mirrors the
+# audit verdict into a failing Check Run (observed on the first PR
+# run: 17 pre-existing unused-dependency findings in the touched
+# manifests turned the check red even with fail-on-issues false).
+# Report-only means the sticky comment is the only surface.
 permissions:
   contents: read
   pull-requests: write
-  checks: write
 
 jobs:
   audit:
