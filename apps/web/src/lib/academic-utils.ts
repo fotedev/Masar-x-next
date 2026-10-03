@@ -2,9 +2,9 @@ import { logger } from "../lib/logger";
 
 export const USER_ACADEMIC_CACHE_KEY = "masarx_user_academic_cache";
 export const ACADEMIC_FETCH_KEY = "masarx_academic_fetch_timestamp";
-export const CACHE_KEY = "masarx_academic_options_cache";
+const CACHE_KEY = "masarx_academic_options_cache";
 export const RATE_LIMIT_KEY = "masarx_academic_rate_limit";
-export const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const FETCH_COOLDOWN = 60 * 60 * 1000; // 1 hour
 
 export type AcademicLevel = {

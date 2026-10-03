@@ -120,7 +120,7 @@ async function fetchDbAttempts(
 }
 
 /** Merge DB + local attempts, dedup by id (DB wins), newest first. */
-export function mergeAttempts(db: AttemptEntry[], local: AttemptEntry[]): AttemptEntry[] {
+function mergeAttempts(db: AttemptEntry[], local: AttemptEntry[]): AttemptEntry[] {
   const byId = new Map<string, AttemptEntry>();
   for (const entry of [...db, ...local]) byId.set(entry.id, entry);
   return [...byId.values()].sort((a, b) => {

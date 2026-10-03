@@ -16,7 +16,7 @@ type PuterClient = {
   };
 };
 
-export type PuterSignInResult =
+type PuterSignInResult =
   | { ok: true; signedIn: true }
   | {
       ok: false;

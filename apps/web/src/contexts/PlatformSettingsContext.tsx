@@ -265,14 +265,6 @@ function PlatformSettingsInternalProvider({ children }: { children: ReactNode })
 }
 
 
-export function usePlatformSettingsContext() {
-  const context = useContext(PlatformSettingsContext);
-  if (context === undefined) {
-    throw new Error("usePlatformSettingsContext must be used within a PlatformSettingsProvider");
-  }
-  return context;
-}
-
 export function useOptionalPlatformSettingsContext() {
   return useContext(PlatformSettingsContext);
 }
