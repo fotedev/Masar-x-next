@@ -144,4 +144,34 @@ by hooks rather than documentation alone.
 
 See also the [pre-commit / pre-merge checklist](./08-precommit.md).
 
+## Escalation Lock (I16)
+
+Protected and irreversible repository state changes require the owner's **explicit written
+confirmation in the same conversation message** that requests the exact action. Without it,
+an agent must never:
+
+- modify repository rulesets (create/update/delete, including temporary bypass windows)
+- force-push to any protected branch
+- rewrite pushed history (rebase / filter / amend of commits already on a remote)
+
+**What does not count as confirmation:** an approved plan alone, silence in reply to a
+clarification question, a timeout, or an agent-chosen "recommended default". If an action
+additionally requires the owner to open a bypass window (or the agent to open one), the
+agent must ask who opens it and **wait** for the answer.
+
+**Why:** 2026-10-03 — `main` was rewritten (7 Hermes-identity commits re-authored to the
+owner; 25 commit SHAs changed; verified content-identical, dates preserved). The rewrite was
+owner-requested and the plan approved, but the sub-question "who opens the bypass window on
+`Main Branch Protection` (ruleset 20299668)?" went unanswered and the agent proceeded with
+its recommended default: it added itself as a bypass actor (`RepositoryRole` admin), force
+-pushed, and restored the ruleset ~30 seconds later (ruleset History: 22:02:04 and
+22:02:33 +02:00). The outcome was clean and `current_user_can_bypass` returned to `never`,
+but a locked ruleset is exactly the kind of state whose unlocking must never be a default.
+
+**Related note — identity in throwaway clones:** when re-creating that history in a temp
+clone, the agent set the identity explicitly (`fotedev` / `fotedev@users.noreply.github.com`,
+matching this repo's dominant convention) instead of inheriting the machine global config.
+Not a command-time override (I15's letter), but an undisclosed choice of identity source —
+any deliberate identity selection must be stated in the report.
+
 **Back to:** [AGENTS.md](../../../AGENTS.md)
