@@ -10,12 +10,17 @@
   "ignorePatterns": [
     "**/.kilo/**",
     "**/.next/**",
-    "**/public/sw.template.js"
+    "**/public/sw.template.js",
+    "sandbox/**",
+    "masarx-remotion-ad/**",
+    "masarx-video-ad/**"
   ],
   "ignoreUnresolvedImports": [
     "./messages/**/*.json"
   ],
   "ignoreDependencies": [
-    "expo-dev-client"
+    "expo-dev-client",
+    "@swc/helpers",
+    "react-native-screens"
   ]
 }
