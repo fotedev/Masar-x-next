@@ -1,6 +1,7 @@
 // @ts-nocheck
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { buildCorsHeaders } from '../_shared/cors.ts';
+import { corsPreflight, jsonResponse } from '../_shared/http.ts';
+import { requireUser } from '../_shared/auth.ts';
+import { getCloudinaryCredentials } from '../_shared/cloudinary.ts';
 
 interface UploadRequest {
   file: string // base64 encoded file
@@ -14,35 +15,14 @@ interface UploadRequest {
 Deno.serve(async (req: Request) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: buildCorsHeaders(req) })
+    return corsPreflight(req)
   }
 
   try {
-    // Get Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    )
-
-    // Get authenticated user
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user } } = await supabaseClient.auth.getUser(token)
-
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
-    }
+    // Authenticate the caller (client + user via the shared scaffold)
+    const auth = await requireUser(req)
+    if (auth.response) return auth.response
+    const { user, client: supabaseClient } = auth
 
     const {
       file,
@@ -55,43 +35,26 @@ Deno.serve(async (req: Request) => {
 
     // Validate input
     if (!file || !fileName || !contentType) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: file, fileName, contentType' }),
-        {
-          status: 400,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
+      return jsonResponse(req, { error: 'Missing required fields: file, fileName, contentType' }, 400)
     }
 
     // Get Cloudinary credentials from environment
-    const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME')
-    const apiKey = Deno.env.get('CLOUDINARY_API_KEY')
-    const apiSecret = Deno.env.get('CLOUDINARY_API_SECRET')
-    const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET')
-
-    if (!cloudName || !apiKey || !apiSecret || !uploadPreset) {
-      console.error('Missing Cloudinary credentials')
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        {
-          status: 500,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
+    const creds = getCloudinaryCredentials(true)
+    if (!creds) {
+      return jsonResponse(req, { error: 'Server configuration error' }, 500)
     }
 
     // Prepare Cloudinary upload
     const formData = new FormData()
     formData.append('file', `data:${contentType};base64,${file}`)
-    formData.append('upload_preset', uploadPreset)
+    formData.append('upload_preset', creds.uploadPreset)
     formData.append('folder', folder)
     formData.append('resource_type', resourceType)
     formData.append('public_id', `${user.id}_${Date.now()}`)
 
     // Upload to Cloudinary
     const cloudinaryResponse = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType === 'raw' ? 'raw' : 'image'}/upload`,
+      `https://api.cloudinary.com/v1_1/${creds.cloudName}/${resourceType === 'raw' ? 'raw' : 'image'}/upload`,
       {
         method: 'POST',
         body: formData,
@@ -101,13 +64,7 @@ Deno.serve(async (req: Request) => {
     if (!cloudinaryResponse.ok) {
       const errorData = await cloudinaryResponse.json()
       console.error('Cloudinary upload failed:', errorData)
-      return new Response(
-        JSON.stringify({ error: 'Upload failed', details: errorData }),
-        {
-          status: 500,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
+      return jsonResponse(req, { error: 'Upload failed', details: errorData }, 500)
     }
 
     const cloudinaryData = await cloudinaryResponse.json()
@@ -139,28 +96,16 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        url: cloudinaryData.secure_url,
-        public_id: cloudinaryData.public_id,
-        message: 'File uploaded successfully'
-      }),
-      {
-        status: 200,
-        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-      }
-    )
+    return jsonResponse(req, {
+      success: true,
+      url: cloudinaryData.secure_url,
+      public_id: cloudinaryData.public_id,
+      message: 'File uploaded successfully'
+    })
 
   } catch (error: unknown) {
     console.error('Upload error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: message }),
-      {
-        status: 500,
-        headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-      }
-    )
+    return jsonResponse(req, { error: 'Internal server error', details: message }, 500)
   }
 })

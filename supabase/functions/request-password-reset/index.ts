@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { nanoid } from "https://esm.sh/nanoid@3";
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { sha256Hex } from '../_shared/crypto.ts';
+import { getClientIp } from '../_shared/net.ts';
 
 // =====================
 // Brevo configuration
@@ -16,16 +18,8 @@ const BREVO_SENDER_NAME = Deno.env.get('BREVO_SENDER_NAME') || 'مسار X';
 // =====================
 // Helpers
 // =====================
-function toHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 async function sha256(input: string): Promise<string> {
-  const data = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return toHex(hash);
+  return sha256Hex(input);
 }
 
 // =====================
@@ -140,25 +134,6 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
     throw new Error(`Brevo error: ${err?.message || response.statusText}`);
   }
   console.log(`Password reset email successfully sent to: ${email}`);
-}
-
-function getClientIp(req: Request): string {
-  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
-  // x-forwarded-for, whose entries can be client-supplied.
-  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
-  //    real peer IP, so a spoofed value is replaced at the edge.
-  const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp) return cfIp.trim();
-  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
-  const sbIp = req.headers.get('sb-forwarded-for');
-  if (sbIp) return sbIp.split(',')[0].trim();
-  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  // 4) nginx-style fallback.
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return 'unknown';
 }
 
 // =====================
