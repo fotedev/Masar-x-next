@@ -35,10 +35,8 @@ import {
 import { SUPABASE_URL, getSupabaseClient, isSupabaseConfigured } from "./supabase";
 import { uuid4 } from "./uuid";
 
-export type { AiRequest, AiResponse, AiResponseDelta };
-
 /** Absolute Edge Function URL for native (the shared default is a web proxy path). */
-export const AI_EDGE_FUNCTION_URL = SUPABASE_URL
+const AI_EDGE_FUNCTION_URL = SUPABASE_URL
   ? `${SUPABASE_URL}/functions/v1/ai-chat`
   : "";
 

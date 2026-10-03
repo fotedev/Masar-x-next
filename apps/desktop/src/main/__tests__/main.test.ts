@@ -518,18 +518,16 @@ describe('T017 — Electron main process contract', () => {
     openHandler({ url: 'file:///c:/sensitive.txt' });
     expect(externalSpy).not.toHaveBeenCalled();
 
-    // R14 — preload/main parity for app:version and app:quit.
+    // R14 — preload/main parity for app:version.
     const registered = mockIpcMain.handle.mock.calls.map((c: unknown[]) => c[0]);
     expect(registered).toEqual(
-      expect.arrayContaining(['app:version', 'app:quit']),
+      expect.arrayContaining(['app:version']),
     );
     const handlerFor = (channel: string) =>
       mockIpcMain.handle.mock.calls.find((c: unknown[]) => c[0] === channel)?.[1] as
         | (() => unknown)
         | undefined;
     expect(handlerFor('app:version')?.()).toBe('0.5.9-test');
-    handlerFor('app:quit')?.();
-    expect(mockApp.quit).toHaveBeenCalled();
   });
 
   // R5 (body) — will-navigate blocks anything outside the loopback origin

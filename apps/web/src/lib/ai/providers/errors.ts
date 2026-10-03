@@ -26,7 +26,7 @@ import {
   type NormalizedErrorKind,
 } from './types';
 
-export type { NormalizedError, NormalizedErrorKind } from './types';
+export type { NormalizedError } from './types';
 export { isNormalizedError, isFallbackEligible } from './types';
 
 /**

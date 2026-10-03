@@ -68,7 +68,7 @@ const extractTextFromContentArray = (content: unknown): string => {
   return '';
 };
 
-export const safeStringify = (value: unknown): string => {
+const safeStringify = (value: unknown): string => {
   try {
     if (value === null || value === undefined) return '';
     if (typeof value === 'string') return value;

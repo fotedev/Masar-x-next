@@ -13,7 +13,7 @@ import type { AiAssistantMode } from "./ai-assistant";
  *
  * When no event is fired, the state machine plays its default "idle" state.
  */
-export type AiReactionEvent =
+type AiReactionEvent =
   | "thinkClick"
   | "yesClick"
   | "noClick"
