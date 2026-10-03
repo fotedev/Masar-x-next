@@ -506,7 +506,7 @@ jobs:
         working-directory: supabase/functions
         # allowJs is rejected by newer Deno as unsupported (warning only);
         # the check itself must stay green for all 11 functions.
-        run: deno check --config deno.jsonc */index.ts
+        run: deno check --config deno.jsonc ./*/index.ts
 
   # ---------------------------------------------------------------------
   # Workflow lint (actionlint) — added 2026-09-18 after the Lighthouse
