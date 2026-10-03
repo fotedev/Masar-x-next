@@ -1,31 +1,15 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { buildCorsHeaders } from '../_shared/cors.ts';
-
-function getClientIp(req: Request): string {
-  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
-  // x-forwarded-for, whose entries can be client-supplied.
-  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
-  //    real peer IP, so a spoofed value is replaced at the edge.
-  const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp) return cfIp.trim();
-  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
-  const sbIp = req.headers.get('sb-forwarded-for');
-  if (sbIp) return sbIp.split(',')[0].trim();
-  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  // 4) nginx-style fallback.
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return 'unknown';
-}
+import { corsPreflight } from '../_shared/http.ts';
+import { createAdminClient } from '../_shared/auth.ts';
+import { sha256Hex } from '../_shared/crypto.ts';
+import { checkRateLimit, getClientIp } from '../_shared/net.ts';
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: buildCorsHeaders(req) });
+    return corsPreflight(req);
   }
 
   try {
@@ -44,26 +28,19 @@ serve(async (req) => {
 
     // Clean token - remove any trailing :number (React dev artifact)
     const cleanToken = token.replace(/:\d+$/, '');
-    const tokenDataBytes = new TextEncoder().encode(cleanToken);
-    const tokenHashBuffer = await crypto.subtle.digest('SHA-256', tokenDataBytes);
-    const tokenHash = Array.from(new Uint8Array(tokenHashBuffer))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    const tokenHash = await sha256Hex(cleanToken);
 
     // Create Supabase client with service role key
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const supabaseAdmin = createAdminClient();
 
     // Basic rate limit by IP
     try {
       const ip = getClientIp(req);
-      const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
-        p_identifier: ip,
-        p_endpoint: 'reset-password',
-        p_max_requests: 30,
-        p_window_minutes: 1,
+      const allowed = await checkRateLimit(supabaseAdmin, {
+        identifier: ip,
+        endpoint: 'reset-password',
+        maxRequests: 30,
+        windowMinutes: 1,
       });
       if (allowed === false) {
         return new Response(
