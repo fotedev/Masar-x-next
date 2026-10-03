@@ -483,6 +483,32 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------------
+  # Deno type check for Supabase Edge Functions (added 2026-10-03 with
+  # the edge-function dedup round). CI had zero coverage of
+  # supabase/functions; deno check catches type errors in the Deno
+  # runtime code (imports resolve via the functions-root deno.jsonc
+  # import map; remote esm.sh module types are fetched at check time).
+  # ---------------------------------------------------------------------
+  deno-check:
+    name: deno-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check edge functions
+        working-directory: supabase/functions
+        # allowJs is rejected by newer Deno as unsupported (warning only);
+        # the check itself must stay green for all 11 functions.
+        run: deno check --config deno.jsonc */index.ts
+
+  # ---------------------------------------------------------------------
   # Workflow lint (actionlint) — added 2026-09-18 after the Lighthouse
   # incident: an unparseable workflow YAML fails on ANY triggering event
   # with zero jobs and no logs ("invalid workflow file"), which no
