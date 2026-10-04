@@ -13,7 +13,10 @@ import {
 // (the anon key is itself a valid JWT), so auth.getUser() must resolve a
 // real user below.
 
-Deno.serve(async (req) => {
+// Exported for handler-level tests (see _shared/tests/handler-delete-avatar.test.ts,
+// run with --import-map to stub the remote supabase-js import). Production entry
+// stays identical: supabase serves this file as main.
+export async function handleDeleteAvatar(req: Request): Promise<Response> {
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: buildCorsHeaders(req) })
@@ -156,4 +159,8 @@ Deno.serve(async (req) => {
       }
     )
   }
-})
+}
+
+if (import.meta.main) {
+  Deno.serve(handleDeleteAvatar);
+}
