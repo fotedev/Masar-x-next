@@ -83,7 +83,10 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-serve(async (req) => {
+// Exported for handler-level tests (see _shared/tests/handler-process-pdf.test.ts,
+// run with --allow-env --import-map to stub remote imports). Production entry
+// stays identical: supabase serves this file as main.
+export async function handleProcessPdf(req: Request): Promise<Response> {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: buildCorsHeaders(req) })
@@ -257,4 +260,8 @@ serve(async (req) => {
       }
     )
   }
-})
+}
+
+if (import.meta.main) {
+  serve(handleProcessPdf);
+}
