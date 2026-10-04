@@ -1,9 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { getBearerToken } from '../_shared/auth.ts';
+import {
+  extractCloudinaryPublicId,
+  isOwnedAvatarPublicId,
+} from '../_shared/avatar-id.ts';
 
-interface DeleteRequest {
-  publicId: string
-}
+// P0 hotfix: the Cloudinary public_id is NEVER taken from the request body.
+// It is derived from the caller's own profile record (profiles.avatar_url,
+// written by upload-avatar as `avatars/<user.id>_<timestamp>`) and must lie
+// inside the caller's own namespace. verify_jwt alone is not sufficient
+// (the anon key is itself a valid JWT), so auth.getUser() must resolve a
+// real user below.
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -11,44 +19,57 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: buildCorsHeaders(req) })
   }
 
+  const deny = (status: 401 | 403 | 404, error: string) =>
+    new Response(JSON.stringify({ error }), {
+      status,
+      headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+    });
+
   try {
-    // Get Supabase client
+    // Get Supabase client (user-scoped: forwards the caller's JWT)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: req.headers.get('Authorization') ?? '' },
         },
       }
     )
 
-    // Get authenticated user
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user } } = await supabaseClient.auth.getUser(token)
+    // Authenticate: resolve the bearer token to a real user.
+    const token = getBearerToken(req);
+    if (!token) {
+      return deny(401, 'Unauthorized');
+    }
+    const { data: { user } } = await supabaseClient.auth.getUser(token);
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
+      return deny(401, 'Unauthorized');
     }
 
-    const { publicId }: DeleteRequest = await req.json()
+    // Derive the deletable asset from the caller's OWN profile record.
+    // Any `publicId` sent in the request body is intentionally ignored.
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single();
 
-    // Validate input
-    if (!publicId) {
-      return new Response(
-        JSON.stringify({ error: 'Missing publicId parameter' }),
-        {
-          status: 400,
-          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
-        }
-      )
+    if (profileError) {
+      console.error('Delete-avatar profile lookup failed for user:', user.id);
+      return deny(404, 'No avatar on record');
+    }
+
+    const avatarUrl = (profile as { avatar_url?: string | null } | null)?.avatar_url ?? null;
+    if (!avatarUrl) {
+      return deny(404, 'No avatar on record');
+    }
+
+    const publicId = extractCloudinaryPublicId(avatarUrl);
+    if (!publicId || !isOwnedAvatarPublicId(publicId, user.id)) {
+      console.warn('Delete-avatar refused: stored avatar outside caller namespace for user:', user.id);
+      return deny(403, 'Forbidden');
     }
 
     // Get Cloudinary credentials from environment
@@ -89,8 +110,7 @@ Deno.serve(async (req) => {
     )
 
     if (!cloudinaryResponse.ok) {
-      const errorData = await cloudinaryResponse.json()
-      console.error('Cloudinary delete failed:', errorData)
+      console.error('Cloudinary delete failed for user:', user.id)
       // Don't fail if Cloudinary delete fails, just log it
     }
 
@@ -104,7 +124,7 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('Database update failed:', updateError)
+      console.error('Delete-avatar database update failed for user:', user.id)
       return new Response(
         JSON.stringify({ error: 'Failed to update profile' }),
         {
@@ -125,10 +145,11 @@ Deno.serve(async (req) => {
       }
     )
 
-  } catch (error) {
-    console.error('Delete error:', error)
+  } catch (_error) {
+    // Never reflect internal details to the caller.
+    console.error('Delete-avatar internal error');
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       {
         status: 500,
         headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' }
