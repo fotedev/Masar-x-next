@@ -18,8 +18,15 @@ const MAX_PUBLIC_ID_LENGTH = 256;
  * Extract the Cloudinary public_id from a secure delivery URL previously
  * stored by upload-avatar, e.g.
  *   https://res.cloudinary.com/<cloud>/image/upload/v1712345678/avatars/<uid>_1712345678.jpg
+ *   https://res.cloudinary.com/<cloud>/image/upload/c_fill,w_200/v1712345678/avatars/<uid>_1712345678.png?foo=bar
  *   -> "avatars/<uid>_1712345678"
- * Returns null for anything that is not exactly this shape.
+ * The `avatars` folder segment is located anywhere after `/upload/` so
+ * version (`v123/`) and transformation (`c_fill,.../`) prefixes are skipped.
+ * Query strings never reach here (URL.pathname only). Returns null for
+ * anything that is not exactly this shape. The ownership check in
+ * isOwnedAvatarPublicId pins the result to the caller's namespace, so a
+ * loose segment search cannot escalate: at most it yields a 403/404, never a
+ * foreign id that passes the check.
  */
 export function extractCloudinaryPublicId(secureUrl: string): string | null {
   if (typeof secureUrl !== "string" || secureUrl.length === 0) return null;
@@ -35,16 +42,16 @@ export function extractCloudinaryPublicId(secureUrl: string): string | null {
   const marker = "/upload/";
   const idx = parsed.pathname.indexOf(marker);
   if (idx < 0) return null;
-  let rest = parsed.pathname.slice(idx + marker.length);
-  // Strip optional transformation segments is NOT attempted: upload-avatar
-  // stores plain versioned URLs, so only strip the `v<digits>/` version prefix.
-  rest = rest.replace(/^v\d+\//, "");
+  const segments = parsed.pathname.slice(idx + marker.length).split("/").filter((s) => s !== "");
+  // Locate the avatars folder segment (skips version + transformation prefixes).
+  const folderIdx = segments.indexOf(AVATAR_FOLDER);
+  if (folderIdx < 0 || folderIdx !== segments.length - 2) return null;
+  const leafWithExt = segments[folderIdx + 1];
   // Strip the file extension (delivery format suffix).
-  const dot = rest.lastIndexOf(".");
-  const slash = rest.lastIndexOf("/");
-  if (dot < 0 || dot < slash) return null;
-  const publicId = rest.slice(0, dot);
-  if (publicId.length === 0 || publicId.length > MAX_PUBLIC_ID_LENGTH) return null;
+  const dot = leafWithExt.lastIndexOf(".");
+  if (dot <= 0) return null;
+  const publicId = `${AVATAR_FOLDER}/${leafWithExt.slice(0, dot)}`;
+  if (publicId.length > MAX_PUBLIC_ID_LENGTH) return null;
   return publicId;
 }
 

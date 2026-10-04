@@ -26,13 +26,35 @@ Deno.test("extract: versioned avatar URL -> namespaced public_id", () => {
   );
 });
 
-Deno.test("extract: unversioned URL works", () => {
+Deno.test("extract: realistic URLs (version, transform, png, query)", () => {
+  const uid = UID;
   assertEquals(
     extractCloudinaryPublicId(
-      `https://res.cloudinary.com/demo/image/upload/avatars/${UID}_1712345678.png`,
+      `https://res.cloudinary.com/demo/image/upload/v1712345678/avatars/${uid}_1712345678.jpg`,
     ),
-    `avatars/${UID}_1712345678`,
-    "unversioned url",
+    `avatars/${uid}_1712345678`,
+    "versioned jpg",
+  );
+  assertEquals(
+    extractCloudinaryPublicId(
+      `https://res.cloudinary.com/demo/image/upload/c_fill,w_200/v1712345678/avatars/${uid}_1712345678.png`,
+    ),
+    `avatars/${uid}_1712345678`,
+    "transformation + version + png",
+  );
+  assertEquals(
+    extractCloudinaryPublicId(
+      `https://res.cloudinary.com/demo/image/upload/v1712345678/avatars/${uid}_1712345678.jpg?foo=bar&_a=x`,
+    ),
+    `avatars/${uid}_1712345678`,
+    "query string ignored",
+  );
+  assertEquals(
+    extractCloudinaryPublicId(
+      `https://res.cloudinary.com/demo/image/upload/c_fill,w_200/avatars/${uid}_1712345678.webp`,
+    ),
+    `avatars/${uid}_1712345678`,
+    "transformation without version",
   );
 });
 

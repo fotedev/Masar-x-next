@@ -5,7 +5,7 @@
  * The real handler runs with a stubbed supabase client (scenario-driven) and a
  * stubbed global fetch (Cloudinary). No network.
  */
-import { handleDeleteAvatar } from "../../delete-avatar/index.ts";
+import { handleDeleteAvatar } from "../../delete-avatar/handler.ts";
 
 // Dummy (obviously fake, low-entropy) Cloudinary credentials so the handler
 // passes its config gate in tests. Deno.env.set needs --allow-env (see header).
@@ -106,6 +106,17 @@ Deno.test("handler: no avatar on record -> 404, Cloudinary untouched", async () 
   assert(s.calls.destroys.length === 0, "no destroy call");
 });
 
+Deno.test("handler: tampered record (A profile points at B avatar) -> 403", async () => {
+  const s = baseScenario();
+  s.profileRow = {
+    avatar_url: `https://res.cloudinary.com/demo/image/upload/v1/avatars/${USER_B}_1712345678.jpg`,
+  };
+  setScenario(s);
+  stubFetch(s);
+  const res = await handleDeleteAvatar(req("Bearer good-token-A", {}));
+  assert(res.status === 403, `status ${res.status}`);
+  assert(s.calls.destroys.length === 0, "no destroy call");
+});
 Deno.test("handler: legacy avatar outside namespace -> 403, Cloudinary untouched", async () => {
   const s = baseScenario();
   s.profileRow = { avatar_url: "https://res.cloudinary.com/demo/image/upload/other/x.jpg" };
