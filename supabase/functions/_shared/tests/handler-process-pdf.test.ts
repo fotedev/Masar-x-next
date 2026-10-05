@@ -1,11 +1,11 @@
 /**
- * Handler-level tests for ../../process-pdf/index.ts (P0 hotfix review packet).
+ * Handler-level tests for ../../process-pdf/handler.ts (P0 hotfix review packet).
  * Run: deno test --allow-env --import-map=supabase/functions/_shared/tests/import-map.json
  *        supabase/functions/_shared/tests/handler-process-pdf.test.ts
  * The real handler runs with stubbed supabase/Gemini imports, stubbed DNS and
  * stubbed fetch. No network.
  */
-import { handleProcessPdf } from "../../process-pdf/index.ts";
+import { handleProcessPdf } from "../../process-pdf/handler.ts";
 
 const USER = "aaaaaaaa-1111-2222-3333-444444444444";
 const LEGIT_URL = "https://res.cloudinary.com/demo/image/upload/v1/docs/a.pdf";
