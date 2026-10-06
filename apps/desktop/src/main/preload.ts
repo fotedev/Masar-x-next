@@ -69,13 +69,6 @@ const api = {
     // updater.ts: `{ message: err.message }`.
     onError: (cb: (info: { message: string }) => void): Unsubscribe =>
       subscribe<{ message: string }>('updates:error', cb),
-    // SC-002 fixture (spec 015) — added here BECAUSE the shared module's
-    // satisfies constraint forced this file to expose every bridge method.
-    // Without the dedup this method could land in one file and silently
-    // miss the other (the 2026-09-12 B4 audit toast-crash bug class).
-    onInstallProgress: (
-      cb: (stage: 'extracting' | 'replacing' | 'restarting') => void,
-    ): Unsubscribe => subscribe<{ stage: 'extracting' | 'replacing' | 'restarting' }>('updates:installProgress', ({ stage }) => cb(stage)),
   },
   // T040–T043 (spec 005 US3): frameless titlebar window controls. The
   // renderer exposes a thin surface that matches the optional
