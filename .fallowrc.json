@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "workspaces": {
+    "patterns": ["apps/*", "packages/*"]
+  },
+  "entry": [
+    "scripts/**/*.mjs",
+    "apps/*/scripts/**/*.mjs"
+  ],
+  "ignorePatterns": [
+    "**/.kilo/**",
+    "**/.next/**",
+    "**/public/sw.template.js"
+  ],
+  "ignoreUnresolvedImports": [
+    "./messages/**/*.json"
+  ],
+  "ignoreDependencies": [
+    "expo-dev-client"
+  ]
+}
