@@ -1,0 +1,57 @@
+# Fallow codebase-intelligence audit — report-only.
+#
+# Adopted 2026-10-02 from the fallow pilot (gitignored
+# docs/audits/fallow-pilot-2026-10-02/REPORT.md). `audit` mode compares
+# each pull request against its base branch and reports only findings
+# the PR introduces, so the pre-existing debt recorded in the pilot
+# (128 dead-code issues, 110 clone groups, 485 above-threshold
+# functions, health score 91.1 post-cleanup, grade C) never fails a
+# build. fail-on-issues stays false until the owner ratifies gating.
+#
+# The Action installs fallow itself (self-contained install.sh) and
+# resolves the version from the root package.json devDependency pin
+# (fallow 3.31.0, exact) — no pnpm/node setup needed here.
+#
+# Analysis scope is tuned by the committed .fallowrc.json: manual
+# scripts as entry points, i18n.d.ts ambient JSON modules suppressed,
+# sw.template.js and .kilo/.next excluded, expo-dev-client ignored.
+
+name: Fallow
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: fallow-${{ github.ref }}
+  cancel-in-progress: true
+
+# PR comment + inline annotations need pull-requests: write. checks:
+# write is deliberately NOT granted: with it, the Action mirrors the
+# audit verdict into a failing Check Run (observed on the first PR
+# run: 17 pre-existing unused-dependency findings in the touched
+# manifests turned the check red even with fail-on-issues false).
+# Report-only means the sticky comment is the only surface.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  audit:
+    name: fallow-audit (report-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        # Full history: audit needs the PR base SHA for changed-file
+        # scoping (auto-changed-since defaults to true).
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Fallow audit
+        uses: fallow-rs/fallow@v3
+        with:
+          command: audit
+          fail-on-issues: false
+          comment: true
