@@ -24,7 +24,6 @@ function getSupabaseClient(): SupabaseClient | null {
 const staticPaths = [
   { path: "", priority: 1.0, changeFrequency: "daily" as const },
   { path: "/subjects", priority: 0.9, changeFrequency: "daily" as const },
-  { path: "/summaries", priority: 0.9, changeFrequency: "daily" as const },
   { path: "/quizzes", priority: 0.9, changeFrequency: "daily" as const },
   { path: "/courses", priority: 0.8, changeFrequency: "weekly" as const },
   { path: "/news", priority: 0.7, changeFrequency: "weekly" as const },

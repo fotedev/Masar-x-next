@@ -37,7 +37,7 @@ export type AdminTabId =
   /** Placeholder entry — rendered disabled, has no view. */
   | "zane";
 
-export interface AdminNavItem {
+interface AdminNavItem {
   id: AdminTabId;
   /** next-intl key under the adminDashboard namespace, e.g. "tabs.courses". */
   labelKey: string;

@@ -18,7 +18,7 @@ export interface AdminAnalyticsSummary {
     }>;
 }
 
-export type AdminAnalyticsResult =
+type AdminAnalyticsResult =
     | { data: AdminAnalyticsSummary; error: null }
     | { data: null; error: 'unauthorized' | 'load_failed' };
 

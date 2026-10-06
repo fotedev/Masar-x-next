@@ -10,4 +10,3 @@ const almarai = Almarai({
 });
 
 export const almaraiClassName = almarai.variable;
-export const almaraiStyle = almarai.style;
