@@ -18,12 +18,6 @@
  */
 export type AiAssistantMode = 'cs_assistant' | 'student_agent' | 'group_rag';
 
-/** Single text delta emitted by a streaming adapter. */
-export interface ChatChunk {
-  /** Plain text delta. Empty strings are not emitted by adapters (filter upstream). */
-  text: string;
-}
-
 /** Discriminator names are locked by spec §3.4. */
 export type NormalizedErrorKind =
   | 'QuotaExceeded'

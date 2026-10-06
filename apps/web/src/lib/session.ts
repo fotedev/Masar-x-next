@@ -23,18 +23,3 @@ export const getSessionId = (): string => {
 
     return sessionId;
 };
-
-/**
- * Resets the session ID. Useful if you want to force a new session.
- */
-export const resetSessionId = (): string => {
-    const newSessionId = uuidv4();
-    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-        try {
-            sessionStorage.setItem(SESSION_STORAGE_KEY, newSessionId);
-        } catch {
-            // ignore
-        }
-    }
-    return newSessionId;
-};

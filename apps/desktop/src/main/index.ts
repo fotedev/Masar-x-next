@@ -182,8 +182,7 @@ export async function startMainProcess(): Promise<number> {
   // (File / Edit / View / Window / Help) BEFORE creating the window:
   // on Windows Electron attaches the default application menu at
   // BrowserWindow construction, so calling this afterwards leaves a
-  // visible bar on the first paint. The T024 "Check for Updates…"
-  // trigger stays available through the `updates:check` IPC.
+  // visible bar on the first paint.
   Menu.setApplicationMenu(null);
 
   // Preload lives in the same directory as index.js after `tsc -p
@@ -341,14 +340,11 @@ export async function startMainProcess(): Promise<number> {
   });
 
   // R14 (audit 2026-09-08) — preload/main parity. The preload bridge
-  // exposes `masarxDesktop.app.version` and `masarxDesktop.app.quit`
-  // (see apps/desktop/src/main/preload.ts). Without these handlers the
+  // exposes `masarxDesktop.app.version`
+  // (see apps/desktop/src/main/preload.ts). Without this handler the
   // renderer gets `No handler registered` whenever a surface tries to
-  // read the version or trigger a controlled quit.
+  // read the version.
   ipcMain.handle('app:version', () => app.getVersion());
-  ipcMain.handle('app:quit', () => {
-    app.quit();
-  });
 
   // Spec 014 (R032) — system-browser bridge for the OAuth consent window.
   // The renderer hands us the Supabase authorize URL; we validate the
@@ -412,7 +408,7 @@ export async function startMainProcess(): Promise<number> {
 
   // T023 — auto-update wiring.
   // The Updater class wraps electron-updater; bootUpdater() wires the
-  // available/progress/error events to broadcasts on `updates:*`
+  // available/error events to broadcasts on `updates:*`
   // channels (handled by preload.ts and the renderer's updates.* API).
   const updater = new Updater({ userDataPath });
   bootUpdater({
@@ -423,7 +419,6 @@ export async function startMainProcess(): Promise<number> {
       }
     },
   });
-  ipcMain.handle('updates:check', () => updater.checkFor());
   ipcMain.handle('updates:installAndRestart', () => updater.installAndRestart());
   ipcMain.handle('updates:skip', (_event, version: string) =>
     updater.skipThisVersion(version),

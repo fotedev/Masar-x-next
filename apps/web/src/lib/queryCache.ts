@@ -152,35 +152,6 @@ class QueryCache {
       }
     }
   }
-
-  /**
-   * Clear all cached data
-   */
-  invalidateAll(): void {
-    this.cache.clear();
-    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
-      try {
-        // Snapshot keys first — removeItem() shifts indices and causes entries to be skipped
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("cache_")) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => localStorage.removeItem(key));
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  /**
-   * Check if a key exists and is valid
-   */
-  has(key: string): boolean {
-    return this.get(key) !== null;
-  }
 }
 
 // Export singleton instance

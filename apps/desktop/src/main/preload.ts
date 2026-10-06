@@ -6,7 +6,7 @@ import { masarxDesktopApi, type DesktopUpdateAvailableInfo } from '@masarx-share
 // `window` only sees the surface we explicitly expose via contextBridge.
 //
 // Contract (T020):
-//   - `window.masarxDesktop.app.*`     — app version, platform, controlled quit
+//   - `window.masarxDesktop.app.*`     — app version, openExternal
 //   - `window.masarxDesktop.updates.*` — auto-update surface (T023)
 //
 // Security posture:
@@ -36,8 +36,6 @@ const subscribe = <T>(channel: string, cb: (payload: T) => void): Unsubscribe =>
 const api = {
   app: {
     version: (): Promise<string> => ipcRenderer.invoke('app:version'),
-    platform: (): NodeJS.Platform => process.platform,
-    quit: (): Promise<void> => ipcRenderer.invoke('app:quit'),
     // Spec 014 (R032) — open a URL in the system browser. Used by the
     // OAuth consent flow: main validates the http(s) scheme before
     // calling shell.openExternal, so the renderer cannot be tricked into
@@ -58,7 +56,6 @@ const api = {
       subscribe<string>('auth:deepLink', cb),
   },
   updates: {
-    check: (): Promise<unknown> => ipcRenderer.invoke('updates:check'),
     installAndRestart: (): Promise<void> =>
       ipcRenderer.invoke('updates:installAndRestart'),
     skip: (version: string): Promise<void> =>
