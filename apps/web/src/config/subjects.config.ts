@@ -17,7 +17,7 @@ export interface Subject {
     semester?: 1 | 2;
 }
 
-export interface SubjectIconMap {
+interface SubjectIconMap {
     [key: string]: React.ComponentType<{ className?: string }>;
 }
 
@@ -26,15 +26,8 @@ export interface SubjectIconMap {
 // ============================================================================
 // Change these values to match your college's subjects
 
-export const COLLEGE_CONFIG = {
-    name: "جامعة مسار", // Change to your college name
-    // Add your college logo path here if needed
-    logo_ar: "/logo_AR.webp",
-    logo_en: "/logo_EN.webp",
-};
-
 // Semester 1 subjects
-export const SEMESTER_1_SUBJECTS: Subject[] = [
+const SEMESTER_1_SUBJECTS: Subject[] = [
     { id: "1", name: "أساسيات تكنولوجيا المعلومات", semester: 1 },
     { id: "2", name: "الرسم باليد", semester: 1 },
     { id: "3", name: "سلوكيات الهيئات", semester: 1 },
@@ -49,7 +42,7 @@ export const SEMESTER_1_SUBJECTS: Subject[] = [
 ];
 
 // Semester 2 subjects (customize for your college)
-export const SEMESTER_2_SUBJECTS: Subject[] = [
+const SEMESTER_2_SUBJECTS: Subject[] = [
     { id: "12", name: "رياضيات 2", semester: 2 },
     { id: "13", name: "التواصل الشخصي", semester: 2 },
     { id: "14", name: "أساسيات نظم المعلومات", semester: 2 },
