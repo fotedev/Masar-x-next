@@ -3,7 +3,6 @@
  * Mobile lib functions take the client as a parameter (DI), so tests build
  * one per case and assert the recorded PostgREST calls.
  */
-import { vi } from "vitest";
 
 export interface RecordedCall {
   table: string;
@@ -67,23 +66,5 @@ export function createSupabaseMock(initial: QueryResult = { data: [], error: nul
     respondWith: (result, match) => {
       responses.push({ result, match });
     },
-  };
-}
-
-/** In-memory AsyncStorage mock (same shape the RN package exposes). */
-export function createAsyncStorageMock() {
-  const store = new Map<string, string>();
-  return {
-    getItem: vi.fn(async (k: string) => store.get(k) ?? null),
-    setItem: vi.fn(async (k: string, v: string) => {
-      store.set(k, v);
-    }),
-    removeItem: vi.fn(async (k: string) => {
-      store.delete(k);
-    }),
-    getAllKeys: vi.fn(async () => Array.from(store.keys())),
-    multiRemove: vi.fn(async (keys: string[]) => {
-      keys.forEach((k) => store.delete(k));
-    }),
   };
 }

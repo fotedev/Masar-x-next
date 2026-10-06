@@ -11,7 +11,7 @@
 import arMessages from "masarx-shared/messages/ar/aiAssistant.json";
 import enMessages from "masarx-shared/messages/en/aiAssistant.json";
 
-export type CannedMessages = typeof arMessages.canned;
+type CannedMessages = typeof arMessages.canned;
 
 /**
  * Emoji prefixes marking a canned string as an AI-service failure. Canned

@@ -103,24 +103,3 @@ export const CardContent = ({
 };
 
 CardContent.displayName = "CardContent";
-
-interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-export const CardFooter = ({
-  className = "",
-  children,
-  ...props
-}: CardFooterProps) => {
-    return (
-      <div
-        className={`flex items-center p-6 pt-0 ${className}`}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-};
-
-CardFooter.displayName = "CardFooter";

@@ -1,13 +1,6 @@
 import { supabase } from './supabase';
 import { getSessionId } from './session';
 
-// Types for Analytics
-export interface AnalyticsEvent {
-    name: string;
-    page?: string;
-    metadata?: Record<string, unknown>;
-}
-
 export interface SystemLog {
     level: 'info' | 'warn' | 'error' | 'fatal';
     message: string;

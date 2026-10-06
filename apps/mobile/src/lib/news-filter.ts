@@ -7,7 +7,7 @@
 
 export type NewsCategory = "all" | "announcement" | "update" | "important";
 
-export interface NewsFilterRow {
+interface NewsFilterRow {
   type?: string | null;
   custom_category?: string | null;
 }

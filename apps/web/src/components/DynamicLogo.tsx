@@ -20,14 +20,6 @@ export function getLogoPath(_locale?: string) {
 }
 
 /**
- * Horizontal lockup (mark + «MASARX» wordmark) — the official navbar form
- * for both locales per BRANDING.md §7.3 rule 3 (amended 2026-09-23).
- */
-export function getLockupPath() {
-  return LOCKUP_PATH;
-}
-
-/**
  * Reusable Image component for the brand logo. Source is locale-independent;
  * pick `variant` per context ("lockup" for header-style rows, "mark" for
  * square slots paired with adjacent text).

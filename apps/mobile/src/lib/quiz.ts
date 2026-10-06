@@ -176,7 +176,7 @@ export interface GuestAnswerEntry {
  * fully reviewable offline. All fields optional for backward
  * compatibility with results stored before spec 019.
  */
-export interface GuestResult {
+interface GuestResult {
   quizId: string;
   score: number;
   total: number;
@@ -197,7 +197,7 @@ export async function getGuestResult(quizId: string): Promise<GuestResult | null
   );
 }
 
-export interface GuestResultEntry {
+interface GuestResultEntry {
   quizId: string;
   result: GuestResult;
 }

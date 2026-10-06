@@ -7,17 +7,6 @@
  * (apps/web/src/lib/quiz.ts + useQuizAttempt.ts) so the mobile player
  * consumes the same tables with the same columns.
  */
-export interface QuizQuestionRow {
-  id: string;
-  quiz_id: string;
-  question: string;
-  options: string[];
-  correct_answer: number;
-  explanation: string | null;
-  image_url: string | null;
-  order_index: number;
-}
-
 export interface QuizAttemptRow {
   id: string;
   quiz_id: string;
@@ -45,10 +34,4 @@ export interface PlayerQuestion {
   options: string[];
   correctAnswer: number;
   explanation?: string | null;
-}
-
-export interface PlayerResult {
-  score: number;
-  total: number;
-  savedToServer: boolean;
 }

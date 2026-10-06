@@ -3,9 +3,5 @@
   "description": "اختر المادة التي تريد الاطلاع على محاضراتها",
   "emptyAcademicTitle": "لا توجد مواد",
   "emptyAcademicDescription": "سيتم إضافة المواد الدراسية قريباً",
-  "professorLabelMale": "دكتور",
-  "professorLabelFemale": "دكتورة",
-  "emptyNonAcademicTitle": "لا يوجد محتوى",
-  "emptyNonAcademicDescription": "سيتم إضافة محتوى جديد قريباً",
   "studyWithZainCta": "ادرس مع زين"
 }
