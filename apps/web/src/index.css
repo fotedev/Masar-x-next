@@ -267,45 +267,11 @@ html[dir="rtl"] [lang="en"] {
   --card-shadow: 0 20px 40px -10px rgba(2, 6, 23, 0.3);
 }
 
-/* Glass morphism effect */
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-}
-
-/* Modern button styles */
-.btn-primary {
-  background: var(--primary-gradient);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
-}
-
-@media (hover: hover) {
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.3);
-  }
-}
-
-.btn-secondary {
-  background: var(--secondary-gradient);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-@media (hover: hover) {
-  .btn-secondary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
-  }
-}
-
 /* Enhanced card hover effects */
 /* NOTE: intentionally NO backdrop-filter here. A blur on every card forces
    the GPU to re-composite dozens of layers on each scroll tick (home renders
    30+ .modern-card nodes). Solid card bg + border/shadow keeps the look
-   without the repaint storm. Use .glass-card sparingly for hero-only frost. */
+   without the repaint storm. */
 .modern-card {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 24px;
@@ -319,24 +285,6 @@ html[dir="rtl"] [lang="en"] {
     transform: translateY(-4px);
     box-shadow: 0 30px 60px -12px rgba(2, 6, 23, 0.2);
     border-color: var(--brand-blue);
-  }
-}
-
-/* Animated gradient backgrounds */
-.animated-bg {
-  background-size: 400% 400%;
-  /* animation: gradientShift 8s ease infinite; â€” perpetual animation removed */
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
   }
 }
 
@@ -408,97 +356,6 @@ html[dir="rtl"] [lang="en"] {
   textarea {
     font-size: 16px;
   }
-
-  /* Better spacing for mobile */
-  .mobile-spacing {
-    margin: 0.5rem 0;
-  }
-
-  /* Horizontal scroll for tabs/filters on mobile */
-  .scroll-x-mobile {
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-  }
-
-  .scroll-x-mobile::-webkit-scrollbar {
-    display: none; /* Chrome/Safari/Webkit */
-  }
-}
-
-/* Text gradients */
-.text-gradient-primary {
-  color: hsl(217 91% 60%);
-}
-.dark .text-gradient-primary {
-  color: hsl(213 94% 68%);
-}
-
-.text-gradient-secondary {
-  color: hsl(198 93% 60%);
-}
-.dark .text-gradient-secondary {
-  color: hsl(199 89% 64%);
-}
-
-/* Enhanced mobile responsive improvements */
-@media (max-width: 1023px) {
-  /* Better spacing for mobile header */
-  .mobile-nav-spacing {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  /* Ensure theme button is always accessible */
-  .theme-toggle-mobile {
-    display: block !important;
-    visibility: visible !important;
-  }
-
-  /* Better touch targets for mobile */
-  .mobile-touch-target {
-    min-height: 48px;
-    min-width: 48px;
-  }
-
-  /* Improved mobile menu scrolling */
-  .mobile-menu-scroll {
-    max-height: calc(100vh - 4rem);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Tablet optimizations */
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* Tablet-specific adjustments */
-  .tablet-nav-item {
-    padding: 0.75rem 1rem;
-  }
-
-  .tablet-text-size {
-    font-size: 0.95rem;
-  }
-}
-
-/* Large screen header improvements */
-@media (min-width: 1024px) {
-  /* Desktop header enhancements */
-  .desktop-header-spacing {
-    max-width: 7xl;
-    margin: 0 auto;
-  }
-}
-
-/* Prevent Cumulative Layout Shift (CLS) */
-.cls-prevent {
-  /* Reserve space for dynamic content */
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  contain: layout;
 }
 
 /* Accessibility improvements */
@@ -548,94 +405,12 @@ html[dir="rtl"] [lang="en"] {
   color: #9ca3af; /* gray-400 */
 }
 
-/* Stable filter layout */
-.filter-container {
-  min-height: 160px; /* Increased space for filter section */
-  contain: layout;
-  position: relative;
-}
-
 /* Stable grid layout */
 .summary-grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   contain: layout;
-}
-
-/* Reserve space for loading states */
-.loading-placeholder {
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  contain: layout;
-}
-
-/* Stable card heights */
-.summary-card {
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Additional mobile optimizations */
-@media (max-width: 640px) {
-  /* Improve touch targets */
-  .mobile-touch-target {
-    min-height: 48px;
-    min-width: 48px;
-  }
-
-  /* Better spacing for mobile cards */
-  .mobile-card-spacing {
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-  }
-
-  /* Optimize text sizes for small screens */
-  .mobile-text-optimize {
-    font-size: 0.875rem;
-    line-height: 1.4;
-  }
-
-  /* Better button spacing on mobile */
-  .mobile-button-spacing {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-  }
-
-  /* Prevent horizontal scroll on mobile */
-  .mobile-no-overflow {
-    overflow-x: hidden;
-  }
-
-  /* Better modal sizing on mobile */
-  .mobile-modal {
-    margin: 1rem;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-  }
-
-  /* Improve form inputs on mobile */
-  .mobile-input {
-    font-size: 16px; /* Prevents zoom on iOS */
-    padding: 0.75rem;
-  }
-}
-
-/* Chat page specific mobile improvements */
-@media (max-width: 768px) {
-  /* Hide chat list on mobile when chatting */
-  .chat-list-mobile-hidden {
-    display: none;
-  }
-
-  /* Full width chat window on mobile */
-  .chat-window-mobile {
-    width: 100%;
-    height: calc(100vh - 64px); /* Adjust based on header height */
-  }
 }
 
 /* AI Assistant chat: hide the messages scrollbar in BOTH states (hero and
@@ -780,14 +555,6 @@ html.dark {
   transition: opacity var(--ax-dur-base) var(--ax-ease-standard),
     visibility var(--ax-dur-base) linear;
 }
-.ax-badge-pop {
-  animation: ax-badge-pop 150ms var(--ax-ease-standard);
-}
-@keyframes ax-badge-pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.18); }
-  100% { transform: scale(1); }
-}
 .ax-content-fade {
   animation: ax-content-fade 150ms var(--ax-ease-standard) both;
 }
@@ -805,17 +572,6 @@ html.dark {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-/* Scrollbar hide utility */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-
 
 /* Zane chat markdown list markers. Unlayered on purpose — these must win
    over the layered prose/utilities cascade (established gotcha). The dot

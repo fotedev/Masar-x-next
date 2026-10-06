@@ -4,7 +4,7 @@
  * payload and flushes at most once per scheduled tick (rAF in the browser).
  * The scheduler is injected so the logic stays unit-testable in node.
  */
-export interface DeltaThrottle {
+interface DeltaThrottle {
   /** Record the latest payload; schedules one trailing flush if none pending. */
   update: (full: string) => void;
   /** Drop any pending scheduled flush without running it. */

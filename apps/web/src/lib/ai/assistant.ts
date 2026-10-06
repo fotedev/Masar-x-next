@@ -213,7 +213,7 @@ const streamPuterChat = async (
   return full;
 };
 
-export class AiAssistant {
+class AiAssistant {
   private buildChatHistoryContext(history?: AiChatHistoryTurn[], maxTurns: number = 20) {
     const safeHistory = (history || [])
       .filter(t => t?.content && t.content.trim())

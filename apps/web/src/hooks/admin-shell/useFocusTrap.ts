@@ -11,7 +11,7 @@ import type { RefObject } from "react";
 const FOCUSABLE =
   'a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), iframe, object, embed, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
 
-export interface FocusTrapOptions {
+interface FocusTrapOptions {
   initialFocus?: boolean;
   returnFocus?: boolean;
 }

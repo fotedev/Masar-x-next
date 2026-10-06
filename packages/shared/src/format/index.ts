@@ -7,7 +7,7 @@
  * the app locale and the variant they render.
  */
 
-export interface FormatDateOptions {
+interface FormatDateOptions {
   /** BCP-47 locale tag. Defaults to "ar-EG" (the product's primary). */
   locale?: string;
   /** Month rendering length. Defaults to "short". */
