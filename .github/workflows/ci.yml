@@ -483,6 +483,42 @@ jobs:
           retention-days: 7
 
   # ---------------------------------------------------------------------
+  # Deno type check + unit tests for Supabase Edge Functions (WP1
+  # follow-up (a), owner-directed 2026-10-05; design base: the deno-check
+  # job from PR #105's branch, with the floating `v2.x` input replaced by
+  # an exact pin matching the locally verified toolchain). CI had zero
+  # coverage of supabase/functions; deno check catches type errors in the
+  # Deno runtime code, deno test runs the offline handler/ssrf-guard
+  # suites through _shared/tests/import-map.json (stubbed, no network).
+  # ---------------------------------------------------------------------
+  deno-check:
+    name: deno-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Deno (exact pin)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.9.7
+
+      - name: Type-check edge functions
+        working-directory: supabase/functions
+        # allowJs is rejected by newer Deno as unsupported (warning only);
+        # the check itself must stay green for all 11 functions.
+        run: deno check --config deno.jsonc ./*/index.ts
+
+      - name: Unit tests (offline, stubbed via import map)
+        # Run from the repo root: the import-map paths inside
+        # _shared/tests/import-map.json are root-relative.
+        run: |
+          deno test --allow-env \
+            --import-map=supabase/functions/_shared/tests/import-map.json \
+            supabase/functions/_shared/tests/
+
+  # ---------------------------------------------------------------------
   # Workflow lint (actionlint) — added 2026-09-18 after the Lighthouse
   # incident: an unparseable workflow YAML fails on ANY triggering event
   # with zero jobs and no logs ("invalid workflow file"), which no
