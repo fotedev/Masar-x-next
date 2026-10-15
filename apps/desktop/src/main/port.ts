@@ -47,14 +47,3 @@ export async function writePortSidecar(userDataPath: string, port: number): Prom
     'utf8',
   );
 }
-
-export async function readPortSidecar(userDataPath: string): Promise<number | undefined> {
-  try {
-    const sidecarPath = path.join(userDataPath, 'port.json');
-    const raw = await fs.readFile(sidecarPath, 'utf8');
-    const parsed = JSON.parse(raw) as { port?: unknown };
-    return typeof parsed.port === 'number' ? parsed.port : undefined;
-  } catch {
-    return undefined;
-  }
-}

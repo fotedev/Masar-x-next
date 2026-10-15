@@ -68,7 +68,7 @@ masarx_next/                          # Full-stack Next.js monorepo
 ├── .gitattributes                    # Line-ending + LFS rules
 ├── .editorconfig                     # Editor formatting
 ├── .npmrc, .cssrc.json               # Package manager / CSS configs
-├── .eslintrc.json, .stylelintrc.json, .markdownlint.jsonc  # Linters
+├── .stylelintrc.json, .markdownlint.jsonc  # Linters
 ├── .gitleaks.toml                    # Secret scanning config
 ├── .cursorignore, .windsurfignore    # AI tool ignore files
 ├── AGENTS.md                         # Agent-facing project guide
@@ -107,7 +107,7 @@ masarx_next/                          # Full-stack Next.js monorepo
 | `.env`, `.env.example`, `.env.local` | dotenv convention; `.env*` files stay at root (local ones gitignored) |
 | `.gitignore`, `.gitattributes` | git reads from root |
 | `.editorconfig`, `.npmrc`, `.cssrc.json` | Tooling configs read from root |
-| `.eslintrc.json`, `.stylelintrc.json`, `.markdownlint.jsonc`, `.gitleaks.toml` | Linters / scanners read from root |
+| `.stylelintrc.json`, `.markdownlint.jsonc`, `.gitleaks.toml` | Linters / scanners read from root |
 | `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` | TypeScript reads from root |
 | `drizzle.config.ts` | Drizzle ORM reads from root |
 | `vercel.json` | Vercel reads from root |

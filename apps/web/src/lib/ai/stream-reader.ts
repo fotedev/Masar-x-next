@@ -5,7 +5,7 @@
  * broke the server-side fallback; this reader is the fix.
  */
 
-export type TextStreamDeltaHandler = (fullSoFar: string) => void;
+type TextStreamDeltaHandler = (fullSoFar: string) => void;
 
 export const consumeTextStream = async (
   response: Response,

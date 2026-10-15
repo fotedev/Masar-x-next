@@ -130,18 +130,3 @@ export async function saveThemeOverride(mode: ThemeMode): Promise<void> {
     // Best-effort persistence; the UI stays on the previous mode.
   }
 }
-
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-} as const;
-
-export const radii = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  pill: 999,
-} as const;

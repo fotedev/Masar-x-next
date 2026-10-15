@@ -39,8 +39,6 @@ import type {
 
 export type {
   SupabaseClient,
-  SupabaseClientOptions,
-  SupabaseRuntime,
   SupabaseStorageAdapter,
 } from "./types.js";
 
@@ -174,6 +172,7 @@ function wrapClient(
  * user is signed in. Mirrors the contract's "typed `getCurrentSession()`"
  * requirement.
  */
+/** test-only convenience helper — no production consumers (edge functions define their own requireUser) */
 export async function getCurrentSession(
   client: SupabaseClient,
 ): Promise<Awaited<ReturnType<SupabaseClient["auth"]["getSession"]>>["data"]["session"]> {
@@ -186,6 +185,7 @@ export async function getCurrentSession(
  * is signed in. Use this in protected routes / server actions where
  * an unauthenticated request is a programmer error.
  */
+/** test-only convenience helper — no production consumers (edge functions define their own requireUser) */
 export async function requireUser(
   client: SupabaseClient,
 ): Promise<NonNullable<Awaited<ReturnType<SupabaseClient["auth"]["getUser"]>>["data"]["user"]>> {

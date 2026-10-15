@@ -35,5 +35,3 @@ export const ProfileFormSchema = z.object({
       }
     }, 'Avatar URL must be a valid HTTP/HTTPS URL'),
 });
-
-export type ProfileUpdateInput = z.infer<typeof ProfileFormSchema>;

@@ -15,14 +15,14 @@ import type { SupabaseClient } from "masarx-shared/supabase";
 import { cacheGet, cacheSet } from "../read-cache";
 import { useNetworkStatus } from "./useNetworkStatus";
 
-export interface SupabaseQueryOptions<T> {
+interface SupabaseQueryOptions<T> {
   cacheKey: string;
   fetcher: (supabase: SupabaseClient) => Promise<T>;
   ttlHours?: number;
   enabled?: boolean;
 }
 
-export interface SupabaseQueryResult<T> {
+interface SupabaseQueryResult<T> {
   data: T | null;
   loading: boolean;
   error: string | null;

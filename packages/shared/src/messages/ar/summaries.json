@@ -20,7 +20,6 @@
     "statusPending": "قيد الانتظار",
     "statusApproved": "مقبول",
     "statusRejected": "مرفوض",
-    "statusBy": "بواسطة",
     "subject": "المادة",
     "approve": "اعتماد",
     "reject": "رفض",
@@ -32,12 +31,6 @@
     "viewCount": "عرض {start}-{end} من {total}",
     "label": "ملخصات"
   },
-  "manageTitle": "إدارة الملخصات",
-  "deleteAll": "حذف جميع الملخصات",
-  "noSummaries": "لا توجد ملخصات",
-  "noSummariesDesc": "لا توجد ملخصات في هذا التصنيف حالياً",
-  "noResults": "لا توجد نتائج",
-  "noResultsDesc": "لا توجد ملخصات تطابق معايير البحث",
   "detail": {
     "notFound": "الملخص غير موجود أو قيد المراجعة",
     "loadFailed": "حدث خطأ أثناء تحميل الملخص",

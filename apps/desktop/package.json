@@ -33,7 +33,7 @@
     "@vitest/coverage-v8": "2.1.8",
     "electron": "44.4.5",
     "electron-builder": "^25.1.8",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "typescript": "^5.5.3",
     "vitest": "^2.1.8"
   }

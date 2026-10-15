@@ -24,7 +24,7 @@ export interface AcademicProfile {
   department_id: string | null;
 }
 
-export interface AcademicLevelRow {
+interface AcademicLevelRow {
   id: string;
   name: string;
   level_number: number;
@@ -32,7 +32,7 @@ export interface AcademicLevelRow {
   sort_order: number | null;
 }
 
-export interface AcademicDepartmentRow {
+interface AcademicDepartmentRow {
   id: string;
   academic_level_id: string;
   name: string;

@@ -221,14 +221,6 @@ export class Updater {
   }
 
   /**
-   * Download the available update (if any). Called explicitly when the
-   * user opts in (most apps let `autoDownload: true` handle this).
-   */
-  async download(): Promise<void> {
-    await this.au.downloadUpdate();
-  }
-
-  /**
    * Install the downloaded update and restart the app. We do NOT call
    * `app.quit()` ourselves — `quitAndInstall()` handles the quit
    * internally per electron-updater's documented behavior.
@@ -410,9 +402,6 @@ export function bootUpdater(opts: UpdaterBootOptions): void {
 
   opts.updater.onAvailable((info) => {
     opts.broadcast('updates:available', info);
-  });
-  opts.updater.onProgress((p) => {
-    opts.broadcast('updates:progress', p);
   });
   opts.updater.onError((err) => {
     opts.broadcast('updates:error', { message: err.message });

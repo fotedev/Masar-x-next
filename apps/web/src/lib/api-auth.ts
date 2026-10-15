@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 
-export type ApiAuthResult = { user: User } | { response: NextResponse };
+type ApiAuthResult = { user: User } | { response: NextResponse };
 
 /**
  * T021: Authenticate the caller via getUser() (JWT verification).

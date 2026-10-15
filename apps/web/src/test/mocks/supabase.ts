@@ -4,13 +4,13 @@
 // thenable, mirroring how production code awaits the chain directly:
 //   const { data, error } = await supabase.from("subjects").select(...).or(...)
 
-export interface RecordedCall {
+interface RecordedCall {
   table: string;
   method: string;
   args: unknown[];
 }
 
-export interface SupabaseQueryResult<T = unknown> {
+interface SupabaseQueryResult<T = unknown> {
   data: T | null;
   error: { message: string; code?: string } | null;
   count?: number | null;

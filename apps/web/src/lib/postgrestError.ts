@@ -1,4 +1,4 @@
-export type PostgrestLikeError = {
+type PostgrestLikeError = {
   code?: string;
   message?: string;
   details?: string;

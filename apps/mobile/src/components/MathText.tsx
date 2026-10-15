@@ -64,7 +64,7 @@ function escapeHtml(input: string): string {
   return input.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export interface MathTextProps {
+interface MathTextProps {
   text: string;
   /** Paragraph direction (follows the app locale). */
   rtl?: boolean;

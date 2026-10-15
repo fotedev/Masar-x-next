@@ -97,7 +97,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
  * packages/shared/src/messages/{ar,en}/mobileApp.json when the web team
  * picks them up (contract: "Rules for adding a new key").
  */
-export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
+const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
   ar: {
     "tabs.subjects": "المواد",
     "tabs.summaries": "الملخصات",
@@ -261,13 +261,13 @@ export const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
 };
 
 /** Device primary language, normalized to the locales the product ships. */
-export function getDeviceLocale(): Locale {
+function getDeviceLocale(): Locale {
   const locales = Localization.getLocales?.() ?? [];
   const languageCode = locales[0]?.languageCode;
   return languageCode === "en" ? "en" : "ar";
 }
 
-export async function getLocaleOverride(): Promise<Locale | null> {
+async function getLocaleOverride(): Promise<Locale | null> {
   try {
     const stored = await AsyncStorage.getItem(LOCALE_OVERRIDE_KEY);
     return stored === "ar" || stored === "en" ? stored : null;

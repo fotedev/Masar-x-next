@@ -6,14 +6,14 @@ import { supabase } from './supabase'
  * Now supports guest uploads with optional authentication
  */
 
-export interface CloudinaryUploadOptions {
+interface CloudinaryUploadOptions {
   folder?: string
   resourceType?: 'image' | 'video' | 'raw' | 'auto'
   skipProfileUpdate?: boolean
   onProgress?: (progress: number, stage: string) => void
 }
 
-export interface CloudinaryUploadResult {
+interface CloudinaryUploadResult {
   success: boolean
   url: string
   public_id: string
@@ -198,54 +198,4 @@ const fileToBase64 = (file: File, onProgress?: (progress: number) => void): Prom
 
     reader.readAsDataURL(file)
   })
-}
-
-/**
- * Delete a file from Cloudinary via Supabase Edge Function
- */
-export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
-  // Get current session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-  if (sessionError) {
-    throw new Error('فشل في التحقق من حالة تسجيل الدخول')
-  }
-
-  if (!session || !session.access_token) {
-    throw new Error('يجب تسجيل الدخول أولاً لحذف الملفات')
-  }
-
-  // Call Edge Function for secure deletion
-  const { error } = await supabase.functions.invoke('delete-file', {
-    body: { publicId }
-  })
-
-  if (error) {
-    throw new Error(`Delete failed: ${error.message}`)
-  }
-}
-
-/**
- * Generate Cloudinary URL with transformations
- * Uses NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME from environment variables
- */
-export const getCloudinaryUrl = (
-  publicId: string,
-  transformations: Record<string, string | number> = {}
-): string => {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  if (!cloudName) {
-    throw new Error('Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME environment variable');
-  }
-  const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`
-
-  const transformationString = Object.entries(transformations)
-    .map(([key, value]) => `${key}_${value}`)
-    .join(',')
-
-  if (transformationString) {
-    return `${baseUrl}/${transformationString}/${publicId}`
-  }
-
-  return `${baseUrl}/${publicId}`
 }

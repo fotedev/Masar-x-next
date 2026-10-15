@@ -16,19 +16,18 @@
 import type { SupabaseClient } from "masarx-shared/supabase";
 
 import {
-  secureStoreGetText,
   secureStoreRemoveText,
   secureStoreSetText,
 } from "./lib/secure-store-text";
 
 const LOCAL_AUTH_SESSION_KEY = "local_auth_session";
-export const LOCAL_AUTH_SESSION_VERSION = 1 as const;
+const LOCAL_AUTH_SESSION_VERSION = 1 as const;
 
 type ClientSession = NonNullable<
   Awaited<ReturnType<SupabaseClient["auth"]["getSession"]>>["data"]["session"]
 >;
 
-export interface LocalAuthSessionEnvelope {
+interface LocalAuthSessionEnvelope {
   version: typeof LOCAL_AUTH_SESSION_VERSION;
   savedAt: string;
   session: {
@@ -51,20 +50,6 @@ export async function saveLocalAuthSession(session: ClientSession): Promise<void
     },
   };
   await secureStoreSetText(LOCAL_AUTH_SESSION_KEY, JSON.stringify(envelope));
-}
-
-export async function getLocalAuthSession(): Promise<LocalAuthSessionEnvelope | null> {
-  const raw = await secureStoreGetText(LOCAL_AUTH_SESSION_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as LocalAuthSessionEnvelope;
-    if (parsed.version !== LOCAL_AUTH_SESSION_VERSION || !parsed.session?.access_token) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
 }
 
 export async function clearLocalAuthSession(): Promise<void> {

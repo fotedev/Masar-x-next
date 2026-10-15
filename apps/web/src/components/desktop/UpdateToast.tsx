@@ -117,5 +117,3 @@ export function UpdateToast(): React.JSX.Element | null {
     </div>
   );
 }
-
-export default UpdateToast;

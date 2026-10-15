@@ -6,7 +6,7 @@ import { masarxDesktopApi, type DesktopUpdateAvailableInfo } from '@masarx-share
 // `window` only sees the surface we explicitly expose via contextBridge.
 //
 // Contract (T020):
-//   - `window.masarxDesktop.app.*`     — app version, platform, controlled quit
+//   - `window.masarxDesktop.app.*`     — app version, openExternal
 //   - `window.masarxDesktop.updates.*` — auto-update surface (T023)
 //
 // Security posture:
@@ -36,8 +36,6 @@ const subscribe = <T>(channel: string, cb: (payload: T) => void): Unsubscribe =>
 const api = {
   app: {
     version: (): Promise<string> => ipcRenderer.invoke('app:version'),
-    platform: (): NodeJS.Platform => process.platform,
-    quit: (): Promise<void> => ipcRenderer.invoke('app:quit'),
     // Spec 014 (R032) — open a URL in the system browser. Used by the
     // OAuth consent flow: main validates the http(s) scheme before
     // calling shell.openExternal, so the renderer cannot be tricked into
@@ -58,7 +56,6 @@ const api = {
       subscribe<string>('auth:deepLink', cb),
   },
   updates: {
-    check: (): Promise<unknown> => ipcRenderer.invoke('updates:check'),
     installAndRestart: (): Promise<void> =>
       ipcRenderer.invoke('updates:installAndRestart'),
     skip: (version: string): Promise<void> =>
@@ -72,13 +69,6 @@ const api = {
     // updater.ts: `{ message: err.message }`.
     onError: (cb: (info: { message: string }) => void): Unsubscribe =>
       subscribe<{ message: string }>('updates:error', cb),
-    // SC-002 fixture (spec 015) — added here BECAUSE the shared module's
-    // satisfies constraint forced this file to expose every bridge method.
-    // Without the dedup this method could land in one file and silently
-    // miss the other (the 2026-09-12 B4 audit toast-crash bug class).
-    onInstallProgress: (
-      cb: (stage: 'extracting' | 'replacing' | 'restarting') => void,
-    ): Unsubscribe => subscribe<{ stage: 'extracting' | 'replacing' | 'restarting' }>('updates:installProgress', ({ stage }) => cb(stage)),
   },
   // T040–T043 (spec 005 US3): frameless titlebar window controls. The
   // renderer exposes a thin surface that matches the optional

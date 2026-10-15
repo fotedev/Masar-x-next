@@ -9,4 +9,3 @@ const inter = Inter({
 });
 
 export const interClassName = inter.variable;
-export const interStyle = inter.style;

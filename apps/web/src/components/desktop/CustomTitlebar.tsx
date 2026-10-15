@@ -222,5 +222,3 @@ function CloseGlyph(): React.JSX.Element {
     </svg>
   );
 }
-
-export default CustomTitlebar;

@@ -42,31 +42,3 @@ export function cleanupOldLocalStorage(): void {
     console.warn('Failed to cleanup old localStorage keys:', e);
   }
 }
-
-/**
- * Checks if there are any old localStorage keys present
- * Useful for debugging/monitoring the migration
- */
-export function hasOldLocalStorageKeys(): boolean {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    for (const key of OLD_LOCALSTORAGE_KEYS) {
-      if (key.endsWith('_')) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const itemKey = localStorage.key(i);
-          if (itemKey && itemKey.startsWith(key)) {
-            return true;
-          }
-        }
-      } else {
-        if (localStorage.getItem(key)) {
-          return true;
-        }
-      }
-    }
-  } catch {
-    // Ignore errors
-  }
-  return false;
-}

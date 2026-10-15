@@ -10,7 +10,7 @@ import { useTheme } from "@/contexts/ThemeContext";
  * MUST NOT run a second theme system. This adapter exposes exactly the
  * surface the shell needs and nothing more.
  */
-export interface UseAdminThemeResult {
+interface UseAdminThemeResult {
   theme: "light" | "dark";
   mounted: boolean;
   toggleTheme: () => void;

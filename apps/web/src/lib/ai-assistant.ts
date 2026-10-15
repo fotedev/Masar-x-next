@@ -6,7 +6,7 @@
  * not from the internals — so the module boundaries stay swappable.
  */
 
-export { aiAssistant, AiAssistant } from './ai/assistant';
+export { aiAssistant } from './ai/assistant';
 export type {
   AiAssistantMode,
   AiChatHistoryTurn,

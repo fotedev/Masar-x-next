@@ -48,7 +48,7 @@ const DotLottieReact = dynamic(
   },
 );
 
-export type Props = DotLottieReactProps;
+type Props = DotLottieReactProps;
 
 /**
  * Shape of the runtime player instance that `dotLottieRefCallback` receives.

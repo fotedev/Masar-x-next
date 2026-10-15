@@ -6,7 +6,7 @@ import { useEffectiveSemester } from "./useEffectiveSemester";
 import { logger } from "../lib/logger";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export interface Subject extends DBSubject {
+interface Subject extends DBSubject {
   isOptimistic?: boolean;
 }
 

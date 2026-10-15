@@ -7,12 +7,12 @@
  * t(locale, "authPages", key).
  */
 
-export type SignupErrorKey =
+type SignupErrorKey =
   | "passwordMinLength"
   | "passwordMismatch"
   | "signupGenericError";
 
-export const PASSWORD_MIN_LENGTH = 6;
+const PASSWORD_MIN_LENGTH = 6;
 
 /**
  * Client-side signup gate (same rules as the web signup form): both

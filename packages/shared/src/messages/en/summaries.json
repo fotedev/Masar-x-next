@@ -20,7 +20,6 @@
     "statusPending": "Pending",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
-    "statusBy": "By",
     "subject": "Subject",
     "approve": "Approve",
     "reject": "Reject",
@@ -32,12 +31,6 @@
     "viewCount": "Showing {start}-{end} of {total}",
     "label": "summaries"
   },
-  "manageTitle": "Manage Summaries",
-  "deleteAll": "Delete all summaries",
-  "noSummaries": "No summaries",
-  "noSummariesDesc": "No summaries in this category currently",
-  "noResults": "No results",
-  "noResultsDesc": "No summaries match your search criteria",
   "detail": {
     "notFound": "Summary not found or pending review",
     "loadFailed": "Failed to load the summary",

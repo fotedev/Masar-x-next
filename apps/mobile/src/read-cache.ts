@@ -22,9 +22,9 @@ export const CACHE_PREFIX = "masarx_read_cache_";
 export const CACHE_VERSION = 1 as const;
 
 /** One week - long enough for offline study, short enough to stay fresh-ish. */
-export const DEFAULT_TTL_HOURS = 168;
+const DEFAULT_TTL_HOURS = 168;
 
-export interface CacheEnvelope<T> {
+interface CacheEnvelope<T> {
   version: typeof CACHE_VERSION;
   savedAt: string;
   ttlHours: number;

@@ -1,0 +1,8 @@
+# Canonical identity: the GitHub noreply address used by the majority of this
+# repo's history (fotedev). Maps the personal-gmail spellings (GitHub treats
+# the two casings as one email; git sees two distinct strings) to the canonical
+# identity for `git log` / `git shortlog` display only — no SHAs change.
+fotedev <fotedev@users.noreply.github.com> Ahmed Aboalayoun <ahmedaboalayoun0016K@gmail.com>
+fotedev <fotedev@users.noreply.github.com> Ahmed Aboalayoun <ahmedaboalayoun0016k@gmail.com>
+fotedev <fotedev@users.noreply.github.com> <ahmedaboalayoun0016K@gmail.com>
+fotedev <fotedev@users.noreply.github.com> <ahmedaboalayoun0016k@gmail.com>

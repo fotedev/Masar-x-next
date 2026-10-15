@@ -43,7 +43,7 @@ interface MasarxExtra {
 
 export const SUPABASE_URL: string =
   ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).supabaseUrl ?? "";
-export const SUPABASE_ANON_KEY: string =
+const SUPABASE_ANON_KEY: string =
   ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).supabaseAnonKey ?? "";
 
 /**
@@ -55,7 +55,7 @@ export const WEB_ORIGIN: string =
   ((Constants.expoConfig?.extra ?? {}) as MasarxExtra).webOrigin ||
   "https://masarx.vercel.app";
 
-export const MISSING_SUPABASE_ENV_VARS: string[] = [
+const MISSING_SUPABASE_ENV_VARS: string[] = [
   ...(SUPABASE_URL ? [] : ["EXPO_PUBLIC_SUPABASE_URL"]),
   ...(SUPABASE_ANON_KEY ? [] : ["EXPO_PUBLIC_SUPABASE_ANON_KEY"]),
 ];
@@ -67,7 +67,7 @@ export const isSupabaseConfigured: boolean = MISSING_SUPABASE_ENV_VARS.length ==
  * stringifies the session itself; we only move (possibly chunked) strings
  * in and out of the Keychain / EncryptedSharedPreferences.
  */
-export const SecureStoreAdapter: SupabaseStorageAdapter = {
+const SecureStoreAdapter: SupabaseStorageAdapter = {
   getItem: (key: string) => secureStoreGetText(key),
   setItem: (key: string, value: string) => secureStoreSetText(key, value),
   removeItem: (key: string) => secureStoreRemoveText(key),

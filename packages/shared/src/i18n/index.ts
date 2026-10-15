@@ -72,7 +72,6 @@ import arSubjects from "../messages/ar/subjects.json";
 import arSubjectsTab from "../messages/ar/subjectsTab.json";
 import arSummaries from "../messages/ar/summaries.json";
 import arTheme from "../messages/ar/theme.json";
-import arTrw from "../messages/ar/trw.json";
 import arTrwRedeem from "../messages/ar/trwRedeem.json";
 import arDesktopStudyWorkspace from "../messages/ar/desktopStudyWorkspace.json";
 import arDesktopUpdates from "../messages/ar/desktopUpdates.json";
@@ -124,7 +123,6 @@ import enSubjects from "../messages/en/subjects.json";
 import enSubjectsTab from "../messages/en/subjectsTab.json";
 import enSummaries from "../messages/en/summaries.json";
 import enTheme from "../messages/en/theme.json";
-import enTrw from "../messages/en/trw.json";
 import enTrwRedeem from "../messages/en/trwRedeem.json";
 import enDesktopStudyWorkspace from "../messages/en/desktopStudyWorkspace.json";
 import enDesktopUpdates from "../messages/en/desktopUpdates.json";
@@ -180,7 +178,6 @@ const arMessages = {
   subjectsTab: arSubjectsTab,
   summaries: arSummaries,
   theme: arTheme,
-  trw: arTrw,
   trwRedeem: arTrwRedeem,
   desktopStudyWorkspace: arDesktopStudyWorkspace,
   desktopUpdates: arDesktopUpdates,
@@ -246,7 +243,6 @@ const enMessages: Record<I18nNamespace, unknown> = {
   subjectsTab: enSubjectsTab,
   summaries: enSummaries,
   theme: enTheme,
-  trw: enTrw,
   trwRedeem: enTrwRedeem,
   desktopStudyWorkspace: enDesktopStudyWorkspace,
   desktopUpdates: enDesktopUpdates,

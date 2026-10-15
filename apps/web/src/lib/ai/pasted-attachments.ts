@@ -16,12 +16,9 @@ export {
   PASTE_CHAR_THRESHOLD,
   PASTE_LINE_THRESHOLD,
   AI_PROMPT_MAX_CHARS,
-  hasTextEncoder,
   countLines,
   shouldWrapAsAttachment,
-  formatApproxSize,
   createPastedAttachment,
-  buildAttachmentBlock,
   combinePromptWithAttachments,
   type PastedAttachment,
 } from 'masarx-shared/ai/paste-attachments';

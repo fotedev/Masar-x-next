@@ -3,9 +3,5 @@
   "description": "Choose the subject you want to explore lectures for",
   "emptyAcademicTitle": "No subjects",
   "emptyAcademicDescription": "Subjects will be added soon",
-  "professorLabelMale": "Dr.",
-  "professorLabelFemale": "Dr.",
-  "emptyNonAcademicTitle": "No content",
-  "emptyNonAcademicDescription": "New content will be added soon",
   "studyWithZainCta": "Study with Zain"
 }

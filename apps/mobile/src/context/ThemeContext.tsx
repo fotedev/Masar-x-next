@@ -26,7 +26,7 @@ import {
   type ThemeScheme,
 } from "../lib/theme";
 
-export type { ThemeMode, ThemeScheme };
+export type { ThemeMode };
 
 export interface ThemeContextValue {
   mode: ThemeMode;

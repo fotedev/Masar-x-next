@@ -29,9 +29,9 @@ describe('MasarxDesktopBridge', () => {
   });
 
   // SC-002: every namespace exposes the expected methods
-  it('app namespace exposes version, platform, quit, openExternal', () => {
+  it('app namespace exposes version, openExternal', () => {
     expect(Object.keys(masarxDesktopApi.app).sort()).toEqual(
-      ['openExternal', 'platform', 'quit', 'version'],
+      ['openExternal', 'version'],
     );
   });
 
@@ -41,9 +41,9 @@ describe('MasarxDesktopBridge', () => {
     );
   });
 
-  it('updates namespace exposes check, installAndRestart, skip, onAvailable, onError, onInstallProgress', () => {
+  it('updates namespace exposes installAndRestart, skip, onAvailable, onError', () => {
     expect(Object.keys(masarxDesktopApi.updates).sort()).toEqual(
-      ['check', 'installAndRestart', 'onAvailable', 'onError', 'onInstallProgress', 'skip'],
+      ['installAndRestart', 'onAvailable', 'onError', 'skip'],
     );
   });
 

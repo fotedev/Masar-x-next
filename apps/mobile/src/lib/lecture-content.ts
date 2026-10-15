@@ -26,7 +26,7 @@ export interface MatchableRow {
   lecture_id?: string | null;
 }
 
-export interface LectureContentGroups<S, V, F, Q> {
+interface LectureContentGroups<S, V, F, Q> {
   summaries: S[];
   videos: V[];
   files: F[];
@@ -55,7 +55,7 @@ export function matchesLecture(
   return false;
 }
 
-export interface GroupedContent<
+interface GroupedContent<
   S extends MatchableRow,
   V extends MatchableRow,
   F extends MatchableRow,

@@ -678,21 +678,9 @@ export interface Database {
   }
 }
 
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
-
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-export type Admin = Database['public']['Tables']['admins']['Row']
-export type SystemAccessCode = Database['public']['Tables']['system_access_codes']['Row']
 export type Summary = Database['public']['Tables']['summaries']['Row']
-export type SummaryInsert = Database['public']['Tables']['summaries']['Insert']
 export type SummaryUpdate = Database['public']['Tables']['summaries']['Update']
 export type Quiz = Database['public']['Tables']['quizzes']['Row']
-export type QuizInsert = Database['public']['Tables']['quizzes']['Insert']
-export type QuizUpdate = Database['public']['Tables']['quizzes']['Update']
 
 export interface QuizWithRatings extends Quiz {
   avg_rating?: number | null;
@@ -703,67 +691,28 @@ export interface QuizWithRatings extends Quiz {
 // News types
 export type News = Database['public']['Tables']['news']['Row']
 export type NewsInsert = Database['public']['Tables']['news']['Insert']
-export type NewsUpdate = Database['public']['Tables']['news']['Update']
 
 // Subject types
 export type Subject = Database['public']['Tables']['subjects']['Row']
-export type SubjectInsert = Database['public']['Tables']['subjects']['Insert']
-export type SubjectUpdate = Database['public']['Tables']['subjects']['Update']
-
-// Subject lecture types
-export type SubjectLecture = Database['public']['Tables']['subject_lectures']['Row']
-export type SubjectLectureInsert = Database['public']['Tables']['subject_lectures']['Insert']
-export type SubjectLectureUpdate = Database['public']['Tables']['subject_lectures']['Update']
 
 // Appeals
 export type Appeal = Database['public']['Tables']['appeals']['Row']
 export type AppealInsert = Database['public']['Tables']['appeals']['Insert']
-export type AppealUpdate = Database['public']['Tables']['appeals']['Update']
 
 // Notifications
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
-export type NotificationUpdate = Database['public']['Tables']['notifications']['Update']
 
 // Reviews
-export type Review = Database['public']['Tables']['reviews']['Row']
 export type ReviewInsert = Database['public']['Tables']['reviews']['Insert']
-export type ReviewUpdate = Database['public']['Tables']['reviews']['Update']
-
-// Chat messages
-export type ChatMessage = Database['public']['Tables']['messages']['Row']
-export type ChatMessageInsert = Database['public']['Tables']['messages']['Insert']
-export type ChatMessageUpdate = Database['public']['Tables']['messages']['Update']
-
-// AI summaries
-export type AiSummary = Database['public']['Tables']['ai_summaries']['Row']
-export type AiSummaryInsert = Database['public']['Tables']['ai_summaries']['Insert']
-export type AiSummaryUpdate = Database['public']['Tables']['ai_summaries']['Update']
 
 // Courses
 export type Course = Database['public']['Tables']['courses']['Row']
 export type CourseInsert = Database['public']['Tables']['courses']['Insert']
-export type CourseUpdate = Database['public']['Tables']['courses']['Update']
 
 // View types
 export type ReviewDetails = Database['public']['Views']['review_details']['Row']
 export type SummaryWithRatings = Database['public']['Views']['summaries_with_ratings']['Row']
-
-// Chat messages
-export type Message = Database['public']['Tables']['messages']['Row']
-export type MessageInsert = Database['public']['Tables']['messages']['Insert']
-export type MessageUpdate = Database['public']['Tables']['messages']['Update']
-
-export interface MessageWithSender extends Message {
-  sender: {
-    id: string
-    email?: string
-    raw_user_meta_data?: {
-      display_name?: string
-      name?: string
-    } | null
-  } | null
-}
 
 // Videos with ratings (extended view)
 export interface VideoWithRatings {

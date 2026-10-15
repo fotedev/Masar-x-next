@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "workspaces": {
+    "patterns": ["apps/*", "packages/*"]
+  },
+  "entry": [
+    "scripts/**/*.mjs",
+    "apps/*/scripts/**/*.mjs"
+  ],
+  "ignorePatterns": [
+    "**/.kilo/**",
+    "**/.next/**",
+    "**/public/sw.template.js",
+    "sandbox/**",
+    "masarx-remotion-ad/**",
+    "masarx-video-ad/**"
+  ],
+  "ignoreUnresolvedImports": [
+    "./messages/**/*.json"
+  ],
+  "ignoreDependencies": [
+    "expo-dev-client",
+    "@swc/helpers",
+    "react-native-screens"
+  ]
+}

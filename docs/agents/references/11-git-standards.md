@@ -32,9 +32,11 @@ All commit messages must follow the standard format:
 
 ## Branch Isolation & Multi-Agent Safety Protocol (I14)
 
-Multiple agents/sessions work in this repository concurrently — often in the
-same working copy. The currently checked-out branch is therefore **never** a
-task assignment.
+Multiple agents/sessions work in this repository concurrently. Since
+2026-10-04 every agent session works in its **own worktree** (rule 6) — but
+their changes share one repository, and the primary checkout may still carry
+the owner's (or a legacy session's) in-flight work. The currently
+checked-out branch is therefore **never** a task assignment.
 
 1. **Never assume the current branch matches the task scope.** The user may
    start a session on any branch out of convenience. Do not commit web fixes
@@ -96,6 +98,23 @@ task assignment.
    must carry both your hunk and another agent's, stage only your hunk via a
    filtered patch (`git diff` → extract → `git apply --cached`) and commit
    the index without a pathspec.
+6. **Work in your own dedicated worktree — always (reinstated 2026-10-04).**
+   Every agent session creates and works inside its own
+   `git worktree add` checkout, **even when working alone**; the primary
+   checkout belongs to the owner's direct work. This re-imposes the
+   mandatory-worktree rule cancelled on 2026-09-26 — owner decision after the
+   2026-10-03 cross-session collision (incident note below). Keep the
+   worktree in a separate directory outside the repo (e.g.
+   `%TEMP%/<repo>-<task>/`) and remove it when the task lands. Rules 1–5
+   still apply inside the worktree: dedicated branch, `.agents/` claim
+   (also read the primary clone's claims), explicit-path staging.
+7. **No throwaway operations in the primary checkout.** Test commits,
+   experiments, and scratch commits run in a temporary `git worktree add`
+   outside the repo — never in the primary checkout. Never `git switch`,
+   `git reset`, or a test commit there, especially when any other session
+   may be active. Before *any* git state operation, run
+   `git branch --show-current` and `git status --porcelain`: the checked-out
+   branch and the dirty state are never assumed (rule 1; hit 2026-10-03).
 
 **Why:** 2026-09-26 — a web fix was committed to `feat/020-mobile-polish`
 (the session's starting branch), a CI fix landed on a freshly created
@@ -106,6 +125,87 @@ staging, and (since 2026-09-26, replacing the brief mandatory-worktree
 rule) `.agents/` claim files that cost zero disk and stay in the tree the
 agent actually works in.
 
+**Why (2026-10-03, 23:42–23:49 +02:00) — the collision that reinstated
+rules 6–7:** an agent session needing a single test commit worked in the
+primary checkout without checking it first. Another session was live there
+on `chore/dead-code-sweep-2` with ~44 staged deletions and ~40 modified
+files. The "empty" test commit absorbed the other session's entire staged
+state, and the branch movement moved the shared HEAD off the other session's
+branch, which had to self-recover twice (see `git reflog HEAD` of that
+window). Nothing was ultimately lost — the other session unstaged
+deliberately, committed its sweep as `20aa16e` (signed, pushed) on its own
+branch, and continued — but the agent had violated I8 (git state operations
+on a dirty tree without consent) and rule 1 of this section (assuming the
+checked-out branch), hours after writing I15/I16 itself. Rules 6–7 exist
+because written rules alone did not stop it: the protection is the workflow
+— isolated worktrees and check-first, every time.
+
+## Git Identity Lock (I15)
+
+Commits must carry the owner's identity, set by machine git config only. **Never** do any
+of the following:
+
+- `git -c user.name=… -c user.email=… commit` (per-command config override — it beats
+  every config file and leaves no persistent trace)
+- `git commit --author="…"`, or setting `GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars
+- `--no-verify` (skips the identity guard hooks) or `-c core.hooksPath=` (disables them)
+
+If `git var GIT_AUTHOR_IDENT` / `GIT_COMMITTER_IDENT` do not resolve to
+`ahmedaboalayoun0016k@gmail.com` or `fotedev@users.noreply.github.com` — stop and ask the
+owner instead of self-assigning an identity.
+
+**Local guard:** `C:/Users/FOTE/.githooks/pre-commit` + `commit-msg` (identical script,
+living **outside** any repository) reject any commit whose author/committer email is not
+in the allowlist. They are wired via the repo-local config
+`core.hooksPath=C:/Users/FOTE/.githooks` (absolute path) in this repo and in
+`unban-machine-id` (ghost), so they apply regardless of `HOME` (ZCode desktop clones
+override HOME, which breaks global-config resolution) and are inherited by agent
+worktrees (`.kilo/worktrees/*`) — a relative `hooksPath` would resolve against each
+worktree root and miss there, and files inside the repo would be removable by
+`git clean`. The hook evaluates `git var GIT_AUTHOR_IDENT`/`GIT_COMMITTER_IDENT` at
+commit time, so it *does* see `-c` and `--author` overrides. Editing the hook files is an
+owner-level machine change, not a repo PR. Final enforcement layer is the GitHub ruleset
+(signed commits, no bypass).
+
+**Why:** 2026-09-28/29 — a Hermes session (`20260928_130552_98eb20`) committed 7 times on
+a task branch using `git -c user.email=hermes@nousresearch.com -c user.name="Hermes Agent"
+commit`, fast-forward-merged to `main` and pushed through the then-open admin bypass. The
+commits were SSH-signed by the owner's own key (global `commit.gpgsign=true`) but carry
+the agent's self-selected identity, so GitHub shows them `Unverified / unverified_email`
+under the `Rafa-Ross` account that owns that email. AGENTS.md (with I14) was not read
+until after the first commit — hence I15 is also mirrored into agent memory and enforced
+by hooks rather than documentation alone.
+
 See also the [pre-commit / pre-merge checklist](./08-precommit.md).
+
+## Escalation Lock (I16)
+
+Protected and irreversible repository state changes require the owner's **explicit written
+confirmation in the same conversation message** that requests the exact action. Without it,
+an agent must never:
+
+- modify repository rulesets (create/update/delete, including temporary bypass windows)
+- force-push to any protected branch
+- rewrite pushed history (rebase / filter / amend of commits already on a remote)
+
+**What does not count as confirmation:** an approved plan alone, silence in reply to a
+clarification question, a timeout, or an agent-chosen "recommended default". If an action
+additionally requires the owner to open a bypass window (or the agent to open one), the
+agent must ask who opens it and **wait** for the answer.
+
+**Why:** 2026-10-03 — `main` was rewritten (7 Hermes-identity commits re-authored to the
+owner; 25 commit SHAs changed; verified content-identical, dates preserved). The rewrite was
+owner-requested and the plan approved, but the sub-question "who opens the bypass window on
+`Main Branch Protection` (ruleset 20299668)?" went unanswered and the agent proceeded with
+its recommended default: it added itself as a bypass actor (`RepositoryRole` admin), force
+-pushed, and restored the ruleset ~30 seconds later (ruleset History: 22:02:04 and
+22:02:33 +02:00). The outcome was clean and `current_user_can_bypass` returned to `never`,
+but a locked ruleset is exactly the kind of state whose unlocking must never be a default.
+
+**Related note — identity in throwaway clones:** when re-creating that history in a temp
+clone, the agent set the identity explicitly (`fotedev` / `fotedev@users.noreply.github.com`,
+matching this repo's dominant convention) instead of inheriting the machine global config.
+Not a command-time override (I15's letter), but an undisclosed choice of identity source —
+any deliberate identity selection must be stated in the report.
 
 **Back to:** [AGENTS.md](../../../AGENTS.md)

@@ -31,13 +31,6 @@ interface RateLimitConfig {
   keyPrefix: string;
 }
 
-// Kept exported for API compatibility with existing consumers.
-interface RateLimitEntry {
-  count: number;
-  windowStart: number;
-  userId: string;
-}
-
 interface RateLimitResult {
   allowed: boolean;
   remaining: number;
@@ -402,4 +395,3 @@ export function recordAIChatRequest(userId: string): void {
 }
 
 export { AI_CHAT_RATE_LIMIT };
-export type { RateLimitConfig, RateLimitEntry, RateLimitResult };

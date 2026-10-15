@@ -14,10 +14,8 @@
   },
   "platforms": {
     "windows": {
-      "name": "ويندوز",
       "status": "متاح الآن",
       "version": "الإصدار {version}",
-      "size": "121 MB",
       "installerLabel": "تحميل البرنامج (Setup)",
       "installerHint": "يتطلب التثبيت — موصى به لمعظم المستخدمين",
       "portableLabel": "نسخة محمولة (Portable)",

@@ -14,10 +14,8 @@
   },
   "platforms": {
     "windows": {
-      "name": "Windows",
       "status": "Available now",
       "version": "Version {version}",
-      "size": "121 MB",
       "installerLabel": "Download installer (Setup)",
       "installerHint": "Requires installation — recommended for most users",
       "portableLabel": "Portable edition",

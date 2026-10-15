@@ -95,4 +95,3 @@ export const WaitlistSignupSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   source: WaitlistSourceSchema,
 });
-export type WaitlistSignupInput = z.infer<typeof WaitlistSignupSchema>;
