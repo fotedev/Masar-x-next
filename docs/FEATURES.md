@@ -199,7 +199,6 @@
 - `[X]` Web App Manifest with shortcuts for summaries and news (`public/manifest.json`)
 - `[X]` Service Worker v3 for push notifications (`public/sw.js`)
 - `[X]` PWA install prompt component (`src/components/PWAInstallPrompt.tsx`)
-- `[X]` Custom notification sounds (`public/notification-sound.mp3`, `public/notification-sound.wav`)
 - `[!]` PWA manifest references `/logo.png` which does not exist — only `logo_AR.png` and `logo_EN.png` in `public/`
 - `[!]` Service Worker completeness unverified
 

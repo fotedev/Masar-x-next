@@ -4,6 +4,10 @@ node_modules/
 
 # Build outputs
 .next/
+# Next.js regenerates this on every dev/build (flips between .next/types and
+# .next/dev/types routes), causing perpetual working-tree churn if tracked.
+# It stays on disk in every clone — only its tracking is removed.
+apps/web/next-env.d.ts
 dist/
 build/
 out/
