@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { corsPreflight, jsonResponse } from '../_shared/http.ts';
-import { requireUser } from '../_shared/auth.ts';
+import { jsonResponse } from '../_shared/http.ts';
+import { withAuthedJson } from '../_shared/auth.ts';
 import {
   destroyCloudinaryAsset,
   getCloudinaryCredentials,
@@ -11,19 +11,9 @@ interface DeleteRequest {
     resourceType?: 'image' | 'video' | 'raw'
 }
 
-Deno.serve(async (req: Request) => {
-    // Handle CORS
-    if (req.method === 'OPTIONS') {
-        return corsPreflight(req)
-    }
-
-    try {
-        // Authenticate the caller (client + user via the shared scaffold)
-        const auth = await requireUser(req)
-        if (auth.response) return auth.response
-        const { user, client: supabaseClient } = auth
-
-        const { publicId, resourceType = 'image' }: DeleteRequest = await req.json()
+Deno.serve((req: Request) =>
+    withAuthedJson<DeleteRequest>(req, 'Delete', async ({ user, client: supabaseClient, body }) => {
+        const { publicId, resourceType = 'image' }: DeleteRequest = body
 
         // Validate input
         if (!publicId) {
@@ -57,10 +47,5 @@ Deno.serve(async (req: Request) => {
             success: true,
             message: 'File deleted successfully'
         })
-
-    } catch (error: unknown) {
-        console.error('Delete error:', error)
-        const message = error instanceof Error ? error.message : 'Unknown error'
-        return jsonResponse(req, { error: 'Internal server error', details: message }, 500)
-    }
-})
+    })
+)

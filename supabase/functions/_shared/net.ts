@@ -1,30 +1,32 @@
 /**
  * Network/request helpers for Supabase Edge Functions.
  */
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
- * Client IP resolution, extracted verbatim (including comments) from the
- * three identical copies in reset-password, cloudinary-webhook and
- * request-password-reset.
+ * Client IP resolution.
+ *
+ * Priority: platform/CDN-injected headers (not client-controllable) BEFORE
+ * x-forwarded-for, whose entries can be client-supplied.
+ * 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
+ *    real peer IP, so a spoofed value is replaced at the edge.
+ * 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
+ * 3) x-forwarded-for — first entry of the proxy chain (last resort).
+ * 4) nginx-style fallback.
  */
+const IP_HEADERS: Array<{ name: string; firstHopOnly: boolean }> = [
+  { name: "cf-connecting-ip", firstHopOnly: false },
+  { name: "sb-forwarded-for", firstHopOnly: true },
+  { name: "x-forwarded-for", firstHopOnly: true },
+  { name: "x-real-ip", firstHopOnly: false },
+];
+
 export const getClientIp = (req: Request): string => {
-  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
-  // x-forwarded-for, whose entries can be client-supplied.
-  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
-  //    real peer IP, so a spoofed value is replaced at the edge.
-  const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp) return cfIp.trim();
-  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
-  const sbIp = req.headers.get('sb-forwarded-for');
-  if (sbIp) return sbIp.split(',')[0].trim();
-  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  // 4) nginx-style fallback.
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return 'unknown';
+  for (const { name, firstHopOnly } of IP_HEADERS) {
+    const raw = req.headers.get(name);
+    if (!raw) continue;
+    return firstHopOnly ? raw.split(",")[0].trim() : raw.trim();
+  }
+  return "unknown";
 };
 
 export interface RateLimitOptions {
@@ -34,13 +36,28 @@ export interface RateLimitOptions {
   windowMinutes: number;
 }
 
+/** Minimal RPC surface checkRateLimit needs (keeps this helper decoupled
+ * from the SupabaseClient generics, whose bare instantiation does not
+ * accept concrete rpc args). */
+export interface RateLimitRpc {
+  rpc(
+    fn: string,
+    args: {
+      p_identifier: string;
+      p_endpoint: string;
+      p_max_requests: number;
+      p_window_minutes: number;
+    },
+  ): PromiseLike<{ data: unknown }>;
+}
+
 /**
  * Call the check_rate_limit RPC. Returns the RPC's `allowed` value
  * (`false` = exceeded; undefined on RPC error — callers keep their own
  * fail-open semantics and 429 response).
  */
 export const checkRateLimit = async (
-  client: SupabaseClient,
+  client: RateLimitRpc,
   { identifier, endpoint, maxRequests, windowMinutes }: RateLimitOptions,
 ): Promise<boolean | undefined> => {
   const { data: allowed } = await client.rpc("check_rate_limit", {
@@ -49,5 +66,5 @@ export const checkRateLimit = async (
     p_max_requests: maxRequests,
     p_window_minutes: windowMinutes,
   });
-  return allowed as boolean | undefined;
+  return typeof allowed === "boolean" ? allowed : undefined;
 };

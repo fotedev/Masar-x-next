@@ -1,5 +1,5 @@
 /**
- * Offline test double for `https://esm.sh/@supabase/supabase-js@2`.
+ * Offline test double for `https://esm.sh/@supabase/supabase-js@2.117.2`.
  * Only implements what the hotfixed functions use: createClient with
  * auth.getUser, from('profiles') select/eq/single + update/eq, and rpc.
  * Driven by `globalThis.__SCENARIO__` (see handler tests).

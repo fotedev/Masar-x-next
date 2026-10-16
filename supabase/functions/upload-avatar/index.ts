@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { corsPreflight, jsonResponse } from '../_shared/http.ts';
-import { requireUser } from '../_shared/auth.ts';
+import { jsonResponse } from '../_shared/http.ts';
+import { withAuthedJson } from '../_shared/auth.ts';
 import { getCloudinaryCredentials } from '../_shared/cloudinary.ts';
 
 interface UploadRequest {
@@ -12,18 +12,8 @@ interface UploadRequest {
   skipProfileUpdate?: boolean
 }
 
-Deno.serve(async (req: Request) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return corsPreflight(req)
-  }
-
-  try {
-    // Authenticate the caller (client + user via the shared scaffold)
-    const auth = await requireUser(req)
-    if (auth.response) return auth.response
-    const { user, client: supabaseClient } = auth
-
+Deno.serve((req: Request) =>
+  withAuthedJson<UploadRequest>(req, 'Upload', async ({ user, client: supabaseClient, body }) => {
     const {
       file,
       fileName,
@@ -31,7 +21,7 @@ Deno.serve(async (req: Request) => {
       folder = 'avatars',
       resourceType = 'auto',
       skipProfileUpdate = false
-    }: UploadRequest = await req.json()
+    }: UploadRequest = body
 
     // Validate input
     if (!file || !fileName || !contentType) {
@@ -102,10 +92,5 @@ Deno.serve(async (req: Request) => {
       public_id: cloudinaryData.public_id,
       message: 'File uploaded successfully'
     })
-
-  } catch (error: unknown) {
-    console.error('Upload error:', error)
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonResponse(req, { error: 'Internal server error', details: message }, 500)
-  }
-})
+  })
+)

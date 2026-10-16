@@ -1,10 +1,10 @@
 /**
  * Cloudinary helpers for Supabase Edge Functions.
  *
- * Extracted from the delete-avatar / delete-file / upload-avatar pipeline.
- * Callers keep their own response policy: delete-avatar logs a failed
- * destroy and continues, delete-file turns it into a 400 — the helper only
- * returns the outcome.
+ * Extracted from the delete-file / upload-avatar pipeline (delete-avatar
+ * now resolves ownership through its handler split and no longer calls
+ * into this module). Callers keep their own response policy: delete-file
+ * turns a failed destroy into a 400 — the helper only returns the outcome.
  */
 import { sha1Hex } from "./crypto.ts";
 
@@ -22,30 +22,24 @@ export interface CloudinaryCredentials {
 export const getCloudinaryCredentials = (
   requirePreset = false,
 ): CloudinaryCredentials | null => {
-  const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME");
-  const apiKey = Deno.env.get("CLOUDINARY_API_KEY");
-  const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET");
-  const uploadPreset = requirePreset
-    ? Deno.env.get("CLOUDINARY_UPLOAD_PRESET")
-    : undefined;
-
-  if (!cloudName || !apiKey || !apiSecret || (requirePreset && !uploadPreset)) {
-    console.error("Missing Cloudinary credentials");
-    return null;
+  const entries: Array<
+    { key: "cloudName" | "apiKey" | "apiSecret" | "uploadPreset"; value: string | undefined; required: boolean }
+  > = [
+    { key: "cloudName", value: Deno.env.get("CLOUDINARY_CLOUD_NAME"), required: true },
+    { key: "apiKey", value: Deno.env.get("CLOUDINARY_API_KEY"), required: true },
+    { key: "apiSecret", value: Deno.env.get("CLOUDINARY_API_SECRET"), required: true },
+    { key: "uploadPreset", value: Deno.env.get("CLOUDINARY_UPLOAD_PRESET"), required: requirePreset },
+  ];
+  const creds = {} as CloudinaryCredentials;
+  for (const { key, value, required } of entries) {
+    if (!value) {
+      if (!required) continue;
+      console.error("Missing Cloudinary credentials");
+      return null;
+    }
+    creds[key] = value;
   }
-  return { cloudName, apiKey, apiSecret, uploadPreset };
-};
-
-/** Signed-params triple used by the Cloudinary Admin API (SHA-1). */
-export const signCloudinaryParams = (
-  publicId: string,
-  apiSecret: string,
-): Promise<{ timestamp: number; signature: string }> => {
-  const timestamp = Math.round(Date.now() / 1000);
-  const signature = sha1Hex(
-    `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`,
-  );
-  return signature.then((signature) => ({ timestamp, signature }));
+  return creds;
 };
 
 /**
@@ -58,9 +52,10 @@ export const destroyCloudinaryAsset = async (
   publicId: string,
   resourceType = "image",
 ): Promise<{ httpOk: boolean; result: unknown }> => {
-  const { timestamp, signature } = await signCloudinaryParams(
-    publicId,
-    creds.apiSecret,
+  // Signed-params triple for the Cloudinary Admin API (SHA-1).
+  const timestamp = Math.round(Date.now() / 1000);
+  const signature = await sha1Hex(
+    `public_id=${publicId}&timestamp=${timestamp}${creds.apiSecret}`,
   );
 
   const formData = new FormData();

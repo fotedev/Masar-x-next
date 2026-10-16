@@ -4,6 +4,10 @@ node_modules/
 
 # Build outputs
 .next/
+# Next.js regenerates this on every dev/build (flips between .next/types and
+# .next/dev/types routes), causing perpetual working-tree churn if tracked.
+# It stays on disk in every clone — only its tracking is removed.
+apps/web/next-env.d.ts
 dist/
 build/
 out/
@@ -291,3 +295,7 @@ promo_assets/story.md
 
 # Freebuff tool marker (per-project UUID the tool writes into the repo root)
 .freebuff/
+
+# Deno regenerates this on every check/test run; the repo deliberately does
+# not track it (revert #122) — ignore it to avoid working-tree churn.
+supabase/functions/deno.lock

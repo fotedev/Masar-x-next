@@ -5,7 +5,7 @@
  * (request-password-reset, reset-password, delete-avatar, delete-file).
  */
 
-export const toHex = (buffer: ArrayBuffer): string =>
+const toHex = (buffer: ArrayBuffer): string =>
   Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");

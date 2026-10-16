@@ -1,8 +1,9 @@
 // @ts-nocheck: Deno runtime types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-import { nanoid } from "https://esm.sh/nanoid@3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { nanoid } from "https://esm.sh/nanoid@3.3.20";
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { methodGuard } from '../_shared/http.ts';
 import { sha256Hex } from '../_shared/crypto.ts';
 import { getClientIp } from '../_shared/net.ts';
 
@@ -140,16 +141,8 @@ async function sendPasswordResetEmail(email: string, resetToken: string) {
 // Edge Function
 // =====================
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: buildCorsHeaders(req) });
-  }
-
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
-    });
-  }
+  const guard = methodGuard(req);
+  if (guard) return guard;
 
     try {
       const { email } = await req.json();
