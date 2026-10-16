@@ -370,6 +370,30 @@ export async function startMainProcess(): Promise<number> {
     return url;
   });
 
+  // Spec 014 (R032) — system-browser bridge for the OAuth consent window.
+  // The renderer hands us the Supabase authorize URL; we validate the
+  // scheme (R17-lite) and open it outside the shell. async so a guard
+  // rejection surfaces as an IPC rejection, like real handler errors.
+  ipcMain.handle('app:openExternal', async (_event, url: string) => {
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+      throw new Error('app:openExternal only accepts http(s) URLs');
+    }
+    return shell.openExternal(url);
+  });
+
+  // Spec 014 (R032) — deep-link readiness handshake. The renderer calls
+  // this once its `auth.onDeepLink` subscription is in place; the return
+  // value carries (and clears) any deep link that arrived before that —
+  // closing the cold-start race where the OS delivers the OAuth callback
+  // before the renderer could possibly listen. Subsequent links are
+  // pushed on `auth:deepLink`.
+  ipcMain.handle('auth:rendererReady', () => {
+    deepLinkRendererReady = true;
+    const url = pendingDeepLinkUrl;
+    pendingDeepLinkUrl = null;
+    return url;
+  });
+
   // T040–T042 (spec 005 US3): window-control IPC surface exposed to the
   // renderer through `masarxDesktop.window` (see apps/desktop/src/main/preload.ts).
   // Every handler is a thin wrapper around BrowserWindow + a single state
