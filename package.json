@@ -20,7 +20,7 @@
     "seed:launch": "node scripts/seed-mvp-launch.mjs"
   },
   "devDependencies": {
-    "fallow": "3.31.0"
+    "fallow": "3.32.0"
   },
   "dependencies": {
     "pg": "^8.18.0"
