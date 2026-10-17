@@ -2,43 +2,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2'
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { methodGuard } from '../_shared/http.ts';
+import { getClientIp } from '../_shared/net.ts';
 import { verifyCloudinaryWebhookSignature } from './signature.ts';
 
 type AdminRow = {
   user_id: string;
 };
 
-function getClientIp(req: Request): string {
-  // Priority: platform/CDN-injected headers (not client-controllable) BEFORE
-  // x-forwarded-for, whose entries can be client-supplied.
-  // 1) Cloudflare (fronts Supabase): overwrites CF-Connecting-IP with the
-  //    real peer IP, so a spoofed value is replaced at the edge.
-  const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp) return cfIp.trim();
-  // 2) Supabase gateway trusted forwarded IP (when enabled platform-side).
-  const sbIp = req.headers.get('sb-forwarded-for');
-  if (sbIp) return sbIp.split(',')[0].trim();
-  // 3) x-forwarded-for — first entry of the proxy chain (last resort).
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  // 4) nginx-style fallback.
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp) return realIp.trim();
-  return 'unknown';
-}
-
 serve(async (req: Request) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: buildCorsHeaders(req) })
-  }
-
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json', 'Allow': 'POST, OPTIONS' } }
-    )
-  }
+  const guard = methodGuard(req, { Allow: 'POST, OPTIONS' });
+  if (guard) return guard;
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''

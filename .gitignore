@@ -295,3 +295,7 @@ promo_assets/story.md
 
 # Freebuff tool marker (per-project UUID the tool writes into the repo root)
 .freebuff/
+
+# Deno regenerates this on every check/test run; the repo deliberately does
+# not track it (revert #122) — ignore it to avoid working-tree churn.
+supabase/functions/deno.lock
