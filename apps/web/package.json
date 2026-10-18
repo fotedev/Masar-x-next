@@ -77,7 +77,7 @@
     "@vitest/coverage-v8": "2.1.8",
     "dotenv": "^18.0.8",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^9.39.4",
+    "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "imagetracerjs": "^1.2.6",
     "jsdom": "^30.1.1",
