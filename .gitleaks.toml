@@ -138,9 +138,17 @@ paths = [
   # Verified locally 2026-09-19: slash-free key fixture fires,
   # slash-containing fixture doesn't; with these paths allowlisted,
   # any key shape passes and real secrets elsewhere still fire.
-  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
-  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
-  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]server-reference-manifest\.json)$''',
+  # 2026-10-18: Next.js 16.4.1 (PR #132's minor bump) newly emits
+  # `server/preview-props.json` in the production build (+ the
+  # standalone copy) — the same auto-generated Preview Mode keys as
+  # the manifests below, regenerated every build and shipped inside
+  # the deployed output, so it has the same zero secrecy value.
+  # `gitleaks-artifacts` failed on it (4 findings, generic-api-key,
+  # entropy ~3.8) because it was missing from these alternations.
+  # Added to the dev alternation too, matching the established set.
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]preview-props\.json|server[/\\]server-reference-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]standalone[/\\]apps[/\\]web[/\\]\.next[/\\](?:prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]preview-props\.json|server[/\\]server-reference-manifest\.json)$''',
+  '''(?:^|[/\\])apps[/\\]web[/\\]\.next[/\\]dev[/\\](?:cache[/\\]\.previewinfo|cache[/\\]\.rscinfo|dev-cache\.json|prerender-manifest\.json|server[/\\]middleware-manifest\.json|server[/\\]preview-props\.json|server[/\\]server-reference-manifest\.json)$''',
 
   # 2026-09-29 Turbopack build-cache false positive (PRs #63/#64):
   # `gitleaks-artifacts` failed with `facebook-page-access-token`
