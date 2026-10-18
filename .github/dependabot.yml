@@ -102,12 +102,17 @@ updates:
         versions: [">= 7"]
       - dependency-name: "@react-navigation/native-stack"
         versions: [">= 7"]
-      # react >= 19.3 is held (PR #123): apps/mobile pins react 18.2.0 via
-      # the Expo SDK 51 / RN 0.74.5 holds above, and apps/web's react is
-      # paired with the react-dom hold at exactly 19.2.4 — react moves in
-      # that dedicated React upgrade, never solo. 19.2.x patches still flow.
+      # react above 19.2.4 is held (PRs #123/#138): apps/mobile pins react
+      # 18.2.0 via the Expo SDK 51 / RN 0.74.5 holds above, and apps/web's
+      # react is paired with the react-dom hold at exactly 19.2.4 — react
+      # moves in that dedicated React upgrade, never solo. The original
+      # >= 19.3 predicate let react 19.2.9 slip through (PR #138) on BOTH
+      # sides: web would break the pinned react/react-dom pair (the PR #68
+      # mismatch class that broke 34 vitest suites) and mobile 19.x breaks
+      # the RN 0.74.5 peer range — so the predicate mirrors the react-dom
+      # hold exactly.
       - dependency-name: react
-        versions: [">= 19.3"]
+        versions: ["> 19.2.4"]
       # @vitest/coverage-v8 >= 3 is held (PR #109): the coverage plugin must
       # move in lockstep with the vitest core major (both at 2.1.8), else
       # coverage runs break silently — CI never runs --coverage, so the
@@ -115,6 +120,37 @@ updates:
       # dedicated vitest upgrade, not autodrift.
       - dependency-name: "@vitest/coverage-v8"
         versions: [">= 3"]
+      # --- Holds wave 2, 2026-10-18 (same owner-approved cleanup: majors
+      # dependabot re-proposed after #132/#111/#126/#142 landed; PRs
+      # #136/#137/#138/#139/#140/#141/#143) — each entry reversible, delete
+      # it and dependabot re-proposes on the next weekly run ---
+      # react-navigation v7 trio completion: bottom-tabs 7 (PR #137) pairs
+      # with the held native/native-stack 7 — all three merge together in
+      # the same device-smoke-gated upgrade.
+      - dependency-name: "@react-navigation/bottom-tabs"
+        versions: [">= 7"]
+      # react-native-screens >= 4 is held (PR #136): navigation v7 requires
+      # screens 4, so it belongs to the same navigation upgrade as the
+      # holds above, not autodrift.
+      - dependency-name: react-native-screens
+        versions: [">= 4"]
+      # react-native-safe-area-context >= 5 is held (PR #140): mobile
+      # major coupled to the same navigation/SDK upgrade window.
+      - dependency-name: react-native-safe-area-context
+        versions: [">= 5"]
+      # @sentry/react-native >= 7 is held (PR #143): 6→8 skips a major and
+      # the mobile Sentry SDK needs its own verified upgrade pass (spec 023
+      # territory), not autodrift.
+      - dependency-name: "@sentry/react-native"
+        versions: [">= 7"]
+      # vite-plugin-pwa >= 2 is held (PR #139): web dev major with a changed
+      # config surface — deliberate migration pass, post-MVP.
+      - dependency-name: vite-plugin-pwa
+        versions: [">= 2"]
+      # eslint >= 10 is held (PR #141): dev major; flat-config and plugin
+      # ecosystem compatibility needs a dedicated pass, not autodrift.
+      - dependency-name: eslint
+        versions: [">= 10"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
