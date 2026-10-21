@@ -67,13 +67,13 @@ function calculateMicroTrends(
     }
 
     // 2. click -> clicks
-    if (action === "click" || action === "summary_click") {
+    if (action === "click" || action === "summary_click" || action === "link_click") {
       if (isCurrent) currentClicks++;
       else previousClicks++;
     }
 
-    // 3. ai_interaction -> assistantMessages
-    if (action === "ai_interaction") {
+    // 3. ai_question_asked / ai_interaction -> assistantMessages
+    if (action === "ai_question_asked" || action === "ai_interaction") {
       if (isCurrent) currentMessages++;
       else previousMessages++;
     }
@@ -125,7 +125,6 @@ export const AdminAnalyticsPage = () => {
   // always rendered; en-US switches Latin digits for English admins.
   const intlLocale = locale === "ar" ? "ar-EG" : "en-US";
   const { isAdmin } = useAuth();
-  const isAdminLoading = false;
   const [analytics, setAnalytics] = useState<AdminAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +163,10 @@ export const AdminAnalyticsPage = () => {
         return t("action.content_view");
       case "summary_click":
         return t("action.summary_click");
+      case "link_click":
+        return t("action.link_click");
+      case "summary_view":
+        return t("action.summary_view");
       default:
         return action || t("action.fallback");
     }
@@ -195,8 +198,8 @@ export const AdminAnalyticsPage = () => {
   const actionBadgeClass = (action: string) => {
     const a = (action || "").toLowerCase();
     if (a === "page_view") return "bg-ax-info-soft text-ax-info";
-    if (a === "click") return "bg-ax-warning-soft text-ax-warning";
-    if (a === "ai_interaction") return "bg-ax-accent-soft text-ax-accent";
+    if (a === "click" || a === "link_click") return "bg-ax-warning-soft text-ax-warning";
+    if (a === "ai_interaction" || a === "ai_question_asked") return "bg-ax-accent-soft text-ax-accent";
     if (a === "user_login") return "bg-ax-success-soft text-ax-success";
     if (a === "user_logout") return "bg-ax-danger-soft text-ax-danger";
     return "bg-ax-surface-inset text-ax-secondary";
@@ -206,7 +209,7 @@ export const AdminAnalyticsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      if (!isAdminLoading && !isAdmin) {
+      if (!isAdmin) {
         setError(t("errors.unauthorized"));
         return;
       }
@@ -221,21 +224,20 @@ export const AdminAnalyticsPage = () => {
           recentActivity: summary.data.recentActivity || [],
         });
       } else {
-        setAnalytics({
-          totalUsers: 0,
-          totalMessages: 0,
-          totalViews: 0,
-          totalClicks: 0,
-          topContentTypes: [],
-          recentActivity: [],
-        });
+        // Surface the typed helper error instead of rendering a confident
+        // zeroed dashboard — an RPC failure must look like a failure.
+        setError(
+          summary.error === "unauthorized"
+            ? t("errors.unauthorized")
+            : t("errors.loadFailed"),
+        );
       }
     } catch {
       setError(t("errors.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, isAdminLoading, t]);
+  }, [isAdmin, t]);
 
   useEffect(() => {
     loadAnalytics();
