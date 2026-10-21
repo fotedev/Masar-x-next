@@ -11,6 +11,11 @@
 --      the client matched English literals ('click', 'ai_interaction', …) —
 --      every trend badge and most action labels were dead code. Return RAW
 --      action_type; display translation belongs to the client's i18n.
+--   4. Views counted action_type='content_view', an event the client has
+--      NEVER written once (prod analytics: 0 content_view rows ever; the
+--      real writer emits 'page_view' — 1,700+ rows). Count both so the
+--      Views card reflects actual usage; the client's views trend already
+--      treats page_view as a view.
 --   3. recent_activity omitted user_id (needed by the client's active-users
 --      trend) and its LIMIT 20 starved the 7d-vs-prior-7d trend windows.
 --      Include user_id, raise the window to 100.
@@ -56,7 +61,7 @@ BEGIN
     SELECT count(*)
     INTO total_views_count
     FROM public.analytics
-    WHERE action_type = 'content_view';
+    WHERE action_type IN ('content_view', 'page_view');
 
     SELECT count(*)
     INTO total_clicks_count
@@ -75,7 +80,7 @@ BEGIN
             content_type,
             count(*) AS view_count
         FROM public.analytics
-        WHERE action_type = 'content_view'
+        WHERE action_type IN ('content_view', 'page_view')
         GROUP BY content_type
         ORDER BY view_count DESC
         LIMIT 10
