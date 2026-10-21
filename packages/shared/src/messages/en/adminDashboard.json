@@ -64,6 +64,8 @@
       "user_logout": "Logout",
       "content_view": "Content View",
       "summary_click": "Summary Click",
+      "link_click": "Link Click",
+      "summary_view": "Summary View",
       "fallback": "Event"
     },
     "contentType": {

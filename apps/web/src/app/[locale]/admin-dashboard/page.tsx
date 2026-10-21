@@ -64,7 +64,6 @@ function AdminDashboard() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isAdmin, loading: authLoading } = useAuth();
-  const isAdminLoading = false; // AuthContext handles admin state within the main loading state
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -72,7 +71,7 @@ function AdminDashboard() {
   }, []);
 
   // Auth guard: redirect non-admin users
-  const isAuthChecking = authLoading || isAdminLoading;
+  const isAuthChecking = authLoading;
 
   useEffect(() => {
     if (isMounted && !isAuthChecking && (!user || !isAdmin)) {
@@ -166,12 +165,14 @@ function AdminDashboardContent() {
       summariesHook.loading ||
       newsHook.loading ||
       appealsHook.loading ||
-      quizzesHook.loading,
+      quizzesHook.loading ||
+      subjectsHook.loading,
     [
       summariesHook.loading,
       newsHook.loading,
       appealsHook.loading,
       quizzesHook.loading,
+      subjectsHook.loading,
     ],
   );
 
@@ -238,7 +239,11 @@ function AdminDashboardContent() {
               subjects={subjectsHook.subjects}
               news={newsHook.news}
               quizzes={quizzesHook.quizzes}
-              appealsCount={appealsHook.appeals.length}
+              appealsCount={
+                appealsHook.pendingCount ??
+                appealsHook.appeals.filter((a) => a.status === "pending")
+                  .length
+              }
               onNavigate={(tab) => setActiveTab(tab)}
               onAddNew={() => newsHook.setShowAddNews(true)}
               onAddSubject={handleCreateSubject}
