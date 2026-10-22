@@ -67,7 +67,7 @@ class AnalyticsService {
             }
 
             try {
-                await supabase.from('analytics').insert({
+                const { error } = await supabase.from('analytics').insert({
                     user_id: user.id,
                     action_type: actionType,
                     content_type: contentType,
@@ -78,8 +78,15 @@ class AnalyticsService {
                         session_id: getSessionId()
                     },
                 });
-            } catch {
-                // ignore
+                // supabase-js RESOLVES (never throws) on RLS/permission
+                // rejections — an unread error makes a failed insert look
+                // exactly like "no user activity" (verified 2026-10-21 while
+                // diagnosing the false Oct-8 outage). Surface it at minimum.
+                if (error) {
+                    console.error('[analytics] insert failed:', actionType, error.message);
+                }
+            } catch (e) {
+                console.error('[analytics] trackEvent threw:', e);
             }
         } catch {
             // ignore
@@ -99,20 +106,19 @@ class AnalyticsService {
      */
     async log(log: SystemLog) {
         try {
-            try {
-                await supabase.from('system_logs').insert({
-                    level: log.level,
-                    message: log.message,
-                    status_code: log.statusCode,
-                    request_id: log.requestId,
-                    endpoint: log.endpoint,
-                    metadata: log.metadata,
-                });
-            } catch {
-                // ignore
+            const { error } = await supabase.from('system_logs').insert({
+                level: log.level,
+                message: log.message,
+                status_code: log.statusCode,
+                request_id: log.requestId,
+                endpoint: log.endpoint,
+                metadata: log.metadata,
+            });
+            if (error) {
+                console.error('[analytics] system_logs insert failed:', log.level, error.message);
             }
         } catch {
-            // ignore
+            // ignore — system log writes must never throw into callers
         }
     }
 
