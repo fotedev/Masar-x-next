@@ -4,7 +4,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
   Download,
   Monitor,
-  Apple,
   Smartphone,
   Check,
   Clock,
@@ -111,7 +110,7 @@ export default async function DownloadsPage({ params }: Props) {
             </div>
           </div>
         ) : release ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <WindowsCard
               installerUrl={release.windowsInstaller}
               portableUrl={release.windowsPortable}
@@ -125,12 +124,6 @@ export default async function DownloadsPage({ params }: Props) {
               installerHint={t("platforms.windows.installerHint")}
               portableLabel={t("platforms.windows.portableLabel")}
               portableHint={t("platforms.windows.portableHint")}
-            />
-            <ComingSoonCard
-              icon={<Apple className="w-7 h-7" />}
-              name={t("platforms.macos.name")}
-              status={t("platforms.macos.status")}
-              source="macos"
             />
             <ComingSoonCard
               icon={<Smartphone className="w-7 h-7" />}
@@ -277,7 +270,7 @@ function ComingSoonCard({
   icon: React.ReactNode;
   name: string;
   status: string;
-  source: "macos" | "android";
+  source: "android";
 }) {
   return (
     <div className="modern-card p-6 flex flex-col gap-4 opacity-80 hover:opacity-100 transition-opacity">

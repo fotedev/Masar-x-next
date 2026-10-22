@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Download Masar X — Windows, macOS, Android",
+    "title": "Download Masar X — Windows & Android",
     "description": "Download the Masar X desktop app for Windows. Works offline. Auto-updates. Syncs with your account."
   },
   "hero": {
@@ -20,10 +20,6 @@
       "installerHint": "Requires installation — recommended for most users",
       "portableLabel": "Portable edition",
       "portableHint": "No install needed — run from any folder"
-    },
-    "macos": {
-      "name": "macOS",
-      "status": "Coming soon"
     },
     "android": {
       "name": "Android",
