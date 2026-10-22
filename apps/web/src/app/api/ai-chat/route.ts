@@ -6,6 +6,7 @@ import {
   tooManyRequestsResponse,
 } from '@/lib/api-auth';
 import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
+import { recordAiQuestion } from '@/lib/metrics';
 import { logger } from '@/lib/logger';
 
 /**
@@ -86,6 +87,9 @@ export async function POST(req: NextRequest) {
       );
     }
     await recordAIChatRequest(user.id);
+
+    // Lean metrics: accepted AI request (Redis counter, best-effort)
+    recordAiQuestion(user.id);
 
     // 4. Env-var check (fail fast on misconfiguration)
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
