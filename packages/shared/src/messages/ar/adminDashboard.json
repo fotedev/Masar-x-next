@@ -49,11 +49,12 @@
     "cards": {
       "activeUsers": "المستخدمون النشطون",
       "assistantMessages": "رسائل المساعد",
-      "views": "المشاهدات",
-      "clicks": "النقرات"
+      "views": "التحميلات",
+      "clicks": "أسئلة الذكاء الاصطناعي"
     },
-    "topContent": "أكثر المحتويات شعبية",
+    "topContent": "أكثر الملفات تحميلاً",
     "noData": "لا توجد بيانات متاحة",
+    "redisNotice": "لم يتم ضبط تخزين الإحصائيات (Upstash Redis) بعد — العدادات متوقفة وستبدأ فور تعيين UPSTASH_REDIS_REST_URL/TOKEN.",
     "recentActivity": "النشاط الأخير",
     "noRecentActivity": "لا توجد نشاطات حديثة",
     "action": {
@@ -66,6 +67,8 @@
       "summary_click": "نقر على ملخص",
       "link_click": "نقر على رابط",
       "summary_view": "عرض ملخص",
+      "file_download": "تحميل ملف",
+      "ai_question": "سؤال للذكاء الاصطناعي",
       "fallback": "حدث"
     },
     "contentType": {
@@ -73,6 +76,7 @@
       "course": "مقرر",
       "quiz": "اختبار",
       "page": "صفحة",
+      "file": "ملف",
       "login": "تسجيل دخول",
       "logout": "تسجيل خروج",
       "unknown": "غير معروف",

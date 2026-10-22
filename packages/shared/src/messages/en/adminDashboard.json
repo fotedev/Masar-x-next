@@ -49,11 +49,12 @@
     "cards": {
       "activeUsers": "Active Users",
       "assistantMessages": "Assistant Messages",
-      "views": "Views",
-      "clicks": "Clicks"
+      "views": "Downloads",
+      "clicks": "AI Questions"
     },
-    "topContent": "Most Popular Content",
+    "topContent": "Top Downloaded Files",
     "noData": "No data available",
+    "redisNotice": "Metrics storage (Upstash Redis) is not configured yet — counters are paused and will start as soon as UPSTASH_REDIS_REST_URL/TOKEN are set.",
     "recentActivity": "Recent Activity",
     "noRecentActivity": "No recent activity",
     "action": {
@@ -66,6 +67,8 @@
       "summary_click": "Summary Click",
       "link_click": "Link Click",
       "summary_view": "Summary View",
+      "file_download": "File Download",
+      "ai_question": "AI Question",
       "fallback": "Event"
     },
     "contentType": {
@@ -73,6 +76,7 @@
       "course": "Course",
       "quiz": "Quiz",
       "page": "Page",
+      "file": "File",
       "login": "Login",
       "logout": "Logout",
       "unknown": "Unknown",
