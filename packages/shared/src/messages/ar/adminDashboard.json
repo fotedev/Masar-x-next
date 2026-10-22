@@ -64,6 +64,8 @@
       "user_logout": "تسجيل خروج",
       "content_view": "عرض محتوى",
       "summary_click": "نقر على ملخص",
+      "link_click": "نقر على رابط",
+      "summary_view": "عرض ملخص",
       "fallback": "حدث"
     },
     "contentType": {

@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { QuizWithRatings } from "../types/database";
 import { queryCache, cacheTTL } from "../lib/queryCache";
@@ -7,6 +9,7 @@ import { queryCache, cacheTTL } from "../lib/queryCache";
 let inflightRequest: Promise<QuizWithRatings[]> | null = null;
 
 export function useQuizzes() {
+    const t = useTranslations("quizzes");
     const [quizzes, setQuizzes] = useState<QuizWithRatings[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -51,7 +54,7 @@ export function useQuizzes() {
             // Cache the result
             queryCache.set(cacheKey, quizData, cacheTTL.summaries); // Reuse summaries TTL
         } catch {
-            // ignore
+            toast.error(t("failed"));
         } finally {
             inflightRequest = null;
             setLoading(false);
@@ -75,7 +78,7 @@ export function useQuizzes() {
             // Invalidate cache
             queryCache.delete("admin_quizzes_v2");
         } catch {
-            // ignore
+            toast.error(t("deleteFeedback.error"));
         }
     };
 
@@ -94,7 +97,7 @@ export function useQuizzes() {
             // Refetch quizzes to get fresh data from database
             await fetchQuizzes(true);
         } catch {
-            // ignore
+            toast.error(t("saveFeedback.error"));
         }
     };
 

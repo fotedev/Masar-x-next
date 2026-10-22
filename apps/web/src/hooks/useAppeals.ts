@@ -29,6 +29,22 @@ export function useAppeals() {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
+  // Exact pending count for the overview KPI: the list query is capped at 30
+  // and includes accepted/rejected rows, so its length can't answer "pending".
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["appeals", "pending-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("appeals")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
   const addAppealMutation = useMutation({
     mutationFn: async (appealData: Partial<Appeal>) => {
       const { error } = await supabase.from("appeals").insert(appealData);
@@ -132,6 +148,7 @@ export function useAppeals() {
 
   return {
     appeals,
+    pendingCount,
     loading,
     fetchAppeals: () => fetchAppeals(),
     addAppeal: (data: Partial<Appeal>) => addAppealMutation.mutateAsync(data),

@@ -52,5 +52,9 @@ describe("analyticsHelpers.getAdminAnalyticsSummary", () => {
       data: payload,
       error: null,
     });
+
+    // Guard the RPC contract: a rename/drop in the DB would otherwise be
+    // invisible to this suite (the stub accepts any call shape).
+    expect(rpcMock).toHaveBeenCalledWith("get_admin_analytics_summary");
   });
 });
