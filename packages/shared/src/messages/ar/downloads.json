@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "حمّل Masar X — ويندوز، ماك، أندرويد",
+    "title": "حمّل Masar X — ويندوز وأندرويد",
     "description": "حمّل تطبيق Masar X للويندوز واستخدمه بدون إنترنت. تحديثات تلقائية ومزامنة مع حسابك."
   },
   "hero": {
@@ -20,10 +20,6 @@
       "installerHint": "يتطلب التثبيت — موصى به لمعظم المستخدمين",
       "portableLabel": "نسخة محمولة (Portable)",
       "portableHint": "بدون تثبيت — شغّله من أي مجلد"
-    },
-    "macos": {
-      "name": "macOS",
-      "status": "قريباً"
     },
     "android": {
       "name": "Android",
