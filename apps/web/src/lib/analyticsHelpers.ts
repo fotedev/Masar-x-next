@@ -38,15 +38,21 @@ export const analyticsHelpers = {
         metadata?: Json;
     }) {
         try {
-            await supabase.from('analytics').insert({
+            const { error } = await supabase.from('analytics').insert({
                 user_id: params.userId,
                 action_type: params.actionType,
                 content_type: params.contentType,
                 content_id: params.contentId,
                 metadata: params.metadata || {},
             });
+            // supabase-js resolves (never throws) on rejections — without
+            // reading the error, a failed write is indistinguishable from
+            // no user activity (see the 2026-10-21 false-outage diagnosis).
+            if (error) {
+                console.error('[analytics] recordAnalytics insert failed:', params.actionType, error.message);
+            }
         } catch {
-            // ignore
+            // ignore — tracking must never break the auth flow that calls it
         }
     },
 
