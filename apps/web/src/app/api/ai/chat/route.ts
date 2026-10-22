@@ -7,6 +7,7 @@ import {
   tooManyRequestsResponse,
 } from '@/lib/api-auth';
 import { checkAIChatRateLimit, recordAIChatRequest } from '@/lib/rate-limit';
+import { recordAiQuestion } from '@/lib/metrics';
 import { logger } from '@/lib/logger';
 
 /**
@@ -91,6 +92,9 @@ export async function POST(request: NextRequest) {
 
     // Record this request for rate limiting
     recordAIChatRequest(user.id);
+
+    // Lean metrics: accepted AI request (Redis counter, best-effort)
+    recordAiQuestion(user.id);
 
     // Stream a real LLM response via the Vercel AI Gateway.
     // The AI SDK reads AI_GATEWAY_API_KEY automatically and resolves

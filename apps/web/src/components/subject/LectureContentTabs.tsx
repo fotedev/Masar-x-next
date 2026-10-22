@@ -1,6 +1,7 @@
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { formatDate } from "masarx-shared/format";
+import { trackFileDownload } from "@/lib/metrics-client";
 import type { ContentItem } from "@/hooks/useLectureContent";
 
 type TranslationValues = Record<string, string | number | Date>;
@@ -136,6 +137,7 @@ export function FilesList({ files, onDelete, t }: FilesListProps) {
               href={f.file_url}
               target="_blank"
               rel="noreferrer"
+              onClick={() => trackFileDownload({ id: f.id, title: f.title, fileUrl: f.file_url })}
               className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 rounded-lg transition-all"
               title={t("lectureForm.viewContent")}
             >

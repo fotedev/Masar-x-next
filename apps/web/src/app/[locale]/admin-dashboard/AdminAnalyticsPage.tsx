@@ -12,91 +12,68 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { analyticsHelpers } from "@/lib/analyticsHelpers";
-import type { AdminAnalyticsSummary } from "@/lib/analyticsHelpers";
 import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/admin-shell/StatCard";
 import { PageHeader } from "@/components/admin-shell/PageHeader";
 
+/**
+ * Lean-metrics payload from GET /api/admin/metrics (Redis counters +
+ * Postgres assistant-message counts). "Views" means file downloads and
+ * "Clicks" means AI questions — the card labels in the dashboard i18n
+ * were relabeled to match; the keys keep their historical names.
+ */
+interface AdminMetricsPayload {
+  totalUsers: number;
+  totalMessages: number;
+  totalViews: number;
+  totalClicks: number;
+  topContentTypes: Array<{ type: string; count: number }>;
+  recentActivity: Array<{
+    action: string;
+    content_type: string;
+    created_at: string;
+  }>;
+  dailyCounts: Array<{
+    date: string;
+    downloads: number;
+    aiQuestions: number;
+    activeUsers: number;
+    assistantMessages: number;
+  }>;
+  redisConfigured: boolean;
+}
 
 interface MicroTrend {
   direction: "up" | "down" | "flat";
   pct: number;
 }
 
+/**
+ * Honest 7d-vs-prior-7d trends from the server's daily buckets — no more
+ * math on capped activity rows. `activeUsers` per day is a per-day HLL
+ * count, so window sums can double-count users active on multiple days;
+ * acceptable for a directional badge.
+ */
 function calculateMicroTrends(
-  recentActivity: Array<{
-    action: string;
-    content_type: string;
-    created_at: string;
-    user_id?: string;
-  }> = [],
+  days: AdminMetricsPayload["dailyCounts"] = [],
 ): Record<"views" | "clicks" | "assistantMessages" | "activeUsers", MicroTrend | null> {
-  const now = Date.now();
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+  const current = days.slice(-7);
+  const previous = days.slice(-14, -7);
 
-  const currentWindowUsers = new Set<string>();
-  const previousWindowUsers = new Set<string>();
-
-  let currentViews = 0;
-  let previousViews = 0;
-
-  let currentClicks = 0;
-  let previousClicks = 0;
-
-  let currentMessages = 0;
-  let previousMessages = 0;
-
-  for (const item of recentActivity) {
-    if (!item.created_at) continue;
-    const time = new Date(item.created_at).getTime();
-    if (Number.isNaN(time)) continue;
-
-    const isCurrent = time >= now - sevenDaysMs && time <= now;
-    const isPrevious =
-      time >= now - fourteenDaysMs && time < now - sevenDaysMs;
-    if (!isCurrent && !isPrevious) continue;
-
-    const action = (item.action || "").toLowerCase();
-
-    // 1. page_view -> views
-    if (action === "page_view" || action === "content_view") {
-      if (isCurrent) currentViews++;
-      else previousViews++;
-    }
-
-    // 2. click -> clicks
-    if (action === "click" || action === "summary_click" || action === "link_click") {
-      if (isCurrent) currentClicks++;
-      else previousClicks++;
-    }
-
-    // 3. ai_question_asked / ai_interaction -> assistantMessages
-    if (action === "ai_question_asked" || action === "ai_interaction") {
-      if (isCurrent) currentMessages++;
-      else previousMessages++;
-    }
-
-    // 4. distinct user ids -> activeUsers
-    const userId =
-      item.user_id ||
-      (action === "user_login" ? item.content_type : undefined);
-    if (userId) {
-      if (isCurrent) currentWindowUsers.add(userId);
-      else previousWindowUsers.add(userId);
-    }
-  }
+  const sum = (
+    window: AdminMetricsPayload["dailyCounts"],
+    pick: (day: AdminMetricsPayload["dailyCounts"][number]) => number,
+  ): number => window.reduce((acc, day) => acc + pick(day), 0);
 
   const computeDelta = (
-    current: number,
-    previous: number,
+    currentTotal: number,
+    previousTotal: number,
   ): MicroTrend | null => {
     // If either window has zero events for a metric: render NO trend badge (neutral).
-    if (current === 0 || previous === 0) return null;
-    const diff = current - previous;
+    if (currentTotal === 0 || previousTotal === 0) return null;
+    const diff = currentTotal - previousTotal;
     if (diff === 0) return { direction: "flat", pct: 0 };
-    const pct = Math.round(Math.abs(diff / previous) * 100);
+    const pct = Math.round(Math.abs(diff / previousTotal) * 100);
     return {
       direction: diff > 0 ? "up" : "down",
       pct,
@@ -104,12 +81,18 @@ function calculateMicroTrends(
   };
 
   return {
-    views: computeDelta(currentViews, previousViews),
-    clicks: computeDelta(currentClicks, previousClicks),
-    assistantMessages: computeDelta(currentMessages, previousMessages),
+    views: computeDelta(sum(current, (d) => d.downloads), sum(previous, (d) => d.downloads)),
+    clicks: computeDelta(
+      sum(current, (d) => d.aiQuestions),
+      sum(previous, (d) => d.aiQuestions),
+    ),
+    assistantMessages: computeDelta(
+      sum(current, (d) => d.assistantMessages),
+      sum(previous, (d) => d.assistantMessages),
+    ),
     activeUsers: computeDelta(
-      currentWindowUsers.size,
-      previousWindowUsers.size,
+      sum(current, (d) => d.activeUsers),
+      sum(previous, (d) => d.activeUsers),
     ),
   };
 }
@@ -125,7 +108,7 @@ export const AdminAnalyticsPage = () => {
   // always rendered; en-US switches Latin digits for English admins.
   const intlLocale = locale === "ar" ? "ar-EG" : "en-US";
   const { isAdmin } = useAuth();
-  const [analytics, setAnalytics] = useState<AdminAnalyticsSummary | null>(null);
+  const [analytics, setAnalytics] = useState<AdminMetricsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -167,6 +150,10 @@ export const AdminAnalyticsPage = () => {
         return t("action.link_click");
       case "summary_view":
         return t("action.summary_view");
+      case "file_download":
+        return t("action.file_download");
+      case "ai_question":
+        return t("action.ai_question");
       default:
         return action || t("action.fallback");
     }
@@ -184,6 +171,8 @@ export const AdminAnalyticsPage = () => {
         return t("contentType.quiz");
       case "page":
         return t("contentType.page");
+      case "file":
+        return t("contentType.file");
       case "login":
         return t("contentType.login");
       case "logout":
@@ -199,7 +188,8 @@ export const AdminAnalyticsPage = () => {
     const a = (action || "").toLowerCase();
     if (a === "page_view") return "bg-ax-info-soft text-ax-info";
     if (a === "click" || a === "link_click") return "bg-ax-warning-soft text-ax-warning";
-    if (a === "ai_interaction" || a === "ai_question_asked") return "bg-ax-accent-soft text-ax-accent";
+    if (a === "ai_interaction" || a === "ai_question_asked" || a === "ai_question") return "bg-ax-accent-soft text-ax-accent";
+    if (a === "file_download" || a === "summary_click" || a === "link_click") return "bg-ax-warning-soft text-ax-warning";
     if (a === "user_login") return "bg-ax-success-soft text-ax-success";
     if (a === "user_logout") return "bg-ax-danger-soft text-ax-danger";
     return "bg-ax-surface-inset text-ax-secondary";
@@ -213,25 +203,26 @@ export const AdminAnalyticsPage = () => {
         setError(t("errors.unauthorized"));
         return;
       }
-      const summary = await analyticsHelpers.getAdminAnalyticsSummary();
-      if (summary.data) {
-        setAnalytics({
-          totalUsers: summary.data.totalUsers || 0,
-          totalMessages: summary.data.totalMessages || 0,
-          totalViews: summary.data.totalViews || 0,
-          totalClicks: summary.data.totalClicks || 0,
-          topContentTypes: summary.data.topContentTypes || [],
-          recentActivity: summary.data.recentActivity || [],
-        });
-      } else {
-        // Surface the typed helper error instead of rendering a confident
-        // zeroed dashboard — an RPC failure must look like a failure.
-        setError(
-          summary.error === "unauthorized"
-            ? t("errors.unauthorized")
-            : t("errors.loadFailed"),
-        );
+      const res = await fetch("/api/admin/metrics", { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        setError(t("errors.unauthorized"));
+        return;
       }
+      if (!res.ok) {
+        setError(t("errors.loadFailed"));
+        return;
+      }
+      const payload = (await res.json()) as AdminMetricsPayload;
+      setAnalytics({
+        totalUsers: payload.totalUsers || 0,
+        totalMessages: payload.totalMessages || 0,
+        totalViews: payload.totalViews || 0,
+        totalClicks: payload.totalClicks || 0,
+        topContentTypes: payload.topContentTypes || [],
+        recentActivity: payload.recentActivity || [],
+        dailyCounts: payload.dailyCounts || [],
+        redisConfigured: Boolean(payload.redisConfigured),
+      });
     } catch {
       setError(t("errors.loadFailed"));
     } finally {
@@ -244,8 +235,8 @@ export const AdminAnalyticsPage = () => {
   }, [loadAnalytics]);
 
   const trends = useMemo(() => {
-    return calculateMicroTrends(analytics?.recentActivity);
-  }, [analytics?.recentActivity]);
+    return calculateMicroTrends(analytics?.dailyCounts);
+  }, [analytics?.dailyCounts]);
 
   const renderTrendBadge = (trend: MicroTrend | null) => {
     if (!trend) return null;
@@ -321,6 +312,12 @@ export const AdminAnalyticsPage = () => {
         description={t("subtitle")}
       />
 
+      {!analytics?.redisConfigured && (
+        <p className="rounded-lg border border-ax-edge bg-ax-surface-inset px-4 py-3 text-xs text-ax-muted">
+          {t("redisNotice")}
+        </p>
+      )}
+
       {/* Summary Cards: 2x2 grid on mobile (<lg), 4-col on lg+ */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
@@ -379,10 +376,7 @@ export const AdminAnalyticsPage = () => {
                       {formatNumber(index + 1)}
                     </span>
                     <div className="min-w-0 text-sm font-medium text-ax-primary">
-                      <span className="truncate">{getContentLabel(item.type)}</span>
-                      <span className="ms-1.5 text-xs text-ax-muted font-normal">
-                        ({item.type})
-                      </span>
+                      <span className="truncate">{item.type}</span>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full bg-ax-accent-soft px-3 py-0.5 text-xs font-semibold tabular-nums text-ax-accent">

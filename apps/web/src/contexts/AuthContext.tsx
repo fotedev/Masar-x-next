@@ -14,6 +14,7 @@ import { ProfileRow } from "@/lib/admin-db/schema";
 import { supabase } from "../lib/supabase";
 import { isDesktopRuntime, getDesktopBridge } from "../lib/desktop/runtime";
 import { analyticsHelpers } from "../lib/analyticsHelpers";
+import { pingActiveUser } from "../lib/metrics-client";
 import { logger } from "../lib/logger";
 import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
 import { useLocale } from "next-intl";
@@ -58,6 +59,14 @@ export function AuthProvider({
   const syncInProgress = useRef<boolean>(false);
   const lastSyncTime = useRef<number>(0);
   const SYNC_COOLDOWN = 10000; // 10 seconds cooldown between syncs
+
+  // Lean-metrics guards: auth-js delivers session-RECOVERY SIGNED_IN before
+  // the subscriber's INITIAL_SESSION, so a one-shot ref distinguishes a
+  // genuine sign-in (records user_login) from a restored session (does not).
+  // The active-user ping is one per app load; Redis PFADD is idempotent per
+  // day anyway.
+  const sawInitialSessionRef = useRef<boolean>(false);
+  const activePingSent = useRef<boolean>(false);
 
   const triggerSync = useCallback(async (userId: string, force: boolean = false) => {
     const now = Date.now();
@@ -116,7 +125,7 @@ export function AuthProvider({
         const {
           data: { session: initialSession },
         } = await supabase.auth.getSession();
-        
+
         if (!mounted) return;
 
         setSession(initialSession);
@@ -125,6 +134,10 @@ export function AuthProvider({
         // If we have an initial session on mount, trigger a sync to be safe
         if (initialSession?.user) {
           triggerSync(initialSession.user.id);
+          if (!activePingSent.current) {
+            activePingSent.current = true;
+            pingActiveUser();
+          }
         }
       } catch (e) {
         logger.error("Auth initialization failed:", e);
@@ -156,20 +169,34 @@ export function AuthProvider({
           setProfile(null);
         }
 
+        if (event === "INITIAL_SESSION") {
+          sawInitialSessionRef.current = true;
+        }
+
         if (event === "SIGNED_IN" && currentUser) {
           // Trigger profile sync after sign-in
           triggerSync(currentUser.id, true); // Force sync on explicit sign-in
 
-          analyticsHelpers
-            .recordAnalytics({
-              userId: currentUser.id,
-              actionType: "user_login",
-              contentType: "login",
-              metadata: {
-                provider: currentUser.app_metadata?.provider || "email",
-              },
-            })
-            .catch(() => {});
+          if (!activePingSent.current) {
+            activePingSent.current = true;
+            pingActiveUser();
+          }
+
+          // user_login means a GENUINE sign-in: recovery SIGNED_IN (page
+          // load with a live session) arrives before INITIAL_SESSION and is
+          // skipped, so page loads no longer fabricate logins.
+          if (sawInitialSessionRef.current) {
+            analyticsHelpers
+              .recordAnalytics({
+                userId: currentUser.id,
+                actionType: "user_login",
+                contentType: "login",
+                metadata: {
+                  provider: currentUser.app_metadata?.provider || "email",
+                },
+              })
+              .catch(() => {});
+          }
         }
       },
     );
