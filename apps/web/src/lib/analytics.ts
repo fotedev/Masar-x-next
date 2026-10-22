@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { getSessionId } from './session';
 
 export interface SystemLog {
     level: 'info' | 'warn' | 'error' | 'fatal';
@@ -18,90 +17,24 @@ type AnalyticsMetadata = Record<string, unknown> & {
 
 class AnalyticsService {
     /**
-     * Tracks a generic event (e.g., "summary_view", "summary_click").
-     * Uses user_id for admin analytics and does NOT track personal user info.
+     * Lean-analytics migration (owner directive, 2026-10-21): the Postgres
+     * `analytics` table no longer receives event rows — page views, clicks
+     * and the like were Free-Tier bloat and surveillance-style tracking.
+     * The meaningful signals (file downloads, AI usage, active users) now
+     * go through Redis counters via lib/metrics.ts and /api/metrics/event;
+     * genuine sign-ins still land a user_login row via analyticsHelpers.
+     *
+     * This method stays as a no-op because trackEvent is threaded through
+     * several component/hook signatures (useAiChat, quiz hooks, the desktop
+     * workspace); ripping the plumbing out is deferred cleanup.
      */
-    async trackEvent(eventName: string, metadata: AnalyticsMetadata = {}) {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return; // Don't track for non-authenticated users
-
-            const page = window.location.pathname;
-            let actionType = eventName;
-            let contentType = metadata.contentType || 'unknown';
-            const contentId = metadata.id || metadata.contentId;
-
-            // Map event names to analytics action types
-            switch (eventName) {
-                case 'summary_view':
-                    actionType = 'content_view';
-                    contentType = 'summary';
-                    break;
-                case 'summary_click':
-                    actionType = 'summary_click';
-                    contentType = 'summary';
-                    break;
-                case 'page_view':
-                    actionType = 'page_view';
-                    contentType = 'page';
-                    break;
-                case 'ai_interaction':
-                    actionType = 'ai_interaction';
-                    contentType = 'ai_assistant';
-                    break;
-                case 'click':
-                    actionType = 'click';
-                    contentType = metadata.contentType || 'unknown';
-                    break;
-                case 'user_login':
-                    actionType = 'user_login';
-                    contentType = 'login';
-                    break;
-                case 'user_logout':
-                    actionType = 'user_logout';
-                    contentType = 'logout';
-                    break;
-                default:
-                    actionType = eventName;
-                    break;
-            }
-
-            try {
-                const { error } = await supabase.from('analytics').insert({
-                    user_id: user.id,
-                    action_type: actionType,
-                    content_type: contentType,
-                    content_id: contentId,
-                    metadata: {
-                        ...metadata,
-                        page: page,
-                        session_id: getSessionId()
-                    },
-                });
-                // supabase-js RESOLVES (never throws) on RLS/permission
-                // rejections — an unread error makes a failed insert look
-                // exactly like "no user activity" (verified 2026-10-21 while
-                // diagnosing the false Oct-8 outage). Surface it at minimum.
-                if (error) {
-                    console.error('[analytics] insert failed:', actionType, error.message);
-                }
-            } catch (e) {
-                console.error('[analytics] trackEvent threw:', e);
-            }
-        } catch {
-            // ignore
-        }
+    async trackEvent(_eventName: string, _metadata: AnalyticsMetadata = {}): Promise<void> {
+        // intentionally empty
     }
 
     /**
-     * Tracks a page view.
-     */
-    async trackPageView() {
-        await this.trackEvent('page_view');
-    }
-
-    /**
-     * Logs a system error or message.
+     * Logs a system error or message to the `system_logs` table. This is
+     * error/debug telemetry, NOT user analytics — it stays on Postgres.
      * Useful for debugging without exposing user data.
      */
     async log(log: SystemLog) {

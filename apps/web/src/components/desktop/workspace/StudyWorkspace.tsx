@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { User } from "@supabase/supabase-js";
+import { trackFileDownload } from "@/lib/metrics-client";
 import { LectureListColumn } from "./LectureListColumn";
 import { ReaderToolbar } from "./ReaderToolbar";
 import { DocumentReader } from "./DocumentReader";
@@ -105,6 +106,7 @@ export function StudyWorkspace({
     const url = activeLecture?.documentUrl;
     if (!url) return;
     if (typeof window !== "undefined") {
+      trackFileDownload({ id: activeLecture.id, title: activeLecture.title, fileUrl: url });
       window.open(url, "_blank", "noopener,noreferrer");
     }
     trackEvent("study_workspace_download_clicked", { lectureId: selectedLectureId });

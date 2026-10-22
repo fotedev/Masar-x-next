@@ -1,21 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { useCallback } from 'react';
 import { analytics, SystemLog } from '../lib/analytics';
 
 export const useAnalytics = () => {
-  const pathname = usePathname();
-  const lastTrackedPath = useRef<string | null>(null);
-
-  // Track page views automatically when location changes
-  useEffect(() => {
-    // Prevent duplicate tracking for the same pathname in the same mount cycle
-    if (lastTrackedPath.current === pathname) return;
-    
-    analytics.trackPageView();
-    lastTrackedPath.current = pathname;
-  }, [pathname]);
+  // Page-view tracking was removed with the lean-analytics migration
+  // (2026-10-21): the Postgres analytics table receives no event rows.
+  // Meaningful signals (downloads, AI usage, active users) go through
+  // lib/metrics-client.ts; user_login is recorded in AuthContext.
 
   const trackEvent = useCallback((eventName: string, metadata?: Record<string, unknown>) => {
     analytics.trackEvent(eventName, metadata);

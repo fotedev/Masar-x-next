@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { CheckCircle, ClipboardList, FileText } from "lucide-react";
 import { motion } from "framer-motion";
+import { trackFileDownload } from "@/lib/metrics-client";
 import type { ContentItem } from "./types";
 
 export function LectureHomeworkSection(props: {
@@ -101,6 +102,7 @@ export function LectureHomeworkSection(props: {
             <button
               onClick={() => {
                 if (item.file_url) {
+                  trackFileDownload({ id: item.id, title: item.title, fileUrl: item.file_url });
                   window.open(item.file_url, "_blank", "noopener,noreferrer");
                 }
               }}

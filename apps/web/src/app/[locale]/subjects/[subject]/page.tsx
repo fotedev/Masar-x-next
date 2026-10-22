@@ -13,6 +13,7 @@ import { useSubjectModals } from "@/hooks/useSubjectModals";
 import { useLectureContent } from "@/hooks/useLectureContent";
 import { useManageLectures } from "@/hooks/useManageLectures";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { trackFileDownload } from "@/lib/metrics-client";
 import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
 import { StudyWorkspace } from "@/components/desktop/workspace/StudyWorkspace";
 import type { WorkspaceLecture } from "@/components/desktop/workspace/types";
@@ -313,6 +314,7 @@ export default function SubjectPage() {
       // Scroll to top to see video player
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (item.file_url) {
+      trackFileDownload({ id: item.id, title: item.title, fileUrl: item.file_url });
       window.open(item.file_url, "_blank");
     }
   }, []);
