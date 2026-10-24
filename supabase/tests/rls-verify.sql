@@ -338,7 +338,9 @@ BEGIN;
   -- admin (or a branch DB with the admins fixture); CI supplies it.
 
   -- 3.4 enrollments ---------------------------------------------------------
-  -- Students see ONLY their own rows; only admins can write.
+  -- Students see ONLY their own rows; they self-apply with status='pending'
+  -- (migration 018) and can re-apply after rejection; activation is
+  -- instructor/admin-only.
   DO $t34a$
   DECLARE
     own int;
@@ -359,20 +361,111 @@ BEGIN;
   END
   $t34a$;
 
+  -- 3.4b enrollments: students CAN self-apply with status='pending'
+  -- (migration 018; the policy existed on the live lineage but was missing
+  -- from the numbered chain). Clear any residue, insert, expect success.
   DO $t34b$
   BEGIN
-    BEGIN
-      INSERT INTO public.enrollments (student_id, course_id)
-      VALUES ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c1');
-      RAISE EXCEPTION 'RLS VERIFY FAILED: enrollments allowed a student INSERT (only admins may write)';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE '3.4 enrollments PASS: student insert rejected as expected';
-      WHEN foreign_key_violation THEN
-        RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: seed incomplete (user A or course c1 missing) - see supabase/tests/README.md';
-    END;
+    DELETE FROM public.enrollments
+     WHERE student_id = '00000000-0000-0000-0000-0000000000a1'
+       AND course_id = '00000000-0000-0000-0000-0000000000c1';
+    INSERT INTO public.enrollments (student_id, course_id, status)
+    VALUES ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c1', 'pending');
+    RAISE NOTICE '3.4b enrollments PASS: student self-enrollment (pending) allowed';
+  EXCEPTION
+    WHEN foreign_key_violation THEN
+      RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: seed incomplete (user A or course c1 missing) - see supabase/tests/README.md';
+    WHEN insufficient_privilege THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: student self-enrollment (pending) rejected - INSERT policy missing';
+    WHEN unique_violation THEN
+      RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: a non-pending (a1, c1) enrollment row already exists and could not be deleted - check the seed';
   END
   $t34b$;
+
+  -- 3.4c students must not self-activate: status='active' is
+  -- instructor-only. RLS WITH CHECK fires before constraints, so this must
+  -- be a privilege rejection even though (a1, c1) is already taken by 3.4b.
+  DO $t34c$
+  BEGIN
+    INSERT INTO public.enrollments (student_id, course_id, status)
+    VALUES ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c1', 'active');
+    RAISE EXCEPTION 'RLS VERIFY FAILED: enrollments allowed a student INSERT with status=active';
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE NOTICE '3.4c enrollments PASS: student insert (active) rejected as expected';
+  END
+  $t34c$;
+
+  -- 3.4d reapply path (migration 018): a student may revive their own
+  -- rejected application back to 'pending', but nothing else. Seed the
+  -- rejected state as service_role, then re-apply as the student.
+  SET LOCAL ROLE service_role;
+  UPDATE public.enrollments
+     SET status = 'rejected'
+   WHERE student_id = '00000000-0000-0000-0000-0000000000a1'
+     AND course_id = '00000000-0000-0000-0000-0000000000c1';
+  SET LOCAL ROLE authenticated;
+  SELECT set_config(
+    'request.jwt.claims',
+    '{"sub": "00000000-0000-0000-0000-0000000000a1", "role": "authenticated"}',
+    true
+  );
+
+  DO $t34d$
+  DECLARE
+    n int;
+  BEGIN
+    UPDATE public.enrollments
+       SET status = 'pending'
+     WHERE student_id = '00000000-0000-0000-0000-0000000000a1'
+       AND course_id = '00000000-0000-0000-0000-0000000000c1';
+    GET DIAGNOSTICS n = ROW_COUNT;
+    IF n <> 1 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: student reapply (rejected -> pending) did not update the row';
+    END IF;
+    RAISE NOTICE '3.4d enrollments PASS: student reapply (rejected -> pending) allowed';
+  END
+  $t34d$;
+
+  -- 3.4e show_extra_assets guard (migration 018): a never-entitled user
+  -- cannot self-grant through PostgREST any more; the guard trigger must
+  -- reject the write even though the UPDATE policy (auth.uid() = id) allows
+  -- the row.
+  DO $t34e$
+  BEGIN
+    UPDATE public.profiles
+       SET show_extra_assets = true
+     WHERE id = '00000000-0000-0000-0000-0000000000a1';
+    RAISE EXCEPTION 'RLS VERIFY FAILED: profiles allowed a never-entitled user to self-grant show_extra_assets';
+  EXCEPTION
+    WHEN raise_exception THEN
+      RAISE NOTICE '3.4e profiles PASS: show_extra_assets self-grant rejected by the guard trigger';
+  END
+  $t34e$;
+
+  -- 3.4f access codes must not be enumerable by authenticated users
+  -- (migration 018 dropped trw_access_codes_select_auth). Existence-guarded:
+  -- branches built from the numbered chain alone have no trw tables yet.
+  DO $t34f$
+  DECLARE
+    v_exists boolean;
+    v_count  int;
+  BEGIN
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = 'trw_access_codes'
+    ) INTO v_exists;
+    IF v_exists THEN
+      SELECT count(*) INTO v_count FROM public.trw_access_codes;
+      IF v_count <> 0 THEN
+        RAISE EXCEPTION 'RLS VERIFY FAILED: trw_access_codes enumerable by authenticated (%)', v_count;
+      END IF;
+      RAISE NOTICE '3.4f trw_access_codes PASS: not enumerable by authenticated';
+    ELSE
+      RAISE NOTICE '3.4f trw_access_codes SKIP: table absent (active-migration branch)';
+    END IF;
+  END
+  $t34f$;
 
   -- 3.5 reviews -------------------------------------------------------------
   -- Writers may only author rows for themselves (WITH CHECK auth.uid() =
