@@ -95,17 +95,20 @@ const registeredIpcChannels = new Set<string>();
 
 const mockIpcMain = {
   on: vi.fn(),
-  // Mirror Electron's real contract: a second handle() for the same channel
-  // throws and rejects startMainProcess (audit C1 — the duplicate
+  // Mirror Electron's real contract — handle(channel, listener) — so the
+  // extracted listener args typecheck, and a second handle() for the same
+  // channel throws and rejects startMainProcess (audit C1 — the duplicate
   // registration regression this mock now catches instead of waving through).
-  handle: vi.fn((channel: string) => {
-    if (registeredIpcChannels.has(channel)) {
-      throw new TypeError(
-        `Attempted to register a second handler for '${channel}'`,
-      );
-    }
-    registeredIpcChannels.add(channel);
-  }),
+  handle: vi.fn(
+    (channel: string, listener?: (...args: unknown[]) => unknown) => {
+      if (registeredIpcChannels.has(channel)) {
+        throw new TypeError(
+          `Attempted to register a second handler for '${channel}'`,
+        );
+      }
+      registeredIpcChannels.add(channel);
+    },
+  ),
   removeHandler: vi.fn(),
 };
 
