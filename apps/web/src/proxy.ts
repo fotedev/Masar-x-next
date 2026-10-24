@@ -152,12 +152,23 @@ function addSecurityHeaders(response: NextResponse, nonce: string, host: string 
   );
 }
 
-export default async function proxy(request: NextRequest) {
-  try {
-    const pathname = request.nextUrl.pathname;
-    const nonce = generateNonce();
-    const host = request.headers.get("host");
+// Set-Cookie values must move one header at a time: `headers.get("set-cookie")`
+// returns the edge runtime's comma-joined view of every Set-Cookie on the
+// source response, and re-appending that string collapses Supabase's chunked
+// session cookies (`sb-*-auth-token.0/.1` + verifier) into a single
+// unparseable header (audit H1). `getSetCookie()` returns them individually.
+function appendSetCookies(target: Headers, source: Headers): void {
+  for (const cookie of source.getSetCookie()) {
+    target.append("set-cookie", cookie);
+  }
+}
 
+export default async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const nonce = generateNonce();
+  const host = request.headers.get("host");
+
+  try {
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-pathname", pathname);
     requestHeaders.set("x-nonce", nonce);
@@ -169,9 +180,7 @@ export default async function proxy(request: NextRequest) {
       intlResponse.headers.set("x-pathname", pathname);
       addSecurityHeaders(intlResponse, nonce, host);
 
-      const sessionSetCookie = sessionResponse.headers.get("set-cookie");
-      if (sessionSetCookie)
-        intlResponse.headers.append("set-cookie", sessionSetCookie);
+      appendSetCookies(intlResponse.headers, sessionResponse.headers);
 
       return intlResponse;
     }
@@ -180,16 +189,27 @@ export default async function proxy(request: NextRequest) {
       sessionResponse.headers.set("x-pathname", pathname);
       addSecurityHeaders(sessionResponse, nonce, host);
 
-      const intlSetCookie = intlResponse?.headers.get("set-cookie");
-      if (intlSetCookie)
-        sessionResponse.headers.append("set-cookie", intlSetCookie);
+      if (intlResponse) {
+        appendSetCookies(sessionResponse.headers, intlResponse.headers);
+      }
 
       return sessionResponse;
     }
 
+    // Rebuild from the post-updateSession request: updateSession may have
+    // rotated the auth cookies via request.cookies.set, and the downstream
+    // RSC/Server-Action render must see the refreshed cookies — forwarding
+    // the pre-refresh clone made the server re-refresh with an already
+    // consumed token, which Supabase's reuse detection can punish by
+    // revoking the whole session family (audit H2, the "randomly logged
+    // out" signature).
+    const forwardedHeaders = new Headers(request.headers);
+    forwardedHeaders.set("x-pathname", pathname);
+    forwardedHeaders.set("x-nonce", nonce);
+
     const finalResponse = NextResponse.next({
       request: {
-        headers: requestHeaders,
+        headers: forwardedHeaders,
       },
     });
 
@@ -199,13 +219,10 @@ export default async function proxy(request: NextRequest) {
       finalResponse.headers.set(key, value);
     });
 
-    const intlSetCookie = intlResponse?.headers.get("set-cookie");
-    if (intlSetCookie)
-      finalResponse.headers.append("set-cookie", intlSetCookie);
-
-    const sessionSetCookie = sessionResponse.headers.get("set-cookie");
-    if (sessionSetCookie)
-      finalResponse.headers.append("set-cookie", sessionSetCookie);
+    if (intlResponse) {
+      appendSetCookies(finalResponse.headers, intlResponse.headers);
+    }
+    appendSetCookies(finalResponse.headers, sessionResponse.headers);
 
     finalResponse.headers.set("x-pathname", pathname);
     addSecurityHeaders(finalResponse, nonce, host);
@@ -213,29 +230,28 @@ export default async function proxy(request: NextRequest) {
   } catch (error) {
     // On proxy error, log and pass through to page (don't block request)
     logger.error("Proxy error", error, {
-      pathname: request.nextUrl.pathname,
+      pathname,
     });
 
     // Return a response that allows the request to proceed
     // The page can handle any remaining auth checks
-    const pathname = request.nextUrl.pathname;
-    const fallbackResponse = NextResponse.next({
-      request: {
-        headers: new Headers(request.headers),
-      },
-    });
-    fallbackResponse.headers.set("x-pathname", pathname);
-    fallbackResponse.headers.set("x-middleware-error", "true");
-
-    // Fix audit §1.4: the error fallback previously returned without any
-    // security headers (CSP, X-Frame-Options, Referrer-Policy) or the
-    // locale/session cookies from the proxy chain. We generate a
-    // fresh nonce here because the original `nonce` is out of scope at
-    // this point; we also re-read the Host header for the CSP directive
-    // that depends on it (see getCspHeader).
     const fallbackNonce = generateNonce();
     const fallbackHost = request.headers.get("host");
-    fallbackResponse.headers.set("x-nonce", fallbackNonce);
+
+    // The fallback forwards the request WITH the same nonce it signs the
+    // CSP with — previously the forwarded headers carried no x-nonce while
+    // the CSP nonce existed, so ThemeScript and every inline bootstrap
+    // script were blocked on the error path (audit M1).
+    const fallbackHeaders = new Headers(request.headers);
+    fallbackHeaders.set("x-pathname", pathname);
+    fallbackHeaders.set("x-nonce", fallbackNonce);
+
+    const fallbackResponse = NextResponse.next({
+      request: {
+        headers: fallbackHeaders,
+      },
+    });
+    fallbackResponse.headers.set("x-middleware-error", "true");
     addSecurityHeaders(fallbackResponse, fallbackNonce, fallbackHost);
 
     return fallbackResponse;

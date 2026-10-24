@@ -17,6 +17,8 @@ import { analyticsHelpers } from "../lib/analyticsHelpers";
 import { pingActiveUser } from "../lib/metrics-client";
 import { logger } from "../lib/logger";
 import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
+import { queryClient } from '@/components/QueryProvider';
+import { queryCache } from '@/lib/queryCache';
 import { useLocale } from "next-intl";
 
 interface AuthContextType {
@@ -167,6 +169,14 @@ export function AuthProvider({
         } else {
           setIsAdmin(false);
           setProfile(null);
+        }
+
+        if (event === "SIGNED_OUT") {
+          // Role-scoped react-query + queryCache data must never survive an
+          // auth transition — the next identity on this tab must not see the
+          // previous one's appeals/enrollments rows (audit M45).
+          queryClient.clear();
+          queryCache.invalidatePrefix("");
         }
 
         if (event === "INITIAL_SESSION") {
