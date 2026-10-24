@@ -252,14 +252,21 @@ export default function CourseDetailPage() {
         .upload(fileName, paymentScreenshot);
       if (uploadError) throw uploadError;
 
+      // Upsert so a previously rejected/expired application can re-apply
+      // under UNIQUE(student_id, course_id) (audit H20/H21). The UPDATE
+      // branch is gated server-side by the reapply RLS policy in migration
+      // 018 — an active enrollment can never be overwritten this way.
       const { error: enrollmentError } = await supabase
         .from("enrollments")
-        .insert({
-          student_id: user.id,
-          course_id: course.id,
-          payment_screenshot_url: uploadData.path,
-          status: "pending",
-        });
+        .upsert(
+          {
+            student_id: user.id,
+            course_id: course.id,
+            payment_screenshot_url: uploadData.path,
+            status: "pending",
+          },
+          { onConflict: "student_id,course_id" },
+        );
       if (enrollmentError) throw enrollmentError;
 
       toast.success(t("toasts.enrollmentSent"));

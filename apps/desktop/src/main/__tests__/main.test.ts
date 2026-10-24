@@ -87,9 +87,28 @@ const mockApp = {
   getVersion: vi.fn().mockReturnValue('0.5.9-test'),
 };
 
+// Channels registered through the handle mock. Module-scope so beforeEach
+// can reset it — Electron's real registry lives for the process lifetime,
+// but these tests call startMainProcess repeatedly, so per-test reset keeps
+// the duplicate-throw contract scoped to a single startup.
+const registeredIpcChannels = new Set<string>();
+
 const mockIpcMain = {
   on: vi.fn(),
-  handle: vi.fn(),
+  // Mirror Electron's real contract — handle(channel, listener) — so the
+  // extracted listener args typecheck, and a second handle() for the same
+  // channel throws and rejects startMainProcess (audit C1 — the duplicate
+  // registration regression this mock now catches instead of waving through).
+  handle: vi.fn(
+    (channel: string, listener?: (...args: unknown[]) => unknown) => {
+      if (registeredIpcChannels.has(channel)) {
+        throw new TypeError(
+          `Attempted to register a second handler for '${channel}'`,
+        );
+      }
+      registeredIpcChannels.add(channel);
+    },
+  ),
   removeHandler: vi.fn(),
 };
 
@@ -300,6 +319,7 @@ describe('T017 — Electron main process contract', () => {
     mockBrowserWindowInstance.webContents.on.mockClear();
     mockBrowserWindowInstance.webContents.setWindowOpenHandler.mockClear();
     mockBrowserWindowInstance.webContents.session.setPermissionRequestHandler.mockClear();
+    registeredIpcChannels.clear();
   });
 
   it('exports a startMainProcess function (red until T020)', async () => {

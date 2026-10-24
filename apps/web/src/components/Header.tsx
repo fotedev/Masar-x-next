@@ -107,18 +107,9 @@ export const Header = memo(function Header() {
   const enterMatrix = async () => {
     setIsMatrixActive(true);
 
-    if (user) {
-      try {
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ show_extra_assets: true })
-          .eq("id", user.id);
-
-        if (updateError) throw updateError;
-      } catch (e) {
-        logger.error("Failed to persist access", e);
-      }
-    }
+    // Entitlement is granted server-side by redeem_system_access_code
+    // (migration 018) — no client-side profiles write here; the guard
+    // trigger would reject it for never-entitled users anyway (audit H36).
 
     setTimeout(() => {
       setIsMatrixActive(false);
@@ -211,19 +202,24 @@ export const Header = memo(function Header() {
     try {
       setIsVerifying(true);
 
-      // Verification runs server-side via a security-definer RPC so the key
-      // values never cross the wire and used_count is consumed atomically
-      // (migration 010: the direct client-read policy was removed).
-      const { data: status, error } = await supabase.rpc(
-        "verify_system_access_code",
+      // Verification + grant run server-side via a security-definer RPC so
+      // the key values never cross the wire, used_count is consumed
+      // atomically, and show_extra_assets entitlement is granted by the
+      // database — never by a client-side profiles write (migration 018;
+      // audit H36: the old verify-then-client-update path let any user
+      // PATCH their own entitlement straight through PostgREST).
+      const { data: result, error } = await supabase.rpc(
+        "redeem_system_access_code",
         { p_access_key: accessKey.trim() },
       );
 
-      if (!error && status === "valid") {
+      const outcome = (result ?? {}) as { success?: boolean; reason?: string };
+
+      if (!error && outcome.success) {
         setAttempts(0);
         setLockoutUntil(null);
         enterMatrix();
-      } else if (!error && status === "exhausted") {
+      } else if (!error && outcome.reason === "exhausted") {
         toast.error(tHeader("access.systemErrorTitle"), {
           description: tHeader("access.maxUsesDescription"),
         });

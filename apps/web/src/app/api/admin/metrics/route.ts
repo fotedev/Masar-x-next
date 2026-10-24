@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuthenticatedUser } from '@/lib/api-auth';
 import { isAdminRole } from '@/lib/auth/roles';
 import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getAdminMetrics } from '@/lib/metrics';
 import { logger } from '@/lib/logger';
 
@@ -39,17 +40,27 @@ export async function GET() {
 
   const snapshot = await getAdminMetrics();
 
+  // ai_chat_messages RLS is owner-only (auth.uid() = user_id), so reading
+  // through the cookie client scoped every count to the viewing admin's own
+  // chats (audit H24). The caller is already verified as an admin via the
+  // admins-table row above; these two reads are the only service-role uses
+  // in the route, and neither returns row payloads to the client.
+  const admin = getSupabaseAdmin();
+
   // Assistant messages are real relational data: all-time total plus a
   // per-day breakdown for the trend windows. Row counts are tiny (the
   // table held 22 assistant rows as of 2026-10-21), so selecting the
   // timestamps and bucketing in-process is cheaper than any RPC.
   const since = new Date(Date.now() - (TREND_DAYS - 1) * 24 * 60 * 60 * 1000);
   since.setUTCHours(0, 0, 0, 0);
-  const { data: messageRows, error: messagesError } = await supabase
+  const { data: messageRows, error: messagesError } = await admin
     .from('ai_chat_messages')
     .select('created_at')
     .eq('role', 'assistant')
-    .gte('created_at', since.toISOString());
+    .gte('created_at', since.toISOString())
+    // The admin client is typed loosely on purpose (see lib/supabase/admin)
+    // — its row type infers `never`, so the shape is asserted here.
+    .returns<{ created_at: string }[]>();
 
   if (messagesError) {
     logger.error('[api/admin/metrics] assistant messages query failed', messagesError);
@@ -64,7 +75,7 @@ export async function GET() {
   }
 
   // All-time total: cheap exact count on the same indexed table.
-  const { count: totalMessages, error: totalError } = await supabase
+  const { count: totalMessages, error: totalError } = await admin
     .from('ai_chat_messages')
     .select('id', { count: 'exact', head: true })
     .eq('role', 'assistant');
