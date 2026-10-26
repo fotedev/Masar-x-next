@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { quizService } from '../lib/quiz';
-import type { Json } from '@/types/database';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
 
@@ -191,16 +190,27 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
             sessionStorage.removeItem(`quiz_attempt_${quizId}_guest`);
         }
 
-        // If logged in and have attemptId, sync to DB
+        // If logged in and have attemptId, sync to DB. Grading is
+        // server-authoritative (spec 030): the RPC re-grades every saved
+        // answer and returns the trusted score/total, which patch the local
+        // history entry so the history page shows authoritative numbers even
+        // before its next DB fetch.
         if (!localOnly && attemptId && userId) {
             try {
                 setSaving(true);
-                const answersJson: Json[] = answersArray.map((a) => ({
-                    question_id: a.question_id,
-                    selected_option: a.selected_option,
-                    is_correct: a.is_correct,
-                }));
-                await quizService.finishAttempt(attemptId, score, totalQuestions, answersJson);
+                const server = await quizService.finishAttempt(attemptId, timeTakenSeconds);
+                try {
+                    const localHistoryStr = sessionStorage.getItem('quiz_history');
+                    const localHistory: QuizHistoryEntry[] = localHistoryStr ? JSON.parse(localHistoryStr) : [];
+                    sessionStorage.setItem('quiz_history', JSON.stringify(localHistory.map((h: QuizHistoryEntry) => (
+                        h.id === attemptId
+                            ? { ...h, score: server.score, total_questions: server.totalQuestions }
+                            : h
+                    ))));
+                } catch {
+                    // ignore
+                }
+                return { score: server.score, totalQuestions: server.totalQuestions };
             } catch (err) {
                 if (err instanceof Error) {
                     setError(err.message);
@@ -212,6 +222,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
                 setSaving(false);
             }
         }
+        return null;
     }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle, localOnly]);
 
     return {

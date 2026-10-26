@@ -273,33 +273,32 @@ export class QuizService {
         }
     }
 
-    // Finish a quiz attempt
+    // Finish a quiz attempt — grading is server-authoritative (spec 030):
+    // the finish_quiz_attempt RPC re-grades every saved answer against
+    // quiz_questions.correct_answer, overwrites the client-sent is_correct
+    // flags, and returns the trusted score/total. The client's own
+    // computation stays display-only until this resolves.
     async finishAttempt(
         attemptId: string,
-        score: number,
-        totalQuestions: number,
-        answers: Json[] // Kept for backward compatibility if needed, but we rely on quiz_answers table now
-    ) {
-        try {
-            const finishedAt = new Date().toISOString();
+        timeTakenSeconds?: number
+    ): Promise<{ score: number; totalQuestions: number }> {
+        const { data, error } = await supabase
+            .rpc('finish_quiz_attempt', {
+                p_attempt_id: attemptId,
+                p_time_taken_seconds: timeTakenSeconds ?? null,
+            });
 
-            // Calculate time taken if needed, or let the frontend pass it. 
-            // For now, we'll just mark it completed.
+        if (error) throw error;
 
-            const { error } = await supabase
-                .from('quiz_attempts')
-                .update({
-                    score: score,
-                    total_questions: totalQuestions,
-                    finished_at: finishedAt,
-                    answers: answers // Optional: store JSON backup
-                })
-                .eq('id', attemptId);
+        const result = (data ?? {}) as {
+            score?: number;
+            total_questions?: number;
+        };
 
-            if (error) throw error;
-        } catch (error) {
-            throw error;
-        }
+        return {
+            score: result.score ?? 0,
+            totalQuestions: result.total_questions ?? 0,
+        };
     }
 
     // Submit a quiz attempt (Legacy/Fallback)

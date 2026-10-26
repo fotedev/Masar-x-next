@@ -630,6 +630,51 @@ BEGIN;
     RAISE NOTICE '3.10 quiz_attempts PASS: RLS enabled and rows owner-scoped (legacy table present)';
   END
   $t310$;
+
+  -- 3.11 quiz server-grading (CONDITIONAL / spec 030) -----------------------
+  -- finish_quiz_attempt must exist with the canonical ACL posture (anon
+  -- revoked, authenticated granted) and the score-guard trigger must be
+  -- attached. Behavioral grading checks need seeded questions/answers and
+  -- are covered by the app-level suites, not this file.
+  DO $t311$
+  DECLARE
+    v_rpc       boolean;
+    v_anon_exec boolean;
+    v_trigger   int;
+  BEGIN
+    SELECT EXISTS (
+      SELECT 1 FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'public' AND p.proname = 'finish_quiz_attempt'
+    ) INTO v_rpc;
+    IF NOT v_rpc THEN
+      RAISE NOTICE '3.11 finish_quiz_attempt SKIP: RPC not present (pre-spec-030 environment)';
+      RETURN;
+    END IF;
+
+    SELECT EXISTS (
+      SELECT 1 FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+       WHERE n.nspname = 'public'
+         AND p.proname = 'finish_quiz_attempt'
+         AND has_function_privilege('anon', p.oid, 'EXECUTE')
+    ) INTO v_anon_exec;
+    IF v_anon_exec THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: finish_quiz_attempt executable by anon (REVOKE missing)';
+    END IF;
+
+    SELECT count(*) INTO v_trigger
+      FROM pg_trigger
+     WHERE tgrelid = to_regclass('public.quiz_attempts')
+       AND tgname = 'trg_guard_quiz_attempt_score'
+       AND NOT tgisinternal;
+    IF v_trigger = 0 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: trg_guard_quiz_attempt_score missing (clients could write grading columns directly)';
+    END IF;
+
+    RAISE NOTICE '3.11 PASS: finish_quiz_attempt anon-revoked and quiz_attempts score-guard attached';
+  END
+  $t311$;
 ROLLBACK;
 
 DO $summary$

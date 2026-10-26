@@ -167,17 +167,13 @@ describe("QuizService.attempt lifecycle", () => {
     expect((upsert!.args[0] as Record<string, unknown>).is_correct).toBe(true);
   });
 
-  it("finishAttempt writes score/total/finished_at", async () => {
-    chain.respondWith({ data: null, error: null });
-    await new QuizService().finishAttempt("att-1", 8, 10, []);
-    const update = chain.calls.find((c) => c.table === "quiz_attempts" && c.method === "update");
-    const payload = update!.args[0] as Record<string, unknown>;
-    expect(payload.score).toBe(8);
-    expect(payload.total_questions).toBe(10);
-    expect(typeof payload.finished_at).toBe("string");
-    expect(update!.args[1]).toBeUndefined(); // the .eq follows separately
-    const eq = chain.calls.find((c) => c.method === "eq");
-    expect(eq!.args).toEqual(["id", "att-1"]);
+  it("finishAttempt calls the server-grading RPC and returns trusted numbers (spec 030)", async () => {
+    chain.respondWith({ data: { success: true, score: 8, total_questions: 10 }, error: null });
+    const result = await new QuizService().finishAttempt("att-1", 120);
+    const rpc = chain.calls.find((c) => c.method === "rpc");
+    expect(rpc!.table).toBe("rpc:finish_quiz_attempt");
+    expect(rpc!.args[0]).toEqual({ p_attempt_id: "att-1", p_time_taken_seconds: 120 });
+    expect(result).toEqual({ score: 8, totalQuestions: 10 });
   });
 
   it("submitAttempt (legacy) inserts a completed attempt payload", async () => {
