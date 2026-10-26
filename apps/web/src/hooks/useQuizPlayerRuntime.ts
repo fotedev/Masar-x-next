@@ -29,7 +29,10 @@ export function useQuizPlayerRuntime(props: {
   attemptStartTime: number | null;
   score: number;
   saveAnswer: (questionId: string, selectedOption: number, isCorrect: boolean) => void;
-  saveFinishAttempt: (score: number, timeTakenSeconds?: number) => Promise<void>;
+  saveFinishAttempt: (
+    score: number,
+    timeTakenSeconds?: number,
+  ) => Promise<void | { score: number; totalQuestions: number } | null>;
   trackEvent: (event: string, payload?: Record<string, unknown>) => void;
   onComplete?: (score: number) => void;
 }) {

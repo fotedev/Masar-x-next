@@ -132,36 +132,30 @@ export interface AttemptAnswerPayload {
 }
 
 /**
- * Finish the attempt (spec 019 C6/T095): now also writes
- * `time_taken_seconds` and the `answers` jsonb — the exact columns the
- * web finish flow writes, so the attempts history (web /quiz-attempts
- * and the new mobile QuizAttemptsScreen) can review per-question
- * answers without joining quiz_answers.
+ * Finish the attempt (spec 030): grading is server-authoritative. The
+ * finish_quiz_attempt RPC re-grades every saved answer against
+ * quiz_questions.correct_answer, overwrites the client-sent is_correct
+ * flags, computes score/total server-side, and rebuilds the answers jsonb
+ * (answered rows only, order_index-ordered) — the client no longer sends
+ * score, total, or an answers payload. The returned numbers are the trusted
+ * ones the results screen displays.
  */
 export async function finishAttempt(
   supabase: SupabaseClient,
   attemptId: string,
-  score: number,
-  totalQuestions: number,
-  details: {
-    timeTakenSeconds?: number | null;
-    answers?: AttemptAnswerPayload[];
-  } = {},
-): Promise<void> {
-  const { error } = await supabase
-    .from("quiz_attempts")
-    .update({
-      score,
-      total_questions: totalQuestions,
-      finished_at: new Date().toISOString(),
-      status: "completed",
-      ...(details.timeTakenSeconds != null
-        ? { time_taken_seconds: details.timeTakenSeconds }
-        : {}),
-      ...(details.answers ? { answers: details.answers } : {}),
-    })
-    .eq("id", attemptId);
+  details: { timeTakenSeconds?: number | null } = {},
+): Promise<{ score: number; totalQuestions: number }> {
+  const { data, error } = await supabase.rpc("finish_quiz_attempt", {
+    p_attempt_id: attemptId,
+    p_time_taken_seconds: details.timeTakenSeconds ?? null,
+  });
   if (error) throw error;
+
+  const result = (data ?? {}) as { score?: number; total_questions?: number };
+  return {
+    score: result.score ?? 0,
+    totalQuestions: result.total_questions ?? 0,
+  };
 }
 
 export interface GuestAnswerEntry {

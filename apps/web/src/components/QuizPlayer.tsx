@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { XCircle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useAnalytics } from "../hooks/useAnalytics";
@@ -75,6 +75,23 @@ export function QuizPlayer({
     [savedAnswers],
   );
 
+  // Spec 030: grading is server-authoritative — capture the RPC's re-graded
+  // numbers so the results screen shows the authoritative values (identical
+  // for honest clients; overrides a forged client computation).
+  const [serverResult, setServerResult] = useState<{
+    score: number;
+    totalQuestions: number;
+  } | null>(null);
+
+  const finishAndCapture = useCallback(
+    async (clientScore: number, timeTakenSeconds?: number) => {
+      const server = await saveFinishAttempt(clientScore, timeTakenSeconds);
+      if (server) setServerResult(server);
+      return server;
+    },
+    [saveFinishAttempt],
+  );
+
   const runtime = useQuizPlayerRuntime({
     quizId,
     quiz,
@@ -83,7 +100,7 @@ export function QuizPlayer({
     attemptStartTime,
     score,
     saveAnswer,
-    saveFinishAttempt,
+    saveFinishAttempt: finishAndCapture,
     trackEvent,
     onComplete,
   });
@@ -133,8 +150,8 @@ export function QuizPlayer({
     return (
       <QuizPlayerResults
         quizId={quizId}
-        score={score}
-        totalQuestions={questions.length}
+        score={serverResult?.score ?? score}
+        totalQuestions={serverResult?.totalQuestions ?? questions.length}
         endedByTimeout={runtime.endedByTimeout}
         timeTakenSeconds={timeTaken}
         isGuest={isGuest}

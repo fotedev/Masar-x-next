@@ -118,20 +118,13 @@ describe("attempt lifecycle", () => {
     expect((upsert!.args[0] as Record<string, unknown>).is_correct).toBe(true);
   });
 
-  it("finishAttempt writes score/status and optional details", async () => {
-    const chain = createSupabaseMock();
-    await finishAttempt(chain.supabase as never, "att-1", 4, 5, {
-      timeTakenSeconds: 120,
-      answers: [{ question_id: "qq-1", selected_option: 1, is_correct: true }],
-    });
-    const update = chain.calls.find((c) => c.method === "update");
-    const payload = update!.args[0] as Record<string, unknown>;
-    expect(payload.score).toBe(4);
-    expect(payload.status).toBe("completed");
-    expect(payload.time_taken_seconds).toBe(120);
-    expect(payload.answers).toEqual([
-      { question_id: "qq-1", selected_option: 1, is_correct: true },
-    ]);
+  it("finishAttempt calls the server-grading RPC and returns trusted numbers (spec 030)", async () => {
+    const chain = createSupabaseMock({ data: { success: true, score: 4, total_questions: 5 }, error: null });
+    const result = await finishAttempt(chain.supabase as never, "att-1", { timeTakenSeconds: 120 });
+    const rpc = chain.calls.find((c) => c.method === "rpc");
+    expect(rpc!.table).toBe("rpc:finish_quiz_attempt");
+    expect(rpc!.args[0]).toEqual({ p_attempt_id: "att-1", p_time_taken_seconds: 120 });
+    expect(result).toEqual({ score: 4, totalQuestions: 5 });
   });
 });
 

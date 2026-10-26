@@ -173,6 +173,8 @@ export default function QuizPlayScreen() {
     }));
     setSubmitting(true);
     let savedToServer = false;
+    let resultScore = finalScore;
+    let resultTotal = questions.length;
     try {
       if (user) {
         const attempt = await startAttempt(getSupabase(), quizId, user.id);
@@ -187,11 +189,14 @@ export default function QuizPlayScreen() {
             choice === questions[i].correctAnswer,
           );
         }
-        await finishAttempt(getSupabase(), attempt.id, finalScore, questions.length, {
+        // Server-authoritative grading (spec 030): the RPC re-grades every
+        // saved answer and returns the trusted score/total.
+        const graded = await finishAttempt(getSupabase(), attempt.id, {
           timeTakenSeconds,
-          answers: answersPayload,
         });
         savedToServer = true;
+        resultScore = graded.score;
+        resultTotal = graded.totalQuestions;
       } else {
         await saveGuestResult(quizId, {
           quizId,
@@ -210,7 +215,7 @@ export default function QuizPlayScreen() {
     } catch {
       savedToServer = false;
     } finally {
-      setResult({ score: finalScore, total: questions.length, savedToServer });
+      setResult({ score: resultScore, total: resultTotal, savedToServer });
       setSubmitting(false);
       setPhase("finished");
     }
