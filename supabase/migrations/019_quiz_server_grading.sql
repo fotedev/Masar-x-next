@@ -8,12 +8,22 @@
 --     total_questions server-side, finalizes the attempt, and rebuilds the
 --     answers jsonb authoritatively.
 --   * A guard trigger blocks direct client UPDATEs of the grading columns
---     (score/total_questions/finished_at/status/answers/time_taken_seconds)
+--     (score/total_questions/finished_at/answers/time_taken_seconds)
 --     — the RPC is the only sanctioned writer, via the app.quiz_grading GUC.
+--   * Adds the `updated_at` column quiz_attempts' own pre-existing
+--     tr_update_quiz_attempts_updated_at trigger assigns: without it EVERY
+--     UPDATE to this table failed with 42703 on the live schema (quiz
+--     finishes never persisted server-side — the true root cause of audit
+--     H27), and the live table has no `status`/`last_updated_at` columns
+--     (the migrations.old DDL drift), so nothing here references them.
 --
 -- Spec: specs/030-quiz-server-grading/spec.md
 -- Canonical RPC style: migrations/011 notify_admins_of_content.
 -- ============================================================================
+
+-- Live schema: the table's own trigger requires this column to exist.
+ALTER TABLE public.quiz_attempts
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE OR REPLACE FUNCTION public.finish_quiz_attempt(
   p_attempt_id uuid,
@@ -98,12 +108,10 @@ BEGIN
      SET score = v_score,
          total_questions = v_total,
          finished_at = now(),
-         status = 'completed',
          time_taken_seconds = COALESCE(
            p_time_taken_seconds,
            floor(EXTRACT(EPOCH FROM (now() - v_attempt.started_at)))::integer
          ),
-         last_updated_at = now(),
          answers = v_answers
    WHERE id = v_attempt.id;
 
@@ -129,7 +137,6 @@ BEGIN
        NEW.score IS DISTINCT FROM OLD.score
        OR NEW.total_questions IS DISTINCT FROM OLD.total_questions
        OR NEW.finished_at IS DISTINCT FROM OLD.finished_at
-       OR NEW.status IS DISTINCT FROM OLD.status
        OR NEW.answers IS DISTINCT FROM OLD.answers
        OR NEW.time_taken_seconds IS DISTINCT FROM OLD.time_taken_seconds
      )
