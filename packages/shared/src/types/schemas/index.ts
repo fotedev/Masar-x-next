@@ -34,14 +34,15 @@ export const ProfileSchema = z.object({
 });
 
 // --- Courses ---
+// Shape = the real `courses` table (spec 031 truthful types): no
+// `is_academic` column exists; `description` is nullable.
 export const CourseSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
-  description: z.string(),
+  description: z.string().nullable(),
   instructor_id: z.string().uuid(),
   price: z.number().int().default(0),
   is_published: z.boolean().default(false),
-  is_academic: z.boolean().default(true),
   created_at: dateSchema,
 });
 

@@ -17,7 +17,8 @@
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "seed:launch": "node scripts/seed-mvp-launch.mjs"
+    "seed:launch": "node scripts/seed-mvp-launch.mjs",
+    "types:generate": "supabase gen types typescript --linked > packages/shared/src/types/database.generated.ts"
   },
   "devDependencies": {
     "fallow": "3.33.1"

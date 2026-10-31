@@ -14,7 +14,13 @@
 import type { SupabaseClient } from "masarx-shared/supabase";
 import type { SummaryWithRatings } from "masarx-shared/types";
 
-export type SummaryDetailRow = SummaryWithRatings;
+/**
+ * Detail row = the summaries_with_ratings view row plus `youtube_url`,
+ * which the view does not expose (spec 031: the generated Database type is
+ * truthful about view columns) — fetchSummaryDetail merges it in from the
+ * base `summaries` table so the detail screen can link YouTube lectures.
+ */
+export type SummaryDetailRow = SummaryWithRatings & { youtube_url: string | null };
 
 /** Row of the `review_details` view (security_invoker over `reviews`). */
 export interface ReviewDetailRow {
@@ -39,7 +45,15 @@ export async function fetchSummaryDetail(
     .eq("id", summaryId)
     .maybeSingle();
   if (error) throw error;
-  return (data ?? null) as unknown as SummaryDetailRow | null;
+  if (!data) return null;
+  // The view has no youtube_url column — pull it from the base table.
+  const { data: base, error: baseError } = await supabase
+    .from("summaries")
+    .select("youtube_url")
+    .eq("id", summaryId)
+    .maybeSingle();
+  if (baseError) throw baseError;
+  return { ...data, youtube_url: base?.youtube_url ?? null } as unknown as SummaryDetailRow;
 }
 
 export async function fetchSummaryReviews(

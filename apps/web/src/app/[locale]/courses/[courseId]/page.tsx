@@ -231,7 +231,9 @@ export default function CourseDetailPage() {
         course_id: courseId,
         user_id: user.id,
         rating,
-        comment: content,
+        // The real column is `content` (the old hand-written type said
+        // `comment`, which PostgREST rejects — spec 031 truthful types).
+        content,
       });
       toast.success(t("toasts.reviewAdded"));
       setShowReviewForm(false);

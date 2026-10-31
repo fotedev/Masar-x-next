@@ -69,7 +69,8 @@ export const AddCourseModal: FC<AddCourseModalProps> = ({
         title: title.trim(),
         description: description.trim(),
         price: price ? parseFloat(price) : 0,
-        is_academic: isAcademic,
+        // No `is_academic` column exists on `courses` (spec 031 truthful
+        // types) — PostgREST rejects unknown columns, so it must not be sent.
         is_published: false,
         instructor_id: user.id,
       };

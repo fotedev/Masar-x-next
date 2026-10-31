@@ -64,11 +64,15 @@ describe("CourseSchema", () => {
     created_at: "2025-01-05T00:00:00Z",
   };
 
-  it("applies defaults for price/is_published/is_academic", () => {
+  it("applies defaults for price/is_published", () => {
     const parsed = CourseSchema.parse(base);
     expect(parsed.price).toBe(0);
     expect(parsed.is_published).toBe(false);
-    expect(parsed.is_academic).toBe(true);
+  });
+
+  it("accepts a null description (real column is nullable)", () => {
+    const parsed = CourseSchema.parse({ ...base, description: null });
+    expect(parsed.description).toBeNull();
   });
 
   it("rejects an invalid created_at date string", () => {

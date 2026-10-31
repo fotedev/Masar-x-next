@@ -134,7 +134,7 @@ export function SummariesSection({
                     : "cursor-pointer group hover:border-brand-blue/50 hover:-translate-y-1"
                   }`}
                 onClick={() => {
-                  if (summary.isOptimistic) return;
+                  if (summary.isOptimistic || !summary.id) return;
                   trackSummaryClick(summary.id, "trending_click");
                   onNavigate("summaries", summary.id);
                 }}
