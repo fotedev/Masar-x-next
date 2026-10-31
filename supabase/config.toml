@@ -1,8 +1,13 @@
-# Supabase Edge Functions Configuration
-# See: https://supabase.com/docs/guides/functions/config
+# Supabase local project configuration.
+# The migration chain is baseline-based (see migrations/README.md): a fresh
+# environment is built from 20261031000000_baseline.sql onward.
+# See: https://supabase.com/docs/guides/local-development/cli/config
 
-# Disable JWT verification for password reset functions
-# These functions are called by unauthenticated users
+project_id = "masarx"
+
+[db]
+# Major version kept in line with production (PostgreSQL 17.6, 2026-10-31).
+major_version = 17
 
 [functions.reset-password]
 verify_jwt = false
