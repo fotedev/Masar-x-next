@@ -3,7 +3,7 @@
 **Feature Branch**: main (atomic commits)
 **Created**: 2026-09-15
 **Status**: approved (owner-approved inline plan, this file records it)
-**Input**: owner directive — "الشكل وحش، عاوزه مثل gemini و perplexity": (+) tools button, bottom model selector, window-edge scrollbar.
+**Input**: owner directive — "the design is awful; make it like Gemini and Perplexity" (translated from Arabic): (+) tools button, bottom model selector, window-edge scrollbar.
 
 ## Context & Problem Statement
 

@@ -13,47 +13,47 @@ graph TD
     classDef highlight fill:#fff9c4,stroke:#fbc02d,stroke-width:3px,color:#000;
 
     %% Entry Points
-    Start([شاشة المواد / Subjects Page]) --> ClickSubject[الضغط على مادة معينة]
-    ClickSubject --> SubjectPage[صفحة المادة: src/app/subjects/subject/page.tsx]
+    Start([Subjects Page]) --> ClickSubject[Click a specific subject]
+    ClickSubject --> SubjectPage[Subject page: src/app/subjects/subject/page.tsx]
 
     %% Main Logic in Subject Page
-    subgraph Subject_Page_Logic [منطق صفحة المادة]
-        LoadData[تحميل البيانات: Summaries, Videos, Files, Quizzes]
-        FetchLectures[جلب المحاضرات المسجلة من جدول subject_lectures]
-        
-        LectureIndex{تكوين فهرس المحاضرات: lectureIndex}
+    subgraph Subject_Page_Logic [Subject page logic]
+        LoadData[Load data: Summaries, Videos, Files, Quizzes]
+        FetchLectures[Fetch recorded lectures from the subject_lectures table]
+
+        LectureIndex{Build the lecture index: lectureIndex}
         LoadData --> LectureIndex
         FetchLectures --> LectureIndex
-        
+
         %% Categorization Logic
-        subgraph Categorization [كيف يتم تصنيف المحتوى؟]
-            TitleParsing[تحليل عنوان الملف/الفيديو: getLectureInfoFromTitle]
-            TitleParsing --> |"مثال: محاضرة 1 - مقدمة"| Key[Key: lec-1]
-            TitleParsing --> |"اسم العرض"| Label[Label: المحاضرة الأولى]
+        subgraph Categorization [How is content categorized?]
+            TitleParsing[Parse the file/video title: getLectureInfoFromTitle]
+            TitleParsing --> |"example title: محاضرة 1 - مقدمة"| Key[Key: lec-1]
+            TitleParsing --> |"display name"| Label[Label: المحاضرة الأولى]
         end
-        
-        LectureIndex --> |"إذا لم تكن في عرض محاضرة معينة"| RenderDashboard[عرض لوحة تحكم المادة: renderSubjectDashboard]
-        LectureIndex --> |"إذا تم اختيار محاضرة (URL ?lecture=...)"| RenderDetail[عرض تفاصيل المحاضرة: renderLectureDetailView]
+
+        LectureIndex --> |"when not viewing a specific lecture"| RenderDashboard[Render the subject dashboard: renderSubjectDashboard]
+        LectureIndex --> |"when a lecture is selected (URL ?lecture=...)"| RenderDetail[Render the lecture detail view: renderLectureDetailView]
     end
 
     %% Interaction Flow
-    RenderDashboard --> |"الضغط على كارت المحاضرة"| UpdateURL[تحديث الرابط: router.push?lecture=key]
-    UpdateURL --> SelectedKey[تحديث selectedLectureKey]
-    SelectedKey --> FilterContent[تصفية المحتوى للمحاضرة المختارة فقط]
+    RenderDashboard --> |"lecture card click"| UpdateURL[Update the URL: router.push?lecture=key]
+    UpdateURL --> SelectedKey[Update selectedLectureKey]
+    SelectedKey --> FilterContent[Filter content to the selected lecture only]
     FilterContent --> RenderDetail
 
     %% Content Grouping in Detail View
-    subgraph Detail_View [عرض التفاصيل]
-        RenderDetail --> GroupContent[تجميع المحتوى: groupContentBySection]
-        GroupContent --> Explanation[قسم الشرح: فيديوهات + ملخصات]
-        GroupContent --> Homework[قسم الواجب: ملفات]
-        GroupContent --> Exams[قسم الاختبارات: الكويزات]
+    subgraph Detail_View [Detail view]
+        RenderDetail --> GroupContent[Group content: groupContentBySection]
+        GroupContent --> Explanation[Explanation section: videos + summaries]
+        GroupContent --> Homework[Homework section: files]
+        GroupContent --> Exams[Quizzes section: quizzes]
     end
 
     %% Database
-    subgraph Database [قاعدة البيانات - Supabase]
-        DB_Lectures[(جدول subject_lectures: يحفظ ترتيب وأسماء المحاضرات)]
-        DB_Content[(جداول المحتوى: summaries, videos, files, quizzes)]
+    subgraph Database [Database - Supabase]
+        DB_Lectures[(subject_lectures table: stores lecture order and names)]
+        DB_Content[(Content tables: summaries, videos, files, quizzes)]
     end
 
     FetchLectures -.-> DB_Lectures

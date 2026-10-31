@@ -1,12 +1,12 @@
 flowchart TD
-    A[التسجيل في الجامعة] --> B[المستوى 100\nإتمام 30 ساعة معتمدة]
-    B --> C{هل المعدل >= 2.0؟}
-    C -->|نعم| D[المستوى 200\nإتمام 63 ساعة معتمدة]
-    C -->|لا| E[إنذار أكاديمي أو فصل]
-    D --> F{هل المعدل >= 2.0؟}
-    F -->|نعم| G[المستوى 300\nإتمام 98 ساعة معتمدة]
-    F -->|لا| E
-    G --> H{هل المعدل >= 2.0؟}
-    H -->|نعم| I[المستوى 400\nإتمام 138 ساعة معتمدة\n+ مشروع التخرج\n+ تدريب ميداني]
-    H -->|لا| E
-    I --> J[التخرج]
+    A[Receive lecture data] --> B[Process the information\nstudent name, level, lecture title, subject, professor, date, content]
+    B --> C[Analyze key concepts\nkeyConcepts]
+    C --> D[Analyze formulas\nformulas]
+    D --> E[Analyze examples\nexamples]
+    E --> F[Prepare the greeting\nHello Mohamed Ahmed Mahmoud 👋]
+    F --> G["Prepare the main heading\n## 📘 شرح محاضرة: (title)"]
+    G --> H[Explain key concepts\n### 🔹 المفاهيم الأساسية]
+    H --> I[Explain formulas\n### 🔹 القوانين]
+    I --> J[Present examples\n### ✏️ مثال:]
+    J --> K[Verify formatting\nMarkdown, emojis, separators, separate lines]
+    K --> L[Send the structured reply]

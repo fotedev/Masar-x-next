@@ -1,35 +1,35 @@
-# Masar X — إعلان احترافي بالـ AI (Prompts + سكربت تركيب)
+# Masar X — professional AI ad (prompts + assembly script)
 
-مدة الإعلان: **30 ثانية** · 1920×1080 (مع نسخة 1080×1920) · 24fps سينمائي
+Ad duration: **30 seconds** · 1920×1080 (with a 1080×1920 variant) · 24fps cinematic
 
 ---
 
-## اقرأ هذا أولاً — قاعدة العمل
+## Read this first — the working rule
 
-**لا تطلب من أي أداة AI أن تكتب نصاً عربياً داخل الفيديو.** كل الموديلات (Sora 2، Veo 3، Runway Gen-4، Kling 2.5) تُخرج حروفاً عربية مشوّهة ومفكوكة الاتصال. هذه ليست مسألة صياغة prompt — هي حدود تقنية في الموديل.
+**Do not ask any AI tool to write Arabic text inside the video.** Every model (Sora 2, Veo 3, Runway Gen-4, Kling 2.5) outputs distorted, disconnected Arabic glyphs. This is not a prompt-crafting issue — it is a hard model limitation.
 
-الطريقة الصحيحة، وهي نفسها التي تُستخدم في الإعلانات المدفوعة:
+The correct approach, the same one used in paid ads:
 
-| الطبقة | من يصنعها |
+| Layer | Who makes it |
 |---|---|
-| الأجواء، الحركة، الإضاءة، الوجوه، المشاعر | أداة الـ AI (الـ prompts أدناه) |
-| النص العربي، اللوجو، الـ CTA، الرابط | أنت في CapCut / Premiere / Canva |
-| الموسيقى + التعليق الصوتي | أداة صوت منفصلة (السكربت في القسم 4) |
+| Atmosphere, motion, lighting, faces, emotions | the AI tool (the prompts below) |
+| Arabic text, logo, CTA, URL | you, in CapCut / Premiere / Canva |
+| Music + voice-over | a separate audio tool (script in section 4) |
 
-في كل prompt أدناه تجد سطر `Screen content:` — اطلب فيه شاشة **مضيئة بلا نص مقروء** (blurred UI, no legible text). ثم تضع أنت الـ UI الحقيقي فوقها.
+Every prompt below has a `Screen content:` line — request a screen that is **lit but shows no legible text** (blurred UI, no legible text). You then overlay the real UI yourself.
 
-### أفضل مسار جودة: image-to-video لا text-to-video
+### Best quality path: image-to-video, not text-to-video
 
-لديك ميزة كبيرة: المنصة موجودة فعلاً. خذ **لقطات شاشة حقيقية** من `masarx.vercel.app` (الوضع الليلي)، وركّبها على صورة مكتب/موبايل في Photoshop أو Canva، ثم أدخل الصورة كـ **first frame** في Runway Gen-4 أو Kling. النتيجة: منتجك الحقيقي، بحركة سينمائية، بدون أي هلوسة من الموديل.
+You have a big advantage: the platform actually exists. Take **real screenshots** of `masarx.vercel.app` (dark mode), composite them onto a desk/phone photo in Photoshop or Canva, then feed the image as the **first frame** to Runway Gen-4 or Kling. Result: your real product, with cinematic motion, zero model hallucination.
 
-استخدم `text-to-video` فقط للمشاهد التي لا تحتوي شاشة (المشهد 1، 7).
+Use `text-to-video` only for shots without a screen (shots 1 and 7).
 
 ---
 
-## 1. الهوية البصرية — الصقها في كل prompt
+## 1. Visual identity — paste into every prompt
 
 ```
-COLOR GRADE (حرفياً في كل prompt):
+COLOR GRADE (verbatim in every prompt):
 deep midnight navy #020617 base, interface blue #3B82F6 key light,
 horizon sky cyan #0EA5E9 rim light, single amber #F59E0B accent only.
 Teal-and-orange cinematic grade, crushed blacks, low-saturation midtones.
@@ -42,15 +42,15 @@ TONE:
 premium tech advertisement, calm and confident, not hyperactive.
 ```
 
-**قاعدة الكهرماني (Amber Gate):** اللون `#F59E0B` لا يظهر إلا في نقطة واحدة صغيرة في الكادر — نقطة ضوء، انعكاس، زر. إذا صار أكثر من 10% من الكادر فقد الإعلان هويته. هذه قاعدة موثّقة في `DESIGN.md` للمشروع.
+**The amber rule (Amber Gate):** the color `#F59E0B` may appear at exactly one small point in the frame — a light point, a reflection, a button. If more than 10% of the frame turns amber, the ad loses its identity. This rule is documented in the project's `DESIGN.md`.
 
 ---
 
-## 2. الـ Prompts — 8 لقطات
+## 2. The prompts — 8 shots
 
-> كل لقطة 3–4 ثوان. Veo 3 و Sora 2 يخرجان 8 ثوان، لذلك اطلب لقطة واحدة في المرة ثم اقتصّها في المونتاج.
+> Each shot is 3–4 seconds. Veo 3 and Sora 2 output 8 seconds, so request one shot at a time and trim it in the edit.
 
-### Shot 1 — الألم (0:00–0:03) · text-to-video
+### Shot 1 — the pain (0:00–0:03) · text-to-video
 
 ```
 Cinematic close-up, late night university dorm room, 2 AM. A young Middle
@@ -66,7 +66,7 @@ Deep midnight navy #020617 shadows, cold blue #3B82F6 window light,
 one warm amber #F59E0B lamp glow. Anamorphic 35mm, f/1.8, film grain.
 ```
 
-### Shot 2 — الانطلاق (0:03–0:06) · image-to-video (ابدأ من صورة لموبايل مطفأ)
+### Shot 2 — the awakening (0:03–0:06) · image-to-video (start from a powered-off phone image)
 
 ```
 Extreme close-up on a smartphone lying face-up on the same messy desk.
@@ -79,9 +79,9 @@ The blue light reflects in the student's eye at the edge of frame.
 Deep navy #020617, blue #3B82F6 screen bloom. Anamorphic 35mm, f/1.4.
 ```
 
-الآن ركّب لقطة شاشة حقيقية للصفحة الرئيسية فوق الشاشة الضبابية في المونتاج (corner-pin / mask).
+Now composite a real screenshot of the home page over the blurred screen in the edit (corner-pin / mask).
 
-### Shot 3 — الفوضى تنتظم (0:06–0:10) · text-to-video
+### Shot 3 — chaos organizes (0:06–0:10) · text-to-video
 
 ```
 Abstract product metaphor, no people. Hundreds of loose paper sheets float
@@ -96,7 +96,7 @@ Deep midnight navy #020617 void, blue #3B82F6 edge light on paper,
 cyan #0EA5E9 rim on the final card. Volumetric haze, film grain.
 ```
 
-### Shot 4 — ZANE / المساعد الذكي (0:10–0:14) · text-to-video
+### Shot 4 — ZANE / the AI assistant (0:10–0:14) · text-to-video
 
 ```
 Abstract representation of artificial intelligence, no face, no robot,
@@ -111,9 +111,9 @@ Feeling: intelligence explaining, not intelligence surveilling. Calm.
 Deep navy #020617, blue #3B82F6 filaments. Anamorphic, shallow DOF.
 ```
 
-> **ملاحظة:** لا تطلب روبوتاً. عندك mascot خاص بالمشروع (`LoginRobot.tsx` + `ai-robo.lottie`) — ضعه كطبقة Lottie فوق هذه اللقطة في المونتاج، أفضل بكثير من روبوت مهلوس.
+> **Note:** do not request a robot. The project has its own mascot (`LoginRobot.tsx` + `ai-robo.lottie`) — overlay it as a Lottie layer on this shot in the edit; far better than a hallucinated robot.
 
-### Shot 5 — الكورسات والمحاضرات (0:14–0:18) · image-to-video (ابدأ من screenshot لصفحة الكورسات)
+### Shot 5 — courses and lectures (0:14–0:18) · image-to-video (start from a courses-page screenshot)
 
 ```
 A laptop on a clean wooden desk in a dim room, screen bright, viewed from
@@ -127,7 +127,7 @@ Navy #020617 room, blue #3B82F6 screen spill, one warm #F59E0B
 practical light in the deep background bokeh.
 ```
 
-### Shot 6 — الاختبارات والثقة (0:18–0:22) · text-to-video
+### Shot 6 — quizzes and confidence (0:18–0:22) · text-to-video
 
 ```
 Medium close-up, same student, now in a bright university library by day.
@@ -141,7 +141,7 @@ a single amber #F59E0B highlight on his shoulder from a warm lamp.
 Mood: quiet competence. NOT celebration, NOT fist-pumping.
 ```
 
-### Shot 7 — النتيجة (0:22–0:26) · text-to-video
+### Shot 7 — the result (0:22–0:26) · text-to-video
 
 ```
 Wide cinematic shot. The same student walks with easy confidence down a
@@ -155,9 +155,9 @@ in the depths of the corridor, amber #F59E0B in the light shaft only.
 Anamorphic 35mm, shallow DOF, gentle lens flare. Film grain.
 ```
 
-### Shot 8 — الخاتمة (0:26–0:30) · plate فقط
+### Shot 8 — the outro (0:26–0:30) · plate only
 
-**لا تولّد اللوجو أو الرابط بالـ AI أبداً.** ولّد خلفية متحركة نظيفة فقط:
+**Never generate the logo or the URL with AI.** Generate only a clean animated background:
 
 ```
 Abstract seamless looping background, no subjects, no text, no logos.
@@ -168,13 +168,13 @@ Camera: perfectly static. Extremely slow, calm, hypnotic motion.
 Feels like a premium software brand end card. Empty centre for a logo.
 ```
 
-ثم في المونتاج فوقها:
-- `logo_AR.webp` من `apps/web/public/` — يظهر بـ fade + scale من 0.96 إلى 1.00
-- `مسار إكس` بخط **Almarai Bold**
+Then in the edit, on top of it:
+- `logo_AR.webp` from `apps/web/public/` — fade in + scale from 0.96 to 1.00
+- `مسار إكس` in **Almarai Bold**
 - `masarx.vercel.app`
-- شارة صغيرة: `مجاني بالكامل` (هذه مدعومة فعلياً — `downloads.json` ينص: "Yes, 100%. Masar X is a free learning tool for students.")
+- a small badge: `مجاني بالكامل` (this one is factually supported — `downloads.json` states: "Yes, 100%. Masar X is a free learning tool for students.")
 
-### Negative prompt — الصقه في كل لقطة
+### Negative prompt — paste into every shot
 
 ```
 text, letters, words, Arabic text, English text, subtitles, captions,
@@ -187,39 +187,43 @@ bounce easing, elastic motion, 3D render look, cartoon, anime
 
 ---
 
-## 3. النصوص العربية — تُركَّب في المونتاج
+## 3. The Arabic texts — composited in the edit
 
-خط العناوين: **Almarai ExtraBold (800)** · خط الفرعي: **Almarai Bold (700)** · الإنجليزي: **Inter**
+Headline font: **Almarai ExtraBold (800)** · subhead font: **Almarai Bold (700)** · English: **Inter**
 
-قاعدتان من `DESIGN.md` احترمهما: line-height للعنوان العربي **لا يقل عن 1.3**، ولا تستخدم `letter-spacing` سالباً على العربية أبداً — يكسر اتصال الحروف.
+Two rules from `DESIGN.md` to respect: the Arabic headline **line-height must be at least 1.3**, and never use negative `letter-spacing` on Arabic — it breaks glyph joining.
 
-| التوقيت | فوق اللقطة | النص |
+The on-screen copy itself is the Arabic ad script (product content, kept verbatim):
+
+| Timing | Over shot | Text |
 |---|---|---|
-| 0:01–0:03 | 1 | `الساعة ٢ فجراً.` ← ثم `والمنهج كله لسه.` |
+| 0:01–0:03 | 1 | `الساعة ٢ فجراً.` ← then `والمنهج كله لسه.` |
 | 0:04–0:06 | 2 | `مسار إكس` |
-| 0:07–0:10 | 3 | `كل ملخصاتك.` / سطر ثاني كهرماني: `في مكان واحد.` |
-| 0:11–0:14 | 4 | `زين — مساعدك الذكي` / فرعي: `يشرح لك، مش بس يجاوب.` |
+| 0:07–0:10 | 3 | `كل ملخصاتك.` / amber second line: `في مكان واحد.` |
+| 0:11–0:14 | 4 | `زين — مساعدك الذكي` / sub: `يشرح لك، مش بس يجاوب.` |
 | 0:15–0:18 | 5 | `كورسات ومحاضرات منظّمة` |
 | 0:19–0:22 | 6 | `اختبر نفسك. اعرف مستواك.` |
-| 0:23–0:26 | 7 | `طريقك للتفوق الأكاديمي.` ← وهذا هو الوصف الرسمي للمنصة حرفياً من `metadata.json` |
-| 0:27–0:30 | 8 | لوجو + `مسار إكس` + `masarx.vercel.app` + `ابدأ مجاناً` |
+| 0:23–0:26 | 7 | `طريقك للتفوق الأكاديمي.` ← this is the platform's official description, verbatim from `metadata.json` |
+| 0:27–0:30 | 8 | logo + `مسار إكس` + `masarx.vercel.app` + `ابدأ مجاناً` |
 
-حركة النص: `opacity 0→1` مع `translateY 16px→0`، مدة **0.35s**، easing `cubic-bezier(0.4, 0, 0.2, 1)`.
-**ممنوع** bounce أو elastic أو spring — هذا نص صريح في دليل تصميم المشروع، والإعلانان السابقان في المستودع خالفاه.
+Text motion: `opacity 0→1` with `translateY 16px→0`, duration **0.35s**, easing `cubic-bezier(0.4, 0, 0.2, 1)`.
+**No** bounce, elastic, or spring — this is explicit in the project's design guide, and the previous two ads in the repo violated it.
 
-اتجاه الحركة في RTL: النص يدخل من **اليمين** لا اليسار.
+RTL motion direction: text enters from the **right**, not the left.
 
-### تحذير مهم على المحتوى
+### Important content warning
 
-الإعلانان الموجودان في المستودع (`masarx-remotion-ad` و `masarx-video-ad`) يستخدمان أرقاماً **لا يوجد لها أي مصدر في المشروع**: `10k+ طالب نشط`، `أكثر من ٤٠ جامعة`، `2M+ ملخص`، `98% رضا`، وشهادة منسوبة لـ "أحمد، هندسة". هذه أرقام مُختلقة. لا تضعها في إعلان عام — إعلان كاذب الأرقام يضرّك قانونياً وسمعةً. استبدلها بما هو صحيح فعلاً: مجاني · عربي وإنجليزي · يعمل بدون إنترنت على تطبيق الديسكتوب.
+The two ads already in the repo (`masarx-remotion-ad` and `masarx-video-ad`) use numbers **with no source anywhere in the project**: `10k+ active students`, `40+ universities`, `2M+ summaries`, `98% satisfaction`, and a testimonial attributed to "Ahmed, Engineering". These are fabricated numbers. Never put them in a public ad — false advertising hurts you legally and reputationally. Replace them with what is actually true: free · Arabic and English · works offline on the desktop app.
 
 ---
 
-## 4. الصوت
+## 4. Audio
 
-### التعليق الصوتي (اختياري — الإعلان يعمل بدون تعليق أيضاً)
+### Voice-over (optional — the ad also works without it)
 
-صوت شاب عربي، عشرينات، هادئ وواثق، بلا مبالغة إعلانية. لهجة مصرية بيضاء أو فصحى مخفّفة.
+Young Arab male voice, twenties, calm and confident, no hard-sell delivery. Neutral Egyptian dialect or light Modern Standard Arabic.
+
+The voice-over script is the Arabic ad script (product content, kept verbatim):
 
 ```
 (0:01) الساعة اتناشر... واحدة... اتنين. والمنهج زي ما هو.
@@ -231,9 +235,9 @@ bounce easing, elastic motion, 3D render look, cartoon, anime
 (0:28) مسار إكس. مجاني. ابدأ اليوم.
 ```
 
-أدوات مناسبة للعربية: ElevenLabs (Multilingual v2) أو Speechify.
+Suitable tools for Arabic: ElevenLabs (Multilingual v2) or Speechify.
 
-### الموسيقى
+### Music
 
 ```
 Cinematic minimal electronic. Starts sparse: single sustained low synth pad
@@ -244,23 +248,23 @@ No vocals. No trap hats. No epic trailer braams. 90 BPM.
 Reference feel: Apple / Notion / Linear product film.
 ```
 
-المستودع فيه `masarx-remotion-ad/audio/bgm.wav` (32 ثانية، أُنتج بـ FFmpeg) — قابل لإعادة الاستخدام كـ scratch track أثناء المونتاج.
+The repo has `masarx-remotion-ad/audio/bgm.wav` (32 seconds, produced with FFmpeg) — reusable as a scratch track while editing.
 
-SFX: whoosh خفيف جداً عند كل انتقال، وclick واحد عند ظهور اللوجو. لا أكثر.
+SFX: a very light whoosh on each transition, and one click when the logo appears. Nothing more.
 
 ---
 
-## 5. سلسلة الإنتاج العملية
+## 5. The practical production pipeline
 
-1. **الصور المرجعية** — التقط screenshots من `masarx.vercel.app` بالوضع الليلي: الرئيسية، صفحة المواد، محادثة زين، صفحة الاختبارات. هذه ستُركّب على الشاشات لاحقاً.
-2. **first frames** — للمشاهد 2 و 5، ركّب الـ screenshot على صورة موبايل/لابتوب (Photoshop أو Canva)، صدّرها PNG.
-3. **التوليد** — Veo 3 أو Sora 2 للمشاهد بلا شاشة (1، 3، 4، 6، 7، 8). Runway Gen-4 أو Kling image-to-video للمشهد 2 و 5.
-4. **ولّد 3–4 نسخ من كل لقطة.** معدل النجاح في الفيديو AI حوالي 1 من 4. هذه ليست علامة على prompt سيئ — هي طبيعة الأداة.
-5. **التدرّج اللوني** — وحّد كل اللقطات على نفس الـ grade في CapCut/Premiere حتى تبدو من فيلم واحد. هذه الخطوة هي الفرق بين "مجموعة كليبات AI" و"إعلان".
-6. **النص واللوجو** — الطبقة الأخيرة.
-7. **الصوت** — موسيقى ثم تعليق ثم SFX.
-8. **التصدير** — H.264، CRF 18، `+faststart`. نسخة 1080×1920 للريلز: أعد تأطير كل لقطة، وارفع حجم الخط 1.4×.
+1. **Reference images** — take screenshots of `masarx.vercel.app` in dark mode: home, subjects page, a ZANE chat, the quizzes page. These get composited onto the screens later.
+2. **First frames** — for shots 2 and 5, composite the screenshot onto a phone/laptop image (Photoshop or Canva), export as PNG.
+3. **Generation** — Veo 3 or Sora 2 for the screenless shots (1, 3, 4, 6, 7, 8). Runway Gen-4 or Kling image-to-video for shots 2 and 5.
+4. **Generate 3–4 takes per shot.** The video-AI success rate is roughly 1 in 4. That is not a sign of a bad prompt — it is the nature of the tool.
+5. **Colour grading** — unify every shot to the same grade in CapCut/Premiere so it reads as one film. This step is the difference between "a pile of AI clips" and "an ad".
+6. **Text and logo** — the final layer.
+7. **Audio** — music, then voice-over, then SFX.
+8. **Export** — H.264, CRF 18, `+faststart`. For the 1080×1920 Reels variant: reframe every shot and scale fonts 1.4×.
 
-## نسخة 6 ثوان (للإعلانات المدفوعة)
+## The 6-second version (for paid placements)
 
-المشهد 2 (1.5s) → المشهد 3 (1.5s) → المشهد 4 (1.5s) → المشهد 8 (1.5s). نص واحد فقط: `كل مقررك. ومساعد ذكي.` ثم اللوجو والرابط.
+Shot 2 (1.5s) → shot 3 (1.5s) → shot 4 (1.5s) → shot 8 (1.5s). One text line only: `كل مقررك. ومساعد ذكي.` then the logo and URL.

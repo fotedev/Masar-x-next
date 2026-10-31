@@ -1,33 +1,33 @@
 flowchart TD
 
 %% --- ACTORS ---
-User["Users (المستخدمين)"]
-RA(["Root Admin (مدير النظام)"])
+User["Users"]
+RA(["Root Admin"])
 
 %% --- CLIENT LAYER (NEXT.JS) ---
-subgraph ClientApp ["Next.js App Layer (واجهة المستخدم)"]
+subgraph ClientApp ["Next.js App Layer (UI)"]
     direction TB
     I18n{"I18n Middleware<br/>Detect Locale"}
-    
-    subgraph PublicRoutes ["Public (عام)"]
-        Home["/ (Home - الرئيسية)"]
-        News["/news (الأخبار)"]
+
+    subgraph PublicRoutes ["Public"]
+        Home["/ (Home)"]
+        News["/news (News)"]
     end
 
-    subgraph ProtectedRoutes ["Authenticated (محمي)"]
+    subgraph ProtectedRoutes ["Authenticated"]
         direction TB
-        Profile["/profile (الملف الشخصي)"]
-        
-        subgraph AcademicHub ["Academic Hub (المحور الأكاديمي)"]
-            Subjects["/subjects (المواد)"]
-            Courses["/courses (الدورات)"]
-            Quizzes["/quizzes (الاختبارات)"]
+        Profile["/profile (Profile)"]
+
+        subgraph AcademicHub ["Academic Hub"]
+            Subjects["/subjects (Subjects)"]
+            Courses["/courses (Courses)"]
+            Quizzes["/quizzes (Quizzes)"]
         end
-        
-        AI_Assist["/ai-assistant (المساعد الذكي)"]
+
+        AI_Assist["/ai-assistant (AI Assistant)"]
         TRW["/trw (Premium Studies)"]
-        
-        subgraph AdminPortal ["Admin Dashboard (لوحة التحكم)"]
+
+        subgraph AdminPortal ["Admin Dashboard"]
             Moderation["/admin/moderation"]
             Settings["/admin/settings"]
         end
@@ -38,32 +38,32 @@ end
 Auth_Middleware{{"App Router Middleware<br/>(Auth Check)"}}
 
 %% --- BACKEND SERVICES LAYER (SUPABASE) ---
-subgraph SupabaseLayer ["Supabase Platform (منصة الخدمات الخلفية)"]
+subgraph SupabaseLayer ["Supabase Platform (backend services)"]
     direction TB
-    
+
     Auth_Service["Supabase Auth<br/>(JWT, RLS)"]
     EF_Gateway["Supabase Edge Functions Gateway"]
-    
-    subgraph EdgeFunctions ["Edge Functions (وظائف الحافة)"]
+
+    subgraph EdgeFunctions ["Edge Functions"]
         direction LR
         Func_PDF["process-pdf"]
         Func_Upload["upload-file"]
         Func_Email["auth-hook-email"]
         Func_Chat["summarize-chat"]
     end
-    
+
     DB_Gateway["PostgreSQL Gateway"]
 end
 
 %% --- DATA STORAGE LAYER ---
-subgraph StorageLayer ["Data & Assets (البيانات والوسائط)"]
+subgraph StorageLayer ["Data & Assets"]
     direction TB
-    
+
     SupaStorage[("Supabase Storage<br/>Avatars, TempFiles")]
-    
-    subgraph PostgreSQL ["PostgreSQL Schema (قاعدة البيانات)"]
+
+    subgraph PostgreSQL ["PostgreSQL Schema (database)"]
         direction TB
-        
+
         subgraph Schema_Identity ["Identity & Roles"]
             profiles["profiles (id, full_name, role, department_id)"]
             admins["admins (user_id, role, permissions)"]
@@ -82,13 +82,13 @@ subgraph StorageLayer ["Data & Assets (البيانات والوسائط)"]
             quizzes_db["quizzes (id, subject_id, course_id)"]
             reviews["reviews (id, user_id, video_id, rating)"]
         end
-        
+
         PlatformSettings[("platform_settings")]
     end
 end
 
 %% --- EXTERNAL APIS ---
-subgraph ExternalAPIs ["External APIs (خدمات خارجية)"]
+subgraph ExternalAPIs ["External APIs"]
     direction TB
     CDN_Cloudinary(("Cloudinary<br/>Media Assets"))
     SMTP_Brevo(("Brevo<br/>Transactional Email"))

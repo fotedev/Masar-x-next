@@ -229,7 +229,7 @@ This spec is **not** done when:
 
 Per the user direction that opened this spec:
 
-> "اشتغل على branch جديد: refactor/decouple-trw-subjects عشان نحافظ على ثبات الـ main."
+> "Work on a new branch: refactor/decouple-trw-subjects, to keep main stable." — *owner directive, translated from Arabic*
 
 The Phase 1 commit is `fbeaf83` on `origin/refactor/decouple-trw-subjects`. The new tests from this spec are committed on the **same branch**, ideally fixup'd into `fbeaf83` so the PR diff cleanly shows "refactor + safety net" together. Do not push a separate branch.
 

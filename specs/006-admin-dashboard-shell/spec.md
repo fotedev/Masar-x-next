@@ -6,7 +6,7 @@
 
 **Status**: Approved (plan mode — user ratified base strategy, IA tree, agy authorization on 2026-09-14)
 
-**Input**: User brief "Admin Dashboard UI/UX Redesign & Layout Refactoring (Desktop + Mobile Responsive)" with screenshots (`sandbox/admin-screenshots/`, 2026-09-14), plus a follow-up Arabic directive: the standalone Summaries feature is retired from the admin dashboard ("لا أريد ميزة الملخصات") — its content belongs inside Subjects/Lectures as attachments; the sidebar IA follows an explicit user-provided tree.
+**Input**: User brief "Admin Dashboard UI/UX Redesign & Layout Refactoring (Desktop + Mobile Responsive)" with screenshots (`sandbox/admin-screenshots/`, 2026-09-14), plus a follow-up Arabic directive: the standalone Summaries feature is retired from the admin dashboard ("I do not want a Summaries feature" — owner directive, translated from Arabic) — its content belongs inside Subjects/Lectures as attachments; the sidebar IA follows an explicit user-provided tree.
 
 ## Context & Problem Statement
 
