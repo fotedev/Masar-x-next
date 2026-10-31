@@ -42,15 +42,16 @@ insert into auth.users
 values
   ('00000000-0000-0000-0000-000000000000',
    '00000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated',
-   'rls-user-a@example.com', crypt('rls-harness-only', gen_random_uuid()),
+   'rls-user-a@example.com', crypt('rls-harness-only', gen_random_uuid()::text),
    now(), '{"provider":"email","providers":["email"]}', '{}', now(), now()),
   ('00000000-0000-0000-0000-000000000000',
    '00000000-0000-0000-0000-0000000000a2', 'authenticated', 'authenticated',
-   'rls-user-b@example.com', crypt('rls-harness-only', gen_random_uuid()),
+   'rls-user-b@example.com', crypt('rls-harness-only', gen_random_uuid()::text),
    now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
-insert into public.courses (id, title)
-values ('00000000-0000-0000-0000-0000000000c1', 'RLS harness course');
+insert into public.courses (id, title, instructor_id)
+values ('00000000-0000-0000-0000-0000000000c1', 'RLS harness course',
+        '00000000-0000-0000-0000-0000000000a1');
 ```
 
 The `auth.users` insert also creates empty `profiles` rows via the
