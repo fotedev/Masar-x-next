@@ -22,7 +22,7 @@
 
 A student opens a subject in the desktop app. The lectures and summaries for that subject appear in a fixed list along one edge of the window. Selecting a lecture renders it immediately in the centre of the same window — no page navigation, no back button, no browser tab. The student opens the assistant panel and asks a question about the material currently on screen; the assistant already knows which lecture is open, so the student never has to describe or re-upload it. The student switches to the next lecture and the assistant follows the change.
 
-**Why this priority**: This is the entire reason a student would choose the desktop app over the website. It removes the tab-switching that the transcript identifies as the core friction ("تحل أزمة التنقل بين التبويبات"), and it is the one story that delivers standalone value even if nothing else in this feature ships.
+**Why this priority**: This is the entire reason a student would choose the desktop app over the website. It removes the tab-switching that the transcript identifies as the core friction ("it solves the tab-switching problem" — owner quote, translated from Arabic), and it is the one story that delivers standalone value even if nothing else in this feature ships.
 
 **Independent Test**: Launch the desktop app, open a subject with at least two lectures, select each in turn, confirm the reader content changes without a navigation event, open the assistant panel, and confirm the panel states which lecture it is scoped to and that this text tracks the selection.
 
@@ -42,7 +42,7 @@ A student opens a subject in the desktop app. The lectures and summaries for tha
 
 A student who uses Discord and VS Code launches the desktop app. Nothing about it reads as "a website in a window": text does not turn blue when they double-click a button label, dragging an image does not peel a translucent ghost off the screen, right-clicking does not offer "Reload" or "Inspect", the window itself never scrolls as one long page, and promotional "Download the desktop app" surfaces and the long web footer are simply not there — they are already in the app.
 
-**Why this priority**: This is the complaint that opened the conversation ("بحس اني فاتح الموقع بس دايس f11"). It is a perception problem, so it is broad and shallow: many small removals rather than one feature. It ranks below Story 1 because a workspace that works still delivers value with browser habits intact, whereas polished chrome around the old single-column page does not.
+**Why this priority**: This is the complaint that opened the conversation ("I feel like I am opening the website but pressing f11" — owner quote, translated from Arabic). It is a perception problem, so it is broad and shallow: many small removals rather than one feature. It ranks below Story 1 because a workspace that works still delivers value with browser habits intact, whereas polished chrome around the old single-column page does not.
 
 **Independent Test**: In the desktop app, attempt each browser-flavoured gesture (drag-select a label, drag an image, right-click, scroll past the viewport, look for a download banner and the footer) and confirm each is absent — while confirming the same gestures still work normally in the browser build.
 

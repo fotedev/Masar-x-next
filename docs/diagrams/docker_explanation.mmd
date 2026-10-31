@@ -1,21 +1,21 @@
 graph TD
-    subgraph "الجهاز المحلي (جهازك)"
-        PC[الكمبيوتر الشخصي]
+    subgraph "Local machine (your computer)"
+        PC[Personal computer]
         subgraph "Docker"
-            ShadowDB[قاعدة بيانات وهمية - Shadow DB]
-            Container[حاوية Supabase]
+            ShadowDB[Shadow database - Shadow DB]
+            Container[Supabase container]
         end
-        Migrations[ملفات الميجريشن - migrations/*.sql]
+        Migrations[Migration files - migrations/*.sql]
     end
 
-    subgraph "السحابة (Online)"
-        RemoteDB[قاعدة بيانات Supabase الحقيقية]
+    subgraph "Cloud (online)"
+        RemoteDB[Real Supabase database]
     end
 
     PC -->|supabase db pull| ShadowDB
-    Migrations -->|مقارنة| ShadowDB
-    RemoteDB -->|جلب الهيكل| ShadowDB
-    ShadowDB -->|إنشاء فرق| PC
+    Migrations -->|compare| ShadowDB
+    RemoteDB -->|fetch structure| ShadowDB
+    ShadowDB -->|generate diff| PC
 
     style PC fill:#f9f,stroke:#333,stroke-width:2px
     style Docker fill:#0db7ed,stroke:#fff,stroke-width:2px

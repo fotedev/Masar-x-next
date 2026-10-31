@@ -19,7 +19,7 @@
 
 ## 1. Relationship to spec 015 (re-baseline rationale)
 
-015 targeted one refactor's regression vectors. The owner's ask — "المشروع يتم تغطيته بالكامل بالاختبارات" — is broader. Executing 015 as written against current code is impossible (its contracts assert `is_academic` is *gone*; current code still has it at `useSubjects.ts:76`, `SubjectsGrid.tsx:13`, `non-academic/[subject]/page.tsx:54`). Decision: campaign on current code; 015's TRW tests wait for the merge. Until then, `useSubjects`/`SubjectsGrid` get **current-state** regression locks documenting the `is_academic` behavior that actually ships.
+015 targeted one refactor's regression vectors. The owner's ask — "the project is to be covered by tests in full" (owner directive, translated from Arabic) — is broader. Executing 015 as written against current code is impossible (its contracts assert `is_academic` is *gone*; current code still has it at `useSubjects.ts:76`, `SubjectsGrid.tsx:13`, `non-academic/[subject]/page.tsx:54`). Decision: campaign on current code; 015's TRW tests wait for the merge. Until then, `useSubjects`/`SubjectsGrid` get **current-state** regression locks documenting the `is_academic` behavior that actually ships.
 
 ## 2. Design
 

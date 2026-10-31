@@ -1,5 +1,5 @@
 # Complete Setup Instructions for Masar X
-*آخر تحديث: 12 مارس 2026*
+*Last updated: March 12, 2026*
 
 ## Recent edits (12 Mar 2026)
 - **Localization Sync**: Finalized all translation keys for Admin Dashboard and Appeals system.
@@ -94,21 +94,21 @@ Open `src/config/subjects.config.ts` and customize:
 ```typescript
 // Change college name
 export const COLLEGE_CONFIG = {
-    name: "جامعة [اسم جامعتك]", // Change to your college name
+    name: "University [your university name]", // Change to your college name
     logo: "/logo.png"
 };
 
 // Customize Semester 1 subjects
 export const SEMESTER_1_SUBJECTS: Subject[] = [
-    { id: "1", name: "[اسم المادة الأولى]", semester: 1 },
-    { id: "2", name: "[اسم المادة الثانية]", semester: 1 },
+    { id: "1", name: "[Subject 1 name]", semester: 1 },
+    { id: "2", name: "[Subject 2 name]", semester: 1 },
     // Add your semester 1 subjects...
 ];
 
 // Customize Semester 2 subjects  
 export const SEMESTER_2_SUBJECTS: Subject[] = [
-    { id: "12", name: "[اسم المادة الأولى]", semester: 2 },
-    { id: "13", name: "[اسم المادة الثانية]", semester: 2 },
+    { id: "12", name: "[Subject 1 name]", semester: 2 },
+    { id: "13", name: "[Subject 2 name]", semester: 2 },
     // Add your semester 2 subjects...
 ];
 ```
@@ -151,10 +151,10 @@ npx supabase db pull
 ```
 
 ### Security & Ops updates (Feb 2026)
-- أُجريت تحديثات أمنيّة وتشغيلية هامة — تأكد من تطبيقها في بيئتك:
-  1. شغّل جميع الميجرِيشنز الجديدة (محلياً أو عن بُعد) للتأكد من وجود: قيد فريد على `rate_limits(identifier, endpoint)`, جدول `system_logs`, وعمود `token_hash` في `password_reset_tokens`.
-  2. تأكد أن سياسة رفع الملفات لـ`summaries-pdfs` لم تعد تسمح بالرفع المجهول (فقط المستخدمون المصادقون).
-  3. أعد نشر جميع Supabase Edge Functions بعد تطبيق الميجرِيشنز:
+- Important security and operational updates were applied — make sure they are in place in your environment:
+  1. Run all new migrations (locally or remotely) to confirm the presence of: a unique constraint on `rate_limits(identifier, endpoint)`, the `system_logs` table, and the `token_hash` column in `password_reset_tokens`.
+  2. Confirm that the `summaries-pdfs` upload policy no longer allows anonymous uploads (authenticated users only).
+  3. Redeploy all Supabase Edge Functions after applying the migrations:
      ```bash
      npx supabase functions deploy gemini-chat
      npx supabase functions deploy upload-avatar
@@ -167,7 +167,7 @@ npx supabase db pull
      npx supabase functions deploy reset-password
      npx supabase functions deploy summarize-chat
      ```
-  4. اختبر سير عمل إعادة تعيين كلمة المرور والتأكد من أن `token_hash` يُستخدم بشكل صحيح قبل إزالة أي تخزين نصي للـtoken.
+  4. Test the password-reset flow and confirm `token_hash` is used correctly before removing any plaintext token storage.
 #### Database Schema Overview:
 - **Core Tables**: `profiles`, `admins`, `summaries`, `courses`, `enrollments`, `quizzes`
 - **Content Tables**: `course_summaries`, `course_videos`, `course_files`
