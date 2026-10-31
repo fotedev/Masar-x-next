@@ -13,7 +13,7 @@ export function useCoursesFilter({ courses, searchTerm, filter }: UseCoursesFilt
       const instructorName = course.instructor_name || "";
       const matchesSearch =
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.description ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         instructorName.toLowerCase().includes(searchTerm.toLowerCase());
 
       const price = typeof course.price === "number" ? course.price : Number(course.price);

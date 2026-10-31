@@ -293,24 +293,39 @@ BEGIN;
   END
   $t32a$;
 
+  -- 3.2b summaries — crowdsourced writes (summaries_insert_authenticated):
+  -- an authenticated user CAN insert their OWN summary; the WITH CHECK
+  -- (auth.uid() = user_id) must reject inserting under another user's id.
+  -- Required NOT NULL columns (prod shape): subject, year, department, content.
   DO $t32b$
   BEGIN
-    BEGIN
-      INSERT INTO public.summaries (title, user_id)
-      VALUES ('rls-harness', '00000000-0000-0000-0000-0000000000a1');
-      RAISE EXCEPTION 'RLS VERIFY FAILED: summaries allowed a non-admin INSERT (no insert policy present)';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE '3.2 summaries PASS: non-admin insert rejected as expected';
-      WHEN foreign_key_violation THEN
-        RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: user A missing from auth.users - apply the seed in supabase/tests/README.md and re-run';
-    END;
+    INSERT INTO public.summaries (title, subject, year, department, content, user_id)
+    VALUES ('rls-harness', 'rls-harness-subject', '1', 'rls-harness-department',
+            'rls-harness-content', '00000000-0000-0000-0000-0000000000a1');
+    RAISE NOTICE '3.2 summaries PASS: own-summary insert allowed (crowdsourced writes)';
+  EXCEPTION
+    WHEN foreign_key_violation THEN
+      RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: user A missing from auth.users - apply the seed in supabase/tests/README.md and re-run';
   END
   $t32b$;
 
-  -- 3.3 quizzes -------------------------------------------------------------
-  -- Public read, admin-managed writes: non-admin INSERT must fail. (No
-  -- user_id column, so this block has no FK dependency.)
+  DO $t32c$
+  BEGIN
+    BEGIN
+      INSERT INTO public.summaries (title, subject, year, department, content, user_id)
+      VALUES ('rls-harness-intruder', 'rls-harness-subject', '1', 'rls-harness-department',
+              'rls-harness-content', '00000000-0000-0000-0000-0000000000a2');
+      RAISE EXCEPTION 'RLS VERIFY FAILED: summaries allowed inserting under another user id';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE '3.2 summaries PASS: cross-user insert rejected as expected';
+    END;
+  END
+  $t32c$;
+
+  -- 3.3 quizzes — crowdsourced writes ("Users can insert own quizzes"): own
+  -- insert allowed (user_id defaults to auth.uid()), cross-user insert
+  -- rejected by the WITH CHECK.
   DO $t33a$
   DECLARE
     n int;
@@ -322,15 +337,23 @@ BEGIN;
 
   DO $t33b$
   BEGIN
-    BEGIN
-      INSERT INTO public.quizzes (title) VALUES ('rls-harness');
-      RAISE EXCEPTION 'RLS VERIFY FAILED: quizzes allowed a non-admin INSERT';
-    EXCEPTION
-      WHEN insufficient_privilege THEN
-        RAISE NOTICE '3.3 quizzes PASS: non-admin insert rejected as expected';
-    END;
+    INSERT INTO public.quizzes (title) VALUES ('rls-harness-own');
+    RAISE NOTICE '3.3 quizzes PASS: own-quiz insert allowed (crowdsourced writes)';
   END
   $t33b$;
+
+  DO $t33c$
+  BEGIN
+    BEGIN
+      INSERT INTO public.quizzes (title, user_id)
+      VALUES ('rls-harness-intruder', '00000000-0000-0000-0000-0000000000a2');
+      RAISE EXCEPTION 'RLS VERIFY FAILED: quizzes allowed inserting under another user id';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE '3.3 quizzes PASS: cross-user insert rejected as expected';
+    END;
+  END
+  $t33c$;
 
   -- TODO(LIVE-JWT): admin write paths. Seed an admins row for user A, then
   -- re-run with A authenticated: INSERT/UPDATE/DELETE on courses, quizzes,
@@ -506,20 +529,32 @@ BEGIN;
   END
   $t36a$;
 
+  -- 3.6b notifications — notifications_insert_own exists on the live schema:
+  -- an authenticated user CAN insert their OWN notification row; the WITH
+  -- CHECK (auth.uid() = user_id) must reject inserting for another user.
   DO $t36b$
+  BEGIN
+    INSERT INTO public.notifications (user_id, title, message, type)
+    VALUES ('00000000-0000-0000-0000-0000000000a1', 'rls-harness', 'x', 'system');
+    RAISE NOTICE '3.6 notifications PASS: own-notification insert allowed (notifications_insert_own)';
+  EXCEPTION
+    WHEN foreign_key_violation THEN
+      RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: user A missing from auth.users - apply the seed in supabase/tests/README.md and re-run';
+  END
+  $t36b$;
+
+  DO $t36c$
   BEGIN
     BEGIN
       INSERT INTO public.notifications (user_id, title, message, type)
-      VALUES ('00000000-0000-0000-0000-0000000000a1', 'rls-harness', 'x', 'info');
-      RAISE EXCEPTION 'RLS VERIFY FAILED: notifications allowed a client INSERT (no insert policy exists)';
+      VALUES ('00000000-0000-0000-0000-0000000000a2', 'rls-harness', 'x', 'system');
+      RAISE EXCEPTION 'RLS VERIFY FAILED: notifications allowed inserting for another user id';
     EXCEPTION
       WHEN insufficient_privilege THEN
-        RAISE NOTICE '3.6 notifications PASS: client insert rejected as expected';
-      WHEN foreign_key_violation THEN
-        RAISE EXCEPTION 'RLS VERIFY INCONCLUSIVE: user A missing from auth.users - apply the seed in supabase/tests/README.md and re-run';
+        RAISE NOTICE '3.6 notifications PASS: cross-user insert rejected as expected';
     END;
   END
-  $t36b$;
+  $t36c$;
 
   -- 3.7 admins --------------------------------------------------------------
   -- The admins table is admin-only read. User A is not an admin here.
@@ -590,10 +625,19 @@ BEGIN;
       RAISE EXCEPTION 'RLS VERIFY FAILED: system_logs visible to non-admin (% rows)', n;
     END IF;
 
-    SELECT count(*) INTO n FROM public.rate_limits;
-    IF n <> 0 THEN
-      RAISE EXCEPTION 'RLS VERIFY FAILED: rate_limits visible to authenticated (% rows) - deny-all broken', n;
-    END IF;
+    -- rate_limits is deny-all: authenticated holds NO table grant, so the
+    -- denial itself (insufficient_privilege) is the passing posture — both
+    -- "an error" and "zero rows" mean the caller sees nothing.
+    BEGIN
+      SELECT count(*) INTO n FROM public.rate_limits;
+      IF n <> 0 THEN
+        RAISE EXCEPTION 'RLS VERIFY FAILED: rate_limits visible to authenticated (% rows) - deny-all broken', n;
+      END IF;
+      RAISE NOTICE '3.9 PASS: rate_limits returns zero rows for authenticated';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE '3.9 PASS: rate_limits denied to authenticated (no grant - deny-all)';
+    END;
 
     RAISE NOTICE '3.9 PASS: audit_logs, system_logs, rate_limits all invisible to authenticated';
   END
@@ -621,7 +665,7 @@ BEGIN;
 
     EXECUTE 'SELECT count(*) FROM public.quiz_attempts WHERE user_id IS NULL OR user_id <> $1'
        INTO n
-      USING '00000000-0000-0000-0000-0000000000a1';
+      USING '00000000-0000-0000-0000-0000000000a1'::uuid;
 
     IF n <> 0 THEN
       RAISE EXCEPTION 'RLS VERIFY FAILED: quiz_attempts exposed % rows not owned by the caller', n;

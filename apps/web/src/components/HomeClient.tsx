@@ -70,7 +70,8 @@ export default function HomeClient() {
   const displaySummaries = useMemo(() => {
     const approvedSummaries = (summaries as SummaryWithRatings[]).filter(
       (s: SummaryWithRatings) =>
-        s.status === "approved" && visibleSubjectSet.has(normalizeSubjectName(s.subject)),
+        s.status === "approved" &&
+        visibleSubjectSet.has(normalizeSubjectName(s.subject ?? "")),
     );
 
     const sortedSummaries = [...approvedSummaries].sort((a, b) => {
@@ -78,7 +79,8 @@ export default function HomeClient() {
       const ratingB = b.avg_rating || 0;
       if (ratingB !== ratingA) return ratingB - ratingA;
       return (
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b.created_at ?? 0).getTime() -
+        new Date(a.created_at ?? 0).getTime()
       );
     });
 

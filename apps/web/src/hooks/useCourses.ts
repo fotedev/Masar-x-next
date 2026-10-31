@@ -74,7 +74,7 @@ export function useCourses() {
           if (!validation.success) {
             logger.error(`Validation failed for course ${course.id}:`, validation.error.format());
             // Return existing structure as fallback but log the error
-            return courseToValidate as CourseWithInstructor;
+            return courseToValidate as unknown as CourseWithInstructor;
           }
 
           return validation.data as CourseWithInstructor;

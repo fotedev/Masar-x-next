@@ -366,11 +366,13 @@ export default function SummaryDetailPage() {
 
           <div className="mt-12 pt-8 border-t border-slate-100 dark:border-slate-800">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-              <p className="text-sm font-medium text-slate-400">
-                {t("detail.publishedOn", {
-                  date: formatDate(summary.created_at, { month: "long" }),
-                })}
-              </p>
+              {summary.created_at ? (
+                <p className="text-sm font-medium text-slate-400">
+                  {t("detail.publishedOn", {
+                    date: formatDate(summary.created_at, { month: "long" }),
+                  })}
+                </p>
+              ) : null}
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowAppealForm(true)}

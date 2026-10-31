@@ -47,13 +47,27 @@ describe("buildReviewInsert", () => {
 });
 
 describe("data access", () => {
-  it("fetchSummaryDetail reads summaries_with_ratings by id", async () => {
+  it("fetchSummaryDetail reads summaries_with_ratings by id and merges youtube_url from summaries", async () => {
     const chain = createSupabaseMock();
-    chain.respondWith({ data: { id: "s1", rating: 4.5 }, error: null });
+    chain.respondWith(
+      { data: { id: "s1", rating: 4.5 }, error: null },
+      { table: "summaries_with_ratings" },
+    );
+    chain.respondWith(
+      { data: { youtube_url: "https://youtu.be/x" }, error: null },
+      { table: "summaries" },
+    );
     const row = await fetchSummaryDetail(chain.supabase as never, "s1");
-    expect(row).toEqual({ id: "s1", rating: 4.5 });
+    // The view has no youtube_url column — the lib merges it from `summaries`.
+    expect(row).toEqual({ id: "s1", rating: 4.5, youtube_url: "https://youtu.be/x" });
     expect(chain.calls[0].table).toBe("summaries_with_ratings");
     expect(chain.calls.find((c) => c.method === "eq")!.args).toEqual(["id", "s1"]);
+  });
+
+  it("fetchSummaryDetail returns null without a base lookup when the view row is absent", async () => {
+    const chain = createSupabaseMock();
+    chain.respondWith({ data: null, error: null });
+    expect(await fetchSummaryDetail(chain.supabase as never, "missing")).toBeNull();
   });
 
   it("fetchSummaryReviews orders review_details newest-first", async () => {

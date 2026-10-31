@@ -55,11 +55,11 @@ export function useEditSummary({
   useEffect(() => {
     if (summary && isOpen) {
       setFormData({
-        title: summary.title,
-        subject: summary.subject,
-        year: summary.year,
-        department: summary.department,
-        content: summary.content,
+        title: summary.title ?? "",
+        subject: summary.subject ?? "",
+        year: summary.year ?? "",
+        department: summary.department ?? "",
+        content: summary.content ?? "",
       });
       setSemester(1);
       setPdfFile(null);
@@ -131,7 +131,7 @@ export function useEditSummary({
         pdfUrl = driveLink.trim() || null;
       }
 
-      await onSave(summary.id, {
+      await onSave(summary.id ?? "", {
         title: formData.title,
         subject: formData.subject,
         year: formData.year,

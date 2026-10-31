@@ -30,7 +30,9 @@ export function ReviewSection({
     if (!user?.id) return;
 
     const reviewData: ReviewInsert = {
-      comment: content,
+      // The real column is `content` (the old hand-written type said
+      // `comment`, which PostgREST rejects — spec 031 truthful types).
+      content,
       user_id: user.id,
       rating,
       summary_id: contentType === "summary" ? contentId : undefined,
