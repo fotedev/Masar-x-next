@@ -90,9 +90,13 @@ coverage/
 # Agent file locking (I14 branch isolation & multi-agent safety) — each
 # agent/session writes a claim file (.agents/<task-name>.md: branch, locked
 # paths, status) before editing and deletes it after commit+push. Claims are
-# machine-local coordination only, never committed. The whole .agents/ tree
-# (skills, agent defs, claims) is local-only.
-.agents/
+# machine-local coordination only, never committed. The rest of .agents/ is
+# local-only too, EXCEPT curated, repo-shipped skills (spec-030 /factory):
+# only .agents/skills/factory/** is tracked; speckit's local skills stay ignored.
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/factory/
 
 # Database and Supabase
 supabase/.temp/
