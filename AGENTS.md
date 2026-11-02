@@ -21,6 +21,16 @@
 
 No trivial/cosmetic/refactor work. Allowed only: (1) blocking bugs, (2) core study-flow stability, (3) login + essential data, (4) deployment readiness. Lifted only by explicit owner decision.
 
+## Work Protocol (every code-touching request — always-on router)
+
+Classify before touching code; state the class in one line and WAIT for the owner's OK:
+- Question / explanation / docs-only → answer directly, no pipeline.
+- Light change (≤3 files, no auth/payments/RLS/migrations, no new deps, no API-contract change) → LIGHT path.
+- Anything else, or any bug with unclear cause → FULL path → follow `specs/030-factory-workflow/spec.md` (read it first).
+
+LIGHT: one-paragraph spec → owner "ok" → implement (worktree + claim) → verify → PR.
+Always, on both paths: bugs get a failing test BEFORE the fix · owner gates are mandatory, never self-approved · spec conflict → stop and report, don't improvise · stay inside task scope · never merge (I14/I16) · review in a fresh context, separate from the coder. P0 incidents → direct fix under MVP-Lock rules.
+
 ---
 
 ## References
