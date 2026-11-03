@@ -162,25 +162,47 @@ export default function CourseDetailPage() {
           instructor_name: typedCourseData.profiles?.display_name || t("fallback.instructor"),
         });
 
-        if (user) {
-          const { data: enrollmentData } = await supabase
-            .from("enrollments")
-            .select("*")
-            .eq("student_id", user.id)
-            .eq("course_id", courseId)
-            .maybeSingle();
-          setEnrollment(enrollmentData);
-        }
+        // Spec 034 Track E (audit QUERY-2): the five follow-up reads are
+        // independent of each other (only the course fetch gated them via
+        // the publication check) — one round-trip instead of five serial
+        // awaits.
+        const [enrollmentRes, reviewsRes, summariesRes, videosRes, filesRes] =
+          await Promise.all([
+            user
+              ? supabase
+                  .from("enrollments")
+                  .select("*")
+                  .eq("student_id", user.id)
+                  .eq("course_id", courseId)
+                  .maybeSingle()
+              : Promise.resolve({ data: null }),
+            supabase
+              .from("review_details")
+              .select("id,rating,comment,created_at,full_name,username")
+              .eq("course_id", courseId)
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("course_summaries")
+              .select("*")
+              .eq("course_id", courseId)
+              .order("order_index", { ascending: true }),
+            supabase
+              .from("course_videos")
+              .select("*")
+              .eq("course_id", courseId)
+              .order("order_index", { ascending: true }),
+            supabase
+              .from("course_files")
+              .select("*")
+              .eq("course_id", courseId)
+              .order("order_index", { ascending: true }),
+          ]);
 
-        const { data: reviewsData } = await supabase
-          .from("review_details")
-          .select("*")
-          .eq("course_id", courseId)
-          .order("created_at", { ascending: false });
+        setEnrollment(enrollmentRes.data);
 
-        if (reviewsData) {
+        if (reviewsRes.data) {
           setReviews(
-            (reviewsData as ReviewDetailsRow[]).map((review) => ({
+            (reviewsRes.data as ReviewDetailsRow[]).map((review) => ({
               id: review.id,
               rating: review.rating,
               content: review.comment || undefined,
@@ -190,26 +212,9 @@ export default function CourseDetailPage() {
           );
         }
 
-        const { data: summariesData } = await supabase
-          .from("course_summaries")
-          .select("*")
-          .eq("course_id", courseId)
-          .order("order_index", { ascending: true });
-        if (summariesData) setSummaries(summariesData);
-
-        const { data: videosData } = await supabase
-          .from("course_videos")
-          .select("*")
-          .eq("course_id", courseId)
-          .order("order_index", { ascending: true });
-        if (videosData) setVideos(videosData);
-
-        const { data: filesData } = await supabase
-          .from("course_files")
-          .select("*")
-          .eq("course_id", courseId)
-          .order("order_index", { ascending: true });
-        if (filesData) setFiles(filesData);
+        if (summariesRes.data) setSummaries(summariesRes.data);
+        if (videosRes.data) setVideos(videosRes.data);
+        if (filesRes.data) setFiles(filesRes.data);
       }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error) || t("toasts.loadFailed"));
