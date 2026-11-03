@@ -32,8 +32,12 @@ in the gitignored sandbox preview. Students cannot reach any of it from the real
 3. **Nav + i18n (I3):** `materials` entry in `Header.tsx` `primaryNavItems` + `FooterLinks`;
    `packages/shared/src/messages/{ar,en}/materials.json` new namespace registered in
    `apps/web/src/i18n/request.ts` `MESSAGE_LOADERS`. Every user-facing string both locales.
-4. **Seed migration** `20261104000000_seed_real_exams.sql` (owner gates 2+3: visibility same
-   as existing approved quizzes; status `approved` immediately):
+4. **Seed migrations** (owner gates 2+3: visibility same as existing approved quizzes;
+   status `approved` immediately):
+   - `20261103222513_seed_real_exams.sql` + `..._part2a/2b/2c.sql`: 17 quizzes + 242
+     questions from the sandbox JSONs, one idempotent guarded CTE per quiz
+     (`WHERE NOT EXISTS (SELECT 1 FROM quizzes WHERE title = $title) RETURNING id` →
+     `INSERT INTO quiz_questions ... SELECT ... FROM (VALUES ...) , q`).
    - 17 quizzes + 242 questions from the sandbox JSONs, one idempotent guarded CTE per quiz
      (`WHERE NOT EXISTS (SELECT 1 FROM quizzes WHERE title = $title) RETURNING id` →
      `INSERT INTO quiz_questions ... SELECT ... FROM (VALUES ...) , q`).
@@ -44,8 +48,14 @@ in the gitignored sandbox preview. Students cannot reach any of it from the real
      `correct_answer` 0-based, `order_index` 1-based.
    - Provenance visible to students: each question's `explanation` gains the suffix
      ` — المصدر: {file}، ص{page}`.
-   - Zero schema change. Applied via `supabase-masarx` MCP `apply_migration` (verify linked
-     project = Masar-x first).
+   - Applied via `supabase-masarx` MCP `apply_migration` (ledger versions are authoritative;
+     repo files are named to match them 1:1).
+5. **Y2-S1 subjects seed** `20261103225128_seed_y2s1_subjects.sql` — discovered during e2e:
+   the quizzes UI scopes subject visibility to the viewer's level/semester via `useSubjects`,
+   and the subjects table had no level-2 rows, so the seeded exams were invisible to their
+   audience and unfilterable. Registers the four Y2-S1 subjects (Data Communication,
+   Discrete Structures, OOP, Signals & Systems; level 2, semester 1, approved, show_on_home)
+   idempotently on the `subjects_name_key` unique constraint.
 5. **E2E:** `apps/web/e2e/materials.spec.ts` — subjects render (20), a Drive iframe builds,
    a seeded exam appears in `/quizzes` and plays to results.
 

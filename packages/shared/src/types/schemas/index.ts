@@ -105,7 +105,8 @@ export const DriveFileSchema = z.object({
   name: z.string().min(1),
   fileId: z.string().min(10),
   type: z.string(),
-  modified: z.string(),
+  /** Null when Drive reports no modified date for the file. */
+  modified: z.string().nullable(),
 });
 export type DriveFile = z.infer<typeof DriveFileSchema>;
 
@@ -140,9 +141,16 @@ export const DriveSubjectSchema = z.object({
 });
 export type DriveSubject = z.infer<typeof DriveSubjectSchema>;
 
+export const DriveManifestSourceSchema = z.object({
+  name: z.string(),
+  folderId: z.string(),
+  url: z.string(),
+  note: z.string().optional(),
+});
+
 export const DriveManifestSchema = z.object({
   generated: z.string(),
-  source: z.string(),
+  source: DriveManifestSourceSchema,
   embedFormat: z.string(),
   subjects: z.array(DriveSubjectSchema),
   lastSyncRun: z.string().optional(),
