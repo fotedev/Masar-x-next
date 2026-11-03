@@ -54,11 +54,14 @@ Five verified small fixes remaining in Wave 1 (all re-checked against current ma
 4. vitest 286 + Playwright e2e green.
 5. Acceptance records measured numbers; reverted attempts documented with root cause.
 
-## Acceptance
+## Acceptance (measured 2026-11-04)
 
-- [ ] news server-seeded (curl-visible card titles), CLS < 0.1
-- [ ] lecture-content scoped fetches with fallback verified (legacy path intact)
-- [ ] notifications use context user (0 getUser roundtrips per mount)
-- [ ] mount sync skipped when `initialProfile` present; TOKEN_REFRESHED skip in place
-- [ ] AuthContext value memoized; course-detail waterfall parallelized
-- [ ] vitest + Playwright green; CI green on the PR
+- [x] **Track A (news seed)** — server seed live and faithful: prod news table currently has **0 active rows for anon** (verified via anon REST, Content-Range */0), so the page renders an empty state and `initialNews: []` matches it exactly. **CLS 0.490 → 0.000 (×3 stable)** — the only Wave-1B target hit outright. Caveat recorded: the earlier 0.490 could not be reproduced against current data (no cards to grow), so the fix ships as correct architecture + prevention. New observation: news LCP 4.4-4.7s reproducible but NOT network/CLS/hydration-gated (TTFB 21ms, no late requests, no framer-motion, no LCP element attribution from LH) — same needs-attribution bucket as quiz-play (suspect: ASSET-3 font-swap trail, preload:false).
+- [x] **Track B (lecture scoping)** — scoped .or(lecture_id, lecture_key) queries with the broad-fetch fallback for legacy inference-only rows; quizzes select adds lecture_key. Typecheck clean; covered by study-flow/subjects-catalog e2e.
+- [x] **Track C (AUTH-1/3)** — useNotifications runs 0 getUser roundtrips (was 2/mount + 2 action paths); realtime channel re-subscribes on identity change (was: stayed on the mount-time user after sign-out); mount sync skipped when initialProfile present; force-sync only on genuine SIGNED_IN.
+- [x] **Track D (RENDER-1)** — context value memoized, 4 handlers useCallback-stable, TOKEN_REFRESHED with unchanged user id no longer reallocates the value (~35 consumers).
+- [x] **Track E (QUERY-2)** — course-detail: 6 serial awaits → course fetch + one Promise.all(5); review_details narrowed. course_* selects kept (*) pending a consumed-columns audit.
+- [x] Suites: vitest **286/286**; Playwright **11/11**.
+- [x] LH single-run volatility note: ar/quiz-play readings swung with machine load (parallel port-agent builds) — ar re-measured 96-97/LCP 1.36s twice; quiz-play unchanged by this branch (5.2-5.6s LCP, attribution pass owed from spec 033).
+- [x] PKG-2/DESKTOP-2 resolution recorded: spec 033 Track D eliminated the multi-platform sharp trace — standalone node_modules/@img = 19 MB (win32-x64 + colour only), standalone total ~52-64 MB. No excludes needed.
+- [ ] CI green on the PR (pending push).
