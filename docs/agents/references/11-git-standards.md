@@ -30,37 +30,42 @@ All commit messages must follow the standard format:
 - **Branch Synchronization:** Before creating a PR or pushing changes, always fetch and rebase against the latest `upstream/main` (or default target branch) to avoid divergent histories and bloated diff counts.
 - **Verification:** Ensure that you can trace and explain every modified line. Avoid unreviewed bulk changes.
 
-## Branch Flow (I14 — simplified 2026-11-02, owner decision)
+## Agent Isolation & Worktrees (I14 — revised 2026-11-04, owner decision)
 
-The per-session `git worktree add` mandate and the `.agents/<task>.md`
-claim-file ceremony are **RETIRED** (owner decision 2026-11-02, after a
-full clutter purge of `.kilo/worktrees/` and the cleanup loop it produced).
-Never recreate `.kilo/worktrees/`. The standing rules that remain:
+One agent session = one branch = one worktree. Git itself forbids checking
+the same branch out twice — that is the real cross-session lock, so the
+`.agents/<task>.md` claim-file ceremony stays RETIRED (2026-11-02).
 
-1. **Branch per task.** Code changes run on `feat/*`/`fix/*` branches via
-   normal `git checkout -b <type>/<short-task-name> origin/main`. Direct
-   commits on `main` are allowed only for owner-directed maintenance/docs
-   that the owner explicitly orders onto main.
-2. **Check before any git state operation.** Run `git branch --show-current`
-   and `git status --porcelain` first; the checked-out branch and dirty
-   state are never assumed. Never `git switch`/`git reset` or run test
-   commits in the primary checkout while another session may be active.
-3. **Re-assert the branch at commit time** — inside the same command as the
-   add/commit:
+1. **The primary checkout belongs to the owner.** Agents never write in it.
+   Never `git switch`/`git reset` or run test commits there while another
+   session may be active.
+2. **Worktrees live OUTSIDE the repo, at the tool-neutral path**
+   `../masarx-wt/<branch-slug>` (sibling of the project folder):
    ```bash
-   git branch --show-current | grep -qx <expected-branch> \
-     && git add <explicit-paths> && git commit -F <msg-file>
+   git worktree add ../masarx-wt/feat-033 -b feat/033-materials-port origin/main
    ```
-4. **Stage explicit paths only.** Never `git add .`, `git commit -a`, or
-   `git checkout -- .` — blanket commands sweep unrelated uncommitted work
-   into your commit. Verify every commit with `git show HEAD --stat`.
+   Never inside the repo, and never in tool-specific folders (`.kilo/`,
+   `.cline/`, `.cursor/`, `.zcode/`, …) — nested worktrees make agent edit
+   tools (bound to the workspace root) hit the primary tree, and duplicate
+   copies confuse `tsc`/`eslint`/`next` (hit 2026-11-04).
+3. **Pin the path on every command** — `git -C <path>` or
+   `cd <path> && …` in the same line. The shell CWD may reset to the
+   primary checkout between commands; unpinned relative paths land edits
+   in the wrong tree (hit 2026-11-04, self-caught and repaired).
+4. **Re-assert the branch at commit time** — inside the same command as the
+   add/commit — and **stage explicit paths only** (never `git add .`,
+   `git commit -a`, `git checkout -- .`). Verify with `git show HEAD --stat`.
 5. **Branch synchronization** (unchanged): fetch and rebase against the
    latest target branch before pushing; PR flow for everything that is not
-   owner-directed maintenance.
+   owner-directed maintenance (direct `main` commits allowed only for that).
+6. **After merge, self-clean:** `git worktree remove <path> &&
+   git worktree prune` — zero orphaned worktrees, resolved immediately.
 
-Historical incident notes (the 2026-09-26 and 2026-10-03 cross-session
-collisions that motivated the worktree/claim mechanics) are preserved in
-this file's git history; the check-first discipline above is what remains.
+Tool droppings (`.kilo/`, `.cline/`, `.zcode/`, `.cursor/`, …) belong in
+the machine's global gitignore (`core.excludesFile`) — never committed and
+never in the project's `.gitignore`. Historical incident notes (2026-09-26,
+2026-10-03 collisions; 2026-11-04 wrong-tree edits) are preserved in this
+file's git history.
 
 ## Git Identity Lock (I15)
 
