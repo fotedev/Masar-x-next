@@ -136,7 +136,9 @@ async function readNamespaceFromDisk(locale: string, namespace: string): Promise
 
   for (const filePath of possiblePaths) {
     try {
-      const raw = await readFile(filePath, "utf8");
+      // turbopackIgnore: true — this dev-only read must not make the
+      // tracer pull the whole project into the standalone output.
+      const raw = await readFile(/* turbopackIgnore: true */ filePath, "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
         return parsed as Messages;
