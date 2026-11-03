@@ -56,10 +56,12 @@ Plus two per-request server costs that tax **every** route (audit MID-2/MID-3):
 4. vitest green; Playwright e2e green.
 5. Fallbacks (if any experiment fails) recorded in Acceptance.
 
-## Acceptance
+## Acceptance (measured 2026-11-03)
 
-- [ ] quiz-play start card server-rendered for anon (curl-visible), LCP ≤2s
-- [ ] quizzes dashboard SSRs from server seed; CLS <0.3 (or fallback documented)
-- [ ] `getCachedUser` dedupes locale+admin layouts; `Promise.all` in locale layout
-- [ ] i18n `fs` prod path removed; tracing warning gone from build log
-- [ ] vitest + Playwright green; CI green on the PR
+- [x] **Track A (quiz-play)** — start card server-renders for anon (title + start button verified as DOM text in curl HTML); LCP 5.58s → 5.23s, CLS 0.317 → 0.173, perf 61 → 69. Target ≤2s **not fully met**: the remaining LCP is not network- or hydration-gated (no framer-motion in quiz-player, all requests done by ~1s) and needs its own attribution pass — recorded for the next wave.
+- [x] **Track B (quizzes)** — **implemented, measured, then reverted (95804f1)**. Root cause found by measurement: the anon grid is scoped by an academic subject allow-list whose subjects query depends on client-side context (`useEffectiveSemester` from platform settings + academic profile) — during SSR the allow-list is empty, so the seeded grid rendered the empty state and the real grid painted only after hydration + subjects fetch (LCP 4.5s despite CLS 0.000). Full-grid SSR requires server-side academic scoping → **Wave 2**. The "hydration mismatch" fear in the old comment did NOT reproduce (zero mismatch warnings through the whole experiment). Quizzes returns to the pre-033 measured state (LCP 1.36s, CLS 0.770–0.798, perf 64–66).
+- [x] **Track C (MID-2)** — `getCachedUser` dedupes the locale + admin layouts; `Promise.all(getMessages, getUser)` in the locale layout.
+- [x] **Track D (MID-3)** — static fs imports removed + dev-only disk read + `turbopackIgnore` on the call site (Turbopack flags even dynamic fs access; its own warning prescribes the comment). **Tracing warning gone; standalone 248 MB → 52 MB.**
+- [x] Suites: vitest **286/286**; Playwright e2e **10 passed + 1 flake re-passed** (`study-flow` "subject detail opens — en" clicked the home hero AI card before subject cards mounted — race in the test's `.first()` locator, green on isolated re-run; the `ar` twin passed both times).
+- [x] New finding documented (pre-existing, not a regression): `/ar/news` CLS **0.490 reproducible ×5** (vs the 032-era single-run 0.005) — mechanism is `news/page.tsx:325-331` rendering `<Image fill>` without a sized/aspect container, so card images resize rows post-load and shift the footer; the 032-era 0.005 coincided with a low-data fetch (805-byte news response). Goes to the Wave 1 deferred list with its mechanism.
+- [ ] CI green on the PR (pending push).
