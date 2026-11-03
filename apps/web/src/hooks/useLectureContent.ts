@@ -58,7 +58,7 @@ export function useLectureContent({
           table: "summaries" | "videos" | "files" | "quizzes",
           select: string,
           limit: number,
-        ): Promise<{ data: Omit<ContentItem, "type">[] | null }> => {
+        ): Promise<Omit<ContentItem, "type">[]> => {
           const scoped = await supabase
             .from(table)
             .select(select)
@@ -69,7 +69,7 @@ export function useLectureContent({
 
           if (scoped.error) throw scoped.error;
           if ((scoped.data ?? []).length > 0) {
-            return { data: scoped.data as Omit<ContentItem, "type">[] };
+            return scoped.data as unknown as Omit<ContentItem, "type">[];
           }
 
           // Empty scoped result → legacy/inference-only rows may exist:
@@ -81,10 +81,10 @@ export function useLectureContent({
             .order("created_at", { ascending: false })
             .limit(limit);
           if (broad.error) throw broad.error;
-          return { data: broad.data as Omit<ContentItem, "type">[] };
+          return broad.data as unknown as Omit<ContentItem, "type">[];
         };
 
-        const [summariesRes, videosRes, filesRes, quizzesRes] =
+        const [summariesData, videosData, filesData, quizzesData] =
           await Promise.all([
             fetchTable(
               "summaries",
@@ -108,10 +108,6 @@ export function useLectureContent({
             ),
           ]);
 
-        if (summariesRes.error) throw summariesRes.error;
-        if (videosRes.error) throw videosRes.error;
-        if (filesRes.error) throw filesRes.error;
-        if (quizzesRes.error) throw quizzesRes.error;
 
         const lectureMatch = (row: { lecture_id?: string | null; lecture_key?: string | null; title?: string | null; id: string }) => {
           // 1. Match by ID (most reliable)
@@ -147,12 +143,11 @@ export function useLectureContent({
           }
         };
 
-        setSummaries((summariesRes.data || []).map((s: Omit<ContentItem, 'type'>) => ({ ...s, type: 'summary' as const })).filter(lectureMatch));
-        setVideos((videosRes.data || []).map((v: Omit<ContentItem, 'type'>) => ({ ...v, type: 'video' as const })).filter(lectureMatch));
-        setFiles((filesRes.data || []).map((f: Omit<ContentItem, 'type'>) => ({ ...f, type: 'file' as const })).filter(lectureMatch));
+        setSummaries(summariesData.map((s) => ({ ...s, type: 'summary' as const })).filter(lectureMatch));
+        setVideos(videosData.map((v) => ({ ...v, type: 'video' as const })).filter(lectureMatch));
+        setFiles(filesData.map((f) => ({ ...f, type: 'file' as const })).filter(lectureMatch));
 
-        const quizzesForSubject = quizzesRes.data || [];
-        setQuizzes(quizzesForSubject.map((q: Omit<ContentItem, 'type'>) => ({ ...q, type: 'quiz' as const })).filter(lectureMatch));
+        setQuizzes(quizzesData.map((q) => ({ ...q, type: 'quiz' as const })).filter(lectureMatch));
       } catch (e) {
         logger.error("Error fetching lecture content:", e);
         setSummaries([]);

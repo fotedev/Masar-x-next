@@ -34,7 +34,7 @@ export function useNotifications() {
       if (!authUser) return;
       userId = authUser.id;
 
-      const cacheKey = cacheKeys.notifications(user.id);
+      const cacheKey = cacheKeys.notifications(userId);
 
       // Check cache first (unless skipping)
       if (!skipCache) {
@@ -48,8 +48,8 @@ export function useNotifications() {
       }
 
       // If there's an inflight request for this user, wait for it
-      if (inflightRequests.has(user.id)) {
-        const data = await inflightRequests.get(user.id)!;
+      if (inflightRequests.has(userId)) {
+        const data = await inflightRequests.get(userId)!;
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.read).length);
         setLoading(false);
@@ -61,7 +61,7 @@ export function useNotifications() {
         const { data, error } = await supabase
           .from("notifications")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(50);
 
@@ -69,7 +69,7 @@ export function useNotifications() {
         return data || [];
       })();
 
-      inflightRequests.set(user.id, request);
+      inflightRequests.set(userId, request);
       const notificationData = await request;
 
       setNotifications(notificationData);
