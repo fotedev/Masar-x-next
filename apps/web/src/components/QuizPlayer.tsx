@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useMemo, useState } from "react";
 import { XCircle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";

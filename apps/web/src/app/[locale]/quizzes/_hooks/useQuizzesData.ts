@@ -6,13 +6,20 @@ import type { QuizFormData } from "../_types";
 
 export function useQuizzesData(props: {
   isAdmin: boolean;
+  /**
+   * Spec 033 Track B: server-fetched approved-quiz seed from the quizzes
+   * RSC page. Seeds state so the grid renders in the first paint (CLS fix)
+   * and the mount fetch is skipped for the default view; admins still
+   * client-fetch their full unfiltered list once isAdmin resolves.
+   */
+  initialQuizzes?: Quiz[] | null;
   summarySubject: string;
   summaryDepartment: string;
 }) {
-  const { isAdmin, summarySubject, summaryDepartment } = props;
+  const { isAdmin, initialQuizzes, summarySubject, summaryDepartment } = props;
 
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(initialQuizzes ?? []);
+  const [loading, setLoading] = useState(!initialQuizzes);
   const [summaries, setSummaries] = useState<Summary[]>([]);
 
   const loadQuizzes = useCallback(
@@ -73,8 +80,15 @@ export function useQuizzesData(props: {
   }, [summarySubject, summaryDepartment]);
 
   useEffect(() => {
+    // Spec 033: the server seed covers the default (approved) view — skip
+    // the redundant mount fetch for non-admins; admins still fetch their
+    // full unfiltered list once isAdmin resolves.
+    if (initialQuizzes && !isAdmin) {
+      setLoading(false);
+      return;
+    }
     loadQuizzes();
-  }, [loadQuizzes]);
+  }, [loadQuizzes, initialQuizzes, isAdmin]);
 
   useEffect(() => {
     fetchSummaries();
