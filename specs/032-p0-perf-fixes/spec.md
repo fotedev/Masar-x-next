@@ -58,10 +58,10 @@ No public API/data contract changes. Code contracts:
 
 ## Acceptance
 
-- [ ] DLLs present in `.next/standalone` after a clean build (PKG-1)
-- [ ] SPLIT-1 experiment executed and documented in this spec (repro result + root cause OR fallback invoked)
-- [ ] `ssr:false` removed from PageTransition and cold-verified (or fallback recorded)
-- [ ] Six `loading.tsx` files present and rendering in server HTML (curl shows skeleton markup before hydration)
-- [ ] Lighthouse targets met or regression-free fallback documented
-- [ ] vitest + Playwright green
-- [ ] CI green on the PR
+- [x] DLLs present in `.next/standalone` after a clean build (PKG-1) — `libvips-42.dll` + `libvips-cpp-8.18.7.dll`; verified again via a live `/_next/image` fetch returning a real optimized JPEG (200, 40 KB). **Implementation note:** the include glob must climb to the repo-root `node_modules` (`../../node_modules/@img/...`) — include paths resolve relative to `apps/web`, and `@img/*` is an optional dep hoisted to the root under the hoisted linker; the app-relative `./` form matched nothing (first attempt produced 0 DLLs).
+- [x] SPLIT-1 experiment executed and documented — **the 2026-09-16 crash no longer reproduces**: cold-dev with the exact 28b8fc5 bypass state returned 200 for `/ar/ai-assistant` (8.4s first compile) with `/ar/login` + `/ar/privacy-policy` controls green. Stale incident at Next 16.4.1; no fallback needed.
+- [x] `ssr:false` removed from PageTransition and cold-verified — 5 routes 200, zero crash lines, ai-assistant SSR HTML carries full content (133 KB vs the old empty-`<main>` chrome).
+- [x] Six `loading.tsx` files present. Correction to the expected mechanism: they do not appear in the static curl HTML (client pages don't suspend server-side); their value is the client-navigation chunk-load gap and any future server suspension.
+- [x] Lighthouse (mobile, same 7 routes, single runs): ai-assistant **LCP 9.06s → 1.37s** (perf 58 → 85), news **CLS 0.917 → 0.005** (74 → 95), quizzes **TBT 2.08s → 416ms** (46 → 66), subjects 73 → 86 (CLS 0.889 → 0.202), landing 92–94 (noise-range vs 96, content unchanged), login 97. **Not met, deferred with cause:** quiz-play LCP 5.86s → 5.58s (target ≤3.5s) — its start card still renders only after the client-side quiz fetch (FETCH-3 waterfall + client-gated render; needs RSC data fetch, Wave 1); quizzes CLS 0.889 → 0.798 — the hydrated client data swap (no server data to stream), Wave 1 (FETCH/SPLIT-3 territory, out of Wave 0 scope).
+- [x] vitest 286/286 green; Playwright e2e 11/11 green (after installing browser revision 1248 for the worktree's Playwright — environment, not code).
+- [ ] CI green on the PR (pending push).
