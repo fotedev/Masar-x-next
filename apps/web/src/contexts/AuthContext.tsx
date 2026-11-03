@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   useRef,
   ReactNode,
@@ -70,6 +71,11 @@ export function AuthProvider({
   const sawInitialSessionRef = useRef<boolean>(false);
   const activePingSent = useRef<boolean>(false);
 
+  // Spec 034 Track D: latest-user mirror for the []-dep auth listener —
+  // the TOKEN_REFRESHED skip compares against this without adding `user`
+  // to the effect deps (which would resubscribe on every auth change).
+  const userRef = useRef<User | null>(initialUser);
+
   const triggerSync = useCallback(async (userId: string, force: boolean = false) => {
     const now = Date.now();
     if (!force && now - lastSyncTime.current < SYNC_COOLDOWN) {
@@ -132,10 +138,16 @@ export function AuthProvider({
 
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
+        userRef.current = initialSession?.user ?? null;
 
-        // If we have an initial session on mount, trigger a sync to be safe
+        // Spec 034 Track C (audit AUTH-3): when the server layout already
+        // delivered the profile (initialProfile), the mount sync POST is
+        // redundant — /api/auth/sync re-fetched the same profile the RSC
+        // just sent. The active-user ping still fires once per load.
         if (initialSession?.user) {
-          triggerSync(initialSession.user.id);
+          if (!initialProfile) {
+            triggerSync(initialSession.user.id);
+          }
           if (!activePingSent.current) {
             activePingSent.current = true;
             pingActiveUser();
@@ -156,9 +168,22 @@ export function AuthProvider({
       async (event: AuthChangeEvent, currentSession: Session | null) => {
         if (!mounted) return;
 
-        setSession(currentSession);
+        // Spec 034 Track D (audit RENDER-1): auth-js fires TOKEN_REFRESHED
+        // on every window focus + scheduled refresh with the SAME user —
+        // re-setting state reallocated the context value and re-rendered
+        // ~35 consumers each time. Skip unchanged identities.
         const currentUser = currentSession?.user ?? null;
+        if (
+          event === "TOKEN_REFRESHED" &&
+          currentUser?.id === userRef.current?.id
+        ) {
+          setLoading(false);
+          return;
+        }
+
+        setSession(currentSession);
         setUser(currentUser);
+        userRef.current = currentUser;
         setLoading(false);
 
         // Update local state based on metadata if user changed
@@ -258,20 +283,23 @@ export function AuthProvider({
     });
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  // Spec 034 Track D (audit RENDER-1): stable handler identities so the
+  // memoized context value only reallocates when its state actually
+  // changes (previously every provider render rebuilt all four).
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) throw error;
-  };
+  }, []);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     // Desktop shell (spec 014 R034): the renderer is served from
     // `http://127.0.0.1:<random port>`, so a loopback redirectTo can
     // neither be allow-listed in Supabase (dynamic port) nor carry the
@@ -319,13 +347,13 @@ export function AuthProvider({
       },
     });
     if (error) throw error;
-  };
+  }, [locale]);
 
-  const signOut = async () => {
-    if (user) {
+  const signOut = useCallback(async () => {
+    if (userRef.current) {
       analyticsHelpers
         .recordAnalytics({
-          userId: user.id,
+          userId: userRef.current.id,
           actionType: "user_logout",
           contentType: "logout",
         })
@@ -333,22 +361,25 @@ export function AuthProvider({
     }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      profile,
+      isAdmin,
+      loading,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signOut,
+    }),
+    [user, session, profile, isAdmin, loading, signIn, signUp, signInWithGoogle, signOut],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        isAdmin,
-        loading,
-        signIn,
-        signUp,
-        signInWithGoogle,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
