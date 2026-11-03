@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useQuizAttempt } from "../hooks/useQuizAttempt";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/navigation";
 import { useQuizPlayerData } from "../hooks/useQuizPlayerData";
 import { useQuizPlayerRuntime } from "../hooks/useQuizPlayerRuntime";
 import { QuizPlayerResults } from "./quiz-player/QuizPlayerResults";
@@ -12,6 +13,16 @@ import { QuizPlayerQuestion } from "./quiz-player/QuizPlayerQuestion";
 
 interface QuizPlayerProps {
   quizId?: string;
+  /**
+   * Spec 033 Track A: raw {quiz, questions} DB rows server-fetched by the
+   * quiz-play page (same shape as quizService.getQuiz's return). When
+   * present the client fetch is skipped entirely. Distinct from the
+   * local-quiz `quizData` prop (camelCase, synthetic ids).
+   */
+  initialQuiz?: {
+    quiz: Record<string, unknown>;
+    questions: Array<Record<string, unknown>>;
+  } | null;
   quizData?: {
     title: string;
     description?: string;
@@ -32,6 +43,7 @@ interface QuizPlayerProps {
 
 export function QuizPlayer({
   quizId,
+  initialQuiz = null,
   quizData,
   onComplete,
   onClose,
@@ -43,9 +55,15 @@ export function QuizPlayer({
   const { user, loading: authLoading } = useAuth();
   const { trackEvent } = useAnalytics();
   const tQuizzes = useTranslations("quizzes");
-  
+  const router = useRouter();
+  // The server-rendered quiz-play page cannot pass closures; default the
+  // exit buttons back to the quizzes hub (what the old client page
+  // implemented as onClose={() => router.push("/quizzes")}).
+  const handleClose = onClose ?? (() => router.push("/quizzes"));
+
   const { loading: quizLoading, quiz, questions, loadQuiz } = useQuizPlayerData({
     quizId,
+    initialQuiz,
     quizData,
     trackEvent,
   });
@@ -155,7 +173,7 @@ export function QuizPlayer({
         endedByTimeout={runtime.endedByTimeout}
         timeTakenSeconds={timeTaken}
         isGuest={isGuest}
-        onClose={onClose}
+        onClose={handleClose}
         t={tQuizzes}
         showSubmitForReview={showSubmitForReview}
         onSubmitForReview={onSubmitForReview}
@@ -171,7 +189,7 @@ export function QuizPlayer({
         questionsCount={questions.length}
         durationMinutes={runtime.durationMinutes}
         onStart={runtime.startQuiz}
-        onClose={onClose}
+        onClose={handleClose}
         t={tQuizzes}
       />
     );
