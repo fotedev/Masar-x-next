@@ -48,16 +48,20 @@ the same branch out twice — that is the real cross-session lock, so the
    `.cline/`, `.cursor/`, `.zcode/`, …) — nested worktrees make agent edit
    tools (bound to the workspace root) hit the primary tree, and duplicate
    copies confuse `tsc`/`eslint`/`next` (hit 2026-11-04).
-3. **Pin the path on every command** — `git -C <path>` or
-   `cd <path> && …` in the same line. The shell CWD may reset to the
-   primary checkout between commands; unpinned relative paths land edits
-   in the wrong tree (hit 2026-11-04, self-caught and repaired).
+3. **Pin the path on every interaction** — shell commands via `git -C <path>`
+   or `cd <path> && …` in the same line; file tools (Read/Edit/Write/Grep)
+   via absolute worktree paths (`C:/…/masarx-wt/<slug>/…`), never
+   repo-relative paths. The shell CWD may reset to the primary checkout
+   between commands, and file tools resolve relative paths against the
+   workspace root; unpinned paths land edits in the wrong tree (hit
+   2026-11-04, self-caught and repaired).
 4. **Re-assert the branch at commit time** — inside the same command as the
    add/commit — and **stage explicit paths only** (never `git add .`,
    `git commit -a`, `git checkout -- .`). Verify with `git show HEAD --stat`.
 5. **Branch synchronization** (unchanged): fetch and rebase against the
-   latest target branch before pushing; PR flow for everything that is not
-   owner-directed maintenance (direct `main` commits allowed only for that).
+   latest target branch before pushing. Everything — including
+   owner-directed maintenance/docs — goes through the PR flow
+   (**`main` is protected; direct pushes are rejected**).
 6. **After merge, self-clean:** `git worktree remove <path> &&
    git worktree prune` — zero orphaned worktrees, resolved immediately.
 
