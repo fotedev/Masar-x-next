@@ -1,0 +1,17 @@
+{
+  "title": "Study Materials",
+  "description": "All your materials in one place: browse files, lectures and sheets from Google Drive right inside the page.",
+  "term": "Level {level} · Semester {semester}",
+  "allTerms": "All terms",
+  "fileCount": "{count} files",
+  "comingSoonTitle": "Coming soon",
+  "comingSoonBody": "Files for this subject haven't been uploaded yet. Its content will appear here as soon as it is available.",
+  "selectSubject": "Pick a subject from the list to view its files.",
+  "openInDrive": "Open in Drive",
+  "viewerAria": "Embedded file viewer",
+  "backToSubjects": "All subjects",
+  "examsHint": "Real previous exams for this subject are available on the quizzes page.",
+  "examsCta": "Go to quizzes",
+  "emptyGroup": "No files in this section yet.",
+  "loadingViewer": "Loading viewer…"
+}

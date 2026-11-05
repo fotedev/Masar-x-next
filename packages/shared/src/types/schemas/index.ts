@@ -96,3 +96,87 @@ export const WaitlistSignupSchema = z.object({
   email: z.string().trim().toLowerCase().email().max(254),
   source: WaitlistSourceSchema,
 });
+
+// --- Schedules (spec 034) ---
+// Shape of the static timetable JSONs at apps/web/src/lib/schedules/ (extracted
+// from the public group Google Sheets via the sandbox gviz pipeline).
+
+export const ScheduleSheetSchema = z.object({
+  id: z.string().min(1),
+  docId: z.string().min(10),
+  /** Tab name in the source spreadsheet (e.g. "الفرقة الثانية"). */
+  tab: z.string().min(1).nullable(),
+  gid: z.string().optional(),
+  fetchedAt: z.string(),
+  sourceUrl: z.string(),
+  rowCount: z.number().int().positive(),
+  colCount: z.number().int().positive(),
+  /** Raw flattened grid — cells may contain multi-line "subject/staff/room". */
+  rows: z.array(z.array(z.string())),
+});
+export type ScheduleSheet = z.infer<typeof ScheduleSheetSchema>;
+
+export const ScheduleSetSchema = z.object({
+  sheets: z.array(ScheduleSheetSchema).min(1),
+});
+export type ScheduleSet = z.infer<typeof ScheduleSetSchema>;
+
+// --- Drive materials (spec 033) ---
+// Shape of the static manifest at apps/web/src/lib/materials/manifest.json
+// (sync-maintained by the drive-materials sandbox tooling; 84 files, term-tagged).
+
+export const DriveFileSchema = z.object({
+  name: z.string().min(1),
+  fileId: z.string().min(10),
+  type: z.string(),
+  /** Null when Drive reports no modified date for the file. */
+  modified: z.string().nullable(),
+});
+export type DriveFile = z.infer<typeof DriveFileSchema>;
+
+/** A Drive folder group; `children` nests subgroup levels (recursive). */
+export type DriveGroup = {
+  name: string;
+  nameAr: string;
+  folderId: string;
+  files: DriveFile[];
+  children?: DriveGroup[];
+};
+
+export const DriveGroupSchema: z.ZodType<DriveGroup> = z.object({
+  name: z.string(),
+  nameAr: z.string(),
+  folderId: z.string(),
+  files: z.array(DriveFileSchema),
+  children: z.array(z.lazy(() => DriveGroupSchema)).optional(),
+});
+
+export const DriveSubjectSchema = z.object({
+  slug: z.string().min(1),
+  name: z.string().min(1),
+  nameAr: z.string().min(1),
+  icon: z.string(),
+  /** null for stub subjects that have no Drive folder yet (coming-soon state). */
+  folderId: z.string().nullable(),
+  groups: z.array(DriveGroupSchema),
+  level: z.number().int().positive(),
+  semester: z.number().int().positive(),
+  stub: z.boolean().optional(),
+});
+export type DriveSubject = z.infer<typeof DriveSubjectSchema>;
+
+export const DriveManifestSourceSchema = z.object({
+  name: z.string(),
+  folderId: z.string(),
+  url: z.string(),
+  note: z.string().optional(),
+});
+
+export const DriveManifestSchema = z.object({
+  generated: z.string(),
+  source: DriveManifestSourceSchema,
+  embedFormat: z.string(),
+  subjects: z.array(DriveSubjectSchema),
+  lastSyncRun: z.string().optional(),
+});
+export type DriveManifest = z.infer<typeof DriveManifestSchema>;

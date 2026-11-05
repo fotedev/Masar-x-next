@@ -301,6 +301,22 @@ export const Header = memo(function Header() {
       activeUnderline: "bg-brand-blue",
     },
     {
+      key: "materials",
+      page: "materials",
+      label: tNav("materials"),
+      isActive: () => isMounted && currentPage === "materials",
+      activeText: "text-sky-600 dark:text-sky-400",
+      activeUnderline: "bg-sky-600 dark:bg-sky-400",
+    },
+    {
+      key: "schedules",
+      page: "schedules",
+      label: tNav("schedules"),
+      isActive: () => isMounted && currentPage === "schedules",
+      activeText: "text-rose-600 dark:text-rose-400",
+      activeUnderline: "bg-rose-600 dark:bg-rose-400",
+    },
+    {
       key: "courses",
       page: "courses",
       label: tNav("courses"),

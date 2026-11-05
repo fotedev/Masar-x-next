@@ -1,7 +1,7 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { AppProviders } from "@/components/AppProviders";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { cache } from "react";
 import { notFound } from "next/navigation";
@@ -88,12 +88,13 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = await getMessages({ locale: typedLocale });
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Spec 033 Track C (audit MID-2): messages and auth are independent —
+  // run them concurrently instead of serializing the auth roundtrip
+  // behind the (cached) message loads.
+  const [messages, user] = await Promise.all([
+    getMessages({ locale: typedLocale }),
+    getCachedUser(),
+  ]);
 
   let profile = null;
   let isAdmin = false;
