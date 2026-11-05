@@ -1,44 +1,38 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   flattenSubjectFiles,
   materialSubjects,
   sortSubjects,
   type DriveSubject,
 } from "@/lib/materials";
-
-export type TermFilter = "all" | `${number}-${number}`;
-
-/** Distinct level-semester pairs present in the manifest, newest term first. */
-export function listTerms(subjects: DriveSubject[]): `${number}-${number}`[] {
-  const seen = new Set<string>();
-  for (const s of subjects) seen.add(`${s.level}-${s.semester}`);
-  return [...seen]
-    .sort((a, b) => {
-      const [la, sa] = a.split("-").map(Number);
-      const [lb, sb] = b.split("-").map(Number);
-      return lb - la || sb - sa;
-    })
-    .map((t) => t as `${number}-${number}`);
-}
+import { useUserAcademic } from "@/hooks/useUserAcademic";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveSemester } from "@/hooks/useEffectiveSemester";
 
 export function useMaterialsData() {
   const subjects = useMemo(() => sortSubjects(materialSubjects), []);
-  const terms = useMemo(() => listTerms(subjects), [subjects]);
+  const { academic, loading: academicLoading } = useUserAcademic();
+  const { isAdmin } = useAuth();
+  // Spec 013 resolution: profile semester → guest localStorage → platform default.
+  const { effectiveSemester } = useEffectiveSemester(academic.semester);
 
-  const [term, setTerm] = useState<TermFilter>("all");
-
-  const filteredSubjects = useMemo(
-    () =>
-      term === "all"
-        ? subjects
-        : subjects.filter((s) => `${s.level}-${s.semester}` === term),
-    [subjects, term],
-  );
+  // Owner decision 2026-11-05: level/semester selection lives in the profile,
+  // not on this page. Admins browse the whole library (same rule as
+  // useSubjects); signed-in students get their profile level+semester;
+  // guests fall back to level 1 with the effective-semester resolution.
+  const filteredSubjects = useMemo(() => {
+    if (isAdmin) return subjects;
+    if (academicLoading) return [];
+    const level = academic.level ?? 1;
+    return subjects.filter(
+      (s) => s.level === level && s.semester === effectiveSemester,
+    );
+  }, [subjects, isAdmin, academicLoading, academic.level, effectiveSemester]);
 
   const fileCount = (subject: DriveSubject) =>
     flattenSubjectFiles(subject).length;
 
-  return { subjects, terms, term, setTerm, filteredSubjects, fileCount };
+  return { filteredSubjects, fileCount };
 }
