@@ -103,6 +103,7 @@ export function SubjectsGrid({
                   : "cursor-pointer group hover:border-brand-blue/50"
                 }`}
               type="button"
+              data-testid="subject-card"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
                 <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-[colors,transform] duration-300 shrink-0
