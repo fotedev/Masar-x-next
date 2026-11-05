@@ -48,7 +48,21 @@ const nextConfig = {
   // installed in the top-level node_modules tree, which is where
   // Next's file tracer starts from.
   outputFileTracingIncludes: {
-    "/**": ["./node_modules/@swc/helpers/**/*"],
+    "/**": [
+      "./node_modules/@swc/helpers/**/*",
+      // PKG-1 (perf audit 2026-11-02): sharp's win32-x64 loader is
+      // dynamically linked — require("sharp") needs libvips-42.dll and
+      // libvips-cpp-8.18.6.dll from its own lib/ directory, but Next's
+      // file tracer only picks up the .node binary. Without this glob
+      // the traced standalone (and therefore the packaged Electron app
+      // via extraResources) ships zero .dll files and every
+      // /_next/image URL 500s inside the desktop build.
+      // NOTE: @img/* is an optional dep of sharp, hoisted to the REPO
+      // ROOT node_modules under pnpm's hoisted linker — include paths
+      // resolve relative to apps/web, so this must climb with ../..
+      // (the ./ form only works for direct deps like @swc/helpers).
+      "../../node_modules/@img/sharp-win32-x64/**/*",
+    ],
   },
   compiler: {
     removeConsole: {

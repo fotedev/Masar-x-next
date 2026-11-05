@@ -10,6 +10,8 @@ interface Subject extends DBSubject {
   isOptimistic?: boolean;
 }
 
+export type { Subject };
+
 // Phase 1 of refactor/decouple-trw-subjects:
 // subjects table is now exclusively for academic subjects.
 // TRW (non-academic) content lives behind /non-academic and is served
@@ -18,6 +20,13 @@ interface Subject extends DBSubject {
 type UseSubjectsParams = {
   level?: number | null;
   semester?: number | null;
+  /**
+   * Spec 034: opt-out of the level/semester scoping for catalog browsing
+   * (/subjects level tabs). Fetches every subject the caller may otherwise
+   * see (anonymous visitors still get show_on_home filtering). Other
+   * consumers (home page, admin) keep the default profile-scoped behavior.
+   */
+  allLevels?: boolean;
 };
 
 export function useSubjects(params: UseSubjectsParams = {}) {
@@ -39,12 +48,13 @@ export function useSubjects(params: UseSubjectsParams = {}) {
   const effectiveSemester = Number(
     typeof params.semester === "number" ? params.semester : resolvedSemester,
   );
+  const allLevels = params.allLevels === true;
 
   const queryKey = [
     "subjects",
     {
-      level: effectiveLevel,
-      semester: effectiveSemester,
+      level: allLevels ? ("all" as const) : effectiveLevel,
+      semester: allLevels ? ("all" as const) : effectiveSemester,
       isAnonymous,
       isAdmin,
     },
@@ -59,9 +69,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     // Admins manage every subject regardless of their own academic profile —
     // scoping the admin grid to the signed-in admin's level/semester hid
     // subjects they had just created (MVP launch blocker).
-    enabled: isAdmin
-      ? true
-      : !academicLoading && params.level !== null,
+    enabled: isAdmin ? true : allLevels || (!academicLoading && params.level !== null),
     staleTime: 5 * 60 * 1000, // 5 minutes (standardized)
     queryFn: async () => {
       try {
@@ -72,7 +80,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
           )
           .order("name", { ascending: true });
 
-        if (!isAdmin) {
+        if (!isAdmin && !allLevels) {
           // subjects table is academic-only since refactor/decouple-trw-subjects.
           // The NULL-OR filter is kept so legacy rows without level/semester
           // remain visible (back-compat until Phase 2 migration drops them).
