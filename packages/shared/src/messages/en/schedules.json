@@ -1,0 +1,7 @@
+{
+  "title": "Schedules",
+  "description": "Weekly lecture and section timetables per cohort — subject, staff and room in every cell.",
+  "sourceNote": "Source: the student-announced timetable",
+  "fetchedAt": "Last updated: {date}",
+  "selectTab": "Pick a cohort to view its timetable."
+}
