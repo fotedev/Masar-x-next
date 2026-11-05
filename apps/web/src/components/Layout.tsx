@@ -20,9 +20,12 @@ const Header = dynamic(() => import("./Header").then((mod) => mod.Header), {
   ),
 });
 
-const PageTransition = dynamic(
-  () => import("./PageTransition").then((m) => m.PageTransition),
-  { ssr: false },
+// SPLIT-1 (perf audit 2026-11-02): no `ssr: false` — with it, server HTML
+// ships an empty <main> on every non-light route (LCP waits for full
+// hydration + client fetch; the SSR'd footer shifts = measured CLS 0.89).
+// The dynamic import still code-splits framer-motion; it just SSRs now.
+const PageTransition = dynamic(() =>
+  import("./PageTransition").then((m) => m.PageTransition),
 );
 
 export function Layout({ children }: LayoutProps) {
@@ -112,6 +115,17 @@ export function Layout({ children }: LayoutProps) {
             crashes on useRouter ("not supported in Server Components").
             PageTransition's own root is already a full-height flex column, so
             the chat page's flex chain is preserved without the bypass. */}
+        {/* NOTE (spec 032, SPLIT-1): PageTransition now renders server-side.
+            The 2026-09-16 "useRouter is not supported in Server Components"
+            crash on /ai-assistant no longer reproduces at Next 16.4.1 — the
+            cold-repro experiment (2026-11-03, spec 032) rendered this page's
+            children in a plain div (the exact 28b8fc5 state) without the
+            crash, with /login + /privacy-policy as controls, and five other
+            "use client" + useRouter pages already SSR through the same plain
+            div daily. Shipping an empty <main> on ~30 routes (both measured
+            LCP outliers + the 4-route footer CLS) for one stale crash was
+            the worse trade. If a useRouter-RSC crash ever resurfaces, re-run
+            the cold experiment before re-adding ssr:false. */}
         {isLightRoute || isAdminRoute ? (
           <div className="w-full h-full min-h-0">{children}</div>
         ) : (

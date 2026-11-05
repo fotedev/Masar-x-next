@@ -1,8 +1,13 @@
 import { getRequestConfig } from "next-intl/server";
 import { routing, type Locale } from "@/i18n/routing";
 
-import { readFile } from "fs/promises";
-import path from "path";
+// Spec 033 Track D (audit MID-3): fs/path are NOT statically imported.
+// A static import made the file tracer pull the whole project (public/,
+// coverage/, src/) into the standalone output — the build's "filesystem
+// access causes the whole project to be traced" warning. The disk read is
+// dev-only (HMR of message JSON), so the modules load dynamically inside
+// readNamespaceFromDisk and the prod catch-fallback disk read is gone
+// (prod loader failures fall through to the English fallback below).
 
 type Messages = Record<string, unknown>;
 
@@ -40,6 +45,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     metadata: () => import("masarx-shared/messages/ar/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/ar/mobileNav.json"),
     nav: () => import("masarx-shared/messages/ar/nav.json"),
+    materials: () => import("masarx-shared/messages/ar/materials.json"),
     news: () => import("masarx-shared/messages/ar/news.json"),
     notFound: () => import("masarx-shared/messages/ar/notFound.json"),
     notifications: () => import("masarx-shared/messages/ar/notifications.json"),
@@ -53,6 +59,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     reviews: () => import("masarx-shared/messages/ar/reviews.json"),
     subjectMetadata: () => import("masarx-shared/messages/ar/subjectMetadata.json"),
     subjectPage: () => import("masarx-shared/messages/ar/subjectPage.json"),
+    schedules: () => import("masarx-shared/messages/ar/schedules.json"),
     subjects: () => import("masarx-shared/messages/ar/subjects.json"),
     subjectsTab: () => import("masarx-shared/messages/ar/subjectsTab.json"),
     summaries: () => import("masarx-shared/messages/ar/summaries.json"),
@@ -91,6 +98,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     metadata: () => import("masarx-shared/messages/en/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/en/mobileNav.json"),
     nav: () => import("masarx-shared/messages/en/nav.json"),
+    materials: () => import("masarx-shared/messages/en/materials.json"),
     news: () => import("masarx-shared/messages/en/news.json"),
     notFound: () => import("masarx-shared/messages/en/notFound.json"),
     notifications: () => import("masarx-shared/messages/en/notifications.json"),
@@ -104,6 +112,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     reviews: () => import("masarx-shared/messages/en/reviews.json"),
     subjectMetadata: () => import("masarx-shared/messages/en/subjectMetadata.json"),
     subjectPage: () => import("masarx-shared/messages/en/subjectPage.json"),
+    schedules: () => import("masarx-shared/messages/en/schedules.json"),
     subjects: () => import("masarx-shared/messages/en/subjects.json"),
     subjectsTab: () => import("masarx-shared/messages/en/subjectsTab.json"),
     summaries: () => import("masarx-shared/messages/en/summaries.json"),
@@ -118,6 +127,11 @@ const namespaceCache = new Map<string, Messages>();
 async function readNamespaceFromDisk(locale: string, namespace: string): Promise<Messages> {
   if (process.env.NEXT_RUNTIME === "edge") return {};
 
+  // Dynamic imports keep fs/path out of the production module graph
+  // (see the import-block note above).
+  const { readFile } = await import("fs/promises");
+  const { default: path } = await import("path");
+
   const possiblePaths = [
     path.join(process.cwd(), "packages", "shared", "src", "messages", locale, `${namespace}.json`),
     path.join(process.cwd(), "..", "..", "packages", "shared", "src", "messages", locale, `${namespace}.json`),
@@ -126,7 +140,9 @@ async function readNamespaceFromDisk(locale: string, namespace: string): Promise
 
   for (const filePath of possiblePaths) {
     try {
-      const raw = await readFile(filePath, "utf8");
+      // turbopackIgnore: true — this dev-only read must not make the
+      // tracer pull the whole project into the standalone output.
+      const raw = await readFile(/* turbopackIgnore: true */ filePath, "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
         return parsed as Messages;
@@ -172,16 +188,11 @@ async function safeImportNamespace(
 
     throw new Error(`Empty messages for ${locale}/${namespace}`);
   } catch {
-    // Fallback: Read the JSON directly from disk (Node runtime only).
-    try {
-      const fromDisk = await readNamespaceFromDisk(locale, namespace);
-      if (fromDisk && typeof fromDisk === "object" && Object.keys(fromDisk).length > 0) {
-        namespaceCache.set(cacheKey, fromDisk);
-        return fromDisk;
-      }
-    } catch {
-      // ignore
-    }
+    // Spec 033 Track D: the former prod disk-read fallback is removed —
+    // bundled static imports of JSON cannot realistically fail, and the
+    // unresolvable fs access dragged the whole project into the traced
+    // standalone output. Loader failures fall through to the English
+    // fallback below.
 
     // Secondary fallback: Try English version of the same namespace
     if (locale !== "en") {

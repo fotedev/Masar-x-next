@@ -1,0 +1,935 @@
+{
+  "generated": "2026-11-03",
+  "source": {
+    "name": "Materials- AI - Y2_S1",
+    "folderId": "1bE-Kel2uE8MdUvSN-7N8uFW_s2U5I3NA",
+    "url": "https://drive.google.com/drive/folders/1bE-Kel2uE8MdUvSN-7N8uFW_s2U5I3NA",
+    "note": "Crawled via drive.google.com/embeddedfolderview — file IDs are stable; names/metadata reflect crawl date."
+  },
+  "embedFormat": "https://drive.google.com/file/d/{fileId}/preview",
+  "subjects": [
+    {
+      "slug": "business-management",
+      "name": "Business Management",
+      "nameAr": "إدارة الأعمال",
+      "icon": "briefcase",
+      "folderId": "1tNy5Js_g8mO14NFnmib-hkcRCux-Amoh",
+      "groups": [
+        {
+          "name": "Materials",
+          "nameAr": "المواد",
+          "folderId": "1tNy5Js_g8mO14NFnmib-hkcRCux-Amoh",
+          "files": [
+            {
+              "name": "Book.pdf",
+              "fileId": "12noG87ELtopyDidVvpYdoZUuYtCaOWf9",
+              "type": "pdf",
+              "modified": "2026-10-16"
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "data-communication",
+      "name": "Data Communication",
+      "nameAr": "اتصالات البيانات",
+      "icon": "network",
+      "folderId": "1t12JAqhN6fDGSRkipt1LvB4jnOO23X4e",
+      "groups": [
+        {
+          "name": "Lectures",
+          "nameAr": "المحاضرات",
+          "folderId": "13rLv5y2btGs7hcx7gC7nQ7B1wVtc9Hcs",
+          "files": [
+            {
+              "name": "Lec_01.pdf",
+              "fileId": "13q8TUarDHwDfTqanqAMQezUfYDboe4Zm",
+              "type": "pdf",
+              "modified": "2026-09-22"
+            },
+            {
+              "name": "lect.2.pdf",
+              "fileId": "1laFec5-C-k9CXu0i1AepnzWDa1ATKaKG",
+              "type": "pdf",
+              "modified": "2026-09-29"
+            },
+            {
+              "name": "lect.3.pdf",
+              "fileId": "1Qqu07exzGI1pTJMw2gqD_BARzZQS-DyH",
+              "type": "pdf",
+              "modified": "2026-10-28"
+            },
+            {
+              "name": "lect.4.pdf",
+              "fileId": "1fxlTvm-4Q_pV2rIiEdfC2Ti4vkYTBAW0",
+              "type": "pdf",
+              "modified": "2026-10-28"
+            },
+            {
+              "name": "lect.5.pdf",
+              "fileId": "1xm2LTHsSTWuJz9KymGtKlMSex91J57Gh",
+              "type": "pdf",
+              "modified": "2026-10-28"
+            }
+          ]
+        },
+        {
+          "name": "Sections",
+          "nameAr": "الأقسام",
+          "folderId": "1R3sHTELyxsnv_ZejOj_WQ5uUBsMLh3zE",
+          "files": [
+            {
+              "name": "Book - Answers.pdf",
+              "fileId": "1tkaatJxOHfM1bvYs0lONIXjyocoafTgV",
+              "type": "pdf",
+              "modified": "2026-10-22"
+            },
+            {
+              "name": "Book.pdf",
+              "fileId": "1whJUbYKbtCwsxALWRMtpLcH7My_QFFHZ",
+              "type": "pdf",
+              "modified": "2026-10-22"
+            },
+            {
+              "name": "Data Communications — Lecture 1.pdf",
+              "fileId": "19Dciq0IcSq-dCpU0O0BgdvDo68Zusxkv",
+              "type": "pdf",
+              "modified": "2026-09-29"
+            }
+          ]
+        },
+        {
+          "name": "Sheets",
+          "nameAr": "الشيتات",
+          "folderId": "1zvevP_X8sVt-aNE3Dm3duqsaITG01wJr",
+          "files": [
+            {
+              "name": "Chapter 3_ Data and Signals",
+              "fileId": "1-S1RNXYmOSCLz43ROLKbPnmnES1T8Ah7",
+              "type": "unknown",
+              "modified": null
+            },
+            {
+              "name": "Chapter2_Solutions (1).pdf",
+              "fileId": "1thBeMROvi42q5Wj3Rz4ZdFKUUWGOC2W_",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "Chapter_1_Sheet_Solution.pdf",
+              "fileId": "1QsxS2B_LdiXtVH8MUUPhoz5G55VrBzT-",
+              "type": "pdf",
+              "modified": null
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "discrete-structures",
+      "name": "Discrete Structures",
+      "nameAr": "التركيبات المنفصلة",
+      "icon": "grid",
+      "folderId": "105Mv2RHTOgIBn_orNcQRA76BjVIa0guR",
+      "groups": [
+        {
+          "name": "Lectures",
+          "nameAr": "المحاضرات",
+          "folderId": "1njt9H4p6TQKKgxD1YwLLTP48ish-YhPS",
+          "files": [
+            {
+              "name": "Lectures - Discrete Structures.pdf",
+              "fileId": "1tGnKDY14QtGUnI_sybVXiQI7IVwIBoNc",
+              "type": "pdf",
+              "modified": "2026-09-29"
+            }
+          ]
+        },
+        {
+          "name": "Sections",
+          "nameAr": "الأقسام",
+          "folderId": "18Tq9m33NrkMdcdo5Usw-HYY53VKEuhv5",
+          "files": [
+            {
+              "name": "section 1.pdf",
+              "fileId": "1_zvp2rMVuYDI0wW4vWnhAt8GmYHP8JC6",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "section 2.pdf",
+              "fileId": "1a1sR_DPkJn8pWrN_Zq6EwfKiu7Mf7VgP",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "section 4.pdf",
+              "fileId": "1vLQqdKEfZeJGOZ5VqUM3xawqwYR1T03R",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "Section_3 (1).pdf",
+              "fileId": "1p1l7PecPnIYGxTjdW9IK88hyuLTwn3_x",
+              "type": "pdf",
+              "modified": null
+            }
+          ],
+          "children": [
+            {
+              "name": "Section 5",
+              "nameAr": "القسم 5",
+              "folderId": "1Zi0Od9IFh8nyrv6q1KG-knMOjHQgeX07",
+              "files": [
+                {
+                  "name": "Copy of Assignment_5.pdf",
+                  "fileId": "1jGwXd9Pk8u88AgJEOVGq7pt8IJ9ko4Z3",
+                  "type": "pdf",
+                  "modified": "2026-10-28"
+                },
+                {
+                  "name": "Copy of section 5.pdf",
+                  "fileId": "1AF9Qdjq5TlNmEFzO3Oqs-gRafJv6gMBw",
+                  "type": "pdf",
+                  "modified": "2026-10-28"
+                },
+                {
+                  "name": "Copy of section_5.mp4",
+                  "fileId": "14ZihGw7URL0g1NidarTtGsgH4TCUXO7R",
+                  "type": "mp4",
+                  "modified": "2026-10-28"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Sheets",
+          "nameAr": "الشيتات",
+          "folderId": "1tJJb7S6EZZh3RoL1hvVFIYjx94vyiXjW",
+          "files": [
+            {
+              "name": "Assignment_1.pdf",
+              "fileId": "1LNJv_KdEr-WG85eKrvuJ9RQhIv4LS0jD",
+              "type": "pdf",
+              "modified": "2026-10-05"
+            },
+            {
+              "name": "Assignment_2.pdf",
+              "fileId": "1-0ZBVxVKzZOEv5RfjthwNmjUFdKD-MjY",
+              "type": "pdf",
+              "modified": "2026-10-05"
+            },
+            {
+              "name": "Assignment_3.pdf",
+              "fileId": "1gK8JiPdUQTRUxpwFbxadtDiP1feEhLrj",
+              "type": "pdf",
+              "modified": "2026-10-12"
+            },
+            {
+              "name": "Assignment_4.pdf",
+              "fileId": "1M4P9uputpSI9-0xpvad0-QtW15-8dzeW",
+              "type": "pdf",
+              "modified": "2026-10-25"
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "oop",
+      "name": "OOP",
+      "nameAr": "البرمجة الكائنية",
+      "icon": "code",
+      "folderId": "1EnBFxK2hpb7aAC0kbpClPR5UJTYiJlPo",
+      "groups": [
+        {
+          "name": "Lectures",
+          "nameAr": "المحاضرات",
+          "folderId": "1pIoLDfye5NhwKeFcwL1qsM2dW8HTtipL",
+          "files": [
+            {
+              "name": "01 OBJECT ORIENTED PROGRAMMING.pdf",
+              "fileId": "13DW2JpAEMEZ_-00qYyG6Eh-EIiQwPlfV",
+              "type": "pdf",
+              "modified": "2026-09-29"
+            },
+            {
+              "name": "02 OBJECT ORIENTED PROGRAMMING.pdf",
+              "fileId": "1goqD6tjLKWUkgpq6XR1Fksx8RojUV3tx",
+              "type": "pdf",
+              "modified": "2026-09-29"
+            },
+            {
+              "name": "03 condition and loops.pdf",
+              "fileId": "1nfgHcfx0am_5wz1AnQ2zY03ye-Q0z_3C",
+              "type": "pdf",
+              "modified": "2026-10-04"
+            },
+            {
+              "name": "04 Methods.pdf",
+              "fileId": "14N9Vg6EejfKLYpra3x3mS19fpu6_M9Jm",
+              "type": "pdf",
+              "modified": "2026-10-12"
+            },
+            {
+              "name": "05 Array.pdf",
+              "fileId": "1W0Qpzm3ktKFlUNBunpZ3WqO_t0x-xEPj",
+              "type": "pdf",
+              "modified": "2026-10-18"
+            },
+            {
+              "name": "06 Objects and Classes.pptx",
+              "fileId": "128mK4hXfCngoTAPhCZ-9oW_0_5Dt6tOE",
+              "type": "pptx",
+              "modified": "2026-10-28"
+            }
+          ]
+        },
+        {
+          "name": "Sheets",
+          "nameAr": "الشيتات",
+          "folderId": "1QCZwwiDfLWS5zCG2DMj6uhnjyiqu03YU",
+          "files": [
+            {
+              "name": "Copy of OOP Sheet_4.mp4",
+              "fileId": "1GfAsgdHYj_8yEWscg_jBHY3mbTZndgU_",
+              "type": "mp4",
+              "modified": "2026-10-21"
+            }
+          ],
+          "children": [
+            {
+              "name": "Answer By: Eng/ Walled",
+              "nameAr": "حلول — م. وليد",
+              "folderId": "1ETYA-aUo5vqIi0KNy02wttppcnKX7MUV",
+              "files": [
+                {
+                  "name": "1&2.txt",
+                  "fileId": "1RnpRrTw9Yvx06RW0ijkMV4uvPDlfFx2d",
+                  "type": "txt",
+                  "modified": "2026-10-07"
+                },
+                {
+                  "name": "3.txt",
+                  "fileId": "1Us2ErybHyJztXJyB_3ZPErSv7fg9TAmm",
+                  "type": "txt",
+                  "modified": "2026-10-07"
+                },
+                {
+                  "name": "fact.txt",
+                  "fileId": "1nhSe6jsEt5_u0HqX6mMxItTuohphWEdm",
+                  "type": "txt",
+                  "modified": "2026-10-07"
+                },
+                {
+                  "name": "power.txt",
+                  "fileId": "1cZIW2rP5HXBeDuuTtU_hxWB5-lWbM-3L",
+                  "type": "txt",
+                  "modified": "2026-10-07"
+                }
+              ]
+            },
+            {
+              "name": "By Eng/Mohamed Alqady",
+              "nameAr": "حلول — م. محمد القدّي",
+              "folderId": "1PXWD-1kc6ji2EPV5iEI0Qld-ZicHVxO6",
+              "files": [
+                {
+                  "name": "طريقة_فتح_الكود_علي_Eclipse.docx",
+                  "fileId": "1V3KrQdvBKHbH1Vju-9GetxdCZa_cD1Or",
+                  "type": "docx",
+                  "modified": "2026-10-13"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Lectures answer",
+                  "nameAr": "حل المحاضرات",
+                  "folderId": "1xR1nEdyKTm9NhaWSdIyNyiz2VbBu5neZ",
+                  "files": [],
+                  "children": [
+                    {
+                      "name": "Lecture 2",
+                      "nameAr": "المحاضرة 2",
+                      "folderId": "1OqNIqXK_18GaYWeKZZV-CaIrTULcyikv",
+                      "files": [
+                        {
+                          "name": "CircleArea.java",
+                          "fileId": "1-NKTInAwXP3k57cve1EuavXKR0_2JFSQ",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "ComputeChange.java",
+                          "fileId": "1lbJ8-HoHF-hnRLa5SnwPGzTwIqVbHSQa",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "ComputeLoanUsingInputDialog.java",
+                          "fileId": "1DD7Oc76q5X5DqFPdg2DzUnT5lLhOsN0Q",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "ComputingLoanPayments.java",
+                          "fileId": "1x0DouzHJikDyIWIbp0kzXbo5Xfhcs_fS",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "DisplayTime.java",
+                          "fileId": "13XrpClqx8jm8EwtPRJYsvkDOamphG6kS",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "DisplayUnicode.java",
+                          "fileId": "1yG2KCIcNTBhwUriTVseVHH4SCzcM0nso",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "salesTax.java",
+                          "fileId": "1bkQDM_p2_9WjBmWKOGVO26ADKX_GSx9e",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        },
+                        {
+                          "name": "ShowCurrentTime.java",
+                          "fileId": "1DuJXv3p8WfEyxaFI9sAVWPI0MpC7fQgg",
+                          "type": "java",
+                          "modified": "2026-10-13"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Sheet answer",
+                  "nameAr": "حل الشيتات",
+                  "folderId": "1KW3-QnMxH57x_DvAbg3hfV6IxUWpGG2A",
+                  "files": [],
+                  "children": [
+                    {
+                      "name": "Sheet_2",
+                      "nameAr": "الشيت 2",
+                      "folderId": "17cjnTdwL5zBlE_3boD7wSLuivyCphOFy",
+                      "files": [
+                        {
+                          "name": "Sheet_2_Q1.java",
+                          "fileId": "1XWLkErmfs32nMZGlBuLFKLW-nvjSLwa3",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q10.java",
+                          "fileId": "1j4fa6oSvMusmMcKpFulznwdkWD1qtQVc",
+                          "type": "java",
+                          "modified": "2026-10-15"
+                        },
+                        {
+                          "name": "Sheet_2_Q2.java",
+                          "fileId": "1P-_-f2AK_0I0lUVG76q83GcNTssiEb96",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q3.java",
+                          "fileId": "1QRA1gYNSPyXtanqUgGaZuIoIX14ANGd_",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q4.java",
+                          "fileId": "1sDSYlGZIJrYxpjWn_FRVzKVzjQNQQ6bQ",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q5.java",
+                          "fileId": "1cIrZx8EVqyqS8mY7XHvQqjWaDqWnu5HT",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q6.java",
+                          "fileId": "1k64dojNx5jiZrLxwsC8yYCTmZ89Glzi3",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q7.java",
+                          "fileId": "1tLnG7RyG4oYpE3If8e-z-oY-g5bN2e7s",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q8.java",
+                          "fileId": "1V-AV4uzFLSjjlNQ8ve9ufvBkzWfXjrqh",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        },
+                        {
+                          "name": "Sheet_2_Q9.java",
+                          "fileId": "12ZBguZ1qXimxKfSuloRPLLkZb2cwh8Hp",
+                          "type": "java",
+                          "modified": "2026-10-14"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sheets files",
+              "nameAr": "ملفات الشيتات",
+              "folderId": "110CzNx-CLKlCoVnR0oYSBU6UGQWIS_sw",
+              "files": [
+                {
+                  "name": "fci_OOP_PracticeSheet_1.pdf",
+                  "fileId": "1hFYoHHzhDQL2o87gFQ5zg_nly8WK1Ve6",
+                  "type": "pdf",
+                  "modified": null
+                },
+                {
+                  "name": "FCI_OOP_PracticeSheet_2.pdf",
+                  "fileId": "1MeSPu1awyaTQ2FjDVVKMZS7zgsIlDiF0",
+                  "type": "pdf",
+                  "modified": null
+                },
+                {
+                  "name": "Sheet 3.pdf",
+                  "fileId": "1E1OQ7GbMZXbU7z-kjecC3OZ3dqzUi90u",
+                  "type": "pdf",
+                  "modified": null
+                },
+                {
+                  "name": "Sheet 4.pdf",
+                  "fileId": "1vOo_CrTvNzxyxQ4a0-hzJ9fHSqIK-h04",
+                  "type": "pdf",
+                  "modified": null
+                },
+                {
+                  "name": "Sheet 5.pdf",
+                  "fileId": "14md5pu1NT4TJBB3H5x9fJOxK0j2ii3pg",
+                  "type": "pdf",
+                  "modified": null
+                },
+                {
+                  "name": "Sheet 6.pdf",
+                  "fileId": "1SZqsEktYbPunUui-xphDfvBlVlZAh3ja",
+                  "type": "pdf",
+                  "modified": "2026-10-31"
+                },
+                {
+                  "name": "Sheet 7.pdf",
+                  "fileId": "1jDHXDILJG5P6j_8zMPKulIBBBpeQ0fPW",
+                  "type": "pdf",
+                  "modified": null
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "probability-statistics",
+      "name": "Probability and Statistics",
+      "nameAr": "الاحتمالات والإحصاء",
+      "icon": "chart",
+      "folderId": "1k1RvuORAx4rkcUxN0j8jJ6bMiVIegYRi",
+      "groups": [
+        {
+          "name": "Materials",
+          "nameAr": "المواد",
+          "folderId": "1k1RvuORAx4rkcUxN0j8jJ6bMiVIegYRi",
+          "files": [
+            {
+              "name": "Modified Prob.&Stat- Hasebat.pdf",
+              "fileId": "1Ag12ajktzozECIb7ObQMA0nfwCqFSpXQ",
+              "type": "pdf",
+              "modified": "2026-10-03"
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "project-management",
+      "name": "Project Management",
+      "nameAr": "إدارة المشاريع",
+      "icon": "clipboard",
+      "folderId": "1o5DYDacW5f3rJnSp1NMzsOxp_DpJlFF8",
+      "groups": [
+        {
+          "name": "Lectures",
+          "nameAr": "المحاضرات",
+          "folderId": "1qVl5AL0ln4dSY6VVN6NI30xqsprKYjuq",
+          "files": [
+            {
+              "name": "Lecture 3 & 4.pdf",
+              "fileId": "11Z53siF434VNs0qu8OviIakCW9xka55B",
+              "type": "pdf",
+              "modified": "2026-10-03"
+            },
+            {
+              "name": "Lectures 1 & 2.pdf",
+              "fileId": "12HNlBCHS5ur6va23_ybN5JWcaObqAsSm",
+              "type": "pdf",
+              "modified": "2026-10-03"
+            }
+          ]
+        },
+        {
+          "name": "Taskes",
+          "nameAr": "المهام",
+          "folderId": "1Ysfpak9sS9bBYa3GydyU4UlElRd3hFIv",
+          "files": [
+            {
+              "name": "project charter .docx",
+              "fileId": "1IKi8HSg_tO0Dj4yDvlTPlL3TrraXllBo",
+              "type": "docx",
+              "modified": "2026-10-06"
+            },
+            {
+              "name": "Project Scope.docx",
+              "fileId": "1RDCnPrxrtUHKvGi5zq_NxSjoVuh1wGki",
+              "type": "docx",
+              "modified": "2026-10-12"
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "signals-systems",
+      "name": "Signals & Systems",
+      "nameAr": "الإشارات والأنظمة",
+      "icon": "wave",
+      "folderId": "1a9Lv1LLGnV44_P5ctIJBjuYw1El8AhTo",
+      "groups": [
+        {
+          "name": "Lectures",
+          "nameAr": "المحاضرات",
+          "folderId": "1lLt41HsElllXZpxNGioOiWbpmeg9yP73",
+          "files": [
+            {
+              "name": "lec01_introduction.pdf",
+              "fileId": "166END2PfvY9IFglxcKpfFKXaRpgiFeFZ",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "lec02_Signals_and_systems_part_1_Final.pdf",
+              "fileId": "1lNAvE1V8O49AJPSzlWV00qVriVPiSlE-",
+              "type": "pdf",
+              "modified": null
+            },
+            {
+              "name": "Lecture_3_Signals_and_Systems_Part_II_revised.pdf",
+              "fileId": "1b8-5LHPWT0LSplGrwZBwiUF8XOvx7s5M",
+              "type": "pdf",
+              "modified": null
+            }
+          ]
+        },
+        {
+          "name": "Sections",
+          "nameAr": "الأقسام",
+          "folderId": "1_LUTJpRjJejtELINRSGozBYJJuUBR8Qr",
+          "files": [],
+          "children": [
+            {
+              "name": "Section1",
+              "nameAr": "القسم 1",
+              "folderId": "14gsUiEiZ8SVay_D2bzb6fPteP3wQwHAZ",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_1.mp4",
+                  "fileId": "1S6J7yb9YkSB7YEaJFD6Cv2sDXRkWh6jw",
+                  "type": "mp4",
+                  "modified": "2026-10-09"
+                },
+                {
+                  "name": "MATLAB_1.pdf",
+                  "fileId": "1SCLKXt_Ojv7-PXfmKV4xHzXIVv_ekQa2",
+                  "type": "pdf",
+                  "modified": "2026-09-29"
+                },
+                {
+                  "name": "Task_1.docx",
+                  "fileId": "1uBfX_PYefkcyxFGDkw9eK7zNZiGJu8ps",
+                  "type": "docx",
+                  "modified": "2026-09-29"
+                }
+              ]
+            },
+            {
+              "name": "Section2",
+              "nameAr": "القسم 2",
+              "folderId": "1_K0-eaVyZ6zsaPQ_CgROvdeAsxKpoRDm",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_2.mp4",
+                  "fileId": "1_2G1HBFDVlMIc5eZLXHg1kz4MwlY6Od5",
+                  "type": "mp4",
+                  "modified": "2026-10-16"
+                },
+                {
+                  "name": "MATLAB_2.pdf",
+                  "fileId": "12ezfM9Y_tLSFaPYvemE78-90SvB1Sc31",
+                  "type": "pdf",
+                  "modified": "2026-10-04"
+                },
+                {
+                  "name": "Pascal_triangle.png",
+                  "fileId": "1xwIx6LPm-FQ3QVwZzxRwNlkhm_oIcIV1",
+                  "type": "png",
+                  "modified": "2026-10-16"
+                },
+                {
+                  "name": "Task_2.docx",
+                  "fileId": "16N8a2ReYKxEwcTXXJNLd5Ew3uAO9kWXk",
+                  "type": "docx",
+                  "modified": "2026-10-16"
+                }
+              ]
+            },
+            {
+              "name": "Section3",
+              "nameAr": "القسم 3",
+              "folderId": "1MPnOF2MsEw-noaZFouB0ZKIEAiJvS7Al",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_3.mp4",
+                  "fileId": "17hzB49fFLd39QKPl36Em-4lAfydGhUWj",
+                  "type": "mp4",
+                  "modified": "2026-10-13"
+                },
+                {
+                  "name": "Copy of MATLAB_3.pdf",
+                  "fileId": "1kByXMqfR5qr6I7XXIZqMPF6wwk3bZhlj",
+                  "type": "pdf",
+                  "modified": "2026-10-13"
+                },
+                {
+                  "name": "Copy of Task_3.docx",
+                  "fileId": "1MKhpnk85I0ETLrCrmKKoZ-wOzPLB79S7",
+                  "type": "docx",
+                  "modified": "2026-10-17"
+                }
+              ]
+            },
+            {
+              "name": "section4",
+              "nameAr": "القسم 4",
+              "folderId": "1ln0AX_MgS0BjHWLPlbRMJxjNtEjyXwyc",
+              "files": [
+                {
+                  "name": "Copy of matlab_4.mp4",
+                  "fileId": "1dAkCqOIcRvo9tSUZWEVJ8GlXtYi5PrzU",
+                  "type": "mp4",
+                  "modified": "2026-10-22"
+                },
+                {
+                  "name": "Copy of MATLAB_4.pptx",
+                  "fileId": "1VPbTzHsF05e9WjEp25FmaDUr3e6jU5WJ",
+                  "type": "pptx",
+                  "modified": "2026-10-22"
+                },
+                {
+                  "name": "Copy of matlab_4_practical_only.mp4",
+                  "fileId": "1u-vrtzrZuKW89lqA1Uxo8EDLHduaNJvz",
+                  "type": "mp4",
+                  "modified": "2026-10-22"
+                }
+              ]
+            },
+            {
+              "name": "section5",
+              "nameAr": "القسم 5",
+              "folderId": "1eDsZrEaIkn_DJj-dFaLDz1SwK8VK8Zfp",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_5.mp4",
+                  "fileId": "1NXlfR2hk7CIEhcos19xZjueYbED4vOgC",
+                  "type": "mp4",
+                  "modified": "2026-10-30"
+                },
+                {
+                  "name": "Copy of MATLAB_5.pptx",
+                  "fileId": "1sLek1bnwCqjHGHp1P-X9In9tU6jAB-Z1",
+                  "type": "pptx",
+                  "modified": "2026-10-30"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "level": 2,
+      "semester": 1
+    },
+    {
+      "slug": "fundamentals-of-it",
+      "name": "Fundamentals of IT",
+      "nameAr": "أساسيات تكنولوجيا المعلومات",
+      "icon": "book-open",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "fundamentals-of-mathematics",
+      "name": "Fundamentals of Mathematics",
+      "nameAr": "أساسيات الرياضيات",
+      "icon": "calculator",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "freehand-drawing",
+      "name": "Freehand Drawing",
+      "nameAr": "الرسم الحر",
+      "icon": "pencil",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "electronics",
+      "name": "Electronics",
+      "nameAr": "الإلكترونيات",
+      "icon": "zap",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "programming-1",
+      "name": "Programming 1",
+      "nameAr": "برمجة 1",
+      "icon": "terminal",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "scientific-thinking",
+      "name": "Scientific Thinking",
+      "nameAr": "التفكير العلمي",
+      "icon": "lightbulb",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "islamic-culture",
+      "name": "Islamic Culture",
+      "nameAr": "الثقافة الإسلامية",
+      "icon": "moon",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "human-rights",
+      "name": "Human Rights",
+      "nameAr": "حقوق الإنسان",
+      "icon": "scale",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "mathematics-1",
+      "name": "Mathematics 1",
+      "nameAr": "رياضيات 1",
+      "icon": "geometry",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "organizational-behavior",
+      "name": "Organizational Behavior",
+      "nameAr": "السلوك التنظيمي",
+      "icon": "users",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "physics-1",
+      "name": "Physics 1",
+      "nameAr": "فيزياء 1",
+      "icon": "atom",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "english-language",
+      "name": "English Language",
+      "nameAr": "اللغة الإنجليزية",
+      "icon": "languages",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    },
+    {
+      "slug": "introduction-to-computers",
+      "name": "Introduction to Computers",
+      "nameAr": "مقدمة في الحاسب الآلي",
+      "icon": "cpu",
+      "level": 1,
+      "semester": 1,
+      "folderId": null,
+      "stub": true,
+      "groups": []
+    }
+  ],
+  "lastSyncRun": "18c6eee290a9"
+}

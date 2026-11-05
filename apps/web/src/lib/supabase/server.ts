@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import { stripBOM } from './utils'
 
 export async function createClient() {
@@ -40,3 +41,19 @@ export async function createClient() {
         }
     )
 }
+
+/**
+ * Spec 033 Track C (audit MID-2): per-request dedupe for the auth
+ * roundtrip. Nested layouts ([locale]/layout.tsx + admin-dashboard/
+ * layout.tsx) each called getUser() on their own client — two identical
+ * /auth/v1 requests per authenticated render. React's cache() scopes the
+ * memo to one render pass, so both layouts share a single network call.
+ * (The proxy's getUser is a separate runtime and cannot share this.)
+ */
+export const getCachedUser = cache(async () => {
+    const supabase = await createClient()
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+    return user
+})

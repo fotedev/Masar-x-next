@@ -12,10 +12,10 @@ export function PageTransition({ children, pathname }: Props) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
-        initial={{ opacity: shouldReduceMotion ? 1 : 0 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : false}
         animate={{ opacity: 1 }}
         exit={{ opacity: shouldReduceMotion ? 1 : 0 }}
         transition={
