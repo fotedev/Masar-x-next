@@ -37,6 +37,6 @@ test.describe("subjects profile scoping (no level tabs)", () => {
     // Guest fallback (profile level null → 1) scopes the query, and the
     // anonymous show_on_home filter is preserved.
     await expect.poll(() => subjectsUrl).toContain("level.eq.1");
-    await expect.poll(() => subjectsUrl).toContain("show_on_home.eq.true");
+    await expect.poll(() => subjectsUrl).toContain("show_on_home=eq.true");
   });
 });
