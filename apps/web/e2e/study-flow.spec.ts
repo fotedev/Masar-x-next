@@ -37,9 +37,9 @@ for (const locale of LOCALES) {
 
   test(`subject detail opens — ${locale}`, async ({ page }) => {
     await page.goto(`/${locale}/subjects`);
-    // SubjectsGrid renders skeleton divs while loading and real <button> cards
-    // once subjects arrive; the empty state renders no buttons.
-    const cards = page.locator("main").getByRole("button");
+    // Spec 034 added the LevelTabs above the grid — level tabs are buttons
+    // too, so scope to the subject cards themselves, not "any button".
+    const cards = page.locator('main [data-testid="subject-card"]');
     try {
       await expect
         .poll(async () => cards.count(), { timeout: 15_000, intervals: [500, 1_000, 5_000] })

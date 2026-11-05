@@ -97,6 +97,30 @@ export const WaitlistSignupSchema = z.object({
   source: WaitlistSourceSchema,
 });
 
+// --- Schedules (spec 034) ---
+// Shape of the static timetable JSONs at apps/web/src/lib/schedules/ (extracted
+// from the public group Google Sheets via the sandbox gviz pipeline).
+
+export const ScheduleSheetSchema = z.object({
+  id: z.string().min(1),
+  docId: z.string().min(10),
+  /** Tab name in the source spreadsheet (e.g. "الفرقة الثانية"). */
+  tab: z.string().min(1).nullable(),
+  gid: z.string().optional(),
+  fetchedAt: z.string(),
+  sourceUrl: z.string(),
+  rowCount: z.number().int().positive(),
+  colCount: z.number().int().positive(),
+  /** Raw flattened grid — cells may contain multi-line "subject/staff/room". */
+  rows: z.array(z.array(z.string())),
+});
+export type ScheduleSheet = z.infer<typeof ScheduleSheetSchema>;
+
+export const ScheduleSetSchema = z.object({
+  sheets: z.array(ScheduleSheetSchema).min(1),
+});
+export type ScheduleSet = z.infer<typeof ScheduleSetSchema>;
+
 // --- Drive materials (spec 033) ---
 // Shape of the static manifest at apps/web/src/lib/materials/manifest.json
 // (sync-maintained by the drive-materials sandbox tooling; 84 files, term-tagged).
