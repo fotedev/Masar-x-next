@@ -199,12 +199,17 @@ function QuizDashboardInternal() {
   const handleEditQuiz = async (quiz: Quiz) => {
     try {
       setEditingQuiz(quiz);
+      setShowCreateForm(true);
 
       const result = await loadQuizForEdit(quiz);
       setFormData(result.formData);
-      setShowCreateForm(true);
-    } catch {
-      // ignore
+    } catch (error: unknown) {
+      setShowCreateForm(false);
+      setEditingQuiz(null);
+      toast.error(t("editFeedback.loadError"), {
+        description:
+          getErrorMessage(error) || t("editFeedback.loadErrorDesc"),
+      });
     }
   };
 

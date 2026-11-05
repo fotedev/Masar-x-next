@@ -62,6 +62,7 @@
   "examTitlePlaceholder": "Example: Mathematics Exam",
   "durationPlaceholder": "Example: 30",
   "generate": "Generate",
+  "semester": "Semester",
   "selectSemester": "Select Semester",
   "semester1": "Term 1",
   "semester2": "Term 2",
@@ -136,6 +137,10 @@
     "successDesc": "The exam was deleted successfully.",
     "error": "Could not delete the exam",
     "errorDesc": "An error occurred while deleting. Please try again."
+  },
+  "editFeedback": {
+    "loadError": "Failed to open the exam for editing",
+    "loadErrorDesc": "An error occurred while loading exam data. Please try again."
   },
   "confirmDeleteTitle": "Delete the exam?",
   "confirmDeleteMessageWithTitle": "The exam \"{title}\" will be permanently deleted and this action cannot be undone.",
