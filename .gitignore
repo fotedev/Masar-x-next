@@ -112,6 +112,7 @@ check-*.js
 
 # Temporary and Local Files
 tmp/
+.tmp/
 temp/
 sandbox/
 *.tgz
