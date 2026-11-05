@@ -299,3 +299,6 @@ promo_assets/story.md
 # Deno regenerates this on every check/test run; the repo deliberately does
 # not track it (revert #122) — ignore it to avoid working-tree churn.
 supabase/functions/deno.lock
+
+# Upstash credential handoff (token now stored in apps/web/.env.local + Vercel)
+redis.env.txt
