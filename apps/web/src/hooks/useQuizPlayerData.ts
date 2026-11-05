@@ -30,16 +30,35 @@ type LocalQuizData = {
 
 export function useQuizPlayerData(props: {
   quizId?: string;
+  /**
+   * Spec 033 Track A: server-fetched payload (quiz-play RSC page). Seeded
+   * directly into state so `loading` is false at first render and the
+   * client fetch is skipped. Null means "server had nothing" — fall
+   * through to the client fetch (its retry can still succeed).
+   */
+  initialQuiz?: {
+    quiz: Record<string, unknown>;
+    questions: Array<Record<string, unknown>>;
+  } | null;
   quizData?: LocalQuizData;
   trackEvent: (event: string, payload?: Record<string, unknown>) => void;
 }) {
-  const { quizId, quizData, trackEvent } = props;
+  const { quizId, initialQuiz, quizData, trackEvent } = props;
 
-  const [loading, setLoading] = useState(true);
-  const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(!initialQuiz);
+  const [quiz, setQuiz] = useState<Quiz | null>(
+    (initialQuiz?.quiz as Quiz | undefined) ?? null,
+  );
+  const [questions, setQuestions] = useState<Question[]>(
+    (initialQuiz?.questions as Question[] | undefined) ?? [],
+  );
 
   const loadQuiz = useCallback(async () => {
+    if (initialQuiz) {
+      // Already seeded server-side (spec 033) — nothing to fetch.
+      return;
+    }
+
     if (quizData) {
       setQuiz({
         id: "local",
@@ -72,7 +91,7 @@ export function useQuizPlayerData(props: {
     } finally {
       setLoading(false);
     }
-  }, [quizData, quizId, trackEvent]);
+  }, [initialQuiz, quizData, quizId, trackEvent]);
 
   useEffect(() => {
     loadQuiz();
