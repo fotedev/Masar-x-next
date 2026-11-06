@@ -72,6 +72,12 @@ const pruneChatOverflow = (userId: string, chatMode: string) => {
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // Spec 036 Track A: render-body mirror — sendMessage snapshots history from
+  // this ref instead of reading the messages state, which would pin it in the
+  // callback's dep array and recreate the handler on every streamed delta.
+  // Assigned during render so event handlers always see the last committed list.
+  const messagesRef = useRef<ChatMessage[]>(messages);
+  messagesRef.current = messages;
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // New: tracks when everything is loaded and ready
   const [isPuterSignedIn, setIsPuterSignedIn] = useState(false);
@@ -340,7 +346,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     trackEvent("ai_question_asked", { length: content.length, using_puter_auth: isPuterSignedIn, model: modelOverride });
 
     try {
-      const historyTurns: AiChatHistoryTurn[] = [...messages, userMsg]
+      const historyTurns: AiChatHistoryTurn[] = [...messagesRef.current, userMsg]
         .filter(m => m?.content && m.content.trim())
         .map(m => ({
           role: m.type === 'user' ? 'user' : 'assistant',
@@ -423,7 +429,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     } finally {
       setIsLoading(false);
     }
-  }, [user, isLoading, trackEvent, isPuterSignedIn, messages, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id, locale]);
+  }, [user, isLoading, trackEvent, isPuterSignedIn, mode, studentSelectedSubject, academic.level, academic.semester, academic.department_id, locale]);
 
   const clearChat = useCallback(async () => {
     setMessages([]);
@@ -448,6 +454,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
   return {
     messages,
+    // Spec 036 Track A: render-synced mirror — consumers with messages-shaped
+    // callback deps (retry) read this so their identity holds while streaming.
+    messagesRef,
     isLoading,
     isReady, // Changed from isInitialLoading
     sendMessage,
