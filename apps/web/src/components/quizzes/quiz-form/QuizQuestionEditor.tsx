@@ -85,7 +85,7 @@ export function QuizQuestionEditor(props: {
             </div>
             <LatexRenderer
               text={question.question}
-              className="text-base text-gray-800 dark:text-gray-200"
+              className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap"
             />
           </div>
         )}
@@ -207,7 +207,7 @@ export function QuizQuestionEditor(props: {
                 </div>
                 {option && (
                   <div className="mr-8 text-sm p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-100/30 dark:border-blue-800/30">
-                    <LatexRenderer text={option} />
+                    <LatexRenderer text={option} className="whitespace-pre-wrap" />
                   </div>
                 )}
               </div>
@@ -237,7 +237,10 @@ export function QuizQuestionEditor(props: {
         />
         {question.explanation && (
           <div className="mt-2 text-sm p-2 bg-green-50/50 dark:bg-green-900/10 rounded-lg border border-green-100/30 dark:border-green-800/30">
-            <LatexRenderer text={question.explanation} />
+            <LatexRenderer
+              text={question.explanation}
+              className="whitespace-pre-wrap"
+            />
           </div>
         )}
       </div>

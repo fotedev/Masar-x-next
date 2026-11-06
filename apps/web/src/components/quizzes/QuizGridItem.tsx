@@ -57,6 +57,11 @@ export function QuizGridItem({
                   {t("semester")} {meta.semester}
                 </span>
               )}
+              {quiz.status && quiz.status !== "approved" && (
+                <span className="px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium rounded-md border border-amber-200 dark:border-amber-800">
+                  {t("pending")}
+                </span>
+              )}
             </div>
           </div>
           {isAdmin && (

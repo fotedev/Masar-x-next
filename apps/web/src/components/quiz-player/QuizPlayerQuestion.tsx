@@ -134,7 +134,7 @@ export function QuizPlayerQuestion(props: {
 
         <h3
           dir="auto"
-          className="text-2xl font-bold text-gray-900 dark:text-white mb-10 leading-relaxed text-start"
+          className="text-2xl font-bold text-gray-900 dark:text-white mb-10 leading-relaxed text-start whitespace-pre-wrap"
         >
           <LatexRenderer text={currentQuestion.question} />
         </h3>
@@ -196,7 +196,7 @@ export function QuizPlayerQuestion(props: {
                     >
                       {String.fromCharCode(65 + index)}
                     </div>
-                    <span className="font-semibold text-lg">
+                    <span className="font-semibold text-lg whitespace-pre-wrap">
                       <LatexRenderer text={option} />
                     </span>
                   </div>
@@ -224,7 +224,7 @@ export function QuizPlayerQuestion(props: {
           {isAnswered && currentQuestion.explanation && (
             <div className="animate-in fade-in duration-500 flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-base text-gray-700 dark:text-gray-300 font-medium">
               <span className="text-lg">💡</span>
-              <div className="flex-1">
+              <div className="flex-1 whitespace-pre-wrap">
                 <LatexRenderer text={currentQuestion.explanation} />
               </div>
             </div>
