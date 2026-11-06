@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Quiz } from "@/types/database";
 
 export function useQuizzesModals() {
@@ -30,27 +30,30 @@ export function useQuizzesModals() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [deleteDialogOpen, isDeletingQuiz]);
 
-  const openDeleteDialog = (quiz: Quiz) => {
+  // Spec 036 Track D: stable identities — the dashboard forwards these into
+  // the memoized QuizGridItem (via handleDeleteQuiz), and an inline function
+  // here would churn per render and defeat that memo.
+  const openDeleteDialog = useCallback((quiz: Quiz) => {
     setQuizToDelete(quiz);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const closeDeleteDialog = () => {
+  const closeDeleteDialog = useCallback(() => {
     if (isDeletingQuiz) return;
     setDeleteDialogOpen(false);
     setQuizToDelete(null);
-  };
+  }, [isDeletingQuiz]);
 
-  const resetImportState = () => {
+  const resetImportState = useCallback(() => {
     setShowImportModal(false);
     setImportJson("");
     setImportMode("json");
-  };
+  }, []);
 
-  const closeCreateFormAndResetEditing = () => {
+  const closeCreateFormAndResetEditing = useCallback(() => {
     setShowCreateForm(false);
     setEditingQuiz(null);
-  };
+  }, []);
 
   return {
     deleteDialogOpen,
