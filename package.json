@@ -21,7 +21,7 @@
     "types:generate": "supabase gen types typescript --linked > packages/shared/src/types/database.generated.ts"
   },
   "devDependencies": {
-    "fallow": "3.33.1"
+    "fallow": "3.37.0"
   },
   "dependencies": {
     "pg": "^8.18.0"

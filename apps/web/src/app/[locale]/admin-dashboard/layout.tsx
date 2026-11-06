@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "../../../lib/supabase/server";
+import { createClient, getCachedUser } from "../../../lib/supabase/server";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
@@ -15,10 +15,10 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
+  // getCachedUser dedupes with the [locale] layout's call in the same
+  // render pass (spec 033 Track C) — one auth roundtrip, not two.
+  const user = await getCachedUser();
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");

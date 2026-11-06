@@ -1,6 +1,6 @@
 import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
-import { useSubjects } from "../hooks/useSubjects";
+import { useSubjects, type Subject } from "../hooks/useSubjects";
 import { useLocale, useTranslations } from "next-intl";
 import { Skeleton } from "./ui/Skeleton";
 
@@ -14,16 +14,24 @@ import { motion, useReducedMotion } from "framer-motion";
 interface SubjectsGridProps {
   onSubjectClick?: (subjectName: string) => void;
   showOnlyOnHome?: boolean;
+  /**
+   * Spec 034: optional pre-fetched list (e.g. the /subjects page's
+   * all-levels fetch filtered by its level tabs). When omitted the grid
+   * fetches its own profile-scoped list, exactly as before.
+   */
+  subjects?: Subject[];
 }
 
 export function SubjectsGrid({
   onSubjectClick,
   showOnlyOnHome = false,
+  subjects: subjectsProp,
 }: SubjectsGridProps) {
   const locale = useLocale();
   const shouldReduceMotion = useReducedMotion();
   const tSubjects = useTranslations("subjects");
-  const { subjects, loading } = useSubjects();
+  const { subjects: scopedSubjects, loading } = useSubjects();
+  const subjects = subjectsProp ?? scopedSubjects;
 
   // Spec 013: the DB query already filters by the student's effective
   // semester (profile-driven) — no client-side semester re-filter here.
@@ -95,6 +103,7 @@ export function SubjectsGrid({
                   : "cursor-pointer group hover:border-brand-blue/50"
                 }`}
               type="button"
+              data-testid="subject-card"
             >
               <div className="text-center flex flex-col items-center justify-center h-full w-full">
                 <div className={`w-14 h-14 bg-brand-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-[colors,transform] duration-300 shrink-0
