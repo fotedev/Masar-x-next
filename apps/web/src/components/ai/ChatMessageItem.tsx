@@ -544,7 +544,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         if (lang === "markdown" || lang === "md") {
           return (
             <div className="my-4">
-              <LazyMarkdown content={normalizeLatexDelimiters(inner)} components={markdownComponents} />
+              <LazyMarkdown content={normalizeLatexDelimiters(inner)} components={markdownComponents} streaming={isStreaming} />
             </div>
           );
         }
@@ -592,7 +592,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           }`}
         >
           <div className="prose prose-slate dark:prose-invert max-w-none">
-            <LazyMarkdown content={normalized} components={markdownComponents} />
+            <LazyMarkdown content={normalized} components={markdownComponents} streaming={isStreaming} />
           </div>
         </div>
       </div>

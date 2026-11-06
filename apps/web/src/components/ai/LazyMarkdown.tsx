@@ -16,8 +16,10 @@ export function LazyMarkdown(props: {
   content: string;
   components?: Components;
   className?: string;
+  /** True while this bubble is still streaming — skips the highlight pass (spec 036). */
+  streaming?: boolean;
 }) {
-  const { content, components, className } = props;
+  const { content, components, className, streaming } = props;
 
-  return <Heavy content={content} components={components} className={className} />;
+  return <Heavy content={content} components={components} className={className} streaming={streaming} />;
 }
