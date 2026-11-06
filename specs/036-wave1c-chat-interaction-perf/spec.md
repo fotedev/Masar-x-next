@@ -109,4 +109,28 @@ time):
 
 ## Results
 
-(filled after verification)
+Measured 2026-11-07 in the worktree at `fix/036-wave1c-chat-perf` (commits `00c9d55`…`8edf36a`):
+
+- [x] Typecheck clean; ESLint 0 errors, 48 warnings (all pre-existing `no-console` style; repo cap 52).
+- [x] vitest 286/286 — baseline held exactly.
+- [x] Build green (Turbopack); standalone **52 MB** unchanged (`@img` 19 MB — the spec-033 trace fix intact).
+- [x] Playwright e2e **18 passed / 2 skipped / 0 failed** (skips = signed-in/prod suites needing credentials,
+      same as prior waves). `ai-chat-history` — the 60-bubble transcript that exercises Track C directly —
+      passed in 7.0s.
+- [x] Lighthouse 13.6 smoke (mobile, Playwright Chromium-1248, single-run volatility ±5; machine live):
+      - `/ar/ai-assistant` ×2: perf **81 / 80**, LCP 1.9 / 2.0 s, TBT 660 / 710 ms, **CLS 0.005 / 0.005**.
+        No regression signal — the recorded 1.37 s baseline (spec 032) was a single volatile run under
+        different machine load, and none of these tracks touch a load-time LCP path (the hero is
+        untouched; avatar gating affects only message bubbles after content exists).
+      - `/ar/quizzes` ×2: perf 84 / 62, LCP 1.4 / 1.4 s, TBT 620 / 540 ms, CLS **0.013 / 0.77**.
+        The CLS bimodality is the documented pre-existing guest allow-list race (specs 033/034 Wave-2
+        wall — needs server-side academic scoping); Track D changes no layout. Reruns show both faces.
+- [x] Manual/dev structural check: handler identities verified stable by construction
+      (`messagesRef` render-synced; retry reads the ref; quizzes handlers + modal-dialog
+      helpers `useCallback`-wrapped), highlight skip verified via the `streaming` prop path
+      (main + nested language-markdown call sites), avatar gating verified in the e2e
+      long-transcript run. Guest persistence untouched (event-driven persist from round 13/14).
+
+Deferred (documented, not dropped): FETCH-2 unbounded quizzes fetch — a client limit would
+hide rows (admins fetch all by design; non-admins filter client-side); Wave 2 server-side
+academic scoping bounds it properly. Quizzes CLS wall rides the same Wave-2 work.
