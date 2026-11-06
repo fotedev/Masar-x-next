@@ -4,11 +4,16 @@ import type { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
 import type { Notification, NotificationInsert } from "../types/database";
 import { queryCache, cacheKeys, cacheTTL } from "../lib/queryCache";
 import { logger } from "../lib/logger";
+import { useAuth } from "../contexts/AuthContext";
 
 // Keep track of inflight requests per user to deduplicate simultaneous calls
 const inflightRequests = new Map<string, Promise<Notification[]>>();
 
 export function useNotifications() {
+  // Spec 034 Track C (audit AUTH-1): the user comes from context — the
+  // server already resolved it (initialUser) — instead of four
+  // supabase.auth.getUser() network roundtrips per mount.
+  const { user: authUser } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -26,13 +31,10 @@ export function useNotifications() {
   const fetchNotifications = useCallback(async (skipCache = false) => {
     let userId: string | null = null;
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      userId = user.id;
+      if (!authUser) return;
+      userId = authUser.id;
 
-      const cacheKey = cacheKeys.notifications(user.id);
+      const cacheKey = cacheKeys.notifications(userId);
 
       // Check cache first (unless skipping)
       if (!skipCache) {
@@ -46,8 +48,8 @@ export function useNotifications() {
       }
 
       // If there's an inflight request for this user, wait for it
-      if (inflightRequests.has(user.id)) {
-        const data = await inflightRequests.get(user.id)!;
+      if (inflightRequests.has(userId)) {
+        const data = await inflightRequests.get(userId)!;
         setNotifications(data);
         setUnreadCount(data.filter((n: Notification) => !n.read).length);
         setLoading(false);
@@ -59,7 +61,7 @@ export function useNotifications() {
         const { data, error } = await supabase
           .from("notifications")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .order("created_at", { ascending: false })
           .limit(50);
 
@@ -67,7 +69,7 @@ export function useNotifications() {
         return data || [];
       })();
 
-      inflightRequests.set(user.id, request);
+      inflightRequests.set(userId, request);
       const notificationData = await request;
 
       setNotifications(notificationData);
@@ -84,7 +86,7 @@ export function useNotifications() {
       if (userId) inflightRequests.delete(userId);
       setLoading(false);
     }
-  }, []);
+  }, [authUser]);
 
   // تحديث حالة القراءة
   const markAsRead = async (notificationId: string) => {
@@ -108,15 +110,13 @@ export function useNotifications() {
   // تحديث جميع الإشعارات كمقروءة
   const markAllAsRead = async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!authUser) return;
+      const userId = authUser.id;
 
       const { error } = await supabase
         .from("notifications")
         .update({ read: true })
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("read", false);
 
       if (error) throw error;
@@ -164,10 +164,7 @@ export function useNotifications() {
         if (error) throw error;
 
         // إذا كان الإشعار للمستخدم الحالي، أضفه للقائمة
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user && data.user_id === user.id) {
+        if (authUser && data.user_id === authUser.id) {
           setNotifications((prev) => [data, ...prev]);
           if (!data.read) {
             setUnreadCount((prev) => prev + 1);
@@ -179,7 +176,7 @@ export function useNotifications() {
         throw error;
       }
     },
-    [],
+    [authUser],
   );
 
   // إرسال إشعار لمستخدم محدد
@@ -269,22 +266,20 @@ export function useNotifications() {
 
       const promise = (async () => {
         try {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (!user) return;
+          // Spec 034 Track C: context user instead of a getUser() roundtrip.
+          if (!authUser) return;
 
           if (realtimeChannelRef.current) {
             return realtimeChannelRef.current;
           }
 
-          const channel = supabase.channel(`notifications:${user.id}`).on(
+          const channel = supabase.channel(`notifications:${authUser.id}`).on(
             "postgres_changes",
             {
               event: "INSERT",
               schema: "public",
               table: "notifications",
-              filter: `user_id=eq.${user.id}`,
+              filter: `user_id=eq.${authUser.id}`,
             },
             (payload: RealtimePostgresInsertPayload<Notification>) => {
               const newNotif = payload.new as Notification;
@@ -293,7 +288,7 @@ export function useNotifications() {
                 setUnreadCount((prev) => prev + 1);
               }
               // Invalidate the cache key so the next manual fetch gets fresh data
-              queryCache.invalidate(cacheKeys.notifications(user.id));
+              queryCache.invalidate(cacheKeys.notifications(authUser.id));
             },
           );
 
@@ -342,7 +337,7 @@ export function useNotifications() {
         });
       });
     };
-  }, [fetchNotifications]);
+  }, [authUser, fetchNotifications]);
 
   return {
     notifications,

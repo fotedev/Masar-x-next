@@ -46,40 +46,68 @@ export function useLectureContent({
       try {
         setLoading(true);
 
-        const [summariesRes, videosRes, filesRes, quizzesRes] =
+        // Spec 034 Track B (audit FETCH-1): scope each table to THIS
+        // lecture server-side via lecture_id/lecture_key (composite index
+        // `subject, lecture_id` covers the shape) instead of downloading
+        // up to 1,700 subject rows and filtering client-side. Legacy rows
+        // linked only by title inference cannot appear in a scoped query —
+        // a scoped table that comes back EMPTY re-fetches broadly and
+        // falls through to the full lectureMatch below.
+        const lectureFilter = `lecture_id.eq.${lecture?.id},lecture_key.eq.${lectureKey}`;
+        const fetchTable = async (
+          table: "summaries" | "videos" | "files" | "quizzes",
+          select: string,
+          limit: number,
+        ): Promise<Omit<ContentItem, "type">[]> => {
+          const scoped = await supabase
+            .from(table)
+            .select(select)
+            .eq("subject", subject)
+            .or(lectureFilter)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+          if (scoped.error) throw scoped.error;
+          if ((scoped.data ?? []).length > 0) {
+            return scoped.data as unknown as Omit<ContentItem, "type">[];
+          }
+
+          // Empty scoped result → legacy/inference-only rows may exist:
+          // fall back to the historical broad fetch + client-side filter.
+          const broad = await supabase
+            .from(table)
+            .select(select)
+            .eq("subject", subject)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+          if (broad.error) throw broad.error;
+          return broad.data as unknown as Omit<ContentItem, "type">[];
+        };
+
+        const [summariesData, videosData, filesData, quizzesData] =
           await Promise.all([
-            supabase
-              .from("summaries")
-              .select("id,title,subject,status,created_at,lecture_key,lecture_id")
-              .eq("subject", subject)
-              .order("created_at", { ascending: false })
-              .limit(400),
-            supabase
-              .from("videos")
-              .select("id,title,subject,url,language,created_at,lecture_key,lecture_id")
-              .eq("subject", subject)
-              .order("created_at", { ascending: false })
-              .limit(400),
-            supabase
-              .from("files")
-              .select(
-                "id,title,subject,file_url,description,created_at,lecture_key,lecture_id",
-              )
-              .eq("subject", subject)
-              .order("created_at", { ascending: false })
-              .limit(400),
-            supabase
-              .from("quizzes")
-              .select("id,title,subject,description,created_at,lecture_id")
-              .eq("subject", subject)
-              .order("created_at", { ascending: false })
-              .limit(500),
+            fetchTable(
+              "summaries",
+              "id,title,subject,status,created_at,lecture_key,lecture_id",
+              400,
+            ),
+            fetchTable(
+              "videos",
+              "id,title,subject,url,language,created_at,lecture_key,lecture_id",
+              400,
+            ),
+            fetchTable(
+              "files",
+              "id,title,subject,file_url,description,created_at,lecture_key,lecture_id",
+              400,
+            ),
+            fetchTable(
+              "quizzes",
+              "id,title,subject,description,created_at,lecture_key,lecture_id",
+              500,
+            ),
           ]);
 
-        if (summariesRes.error) throw summariesRes.error;
-        if (videosRes.error) throw videosRes.error;
-        if (filesRes.error) throw filesRes.error;
-        if (quizzesRes.error) throw quizzesRes.error;
 
         const lectureMatch = (row: { lecture_id?: string | null; lecture_key?: string | null; title?: string | null; id: string }) => {
           // 1. Match by ID (most reliable)
@@ -115,12 +143,11 @@ export function useLectureContent({
           }
         };
 
-        setSummaries((summariesRes.data || []).map((s: Omit<ContentItem, 'type'>) => ({ ...s, type: 'summary' as const })).filter(lectureMatch));
-        setVideos((videosRes.data || []).map((v: Omit<ContentItem, 'type'>) => ({ ...v, type: 'video' as const })).filter(lectureMatch));
-        setFiles((filesRes.data || []).map((f: Omit<ContentItem, 'type'>) => ({ ...f, type: 'file' as const })).filter(lectureMatch));
+        setSummaries(summariesData.map((s) => ({ ...s, type: 'summary' as const })).filter(lectureMatch));
+        setVideos(videosData.map((v) => ({ ...v, type: 'video' as const })).filter(lectureMatch));
+        setFiles(filesData.map((f) => ({ ...f, type: 'file' as const })).filter(lectureMatch));
 
-        const quizzesForSubject = quizzesRes.data || [];
-        setQuizzes(quizzesForSubject.map((q: Omit<ContentItem, 'type'>) => ({ ...q, type: 'quiz' as const })).filter(lectureMatch));
+        setQuizzes(quizzesData.map((q) => ({ ...q, type: 'quiz' as const })).filter(lectureMatch));
       } catch (e) {
         logger.error("Error fetching lecture content:", e);
         setSummaries([]);
