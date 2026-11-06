@@ -8,10 +8,18 @@ import { useTranslations } from "next-intl";
 
 type UseNewsOptions = {
   includeInactive?: boolean;
+  /**
+   * Spec 034 Track A: server-fetched active news (news RSC page). Seeded
+   * via TanStack initialData so the grid renders in the first paint
+   * (measured CLS 0.490 came from the post-hydration fetch-and-grow).
+   * Only applied to the public view — the admin includeInactive query
+   * fetches its own (superset) data.
+   */
+  initialNews?: News[] | null;
 };
 
 export function useNews(options: UseNewsOptions = {}) {
-  const { includeInactive = false } = options;
+  const { includeInactive = false, initialNews } = options;
   const t = useTranslations("news");
   const queryClient = useQueryClient();
   const [showAddNews, setShowAddNews] = useState(false);
@@ -24,6 +32,12 @@ export function useNews(options: UseNewsOptions = {}) {
   });
 
   const queryKey = ["news", { includeInactive }];
+
+  // Server seed (public view only): initialData + a fresh
+  // initialDataUpdatedAt makes the query non-stale for staleTime, so the
+  // mount refetch is skipped while invalidations (add/toggle/delete)
+  // still refetch normally.
+  const seed = !includeInactive ? initialNews ?? undefined : undefined;
 
   const { data: news = [], isLoading: loading, refetch: fetchNews } = useQuery({
     queryKey,
@@ -42,6 +56,8 @@ export function useNews(options: UseNewsOptions = {}) {
       return (data as News[]) || [];
     },
     staleTime: 5 * 60 * 1000,
+    initialData: seed,
+    initialDataUpdatedAt: seed ? Date.now() : undefined,
   });
 
   const addNewsMutation = useMutation({
