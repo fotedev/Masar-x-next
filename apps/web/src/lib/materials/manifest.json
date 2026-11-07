@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-07T01:31:46.793Z",
+  "generated": "2026-11-07T06:57:47.663Z",
   "source": {
     "name": "Materials- AI - Y2_S1",
     "folderId": "1bE-Kel2uE8MdUvSN-7N8uFW_s2U5I3NA",
@@ -309,6 +309,12 @@
           "folderId": "1QCZwwiDfLWS5zCG2DMj6uhnjyiqu03YU",
           "files": [
             {
+              "name": "Copy of OOP Sheet 6.mp4",
+              "fileId": "1H5injiML847K0kV3MAyRNre4vDFh88eI",
+              "type": "mp4",
+              "modified": null
+            },
+            {
               "name": "Copy of OOP Sheet_4.mp4",
               "fileId": "1GfAsgdHYj_8yEWscg_jBHY3mbTZndgU_",
               "type": "mp4",
@@ -566,6 +572,68 @@
                         }
                       ],
                       "children": []
+                    },
+                    {
+                      "name": "Sheet_4",
+                      "nameAr": "Sheet_4",
+                      "folderId": "1PL1oo9jlLWbkYVAIl-ehcF5kl7njjoij",
+                      "files": [
+                        {
+                          "name": "Sheet4_q7.java",
+                          "fileId": "167F70k5mFCwOA8XlUfgHJiYgfsETgdkM",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet4_q8.java",
+                          "fileId": "1OC53b_3CBEa4o7PLF93PghCsgTB1gFQI",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet4_q9.java",
+                          "fileId": "17u5zXIOUBBp-QJtSj7fw9nqHBXDL1oOQ",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q1.java",
+                          "fileId": "1p6g-3CK36HW9vdzPo2rAXiT_iNiY7uF6",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q10.java",
+                          "fileId": "1VkXgdPpDoQZOm99OPS3p5IWStQ4oBynk",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q2.java",
+                          "fileId": "1-Tkpq1ovtYIe6g2wU0W_GbQTcwxLYeeI",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q4.java",
+                          "fileId": "1OdaL58V1E4aapSfUEQNOpWEqx8Ei7MkW",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q5.java",
+                          "fileId": "1VN-brDDVDmSa3NgfkywoG0btOoRFA_xr",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q6.java",
+                          "fileId": "1I4n6h1ACkVJl_vWBjhK2UaALYKEDGXmj",
+                          "type": "java",
+                          "modified": null
+                        }
+                      ],
+                      "children": []
                     }
                   ]
                 }
@@ -726,6 +794,12 @@
               "fileId": "1lNAvE1V8O49AJPSzlWV00qVriVPiSlE-",
               "type": "pdf",
               "modified": null
+            },
+            {
+              "name": "lect 03 . Signals_Transformations_and_Unit_Steps.pdf",
+              "fileId": "1iOO6zFIdgOqcYp6ZK9gf-u68RWIfSn3f",
+              "type": "pdf",
+              "modified": null
             }
           ],
           "children": []
@@ -862,6 +936,26 @@
                   "fileId": "1sLek1bnwCqjHGHp1P-X9In9tU6jAB-Z1",
                   "type": "pptx",
                   "modified": "2026-10-30"
+                }
+              ],
+              "children": []
+            },
+            {
+              "name": "Section6",
+              "nameAr": "Section6",
+              "folderId": "1jk6iKY-FaRonK9ZvVsUrJcqrVqAl-094",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_6.mp4",
+                  "fileId": "1SQhH4EGxSXVUrj4KsYYZtqEcEaFLAH4Z",
+                  "type": "mp4",
+                  "modified": null
+                },
+                {
+                  "name": "Copy of signals_systems_exercises_6.pptx",
+                  "fileId": "1LF7P-9pjT2Z-nSOH94Vu_PlWiL-6I1pK",
+                  "type": "pptx",
+                  "modified": null
                 }
               ],
               "children": []
@@ -1014,5 +1108,5 @@
       "groups": []
     }
   ],
-  "lastSyncRun": "2026-11-07T01:31:46.793Z"
+  "lastSyncRun": "2026-11-07T06:57:47.663Z"
 }
