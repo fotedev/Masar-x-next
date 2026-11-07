@@ -1403,8 +1403,10 @@ export type Database = {
           source_type: string | null
           status: string
           subject: string | null
+          subject_id: string | null
           summary_id: string | null
           title: string
+          updated_at: string
           user_id: string | null
           year: string | null
         }
@@ -1420,8 +1422,10 @@ export type Database = {
           source_type?: string | null
           status?: string
           subject?: string | null
+          subject_id?: string | null
           summary_id?: string | null
           title: string
+          updated_at?: string
           user_id?: string | null
           year?: string | null
         }
@@ -1437,12 +1441,21 @@ export type Database = {
           source_type?: string | null
           status?: string
           subject?: string | null
+          subject_id?: string | null
           summary_id?: string | null
           title?: string
+          updated_at?: string
           user_id?: string | null
           year?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_quizzes_subject_id"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quizzes_created_by_fkey"
             columns: ["created_by"]
@@ -1628,6 +1641,7 @@ export type Database = {
           lecture_label: string
           order_index: number
           subject: string
+          subject_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1637,6 +1651,7 @@ export type Database = {
           lecture_label: string
           order_index?: number
           subject: string
+          subject_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1646,9 +1661,18 @@ export type Database = {
           lecture_label?: string
           order_index?: number
           subject?: string
+          subject_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_subject_lectures_subject_id"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subjects: {
         Row: {
@@ -1668,6 +1692,7 @@ export type Database = {
           semester: number | null
           show_on_home: boolean | null
           status: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -1686,6 +1711,7 @@ export type Database = {
           semester?: number | null
           show_on_home?: boolean | null
           status?: string | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -1704,6 +1730,7 @@ export type Database = {
           semester?: number | null
           show_on_home?: boolean | null
           status?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1719,6 +1746,7 @@ export type Database = {
           pdf_url: string | null
           status: string
           subject: string
+          subject_id: string | null
           title: string
           updated_at: string | null
           user_id: string | null
@@ -1736,6 +1764,7 @@ export type Database = {
           pdf_url?: string | null
           status?: string
           subject: string
+          subject_id?: string | null
           title: string
           updated_at?: string | null
           user_id?: string | null
@@ -1753,6 +1782,7 @@ export type Database = {
           pdf_url?: string | null
           status?: string
           subject?: string
+          subject_id?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string | null
@@ -1760,6 +1790,13 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_summaries_subject_id"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "summaries_lecture_id_fkey"
             columns: ["lecture_id"]
@@ -2690,6 +2727,7 @@ export type Database = {
         Returns: boolean
       }
       manual_ai_summarization: { Args: { chat_uuid: string }; Returns: string }
+      norm_subject_name: { Args: { v: string }; Returns: string }
       notify_admins_of_content: {
         Args: {
           p_message: string
