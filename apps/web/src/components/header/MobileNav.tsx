@@ -4,13 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LanguageToggle } from "../LanguageToggle";
 import { ThemeToggle } from "../ThemeToggle";
 import { DynamicLogo } from "../DynamicLogo";
+import { NAV_ICONS } from "@/components/sidenav/navIcons";
 import {
-  Home,
-  Newspaper,
   BookOpen,
-  GraduationCap,
-  Brain,
-  Sparkles,
   Globe,
   Shield,
   User,
@@ -20,7 +16,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  type LucideIcon,
 } from "lucide-react";
 
 interface NavItem {
@@ -48,15 +43,6 @@ interface MobileNavProps {
   tNav: (key: string) => string;
   tMobileNav: (key: string, values?: Record<string, string | number>) => string;
 }
-
-const NAV_ICONS: Record<string, LucideIcon> = {
-  home: Home,
-  news: Newspaper,
-  subjects: BookOpen,
-  courses: GraduationCap,
-  quizzes: Brain,
-  assistant: Sparkles,
-};
 
 export function MobileNav({
   dir,
