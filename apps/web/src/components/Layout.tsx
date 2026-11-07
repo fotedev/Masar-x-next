@@ -13,12 +13,10 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const Header = dynamic(() => import("./Header").then((mod) => mod.Header), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[72px] w-full bg-transparent fixed top-0 inset-x-0 z-50 border-b border-transparent transition-colors duration-300" />
-  ),
-});
+const AppNav = dynamic(
+  () => import("./sidenav/AppNav").then((mod) => mod.AppNav),
+  { ssr: false },
+);
 
 // SPLIT-1 (perf audit 2026-11-02): no `ssr: false` — with it, server HTML
 // ships an empty <main> on every non-light route (LCP waits for full
@@ -78,12 +76,17 @@ export function Layout({ children }: LayoutProps) {
   const isDesktop = useIsDesktopRuntime();
 
   // Desktop shell (spec 005 US2/US3): CustomTitlebar owns the chrome, so
-  // the web Header (logo + marketing nav + login) is skipped the same
+  // the web nav shell (side rail + mobile top bar) is skipped the same
   // way Footer / PWA / NotificationPrompt already are. Hydration-safe:
   // isDesktop is false on SSR + first paint, so the first HTML matches
-  // the browser; the header disappears one frame later inside Electron.
-  // Padding drops from the 72px web header to the 32px titlebar so the
+  // the browser; the chrome disappears one frame later inside Electron.
+  // Padding drops from the 56px web top bar to the 32px titlebar so the
   // three-column workspace can fill the remaining viewport (FR-017).
+  //
+  // Web nav (owner decision 2026-11-05): collapsible side rail on ≥lg.
+  // The rail width is shared through --sidenav-w (set by AppNav), so the
+  // content push animates in lockstep with the rail; below lg a slim
+  // fixed top bar (56px) takes its place.
   return (
     <div
       className={
@@ -92,11 +95,11 @@ export function Layout({ children }: LayoutProps) {
           : isAdminRoute
             ? "h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-900"
             : isAssistantRoute
-              ? "h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col overflow-hidden pt-[calc(72px+env(safe-area-inset-top))]"
-              : "min-h-dvh bg-slate-50 dark:bg-brand-navy transition-colors flex flex-col pt-[calc(72px+env(safe-area-inset-top))]"
+              ? "h-dvh bg-slate-50 dark:bg-brand-navy flex flex-col overflow-hidden pt-[calc(56px+env(safe-area-inset-top))] lg:pt-0 lg:ps-[var(--sidenav-w,4rem)] transition-[padding,background-color] duration-300"
+              : "min-h-dvh bg-slate-50 dark:bg-brand-navy flex flex-col pt-[calc(56px+env(safe-area-inset-top))] lg:pt-0 lg:ps-[var(--sidenav-w,4rem)] transition-[padding,background-color] duration-300"
       }
     >
-      {!isDesktop && !isAdminRoute && <Header />}
+      {!isDesktop && !isAdminRoute && <AppNav />}
       {!isAdminRoute && <AcademicOnboardingGate />}
       <main
         className={
