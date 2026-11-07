@@ -17,6 +17,9 @@ export default defineConfig({
     setupFiles: ['src/test/setup.ts'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
+    // Spec 040: coverage reporter pinned so coverage-summary.json always
+    // exists for the CI artifact (report-only — no thresholds).
+    coverage: { reporter: ['text', 'json-summary'] },
     // masarx-shared is a workspace symlink exporting raw .ts — inline it
     // so vite transforms the source instead of handing it to node (which
     // cannot load .ts from a package "exports" entry). String form:
