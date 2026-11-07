@@ -1,5 +1,9 @@
 # Complete Setup Instructions for Masar X
-*Last updated: March 12, 2026*
+*Last updated: November 7, 2026*
+
+## Recent edits (7 Nov 2026)
+- Refreshed for the monorepo layout (`apps/web/`): corrected the dependency list, replaced the retired `test_quiz/` scripts with the current `pnpm` test flows, and pointed type generation at `pnpm types:generate`.
+- Database migrations use timestamped filenames in `supabase/migrations/`; the legacy numbered chain (001–019) is archived under `supabase/migrations-archive/numbered-chain-001-019/`.
 
 ## Recent edits (12 Mar 2026)
 - **Localization Sync**: Finalized all translation keys for Admin Dashboard and Appeals system.
@@ -31,7 +35,7 @@ This guide will walk you through setting up the "Masar X" comprehensive learning
 
 ## Prerequisites
 
-- Node.js 18+ and npm/pnpm
+- Node.js 24 (pinned in `.nvmrc`) and pnpm
 - Supabase account and project
 - Puter.js Integration (for AI features)
 - EmailJS account (for email notifications)
@@ -58,13 +62,12 @@ pnpm install
 ```
 
 This will install all required packages:
-- Next.js 14.2.35
-- React 18.3.1
+- Next.js 16.4.3
+- React 19.2.4
 - TypeScript 5.5.3
-- Tailwind CSS 3.4.1
-- Supabase JS Client 2.57.4
-- Google Generative AI 0.24.1
-- Lucide React 0.344.0
+- Tailwind CSS 4.x
+- Supabase JS Client 2.118.0
+- Lucide React 0.577.0
 - KaTeX 0.16.27 (for math rendering)
 - And many more...
 
@@ -82,6 +85,8 @@ NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 CLOUDINARY_URL=your_cloudinary_url
+UPSTASH_REDIS_REST_URL=your_upstash_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token
 ```
 
 ### 4. Subject Customization (For Template Users)
@@ -89,7 +94,7 @@ CLOUDINARY_URL=your_cloudinary_url
 **Masar X is designed as a template** that can be easily customized for different colleges. To customize the subjects for your college:
 
 #### Step 1: Edit Subject Configuration
-Open `src/config/subjects.config.ts` and customize:
+Open `apps/web/src/config/subjects.config.ts` and customize:
 
 ```typescript
 // Change college name
@@ -117,7 +122,7 @@ export const SEMESTER_2_SUBJECTS: Subject[] = [
 After customizing the subjects, run:
 
 ```bash
-npm run setup-subjects
+pnpm --filter web setup-subjects
 ```
 
 This script will:
@@ -132,7 +137,7 @@ This script will:
 3. Check that semester switching works correctly
 4. Access admin panel to manage subjects further if needed
 
-**Note:** You can re-run `npm run setup-subjects` anytime to update subjects. The script is safe to run multiple times.
+**Note:** You can re-run `pnpm --filter web setup-subjects` anytime to update subjects. The script is safe to run multiple times.
 
 ### 5. Database Setup
 
@@ -156,7 +161,8 @@ npx supabase db pull
   2. Confirm that the `summaries-pdfs` upload policy no longer allows anonymous uploads (authenticated users only).
   3. Redeploy all Supabase Edge Functions after applying the migrations:
      ```bash
-     npx supabase functions deploy gemini-chat
+     npx supabase functions deploy ai-chat
+     npx supabase functions deploy process-pdf
      npx supabase functions deploy upload-avatar
      npx supabase functions deploy delete-avatar
      npx supabase functions deploy upload-file
@@ -257,7 +263,8 @@ masarx_next/
 │   ├── config/                 # App-wide configurations
 │   └── navigation.ts           # Shared i18n navigation
 ├── supabase/                   # Database & Edge Functions
-│   ├── migrations/            # SQL schema & RLS (20+ files)
+│   ├── migrations/            # Timestamped SQL migrations & RLS policies
+│   ├── migrations-archive/    # Legacy numbered migration chain (001–019)
 │   └── functions/             # Deno Edge Functions (Brevo, AI, etc.)
 ├── middleware.ts               # Auth & i18n middleware
 ├── vercel.json                 # Security headers & CSP
@@ -435,6 +442,10 @@ NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 CLOUDINARY_URL=your_cloudinary_url
+
+# Rate Limiting & Product Metrics (Upstash Redis — flows fail open if unset)
+UPSTASH_REDIS_REST_URL=your_upstash_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token
 ```
 
 ### Customization
@@ -449,15 +460,15 @@ The platform includes full RTL support with:
 - Localized error messages and UI text
 
 #### Add New Features
-1. Update database schema with new migration in `supabase/migrations/`
-2. Generate/update TypeScript types: `npx supabase gen types typescript --project-id your-project-id > src/types/generated-database.ts`
+1. Update database schema with a new timestamped migration in `supabase/migrations/`
+2. Generate/update TypeScript types: `pnpm types:generate` (writes `packages/shared/src/types/database.generated.ts`)
 3. Create new components in appropriate directories
 4. Update routing in `src/app/` directory
 
 ### Performance Optimization
 
 The project includes comprehensive performance optimizations:
-- **Next.js 14**: App Router with automatic optimization
+- **Next.js 16**: App Router with automatic optimization
 - **Image Optimization**: Automatic WebP conversion and lazy loading
 - **Code Splitting**: Automatic route-based and component splitting
 - **Caching**: Intelligent caching strategies for static and dynamic content
@@ -549,22 +560,24 @@ npx supabase db pull
 
 ### Developer Testing Tools
 
-Masar X includes comprehensive testing tools located in the `test_quiz/` directory:
+The web app ships with Vitest unit tests and a Playwright end-to-end suite; the root package exposes the common flows as workspace scripts.
 
-#### Available Test Scripts:
-- **`test-quiz-answers.js`** - Automated quiz completion testing
-- **`test-quiz-navigation.js`** - Navigation and auto-save testing
-- **`test-quiz-timer.js`** - Timer functionality testing
-- **`test-quiz-bulk.js`** - Bulk testing with multiple attempts
+#### Available Commands:
+- **`pnpm typecheck`** - TypeScript check across all workspaces
+- **`pnpm lint`** - ESLint for the web app
+- **`pnpm test`** - Vitest unit tests
+- **`pnpm --filter web test:e2e`** - Playwright end-to-end suite
 
 #### Quick Start:
 ```bash
-cd test_quiz
-npm install
-node test-quiz-answers.js <quiz-id>
-```
+# From the repository root
+pnpm typecheck
+pnpm lint
+pnpm test
 
-See `test_quiz/README.md` for detailed usage instructions.
+# End-to-end tests live in the web app
+pnpm --filter web test:e2e
+```
 
 ### Manual Testing Checklist
 
@@ -651,8 +664,8 @@ See `test_quiz/README.md` for detailed usage instructions.
 ### Documentation:
 1. **README.md** - Comprehensive project overview and features
 2. **SETUP.md** - This complete setup guide
-3. **test_quiz/README.md** - Quiz testing tools documentation
-4. **PROJECT_CONTEXT.md** - Additional project context and requirements
+3. **docs/FEATURES.md** - Feature inventory and implementation status
+4. **docs/PROJECT_CONTEXT.en.md** - Additional project context and requirements
 
 ### Getting Help:
 - Check browser console for JavaScript errors
@@ -680,7 +693,7 @@ MIT License - Free to use and modify for educational institutions and learning p
 ## Acknowledgments
 
 Built with modern web technologies for the Arabic-speaking academic community:
-- **Next.js 14** - React framework for production
+- **Next.js 16** - React framework for production
 - **Supabase** - Backend-as-a-Service platform
 - **Puter.js** - AI-powered assistance
 - **Tailwind CSS** - Utility-first styling

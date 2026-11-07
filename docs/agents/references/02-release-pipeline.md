@@ -54,20 +54,21 @@ cadences diverge.
 ```powershell
 # 1. Bump the version
 Set-Location C:\programming\WEB_Development\projects\masarx_next
-# Edit apps/desktop/package.json: "version": "0.6.0"
-# Edit root package.json: "version": "0.6.0"
-# Commit + push
+# Edit apps/desktop/package.json: "version": "0.7.0"
+# Edit root package.json: "version": "0.7.0"
+# Commit + push (git identity comes from machine config — never override
+# with -c user.* or --author; that is invariant I15)
 git add apps/desktop/package.json package.json
-git -c user.email='fotedev@users.noreply.github.com' -c user.name='fotedev' commit -m 'chore: bump version to 0.6.0'
+git commit -m 'chore: bump version to 0.7.0'
 git push origin main
 
 # 2. Tag and push — the release workflow runs on the tag
-git tag v0.6.0
-git push origin v0.6.0
+git tag v0.7.0
+git push origin v0.7.0
 
 # 3. Watch the run (~7-8 min)
 gh run watch --repo fotedev/Masar-x-next
-# Output: https://github.com/fotedev/Masar-x-next/releases/tag/v0.6.0
+# Output: https://github.com/fotedev/Masar-x-next/releases/tag/v0.7.0
 ```
 
 To smoke-test without publishing: run the workflow manually from the
@@ -111,7 +112,7 @@ CI and release are fully automated via GitHub Actions. Do NOT build installers o
 
 ### `ci.yml` — runs on every push to `main` and every PR
 
-5 jobs: ESLint, next build, gitleaks-artifacts, workspaces, ai-endpoint-grep. `pnpm install` runs postinstalls only for the `pnpm-workspace.yaml` `onlyBuiltDependencies` allowlist (gotcha #8 documents the pnpm 9 syntax trap). No `--ignore-scripts`.
+12 jobs: ESLint, next build, workspaces, ai-endpoint-grep, gitleaks-artifacts, docs-lint, translations, test, mobile, e2e, deno-check, workflow-lint. `pnpm install` runs postinstalls only for the `pnpm-workspace.yaml` `onlyBuiltDependencies` allowlist (gotcha #8 documents the pnpm 9 syntax trap). No `--ignore-scripts`.
 
 ### `release.yml` — tag-triggered desktop release (ACTIVE)
 
@@ -120,7 +121,7 @@ Trigger: push a tag matching `v*`. Steps: `pnpm install --frozen-lockfile` → `
 To release: bump `package.json` + `apps/desktop/package.json`, commit, then:
 
 ```bash
-git tag v0.6.0
+git tag v0.7.0
 git push origin main --follow-tags
 ```
 

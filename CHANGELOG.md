@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Installers, portable builds, and update manifests for each tagged version are published as [GitHub Releases](https://github.com/fotedev/Masar-x-next/releases) on this repository. (Releases ≤ v0.5.x went to the separate public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository, now archived read-only.)
 
+## [Unreleased]
+
+### Added
+
+- Desktop: local-only Crashpad crash-dump collection and `electron-log` file logging (#98)
+- Web: `/materials` exam library — 17 real exams with 242 verified questions seeded to production from a static manifest (#179), plus 13 approved Drive materials published (#191)
+- Web: `/schedules` weekly cohort timetables (years 1–4) and `/subjects` level tabs (#180)
+- Subject anchoring: `subject_id` FK columns with name-normalized backfill and sync triggers across subject lectures, summaries, and quizzes (#189)
+
+### Changed
+
+- Tailwind upgraded v3 → v4 (4.3.3), cutting compiled CSS by ~37% (#65)
+- Quiz grading is now server-authoritative: the `finish_quiz_attempt` RPC re-grades attempts with a `quiz_attempts` score-guard trigger (#161)
+- Database migrations consolidated into a timestamped baseline chain; the legacy numbered chain (001–019) is archived under `supabase/migrations-archive/` (#164)
+- Performance: P0 fixes (#175, #176) and the three optimization waves — Wave 1A (#177), Wave 1B news seed, lecture scoping, and client auth dedupe (#178), Wave 1C chat interaction and quizzes render (#186)
+- Quiz content fixes: pre-wrapped code options, pending badge, OOP approval flow (#185)
+- Content-table audit added `updated_at` timestamps and audit coverage (#187)
+- License: MIT → AGPL-3.0 for code; educational content and brand assets are All Rights Reserved via `NOTICE.md` (#192)
+
 ## [0.6.0] - 2026-09-23
 
 ### Added
