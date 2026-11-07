@@ -10,6 +10,7 @@ Thanks for contributing. This document covers the workflows specific to this mon
 - [Adding a new shared package](#adding-a-new-shared-package)
 - [Adding a new user story](#adding-a-new-user-story)
 - [Before you open a PR](#before-you-open-a-pr)
+- [CI gates](#ci-gates)
 
 ## Development setup
 
@@ -89,3 +90,22 @@ Open your PR against `main` using the [PR template](./.github/PULL_REQUEST_TEMPL
 - New env vars are documented in `.env.example` (with scope comments) — never committed as real values.
 - Any change touching `packages/shared/` states whether it alters a cross-platform contract.
 - Spec-affecting changes update the relevant files under `specs/`.
+
+## CI gates
+
+CI (`.github/workflows/ci.yml`) runs the following 12 jobs on every PR against `main` — they are the merge gate:
+
+| Job | What it checks |
+| ------- | ----------------- |
+| `ESLint` | Web ESLint, including the AI-boundary restricted-imports rules |
+| `next-build` | Web production build with placeholder environment variables |
+| `workspaces` | Workspace linking, react/react-dom version parity, cross-workspace typecheck |
+| `ai-endpoint-grep` | No AI provider endpoint strings outside the Edge Function and test fixtures |
+| `gitleaks-artifacts` | Secret scan of the post-`next build` tree |
+| `docs-lint` | markdownlint and internal-link resolution for the first-party docs |
+| `translations` | Single translation source under `packages/shared/src/messages/` |
+| `test` | Workspace test suites (`pnpm -r test`) |
+| `mobile` | Mobile ESLint plus an `expo export` bundle proof |
+| `e2e` | Playwright study-flow smoke against a local production server |
+| `deno-check` | Type check and offline unit tests for the Supabase Edge Functions |
+| `workflow-lint` | actionlint validation of every file in `.github/workflows/` |

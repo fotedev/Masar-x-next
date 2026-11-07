@@ -2,7 +2,9 @@
 
 > Distilled from the 20 domain reports in `findings/`. Priorities: **P0** = fix before launch (user-visible breakage), **P1** = significant measurable win, **P2** = hygiene/efficiency (execute opportunistically). Every item cites its evidence file. **All items are recommendations — this audit changed no code.** Per I11, each implemented track needs an approved spec; under the MVP Lock only the P0 wave is launch-eligible without an owner decision.
 
-## Wave 0 — P0 (fix before next desktop release / launch)
+> **Status (2026-11-07):** the audit has since driven landed remediations — **Wave 0 (P0)**: PRs #175/#176; **Wave 1 (partial)**: Wave-1A quizzes-SSR + materials wall (PR #177), Wave-1B news CLS + port coordination (PR #178), Wave-1C chat interaction + quizzes memoization (PR #186). WS6 edge functions remain owner-owned (not agent-deployable); all remaining waves/findings are open.
+
+## Wave 0 — P0 (fix before next desktop release / launch) — **LANDED (PRs #175, #176)**
 
 | # | Item | Fix | Effort | Evidence |
 | --- | --- | --- | --- | --- |
@@ -12,7 +14,7 @@
 
 Wave 0 combined effect: LCP 9.06s → ~2-3s and CLS 0.89 → <0.1 on the measured routes; packaged images functional.
 
-## Wave 1 — P1 workstreams (ordered by measured payoff)
+## Wave 1 — P1 workstreams (ordered by measured payoff) — **PARTIALLY LANDED** (Wave-1A PR #177, Wave-1B PR #178, Wave-1C PR #186)
 
 ### WS1 — Payload & hydration weight (web) — targets quizzes TBT 2.08s, ai-assistant 1390 KB
 
@@ -46,7 +48,7 @@ Wave 0 combined effect: LCP 9.06s → ~2-3s and CLS 0.89 → <0.1 on the measure
 2. RLS rewrites: `(select auth.uid())` / `(select is_admin())` initplans on summaries/quizzes + hot tables; hoist quiz_questions correlated EXISTS; drop duplicate policies/indexes/triggers — [15 RLS-1/2/5/6/7/9](./findings/15-rls.md) · S–M
 3. `rate_limits`: single-upsert `check_rate_limit` + pg_cron retention sweep — [15 RLS-3/4](./findings/15-rls.md) · S–M
 
-### WS6 — Edge functions
+### WS6 — Edge functions — owner-owned (not agent-deployable)
 
  1. Un-retire the Gemini model pins (`gemini-pro`/`gemini-2.0-flash-exp` → current model via one env-backed constant) — [13 EDGE-1](./findings/13-edge-functions.md) · S
  2. upload-file: `AbortSignal.timeout` instead of header-only race; data-URI upload instead of base64 loop; add rate limit — [13 EDGE-2/3/4](./findings/13-edge-functions.md) · S
