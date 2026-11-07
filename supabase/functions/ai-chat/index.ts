@@ -56,23 +56,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2';
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1";
 import { buildCorsHeaders } from '../_shared/cors.ts';
+// Pure helpers (forbidden-header guard, SSE frames, Accept parsing, usage
+// mapping) live in pure.ts so they are testable without env/SDK imports.
+import { acceptsSse, findForbiddenHeader, mapUsage, sseFrame } from './pure.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 const AI_MODEL = Deno.env.get('AI_MODEL') ?? 'gemini-pro';
-
-// Headers that should NEVER appear in a client request. Their presence
-// signals the client has the AI provider key and is trying to make a
-// direct call (per contracts/ai-boundary.md §"What the apps are NOT
-// allowed to do"). The Next.js proxy also checks these — this is the
-// trust-boundary check, the proxy is defense-in-depth.
-const FORBIDDEN_HEADERS = [
-  'x-ai-provider-key',
-  'x-openai-api-key',
-  'x-anthropic-api-key',
-  'x-gemini-api-key',
-];
 
 interface AiRequest {
   conversationId: string;
@@ -96,12 +87,6 @@ interface AiResponse {
 // SSE streaming support (Accept: text/event-stream mode)
 // ---------------------------------------------------------------------------
 
-const SSE_ENCODER = new TextEncoder();
-
-/** Encode one SSE frame: `data: <payload>` + blank line. */
-const sseFrame = (payload: string): Uint8Array =>
-  SSE_ENCODER.encode(`data: ${payload}\n\n`);
-
 /** Response headers for the SSE body (Deno / Supabase Edge Runtime). */
 const sseResponseHeaders = (req: Request): Record<string, string> => ({
   ...buildCorsHeaders(req),
@@ -109,18 +94,6 @@ const sseResponseHeaders = (req: Request): Record<string, string> => ({
   'Cache-Control': 'no-cache, no-transform',
   'Connection': 'keep-alive',
 });
-
-/**
- * True when the client asked for SSE streaming. Matches the exact header the
- * shared client (packages/shared/src/ai/index.ts streamAiMessage) sends, and
- * tolerates media-range parameters (`;q=...`) and multi-value Accept lists.
- */
-const acceptsSse = (req: Request): boolean =>
-  (req.headers.get('accept') ?? '')
-    .split(',')
-    .some(
-      (part) => part.trim().split(';')[0].trim().toLowerCase() === 'text/event-stream'
-    );
 
 /** PII-free log context shared by both response modes. */
 interface StreamLogContext {
@@ -171,14 +144,7 @@ function streamGeminiResponse(
           }
         }
         const aggregated = await result.response;
-        const usageMeta = aggregated.usageMetadata ?? {
-          promptTokenCount: 0,
-          candidatesTokenCount: 0,
-        };
-        const usage = {
-          promptTokens: usageMeta.promptTokenCount ?? 0,
-          completionTokens: usageMeta.candidatesTokenCount ?? 0,
-        };
+        const usage = mapUsage(aggregated.usageMetadata);
         controller.enqueue(
           sseFrame(JSON.stringify({ delta: '', done: true, usage }))
         );
@@ -235,17 +201,16 @@ serve(async (req) => {
 
   try {
     // 1. Reject forbidden headers
-    for (const h of FORBIDDEN_HEADERS) {
-      if (req.headers.get(h)) {
-        console.warn(`[ai-chat] rejected: ${h} header present (possible leak attempt)`);
-        return new Response(
-          JSON.stringify({ error: 'Forbidden: provider key header not allowed' }),
-          {
-            status: 403,
-            headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
-          }
-        );
-      }
+    const forbiddenHeader = findForbiddenHeader((name) => req.headers.get(name));
+    if (forbiddenHeader) {
+      console.warn(`[ai-chat] rejected: ${forbiddenHeader} header present (possible leak attempt)`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: provider key header not allowed' }),
+        {
+          status: 403,
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // 2. Env-var check (fail fast on misconfiguration)
@@ -332,7 +297,7 @@ serve(async (req) => {
     //     run, so the two modes behave identically up to this point - auth,
     //     validation, and rate-limit failures return the same non-2xx JSON
     //     error body in both modes.
-    if (acceptsSse(req)) {
+    if (acceptsSse(req.headers.get('accept'))) {
       return streamGeminiResponse(req, prompt, {
         userId: user.id,
         conversationId: body.conversationId,
@@ -347,14 +312,9 @@ serve(async (req) => {
     const model = genAI.getGenerativeModel({ model: AI_MODEL });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const usage = result.response.usageMetadata ?? { promptTokenCount: 0, candidatesTokenCount: 0 };
-
     const response: AiResponse = {
       content: text,
-      usage: {
-        promptTokens: usage.promptTokenCount ?? 0,
-        completionTokens: usage.candidatesTokenCount ?? 0,
-      },
+      usage: mapUsage(result.response.usageMetadata),
     };
 
     // 6. PII-redacted logging — log the conversationId and the language,

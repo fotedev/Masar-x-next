@@ -1,0 +1,349 @@
+// @ts-nocheck: Deno runtime types
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.117.2";
+import { nanoid } from "https://esm.sh/nanoid@3.3.20";
+import { buildCorsHeaders } from '../_shared/cors.ts';
+import { methodGuard } from '../_shared/http.ts';
+import { sha256Hex } from '../_shared/crypto.ts';
+import { getClientIp } from '../_shared/net.ts';
+
+// All logic lives here (thin index.ts serves it), matching the
+// delete-avatar/process-pdf layout so handler-level tests can import the
+// real handler without side effects (see ../_shared/tests/).
+
+// =====================
+// Brevo configuration
+// =====================
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+const BREVO_SENDER_EMAIL = Deno.env.get('BREVO_SENDER_EMAIL') || 'masarx.eg@gmail.com';
+const BREVO_SENDER_NAME = Deno.env.get('BREVO_SENDER_NAME') || 'مسار X';
+
+// =====================
+// Helpers
+// =====================
+async function sha256(input: string): Promise<string> {
+  return sha256Hex(input);
+}
+
+// =====================
+// Email sender
+// =====================
+async function sendPasswordResetEmail(email: string, resetToken: string) {
+  const frontendUrl = Deno.env.get("FRONTEND_URL") || "https://masarx.vercel.app";
+  const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+  console.log(`[AUTH] Preparing password reset email for: ${email}`);
+
+  if (!BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY is missing in environment variables");
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) {
+    throw new Error("SUPABASE_URL is missing in environment variables");
+  }
+
+  const subject = "إعادة تعيين كلمة المرور - مسار X";
+  const title = "إعادة تعيين كلمة المرور";
+  const bodyText = "تلقينا طلباً لإعادة تعيين كلمة المرور لحسابك. يرجى النقر على الزر أدناه للمتابعة.";
+  const buttonText = "إعادة تعيين كلمة المرور";
+
+  const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+        </head>
+        <body style="font-family: 'Cairo', Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6;">
+          <div style="max-width: 600px; margin: 40px auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 40px 20px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700;">مسار X</h1>
+              <p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 18px;">رفيقك في رحلة التعلم</p>
+            </div>
+
+            <!-- Content -->
+            <div style="padding: 40px 30px;">
+              <h2 style="color: #1f2937; margin: 0 0 24px 0; font-size: 24px; font-weight: 700; text-align: center;">${title}</h2>
+
+              <p style="color: #4b5563; line-height: 1.6; font-size: 16px; margin-bottom: 24px; text-align: center;">
+                مرحباً،<br>
+                ${bodyText}
+              </p>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${resetUrl}"
+                   style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                          color: white;
+                          padding: 16px 32px;
+                          text-decoration: none;
+                          border-radius: 12px;
+                          font-weight: 700;
+                          font-size: 16px;
+                          display: inline-block;
+                          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+                          transition: all 0.3s ease;">
+                  ${buttonText}
+                </a>
+              </div>
+
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
+                إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذه الرسالة بأمان.
+              </p>
+
+              <div style="border-top: 1px solid #e5e7eb; margin: 32px 0 24px 0;"></div>
+
+              <p style="color: #9ca3af; font-size: 13px; line-height: 1.5; text-align: center; margin: 0;">
+                إذا لم يعمل الزر، انسخ الرابط التالي والصقه في متصفحك:<br>
+                <a href="${resetUrl}" style="color: #3b82f6; text-decoration: none; word-break: break-all;">${resetUrl}</a>
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; margin: 0; font-size: 14px;">
+                &copy; ${new Date().getFullYear()} مسار X. جميع الحقوق محفوظة.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+        `;
+
+  const payload = {
+    sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+    to: [{ email }],
+    subject: subject,
+    htmlContent: htmlContent,
+  };
+
+  const response = await fetch(BREVO_API_URL, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    console.error(`Brevo API Error for ${email}:`, JSON.stringify(err, null, 2));
+    throw new Error(`Brevo error: ${err?.message || response.statusText}`);
+  }
+  console.log(`Password reset email successfully sent to: ${email}`);
+}
+
+// =====================
+// Edge Function handler
+// =====================
+export async function handleRequestPasswordReset(req: Request): Promise<Response> {
+  const guard = methodGuard(req);
+  if (guard) return guard;
+
+    try {
+      const { email } = await req.json();
+      const ip = getClientIp(req);
+      console.log(`[AUTH] Processing password reset request for: ${email} from IP: ${ip}`);
+
+      if (!email) {
+        return new Response(JSON.stringify({ error: "Email is required" }), {
+          status: 400,
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (!supabaseUrl || !serviceKey) {
+        console.error("[AUTH] Missing environment variables");
+        throw new Error(`Supabase env missing: URL=${!!supabaseUrl}, KEY=${!!serviceKey}`);
+      }
+
+      const supabase = createClient(supabaseUrl, serviceKey);
+
+      // =====================
+      // IP-based rate limit (enumeration protection, F4) — applied BEFORE the
+      // user lookup. Returns the SAME uniform response when throttled so the
+      // limit itself cannot leak account existence.
+      // =====================
+      try {
+        const { data: ipAllowed, error: ipRlError } = await supabase.rpc('check_rate_limit', {
+          p_identifier: ip,
+          p_endpoint: 'request-password-reset-ip',
+          p_max_requests: 10,
+          p_window_minutes: 60,
+        });
+        if (ipRlError) {
+          console.warn('[AUTH] IP rate limit check failed:', ipRlError.message);
+        } else if (ipAllowed === false) {
+          console.warn(`[AUTH] IP rate limit exceeded: ${ip}`);
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+            }),
+            { status: 200, headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" } }
+          );
+        }
+      } catch (ipRlEx) {
+        // Fail-open documented as accepted risk (security audit F12)
+        console.warn('[AUTH] IP rate limit exception:', ipRlEx);
+      }
+
+      // =====================
+      // Get user by email (safe lookup)
+      // =====================
+      let user;
+
+      if (typeof supabase.auth.admin.getUserByEmail === 'function') {
+        const { data: userResult, error: userError } = await supabase.auth.admin.getUserByEmail(email);
+        if (userError) {
+          console.error(`[AUTH] getUserByEmail error for ${email}:`, userError);
+        } else {
+          user = userResult?.user;
+          console.log(`[AUTH] User search result for ${email}: ${user ? 'Found ID: ' + user.id : 'Not Found'}`);
+          if (!user) {
+            console.log(`[AUTH] No user found for email: ${email}`);
+            // SECURITY (F4): uniform response — the debug field previously
+            // leaked account existence to anyone calling this endpoint.
+            return new Response(
+              JSON.stringify({
+                success: true,
+                message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+              }),
+              {
+                status: 200,
+                headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+              }
+            );
+          }
+        }
+      }
+
+      // Security: Always return success to prevent email enumeration
+      const successResponse = new Response(
+        JSON.stringify({
+          success: true,
+          message: "إذا كان البريد الإلكتروني مسجل في النظام، ستتلقى رسالة إعادة التعيين",
+        }),
+        {
+          status: 200,
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+        }
+      );
+
+      if (!user) {
+        return successResponse;
+      }
+
+      // =====================
+      // BACKGROUND WORK (F4 timing follow-up): email rate limit, token
+      // creation, DB insert and email send all run in the background so the
+      // HTTP response time does NOT reveal whether the account exists.
+      // (Body below keeps its original indentation to minimize the diff.)
+      // =====================
+      const backgroundWork = (async () => {
+      // Rate limit check (basic abuse protection)
+      try {
+        const { data: allowed, error: rlError } = await supabase.rpc('check_rate_limit', {
+          p_identifier: email,
+          p_endpoint: 'request-password-reset',
+          p_max_requests: 3,
+          p_window_minutes: 1440,
+        });
+
+        if (rlError) {
+          console.warn('[AUTH] Rate limit check failed:', rlError.message);
+        } else if (allowed === false) {
+          // F4: silently skip sending — the uniform response was already
+          // returned to the client; a 429 here would confirm the account.
+          console.warn(`[AUTH] Rate limit exceeded for email: ${email}`);
+          return;
+        }
+      } catch (rlEx) {
+        console.warn('[AUTH] Rate limit exception:', rlEx);
+      }
+
+      console.log(`[AUTH] Generating reset token for user: ${user.id}`);
+
+      const resetToken = nanoid(32);
+      const tokenHash = await sha256(resetToken);
+
+      // SECURITY (F5): only the SHA-256 hash is persisted — the plaintext
+      // token is never stored, so a DB read/backup leak cannot be replayed.
+      // (Legacy `token` column NULLed + NOT NULL dropped in migration 014.)
+      const tokenData = {
+        user_id: user.id,
+        email,
+        token_hash: tokenHash,
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      console.log(`[AUTH] Inserting password reset token for user: ${user.id}`);
+
+      // Use direct REST API with service role key to bypass RLS and library issues
+      const restUrl = `${supabaseUrl}/rest/v1/password_reset_tokens`;
+
+      const restResponse = await fetch(restUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': serviceKey,
+          'Authorization': `Bearer ${serviceKey}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(tokenData)
+      });
+
+      const restStatus = restResponse.status;
+      const responseText = await restResponse.text();
+
+      if (!restResponse.ok) {
+        console.error(`[AUTH] REST API insert failed: Status ${restStatus}`, responseText);
+        // CRITICAL: Do not send email if database insert failed
+        throw new Error(`Failed to save password reset token in database: ${restStatus} ${responseText}`);
+      }
+
+      console.log(`[AUTH] Password reset token inserted successfully for email: ${email}`);
+
+      console.log(`[AUTH] Sending password reset email to: ${email}`);
+      try {
+        await sendPasswordResetEmail(email, resetToken);
+        console.log(`[AUTH] Password reset email sent successfully to: ${email}`);
+      } catch (emailErr) {
+        console.error(`[AUTH] Failed to send password reset email:`, emailErr);
+        throw emailErr;
+      }
+      })().catch((bgErr) => {
+        // Errors are logged only — the uniform response was already returned.
+        console.error("[AUTH] Background reset processing failed:", bgErr);
+      });
+
+      // Schedule the background work and keep the isolate alive until it
+      // settles (Supabase Edge runtime). Local dev awaits it instead.
+      const edgeRuntime = (globalThis as {
+        EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+      }).EdgeRuntime;
+      if (edgeRuntime?.waitUntil) {
+        edgeRuntime.waitUntil(backgroundWork);
+      } else {
+        await backgroundWork;
+      }
+
+      return successResponse;
+    } catch (err) {
+      console.error("[AUTH] request-password-reset error:", err);
+      return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
+        status: 500,
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+}
