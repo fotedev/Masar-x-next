@@ -4,29 +4,36 @@ import { vi } from 'vitest';
 // boilerplate (SubjectsGrid, useCourses, AuthContext); centralizing it
 // keeps every new component/page/hook test consistent.
 //
-// The namespace echo (`ns.key`) makes branch coverage observable: tests
-// assert the exact translation key a component renders, matching the
-// established pattern.
-export function mockNextIntl(locale = 'ar') {
-  vi.mock('next-intl', () => ({
-    useLocale: () => locale,
-    useTranslations:
-      (ns: string) =>
-      (key: string, values?: Record<string, unknown>) => {
-        const suffix =
-          values && Object.keys(values).length > 0
-            ? ` ${JSON.stringify(values)}`
-            : '';
-        return `${ns}.${key}${suffix}`;
-      },
-    getTranslations:
-      (ns: string) =>
-      (key: string, values?: Record<string, unknown>) => {
-        const suffix =
-          values && Object.keys(values).length > 0
-            ? ` ${JSON.stringify(values)}`
-            : '';
-        return `${ns}.${key}${suffix}`;
-      },
-  }));
+// vi.mock() calls are hoisted above imports and cannot close over module
+// locals — the state holder must be created with vi.hoisted() so the
+// hoisted factory can reference it. Mutate the locale via
+// setMockIntlLocale() (typically in beforeEach) BEFORE rendering.
+export const intlState = vi.hoisted(() => ({
+  locale: 'ar' as string,
+}));
+
+export function setMockIntlLocale(locale: string): void {
+  intlState.locale = locale;
+}
+
+function makeT(ns: string) {
+  return (key: string, values?: Record<string, unknown>) => {
+    const suffix =
+      values && Object.keys(values).length > 0
+        ? ` ${JSON.stringify(values)}`
+        : '';
+    return `${ns}.${key}${suffix}`;
+  };
+}
+
+/** vi.mock('next-intl', nextIntlMockFactory) — namespace-echo mock. */
+export const nextIntlMockFactory = () => ({
+  useLocale: () => intlState.locale,
+  useTranslations: makeT,
+  getTranslations: makeT,
+});
+
+/** Convenience wrapper: mockNextIntl() at the top of a test file. */
+export function mockNextIntl(): void {
+  vi.mock('next-intl', nextIntlMockFactory);
 }
