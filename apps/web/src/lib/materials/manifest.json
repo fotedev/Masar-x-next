@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-06T00:48:17.124Z",
+  "generated": "2026-11-07T01:31:46.793Z",
   "source": {
     "name": "Materials- AI - Y2_S1",
     "folderId": "1bE-Kel2uE8MdUvSN-7N8uFW_s2U5I3NA",
@@ -308,12 +308,6 @@
           "nameAr": "الشيتات",
           "folderId": "1QCZwwiDfLWS5zCG2DMj6uhnjyiqu03YU",
           "files": [
-            {
-              "name": "Copy of OOP Sheet 6.mp4",
-              "fileId": "1JAUinlOBgGhDIlLKE6V5OTx3gvXp3CMT",
-              "type": "mp4",
-              "modified": null
-            },
             {
               "name": "Copy of OOP Sheet_4.mp4",
               "fileId": "1GfAsgdHYj_8yEWscg_jBHY3mbTZndgU_",
@@ -732,12 +726,6 @@
               "fileId": "1lNAvE1V8O49AJPSzlWV00qVriVPiSlE-",
               "type": "pdf",
               "modified": null
-            },
-            {
-              "name": "Lecture_3_Signals_and_Systems_Part_II_revised.pdf",
-              "fileId": "1b8-5LHPWT0LSplGrwZBwiUF8XOvx7s5M",
-              "type": "pdf",
-              "modified": null
             }
           ],
           "children": []
@@ -1026,5 +1014,5 @@
       "groups": []
     }
   ],
-  "lastSyncRun": "2026-11-06T00:48:17.124Z"
+  "lastSyncRun": "2026-11-07T01:31:46.793Z"
 }
