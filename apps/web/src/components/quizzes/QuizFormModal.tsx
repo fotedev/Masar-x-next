@@ -1,4 +1,10 @@
-import { type Dispatch, type SetStateAction } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { QuizMetaFields } from "./quiz-form/QuizMetaFields";
@@ -56,9 +62,26 @@ export function QuizFormModal({
   const t = useTranslations("quizzes");
   const commonT = useTranslations("common");
   const locale = useLocale();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [highlighted, setHighlighted] = useState(false);
+
+  useEffect(() => {
+    setHighlighted(true);
+    const timer = setTimeout(() => setHighlighted(false), 1600);
+    // The form sits above the grid in normal flow — without this the user
+    // clicks Edit and nothing visibly happens while the form mounts off-screen.
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return () => clearTimeout(timer);
+    // Re-run on target change so editing another exam while the form is open
+    // re-scrolls and re-highlights.
+  }, [editingQuiz?.id]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 mb-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <div
+      ref={panelRef}
+      className={`bg-white dark:bg-gray-800 rounded-xl shadow-xs p-6 mb-8 scroll-mt-24 transition-shadow duration-700 ${highlighted ? "ring-2 ring-blue-500" : ""}`}
+      dir={locale === 'ar' ? 'rtl' : 'ltr'}
+    >
       <div className="space-y-6" dir="auto">
         <QuizMetaFields
           editingQuiz={editingQuiz}

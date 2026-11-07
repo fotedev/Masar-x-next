@@ -58,6 +58,7 @@ export default function AiAssistantPage() {
 
   const {
     messages,
+    messagesRef,
     isLoading,
     isReady,
     sendMessage,
@@ -116,10 +117,13 @@ export default function AiAssistantPage() {
   // exchange (the old error bubble stays in the transcript as history).
   // The retry button only renders on the latest error bubble while not
   // loading, so no in-flight guard is needed here.
+  // Reads messagesRef (not messages) so the identity holds while the transcript
+  // streams — a messages dep would recreate this callback per streamed delta
+  // and defeat the memoized ChatContainer (spec 036 Track A).
   const handleRetryLast = useCallback(() => {
-    const lastUser = [...messages].reverse().find((m) => m.type === "user");
+    const lastUser = [...messagesRef.current].reverse().find((m) => m.type === "user");
     if (lastUser) void sendMessage(lastUser.content, selectedModel);
-  }, [messages, sendMessage, selectedModel]);
+  }, [messagesRef, sendMessage, selectedModel]);
 
   const { subjects: studentSubjects } = useSubjects();
   const [studentSelectedQuizId, setStudentSelectedQuizId] = useState("");

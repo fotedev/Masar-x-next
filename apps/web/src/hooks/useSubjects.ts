@@ -217,6 +217,7 @@ export function useSubjects(params: UseSubjectsParams = {}) {
         level: newSubject.level || 1,
         show_on_home: newSubject.show_on_home ?? true,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         status: "approved",
         isOptimistic: true,
         professor: newSubject.professor || null,

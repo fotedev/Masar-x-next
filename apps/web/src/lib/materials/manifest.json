@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-03",
+  "generated": "2026-11-07T06:57:47.663Z",
   "source": {
     "name": "Materials- AI - Y2_S1",
     "folderId": "1bE-Kel2uE8MdUvSN-7N8uFW_s2U5I3NA",
@@ -13,6 +13,8 @@
       "name": "Business Management",
       "nameAr": "إدارة الأعمال",
       "icon": "briefcase",
+      "level": 2,
+      "semester": 1,
       "folderId": "1tNy5Js_g8mO14NFnmib-hkcRCux-Amoh",
       "groups": [
         {
@@ -26,17 +28,18 @@
               "type": "pdf",
               "modified": "2026-10-16"
             }
-          ]
+          ],
+          "children": []
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "data-communication",
       "name": "Data Communication",
       "nameAr": "اتصالات البيانات",
       "icon": "network",
+      "level": 2,
+      "semester": 1,
       "folderId": "1t12JAqhN6fDGSRkipt1LvB4jnOO23X4e",
       "groups": [
         {
@@ -74,7 +77,8 @@
               "type": "pdf",
               "modified": "2026-10-28"
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Sections",
@@ -99,7 +103,8 @@
               "type": "pdf",
               "modified": "2026-09-29"
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Sheets",
@@ -124,17 +129,18 @@
               "type": "pdf",
               "modified": null
             }
-          ]
+          ],
+          "children": []
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "discrete-structures",
       "name": "Discrete Structures",
       "nameAr": "التركيبات المنفصلة",
       "icon": "grid",
+      "level": 2,
+      "semester": 1,
       "folderId": "105Mv2RHTOgIBn_orNcQRA76BjVIa0guR",
       "groups": [
         {
@@ -148,7 +154,8 @@
               "type": "pdf",
               "modified": "2026-09-29"
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Sections",
@@ -204,7 +211,8 @@
                   "type": "mp4",
                   "modified": "2026-10-28"
                 }
-              ]
+              ],
+              "children": []
             }
           ]
         },
@@ -237,17 +245,18 @@
               "type": "pdf",
               "modified": "2026-10-25"
             }
-          ]
+          ],
+          "children": []
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "oop",
       "name": "OOP",
       "nameAr": "البرمجة الكائنية",
       "icon": "code",
+      "level": 2,
+      "semester": 1,
       "folderId": "1EnBFxK2hpb7aAC0kbpClPR5UJTYiJlPo",
       "groups": [
         {
@@ -291,13 +300,20 @@
               "type": "pptx",
               "modified": "2026-10-28"
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Sheets",
           "nameAr": "الشيتات",
           "folderId": "1QCZwwiDfLWS5zCG2DMj6uhnjyiqu03YU",
           "files": [
+            {
+              "name": "Copy of OOP Sheet 6.mp4",
+              "fileId": "1H5injiML847K0kV3MAyRNre4vDFh88eI",
+              "type": "mp4",
+              "modified": null
+            },
             {
               "name": "Copy of OOP Sheet_4.mp4",
               "fileId": "1GfAsgdHYj_8yEWscg_jBHY3mbTZndgU_",
@@ -335,7 +351,8 @@
                   "type": "txt",
                   "modified": "2026-10-07"
                 }
-              ]
+              ],
+              "children": []
             },
             {
               "name": "By Eng/Mohamed Alqady",
@@ -409,7 +426,8 @@
                           "type": "java",
                           "modified": "2026-10-13"
                         }
-                      ]
+                      ],
+                      "children": []
                     }
                   ]
                 },
@@ -484,7 +502,138 @@
                           "type": "java",
                           "modified": "2026-10-14"
                         }
-                      ]
+                      ],
+                      "children": []
+                    },
+                    {
+                      "name": "Sheet_3",
+                      "nameAr": "Sheet_3",
+                      "folderId": "11a_D7u146liJ2_orAjvmgF2In_25UZH8",
+                      "files": [
+                        {
+                          "name": "Sheet_3_q1.java",
+                          "fileId": "1iNzwKoJdoxHLjePruYFgrdyYoXybQ6e9",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q10.java",
+                          "fileId": "1flJMTH-OyrWY5axDdCfLvA86hGf4b-Xw",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q2.java",
+                          "fileId": "1OwZKFJXbe3WYfajZmJ-2iY8MNVLCQBJ8",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q3.java",
+                          "fileId": "178d_AH6vKtoXSuWc8K9NyL1ahU_UtQPI",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q4.java",
+                          "fileId": "11cFWQQ34hrrR9mM1AreX8jZ9lRzQjUUQ",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q5.java",
+                          "fileId": "1-VsMyW9i9ORsujtaSW2lWdhqihlCeKEg",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q6.java",
+                          "fileId": "1zFEWkIHRKYZCu3v84bOVTct3u-TrlBqV",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q7.java",
+                          "fileId": "15UVUq9YAjdoGBUd-wfOLFwL4aNIh2V72",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q8.java",
+                          "fileId": "1wP78QoCH7y2V_RaiaVUsfMX-Q7ULnZKR",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_3_q9.java",
+                          "fileId": "1PX8SGrx91rr20QaNKGpmpisj5vKZy8aR",
+                          "type": "java",
+                          "modified": null
+                        }
+                      ],
+                      "children": []
+                    },
+                    {
+                      "name": "Sheet_4",
+                      "nameAr": "Sheet_4",
+                      "folderId": "1PL1oo9jlLWbkYVAIl-ehcF5kl7njjoij",
+                      "files": [
+                        {
+                          "name": "Sheet4_q7.java",
+                          "fileId": "167F70k5mFCwOA8XlUfgHJiYgfsETgdkM",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet4_q8.java",
+                          "fileId": "1OC53b_3CBEa4o7PLF93PghCsgTB1gFQI",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet4_q9.java",
+                          "fileId": "17u5zXIOUBBp-QJtSj7fw9nqHBXDL1oOQ",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q1.java",
+                          "fileId": "1p6g-3CK36HW9vdzPo2rAXiT_iNiY7uF6",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q10.java",
+                          "fileId": "1VkXgdPpDoQZOm99OPS3p5IWStQ4oBynk",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q2.java",
+                          "fileId": "1-Tkpq1ovtYIe6g2wU0W_GbQTcwxLYeeI",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q4.java",
+                          "fileId": "1OdaL58V1E4aapSfUEQNOpWEqx8Ei7MkW",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q5.java",
+                          "fileId": "1VN-brDDVDmSa3NgfkywoG0btOoRFA_xr",
+                          "type": "java",
+                          "modified": null
+                        },
+                        {
+                          "name": "Sheet_4_q6.java",
+                          "fileId": "1I4n6h1ACkVJl_vWBjhK2UaALYKEDGXmj",
+                          "type": "java",
+                          "modified": null
+                        }
+                      ],
+                      "children": []
                     }
                   ]
                 }
@@ -537,19 +686,20 @@
                   "type": "pdf",
                   "modified": null
                 }
-              ]
+              ],
+              "children": []
             }
           ]
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "probability-statistics",
       "name": "Probability and Statistics",
       "nameAr": "الاحتمالات والإحصاء",
       "icon": "chart",
+      "level": 2,
+      "semester": 1,
       "folderId": "1k1RvuORAx4rkcUxN0j8jJ6bMiVIegYRi",
       "groups": [
         {
@@ -563,17 +713,18 @@
               "type": "pdf",
               "modified": "2026-10-03"
             }
-          ]
+          ],
+          "children": []
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "project-management",
       "name": "Project Management",
       "nameAr": "إدارة المشاريع",
       "icon": "clipboard",
+      "level": 2,
+      "semester": 1,
       "folderId": "1o5DYDacW5f3rJnSp1NMzsOxp_DpJlFF8",
       "groups": [
         {
@@ -593,7 +744,8 @@
               "type": "pdf",
               "modified": "2026-10-03"
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Taskes",
@@ -612,17 +764,18 @@
               "type": "docx",
               "modified": "2026-10-12"
             }
-          ]
+          ],
+          "children": []
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "signals-systems",
       "name": "Signals & Systems",
       "nameAr": "الإشارات والأنظمة",
       "icon": "wave",
+      "level": 2,
+      "semester": 1,
       "folderId": "1a9Lv1LLGnV44_P5ctIJBjuYw1El8AhTo",
       "groups": [
         {
@@ -643,12 +796,13 @@
               "modified": null
             },
             {
-              "name": "Lecture_3_Signals_and_Systems_Part_II_revised.pdf",
-              "fileId": "1b8-5LHPWT0LSplGrwZBwiUF8XOvx7s5M",
+              "name": "lect 03 . Signals_Transformations_and_Unit_Steps.pdf",
+              "fileId": "1iOO6zFIdgOqcYp6ZK9gf-u68RWIfSn3f",
               "type": "pdf",
               "modified": null
             }
-          ]
+          ],
+          "children": []
         },
         {
           "name": "Sections",
@@ -679,7 +833,8 @@
                   "type": "docx",
                   "modified": "2026-09-29"
                 }
-              ]
+              ],
+              "children": []
             },
             {
               "name": "Section2",
@@ -710,7 +865,8 @@
                   "type": "docx",
                   "modified": "2026-10-16"
                 }
-              ]
+              ],
+              "children": []
             },
             {
               "name": "Section3",
@@ -735,7 +891,8 @@
                   "type": "docx",
                   "modified": "2026-10-17"
                 }
-              ]
+              ],
+              "children": []
             },
             {
               "name": "section4",
@@ -760,7 +917,8 @@
                   "type": "mp4",
                   "modified": "2026-10-22"
                 }
-              ]
+              ],
+              "children": []
             },
             {
               "name": "section5",
@@ -779,13 +937,32 @@
                   "type": "pptx",
                   "modified": "2026-10-30"
                 }
-              ]
+              ],
+              "children": []
+            },
+            {
+              "name": "Section6",
+              "nameAr": "Section6",
+              "folderId": "1jk6iKY-FaRonK9ZvVsUrJcqrVqAl-094",
+              "files": [
+                {
+                  "name": "Copy of MATLAB_6.mp4",
+                  "fileId": "1SQhH4EGxSXVUrj4KsYYZtqEcEaFLAH4Z",
+                  "type": "mp4",
+                  "modified": null
+                },
+                {
+                  "name": "Copy of signals_systems_exercises_6.pptx",
+                  "fileId": "1LF7P-9pjT2Z-nSOH94Vu_PlWiL-6I1pK",
+                  "type": "pptx",
+                  "modified": null
+                }
+              ],
+              "children": []
             }
           ]
         }
-      ],
-      "level": 2,
-      "semester": 1
+      ]
     },
     {
       "slug": "fundamentals-of-it",
@@ -931,5 +1108,5 @@
       "groups": []
     }
   ],
-  "lastSyncRun": "18c6eee290a9"
+  "lastSyncRun": "2026-11-07T06:57:47.663Z"
 }

@@ -6,6 +6,7 @@ import { User, Copy, Check, Code, Eye, LogIn, RotateCcw } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
+import { useInViewport } from "@/hooks/useInViewport";
 import { initPuterDiagnostics, signInToPuter, getPuterStatus } from "@/lib/puter";
 import { CANNED_ERROR_PREFIXES } from "@/lib/ai/canned-messages";
 import { motion, AnimatePresence } from "framer-motion";
@@ -192,6 +193,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   // player and avoids the "Failed to load animation" race condition that
   // happens when a stale canvas is reused.
   const lottieInstanceId = useId();
+  // Spec 036 Track C: the dotLottie engine unmounts while the bubble avatar is
+  // off-screen (one shared IntersectionObserver, 200px margin so the animation
+  // is live before the message scrolls into view). The latest assistant
+  // message always animates regardless of scroll position.
+  const { ref: avatarRef, inView: avatarInView } = useInViewport<HTMLDivElement>();
 
   type ZaneUiButton = { label: string; message: string };
   type ZaneUiPayload = { type: "buttons"; title?: string; buttons: ZaneUiButton[] };
@@ -544,7 +550,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         if (lang === "markdown" || lang === "md") {
           return (
             <div className="my-4">
-              <LazyMarkdown content={normalizeLatexDelimiters(inner)} components={markdownComponents} />
+              <LazyMarkdown content={normalizeLatexDelimiters(inner)} components={markdownComponents} streaming={isStreaming} />
             </div>
           );
         }
@@ -592,7 +598,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           }`}
         >
           <div className="prose prose-slate dark:prose-invert max-w-none">
-            <LazyMarkdown content={normalized} components={markdownComponents} />
+            <LazyMarkdown content={normalized} components={markdownComponents} streaming={isStreaming} />
           </div>
         </div>
       </div>
@@ -626,6 +632,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         } ${directionClass}`}
       >
         <div
+          ref={avatarRef}
           className={`shrink-0 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
             isUser
               ? // Spec 012: 32/36px user avatar — the 48/64px circle dwarfed
@@ -636,7 +643,7 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
         >
           {isUser ? (
             <User className="w-4 h-4 sm:w-5 sm:h-5" />
-          ) : (
+          ) : avatarInView || isLatestAssistant ? (
             <LottiePlayer
               key={lottieInstanceId}
               src="/animations/ai-robo.lottie"
@@ -649,6 +656,11 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
               }}
               className="w-full h-full"
             />
+          ) : (
+            // Spec 036 Track C: off-screen placeholder — same box so there is
+            // no layout shift; the animated player remounts before the bubble
+            // scrolls into view.
+            <div className="w-full h-full rounded-full bg-linear-to-br from-indigo-500 to-indigo-600" />
           )}
         </div>
         <div className="flex flex-col gap-1 min-w-0 flex-1 group/bubble">

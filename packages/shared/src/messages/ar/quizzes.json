@@ -79,6 +79,7 @@
   "generate": "توليد",
   "examDurationMinutes": "مدة الامتحان بالدقائق (اختياري)",
   "selectLevel": "اختر المستوي",
+  "semester": "الترم",
   "selectSemester": "اختر الترم",
   "semester1": "الترم الأول",
   "semester2": "الترم الثاني",
@@ -136,6 +137,10 @@
     "successDesc": "تم حذف الاختبار بنجاح.",
     "error": "تعذر حذف الاختبار",
     "errorDesc": "حدث خطأ أثناء الحذف. حاول مرة أخرى."
+  },
+  "editFeedback": {
+    "loadError": "فشل فتح الامتحان للتعديل",
+    "loadErrorDesc": "حدث خطأ أثناء تحميل بيانات الامتحان. حاول مرة أخرى."
   },
   "confirmDeleteTitle": "حذف الاختبار؟",
   "confirmDeleteMessageWithTitle": "سيتم حذف \"{title}\" نهائيًا ولا يمكن التراجع عن هذا الإجراء.",

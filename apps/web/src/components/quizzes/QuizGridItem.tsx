@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { Play, BookOpen, Edit, Trash2, Clock, Layout } from "lucide-react";
 import { Quiz } from "@/types/database";
 
@@ -19,7 +20,10 @@ interface QuizGridItemProps {
   onViewSummary: (summaryId: string) => void;
 }
 
-export function QuizGridItem({
+// Spec 036 Track D: memoized so dashboard re-renders (filter keystrokes,
+// modal state) skip unchanged cards — the dashboard's handlers are
+// useCallback-stable so the default shallow compare actually engages.
+export const QuizGridItem = memo(function QuizGridItem({
   quiz,
   meta,
   isAdmin,
@@ -55,6 +59,11 @@ export function QuizGridItem({
               {meta.semester && (
                 <span className="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md">
                   {t("semester")} {meta.semester}
+                </span>
+              )}
+              {quiz.status && quiz.status !== "approved" && (
+                <span className="px-2 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium rounded-md border border-amber-200 dark:border-amber-800">
+                  {t("pending")}
                 </span>
               )}
             </div>
@@ -122,4 +131,4 @@ export function QuizGridItem({
       </div>
     </div>
   );
-}
+});

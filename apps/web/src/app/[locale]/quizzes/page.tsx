@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from '@/navigation';
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,7 +168,7 @@ function QuizDashboardInternal() {
     semester: selectedFormSemesterNumber,
   });
 
-  const handleSaveQuiz = async () => {
+  const handleSaveQuiz = useCallback(async () => {
     try {
       if (!user) return;
 
@@ -194,25 +194,30 @@ function QuizDashboardInternal() {
           t("saveFeedback.errorDesc"),
       });
     }
-  };
+  }, [user, saveQuiz, formData, loadQuizzes, editingQuiz, resetForm, t, setShowCreateForm, setEditingQuiz]);
 
-  const handleEditQuiz = async (quiz: Quiz) => {
+  const handleEditQuiz = useCallback(async (quiz: Quiz) => {
     try {
       setEditingQuiz(quiz);
+      setShowCreateForm(true);
 
       const result = await loadQuizForEdit(quiz);
       setFormData(result.formData);
-      setShowCreateForm(true);
-    } catch {
-      // ignore
+    } catch (error: unknown) {
+      setShowCreateForm(false);
+      setEditingQuiz(null);
+      toast.error(t("editFeedback.loadError"), {
+        description:
+          getErrorMessage(error) || t("editFeedback.loadErrorDesc"),
+      });
     }
-  };
+  }, [setEditingQuiz, setShowCreateForm, loadQuizForEdit, setFormData, t]);
 
-  const handleDeleteQuiz = (quiz: Quiz) => {
+  const handleDeleteQuiz = useCallback((quiz: Quiz) => {
     openDeleteDialog(quiz);
-  };
+  }, [openDeleteDialog]);
 
-  const handleConfirmDeleteQuiz = async () => {
+  const handleConfirmDeleteQuiz = useCallback(async () => {
     if (!quizToDelete?.id) return;
     if (isDeletingQuiz) return;
 
@@ -232,7 +237,23 @@ function QuizDashboardInternal() {
     } finally {
       setIsDeletingQuiz(false);
     }
-  };
+  }, [quizToDelete, isDeletingQuiz, setIsDeletingQuiz, deleteQuiz, loadQuizzes, t, closeDeleteDialog]);
+
+  // Spec 036 Track D: stable nav handlers — the memoized QuizGridItem compares
+  // these props on every dashboard render.
+  const handlePlayQuiz = useCallback(
+    (quiz: Quiz) => {
+      router.push(`/quiz-play/${quiz.id}`);
+    },
+    [router],
+  );
+
+  const handleViewSummary = useCallback(
+    (summaryId: string) => {
+      router.push(`/summaries/${summaryId}`);
+    },
+    [router],
+  );
 
   if (loading) {
     return <QuizzesLoading />;
@@ -317,10 +338,10 @@ function QuizDashboardInternal() {
         quizzesWithMeta={quizzesWithMeta}
         isAdmin={isAdmin}
         t={t}
-        onPlay={(q) => router.push(`/quiz-play/${q.id}`)}
+        onPlay={handlePlayQuiz}
         onEdit={handleEditQuiz}
         onDelete={handleDeleteQuiz}
-        onViewSummary={(id) => router.push(`/summaries/${id}`)}
+        onViewSummary={handleViewSummary}
       />
 
       {filteredQuizzes.length === 0 && <QuizzesEmptyState t={t} />}
