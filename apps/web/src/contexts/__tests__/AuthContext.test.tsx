@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 
 // --- module mocks (hoisted-safe) -------------------------------------------
@@ -49,7 +49,7 @@ const { chain, authMock, desktopState, bridge, loggerInfo, loggerWarn, loggerErr
       bridge: {
         auth: {
           rendererReady: vi.fn(async (): Promise<string | null> => null),
-          onDeepLink: vi.fn((): (() => void) => () => {}),
+          onDeepLink: vi.fn((_url?: unknown): (() => void) => () => {}),
         },
         app: { openExternal: vi.fn(async (): Promise<void> => {}) },
       },

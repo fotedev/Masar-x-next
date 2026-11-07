@@ -53,7 +53,7 @@ class FakeFileReader {
 }
 
 const lastXhr = () => {
-  const xhr = FakeXHR.instances.at(-1);
+  const xhr = FakeXHR.instances[FakeXHR.instances.length - 1];
   if (!xhr) throw new Error('no XHR was created');
   return xhr;
 };
@@ -268,7 +268,7 @@ describe('uploadToCloudinary — progress reporting', () => {
 
     expect(onProgress.mock.calls[0]).toEqual([0, 'تحويل الملف...']);
     expect(onProgress).toHaveBeenCalledWith(30, 'جاري رفع الملف...');
-    expect(onProgress.mock.calls.at(-1)).toEqual([100, 'تم الرفع بنجاح']);
+    expect(onProgress.mock.calls[onProgress.mock.calls.length - 1]).toEqual([100, 'تم الرفع بنجاح']);
   });
 
   it('clamps the computed upload percentage at 99 and handles non-computable progress', async () => {

@@ -375,7 +375,7 @@ describe("isGuest", () => {
   it("stays false while auth is loading and flips only after authLoading settles", async () => {
     authState.loading = true;
     const utils = renderHook(
-      (p: Parameters<typeof useQuizAttempt>[0]) =>
+      (p: Partial<Parameters<typeof useQuizAttempt>[0]>) =>
         useQuizAttempt({ quizId: QUIZ_ID, userId: undefined, totalQuestions: 10, ...p }),
       { initialProps: {} as Partial<Parameters<typeof useQuizAttempt>[0]> },
     );

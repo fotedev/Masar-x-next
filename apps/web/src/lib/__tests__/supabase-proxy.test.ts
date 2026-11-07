@@ -44,7 +44,12 @@ const makeSupabase = ({
   user = null,
   profiles = null,
   admins = null,
-  persistOnGetUser = null as Array<{ name: string; value: string; options?: object }> | null,
+  persistOnGetUser = null,
+}: {
+  user?: User | null;
+  profiles?: Record<string, unknown> | null;
+  admins?: Record<string, unknown> | null;
+  persistOnGetUser?: Array<{ name: string; value: string; options?: object }> | null;
 }) => {
   const from = vi.fn((table: string) => {
     const builder = {
@@ -77,7 +82,7 @@ const redirectTarget = (response: Response) => response.headers.get('location') 
 
 beforeEach(() => {
   createServerClientMock.mockReset();
-  createServerClientMock.mockImplementation(((url: string, key: string, config: { cookies: CookieAdapter }) => {
+  createServerClientMock.mockImplementation(((_url: string, _key: string, config: { cookies: CookieAdapter }) => {
     ssrState.cookies = config.cookies;
     return supabaseImpl;
   }) as never);

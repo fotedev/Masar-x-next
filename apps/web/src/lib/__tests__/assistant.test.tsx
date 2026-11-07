@@ -13,7 +13,12 @@ const enCanned = enMessages.canned;
  * the Puter SDK seam. The circuit breaker, canned messages, sanitizer and
  * server-fallback stream reader all run for real.
  */
-const puterClientState = vi.hoisted(() => ({ current: null as unknown }));
+const puterClientState = vi.hoisted(() => ({
+  current: null as {
+    auth: { isSignedIn: () => boolean };
+    ai: { chat: ReturnType<typeof vi.fn> };
+  } | null,
+}));
 
 vi.mock('@/lib/ai/puter-client', () => ({
   getPuterClient: vi.fn(async () => puterClientState.current),
@@ -56,7 +61,7 @@ const streamingPuter = (
 ) => ({
   auth: { isSignedIn: () => true },
   ai: {
-    chat: vi.fn(async () => ({
+    chat: vi.fn(async (_prompt: unknown, _options?: unknown) => ({
       async *[Symbol.asyncIterator]() {
         if (opts.failBefore) throw opts.error ?? new Error('websocket is closed');
         for (let i = 0; i < chunks.length; i++) {
@@ -470,7 +475,7 @@ describe('generateQuiz — fence stripping + JSON slicing', () => {
     expect(quiz.title).toBe('اختبار تجريبي');
     expect(quiz.questions).toHaveLength(2);
 
-    const [prompt, options] = puterClientState.current.ai.chat.mock.calls[0];
+    const [prompt, options] = puterClientState.current!.ai.chat.mock.calls[0];
     expect(prompt).toContain('نص المحاضرة');
     expect(options).toMatchObject({ model: 'gpt-4o', stream: false });
   });
@@ -509,7 +514,7 @@ describe('summarizeCurrentChat — fence stripping + Arabic role labels', () => 
     ]);
     expect(analysis.summary).toBe('ملخص المحادثة');
 
-    const [prompt] = puterClientState.current.ai.chat.mock.calls[0];
+    const [prompt] = puterClientState.current!.ai.chat.mock.calls[0];
     expect(prompt).toContain('المستخدم: كيف أصلح الكود؟');
     expect(prompt).toContain('المساعد: استخدم try/catch');
   });
@@ -531,7 +536,7 @@ describe('summarizeCurrentChat — fence stripping + Arabic role labels', () => 
     }));
     await aiAssistant.summarizeCurrentChat(messages);
 
-    const [prompt] = puterClientState.current.ai.chat.mock.calls[0];
+    const [prompt] = puterClientState.current!.ai.chat.mock.calls[0];
     expect(prompt).toContain('msg-55');
     expect(prompt).toContain('msg-6'); // 50th from the end
     expect(prompt).not.toContain('msg-5\n');

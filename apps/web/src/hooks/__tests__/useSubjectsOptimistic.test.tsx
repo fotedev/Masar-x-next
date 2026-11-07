@@ -31,6 +31,7 @@ vi.mock("@/hooks/useEffectiveSemester", () => ({
 
 import { useSubjects } from "../useSubjects";
 import { renderHookWithProviders } from "@/test/utils/render";
+import type { SupabaseQueryResult } from "@/test/mocks/supabase";
 
 const ROWS = [
   { id: "s-1", name: "رياضيات", show_on_home: true },
@@ -50,7 +51,7 @@ function makeHarness() {
     utils.queryClient
       .getQueryCache()
       .find({ queryKey: ["subjects"], exact: false })?.state
-      .data as CacheRow[] | undefined;
+      .data as (CacheRow & { isOptimistic?: boolean })[] | undefined;
   return { ...utils, cacheData };
 }
 
@@ -75,10 +76,13 @@ describe("updateSubjectVisibility optimistic contract", () => {
     const utils = await renderSettled();
 
     let release!: (v: unknown) => void;
-    chain.respondWith(new Promise((res) => { release = res; }), {
-      table: "subjects",
-      method: "eq",
-    });
+    chain.respondWith(
+      new Promise((res) => { release = res; }) as unknown as SupabaseQueryResult,
+      {
+        table: "subjects",
+        method: "eq",
+      },
+    );
 
     const mutation = utils.result.current.updateSubjectVisibility("s-1", false);
     await waitFor(() => expect(utils.cacheData()![0].show_on_home).toBe(false));
@@ -109,10 +113,13 @@ describe("updateSubject optimistic contract", () => {
     const utils = await renderSettled();
 
     let release!: (v: unknown) => void;
-    chain.respondWith(new Promise((res) => { release = res; }), {
-      table: "subjects",
-      method: "eq",
-    });
+    chain.respondWith(
+      new Promise((res) => { release = res; }) as unknown as SupabaseQueryResult,
+      {
+        table: "subjects",
+        method: "eq",
+      },
+    );
 
     const mutation = utils.result.current.updateSubject("s-1", {
       name: "جبر",
@@ -146,10 +153,13 @@ describe("createSubject optimistic contract", () => {
     const utils = await renderSettled();
 
     let release!: (v: unknown) => void;
-    chain.respondWith(new Promise((res) => { release = res; }), {
-      table: "subjects",
-      method: "single",
-    });
+    chain.respondWith(
+      new Promise((res) => { release = res; }) as unknown as SupabaseQueryResult,
+      {
+        table: "subjects",
+        method: "single",
+      },
+    );
 
     const mutation = utils.result.current.createSubject({
       name: "كيمياء",
@@ -195,10 +205,13 @@ describe("deleteSubject optimistic contract", () => {
     const utils = await renderSettled();
 
     let release!: (v: unknown) => void;
-    chain.respondWith(new Promise((res) => { release = res; }), {
-      table: "subjects",
-      method: "eq",
-    });
+    chain.respondWith(
+      new Promise((res) => { release = res; }) as unknown as SupabaseQueryResult,
+      {
+        table: "subjects",
+        method: "eq",
+      },
+    );
 
     const mutation = utils.result.current.deleteSubject("s-1");
     await waitFor(() =>

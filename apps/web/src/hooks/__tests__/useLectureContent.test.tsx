@@ -19,6 +19,7 @@ vi.mock("@/lib/logger", () => ({
 }));
 
 import { useLectureContent } from "../useLectureContent";
+import type { SupabaseQueryResult } from "@/test/mocks/supabase";
 
 const LECTURE = { id: "lec-1", lecture_key: "ch-1" };
 const INDEX = [
@@ -91,7 +92,9 @@ describe("scoped fetching", () => {
     // Gate every await: the scoped phase hangs first, then the broad phase.
     let releaseScoped!: (v: unknown) => void;
     let releaseBroad!: (v: unknown) => void;
-    chain.respondWith(new Promise((res) => { releaseScoped = res; }));
+    chain.respondWith(
+      new Promise((res) => { releaseScoped = res; }) as unknown as SupabaseQueryResult,
+    );
 
     const { result } = renderHook(() => useLectureContent(base()));
     await waitFor(() =>
@@ -100,7 +103,9 @@ describe("scoped fetching", () => {
 
     // Pushed AFTER the scoped awaits snapshot their response → only the
     // broad chains (issued once the scoped ones resolve empty) see this.
-    chain.respondWith(new Promise((res) => { releaseBroad = res; }));
+    chain.respondWith(
+      new Promise((res) => { releaseBroad = res; }) as unknown as SupabaseQueryResult,
+    );
     releaseScoped({ data: [], error: null });
 
     await waitFor(() =>

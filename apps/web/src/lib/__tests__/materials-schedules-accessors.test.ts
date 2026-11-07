@@ -25,7 +25,6 @@ const subject = (overrides: Partial<DriveSubject> & Pick<DriveSubject, 'level' |
   ({
     slug: 'synthetic',
     name: 'Synthetic',
-    nameAr: 'مادة',
     icon: 'book',
     folderId: 'folder-123',
     groups: [],
@@ -128,7 +127,7 @@ describe('materials manifest (real asset, schema-validated at import)', () => {
     const walk = (groups: typeof withFiles.groups) => {
       for (const g of groups) {
         manual.push(...g.files);
-        g.children?.forEach(walk);
+        g.children?.forEach((child) => walk([child]));
       }
     };
     walk(withFiles.groups);
@@ -150,7 +149,7 @@ describe('schedules accessor (real assets, schema-validated at import)', () => {
     for (const sheet of scheduleSheets) {
       expect(sheet.docId).toBeTruthy();
       expect(sheet.sourceUrl).toContain('docs.google.com/spreadsheets');
-      expect(sheet.tab.length).toBeGreaterThan(0);
+      expect(sheet.tab!.length).toBeGreaterThan(0);
       expect(sheet.rowCount).toBe(sheet.rows.length);
       expect(sheet.rows.length).toBeGreaterThan(0);
       for (const row of sheet.rows) {
