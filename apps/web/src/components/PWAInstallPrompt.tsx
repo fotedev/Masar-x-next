@@ -85,7 +85,8 @@ export function PWAInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-3 right-3 sm:left-4 sm:right-4 z-50 md:left-auto md:right-4 md:w-96">
+    <div className="fixed bottom-4 left-3 right-3 sm:left-4 sm:right-4 z-50 md:left-auto md:right-4 md:w-96 lg:rtl:mr-[var(--sidenav-w,4rem)]">
+      {/* rtl+lg: clear the right-anchored sidenav rail (var set by AppNav; 4rem = collapsed fallback) */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3 rtl:space-x-reverse">

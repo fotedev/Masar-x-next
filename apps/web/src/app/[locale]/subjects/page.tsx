@@ -1,45 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useRouter } from "@/navigation";
 import { useTranslations } from "next-intl";
 import { SubjectsGrid } from "@/components/SubjectsGrid";
 import { useSubjects } from "@/hooks/useSubjects";
-import { useAcademicOptions } from "@/hooks/useAcademicOptions";
-import { useUserAcademic } from "@/hooks/useUserAcademic";
-import { LevelTabs } from "./_components/LevelTabs";
 
 function SubjectsPage() {
   const router = useRouter();
   const tSubjects = useTranslations("subjects");
-  const { academic } = useUserAcademic();
-  // Spec 034: the catalog fetches every level once; the tab bar filters
-  // client-side. Default selection = the viewer's own academic level.
-  const { subjects, loading } = useSubjects({ allLevels: true });
-  const { levels } = useAcademicOptions();
-
-  const [activeLevel, setActiveLevel] = useState<number>(academic.level ?? 1);
-
-  const sortedLevels = useMemo(
-    () =>
-      [...levels].sort(
-        (a, b) => (a.level_number ?? 99) - (b.level_number ?? 99),
-      ),
-    [levels],
-  );
-
-  const visibleSubjects = useMemo(
-    () =>
-      subjects.filter(
-        (s) =>
-          s.level === activeLevel ||
-          // Legacy rows without a level stay visible on every tab
-          // (same back-compat rule as the scoped query's level.is.null).
-          s.level === null ||
-          s.level === undefined,
-      ),
-    [subjects, activeLevel],
-  );
+  // Owner decision 2026-11-05: level selection lives in the profile, not on
+  // this page (the spec 034 tab bar is gone). The default hook scopes the
+  // query server-side to the viewer's profile level/semester; admins see
+  // everything and guests fall back to level 1 + effective semester.
+  const { subjects, loading } = useSubjects();
 
   const handleSubjectClick = (subjectName: string) => {
     // Navigate to subject page with encoded subject name
@@ -57,16 +30,10 @@ function SubjectsPage() {
         </p>
       </div>
 
-      <LevelTabs
-        levels={sortedLevels}
-        active={activeLevel}
-        onSelect={setActiveLevel}
-      />
-
       <div className="modern-card p-6 sm:p-8">
         <SubjectsGrid
           onSubjectClick={handleSubjectClick}
-          subjects={loading ? undefined : visibleSubjects}
+          subjects={loading ? undefined : subjects}
         />
       </div>
     </div>
