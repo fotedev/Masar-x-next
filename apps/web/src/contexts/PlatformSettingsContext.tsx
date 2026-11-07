@@ -68,8 +68,11 @@ class PlatformSettingsErrorBoundary extends Component<{ children: ReactNode }, {
   }
 }
 
-// Fallback component that provides basic functionality if the main provider fails
-function PlatformSettingsFallback({ children }: { children: ReactNode }) {
+// Fallback component that provides basic functionality if the main provider fails.
+// Exported for direct unit testing (spec 040 Wave 3): through the error
+// boundary itself the fallback's context is shadowed by the re-mounted
+// internal provider, so only a direct render can observe its value.
+export function PlatformSettingsFallback({ children }: { children: ReactNode }) {
   const getInitialSemester = () => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("defaultSemester");
