@@ -2,6 +2,7 @@
   "brand": "Masar X",
   "platformSubtitle": "MASAR X PLATFORM",
   "closeMenuAriaLabel": "Close menu",
+  "openMenuAriaLabel": "Open navigation",
   "defaultUserName": "Masar X User",
   "adminLabel": "System Admin ⚡",
   "studentLabel": "Academic Student",

@@ -31,6 +31,7 @@ beforeEach(() => {
   chain.calls.length = 0;
   authState.user = { id: "u1" };
   authState.isAdmin = false;
+  academicState.academic = { level: 1, semester: 1, department_id: null };
   academicState.loading = false;
 });
 
@@ -58,6 +59,20 @@ describe("useSubjects — shared behavior (survives the TRW refactor merge)", ()
       .map((c) => String(c.args[0]));
     expect(orArgs).toContain("level.eq.2,level.is.null");
     expect(orArgs).toContain("semester.eq.3,semester.is.null");
+  });
+
+  it("scopes the default (no-params) query to the profile level — owner decision 2026-11-05", async () => {
+    academicState.academic = { level: 2, semester: 1, department_id: null };
+    chain.respondWith({ data: [], error: null });
+    renderHookWithProviders(() => useSubjects());
+    await waitFor(() =>
+      expect(chain.calls.filter((c) => c.method === "or").length).toBeGreaterThan(1),
+    );
+    const orArgs = chain.calls
+      .filter((c) => c.method === "or")
+      .map((c) => String(c.args[0]));
+    expect(orArgs).toContain("level.eq.2,level.is.null");
+    expect(orArgs).toContain("semester.eq.1,semester.is.null");
   });
 
   it("anonymous users additionally filter show_on_home=true", async () => {

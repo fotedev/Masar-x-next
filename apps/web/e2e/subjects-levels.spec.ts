@@ -1,36 +1,42 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Subjects level tabs — spec 034. Anonymous, live-data variant:
- * the /subjects catalog fetches every level (allLevels) and the tab bar
- * filters client-side. Switching to المستوى الثاني must reveal the seeded
- * Y2-S1 subjects (spec 033), which the old profile-scoped query could
- * never show a level-1 visitor.
+ * Subjects profile scoping — owner decision 2026-11-05 (supersedes the
+ * spec 034 level tabs): level selection lives in the profile, so /subjects
+ * renders no tab bar and the subjects query is scoped server-side to the
+ * viewer's profile level (useSubjects default path).
+ *
+ * Anonymous, route-mocked variant. The signed-in variant (profile level N →
+ * level.eq.N) is covered by the useSubjects unit tests — Playwright has no
+ * portable seed session yet (same deferral reason as subjects-catalog.spec.ts).
  */
 
-test.describe("subjects level tabs (spec 034)", () => {
-  test("renders level tabs and switches to level 2 subjects", async ({
+test.describe("subjects profile scoping (no level tabs)", () => {
+  test("anonymous visitor: no tab bar, level-1 scoped query with show_on_home", async ({
     page,
   }) => {
-    await page.goto("/ar/subjects");
+    let subjectsUrl = "";
+    await page.route("**/auth/v1/user", (route) =>
+      route.fulfill({ json: { id: null, email: null, aud: null } }),
+    );
+    await page.route("**/auth/v1/token*", (route) =>
+      route.fulfill({ json: { error: "no_session" } }),
+    );
+    await page.route("**/rest/v1/subjects*", (route) => {
+      subjectsUrl = decodeURIComponent(route.request().url());
+      return route.fulfill({ json: [] });
+    });
+    await page.route("**/rest/v1/profiles*", (route) => route.fulfill({ json: null }));
 
-    const tabs = page.getByTestId("subjects-level-tab");
-    await expect(tabs.first()).toBeVisible();
-    // academic_levels seeds 4 levels
-    await expect(tabs).toHaveCount(4);
+    await page.goto("/ar/subjects", { waitUntil: "domcontentloaded" });
 
-    // Level 2 tab reveals the Y2-S1 subjects (data structures etc.).
-    await tabs.nth(1).click();
-    await expect(tabs.nth(1)).toHaveAttribute("aria-pressed", "true");
+    // The spec 034 tab bar is gone — level comes from the profile only.
+    await expect(page.getByTestId("subjects-level-tabs")).toHaveCount(0);
+    await expect(page.getByTestId("subjects-level-tab")).toHaveCount(0);
 
-    const grid = page.getByRole("button");
-    await expect(grid.filter({ hasText: "اتصالات البيانات" })).toBeVisible();
-    await expect(grid.filter({ hasText: "البرمجة الكائنية" })).toBeVisible();
-    await expect(grid.filter({ hasText: "التركيبات المنفصلة" })).toBeVisible();
-
-    // Demo subjects are gone from every tab (spec 034 cleanup).
-    await expect(page.getByText("FOTE", { exact: true })).toHaveCount(0);
-    await tabs.first().click();
-    await expect(page.getByText("FOTE", { exact: true })).toHaveCount(0);
+    // Guest fallback (profile level null → 1) scopes the query, and the
+    // anonymous show_on_home filter is preserved.
+    await expect.poll(() => subjectsUrl).toContain("level.eq.1");
+    await expect.poll(() => subjectsUrl).toContain("show_on_home=eq.true");
   });
 });

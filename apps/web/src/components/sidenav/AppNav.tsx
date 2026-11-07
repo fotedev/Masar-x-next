@@ -1,22 +1,29 @@
 "use client";
 
-import { Fragment, useState, useEffect, useRef, memo } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { usePathname, useRouter } from '@/navigation';
+import { Fragment, memo, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "@/navigation";
 import { toast } from "sonner";
-import { supabase } from "../lib/supabase";
-import { useTranslations, useLocale } from "next-intl";
-import { LanguageToggle } from "./LanguageToggle";
-import { ThemeToggle } from "./ThemeToggle";
+import { supabase } from "@/lib/supabase";
+import { useLocale, useTranslations } from "next-intl";
 import { logger } from "@/lib/logger";
 
-import { DynamicLogo } from "./DynamicLogo";
-import { DesktopNav } from "./header/DesktopNav";
-import { MobileNav } from "./header/MobileNav";
-import { UserMenu } from "./header/UserMenu";
-import { SecretAccessGate } from "./header/SecretAccessGate";
+import { useAuth } from "@/contexts/AuthContext";
+import { DynamicLogo } from "@/components/DynamicLogo";
+import { MobileNav } from "@/components/header/MobileNav";
+import { SecretAccessGate } from "@/components/header/SecretAccessGate";
+import { SideNav } from "./SideNav";
 
-export const Header = memo(function Header() {
+export const SIDENAV_EXPANDED_KEY = "masarx_sidenav_expanded";
+/** Rail width shared with Layout's content padding via a root CSS variable. */
+const SIDENAV_WIDTH_VAR = "--sidenav-w";
+
+/**
+ * App navigation shell — replaces the old fixed top navbar (Header) with a
+ * collapsible side rail on desktop and a slim logo-only top bar + drawer on
+ * mobile (owner decision 2026-11-05: no burger icon anywhere; the logo
+ * itself toggles). The logo also keeps the 5-click secret access gate.
+ */
+export const AppNav = memo(function AppNav() {
   const tNav = useTranslations("nav");
   const tHeader = useTranslations("header");
   const tMobileNav = useTranslations("mobileNav");
@@ -25,9 +32,9 @@ export const Header = memo(function Header() {
   const { user, profile: authProfile, loading, isAdmin, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [sidenavExpanded, setSidenavExpanded] = useState(false);
 
-  // Visibility Logic (Obfuscated)
+  // Visibility Logic (Obfuscated) — carried over from the old Header.
   const [showAccessInput, setShowAccessInput] = useState(false);
   const [accessKey, setAccessKey] = useState("");
   const [hasSecretAccess, setHasSecretAccess] = useState(false);
@@ -36,7 +43,7 @@ export const Header = memo(function Header() {
   const [attempts, setAttempts] = useState(0);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const logoClickCount = useRef(0);
-  const logoClickTimeout = useRef<NodeJS.Timeout | null>(null);
+  const logoClickTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profile, setProfile] = useState<{
     show_extra_assets?: boolean;
   } | null>(null);
@@ -51,31 +58,35 @@ export const Header = memo(function Header() {
 
   useEffect(() => {
     setIsMounted(true);
+    let saved = false;
+    try {
+      saved = localStorage.getItem(SIDENAV_EXPANDED_KEY) === "1";
+    } catch {
+      // storage unavailable — default collapsed
+    }
+    if (saved) setSidenavExpanded(true);
   }, []);
 
+  // Content push: Layout pads by the same variable the rail animates, so
+  // the two stay in sync without prop drilling (SSR default = collapsed).
   useEffect(() => {
-    if (!isMounted) return;
+    document.documentElement.style.setProperty(
+      SIDENAV_WIDTH_VAR,
+      sidenavExpanded ? "15rem" : "4rem",
+    );
+  }, [sidenavExpanded]);
 
-    // rAF-throttled: without this, every scroll pixel fires setState and
-    // re-renders the whole header tree (incl. the MobileNav portal) while
-    // also toggling a fullscreen backdrop-blur-sm layer — visible jank.
-    let rafId = 0;
-    const update = () => {
-      rafId = 0;
-      const scrolled = window.scrollY > 20;
-      setIsScrolled((prev) => (prev === scrolled ? prev : scrolled));
-    };
-    const onScroll = () => {
-      if (rafId === 0) rafId = window.requestAnimationFrame(update);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (rafId !== 0) window.cancelAnimationFrame(rafId);
-    };
-  }, [isMounted]);
+  const toggleSidenav = () => {
+    setSidenavExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDENAV_EXPANDED_KEY, next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!isMounted) return;
@@ -166,7 +177,17 @@ export const Header = memo(function Header() {
   const isTRWVisible =
     isMounted && (hasSecretAccess || profile?.show_extra_assets === true);
 
-  const handleLogoClick = () => {
+  /**
+   * Shared logo click handler: single click runs the surface's action after
+   * a short debounce (desktop rail = toggle, mobile top bar = open drawer),
+   * five rapid clicks reveal the secret access gate. Mobile skips the
+   * debounce entirely — a 500ms drawer delay reads as a broken button.
+   */
+  const registerLogoClick = (singleClickAction: () => void, immediate = false) => {
+    if (immediate) {
+      singleClickAction();
+      return;
+    }
     logoClickCount.current += 1;
     if (logoClickTimeout.current) clearTimeout(logoClickTimeout.current);
 
@@ -176,7 +197,7 @@ export const Header = memo(function Header() {
     } else {
       logoClickTimeout.current = setTimeout(() => {
         logoClickCount.current = 0;
-        handleNavigate("home");
+        singleClickAction();
       }, 500);
     }
   };
@@ -281,40 +302,30 @@ export const Header = memo(function Header() {
       page: "home",
       label: tNav("home"),
       isActive: () => isMounted && currentPage === "home",
-      activeText: "text-brand-blue",
-      activeUnderline: "bg-brand-blue",
     },
     {
       key: "news",
       page: "news",
       label: tNav("news"),
       isActive: () => isMounted && currentPage === "news",
-      activeText: "text-brand-blue",
-      activeUnderline: "bg-brand-blue",
     },
     {
       key: "subjects",
       page: "subjects",
       label: tNav("subjects"),
       isActive: () => isMounted && currentPage === "subjects",
-      activeText: "text-brand-blue",
-      activeUnderline: "bg-brand-blue",
     },
     {
       key: "materials",
       page: "materials",
       label: tNav("materials"),
       isActive: () => isMounted && currentPage === "materials",
-      activeText: "text-sky-600 dark:text-sky-400",
-      activeUnderline: "bg-sky-600 dark:bg-sky-400",
     },
     {
       key: "schedules",
       page: "schedules",
       label: tNav("schedules"),
       isActive: () => isMounted && currentPage === "schedules",
-      activeText: "text-rose-600 dark:text-rose-400",
-      activeUnderline: "bg-rose-600 dark:bg-rose-400",
     },
     {
       key: "courses",
@@ -323,32 +334,24 @@ export const Header = memo(function Header() {
       isActive: () =>
         isMounted &&
         (currentPage === "courses" || currentPage.startsWith("courses/")),
-      activeText: "text-green-600 dark:text-green-400",
-      activeUnderline: "bg-green-600 dark:bg-green-400",
     },
     {
       key: "quizzes",
       page: "quizzes",
       label: tNav("quizzes"),
       isActive: () => isMounted && currentPage === "quizzes",
-      activeText: "text-purple-600 dark:text-purple-400",
-      activeUnderline: "bg-purple-600 dark:bg-purple-400",
     },
     {
       key: "assistant",
       page: "ai-assistant",
       label: tNav("assistant"),
       isActive: () => isMounted && currentPage === "ai-assistant",
-      activeText: "text-emerald-600 dark:text-emerald-400",
-      activeUnderline: "bg-emerald-600 dark:bg-emerald-400",
     },
     {
       key: "downloads",
       page: "downloads",
       label: tNav("downloads"),
       isActive: () => isMounted && currentPage === "downloads",
-      activeText: "text-orange-600 dark:text-orange-400",
-      activeUnderline: "bg-orange-600 dark:bg-orange-400",
     },
   ] as const;
 
@@ -363,86 +366,53 @@ export const Header = memo(function Header() {
         setShowAccessInput={setShowAccessInput}
       />
 
+      <SideNav
+        isMounted={isMounted}
+        expanded={sidenavExpanded}
+        onLogoActivate={() => registerLogoClick(toggleSidenav)}
+        items={primaryNavItems}
+        trwVisible={isTRWVisible}
+        currentPage={currentPage}
+        loading={loading}
+        user={user}
+        authProfile={authProfile}
+        isAdmin={isAdmin}
+        isAdminLoading={false}
+        onNavigate={handleNavigate}
+        onSignOut={handleSignOut}
+        tNav={tNav}
+        tMobileNav={tMobileNav}
+      />
+
+      {/* Mobile: slim top bar, logo-only (tapping it opens the drawer). */}
       <header
         dir={dir}
-        className={`fixed top-0 inset-x-0 z-header transition-all duration-300 h-[72px] pt-[env(safe-area-inset-top)] ${
-          isScrolled
-            ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs"
-            : "bg-transparent"
-        }`}
+        className="lg:hidden fixed top-0 inset-x-0 z-header flex h-14 items-center border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-md"
       >
-        <div className="max-w-7xl mx-auto h-full px-4 md:px-6 lg:px-8">
-          <div className="flex items-center h-full gap-3 lg:gap-6">
-            <div className="flex shrink-0 items-center justify-start min-w-0">
-              <button
-                onClick={handleLogoClick}
-                className="flex items-center text-white hover:opacity-80 transition-opacity p-1"
-                type="button"
-              >
-                <DynamicLogo
-                  width={116}
-                  height={40}
-                  className="object-contain h-10 sm:h-11 w-auto"
-                  priority
-                />
-              </button>
-            </div>
-
-            <div className="hidden lg:flex flex-1 min-w-0 items-center justify-center">
-              <DesktopNav
-                primaryNavItems={primaryNavItems}
-                handleNavigate={handleNavigate}
-                isTRWVisible={isTRWVisible}
-                currentPage={currentPage}
-              />
-            </div>
-
-            <div className="flex items-center ms-auto shrink-0 gap-2">
-              <div className="hidden lg:flex items-center gap-2 xl:gap-3">
-                <ThemeToggle />
-                <LanguageToggle />
-
-                <UserMenu
-                  isMounted={isMounted}
-                  loading={loading}
-                  user={user}
-                  profile={authProfile}
-                  isAdmin={isAdmin}
-                  isAdminLoading={false}
-                  handleNavigate={handleNavigate}
-                  handleSignOut={handleSignOut}
-                  tNav={tNav}
-                />
-              </div>
-              <button
-                ref={mobileMenuButtonRef}
-                type="button"
-                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-                aria-haspopup="dialog"
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-nav-drawer"
-                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                className={`lg:hidden flex flex-col items-center justify-center w-11 h-11 z-[110] hover:bg-white/10 dark:hover:bg-white/10 transition-[background-color,opacity,visibility] duration-200 focus:outline-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6] ${
-                  isMobileMenuOpen
-                    ? "invisible pointer-events-none opacity-0"
-                    : "visible opacity-100"
-                }`}
-              >
-                <div className="relative flex flex-col items-center justify-center w-[24px] h-[18px]">
-                  <span
-                    className="absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] top-0 rotate-0"
-                  />
-                  <span
-                    className="absolute top-[8px] block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] opacity-100 translate-x-0"
-                  />
-                  <span
-                    className="absolute block w-[24px] h-[2px] bg-slate-900 dark:bg-white rounded-[2px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] bottom-0 rotate-0"
-                  />
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
+        <button
+          ref={mobileMenuButtonRef}
+          type="button"
+          aria-label={
+            isMobileMenuOpen
+              ? tMobileNav("closeMenuAriaLabel")
+              : tMobileNav("openMenuAriaLabel")
+          }
+          aria-haspopup="dialog"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-drawer"
+          onClick={() =>
+            registerLogoClick(() => setIsMobileMenuOpen(true), true)
+          }
+          className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus:outline-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3b82f6]"
+        >
+          <DynamicLogo
+            variant="mark"
+            width={32}
+            height={32}
+            className="object-contain w-8 h-8"
+            priority
+          />
+        </button>
       </header>
 
       <MobileNav
