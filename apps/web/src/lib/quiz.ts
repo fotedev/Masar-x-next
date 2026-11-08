@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Json } from '@/types/database';
+
 
 
 export interface QuizData {
@@ -190,7 +190,9 @@ export class QuizService {
 
             const { data: questions, error: questionsError } = await supabase
                 .from('quiz_questions')
-                .select('*')
+                // Key-less column select (spec 040): the answer key never
+                // reaches the client; grading is server-authoritative.
+                .select('id, quiz_id, question, options, explanation, image_url, order_index')
                 .eq('quiz_id', quizId)
                 .order('order_index');
 
@@ -281,7 +283,15 @@ export class QuizService {
     async finishAttempt(
         attemptId: string,
         timeTakenSeconds?: number
-    ): Promise<{ score: number; totalQuestions: number }> {
+    ): Promise<{
+        score: number;
+        totalQuestions: number;
+        answers: Array<{
+            question_id: string;
+            selected_option: number;
+            is_correct: boolean;
+        }>;
+    }> {
         const { data, error } = await supabase
             .rpc('finish_quiz_attempt', {
                 p_attempt_id: attemptId,
@@ -293,50 +303,18 @@ export class QuizService {
         const result = (data ?? {}) as {
             score?: number;
             total_questions?: number;
+            answers?: Array<{
+                question_id: string;
+                selected_option: number;
+                is_correct: boolean;
+            }>;
         };
 
         return {
             score: result.score ?? 0,
             totalQuestions: result.total_questions ?? 0,
+            answers: result.answers ?? [],
         };
-    }
-
-    // Submit a quiz attempt (Legacy/Fallback)
-    async submitAttempt(
-        quizId: string,
-        userId: string | null,
-        score: number,
-        totalQuestions: number,
-        answers: Json[],
-        startedAt?: string,
-        finishedAt?: string,
-        timeTakenSeconds?: number
-    ) {
-        // ... legacy implementation or redirect to finishAttempt if attemptId is known
-        // For now keeping as is for backward compatibility or non-logged in users if any
-        try {
-            const basePayload = {
-                quiz_id: quizId,
-                user_id: userId,
-                score,
-                total_questions: totalQuestions,
-            };
-
-            const payloadFull = {
-                ...basePayload,
-                answers,
-                started_at: startedAt ?? null,
-                finished_at: finishedAt ?? null,
-                time_taken_seconds:
-                    typeof timeTakenSeconds === 'number' ? timeTakenSeconds : null,
-                status: 'completed'
-            };
-
-            const { error } = await supabase.from('quiz_attempts').insert(payloadFull);
-            if (error) throw error;
-        } catch (error) {
-            throw error;
-        }
     }
 
     // Get user's quiz history

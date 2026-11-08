@@ -15,7 +15,8 @@ type Question = {
   id: string;
   question: string;
   options: string[];
-  correct_answer: number;
+  /** Optional: absent for DB quizzes (spec 040 column grants). */
+  correct_answer?: number;
   explanation?: string;
   image_url?: string;
 };
@@ -157,12 +158,26 @@ export function QuizPlayerQuestion(props: {
               "w-full text-start p-5 rounded-2xl border-2 transition-[colors,box-shadow,transform] duration-300 relative group ";
 
             if (isAnswered) {
-              if (index === currentQuestion.correct_answer) {
+              // Correctness marks only when the key is locally known
+              // (locally-generated quizzes). DB quizzes reveal results on
+              // the results screen from the server's grading (spec 040).
+              const showCorrectness =
+                typeof currentQuestion.correct_answer === "number";
+              if (
+                showCorrectness &&
+                index === currentQuestion.correct_answer
+              ) {
                 optionClass +=
                   "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 shadow-lg shadow-green-500/10";
-              } else if (index === selectedOption) {
+              } else if (
+                showCorrectness &&
+                index === selectedOption
+              ) {
                 optionClass +=
                   "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 shadow-lg shadow-red-500/10";
+              } else if (index === selectedOption) {
+                optionClass +=
+                  "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300";
               } else {
                 optionClass +=
                   "border-gray-100 dark:border-gray-700/50 opacity-40 grayscale-[0.5]";
@@ -201,12 +216,15 @@ export function QuizPlayerQuestion(props: {
                     </span>
                   </div>
                   <div className="flex items-center">
-                    {isAnswered && index === currentQuestion.correct_answer && (
-                      <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center animate-in zoom-in duration-300">
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      </div>
-                    )}
                     {isAnswered &&
+                      typeof currentQuestion.correct_answer === "number" &&
+                      index === currentQuestion.correct_answer && (
+                        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center animate-in zoom-in duration-300">
+                          <CheckCircle className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+                    {isAnswered &&
+                      typeof currentQuestion.correct_answer === "number" &&
                       index === selectedOption &&
                       index !== currentQuestion.correct_answer && (
                         <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center animate-in zoom-in duration-300">
@@ -221,14 +239,10 @@ export function QuizPlayerQuestion(props: {
         </div>
 
         <div className="flex flex-col gap-6 pt-6 border-t border-gray-100 dark:border-gray-700/50">
-          {isAnswered && currentQuestion.explanation && (
-            <div className="animate-in fade-in duration-500 flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-base text-gray-700 dark:text-gray-300 font-medium">
-              <span className="text-lg">💡</span>
-              <div className="flex-1 whitespace-pre-wrap">
-                <LatexRenderer text={currentQuestion.explanation} />
-              </div>
-            </div>
-          )}
+          {/* Mid-quiz explanation removed (spec 040): explanations typically
+              restate the answer, and the key no longer ships to the client.
+              Results are revealed on the results screen from the server's
+              grading. */}
 
           <div className="flex justify-between items-center">
             <button

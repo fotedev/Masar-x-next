@@ -315,7 +315,7 @@ export default function SubjectPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (item.file_url) {
       trackFileDownload({ id: item.id, title: item.title, fileUrl: item.file_url });
-      window.open(item.file_url, "_blank");
+      window.open(item.file_url, "_blank", "noopener,noreferrer");
     }
   }, []);
 

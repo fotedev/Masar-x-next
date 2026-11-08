@@ -117,12 +117,12 @@ describe("NewsSchema", () => {
 });
 
 describe("QuizSchema", () => {
-  it("defaults status to draft", () => {
+  it("defaults status to pending", () => {
     const parsed = QuizSchema.parse({
       id: UUID,
       title: "Cardio quiz",
     });
-    expect(parsed.status).toBe("draft");
+    expect(parsed.status).toBe("pending");
   });
 
   it("rejects a malformed year", () => {

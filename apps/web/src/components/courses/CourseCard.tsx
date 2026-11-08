@@ -73,7 +73,7 @@ export function CourseCard({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => window.open(`/courses/${course.id}`, "_blank")}
+                onClick={() => window.open(`/courses/${course.id}`, "_blank", "noopener,noreferrer")}
               >
                 <Eye className="w-4 h-4" />
               </Button>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 import {
   Card,
   CardContent,
@@ -102,8 +103,9 @@ export default function InstructorDashboard() {
 
         setStats(statsData);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to fetch instructor dashboard stats:", err);
     } finally {
       setLoading(false);
     }

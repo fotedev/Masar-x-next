@@ -20,9 +20,11 @@ export default async function QuizPlayPage({
 
   const [quizResult, questionsResult] = await Promise.all([
     supabase.from("quizzes").select("*").eq("id", quizId).single(),
+    // Key-less column select (spec 040): correct_answer never reaches the
+    // client — grading is server-authoritative via finish_quiz_attempt.
     supabase
       .from("quiz_questions")
-      .select("*")
+      .select("id, quiz_id, question, options, explanation, image_url, order_index")
       .eq("quiz_id", quizId)
       .order("order_index"),
   ]);

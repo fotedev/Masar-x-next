@@ -21,6 +21,9 @@ export default defineConfig({
     // cannot load .ts from a package "exports" entry). String form:
     // regex here matched nothing under vitest 2.1.8. Under vitest 5 the
     // file-path aliases alone proved sufficient (all node suites pass).
+    // next-intl is inlined for the same class of problem in reverse: its
+    // createNavigation entry imports bare `next/navigation`, which node's
+    // ESM resolver cannot locate from inside the hoisted package (win32).
     server: { deps: { inline: ['masarx-shared'] } },
     // Spec 022 routing, migrated for vitest 5: environmentMatchGlobs was
     // removed in vitest 4 and vitest 5 SILENTLY IGNORES the key — the

@@ -78,7 +78,7 @@ async function resolveSubjectAndLecture(
  *
  * Migrated from pg + Drizzle to Supabase JS service-role client.
  */
-export async function addFile(_prevState: any, formData: FormData) {
+export async function addFile(_prevState: unknown, formData: FormData) {
   const { user, error: authError } = await ensureAdmin();
   if (authError) return { success: false, error: authError };
 
@@ -131,7 +131,7 @@ export async function addFile(_prevState: any, formData: FormData) {
 /**
  * Adds a new video to a subject/lecture.
  */
-export async function addVideo(_prevState: any, formData: FormData) {
+export async function addVideo(_prevState: unknown, formData: FormData) {
   const { user, error: authError } = await ensureAdmin();
   if (authError) return { success: false, error: authError };
 

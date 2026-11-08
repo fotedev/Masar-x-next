@@ -30,6 +30,16 @@ export function DocumentReader({ lectureTitle, document, loading }: DocumentRead
   const [loadFailed, setLoadFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cancels the pending watchdog — called on a successful iframe load and
+  // again from the effect cleanup (last write wins either way).
+  const clearWatchdog = useCallback(() => {
+    if (watchdogTimerRef.current) {
+      clearTimeout(watchdogTimerRef.current);
+      watchdogTimerRef.current = null;
+    }
+  }, []);
 
   // Reset failure on document change — retry applies to the next attempt.
   useEffect(() => {
@@ -45,13 +55,13 @@ export function DocumentReader({ lectureTitle, document, loading }: DocumentRead
   useEffect(() => {
     if (!document?.file_url) return;
     const WATCHDOG_MS = 8000;
-    const timer = setTimeout(() => {
+    watchdogTimerRef.current = setTimeout(() => {
       // If the iframe never reported a load event in time, treat it as a
       // load failure so the user can retry / see the error message.
-      setLoadFailed((failed) => failed || true);
+      setLoadFailed(true);
     }, WATCHDOG_MS);
-    return () => clearTimeout(timer);
-  }, [document?.file_url, reloadKey]);
+    return clearWatchdog;
+  }, [document?.file_url, reloadKey, clearWatchdog]);
 
   const handleRetry = useCallback(() => {
     setLoadFailed(false);
@@ -134,6 +144,7 @@ export function DocumentReader({ lectureTitle, document, loading }: DocumentRead
       // explicit states; this is the success body.
       title={document.title || lectureTitle}
       className="h-full w-full border-0 bg-background"
+      onLoad={clearWatchdog}
       onError={() => setLoadFailed(true)}
       // The toolbar / parent already names the lecture; the iframe
       // surfaces document-internal anchors via its own UI.
