@@ -183,6 +183,7 @@ export function QuizPlayerQuestion(props: {
                 onClick={() => onSelectOption(index)}
                 disabled={isAnswered}
                 dir="auto"
+                data-testid="quiz-option-button"
                 className={optionClass}
               >
                 <div className="flex items-center justify-between">
@@ -234,6 +235,7 @@ export function QuizPlayerQuestion(props: {
             <button
               onClick={onPreviousQuestion}
               disabled={currentQuestionIndex === 0}
+              data-testid="quiz-prev"
               className="group flex items-center gap-2 px-6 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors transition-transform active:scale-95"
               type="button"
             >
@@ -245,6 +247,7 @@ export function QuizPlayerQuestion(props: {
               <button
                 onClick={onSubmitAnswer}
                 disabled={selectedOption === null}
+                data-testid="quiz-submit-answer"
                 className="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-[colors,box-shadow,transform] hover:shadow-xl hover:shadow-blue-500/30 active:scale-95"
                 type="button"
               >
@@ -253,6 +256,7 @@ export function QuizPlayerQuestion(props: {
             ) : (
               <button
                 onClick={onNextQuestion}
+                data-testid="quiz-next"
                 className="group flex items-center gap-3 px-10 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-bold hover:bg-black dark:hover:bg-gray-100 transition-[colors,box-shadow,transform] hover:shadow-xl active:scale-95"
                 type="button"
               >

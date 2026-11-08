@@ -210,6 +210,7 @@ export default function SignUpPage() {
               <input
                 id="signup-email"
                 name="email"
+                data-testid="signup-email"
                 type="email"
                 required
                 autoComplete="email"
@@ -233,6 +234,7 @@ export default function SignUpPage() {
               <input
                 id="signup-password"
                 name="password"
+                data-testid="signup-password"
                 type={showPassword ? "text" : "password"}
                 required
                 autoComplete="new-password"
@@ -269,6 +271,7 @@ export default function SignUpPage() {
               <input
                 id="signup-confirm-password"
                 name="confirmPassword"
+                data-testid="signup-confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 required
                 autoComplete="new-password"
@@ -296,6 +299,7 @@ export default function SignUpPage() {
 
           <button
             type="submit"
+            data-testid="signup-submit"
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 bg-brand-blue hover:bg-brand-sky text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
