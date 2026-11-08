@@ -36,11 +36,11 @@ describe('schemas/index.ts — no dead exports', () => {
     // To reach repo root we climb: __tests__ → schemas → types → shared → packages → repo root = 6 levels.
     const repoRoot = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
 
-    // The schemas file itself is always a reference, plus the test file.
+    // The schemas file itself is always a reference, plus this test file.
+    // (The former path built from `__dirname + '/__tests__-guard.test.ts'`
+    // doubled the __tests__ segment, so the allowlist entry never matched.)
     const schemasRel = path.relative(repoRoot, SCHEMAS_FILE).replace(/\\/g, '/');
-    const testRel = path
-      .relative(repoRoot, __dirname + '/__tests__-guard.test.ts')
-      .replace(/\\/g, '/');
+    const testRel = path.relative(repoRoot, __filename).replace(/\\/g, '/');
     const allowedNonConsuming = new Set([schemasRel, testRel]);
 
     for (const symbol of exports) {
