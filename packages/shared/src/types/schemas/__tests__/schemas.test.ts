@@ -125,6 +125,16 @@ describe("QuizSchema", () => {
     expect(parsed.status).toBe("pending");
   });
 
+  it("rejects a status outside the DB check (pending/approved/rejected)", () => {
+    // "draft" was the pre-spec-041 default and contradicted the DB constraint.
+    expect(
+      QuizSchema.safeParse({ id: UUID, title: "Q", status: "draft" }).success,
+    ).toBe(false);
+    expect(
+      QuizSchema.safeParse({ id: UUID, title: "Q", status: "approved" }).success,
+    ).toBe(true);
+  });
+
   it("rejects a malformed year", () => {
     expect(
       QuizSchema.safeParse({ id: UUID, title: "Q", year: "abcd" }).success,
