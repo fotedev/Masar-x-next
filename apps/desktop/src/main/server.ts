@@ -1,8 +1,16 @@
 import path from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { promises as fs } from 'node:fs';
-import { findFreePort, writePortSidecar } from './port.js';
+import { findFreePort, waitForPort, writePortSidecar } from './port.js';
 import { nextServerLog } from './logging.js';
+
+/**
+ * Budget for the spawned Next server to actually listen (spec 041 R13).
+ * Healthy machines bind in <50ms; the old flat 500ms gate declared victory
+ * without ever checking, so a slow start (AV scan, cold disk) surfaced later
+ * as a did-fail-load recovery screen.
+ */
+const SERVER_READY_TIMEOUT_MS = 8_000;
 
 export interface ServerOptions {
   /** Resolved `app.getPath('userData')` value. */
@@ -100,6 +108,10 @@ async function startProductionServer(userDataPath: string): Promise<RunningServe
       PORT: String(port),
       HOSTNAME: '127.0.0.1',
       NODE_ENV: 'production',
+      // Spec 041 R18: marker for apps/web/src/middleware.ts — in desktop
+      // mode the loopback server rejects any non-loopback Host header
+      // (DNS-rebinding defense). Vercel and `next dev` never see it.
+      MASARX_DESKTOP_LOOPBACK: '1',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: webAppDir,
@@ -117,8 +129,10 @@ async function startProductionServer(userDataPath: string): Promise<RunningServe
     nextServerLog.error(chunk.toString().trimEnd());
   });
 
-  // Detect early spawn failures (e.g. wrong Node version, missing
-  // bundled dep) before the caller assumes the port is live.
+  // Detect early spawn failures (e.g. wrong Node version, missing bundled
+  // dep) AND gate success on a real listener (spec 041 R13): the old probe
+  // resolved "healthy" after a flat 500ms without checking the port, so a
+  // slow start sailed through and failed later in the window's loadURL.
   const earlyError = await new Promise<Error | null>((resolve) => {
     const onError = (err: Error) => {
       cleanup();
@@ -134,13 +148,19 @@ async function startProductionServer(userDataPath: string): Promise<RunningServe
     };
     child.once('error', onError);
     child.once('exit', onExit);
-    // Give Next a brief window to bind the port or fail loudly. 500ms is
-    // generous: on a healthy machine the listener is up in <50ms; a
-    // longer wait would just delay the window paint.
-    setTimeout(() => {
-      cleanup();
-      resolve(null);
-    }, 500);
+    void waitForPort(port, SERVER_READY_TIMEOUT_MS)
+      .then(() => {
+        cleanup();
+        resolve(null);
+      })
+      .catch((err: unknown) => {
+        cleanup();
+        resolve(
+          err instanceof Error
+            ? err
+            : new Error('startProductionServer: server port never became ready'),
+        );
+      });
   });
   if (earlyError) throw earlyError;
   if (child.exitCode !== null) {
