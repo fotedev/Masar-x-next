@@ -12,7 +12,8 @@ type Question = {
   id: string;
   question: string;
   options: string[];
-  correct_answer: number;
+  /** Optional: absent for DB quizzes (spec 040 column grants). */
+  correct_answer?: number;
   explanation?: string;
   image_url?: string;
 };
@@ -33,7 +34,19 @@ export function useQuizPlayerRuntime(props: {
   saveFinishAttempt: (
     score: number,
     timeTakenSeconds?: number,
-  ) => Promise<void | { score: number; totalQuestions: number } | null>;
+  ) => Promise<
+    | void
+    | {
+        score: number;
+        totalQuestions: number;
+        answers: Array<{
+          question_id: string;
+          selected_option: number;
+          is_correct: boolean;
+        }>;
+      }
+    | null
+  >;
   trackEvent: (event: string, payload?: Record<string, unknown>) => void;
   onComplete?: (score: number) => void;
 }) {
@@ -202,7 +215,13 @@ export function useQuizPlayerRuntime(props: {
     if (selectedOption === null) return;
     const q = questions[currentQuestionIndex];
 
-    const isCorrect = Number(selectedOption) === Number(q.correct_answer);
+    // The key never reaches the client for DB quizzes (spec 040) — local
+    // correctness is unknown until the server re-grades. Locally-generated
+    // quizzes (quizData) still carry their own key.
+    const isCorrect =
+      q.correct_answer === undefined
+        ? false
+        : Number(selectedOption) === Number(q.correct_answer);
 
     setIsAnswered(true);
     saveAnswer(q.id, selectedOption, isCorrect);
