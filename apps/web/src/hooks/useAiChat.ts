@@ -10,6 +10,7 @@ import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
 import { CHAT_HISTORY_CAP, CHAT_PAGE_SIZE, hasMoreAfterLoad, nextOlderRange } from "@/lib/chat-pagination";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { cannedMessagesFor } from "@/lib/ai/canned-messages";
+import { getPuterStatus } from "@/lib/puter";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { logger } from "@/lib/logger";
 
@@ -237,7 +238,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // ── Puter polling ───────────────────────────────────────────────────────────
   useEffect(() => {
     const check = () => {
-      const status = aiAssistant.getPuterStatus();
+      // Canonical status from lib/puter (spec 041 P1.7 — the assistant kept a
+      // divergent copy that ignored the unavailable-until cooldown).
+      const status = getPuterStatus();
       setIsPuterSignedIn(status.isSignedIn);
     };
     check();
