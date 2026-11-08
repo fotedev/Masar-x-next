@@ -1,12 +1,89 @@
 // @ts-nocheck: Deno runtime types
+/**
+ * GoTrue send_email hook — renders and sends the platform's transactional
+ * emails via Brevo.
+ *
+ * Hardening (review 2026-11-07 P0.2 "open relay": any caller with the public
+ * anon key could trigger arbitrary emails with an attacker-controlled
+ * redirect, and the default branch injected it unencoded into the HTML):
+ *   1. Hook JWT verification — when SEND_EMAIL_HOOK_SECRET is configured
+ *      (the base64 secret from Supabase Auth → Hooks → send_email), the
+ *      `Authorization: Bearer <jwt>` GoTrue supplies must carry a valid
+ *      HS256 signature; anything else is rejected before any processing
+ *      (fail-closed).
+ *   2. Restricted mode — while the secret is not configured, the function
+ *      still refuses unknown email actions, allowlists the redirect origin,
+ *      rate-limits per recipient, and logs a loud warning on every call so
+ *      the gap stays visible. Deploying either way never breaks live email.
+ */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import { createAdminClient } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/net.ts';
 
 const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 const BREVO_SENDER_EMAIL = Deno.env.get('BREVO_SENDER_EMAIL') || 'masarx.eg@gmail.com';
 const BREVO_SENDER_NAME = Deno.env.get('BREVO_SENDER_NAME') || 'مسار X - منصة طلاب';
+
+// GoTrue signs the hook call as `Authorization: Bearer <jwt>` (HS256, key =
+// the base64 hook secret from the Auth dashboard). Empty = restricted mode.
+const SEND_EMAIL_HOOK_SECRET = Deno.env.get('SEND_EMAIL_HOOK_SECRET') ?? '';
+
+const ALLOWED_EMAIL_ACTIONS = new Set([
+  'signup',
+  'recovery',
+  'magiclink',
+  'email_change',
+  'invite',
+]);
+
+const base64ToBytes = (b64: string): Uint8Array => {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+};
+
+/** Verify the GoTrue hook JWT (HS256 over `header.payload`). */
+const verifyHookJwt = async (req: Request): Promise<boolean> => {
+  const header = req.headers.get('authorization') ?? '';
+  const match = /^Bearer (.+)$/.exec(header.trim());
+  if (!match) return false;
+  const parts = match[1].split('.');
+  if (parts.length !== 3) return false;
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      base64ToBytes(SEND_EMAIL_HOOK_SECRET).buffer as ArrayBuffer,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+    const sig = base64ToBytes(parts[2].replace(/-/g, '+').replace(/_/g, '/'));
+    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+    return await crypto.subtle.verify('HMAC', key, sig, data);
+  } catch {
+    return false;
+  }
+};
+
+/** True when `redirect_to` points at a platform-controlled origin. */
+const isAllowedRedirect = (raw: string): boolean => {
+  try {
+    const url = new URL(raw);
+    const allowed = new Set<string>();
+    const frontend = Deno.env.get('FRONTEND_URL');
+    if (frontend) allowed.add(new URL(frontend).origin);
+    allowed.add('https://masarx.vercel.app');
+    allowed.add('http://localhost:3000');
+    allowed.add('http://127.0.0.1:3000');
+    return allowed.has(url.origin);
+  } catch {
+    return false;
+  }
+};
 
 serve(async (req) => {
   // Handle CORS
@@ -22,23 +99,32 @@ serve(async (req) => {
       });
     }
 
+    if (!SEND_EMAIL_HOOK_SECRET) {
+      console.warn(
+        '[auth-hook-email] SEND_EMAIL_HOOK_SECRET not configured — RESTRICTED mode ' +
+        '(signature unverified; set the Auth hook secret and this env var to close the relay fully)'
+      );
+    } else {
+      const signatureOk = await verifyHookJwt(req);
+      if (!signatureOk) {
+        console.warn('[auth-hook-email] rejected: hook JWT verification failed');
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const payload = await req.json();
     const { user, email_data } = payload;
-    const { token, token_hash, redirect_to, email_action_type } = email_data;
+    const { token_hash, redirect_to, email_action_type } = email_data ?? {};
 
-    console.log(`Processing ${email_action_type} email for ${user.email}`);
-
-    // Determine subject and content based on email type
-    let subject = '';
-    let title = '';
-    let bodyText = '';
-    let buttonText = '';
-    let actionUrl = '';
-
-    // Construct the action URL
-    // For signup/recovery, Supabase usually provides a link or we construct it
-    // The hook payload provides token or token_hash
-    // Standard Supabase confirmation link: {{ .SiteURL }}/auth/v1/verify?token={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}
+    if (!user?.email || typeof email_action_type !== 'string' || !ALLOWED_EMAIL_ACTIONS.has(email_action_type)) {
+      return new Response(JSON.stringify({ error: 'Bad request: unknown email action' }), {
+        status: 400,
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     if (!supabaseUrl) {
@@ -49,7 +135,50 @@ serve(async (req) => {
     }
 
     const safeRedirectTo = redirect_to || Deno.env.get('FRONTEND_URL') || 'https://masarx.vercel.app';
+    if (!isAllowedRedirect(safeRedirectTo)) {
+      console.warn('[auth-hook-email] rejected: redirect origin not allowlisted');
+      return new Response(JSON.stringify({ error: 'Bad request: redirect not allowed' }), {
+        status: 400,
+        headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
 
+    // Per-recipient throttle (Brevo quota protection). Fails open on RPC
+    // error — repo convention (F12); the signature check above is the hard
+    // gate when the secret is configured.
+    try {
+      const admin = createAdminClient();
+      const allowed = await checkRateLimit(admin, {
+        identifier: `auth-hook-email:${String(user.email).toLowerCase()}`,
+        endpoint: 'send_email_hook',
+        maxRequests: 10,
+        windowMinutes: 60,
+      });
+      if (allowed === false) {
+        return new Response(JSON.stringify({ error: 'Too many requests' }), {
+          status: 429,
+          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+    } catch (rateError) {
+      console.error(
+        '[auth-hook-email] rate limit check failed:',
+        rateError instanceof Error ? rateError.message : 'unknown'
+      );
+    }
+
+    console.log(`Processing ${email_action_type} email for ${user.email}`);
+
+    // Determine subject and content based on email type
+    let subject = '';
+    let title = '';
+    let bodyText = '';
+    let buttonText = '';
+    let actionUrl = '';
+
+    // Standard Supabase confirmation link: {{ .SiteURL }}/auth/v1/verify?token=…&type=…&redirect_to=…
+    // Every branch encodes its dynamic segments; unknown actions never reach
+    // here (the enum check above removed the old raw-redirect default branch).
     switch (email_action_type) {
       case 'signup':
         subject = 'تفعيل حسابك - مسار X';
@@ -79,12 +208,13 @@ serve(async (req) => {
         buttonText = 'تأكيد التغيير';
         actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=email_change&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
         break;
-      default:
-        subject = 'إشعار من مسار X';
-        title = 'إشعار جديد';
-        bodyText = 'لديك إشعار جديد بخصوص حسابك.';
-        buttonText = 'انقر هنا';
-        actionUrl = safeRedirectTo;
+      case 'invite':
+        subject = 'دعوة إلى مسار X';
+        title = 'أهلاً بك في مسار X';
+        bodyText = 'تمت دعوتك للانضمام إلى المنصة. اضغط على الزر أدناه لتفعيل حسابك.';
+        buttonText = 'قبول الدعوة';
+        actionUrl = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token_hash)}&type=invite&redirect_to=${encodeURIComponent(safeRedirectTo)}`;
+        break;
     }
 
     const htmlContent = `
@@ -184,7 +314,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in auth-hook-email:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
     });

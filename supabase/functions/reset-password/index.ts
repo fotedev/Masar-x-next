@@ -52,36 +52,34 @@ serve(async (req) => {
       // allow on error
     }
 
-    // Verify the token
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
+    // Atomically claim the token: one conditional UPDATE that only succeeds
+    // while the token is still unused and unexpired. Closes the replay
+    // window of the old read → check → update → mark sequence, where two
+    // concurrent requests could both pass the `used_at` check.
+    const nowIso = new Date().toISOString();
+    const { data: claimed, error: claimError } = await supabaseAdmin
       .from("password_reset_tokens")
-      .select("user_id, email, expires_at, used_at")
+      .update({ used_at: nowIso })
       .eq("token_hash", tokenHash)
-      .single();
+      .is("used_at", null)
+      .gt("expires_at", nowIso)
+      .select("user_id, email")
+      .maybeSingle();
 
-    if (tokenError || !tokenData) {
+    if (claimError) {
+      console.error("Failed to claim reset token:", claimError);
       return new Response(
-        JSON.stringify({ error: "Invalid or expired reset token" }),
+        JSON.stringify({ error: "Internal server error" }),
         {
-          status: 400,
+          status: 500,
           headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
 
-    if (tokenData.used_at) {
+    if (!claimed) {
       return new Response(
-        JSON.stringify({ error: "Token has already been used" }),
-        {
-          status: 400,
-          headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    if (new Date(tokenData.expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ error: "Token has expired" }),
+        JSON.stringify({ error: "Invalid, expired, or already-used reset token" }),
         {
           status: 400,
           headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" },
@@ -92,7 +90,7 @@ serve(async (req) => {
     // Find the user by email (avoid listUsers: expensive and abusable)
     let userId: string | null = null;
     if (typeof supabaseAdmin.auth.admin.getUserByEmail === 'function') {
-      const { data: userResult, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(tokenData.email);
+      const { data: userResult, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(claimed.email);
       if (userError) {
         return new Response(
           JSON.stringify({ error: "Failed to find user" }),
@@ -131,16 +129,9 @@ serve(async (req) => {
       );
     }
 
-    // Mark token as used
-    const { error: markError } = await supabaseAdmin
-      .from("password_reset_tokens")
-      .update({ used_at: new Date().toISOString() })
-      .eq("token_hash", tokenHash);
-
-    if (markError) {
-      console.warn("Failed to mark token as used:", markError);
-    }
-
+    // The token was already consumed by the atomic claim above, so a
+    // password-update failure burns it — the user requests a fresh link,
+    // which is the fail-safe direction.
     return new Response(
       JSON.stringify({ success: true, message: "تم تحديث كلمة المرور بنجاح" }),
       {
