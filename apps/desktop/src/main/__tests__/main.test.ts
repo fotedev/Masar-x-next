@@ -60,7 +60,13 @@ const mockBrowserWindowInstance = {
   },
 };
 
-const BrowserWindowMock = vi.fn().mockImplementation(() => mockBrowserWindowInstance);
+// vitest 5: spies are only constructible (`new MockFn()`) when the
+// implementation is a `function`/`class` — arrow impls throw
+// "is not a constructor" (vitest warns about exactly this). The options
+// param keeps mock.calls' tuple non-empty (typed accesses below index it).
+const BrowserWindowMock = vi.fn(function (_options?: Record<string, unknown>) {
+  return mockBrowserWindowInstance;
+});
 (BrowserWindowMock as any).getAllWindows = vi.fn().mockReturnValue([]);
 
 const mockApp = {
@@ -305,7 +311,9 @@ describe('T017 — Electron main process contract', () => {
     // breaks the listen-callback contract. The mocks are designed to be
     // stable across tests; if you need a per-test reset, re-establish the
     // mockImplementation explicitly here.
-    BrowserWindowMock.mockImplementation(() => mockBrowserWindowInstance);
+    BrowserWindowMock.mockImplementation(function () {
+      return mockBrowserWindowInstance;
+    });
     (BrowserWindowMock as any).getAllWindows = vi.fn().mockReturnValue([]);
     NextMock.mockImplementation(() => mockNextHandler);
     // R12 — keep loadURL mock isolated so retry-budget assertions are
