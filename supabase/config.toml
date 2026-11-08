@@ -9,11 +9,15 @@ project_id = "masarx"
 # Major version kept in line with production (PostgreSQL 17.6, 2026-10-31).
 major_version = 17
 
+# Both password-reset functions are dead from every client surface (mobile
+# uses stock GoTrue recovery; review 2026-11-07 D9). JWT verification is ON
+# so they cannot serve as unauthenticated endpoints if ever invoked; if the
+# custom reset flow is revived, this must be revisited in its own design.
 [functions.reset-password]
-verify_jwt = false
+verify_jwt = true
 
 [functions.request-password-reset]
-verify_jwt = false
+verify_jwt = true
 
 # Cloudinary sends notification webhooks without a Supabase JWT. The function
 # authenticates the raw request with Cloudinary's signed headers instead.

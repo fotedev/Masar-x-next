@@ -281,7 +281,9 @@ serve(async (req) => {
         user_id: user.id,
         email,
         token_hash: tokenHash,
-        expires_at: new Date(Date.now() + 86400000).toISOString(),
+        // F9/P0.5: 1-hour validity (was 24h) — a day-long reset window is
+        // an abuse surface; 1h is ample for a reset email round-trip.
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
       };
       
       console.log(`[AUTH] Inserting password reset token for user: ${user.id}`);
