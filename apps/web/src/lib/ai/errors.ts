@@ -109,6 +109,11 @@ export const isPuterTransportError = (error: unknown) => {
 
   if (isPuterModelNotAvailableError(error)) return false;
 
+  // Union of the two former classifiers (lib/ai/errors.ts + lib/puter.ts,
+  // merged 2026-11-08 — spec 041 P1.7): the SDK also surfaces warmup/sign-in
+  // socket failures as 400s and bare disconnects, so they belong in the same
+  // class. `error_400_from_delegate` is already excluded by the
+  // model-availability guard above.
   return (
     msg.includes('socket.io') ||
     msg.includes('engine.io') ||
@@ -121,9 +126,12 @@ export const isPuterTransportError = (error: unknown) => {
     msg.includes('closed before the connection') ||
     msg.includes('failed to fetch') ||
     msg.includes('connection error') ||
+    msg.includes('connection refused') ||
     msg.includes('timeout') ||
     msg.includes('timed out') ||
-    msg.includes('disconnected')
+    msg.includes('400') ||
+    msg.includes('bad request') ||
+    msg.includes('disconnect')
   );
 };
 

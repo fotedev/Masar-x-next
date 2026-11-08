@@ -4,6 +4,9 @@
  * Puter.js initialization and helper functions
  */
 
+import { PUTER_UNAVAILABLE_UNTIL_KEY } from './ai/circuit-breaker';
+import { isPuterTransportError } from './ai/errors';
+
 type PuterClient = {
   auth: {
     isSignedIn: () => boolean;
@@ -31,28 +34,10 @@ let puterImportPromise: Promise<PuterClient> | null = null;
 let puterWarmupPromise: Promise<boolean> | null = null;
 
 const PUTER_SIGNED_IN_KEY = "puter_signed_in";
-const PUTER_UNAVAILABLE_UNTIL_KEY = "puter_unavailable_until";
 
-const isPuterTransportError = (error: unknown) => {
-  const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
-  return (
-    msg.includes('socket.io') ||
-    msg.includes('engine.io') ||
-    msg.includes('websocket') ||
-    msg.includes('polling') ||
-    msg.includes('transport') ||
-    msg.includes('400') ||
-    msg.includes('bad request') ||
-    msg.includes('closed before the connection') ||
-    msg.includes('websocket is closed') ||
-    msg.includes('failed to fetch') ||
-    msg.includes('network error') ||
-    msg.includes('connection refused') ||
-    msg.includes('timeout') ||
-    msg.includes('eio=') ||
-    msg.includes('disconnect')
-  );
-};
+// The unavailable-until cooldown key and the transport-error classifier are
+// shared with lib/ai (circuit-breaker.ts / errors.ts) — single source of truth
+// since spec 041 (P1.7).
 
 export const warmupPuterAuth = async (): Promise<{ isSignedIn: boolean }> => {
   if (typeof window === 'undefined') return { isSignedIn: false };

@@ -115,7 +115,9 @@ jobs:
 
       - name: Run Lighthouse
         id: lhci
-        uses: treosh/lighthouse-ci-action@v12
+        # v12, pinned to the tag's commit (spec 041 R22 — mutable tag pins
+        # are a supply-chain surface; same treatment as the fallow action).
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18
         with:
           urls: |
             http://127.0.0.1:3000/

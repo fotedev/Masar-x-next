@@ -1,26 +1,15 @@
 "use client";
 
 import { Globe } from "lucide-react";
-import { useCallback } from "react";
-import { usePathname, useRouter } from '@/navigation';
 import { useLocale, useTranslations } from "next-intl";
+import { useSwitchLocale } from "@/hooks/useSwitchLocale";
 
 type Locale = "ar" | "en";
 
 export function LanguageToggle() {
   const locale = useLocale() as Locale;
-  const pathname = usePathname();
-  const router = useRouter();
   const t = useTranslations("common");
-
-  const toggle = useCallback(() => {
-    const next: Locale = locale === "ar" ? "en" : "ar";
-    // <html lang/dir> is server-rendered; flip it immediately so the layout
-    // direction follows a soft locale switch without a full reload.
-    document.documentElement.lang = next;
-    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
-    router.replace(pathname, { locale: next });
-  }, [locale, pathname, router]);
+  const toggle = useSwitchLocale();
 
   const nextLabel = locale === "ar" ? "EN" : "AR";
   const ariaLabel = t("changeLanguageAriaLabel");
