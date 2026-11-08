@@ -28,5 +28,10 @@
   "googleDriveLink": "Google Drive link",
   "clickToUpdatePdf": "Click to update the PDF file",
   "pdfLimitNoteShort": "PDF only (up to 10MB)",
-  "driveLinkPublicNote": "Make sure the link is publicly accessible"
+  "driveLinkPublicNote": "Make sure the link is publicly accessible",
+  "cancel": "Cancel",
+  "saving": "Saving...",
+  "invalidLink": "Please enter a valid link",
+  "missingDriveLink": "Please enter a Google Drive link or choose to upload a file",
+  "updateErrorFallback": "An error occurred while updating the summary. Please try again."
 }

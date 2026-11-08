@@ -112,6 +112,7 @@ export default function CourseDetailPage() {
   const router = useRouter();
   const t = useTranslations("courseDetail.page");
   const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const assistantName = tNav("assistant");
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -288,7 +289,10 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteSummary = async (summaryId: string) => {
-    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.summary") }));
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.summary") }), {
+      confirmLabel: tCommon("confirm"),
+      cancelLabel: tCommon("cancel"),
+    });
     if (!confirmed) return;
     try {
       const { error } = await supabase
@@ -304,7 +308,10 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteVideo = async (videoId: string) => {
-    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.video") }));
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.video") }), {
+      confirmLabel: tCommon("confirm"),
+      cancelLabel: tCommon("cancel"),
+    });
     if (!confirmed) return;
     try {
       const { error } = await supabase
@@ -320,7 +327,10 @@ export default function CourseDetailPage() {
   };
 
   const handleDeleteFile = async (fileId: string) => {
-    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.file") }));
+    const confirmed = await confirmToast(t("toasts.confirmDelete", { type: t("deleteTypes.file") }), {
+      confirmLabel: tCommon("confirm"),
+      cancelLabel: tCommon("cancel"),
+    });
     if (!confirmed) return;
     try {
       const { error = null } = await supabase

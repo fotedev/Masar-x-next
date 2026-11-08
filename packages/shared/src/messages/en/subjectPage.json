@@ -177,5 +177,17 @@
     "updateError": "An error occurred while updating the lecture",
   "duplicateLecture": "A lecture with this identifier already exists — edit the existing lecture or use a different title.",
   "loadError": "Could not load the lecture list"
-}
+},
+  "nonAcademic": {
+    "loading": "Loading...",
+    "backToTrw": "Back to TRW",
+    "defaultDescription": "A general skills section with development courses.",
+    "comingSoon": "Coming soon...",
+    "contentPreparing": "Content for this section is being prepared."
+  },
+  "hero": {
+    "professorLabel": "{gender, select, female {Dr.} other {Dr.}}"
+  },
+  "videoLanguageEn": "English",
+  "videoLanguageAr": "عربي"
 }

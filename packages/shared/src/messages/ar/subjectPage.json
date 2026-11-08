@@ -177,5 +177,17 @@
     "updateError": "حدث خطأ أثناء تحديث المحاضرة",
   "duplicateLecture": "محاضرة بهذا المعرّف موجودة بالفعل — عدّل المحاضرة القائمة أو استخدم عنواناً مختلفاً.",
   "loadError": "تعذّر تحميل قائمة المحاضرات"
-}
+},
+  "nonAcademic": {
+    "loading": "جاري التحميل...",
+    "backToTrw": "العودة لـ TRW",
+    "defaultDescription": "قسم مهارات عامة وكورسات تطويرية.",
+    "comingSoon": "قريباً...",
+    "contentPreparing": "جاري تجهيز محتوى هذا القسم."
+  },
+  "hero": {
+    "professorLabel": "{gender, select, female {دكتورة} other {دكتور}}"
+  },
+  "videoLanguageEn": "English",
+  "videoLanguageAr": "عربي"
 }

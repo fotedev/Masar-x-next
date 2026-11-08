@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { useAcademicOptions } from "../hooks/useAcademicOptions";
@@ -18,6 +19,7 @@ export function useEditSummary({
   onClose,
   onSave,
 }: UseEditSummaryProps) {
+  const t = useTranslations("editSummary");
   const { user } = useAuth();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
@@ -99,12 +101,12 @@ export function useEditSummary({
         try {
           new URL(driveLink.trim());
         } catch {
-          setError("يرجى إدخال رابط صحيح");
+          setError(t("invalidLink"));
           setLoading(false);
           return;
         }
       } else if (attachmentType === "link" && !driveLink.trim()) {
-        setError("يرجى إدخال رابط Google Drive أو اختر رفع ملف");
+        setError(t("missingDriveLink"));
         setLoading(false);
         return;
       }
@@ -142,7 +144,7 @@ export function useEditSummary({
 
       onClose();
     } catch {
-      setError("حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى.");
+      setError(t("updateErrorFallback"));
     } finally {
       setLoading(false);
     }

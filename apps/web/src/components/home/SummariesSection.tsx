@@ -145,7 +145,7 @@ export function SummariesSection({
                     {summary.title}
                     {summary.isOptimistic && (
                       <span className="block text-[10px] mt-1 font-medium animate-pulse">
-                        جاري الرفع...
+                        {tHome("uploading")}
                       </span>
                     )}
                   </h3>

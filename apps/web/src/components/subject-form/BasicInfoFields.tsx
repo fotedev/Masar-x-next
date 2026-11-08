@@ -28,7 +28,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
           htmlFor="subject-name"
           className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          اسم المادة
+          {t("nameLabel")}
         </label>
         <input
           id="subject-name"
@@ -42,7 +42,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
             )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-hidden"
-          placeholder="مثال: رياضيات 2"
+          placeholder={t("namePlaceholder")}
         />
       </div>
 
@@ -51,7 +51,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
           htmlFor="subject-professor"
           className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          اسم المحاضر
+          {t("professorLabel")}
         </label>
         <input
           id="subject-professor"
@@ -64,7 +64,7 @@ export function BasicInfoFields<TFormData extends BasicInfoShape>({
             )
           }
           className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 transition-[border-color,box-shadow,background-color] outline-hidden"
-          placeholder="مثال: د. أحمد"
+          placeholder={t("professorPlaceholder")}
         />
       </div>
 

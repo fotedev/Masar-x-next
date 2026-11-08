@@ -18,5 +18,6 @@
   "selectLectureFirst": "Please select a lecture first",
   "adminOnly": "This page is only available to administrators",
   "lectureNotFound": "Lecture \"{lectureKey}\" not found in subject \"{subject}\"",
-  "lectureMismatch": "This lecture does not belong to the selected subject"
+  "lectureMismatch": "This lecture does not belong to the selected subject",
+  "loading": "Loading..."
 }

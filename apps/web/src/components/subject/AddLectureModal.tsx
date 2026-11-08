@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type LectureFormData = {
   title: string;
@@ -41,6 +42,7 @@ export function AddLectureModal(props: {
     showMergeWarning,
     setShowMergeWarning,
   } = props;
+  const tSubjects = useTranslations("subjects");
 
   return (
     <AnimatePresence>
@@ -149,11 +151,11 @@ export function AddLectureModal(props: {
                       <div>
                         <p className="text-sm font-bold text-amber-900 dark:text-amber-100">
                           {tSubjectPage("lectureForm.mergeWarningTitle") ||
-                            "محاضرة موجودة بالفعل"}
+                            tSubjects("addLectureModal.mergeWarningTitle")}
                         </p>
                         <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                           {tSubjectPage("lectureForm.mergeWarningDesc") ||
-                            "هذا العنوان سيقوم بتحديث المحاضرة الموجودة حالياً. هل أنت متأكد؟"}
+                            tSubjects("addLectureModal.mergeWarningDesc")}
                         </p>
                       </div>
                     </div>
@@ -163,13 +165,14 @@ export function AddLectureModal(props: {
                         className="flex-1 py-2 rounded-xl bg-amber-600 text-white text-sm font-bold hover:bg-amber-700 transition-colors"
                       >
                         {tSubjectPage("lectureForm.confirmMerge") ||
-                          "نعم، تحديث"}
+                          tSubjects("addLectureModal.confirmMerge")}
                       </button>
                       <button
                         onClick={() => setShowMergeWarning(false)}
                         className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                       >
-                        {tSubjectPage("lectureForm.cancelMerge") || "تراجع"}
+                        {tSubjectPage("lectureForm.cancelMerge") ||
+                          tSubjects("addLectureModal.cancelMerge")}
                       </button>
                     </div>
                   </div>

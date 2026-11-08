@@ -7,6 +7,7 @@ import {
   GraduationCap,
   BookOpen as BookOpenIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Subject } from "../../types/database";
 import { SUBJECT_ICONS } from "../../constants/subjects";
 
@@ -27,6 +28,7 @@ export function SubjectCard({
   onManageLectures,
   onUpdateStatus,
 }: SubjectCardProps) {
+  const tAdmin = useTranslations("adminDashboard");
   const IconComponent = SUBJECT_ICONS[subject.name] || BookOpenIcon;
 
   return (
@@ -47,7 +49,7 @@ export function SubjectCard({
           <button
             onClick={() => onEdit(subject)}
             className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg transition-colors"
-            aria-label="تعديل"
+            aria-label={tAdmin("subjectCard.edit")}
             type="button"
           >
             <Edit className="w-4 h-4" />
@@ -55,7 +57,7 @@ export function SubjectCard({
           <button
             onClick={() => onDelete(subject.id)}
             className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 rounded-lg transition-colors"
-            aria-label="حذف"
+            aria-label={tAdmin("subjectCard.delete")}
             type="button"
           >
             <Trash2 className="w-4 h-4" />
@@ -78,7 +80,11 @@ export function SubjectCard({
             ? t("professorLabelFemale")
             : t("professorLabelMale");
 
-          const finalLabel = label.startsWith("subjectsTab.") ? (subject.professor_gender === "female" ? "دكتورة" : "دكتور") : label;
+          const finalLabel = label.startsWith("subjectsTab.")
+            ? tAdmin("subjectCard.professorLabel", {
+                gender: subject.professor_gender === "female" ? "female" : "male",
+              })
+            : label;
 
           return `${finalLabel} ${profName}`;
         })()}
