@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { logger } from "../lib/logger";
 
 type Quiz = {
   id: string;
@@ -105,8 +106,9 @@ export function useQuizPlayerRuntime(props: {
 
       try {
         await saveFinishAttempt(currentScore, takenSeconds);
-      } catch {
-        // ignore
+      } catch (err) {
+        // surfaced via logger until an i18n key exists
+        logger.error("Failed to finish quiz attempt:", err);
       }
 
       trackEvent("quiz_completed", {

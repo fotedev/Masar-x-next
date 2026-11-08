@@ -77,7 +77,8 @@ export const QuizSchema = z.object({
   subject: z.string().nullable().optional(),
   department: z.string().nullable().optional(),
   year: z.string().regex(/^\d{4}$/).nullable().optional(),
-  status: z.string().default("draft"),
+  // Mirrors the quizzes_status_check constraint (pending/approved/rejected).
+  status: z.enum(["pending", "approved", "rejected"]).default("pending"),
   created_at: dateSchema.optional().nullable(),
 });
 
@@ -101,7 +102,10 @@ export const WaitlistSignupSchema = z.object({
 // Shape of the static timetable JSONs at apps/web/src/lib/schedules/ (extracted
 // from the public group Google Sheets via the sandbox gviz pipeline).
 
-export const ScheduleSheetSchema = z.object({
+// Module-private: consumed only by ScheduleSetSchema below — no external
+// importers, so the dead-export guard (unused-exports-guard.test.ts) wants
+// the `export` keyword off.
+const ScheduleSheetSchema = z.object({
   id: z.string().min(1),
   docId: z.string().min(10),
   /** Tab name in the source spreadsheet (e.g. "الفرقة الثانية"). */
@@ -125,7 +129,8 @@ export type ScheduleSet = z.infer<typeof ScheduleSetSchema>;
 // Shape of the static manifest at apps/web/src/lib/materials/manifest.json
 // (sync-maintained by the drive-materials sandbox tooling; 84 files, term-tagged).
 
-export const DriveFileSchema = z.object({
+// Module-private: consumed only by DriveGroupSchema below.
+const DriveFileSchema = z.object({
   name: z.string().min(1),
   fileId: z.string().min(10),
   type: z.string(),
@@ -143,7 +148,8 @@ export type DriveGroup = {
   children?: DriveGroup[];
 };
 
-export const DriveGroupSchema: z.ZodType<DriveGroup> = z.object({
+// Module-private: consumed only by DriveSubjectSchema's recursive nesting.
+const DriveGroupSchema: z.ZodType<DriveGroup> = z.object({
   name: z.string(),
   nameAr: z.string(),
   folderId: z.string(),
@@ -151,7 +157,8 @@ export const DriveGroupSchema: z.ZodType<DriveGroup> = z.object({
   children: z.array(z.lazy(() => DriveGroupSchema)).optional(),
 });
 
-export const DriveSubjectSchema = z.object({
+// Module-private: consumed only by DriveManifestSchema below.
+const DriveSubjectSchema = z.object({
   slug: z.string().min(1),
   name: z.string().min(1),
   nameAr: z.string().min(1),
@@ -165,7 +172,8 @@ export const DriveSubjectSchema = z.object({
 });
 export type DriveSubject = z.infer<typeof DriveSubjectSchema>;
 
-export const DriveManifestSourceSchema = z.object({
+// Module-private: consumed only by DriveManifestSchema below.
+const DriveManifestSourceSchema = z.object({
   name: z.string(),
   folderId: z.string(),
   url: z.string(),

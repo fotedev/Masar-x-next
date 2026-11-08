@@ -2,6 +2,7 @@ import { BookOpen } from "lucide-react";
 import { SUBJECT_ICONS } from "../constants/subjects";
 import { useSubjects, type Subject } from "../hooks/useSubjects";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/navigation";
 import { Skeleton } from "./ui/Skeleton";
 
 import { motion, useReducedMotion } from "framer-motion";
@@ -28,6 +29,7 @@ export function SubjectsGrid({
   subjects: subjectsProp,
 }: SubjectsGridProps) {
   const locale = useLocale();
+  const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const tSubjects = useTranslations("subjects");
   const { subjects: scopedSubjects, loading } = useSubjects();
@@ -137,7 +139,7 @@ export function SubjectsGrid({
             {tSubjects("emptyAcademicDescription")}
           </p>
           <button
-            onClick={() => (window.location.href = `/${locale}/ai-assistant`)}
+            onClick={() => router.push("/ai-assistant")}
             className="px-6 py-3 bg-linear-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all duration-300"
           >
             {tSubjects("studyWithZainCta")}

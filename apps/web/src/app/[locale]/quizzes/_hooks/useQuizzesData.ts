@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheTTL } from "@/lib/queryCache";
+import { logger } from "@/lib/logger";
 import type { Quiz, Summary } from "@/types/database";
 import type { QuizFormData } from "../_types";
 
@@ -42,8 +43,9 @@ export function useQuizzesData(props: {
         const dataRows = data || [];
         setQuizzes(dataRows);
         queryCache.set(cacheKey, dataRows, cacheTTL.quizzes || 1800000);
-      } catch {
-        // ignore
+      } catch (err) {
+        // surfaced via logger until an i18n key exists
+        logger.error("Failed to load quizzes:", err);
       } finally {
         setLoading(false);
       }
@@ -67,8 +69,9 @@ export function useQuizzesData(props: {
 
       if (error) throw error;
       setSummaries(data || []);
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to load summaries:", err);
     }
   }, [summarySubject, summaryDepartment]);
 

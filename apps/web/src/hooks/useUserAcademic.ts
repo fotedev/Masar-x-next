@@ -126,6 +126,9 @@ export function useUserAcademic() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      // Reset so the NEXT identity on this tab re-initializes (review
+      // 2026-11-07 D4: the ref previously latched across user switches).
+      hasInitialized.current = false;
       setAcademic(DEFAULT_ACADEMIC);
       setLoading(false);
       return;

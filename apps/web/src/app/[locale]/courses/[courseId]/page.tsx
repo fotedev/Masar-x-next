@@ -458,7 +458,7 @@ export default function CourseDetailPage() {
           const { data } = supabase.storage
             .from("course-materials")
             .getPublicUrl(fileUrl);
-          window.open(data.publicUrl, "_blank");
+          window.open(data.publicUrl, "_blank", "noopener,noreferrer");
         }}
       />
 
