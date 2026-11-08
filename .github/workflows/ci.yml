@@ -542,3 +542,35 @@ jobs:
 
       - name: Lint all workflow files
         run: actionlint -color
+
+  # ---------------------------------------------------------------------
+  # Dependency audit (spec 041 R22): the 2026-11-07 review found zero
+  # dependency-audit coverage in any of the 4 workflows. REPORT-ONLY for
+  # now, mirroring the fallow precedent: the first run measured 59
+  # production-dependency advisories (35 high / 1 critical — @xmldom/xmldom
+  # 15, tar 12, node-forge 12, postcss 4, rest singletons), so gating on
+  # severity would redden every PR before a single one is fixed. Flip
+  # continue-on-error off and keep --audit-level=high once the debt is
+  # burned down (owner ratification; the per-package table in the run log
+  # is the burn-down checklist).
+  # ---------------------------------------------------------------------
+  deps-audit:
+    name: deps-audit (report-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      # Reads the lockfile only — no install needed.
+      - name: Audit production dependencies (report-only)
+        run: pnpm audit --prod --audit-level=low

@@ -50,7 +50,9 @@ jobs:
           fetch-depth: 0
 
       - name: Fallow audit
-        uses: fallow-rs/fallow@v3
+        # v3, pinned to the tag's commit (spec 041 R22 — mutable tag pins are
+        # a supply-chain surface; same treatment as lighthouse-ci-action).
+        uses: fallow-rs/fallow@34269241152fa2e7e6a9de1aba698dcae93035b3
         with:
           command: audit
           fail-on-issues: false
