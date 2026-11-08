@@ -215,7 +215,7 @@ export function CourseContent({
                         size="sm"
                         variant="link"
                         className="p-0 h-auto text-blue-600"
-                        onClick={() => window.open(v.video_url, "_blank")}
+                        onClick={() => window.open(v.video_url, "_blank", "noopener,noreferrer")}
                       >
                         {t("content.watchNow")}
                       </Button>

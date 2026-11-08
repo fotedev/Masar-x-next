@@ -115,6 +115,26 @@ function NewsClient({
     return categoryConfig?.color || "blue";
   };
 
+  // Literal class strings per color — Tailwind cannot see interpolated
+  // `bg-${color}-…` classes at build time, so dynamically-built class names
+  // rendered unstyled (review 2026-11-07 D1).
+  const CATEGORY_CHIP_CLASSES: Record<string, string> = {
+    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300",
+    orange:
+      "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300",
+    green:
+      "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
+    red: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
+  };
+  const CATEGORY_FILTER_CLASSES: Record<string, string> = {
+    blue: "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800",
+    orange:
+      "bg-orange-50 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800",
+    green:
+      "bg-green-50 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800",
+    red: "bg-red-50 dark:bg-red-900/50 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800",
+  };
+
   const handleAddNewsItem = async (
     newsData: Database["public"]["Tables"]["news"]["Insert"],
     fileUrl: string | null,
@@ -160,8 +180,10 @@ function NewsClient({
 
         setShowAddNews(false);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      // useNews.addNews already logs + toasts (news.addError); log here so
+      // the component layer is not a silent swallow.
+      logger.error("Failed to add news item:", err);
     }
   };
 
@@ -246,7 +268,8 @@ function NewsClient({
                 selectedCategory === category.id
                   ? category.id === "announcement"
                     ? "bg-brand-orange/10 dark:bg-brand-orange/20 text-brand-orange dark:text-brand-orange border border-brand-orange/20 dark:border-brand-orange/30"
-                    : `bg-${category.color}-50 dark:bg-${category.color}-900/50 text-${category.color}-700 dark:text-${category.color}-300 border border-${category.color}-200 dark:border-${category.color}-800`
+                    : CATEGORY_FILTER_CLASSES[category.color] ??
+                      CATEGORY_FILTER_CLASSES.blue
                   : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
               }`}
             >
@@ -283,13 +306,10 @@ function NewsClient({
             <div key={item.id} className="modern-card p-6">
               {/* Category Badge */}
               <div
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-4 bg-${getCategoryColor(
-                  item.type,
-                )}-100 dark:bg-${getCategoryColor(
-                  item.type,
-                )}-900/30 text-${getCategoryColor(
-                  item.type,
-                )}-800 dark:text-${getCategoryColor(item.type)}-300`}
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium mb-4 ${
+                  CATEGORY_CHIP_CLASSES[getCategoryColor(item.type)] ??
+                  CATEGORY_CHIP_CLASSES.blue
+                }`}
               >
                 {(() => {
                   const category = categories.find(
@@ -480,7 +500,7 @@ function NewsClient({
 
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
             <button
-              onClick={() => window.open(selectedImage, "_blank")}
+              onClick={() => window.open(selectedImage, "_blank", "noopener,noreferrer")}
               className="flex items-center gap-2 px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors text-sm font-medium border border-white/10 backdrop-blur-md"
             >
               <Download className="w-4 h-4" />

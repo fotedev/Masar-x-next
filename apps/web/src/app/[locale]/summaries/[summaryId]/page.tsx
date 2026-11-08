@@ -343,14 +343,14 @@ export default function SummaryDetailPage() {
                         fill
                         sizes="(max-width: 640px) 100vw, 50vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
-                        onClick={() => window.open(imageUrl, "_blank")}
+                        onClick={() => window.open(imageUrl, "_blank", "noopener,noreferrer")}
                         unoptimized
                       />
                       <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button
                           onClick={(e: MouseEvent<HTMLButtonElement>) => {
                             e.stopPropagation();
-                            window.open(imageUrl, "_blank");
+                            window.open(imageUrl, "_blank", "noopener,noreferrer");
                           }}
                           className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl border border-white/20 text-sm font-bold hover:bg-white/30 transition-colors cursor-pointer"
                         >

@@ -38,6 +38,9 @@ export function NewsMediaUploads({
     });
   }, [imageFiles]);
 
+  // Revoke URLs for images the user removed. The revoke-all must NOT run
+  // here — this effect re-runs on every imageFiles change, and revoking all
+  // URLs in its cleanup broke the previews that were still on screen.
   useEffect(() => {
     const currentKeys = new Set(
       imageFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
@@ -49,14 +52,17 @@ export function NewsMediaUploads({
         objectUrlMapRef.current.delete(key);
       }
     }
+  }, [imageFiles]);
 
+  // Revoke everything once, when the component unmounts.
+  useEffect(() => {
     return () => {
       for (const url of objectUrlMapRef.current.values()) {
         URL.revokeObjectURL(url);
       }
       objectUrlMapRef.current.clear();
     };
-  }, [imageFiles]);
+  }, []);
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));

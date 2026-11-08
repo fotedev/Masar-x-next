@@ -103,8 +103,11 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
                 
                 setAnswers(answersMap);
 
-            } catch {
-                // ignore
+            } catch (err) {
+                logger.error('Failed to initialize quiz attempt:', err);
+                // Non-blocking: the player continues offline and answers
+                // stay in sessionStorage (banner renders the reason).
+                setError(err instanceof Error ? err.message : null);
             } finally {
                 setLoading(false);
             }
