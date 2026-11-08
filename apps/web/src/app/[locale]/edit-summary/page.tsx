@@ -58,6 +58,15 @@ function EditSummaryContent() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadStage, setUploadStage] = useState<string | null>(null);
 
+  // Stable Cloudinary stage keys -> translated labels. The lib emits keys,
+  // not display copy; unknown values (e.g. the display string pre-set via
+  // t("uploadingPdf") before the upload starts) fall through unchanged.
+  const stageLabels: Record<string, string> = {
+    converting: commonT("uploadStages.converting"),
+    uploading: commonT("uploadStages.uploading"),
+    uploaded: commonT("uploadStages.uploaded"),
+  };
+
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
     return getDepartmentsForLevelName(formData.year);
@@ -406,7 +415,11 @@ function EditSummaryContent() {
             {uploadProgress !== null && (
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  <span>{uploadStage || t("uploadingPdf")}</span>
+                  <span>
+                    {uploadStage
+                      ? (stageLabels[uploadStage] ?? uploadStage)
+                      : t("uploadingPdf")}
+                  </span>
                   <span>{Math.round(uploadProgress)}%</span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

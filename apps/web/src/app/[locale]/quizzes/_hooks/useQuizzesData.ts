@@ -132,6 +132,9 @@ export function useQuizzesData(props: {
         const questionsToInsert = formData.questions.map((q, index) => ({
           quiz_id: editingQuiz.id,
           question: q.question,
+          // Stored quiz content (Arabic true-false options written to
+          // quiz_questions.options) — data, not UI copy; players select by
+          // index. Do not "i18n" this (review 2026-11-07 d13).
           options: q.type === "true-false" ? ["صح", "خطأ"] : q.options,
           correct_answer: q.correctAnswer,
           explanation: q.explanation,
@@ -239,6 +242,8 @@ export function useQuizzesData(props: {
       summaryId: quiz.summary_id || "",
       questions: (questions || []).map(
         (q: NonNullable<typeof questions>[number]) => {
+          // Content-shape detection against STORED options — data literal,
+          // not UI copy (see the insert site above).
           const isTrueFalse =
             Array.isArray(q.options) &&
             q.options.length === 2 &&

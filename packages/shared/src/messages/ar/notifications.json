@@ -24,6 +24,7 @@
   "promptBody": "احصل على إشعارات عندما تكون هناك ملخصات أو أخبار جديدة",
   "promptAllow": "تفعيل",
   "promptLater": "لاحقاً",
+  "defaultBody": "إشعار جديد من Masar X",
   "timeAgo": {
     "now": "الآن",
     "minutesAgo": "منذ {count} دقيقة",

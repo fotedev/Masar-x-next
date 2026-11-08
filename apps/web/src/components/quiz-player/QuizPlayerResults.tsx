@@ -176,12 +176,12 @@ export function QuizPlayerResults(props: {
             {isSubmittingForReview ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                جاري الإرسال
+                {t("submittingForReview")}
               </>
             ) : (
               <>
                 <UploadCloud className="w-5 h-5" />
-                إرسال للمراجعة
+                {t("submitForReview")}
               </>
             )}
           </button>

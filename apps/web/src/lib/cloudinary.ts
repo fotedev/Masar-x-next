@@ -10,8 +10,16 @@ interface CloudinaryUploadOptions {
   folder?: string
   resourceType?: 'image' | 'video' | 'raw' | 'auto'
   skipProfileUpdate?: boolean
-  onProgress?: (progress: number, stage: string) => void
+  /**
+   * Progress callback. `stage` is a STABLE KEY, not display copy (spec 041
+   * i18n batch): the lib is not React-rendered so it cannot translate —
+   * callers map the key through `common.uploadStages.*`.
+   */
+  onProgress?: (progress: number, stage: CloudinaryUploadStage) => void
 }
+
+/** Stable progress-stage keys emitted to onProgress (callers translate). */
+export type CloudinaryUploadStage = 'converting' | 'uploading' | 'uploaded'
 
 interface CloudinaryUploadResult {
   success: boolean
@@ -47,15 +55,15 @@ export const uploadToCloudinary = async (
   const { onProgress } = options
 
   // Update progress: Starting conversion
-  onProgress?.(0, 'تحويل الملف...')
+  onProgress?.(0, 'converting')
 
   // Convert file to base64 with progress tracking
   const base64 = await fileToBase64(file, (progress) => {
-    onProgress?.(progress * 0.3, 'تحويل الملف...') // 30% of total progress for conversion
+    onProgress?.(progress * 0.3, 'converting') // 30% of total progress for conversion
   })
 
   // Update progress: Conversion complete, starting upload
-  onProgress?.(30, 'جاري رفع الملف...')
+  onProgress?.(30, 'uploading')
 
   // Get current session - make it optional for guest uploads
   const { data: { session } } = await supabase.auth.getSession()
@@ -91,13 +99,13 @@ export const uploadToCloudinary = async (
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable) {
-        onProgress?.(50, 'جاري رفع الملف...')
+        onProgress?.(50, 'uploading')
         return
       }
 
       const rawPct = (event.loaded / event.total) * 100
       const overallPct = 30 + (rawPct * 0.7)
-      onProgress?.(Math.min(99, overallPct), 'جاري رفع الملف...')
+      onProgress?.(Math.min(99, overallPct), 'uploading')
     }
 
     xhr.onload = () => {
@@ -166,7 +174,7 @@ export const uploadToCloudinary = async (
   }
 
   // Update progress: Complete
-  onProgress?.(100, 'تم الرفع بنجاح')
+  onProgress?.(100, 'uploaded')
 
   return data
 }

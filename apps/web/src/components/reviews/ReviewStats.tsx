@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import { Star } from "lucide-react";
 import { StarDisplay } from "./StarRating";
 
@@ -14,6 +15,8 @@ interface ReviewStatsProps {
 }
 
 export function ReviewStats({ stats }: ReviewStatsProps) {
+  const t = useTranslations("reviews");
+
   return (
     <div className="modern-card p-6 mb-10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs border border-slate-200 dark:border-slate-800 rounded-3xl">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
@@ -29,7 +32,7 @@ export function ReviewStats({ stats }: ReviewStatsProps) {
             />
           </div>
           <div className="text-sm font-bold text-slate-500 dark:text-slate-400">
-            بناءً على {stats.total} تقييم
+            {t("basedOn", { count: stats.total })}
           </div>
         </div>
 

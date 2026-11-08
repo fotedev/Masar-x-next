@@ -3,5 +3,7 @@
   "subtitle": "We apologize for this error. Please try again or return to the home page.",
   "retry": "Retry",
   "home": "Home Page",
-  "reload": "Or reload the page"
+  "reload": "Or reload the page",
+  "aiTitle": "Sorry — the Zane AI assistant hit an error",
+  "aiSubtitle": "It looks like a temporary technical issue. You can restart the conversation."
 }

@@ -2,18 +2,21 @@ import { toast } from "sonner";
 
 type ConfirmToastOptions = {
   description?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
+  /** Required since spec 041 (i18n batch): this lib is not React-rendered,
+   * so it cannot translate — callers pass `t("confirm")` / `t("cancel")`
+   * (keys in the `common` namespace). */
+  confirmLabel: string;
+  cancelLabel: string;
 };
 
 export function confirmToast(
   message: string,
-  options: ConfirmToastOptions = {},
+  options: ConfirmToastOptions,
 ): Promise<boolean> {
   const {
     description,
-    confirmLabel = "تأكيد",
-    cancelLabel = "إلغاء",
+    confirmLabel,
+    cancelLabel,
   } = options;
 
   const isDanger =

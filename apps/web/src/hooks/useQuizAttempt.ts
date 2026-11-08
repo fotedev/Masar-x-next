@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { quizService } from '../lib/quiz';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
@@ -42,6 +43,7 @@ interface QuizHistoryEntry {
 }
 
 export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, localOnly = false }: UseQuizAttemptProps) {
+    const t = useTranslations('quizzes');
     const { loading: authLoading } = useAuth();
     const [attemptId, setAttemptId] = useState<string | null>(null);
     const [answers, setAnswers] = useState<Record<string, Answer>>({}); // Map questionId -> Answer
@@ -146,12 +148,12 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
             await quizService.saveAnswer(attemptId, questionId, selectedOption, isCorrect);
         } catch (err) {
             logger.error('Failed to save answer to DB:', err);
-            setError(err instanceof Error ? err.message : 'فشل حفظ الإجابة في السحابة. سيتم الاحتفاظ بها محلياً.');
+            setError(err instanceof Error ? err.message : t('saveAnswerCloudError'));
             throw err;
         } finally {
             setSaving(false);
         }
-    }, [attemptId, userId, quizId, localOnly]);
+    }, [attemptId, userId, quizId, localOnly, t]);
 
     // Finish attempt
     const finishAttempt = useCallback(async (score: number, timeTakenSeconds?: number) => {
@@ -172,7 +174,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
             time_taken_seconds: timeTakenSeconds,
             status: 'completed',
             is_local: !attemptId,
-            quizzes: { title: quizTitle || 'امتحان' } // Mock the relation for history page
+            quizzes: { title: quizTitle || t('defaultExamTitle') } // Mock the relation for history page
         };
 
         // Always save to session history first (T029: migrated from localStorage for PII protection)
@@ -230,7 +232,7 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
             }
         }
         return null;
-    }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle, localOnly]);
+    }, [attemptId, answers, totalQuestions, quizId, userId, startTime, quizTitle, localOnly, t]);
 
     return {
         attemptId,

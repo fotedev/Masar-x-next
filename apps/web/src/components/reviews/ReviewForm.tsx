@@ -1,5 +1,6 @@
 import { type FormEvent } from "react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Send } from "lucide-react";
 import { StarRatingInput } from "./StarRating";
 
@@ -10,6 +11,7 @@ interface ReviewFormProps {
 }
 
 export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
+  const t = useTranslations("reviews");
   const [newReview, setNewReview] = useState("");
   const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +36,7 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
     return (
       <div className="bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center mb-10">
         <p className="text-slate-600 dark:text-slate-400 font-medium">
-          يجب عليك تسجيل الدخول لتتمكن من إضافة مراجعة
+          {t("loginRequired")}
         </p>
       </div>
     );
@@ -46,14 +48,14 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
       className="mb-12 modern-card p-6 bg-brand-blue/5 dark:bg-brand-blue/10 border-brand-blue/10 rounded-3xl"
     >
       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-        أضف مراجعتك
+        {t("addYourReview")}
       </h3>
       <StarRatingInput rating={rating} setRating={setRating} />
       <div className="relative">
         <textarea
           value={newReview}
           onChange={(e) => setNewReview(e.target.value)}
-          placeholder="شاركنا رأيك..."
+          placeholder={t("placeholder")}
           className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 pr-12 focus-visible:ring-2 focus-visible:ring-brand-blue/20 focus-visible:border-brand-blue transition-[border-color,box-shadow] outline-hidden resize-none min-h-[120px] text-slate-900 dark:text-white"
         />
         <button
@@ -65,7 +67,7 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <span>نشر المراجعة</span>
+              <span>{t("submit")}</span>
               <Send className="w-4 h-4" />
             </>
           )}
@@ -77,7 +79,7 @@ export function ReviewForm({ onSubmit, user, onCancel }: ReviewFormProps) {
             disabled={submitting}
             className="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl hover:bg-slate-200 transition-[background-color,transform] font-bold"
           >
-            إلغاء
+            {t("cancel")}
           </button>
         )}
       </div>

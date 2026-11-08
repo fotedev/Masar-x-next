@@ -35,7 +35,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
             htmlFor="academic-level"
             className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
           >
-            المستوى
+            {t("levelLabel")}
           </label>
           <select
             id="academic-level"
@@ -81,7 +81,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
             htmlFor="academic-semester"
             className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
           >
-            الترم
+            {t("semesterLabel")}
           </label>
           <select
             id="academic-semester"
@@ -126,7 +126,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
           htmlFor="is_academic"
           className="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          مادة أكاديمية (مرتبطة بمستوى وترم)
+          {t("academicSubjectLabel")}
         </label>
       </div>
 
@@ -151,7 +151,7 @@ export function AcademicOptionsFields<TFormData extends AcademicOptionsShape>({
           htmlFor="show_on_home"
           className="text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          عرض في الصفحة الرئيسية
+          {t("showOnHomeLabel")}
         </label>
       </div>
     </>

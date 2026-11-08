@@ -23,12 +23,14 @@
   "assistantProgramming": "زين AI (برمجة)",
   "assistantStudent": "زين AI (طالب)",
   "assistantGroupChat": "زين AI (مجموعات)",
+  "assistantName": "زين",
   "switchStudentAssistant": "تبديل: زين AI (طالب)",
   "switchCsAssistant": "تبديل: زين AI (برمجة)",
   "switchGroupChat": "تبديل: زين AI (مجموعات)",
   "summarizeAcademicSubjects": "تلخيص المواد الأكاديمية",
   "summarizeCsChat": "تلخيص المحادثة البرمجية الحالية",
   "summarizeGroupChat": "تلخيص محادثات المجموعة (الواتساب)",
+  "selectSubjectForSummary": "يرجى اختيار مادة أولاً لتلخيص محتواها الأكاديمي.",
   "quickQuizFromText": "اختبار سريع من نص",
   "summarizeSubject": "لخص لي مادة",
   "summarizeSubjectDesc": "احصل على ملخص شامل لأي مادة أكاديمية",
@@ -114,5 +116,6 @@
     "insufficientFunds": "💳 انتهت حصة هذا النموذج (رسالة Puter: لا يوجد رصيد متبقٍ للطلب).\n\n💡 بدّل إلى نموذج أخف من القائمة (مثل GPT-5 nano) أو اشحن حساب Puter ثم أعد المحاولة.",
     "puterUnavailable": "⚠️ خدمة الذكاء الاصطناعي غير متاحة حالياً. حاول لاحقاً.",
     "needsLogin": "__PUTER_AUTH_REQUIRED__\n⚠️ يلزم تسجيل الدخول إلى Puter لتفعيل هذا النموذج{modelSuffix}.\n\nاضغط زر \"تسجيل الدخول\" بالأسفل ثم أعد المحاولة."
-  }
+  },
+  "studentAgentNeedsSubject": "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك."
 }

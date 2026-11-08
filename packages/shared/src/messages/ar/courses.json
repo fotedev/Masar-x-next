@@ -32,6 +32,10 @@
   "savingInProgress": "جاري الحفظ...",
   "update": "تحديث",
   "create": "إنشاء",
+  "enrolledCount": "{count} طالب",
+  "instructorLabel": "المدرب: {name}",
+  "unpublish": "إلغاء النشر",
+  "publish": "نشر الكورس",
   "toasts": {
     "addSuccess": "تم إضافة الكورس بنجاح",
     "addError": "فشل في إضافة الكورس",

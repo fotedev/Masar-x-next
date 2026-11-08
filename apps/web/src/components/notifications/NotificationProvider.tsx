@@ -9,6 +9,7 @@ import {
 } from "react";
 import { getLogoPath } from "../DynamicLogo";
 import { registerServiceWorker } from "@/lib/sw-register";
+import { useTranslations } from "next-intl";
 
 interface NotificationContextType {
   permission: NotificationPermission;
@@ -38,6 +39,7 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
+  const t = useTranslations("notifications");
   const [permission, setPermission] =
     useState<NotificationPermission>("default");
   const [showPrompt, setShowPrompt] = useState(false);
@@ -93,7 +95,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       if (!isSupported || permission !== "granted") return;
 
       const defaultOptions: NotificationOptions = {
-        body: "إشعار جديد من Masar X",
+        body: t("defaultBody"),
         icon: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
         badge: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
         tag: "masarx-notification",
@@ -110,7 +112,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         });
       }
     },
-    [isSupported, permission],
+    [isSupported, permission, t],
   );
 
   const dismissPrompt = useCallback(() => {

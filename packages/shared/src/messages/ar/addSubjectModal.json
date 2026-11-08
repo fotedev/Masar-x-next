@@ -25,5 +25,13 @@
   "locationLabel": "موقع المحاضرة",
   "locationPlaceholder": "مثال: مدرج 3 - الدور الثاني",
   "descriptionLabel": "نبذة عن المادة",
-  "descriptionPlaceholder": "اكتب وصفاً موجزاً لأهداف المادة ومواضيعها الأساسية..."
+  "descriptionPlaceholder": "اكتب وصفاً موجزاً لأهداف المادة ومواضيعها الأساسية...",
+  "nameLabel": "اسم المادة",
+  "namePlaceholder": "مثال: رياضيات 2",
+  "professorLabel": "اسم المحاضر",
+  "professorPlaceholder": "مثال: د. أحمد",
+  "levelLabel": "المستوى",
+  "semesterLabel": "الترم",
+  "academicSubjectLabel": "مادة أكاديمية (مرتبطة بمستوى وترم)",
+  "showOnHomeLabel": "عرض في الصفحة الرئيسية"
 }

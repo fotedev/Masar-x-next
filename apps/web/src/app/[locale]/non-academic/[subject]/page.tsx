@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 // NOTE: useMemo is still used above to memoize the supabase client.
 
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowRight, Monitor } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
@@ -22,6 +23,7 @@ type TRWCategory = {
 };
 
 function SubjectDetailsContent() {
+  const t = useTranslations("subjectPage");
   const params = useParams();
   const subjectSlug = params?.subject as string;
   const router = useRouter();
@@ -70,7 +72,9 @@ function SubjectDetailsContent() {
 
   if (loading) {
     return (
-      <div className="p-12 text-center animate-pulse">جاري التحميل...</div>
+      <div className="p-12 text-center animate-pulse">
+        {t("nonAcademic.loading")}
+      </div>
     );
   }
 
@@ -82,7 +86,7 @@ function SubjectDetailsContent() {
           className="group flex items-center gap-3 px-6 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black hover:border-brand-blue hover:text-brand-blue transition-all shadow-xs"
         >
           <ArrowRight className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
-          العودة لـ TRW
+          {t("nonAcademic.backToTrw")}
         </button>
       </div>
 
@@ -97,7 +101,7 @@ function SubjectDetailsContent() {
             </p>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed font-medium">
               {category?.description ||
-                "قسم مهارات عامة وكورسات تطويرية."}
+                t("nonAcademic.defaultDescription")}
             </p>
           </div>
         </div>
@@ -106,10 +110,10 @@ function SubjectDetailsContent() {
       <div className="text-center py-20">
         <Monitor className="w-20 h-20 text-slate-200 dark:text-slate-800 mx-auto mb-6" />
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-          قريباً...
+          {t("nonAcademic.comingSoon")}
         </h2>
         <p className="text-slate-500 dark:text-slate-400">
-          جاري تجهيز محتوى هذا القسم.
+          {t("nonAcademic.contentPreparing")}
         </p>
       </div>
     </div>
@@ -117,10 +121,13 @@ function SubjectDetailsContent() {
 }
 
 export default function NonAcademicSubjectPage() {
+  const t = useTranslations("subjectPage");
   return (
     <Suspense
       fallback={
-        <div className="p-12 text-center animate-pulse">جاري التحميل...</div>
+        <div className="p-12 text-center animate-pulse">
+          {t("nonAcademic.loading")}
+        </div>
       }
     >
       <SubjectDetailsContent />

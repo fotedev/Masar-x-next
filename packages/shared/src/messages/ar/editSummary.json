@@ -28,5 +28,10 @@
   "googleDriveLink": "رابط Google Drive",
   "clickToUpdatePdf": "اضغط لتحديث ملف PDF",
   "pdfLimitNoteShort": "PDF فقط (حتى 10MB)",
-  "driveLinkPublicNote": "تأكد من أن الرابط قابل للوصول للجميع (عام)"
+  "driveLinkPublicNote": "تأكد من أن الرابط قابل للوصول للجميع (عام)",
+  "cancel": "إلغاء",
+  "saving": "جاري الحفظ...",
+  "invalidLink": "يرجى إدخال رابط صحيح",
+  "missingDriveLink": "يرجى إدخال رابط Google Drive أو اختر رفع ملف",
+  "updateErrorFallback": "حدث خطأ أثناء تحديث الملخص. يرجى المحاولة مرة أخرى."
 }

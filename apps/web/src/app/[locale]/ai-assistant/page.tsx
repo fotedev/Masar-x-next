@@ -183,7 +183,7 @@ export default function AiAssistantPage() {
       let analysis;
       if (mode === "student_agent") {
         if (!studentSelectedSubject) {
-          toast.error("يرجى اختيار مادة أولاً لتلخيص محتواها الأكاديمي.");
+          toast.error(t("selectSubjectForSummary"));
           return;
         }
         // Use the messages as context for student agent too if relevant,

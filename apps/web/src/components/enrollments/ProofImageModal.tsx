@@ -1,5 +1,6 @@
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { XCircle } from "lucide-react";
 import { useEffect, type MouseEvent } from "react";
 
@@ -9,6 +10,8 @@ interface ProofImageModalProps {
 }
 
 export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
+  const t = useTranslations("enrollments");
+
   useEffect(() => {
     if (!imageUrl) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -36,7 +39,7 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
       >
         <Image
           src={imageUrl}
-          alt="إثبات الدفع"
+          alt={t("paymentProofAlt")}
           fill
           sizes="(max-width: 768px) 100vw, 1024px"
           className="object-contain rounded-lg shadow-2xl"
@@ -45,7 +48,7 @@ export function ProofImageModal({ imageUrl, onClose }: ProofImageModalProps) {
         <button
           onClick={onClose}
           className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-          aria-label="إغلاق"
+          aria-label={t("close")}
           type="button"
         >
           <XCircle className="w-8 h-8" />

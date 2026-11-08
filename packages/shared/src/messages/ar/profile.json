@@ -13,6 +13,8 @@
   "preferenceUpdateError": "فشل تحديث التفضيلات.",
   "academicUpdateSuccess": "تم تحديث البيانات الأكاديمية",
   "academicUpdateError": "حدث خطأ أثناء حفظ المعلومات الأكاديمية",
+  "academicUpdateRateLimited": "يرجى الانتظار {seconds} ثانية قبل تحديث بياناتك مرة أخرى.",
+  "academicUpdateErrorRetry": "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى.",
   "mustLogin": "يجب تسجيل الدخول أولاً",
   "loginPrompt": "يرجى تسجيل الدخول لرؤية ملفك الشخصي",
   "adminDoctor": "ادمن دكتور",

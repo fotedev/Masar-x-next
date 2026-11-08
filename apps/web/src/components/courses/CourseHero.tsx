@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
@@ -15,27 +16,29 @@ interface CourseHeroProps {
 }
 
 export function CourseHero({ course, enrollmentStatus, renderActionButton }: CourseHeroProps) {
+  const t = useTranslations("courseDetail");
+
   const renderStatusBadge = () => {
     switch (enrollmentStatus) {
       case "active":
         return (
           <Badge className="bg-green-100 text-green-800">
             <CheckCircle className="w-3 h-3 ml-1" />
-            نشط
+            {t("hero.statusActive")}
           </Badge>
         );
       case "pending":
         return (
           <Badge className="bg-yellow-100 text-yellow-800">
             <Clock className="w-3 h-3 ml-1" />
-            في الانتظار
+            {t("hero.statusPending")}
           </Badge>
         );
       case "rejected":
         return (
           <Badge className="bg-red-100 text-red-800">
             <XCircle className="w-3 h-3 ml-1" />
-            مرفوض
+            {t("hero.statusRejected")}
           </Badge>
         );
       default:
@@ -50,14 +53,14 @@ export function CourseHero({ course, enrollmentStatus, renderActionButton }: Cou
           <div>
             <CardTitle className="text-2xl">{course.title}</CardTitle>
             <CardDescription className="text-lg">
-              مدرب: {course.instructor_name}
+              {t("hero.instructor", { name: course.instructor_name ?? "" })}
             </CardDescription>
           </div>
           {renderStatusBadge()}
         </div>
         {course.price > 0 && (
           <div className="text-2xl font-bold text-green-600">
-            {course.price} جنيه مصري
+            {t("hero.price", { price: course.price })}
           </div>
         )}
       </CardHeader>

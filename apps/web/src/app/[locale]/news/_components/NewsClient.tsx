@@ -350,7 +350,7 @@ function NewsClient({
                     >
                       <Image
                         src={url}
-                        alt={`${item.title} - صورة ${index + 1}`}
+                        alt={t("imageAlt", { title: item.title, number: index + 1 })}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-contain hover:scale-105 transition-transform duration-300"
@@ -453,7 +453,7 @@ function NewsClient({
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   {item.created_at
                     ? formatDate(item.created_at)
-                    : "غير معروف"}
+                    : t("unknown")}
                 </span>
               </div>
             </div>

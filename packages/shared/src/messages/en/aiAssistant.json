@@ -23,12 +23,14 @@
   "assistantProgramming": "ZANE AI (Programming)",
   "assistantStudent": "ZANE AI (Student)",
   "assistantGroupChat": "ZANE AI (Group)",
+  "assistantName": "ZANE",
   "switchStudentAssistant": "Switch: ZANE AI (Student)",
   "switchCsAssistant": "Switch: ZANE AI (Programming)",
   "switchGroupChat": "Switch: ZANE AI (Group)",
   "summarizeAcademicSubjects": "Summarize academic subjects",
   "summarizeCsChat": "Summarize current coding chat",
   "summarizeGroupChat": "Summarize group chats (WhatsApp)",
+  "selectSubjectForSummary": "Please select a subject first to summarize its academic content.",
   "quickQuizFromText": "Quick quiz from text",
   "summarizeSubject": "Summarize a Subject",
   "summarizeSubjectDesc": "Get a comprehensive summary for any academic subject",
@@ -114,5 +116,6 @@
     "insufficientFunds": "💳 This model's usage quota is used up (Puter: no usage left for request).\n\n💡 Switch to a lighter model from the selector (e.g. GPT-5 nano) or top up the Puter account, then try again.",
     "puterUnavailable": "⚠️ The AI service is currently unavailable. Please try again later.",
     "needsLogin": "__PUTER_AUTH_REQUIRED__\n⚠️ Sign in to Puter to enable this model{modelSuffix}.\n\nPress the \"Sign In\" button below and try again."
-  }
+  },
+  "studentAgentNeedsSubject": "I can only answer from platform content. Choose a subject from the list first, then resend your question."
 }
