@@ -38,6 +38,7 @@ vi.mock('node:fs', () => ({
 vi.mock('../port.js', () => ({
   findFreePort: vi.fn(),
   writePortSidecar: vi.fn(),
+  waitForPort: vi.fn(),
 }));
 
 vi.mock('../logging.js', () => ({
@@ -50,7 +51,7 @@ vi.mock('../logging.js', () => ({
 // Import AFTER mocks (same pattern as logging.test.ts).
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
-import { findFreePort, writePortSidecar } from '../port.js';
+import { findFreePort, waitForPort, writePortSidecar } from '../port.js';
 import { nextServerLog } from '../logging.js';
 import { startLocalServer } from '../server.js';
 
@@ -95,6 +96,8 @@ beforeEach(() => {
   vi.mocked(findFreePort).mockResolvedValue(SPAWN_PORT);
   vi.mocked(writePortSidecar).mockResolvedValue(undefined);
   vi.mocked(fs.access).mockResolvedValue(undefined);
+  // Default: the port reports liveness immediately (R13's success gate).
+  vi.mocked(waitForPort).mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -160,5 +163,71 @@ describe('next-server log routing (server.ts, spec 028)', () => {
     expect(nextServerLog.info).not.toHaveBeenCalled();
     expect(nextServerLog.error).not.toHaveBeenCalled();
     expect(server.port).toBe(3000);
+  });
+});
+
+// ============================================================================
+// Spec 041 R13 — the readiness gate. The old probe resolved "healthy" after
+// a flat 500ms without ever checking the port; success must now be gated on
+// an actual listener (waitForPort), while early error/exit keep winning the
+// race.
+// ============================================================================
+
+describe('server readiness gate (server.ts, spec 041 R13)', () => {
+  it('gates success on waitForPort for the spawned port with the full budget', async () => {
+    const child = makeFakeChild();
+    await startProductionServer(child);
+
+    expect(waitForPort).toHaveBeenCalledWith(SPAWN_PORT, 8_000);
+  });
+
+  it('throws when the port never opens within the budget', async () => {
+    vi.mocked(waitForPort).mockRejectedValue(
+      new Error('waitForPort: 127.0.0.1:41234 did not accept connections within 8000ms'),
+    );
+    const child = makeFakeChild();
+    vi.mocked(spawn).mockReturnValue(child);
+    const pending = startLocalServer({
+      userDataPath: '/fake/userData',
+      isPackaged: true,
+      forceDev: false,
+    });
+    // Attach the observer before the timer flush: the rejection fires inside
+    // advanceTimersByTimeAsync and would otherwise land as unhandled.
+    const settled = pending.catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(501);
+
+    const outcome = await settled;
+    expect(outcome).toBeInstanceOf(Error);
+    expect((outcome as Error).message).toMatch(/did not accept connections within 8000ms/);
+  });
+
+  it('a child exit before readiness still wins the race over the liveness poll', async () => {
+    vi.mocked(waitForPort).mockReturnValue(new Promise(() => {}));
+    const child = makeFakeChild();
+    vi.mocked(spawn).mockReturnValue(child);
+    const pending = startLocalServer({
+      userDataPath: '/fake/userData',
+      isPackaged: true,
+      forceDev: false,
+    });
+    const settled = pending.catch((e: unknown) => e);
+    // Flush the pre-listener awaits so the exit listener is attached, then
+    // fire the exit while the (never-resolving) liveness poll is pending.
+    await vi.advanceTimersByTimeAsync(501);
+    child.emit('exit', 1);
+
+    const outcome = await settled;
+    expect(outcome).toBeInstanceOf(Error);
+    expect((outcome as Error).message).toMatch(/exited before becoming ready \(code=1\)/);
+  });
+
+  it('marks the spawned server as the desktop loopback (R18 middleware marker)', async () => {
+    const child = makeFakeChild();
+    await startProductionServer(child);
+
+    const spawnCall = vi.mocked(spawn).mock.calls[0];
+    const env = spawnCall[2]?.env as Record<string, string>;
+    expect(env.MASARX_DESKTOP_LOOPBACK).toBe('1');
   });
 });

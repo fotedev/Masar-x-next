@@ -1,6 +1,50 @@
-import { createServer, type AddressInfo } from 'node:net';
+import { connect, createServer, type AddressInfo } from 'node:net';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+
+/**
+ * Poll a loopback TCP port until it accepts a connection (spec 041 R13).
+ *
+ * Replaces the flat "wait 500 ms and hope" gate on the spawned Next server:
+ * success now means the port actually listens. Polls every `intervalMs`
+ * with a 1s per-attempt connect cap and rejects after `timeoutMs` in total.
+ */
+export function waitForPort(
+  port: number,
+  timeoutMs: number,
+  intervalMs = 150,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const deadline = Date.now() + timeoutMs;
+
+    const attempt = () => {
+      const socket = connect(port, '127.0.0.1');
+      const settle = (ok: boolean) => {
+        socket.removeAllListeners();
+        socket.destroy();
+        if (ok) {
+          resolve();
+          return;
+        }
+        if (Date.now() >= deadline) {
+          reject(
+            new Error(
+              `waitForPort: 127.0.0.1:${port} did not accept connections within ${timeoutMs}ms`,
+            ),
+          );
+          return;
+        }
+        setTimeout(attempt, intervalMs);
+      };
+      socket.once('connect', () => settle(true));
+      socket.once('error', () => settle(false));
+      // A hung connect counts as "not listening yet" and retries.
+      socket.setTimeout(1000, () => settle(false));
+    };
+
+    attempt();
+  });
+}
 
 /**
  * Find a free TCP port by asking the OS to assign one.

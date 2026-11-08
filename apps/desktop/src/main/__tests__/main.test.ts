@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -195,6 +196,20 @@ const mockServer = {
 
 vi.mock('node:net', () => ({
   createServer: vi.fn(() => mockServer),
+  // Spec 041 R13 — startProductionServer now gates success on waitForPort
+  // (real net.connect probes). Simulate an already-listening port so the
+  // production path resolves immediately; a microtask avoids depending on
+  // this suite's (real) timer handling.
+  connect: vi.fn(() => {
+    const socket = new EventEmitter();
+    (socket as unknown as { setTimeout: (ms: number, cb: () => void) => void }).setTimeout =
+      vi.fn();
+    (socket as unknown as { destroy: () => void }).destroy = vi.fn();
+    (socket as unknown as { removeAllListeners: (ev?: string) => void }).removeAllListeners =
+      vi.fn();
+    queueMicrotask(() => socket.emit('connect'));
+    return socket;
+  }),
 }));
 
 const mockHttpListen = vi.fn().mockImplementation((_req: unknown, res: any) => {
