@@ -21,6 +21,13 @@ vi.mock("next-intl", () => ({
     (key: string) =>
       `${ns}.${key}`,
 }));
+// SubjectsGrid imports the locale-aware router from @/navigation, whose
+// real module is next-intl's createNavigation — its internal bare
+// `next/navigation` import cannot be resolved from the hoisted package
+// under vitest 5 on win32. Mock the surface SubjectsGrid uses.
+vi.mock("@/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
 
 import { SubjectsGrid } from "../SubjectsGrid";
 

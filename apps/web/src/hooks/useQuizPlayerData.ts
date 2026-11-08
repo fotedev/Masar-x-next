@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { quizService } from "../lib/quiz";
+import { logger } from "../lib/logger";
 
 type Quiz = {
   id: string;
@@ -86,8 +87,9 @@ export function useQuizPlayerData(props: {
       setQuiz(quiz);
       setQuestions(questions);
       trackEvent("quiz_loaded", { quiz_id: quizId, title: quiz.title });
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to load quiz:", err);
     } finally {
       setLoading(false);
     }

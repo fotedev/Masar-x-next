@@ -4,6 +4,7 @@ import { MessageSquare } from "lucide-react";
 import { useReviews } from "../hooks/useReviews";
 import { useAuth } from "../contexts/AuthContext";
 import { confirmToast } from "../lib/confirmToast";
+import { logger } from "../lib/logger";
 import { ReviewStats } from "./reviews/ReviewStats";
 import { ReviewForm } from "./reviews/ReviewForm";
 import { ReviewItem } from "./reviews/ReviewItem";
@@ -52,8 +53,9 @@ export function ReviewSection({
     if (!confirmed) return;
     try {
       await deleteReview(reviewId);
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to delete review:", err);
     }
   };
 
