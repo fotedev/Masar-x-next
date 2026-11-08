@@ -4,6 +4,7 @@ import { Flag, X } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNotifications } from "../hooks/useNotifications";
 import { AppealInsert } from "../types/database";
+import { logger } from "../lib/logger";
 import { useTranslations } from "next-intl";
 import { useAppeals } from "../hooks/useAppeals";
 
@@ -77,8 +78,10 @@ export function AppealFormModal({
       onClose();
       setReason("");
       setDescription("");
-    } catch {
-      // ignore
+    } catch (err) {
+      // useAppeals already surfaces the manage.addError toast; log here so
+      // the modal layer is not a silent swallow.
+      logger.error("Failed to submit appeal:", err);
     } finally {
       setIsSubmitting(false);
     }

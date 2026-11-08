@@ -2,5 +2,8 @@
   "loading": "جاري التحميل...",
   "redirectingToPrivacyPolicy": "جاري التحويل إلى سياسة الخصوصية...",
   "cancel": "إلغاء",
-  "changeLanguageAriaLabel": "التبديل إلى الإنجليزية"
+  "changeLanguageAriaLabel": "التبديل إلى الإنجليزية",
+  "unauthorizedTitle": "غير مصرّح بالوصول",
+  "unauthorizedMessage": "ليس لديك صلاحية لعرض هذه الصفحة.",
+  "backToHome": "العودة للرئيسية"
 }

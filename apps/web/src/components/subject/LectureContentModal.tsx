@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   X,
   BookOpen,
@@ -40,6 +40,7 @@ export function LectureContentModal({
   lecturesIndex,
 }: LectureContentModalProps) {
   const t = useTranslations("subjectPage");
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<
     "summaries" | "videos" | "files" | "quizzes"
   >("summaries");
@@ -60,7 +61,7 @@ export function LectureContentModal({
     (lecture?.lecture_label || "").trim() || t("lectureForm.uncategorized");
 
   const openSubjectLecture = () => {
-    const url = `/subjects/${encodeURIComponent(subject)}?lecture=${encodeURIComponent(lectureKey)}`;
+    const url = `/${locale}/subjects/${encodeURIComponent(subject)}?lecture=${encodeURIComponent(lectureKey)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

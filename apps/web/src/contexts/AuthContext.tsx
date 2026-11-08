@@ -18,6 +18,7 @@ import { analyticsHelpers } from "../lib/analyticsHelpers";
 import { pingActiveUser } from "../lib/metrics-client";
 import { logger } from "../lib/logger";
 import { cleanupOldLocalStorage } from '@/lib/storage-cleanup';
+import { ACADEMIC_FETCH_KEY, USER_ACADEMIC_CACHE_KEY } from '@/lib/academic-utils';
 import { queryClient } from '@/components/QueryProvider';
 import { queryCache } from '@/lib/queryCache';
 import { useLocale } from "next-intl";
@@ -202,6 +203,17 @@ export function AuthProvider({
           // previous one's appeals/enrollments rows (audit M45).
           queryClient.clear();
           queryCache.invalidatePrefix("");
+          // Academic state is per-identity sessionStorage (review D4): drop
+          // every per-user variant + the fetch-cooldown stamp so the next
+          // identity re-fetches its own profile.
+          if (typeof window !== "undefined") {
+            for (const key of Object.keys(sessionStorage)) {
+              if (key.startsWith(USER_ACADEMIC_CACHE_KEY)) {
+                sessionStorage.removeItem(key);
+              }
+            }
+            sessionStorage.removeItem(ACADEMIC_FETCH_KEY);
+          }
         }
 
         if (event === "INITIAL_SESSION") {

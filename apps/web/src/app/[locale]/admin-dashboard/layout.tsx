@@ -12,16 +12,21 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({
   children,
+  params,
 }: {
   children: ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
   // getCachedUser dedupes with the [locale] layout's call in the same
   // render pass (spec 033 Track C) — one auth roundtrip, not two.
   const user = await getCachedUser();
   const supabase = await createClient();
 
   if (!user) {
-    redirect("/login");
+    // Locale-prefixed redirects: bare paths rely on middleware locale
+    // detection and can flip the visitor's language (review 2026-11-07 D2).
+    redirect(`/${locale}/login`);
   }
 
   const { data: adminRow, error: adminError } = await supabase
@@ -31,7 +36,7 @@ export default async function AdminLayout({
     .maybeSingle();
 
   if (adminError || !adminRow) {
-    redirect("/unauthorized");
+    redirect(`/${locale}/unauthorized`);
   }
 
   return children;
