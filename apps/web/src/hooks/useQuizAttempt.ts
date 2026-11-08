@@ -210,7 +210,11 @@ export function useQuizAttempt({ quizId, userId, totalQuestions, quizTitle, loca
                 } catch {
                     // ignore
                 }
-                return { score: server.score, totalQuestions: server.totalQuestions };
+                return {
+                    score: server.score,
+                    totalQuestions: server.totalQuestions,
+                    answers: server.answers,
+                };
             } catch (err) {
                 if (err instanceof Error) {
                     setError(err.message);

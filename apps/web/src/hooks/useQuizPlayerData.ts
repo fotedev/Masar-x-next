@@ -12,7 +12,11 @@ type Question = {
   id: string;
   question: string;
   options: string[];
-  correct_answer: number;
+  /**
+   * Optional: DB-sourced questions never carry the answer key (spec 040
+   * column grants); only locally-generated quizzes (quizData path) know it.
+   */
+  correct_answer?: number;
   explanation?: string;
   image_url?: string;
 };

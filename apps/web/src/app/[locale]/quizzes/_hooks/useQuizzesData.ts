@@ -187,11 +187,13 @@ export function useQuizzesData(props: {
   );
 
   const loadQuizForEdit = useCallback(async (quiz: Quiz) => {
-    const { data: questions, error } = await supabase
-      .from("quiz_questions")
-      .select("*")
-      .eq("quiz_id", quiz.id)
-      .order("order_index");
+    // Spec 040: quiz_questions SELECT no longer exposes correct_answer to
+    // any client role — the admin edit path reads the full rows through the
+    // admin-gated definer RPC (PR-1).
+    const { data: questions, error } = await supabase.rpc(
+      "admin_list_quiz_questions",
+      { p_quiz_id: quiz.id },
+    );
 
     if (error) throw error;
 
