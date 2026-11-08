@@ -38,11 +38,13 @@ const WINDOW_ICON_PATH = app.isPackaged
 
 // R12 (audit 2026-09-08) — local recovery page rendered when the local
 // Next.js server is unreachable after 3 retries. Self-contained, no
-// external resources, no CSP dependencies. The Retry button re-attempts
-// the loopback URL through main (which the page triggers via the
-// preload bridge's `window:close` + `app:quit`-style pattern is overkill;
-// instead we just reload the data: URL with the cached original URL
-// embedded, and let main re-issue loadURL on the next did-fail-load).
+// external resources, no CSP dependencies. The Retry button navigates the
+// window straight back to the cached loopback URL: that top-level
+// navigation passes the will-navigate origin guard, so the app loads when
+// the server is back (spec 040 — the old `location.reload()` re-loaded the
+// data: URL itself, which can never fire did-fail-load, making Retry a
+// permanent no-op). If the server is still down, did-fail-load re-renders
+// this page.
 function recoveryPageUrl(originalUrl: string, lastError: string): string {
   const safe = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -61,7 +63,7 @@ function recoveryPageUrl(originalUrl: string, lastError: string): string {
 <h1>Local server is not responding</h1>
 <p>The Masar X desktop shell could not reach its local server at <code>${safe(originalUrl)}</code> after 3 attempts. The last reported error was:</p>
 <p><code>${safe(lastError)}</code></p>
-<button onclick="window.location.reload()">Retry</button>
+<button onclick="window.location.replace('${safe(originalUrl)}')">Retry</button>
 <small>If this keeps happening, quit and relaunch the app. The recovery page is rendered locally and does not require the server.</small>
 </body></html>`;
   return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
@@ -239,7 +241,9 @@ export async function startMainProcess(): Promise<number> {
   // renderer's `auth:rendererReady` pull.
   const coldDeepLink = parseDeepLinkUrl(process.argv.slice(1));
   if (coldDeepLink) {
-    desktopLog.info('Cold-start deep link received:', coldDeepLink);
+    // Never log the raw callback URL — it carries the OAuth authorization
+    // code, which would land in the on-disk main.log (review 2026-11-07 D10).
+    desktopLog.info('Cold-start deep link received:', coldDeepLink.split('?')[0]);
     dispatchDeepLink(coldDeepLink);
   }
 
@@ -325,7 +329,17 @@ export async function startMainProcess(): Promise<number> {
   // is an SPA pushState and does NOT fire will-navigate, so this guard
   // does not break shell navigation.
   win.webContents.on('will-navigate', (event, navUrl) => {
-    if (!navUrl.startsWith(allowedOrigin)) {
+    // Origin comparison, not a string prefix: `http://127.0.0.1:<port>.evil.tld`
+    // and `http://127.0.0.1:<port>@evil.tld` both pass a startsWith check
+    // while pointing at attacker origins (review 2026-11-07 D10). A failed
+    // parse blocks too — fail closed.
+    let navOrigin = '';
+    try {
+      navOrigin = new URL(navUrl).origin;
+    } catch {
+      navOrigin = '';
+    }
+    if (navOrigin !== allowedOrigin) {
       event.preventDefault();
       desktopLog.warn(`Blocked navigation to: ${navUrl}`);
     }
