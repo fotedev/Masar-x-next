@@ -15,5 +15,10 @@
   "actionSubjects": "Study materials",
   "actionQuizzes": "Quiz bank",
   "actionNews": "Latest news",
-  "actionActivity": "Recent activity"
+  "actionActivity": "Recent activity",
+  "reviewsCount": "{count, plural, one {# review} other {# reviews}}",
+  "noReviewsYet": "No reviews yet",
+  "askZane": "Ask Zane",
+  "generalSubject": "General",
+  "uploading": "Uploading..."
 }

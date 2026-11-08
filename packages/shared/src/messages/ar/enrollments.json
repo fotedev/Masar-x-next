@@ -4,5 +4,15 @@
   "statusRejected": "مرفوض",
   "viewProof": "عرض الإثبات",
   "accept": "قبول",
-  "reject": "رفض"
+  "reject": "رفض",
+  "filterAll": "الكل",
+  "searchPlaceholder": "بحث باسم الطالب أو الكورس...",
+  "unnamedCourse": "كورس غير محدد",
+  "studentFallback": "طالب",
+  "loadError": "حدث خطأ في تحميل طلبات التسجيل",
+  "approveSuccess": "تم قبول الطلب بنجاح",
+  "rejectSuccess": "تم رفض الطلب",
+  "processError": "حدث خطأ في معالجة الطلب",
+  "paymentProofAlt": "إثبات الدفع",
+  "close": "إغلاق"
 }

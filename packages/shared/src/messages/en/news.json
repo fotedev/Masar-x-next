@@ -92,5 +92,8 @@
   "statusUpdateSuccess": "News status updated",
   "statusUpdateError": "An error occurred while updating the news status",
   "deleteSuccess": "News deleted successfully",
-  "deleteError": "An error occurred while deleting the news"
+  "deleteError": "An error occurred while deleting the news",
+  "removeImage": "Remove image",
+  "imageAlt": "{title} - image {number}",
+  "unknown": "Unknown"
 }

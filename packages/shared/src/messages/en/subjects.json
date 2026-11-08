@@ -3,5 +3,11 @@
   "description": "Choose the subject you want to explore lectures for",
   "emptyAcademicTitle": "No subjects",
   "emptyAcademicDescription": "Subjects will be added soon",
-  "studyWithZainCta": "Study with Zain"
+  "studyWithZainCta": "Study with Zain",
+  "addLectureModal": {
+    "mergeWarningTitle": "Lecture already exists",
+    "mergeWarningDesc": "This title will update the currently existing lecture. Are you sure?",
+    "confirmMerge": "Yes, update",
+    "cancelMerge": "Cancel"
+  }
 }

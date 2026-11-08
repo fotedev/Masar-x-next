@@ -13,6 +13,8 @@
   "preferenceUpdateError": "Failed to update preferences.",
   "academicUpdateSuccess": "Academic data updated",
   "academicUpdateError": "An error occurred while saving academic information",
+  "academicUpdateRateLimited": "Please wait {seconds} seconds before updating your data again.",
+  "academicUpdateErrorRetry": "An error occurred while saving academic information. Please try again.",
   "mustLogin": "You must log in first",
   "loginPrompt": "Please log in to see your profile",
   "adminDoctor": "Admin Doctor",

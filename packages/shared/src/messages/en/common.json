@@ -5,5 +5,11 @@
   "changeLanguageAriaLabel": "Switch to Arabic",
   "unauthorizedTitle": "Access denied",
   "unauthorizedMessage": "You don't have permission to view this page.",
-  "backToHome": "Back to home"
+  "backToHome": "Back to home",
+  "confirm": "Confirm",
+  "uploadStages": {
+    "converting": "Converting file...",
+    "uploading": "Uploading file...",
+    "uploaded": "Uploaded successfully"
+  }
 }

@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import { Edit, Eye, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { Button } from "../ui/Button";
 import {
@@ -24,12 +25,16 @@ export function CourseCard({
   onDelete,
   onTogglePublish,
 }: CourseCardProps) {
+  const t = useTranslations("courses");
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
           <Badge variant={course.price === 0 ? "secondary" : "default"}>
-            {course.price === 0 ? "مجاني" : `${course.price} جنيه`}
+            {course.price === 0
+              ? t("free")
+              : `${course.price} ${t("currency")}`}
           </Badge>
           <div className="flex items-center gap-1">
             <button
@@ -39,7 +44,7 @@ export function CourseCard({
                   ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                   : "text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
-              title={course.is_published ? "إلغاء النشر" : "نشر الكورس"}
+              title={course.is_published ? t("unpublish") : t("publish")}
             >
               {course.is_published ? (
                 <ToggleRight className="w-5 h-5" />
@@ -57,8 +62,8 @@ export function CourseCard({
       <CardContent>
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-            <span>المدرب: {course.instructor_name}</span>
-            <span>{course.enrollments_count} طالب</span>
+            <span>{t("instructorLabel", { name: course.instructor_name ?? "" })}</span>
+            <span>{t("enrolledCount", { count: course.enrollments_count ?? 0 })}</span>
           </div>
 
           <div className="flex items-center justify-between pt-2">

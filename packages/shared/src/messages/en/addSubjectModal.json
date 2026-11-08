@@ -25,5 +25,13 @@
   "locationLabel": "Lecture Location",
   "locationPlaceholder": "Example: Hall 3 - Second Floor",
   "descriptionLabel": "About the Subject",
-  "descriptionPlaceholder": "Write a brief description of the subject's objectives and its core topics..."
+  "descriptionPlaceholder": "Write a brief description of the subject's objectives and its core topics...",
+  "nameLabel": "Subject Name",
+  "namePlaceholder": "Example: Mathematics 2",
+  "professorLabel": "Professor Name",
+  "professorPlaceholder": "Example: Dr. Ahmed",
+  "levelLabel": "Level",
+  "semesterLabel": "Semester",
+  "academicSubjectLabel": "Academic subject (linked to a level and semester)",
+  "showOnHomeLabel": "Show on the home page"
 }

@@ -2,7 +2,7 @@
 
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
@@ -72,6 +72,7 @@ const pruneChatOverflow = (userId: string, chatMode: string) => {
 
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const locale = useLocale();
+  const t = useTranslations("aiAssistant");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   // Spec 036 Track A: render-body mirror — sendMessage snapshots history from
   // this ref instead of reading the messages state, which would pin it in the
@@ -297,7 +298,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         {
           id: `assistant_${Date.now()}`,
           type: "assistant",
-          content: "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك.",
+          // Canned guard reply (spec 041 i18n batch): user-facing assistant
+          // content, translated like any other copy.
+          content: t("studentAgentNeedsSubject"),
           timestamp: new Date(),
         },
       ]);
