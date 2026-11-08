@@ -381,9 +381,9 @@ export default function QuizPlayScreen() {
               );
             })}
 
-            {question.explanation && selected !== null ? (
-              <Text style={styles.explanation}>{question.explanation}</Text>
-            ) : null}
+            {/* Mid-quiz explanation removed (spec 040): explanations typically
+                restate the answer, which must not be revealed before the
+                server's post-finish grading. */}
           </>
         ) : null}
       </ScrollView>
