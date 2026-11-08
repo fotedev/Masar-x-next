@@ -10,18 +10,35 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    // Spec 022: .test.tsx files run under jsdom (React component/hook tests);
-    // .test.ts stays on node for speed.
-    environmentMatchGlobs: [['**/*.test.tsx', 'jsdom']],
-    include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
+    // NOTE: no root `include` — projects below define their own, and with
+    // extends:true (default) a root include CONCATS into every project,
+    // making both projects match all files (each file ran twice).
     setupFiles: ['src/test/setup.ts'],
     testTimeout: 60_000,
     hookTimeout: 60_000,
     // masarx-shared is a workspace symlink exporting raw .ts — inline it
     // so vite transforms the source instead of handing it to node (which
     // cannot load .ts from a package "exports" entry). String form:
-    // regex here matched nothing under vitest 2.1.8.
+    // regex here matched nothing under vitest 2.1.8. Under vitest 5 the
+    // file-path aliases alone proved sufficient (all node suites pass).
     server: { deps: { inline: ['masarx-shared'] } },
+    // Spec 022 routing, migrated for vitest 5: environmentMatchGlobs was
+    // removed in vitest 4 and vitest 5 SILENTLY IGNORES the key — the
+    // replacement is projects (deprecated v3, removed v4, see
+    // vitest.dev/guide/migration). .test.tsx runs under jsdom (React
+    // component/hook tests); .test.ts stays on node for speed.
+    projects: [
+      {
+        test: { name: 'node', include: ['src/**/__tests__/**/*.test.ts'] },
+      },
+      {
+        test: {
+          name: 'jsdom',
+          include: ['src/**/__tests__/**/*.test.tsx'],
+          environment: 'jsdom',
+        },
+      },
+    ],
   },
   resolve: {
     // Regex array form: object-form string keys silently failed to match
