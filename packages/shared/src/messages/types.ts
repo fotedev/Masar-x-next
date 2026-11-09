@@ -73,6 +73,7 @@ export const MESSAGE_NAMESPACES = [
   "summaries",
   "theme",
   "titlebar",
+  "trwAccess",
   "trwRedeem",
   "waitlist",
 ] as const;
