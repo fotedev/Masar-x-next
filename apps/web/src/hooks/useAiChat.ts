@@ -2,7 +2,7 @@
 
 import { User } from "@supabase/supabase-js";
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
@@ -10,6 +10,7 @@ import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
 import { CHAT_HISTORY_CAP, CHAT_PAGE_SIZE, hasMoreAfterLoad, nextOlderRange } from "@/lib/chat-pagination";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { cannedMessagesFor } from "@/lib/ai/canned-messages";
+import { getPuterStatus } from "@/lib/puter";
 import { useUserAcademic } from "@/hooks/useUserAcademic";
 import { logger } from "@/lib/logger";
 
@@ -71,6 +72,7 @@ const pruneChatOverflow = (userId: string, chatMode: string) => {
 
 export function useAiChat(user: User | null | undefined, trackEvent: (event: string, properties?: Record<string, unknown>) => void) {
   const locale = useLocale();
+  const t = useTranslations("aiAssistant");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   // Spec 036 Track A: render-body mirror — sendMessage snapshots history from
   // this ref instead of reading the messages state, which would pin it in the
@@ -237,7 +239,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // ── Puter polling ───────────────────────────────────────────────────────────
   useEffect(() => {
     const check = () => {
-      const status = aiAssistant.getPuterStatus();
+      // Canonical status from lib/puter (spec 041 P1.7 — the assistant kept a
+      // divergent copy that ignored the unavailable-until cooldown).
+      const status = getPuterStatus();
       setIsPuterSignedIn(status.isSignedIn);
     };
     check();
@@ -259,6 +263,15 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // Now `pendingPersistRef` is raised only by real append events; the
   // effect consumes it once and skips every other commit (mount, mode
   // switch, auth transitions). Deletion stays exclusive to clearChat.
+  // Live-mode ref for in-flight guards: the sendMessage closure captures
+  // `mode` at call time, so comparing against that captured value could
+  // never detect a switch (review 2026-11-07 D3). The ref always holds the
+  // current mode.
+  const modeRef = useRef(mode);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const pendingPersistRef = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined" || user === undefined || user) {
@@ -285,7 +298,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         {
           id: `assistant_${Date.now()}`,
           type: "assistant",
-          content: "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك.",
+          // Canned guard reply (spec 041 i18n batch): user-facing assistant
+          // content, translated like any other copy.
+          content: t("studentAgentNeedsSubject"),
           timestamp: new Date(),
         },
       ]);
@@ -299,7 +314,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       timestamp: new Date(),
     };
 
-    const currentMode = mode;
+    const currentMode = modeRef.current;
     pendingPersistRef.current = true;
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
@@ -312,7 +327,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     const assistantMsgId = `assistant_${Date.now()}`;
     let streamStarted = false;
     const flushStream = (full: string) => {
-      if (mode !== currentMode) return;
+      if (modeRef.current !== currentMode) return;
       if (!streamStarted) {
         streamStarted = true;
         setMessages(prev => [
@@ -383,7 +398,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       });
 
       // Avoid setting state if another request was started or mode changed
-      if (mode !== currentMode) {
+      if (modeRef.current !== currentMode) {
         deltaThrottle.cancel();
         return;
       }

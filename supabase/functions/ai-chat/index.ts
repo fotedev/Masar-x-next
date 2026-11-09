@@ -59,6 +59,8 @@ import { buildCorsHeaders } from '../_shared/cors.ts';
 // Pure helpers (forbidden-header guard, SSE frames, Accept parsing, usage
 // mapping) live in pure.ts so they are testable without env/SDK imports.
 import { acceptsSse, findForbiddenHeader, mapUsage, sseFrame } from './pure.ts';
+import { createAdminClient } from '../_shared/auth.ts';
+import { checkRateLimit } from '../_shared/net.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
@@ -243,8 +245,70 @@ serve(async (req) => {
       );
     }
 
-    // 4. Parse and validate the AiRequest (contract's wire format)
-    const body = await req.json() as Partial<AiRequest>;
+    // 3b. Per-user rate limit — the same 10/min budget the web proxy applies
+    //     (apps/web/src/app/api/ai-chat/route.ts), enforced here because
+    //     mobile reaches this function directly and would otherwise have an
+    //     uncapped AI-spend surface.
+    try {
+      const allowed = await checkRateLimit(createAdminClient(), {
+        identifier: user.id,
+        endpoint: 'ai_chat_edge',
+        maxRequests: 10,
+        windowMinutes: 1,
+      });
+      if (allowed === false) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded' }),
+          {
+            status: 429,
+            headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    } catch (rateError) {
+      // Fail-open per repo convention (F12): an RPC outage must not take the
+      // chat down; log loudly so the gap stays visible.
+      console.error(
+        '[ai-chat] rate limit check failed:',
+        rateError instanceof Error ? rateError.message : 'unknown'
+      );
+    }
+
+    // 4. Parse and validate the AiRequest (contract's wire format).
+    //    Raw-body and message caps: the web proxy enforces these for browser
+    //    callers, but mobile hits this function directly — enforce them here
+    //    so no caller can bypass the spend guard.
+    const rawBody = await req.text();
+    if (rawBody.length > 64_000) {
+      return new Response(
+        JSON.stringify({ error: 'Payload too large' }),
+        {
+          status: 413,
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    let body: Partial<AiRequest>;
+    try {
+      body = JSON.parse(rawBody) as Partial<AiRequest>;
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Bad request: body must be valid JSON' }),
+        {
+          status: 400,
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    if (typeof body.userMessage === 'string' && body.userMessage.length > 50_000) {
+      return new Response(
+        JSON.stringify({ error: 'Bad request: userMessage too long' }),
+        {
+          status: 400,
+          headers: { ...buildCorsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
     if (!body.conversationId || !body.userMessage || !body.context) {
       return new Response(
         JSON.stringify({ error: 'Bad request: missing conversationId, userMessage, or context' }),

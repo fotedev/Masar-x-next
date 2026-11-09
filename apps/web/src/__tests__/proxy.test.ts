@@ -18,9 +18,10 @@ import {
   appendSetCookies,
   generateNonce,
   getCspHeader,
-  isLocalHost,
   isRedirectResponse,
 } from '../proxy';
+// isLocalHost moved to lib/desktop-host (spec 041 R18) — tests follow it.
+import { isLocalHost } from '../lib/desktop-host';
 
 afterEach(() => {
   vi.unstubAllEnvs();

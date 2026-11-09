@@ -37,7 +37,6 @@ import {
   extractPuterChunkText,
   getPuterClient,
   hasAsyncIterator,
-  isPuterSdkSignedIn,
   isRecord,
   resetPuterClientCache,
   resolvePuterModel,
@@ -134,18 +133,6 @@ const tryServerSideFallback = async (
   } catch (error) {
     console.warn('[AI Fallback] Error calling server endpoint:', error instanceof Error ? error.message : String(error));
     return null;
-  }
-};
-
-/** Legacy explicit-sign-in flag set by lib/puter on successful sign-in. */
-const getExplicitSignedIn = (): boolean => {
-  try {
-    return (
-      typeof localStorage !== 'undefined' &&
-      localStorage.getItem('puter_signed_in') === '1'
-    );
-  } catch {
-    return false;
   }
 };
 
@@ -540,23 +527,6 @@ ${ZANE_UI_INSTRUCTION}
 
       return canned.genericError;
     }
-  }
-
-  // Check Puter AI status
-  getPuterStatus() {
-    if (typeof window === 'undefined') {
-      return {
-        isAIWorking: true,
-        isSignedIn: false,
-        status: 'puter_js',
-      };
-    }
-
-    return {
-      isAIWorking: true,
-      isSignedIn: isPuterSdkSignedIn() || getExplicitSignedIn(),
-      status: 'puter_js',
-    };
   }
 
   // Generate Quiz from text using Puter.js

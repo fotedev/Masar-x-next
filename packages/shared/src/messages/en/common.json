@@ -2,5 +2,14 @@
   "loading": "Loading...",
   "redirectingToPrivacyPolicy": "Redirecting to the Privacy Policy...",
   "cancel": "Cancel",
-  "changeLanguageAriaLabel": "Switch to Arabic"
+  "changeLanguageAriaLabel": "Switch to Arabic",
+  "unauthorizedTitle": "Access denied",
+  "unauthorizedMessage": "You don't have permission to view this page.",
+  "backToHome": "Back to home",
+  "confirm": "Confirm",
+  "uploadStages": {
+    "converting": "Converting file...",
+    "uploading": "Uploading file...",
+    "uploaded": "Uploaded successfully"
+  }
 }

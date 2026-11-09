@@ -3,5 +3,11 @@
   "description": "اختر المادة التي تريد الاطلاع على محاضراتها",
   "emptyAcademicTitle": "لا توجد مواد",
   "emptyAcademicDescription": "سيتم إضافة المواد الدراسية قريباً",
-  "studyWithZainCta": "ادرس مع زين"
+  "studyWithZainCta": "ادرس مع زين",
+  "addLectureModal": {
+    "mergeWarningTitle": "محاضرة موجودة بالفعل",
+    "mergeWarningDesc": "هذا العنوان سيقوم بتحديث المحاضرة الموجودة حالياً. هل أنت متأكد؟",
+    "confirmMerge": "نعم، تحديث",
+    "cancelMerge": "تراجع"
+  }
 }

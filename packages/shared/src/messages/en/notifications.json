@@ -24,6 +24,7 @@
   "promptBody": "Get notified when new summaries or news are available.",
   "promptAllow": "Enable",
   "promptLater": "Later",
+  "defaultBody": "New notification from Masar X",
   "timeAgo": {
     "now": "Just now",
     "minutesAgo": "{count} min ago",

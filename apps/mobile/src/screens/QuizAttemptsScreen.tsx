@@ -9,7 +9,7 @@
  */
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -148,6 +148,10 @@ export default function QuizAttemptsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [review, setReview] = useState<AttemptReview | null>(null);
+  // Stale-response guard: only the newest expansion may render its review
+  // (review 2026-11-07 — expanding B while A's fetch resolves showed A's
+  // questions under B's card).
+  const reviewRequestIdRef = useRef(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -178,13 +182,16 @@ export default function QuizAttemptsScreen() {
       setReview(null);
       return;
     }
+    const requestId = ++reviewRequestIdRef.current;
     setExpandedId(attempt.id);
     setReview({ loading: true, error: null, questions: [] });
     void (async () => {
       try {
         const quiz = await fetchQuizWithQuestions(getSupabaseClient(), attempt.quizId);
+        if (reviewRequestIdRef.current !== requestId) return;
         setReview({ loading: false, error: null, questions: quiz.questions });
       } catch (e) {
+        if (reviewRequestIdRef.current !== requestId) return;
         setReview({
           loading: false,
           error: e instanceof Error ? e.message : String(e),

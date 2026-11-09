@@ -195,7 +195,7 @@ export default function HomeClient() {
               <h2 className="text-2xl sm:text-3xl font-black mb-2.5 tracking-tight flex items-center gap-1.5 flex-wrap">
                 {locale === "ar" ? (
                   <>
-                    <span>اسأل زين</span>
+                    <span>{tHome("askZane")}</span>
                     <bdi className="font-sans font-black tracking-normal">AI</bdi>
                   </>
                 ) : (

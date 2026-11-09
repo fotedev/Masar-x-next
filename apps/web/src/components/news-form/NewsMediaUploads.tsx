@@ -38,6 +38,9 @@ export function NewsMediaUploads({
     });
   }, [imageFiles]);
 
+  // Revoke URLs for images the user removed. The revoke-all must NOT run
+  // here — this effect re-runs on every imageFiles change, and revoking all
+  // URLs in its cleanup broke the previews that were still on screen.
   useEffect(() => {
     const currentKeys = new Set(
       imageFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
@@ -49,14 +52,17 @@ export function NewsMediaUploads({
         objectUrlMapRef.current.delete(key);
       }
     }
+  }, [imageFiles]);
 
+  // Revoke everything once, when the component unmounts.
+  useEffect(() => {
     return () => {
       for (const url of objectUrlMapRef.current.values()) {
         URL.revokeObjectURL(url);
       }
       objectUrlMapRef.current.clear();
     };
-  }, [imageFiles]);
+  }, []);
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
@@ -172,8 +178,8 @@ export function NewsMediaUploads({
                   type="button"
                   onClick={() => removeImage(index)}
                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="إزالة الصورة"
-                  aria-label="إزالة الصورة"
+                  title={t("removeImage")}
+                  aria-label={t("removeImage")}
                 >
                   <X className="w-3 h-3" />
                 </button>

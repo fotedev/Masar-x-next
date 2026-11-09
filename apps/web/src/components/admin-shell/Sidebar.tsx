@@ -13,7 +13,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { adminNavGroups, type AdminTabId } from "@/lib/admin-shell/navigation";
-import { usePathname, useRouter } from "@/navigation";
+import { useRouter } from "@/navigation";
+import { useSwitchLocale } from "@/hooks/useSwitchLocale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminTheme } from "@/hooks/admin-shell/useAdminTheme";
 import { useAdminShell } from "./AdminShellProvider";
@@ -59,21 +60,15 @@ export function Sidebar({
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useAdminTheme();
   const router = useRouter();
-  const pathname = usePathname();
   const locale = useLocale();
 
   const isMobile = variant === "mobile";
   const rail = !isMobile && state.collapsed;
   const isDoctor = adminRole === "doctor";
 
-  const nextLocale = locale === "ar" ? "en" : "ar";
-  // <html lang/dir> is server-rendered; flip it immediately so the sidebar
-  // follows a soft locale switch without a full reload.
-  const switchLocale = () => {
-    document.documentElement.lang = nextLocale;
-    document.documentElement.dir = nextLocale === "ar" ? "rtl" : "ltr";
-    router.replace(pathname, { locale: nextLocale });
-  };
+  // Shared soft-locale switch (spec 041 P1.7) — same implementation as the
+  // header/mobile toggles.
+  const switchLocale = useSwitchLocale();
   const email = user?.email ?? "";
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) || email;

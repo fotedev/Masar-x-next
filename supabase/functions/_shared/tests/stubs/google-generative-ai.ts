@@ -1,5 +1,5 @@
 /**
- * Offline test double for `https://esm.sh/@google/generative-ai@0.21.0`.
+ * Offline test double for `https://esm.sh/@google/generative-ai@0.24.1`.
  * Returns canned OCR text; records call count for assertions.
  */
 export class GoogleGenerativeAI {
