@@ -1,0 +1,19 @@
+{
+  "viewMyPlan": "عرض باقتي",
+  "title": "اشتراكي في TRW",
+  "activeMembership": "اشتراك نشط",
+  "activeMembershipDesc": "لديك وصول كامل إلى المحتوى المصرح به.",
+  "planType": "نوع الباقة",
+  "standardAccess": "وصول قياسي",
+  "grantedAt": "تاريخ المنح",
+  "status": "الحالة",
+  "verifiedActive": "موثّق ونشط",
+  "expiresAt": "تاريخ الانتهاء",
+  "neverExpires": "لا ينتهي (دائم)",
+  "membershipBenefits": "مزايا الاشتراك",
+  "benefits": {
+    "fullAccess": "وصول كامل إلى التصنيفات",
+    "exclusiveContent": "محتوى الكورسات الحصري",
+    "progressTracking": "متابعة تقدمك الشخصية"
+  }
+}
