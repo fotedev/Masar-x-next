@@ -331,7 +331,11 @@ export default function SubjectDetailScreen() {
                 t("mobile", "tabs.summaries"),
                 selectedGroups.summaries.length === 0,
                 renderRows(selectedGroups.summaries, (row) => {
-                  if (row.pdf_url) openLink(row.pdf_url);
+                  // Wire SummaryDetail (spec 042): the finished screen was
+                  // mounted but unreachable — rows opened the raw PDF,
+                  // bypassing the detail view and its reviews entirely. The
+                  // PDF link remains available inside the detail screen.
+                  navigation.navigate("SummaryDetail", { summaryId: row.id });
                 }, t("mobile", "subjectDetail.open")),
               )}
               {renderGroup(
@@ -363,7 +367,9 @@ export default function SubjectDetailScreen() {
               </Text>
               {grouped.unclassified.summaries.length > 0
                 ? renderRows(grouped.unclassified.summaries, (row) => {
-                    if (row.pdf_url) openLink(row.pdf_url);
+                    // Wire SummaryDetail (spec 042) — same rationale as the
+                    // classified-group handler above.
+                    navigation.navigate("SummaryDetail", { summaryId: row.id });
                   }, t("mobile", "subjectDetail.open"))
                 : null}
               {grouped.unclassified.videos.length > 0

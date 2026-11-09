@@ -48,7 +48,6 @@ export const MESSAGE_NAMESPACES = [
   "footer",
   "header",
   "home",
-  "instructorDashboard",
   "lectureSelect",
   "materials",
   "metadata",
@@ -73,6 +72,7 @@ export const MESSAGE_NAMESPACES = [
   "summaries",
   "theme",
   "titlebar",
+  "trwAccess",
   "trwRedeem",
   "waitlist",
 ] as const;
