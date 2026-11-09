@@ -545,20 +545,18 @@ jobs:
 
   # ---------------------------------------------------------------------
   # Dependency audit (spec 041 R22): the 2026-11-07 review found zero
-  # dependency-audit coverage in any of the 4 workflows. REPORT-ONLY for
-  # now, mirroring the fallow precedent: the first run measured 59
-  # production-dependency advisories (35 high / 1 critical — @xmldom/xmldom
-  # 15, tar 12, node-forge 12, postcss 4, rest singletons), so gating on
-  # severity would redden every PR before a single one is fixed. Flip
-  # continue-on-error off and keep --audit-level=high once the debt is
-  # burned down (owner ratification; the per-package table in the run log
-  # is the burn-down checklist).
+  # dependency-audit coverage in any of the 4 workflows. Started REPORT-ONLY
+  # (the first run measured 59 prod advisories — gating would have reddened
+  # every PR); spec 042 (#209 + #215) burned it down to 7 with 0 criticals,
+  # so this is now a CRITICAL-ONLY GATE: fails on any critical advisory.
+  # high stays report-visible (3 deferred highs: image-size x2 build-time,
+  # zod compiler-plugin, node-forge unpatched — see specs/042). Raise to
+  # --audit-level=high when the deferred set clears (Expo SDK 53 upgrade).
   # ---------------------------------------------------------------------
   deps-audit:
-    name: deps-audit (report-only)
+    name: deps-audit (critical gate)
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -572,5 +570,5 @@ jobs:
           cache: 'pnpm'
 
       # Reads the lockfile only — no install needed.
-      - name: Audit production dependencies (report-only)
-        run: pnpm audit --prod --audit-level=low
+      - name: Audit production dependencies (critical gate)
+        run: pnpm audit --prod --audit-level=critical
