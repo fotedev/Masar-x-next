@@ -567,7 +567,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: 'pnpm'
+          # No cache:'pnpm' here — this job never installs, so no pnpm store
+          # ever materializes and setup-node's save step errors the job
+          # ("path specified for caching does not exist").
 
       # Reads the lockfile only — no install needed.
       - name: Audit production dependencies (critical gate)
