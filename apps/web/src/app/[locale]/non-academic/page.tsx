@@ -6,7 +6,8 @@ import useTRWMembership from "@/hooks/trw/useTRWMembership";
 import { TRWAccessGate } from "@/components/trw/TRWAccessGate";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldAlert, Loader2, ArrowRight, BookOpen } from "lucide-react";
+import { ShieldAlert, Loader2, ArrowRight, BookOpen, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -27,6 +28,7 @@ type TRWCategory = {
 
 export default function NonAcademicPage() {
   const router = useRouter();
+  const tTrwAccess = useTranslations("trwAccess");
   const { data: membership, isLoading: membershipLoading } = useTRWMembership();
   const { data: categories, isLoading: isLoadingCats } = useTRWCategories();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
@@ -89,6 +91,15 @@ export default function NonAcademicPage() {
           <p className="text-slate-600 dark:text-slate-400 text-lg">
             Here you will teach you how to master it
           </p>
+          {/* Wire trw/my-access (spec 042): the redeem flow had no
+              discoverable "view my plan/expiry" surface — this is it. */}
+          <Link
+            href="/trw/my-access"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline mt-3"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            {tTrwAccess("viewMyPlan")}
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
