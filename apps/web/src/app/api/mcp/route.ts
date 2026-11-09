@@ -6,7 +6,8 @@ import { logger } from "@/lib/logger";
 // Round-B security fix (subagent_01 gap 10): bearer auth + scoped CORS.
 let mcpSecretWarned = false;
 
-function getAllowedOrigin(request: Request): string {
+// spec 040: exported for unit tests — behavior unchanged.
+export function getAllowedOrigin(request: Request): string {
   const configured =
     process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
   if (configured) return configured.replace(/\/$/, "");
@@ -22,7 +23,8 @@ function getAllowedOrigin(request: Request): string {
   return new URL(request.url).origin;
 }
 
-function isAuthorized(request: Request): boolean {
+// spec 040: exported for unit tests — behavior unchanged.
+export function isAuthorized(request: Request): boolean {
   const secret = process.env.VERCEL_MCP_BYPASS_SECRET;
   // Production gate (fail-closed): missing secret in production = unauthorized.
   if (!secret && process.env.NODE_ENV === "production") {

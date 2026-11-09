@@ -69,7 +69,9 @@ const extractTextFromContentArray = (content: unknown): string => {
   return '';
 };
 
-const safeStringify = (value: unknown): string => {
+// Exported for tests (spec 040) — the conversion is the last-resort text
+// path inside extractPuterChatText and its shape contracts are pinned.
+export const safeStringify = (value: unknown): string => {
   try {
     if (value === null || value === undefined) return '';
     if (typeof value === 'string') return value;

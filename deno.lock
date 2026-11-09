@@ -16,5 +16,13 @@
     "https://deno.land/std@0.168.0/async/tee.ts": "3a47cc4e9a940904fd4341f0224907e199121c80b831faa5ec2b054c6d2eff5e",
     "https://deno.land/std@0.168.0/http/server.ts": "e99c1bee8a3f6571ee4cdeb2966efad465b8f6fe62bec1bdb59c1f007cc4d155",
     "https://esm.sh/@supabase/supabase-js@2.117.1": "99cf17d2470bce11943555fed60fe54cdd642799103df031ace8071b97b5cf78"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:fallow@3.37.0",
+        "npm:pg@^8.18.0"
+      ]
+    }
   }
 }

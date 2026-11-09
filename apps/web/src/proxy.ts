@@ -15,13 +15,15 @@ const routing = defineRouting({
 
 const intlMiddleware = createMiddleware(routing);
 
-function isRedirectResponse(response: NextResponse | null | undefined) {
+// spec 040: exported for unit tests — behavior unchanged.
+export function isRedirectResponse(response: NextResponse | null | undefined) {
   if (!response) return false;
   if (response.headers.has("location")) return true;
   return [301, 302, 303, 307, 308].includes(response.status);
 }
 
-function generateNonce(): string {
+// spec 040: exported for unit tests — behavior unchanged.
+export function generateNonce(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -30,7 +32,8 @@ function generateNonce(): string {
 // isLocalHost lives in ./lib/desktop-host (shared with the desktop Host
 // guard, spec 041 R18).
 
-function getCspHeader(nonce: string, host: string | null = null): string {
+// spec 040: exported for unit tests — behavior unchanged.
+export function getCspHeader(nonce: string, host: string | null = null): string {
   // Use a more robust check for production environment at the edge
   const isProd = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
   const isDev = !isProd;
@@ -131,7 +134,8 @@ function addSecurityHeaders(response: NextResponse, nonce: string, host: string 
 // source response, and re-appending that string collapses Supabase's chunked
 // session cookies (`sb-*-auth-token.0/.1` + verifier) into a single
 // unparseable header (audit H1). `getSetCookie()` returns them individually.
-function appendSetCookies(target: Headers, source: Headers): void {
+// spec 040: exported for unit tests — behavior unchanged.
+export function appendSetCookies(target: Headers, source: Headers): void {
   for (const cookie of source.getSetCookie()) {
     target.append("set-cookie", cookie);
   }

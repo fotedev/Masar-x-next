@@ -10,7 +10,7 @@ interface RecordedCall {
   args: unknown[];
 }
 
-interface SupabaseQueryResult<T = unknown> {
+export interface SupabaseQueryResult<T = unknown> {
   data: T | null;
   error: { message: string; code?: string } | null;
   count?: number | null;

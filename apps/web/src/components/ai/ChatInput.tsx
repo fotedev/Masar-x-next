@@ -262,6 +262,7 @@ export function ChatInput({
             <textarea
               ref={inputRef}
               rows={1}
+              data-testid="chat-input-textarea"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -500,6 +501,7 @@ export function ChatInput({
                 onClick={onSendMessage}
                 disabled={!canSend || isLoading}
                 aria-label={t("send")}
+                data-testid="chat-send-button"
                 type="button"
                 className={`shrink-0 flex items-center justify-center rounded-full transition-all duration-300 w-9 h-9 sm:w-10 sm:h-10 ${
                   !canSend || isLoading

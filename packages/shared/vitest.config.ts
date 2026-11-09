@@ -11,6 +11,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/__tests__/**/*.test.{ts,tsx}'],
     testTimeout: 30_000,
+    // Spec 040: coverage reporter pinned so coverage-summary.json always
+    // exists for the CI artifact (report-only — no thresholds).
+    coverage: { reporter: ['text', 'json-summary'] },
   },
   resolve: {
     alias: [{ find: /^@\//, replacement: `${src}/` }],

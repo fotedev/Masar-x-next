@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "export": "expo export --platform android",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
+    "@vitest/coverage-v8": "2.1.8",
     "@types/react": "^19.2.14",
     "eslint": "^9.39.4",
     "sharp": "^0.35.4",

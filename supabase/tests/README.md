@@ -54,8 +54,20 @@ values ('00000000-0000-0000-0000-0000000000c1', 'RLS harness course',
         '00000000-0000-0000-0000-0000000000a1');
 ```
 
-The `auth.users` insert also creates empty `profiles` rows via the
-`on_auth_user_created` trigger — expected. For real sign-in flows use the
+On a REAL Supabase project the `auth.users` insert also creates empty
+`profiles` rows via the `on_auth_user_created` trigger. The migration chain
+(baseline, spec 031) does NOT recreate that trigger on rebuilt clusters, so
+the seed must create the two profiles itself — `ON CONFLICT DO NOTHING` keeps
+it safe on real Supabase where the trigger already made them:
+
+```sql
+insert into public.profiles (id, full_name) values
+  ('00000000-0000-0000-0000-0000000000a1', 'RLS harness user A'),
+  ('00000000-0000-0000-0000-0000000000a2', 'RLS harness user B')
+on conflict (id) do nothing;
+```
+
+For real sign-in flows use the
 Supabase Auth admin API instead of direct inserts; the harness only needs the
 rows to exist so RLS verdicts are exact (RLS is checked before foreign keys on
 INSERT, so an unsatisfied foreign key would make a negative test
@@ -127,3 +139,44 @@ assertions are never inconclusive).
 * `profiles` are public-read **by design** (migration 002: "Public profiles
   are viewable by everyone"); only profile writes are user-scoped. Same for
   summaries/quizzes/videos/files reads (public read, admin-managed writes).
+---
+
+# rpc-verify.sql — RPC behavior harness (spec 040)
+
+Companion to `rls-verify.sql`: that file covers WHO may touch WHAT (policies);
+`rpc-verify.sql` covers WHAT the server-authoritative functions DO.
+
+| Section | Function(s) | What it pins |
+|---|---|---|
+| 1 | `norm_subject_name(v text)` | spec 038 normalizer vectors (the JS twin in sync-reconcile must stay in lockstep) |
+| 2 | `check_rate_limit(...)` | fixed-window math, exact `max_requests` boundary, no-increment-when-blocked, stale-window purge, per-endpoint independence |
+| 3 | `finish_quiz_attempt` + `guard_quiz_attempt_grading` trigger | auth/ownership/unknown-id refusals (42501), client-side tampering blocked, authoritative re-grade overwrites dirty client score, answers payload ordered, time fallback, idempotent `already_finished` retry |
+| 4 | `trw_redeem_access_code` | auth guard (structured error, not exception), unknown/expired/inactive rejection, duplicate rejection, membership upsert (revoke reset), redemption ledger, used_count + atomic auto-deactivation at exhaustion, audit row, NULL-duration permanent membership |
+
+Every mutating scenario runs inside `BEGIN ... ROLLBACK` — nothing survives a
+run. 53 assertions total; a violation raises `RPC-VERIFY FAILED: ...` and
+aborts under `-v ON_ERROR_STOP=1`.
+
+## Running it
+
+The harness needs a PostgreSQL 17 built from this repo's migration chain
+(`supabase/migrations/README.md`). On vanilla PG the chain requires the
+`auth`-schema prelude first:
+
+```bash
+psql "$DB_URL" -v ON_ERROR_STOP=1 \
+  -c "create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls; create role authenticator nologin noinherit; create role supabase_storage_admin nologin bypassrls; create role dashboard_user nologin;"
+psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/prelude.sql
+for f in supabase/migrations/*.sql; do psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$f"; done
+psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rpc-verify.sql
+```
+
+`prelude.sql` (spec 040) recreates the lost spec 031 `tools/prelude.sql`: the
+`auth` schema (`users` table + `auth.uid()`/`auth.role()`/`auth.jwt()` driven
+by `request.jwt.claims`). It is idempotent and guarded — a no-op on a real
+Supabase project. The harness impersonates users via `request.jwt.claims`
+(`SET LOCAL`-style per scenario), not via role switching: the RPCs are
+SECURITY DEFINER, so claim-setting is the caller context.
+
+Verified end-to-end 2026-11-08 on a disposable portable PostgreSQL 17.6.1
+(theseus-rs binaries) rebuilt from the full migration chain.
