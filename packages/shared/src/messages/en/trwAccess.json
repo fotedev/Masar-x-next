@@ -1,0 +1,19 @@
+{
+  "viewMyPlan": "View my plan",
+  "title": "My TRW Access",
+  "activeMembership": "Active Membership",
+  "activeMembershipDesc": "You have full access to authorized content.",
+  "planType": "Plan Type",
+  "standardAccess": "Standard Access",
+  "grantedAt": "Granted At",
+  "status": "Status",
+  "verifiedActive": "Verified & Active",
+  "expiresAt": "Expires At",
+  "neverExpires": "Never (Permanent)",
+  "membershipBenefits": "Membership Benefits",
+  "benefits": {
+    "fullAccess": "Full Access to Categories",
+    "exclusiveContent": "Exclusive Course Content",
+    "progressTracking": "Personal Progress Tracking"
+  }
+}

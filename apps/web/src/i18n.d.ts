@@ -42,7 +42,7 @@ type Messages = {
   subjectsTab: typeof import("./messages/ar/subjectsTab.json");
   summaries: typeof import("./messages/ar/summaries.json");
   theme: typeof import("./messages/ar/theme.json");
-  trw: typeof import("./messages/ar/trw.json");
+  trwAccess: typeof import("./messages/ar/trwAccess.json");
   trwRedeem: typeof import("./messages/ar/trwRedeem.json");
   waitlist: typeof import("./messages/ar/waitlist.json");
 };
