@@ -75,8 +75,8 @@ describe('shared i18n registry parity', () => {
 
 describe('full per-key ar/en parity (every leaf, every namespace)', () => {
   it.each([...MESSAGE_NAMESPACES])('%s: same key set in both locales', (ns) => {
-    const arKeys = flatten(messages.ar[ns]).sort();
-    const enKeys = flatten(messages.en[ns]).sort();
+    const arKeys = flatten((messages.ar as Record<string, unknown>)[ns]).sort();
+    const enKeys = flatten((messages.en as Record<string, unknown>)[ns]).sort();
     const arOnly = arKeys.filter((k) => !enKeys.includes(k));
     const enOnly = enKeys.filter((k) => !arKeys.includes(k));
     expect(
@@ -92,7 +92,7 @@ describe('full per-key ar/en parity (every leaf, every namespace)', () => {
   it.each([...MESSAGE_NAMESPACES])(
     '%s: non-empty leaves and identical {placeholder} sets per key',
     (ns) => {
-      const arKeys = flatten(messages.ar[ns]);
+      const arKeys = flatten((messages.ar as Record<string, unknown>)[ns]);
       expect(arKeys.length, `${ns} is empty in ar`).toBeGreaterThan(0);
       for (const key of arKeys) {
         // Flat-key lookup first, then dot-path walk — same as t().
@@ -107,8 +107,8 @@ describe('full per-key ar/en parity (every leaf, every namespace)', () => {
             table,
           );
         };
-        const arValue = get(messages.ar[ns]);
-        const enValue = get(messages.en[ns]);
+        const arValue = get((messages.ar as Record<string, unknown>)[ns]);
+        const enValue = get((messages.en as Record<string, unknown>)[ns]);
         expect(arValue, `${ns}.${key} empty in ar`).not.toBe('');
         expect(enValue, `${ns}.${key} empty in en`).not.toBe('');
         expect(
