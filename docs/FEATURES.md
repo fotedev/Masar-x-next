@@ -1,5 +1,5 @@
 # Features — Masar X
-> Last updated: 2026-09-22
+> Last updated: 2026-11-07
 > Status: `[X]` Complete · `[-]` In Progress · `[!]` Blocked · `[ ]` Planned
 > Brand order (see `docs/BRANDING.md`): subjects & materials → lectures → quizzes → courses → summaries (one part of the system) → AI.
 
@@ -14,7 +14,7 @@
 - `[X]` Auth guard on admin dashboard and onboarding gate for new users
 - `[X]` Profile sync from Supabase Auth to custom profiles table (`/api/auth/sync`)
 - `[X]` Open redirect protection on auth callback — checks for `://`, `//` patterns
-- `[-]` Rate limiting — in-memory only, resets on Vercel cold starts (`src/lib/rate-limit.ts:28`)
+- `[X]` Rate limiting — pluggable durable backends: Upstash Redis REST primary, Supabase REST fallback, in-memory last resort; fail-open (`src/lib/rate-limit.ts`)
 
 ## Academic Onboarding
 - `[X]` Mandatory specialization selection (academic level + semester) on first login (`src/app/[locale]/onboarding/academic/page.tsx`)
@@ -32,7 +32,12 @@
 - `[X]` Summary detail view with PDF viewer, contributor info, ratings (`src/app/[locale]/summaries/[summaryId]/page.tsx`)
 - `[X]` Admin moderation workflow — pending → approved/rejected (`src/components/admin/SummariesTab.tsx`)
 - `[X]` Appeal system for rejected content
-- `[!]` OCR processing — `process-pdf` Edge Function does not exist in `supabase/functions/` (broken)
+- `[!]` OCR processing — `process-pdf` Edge Function present in `supabase/functions/process-pdf/` (handler split for testability); end-to-end flow unverified
+
+## Materials Library & Schedules
+- `[X]` `/materials` exam library — subject grid, group chips, and Drive file viewer backed by a static manifest (`src/app/[locale]/materials/page.tsx`)
+- `[X]` 17 real exams with 242 verified questions seeded to production via idempotent, title-guarded migrations (`supabase/migrations/20261103222513_seed_real_exams.sql` … `20261103223556_seed_real_exams_part2c.sql`)
+- `[X]` `/schedules` weekly cohort timetables (years 1–4) rendered from static gviz-extracted data (`src/app/[locale]/schedules/page.tsx`, `src/lib/schedules/`)
 
 ## Courses
 - `[X]` Course catalog with search, filtering (all/free/paid), and animated cards (`src/app/[locale]/courses/page.tsx`)
@@ -51,6 +56,7 @@
 - `[X]` Quiz play interface with timer, answer tracking, auto-save (`src/components/QuizPlayer.tsx`)
 - `[X]` KaTeX math rendering in quiz questions (`src/components/quiz/PreloadKatex.tsx`)
 - `[X]` Quiz attempts history with expandable question details, score, time tracking (`src/app/[locale]/quiz-attempts/page.tsx`)
+- `[X]` Server-authoritative grading — `finish_quiz_attempt` RPC re-grades attempts with a `quiz_attempts` score-guard trigger (`supabase/migrations/20261031000000_baseline.sql`)
 - `[X]` Quiz generation from AI chat summaries
 - `[X]` Quiz page sub-hooks — useQuizzesData, useQuizzesFilters, useQuizzesModals, useQuizFormState, useQuizImport (`src/app/[locale]/quizzes/_hooks/`)
 
@@ -183,7 +189,7 @@
 - `[X]` Storage upload restrictions — authenticated users only for summaries-pdfs
 - `[X]` PII moved from localStorage to sessionStorage (`src/lib/storage-cleanup.ts`)
 - `[X]` Brute-force attempt tracking in sessionStorage
-- `[-]` Rate limiting — in-memory only, not distributed across serverless instances
+- `[X]` Distributed rate limiting via Upstash Redis sliding-window backend (Supabase REST and in-memory fallbacks) (`src/lib/rate-limit.ts`)
 - `[!]` `sentry-example-api` route intentionally throws errors in production — no actual Sentry integration
 
 ## Analytics & Monitoring
@@ -191,6 +197,7 @@
 - `[X]` Admin analytics queries — user counts, message counts, content stats (`src/lib/analyticsHelpers.ts`)
 - `[X]` Database health check endpoint (`/api/health/db`)
 - `[X]` RPC-based admin analytics summary (`get_admin_analytics_summary`)
+- `[X]` Upstash Redis product metrics — file downloads, AI usage, daily active users (HyperLogLog); fail-open, and the legacy `analytics` table no longer receives rows (`src/lib/metrics.ts`)
 - `[-]` Logger — console-only, no real monitoring backend wired up (`src/lib/logger.ts:31`)
 - `[-]` Dual analytics services — `analytics.ts` and `analyticsHelpers.ts` should be consolidated
 - `[ ]` Sentry integration — example API exists but no `@sentry/nextjs` dependency, logger import commented out
@@ -231,17 +238,18 @@
 - `[X]` Upload avatar / Delete avatar — Cloudinary avatar management (`supabase/functions/upload-avatar/`, `delete-avatar/`)
 - `[X]` Delete file — ownership enforcement (`supabase/functions/delete-file/`)
 - `[X]` Summarize chat — AI-powered chat summarization (`supabase/functions/summarize-chat/`)
-- `[!]` process-pdf — referenced in OCR flow but file missing from `supabase/functions/`
+- `[!]` process-pdf — handler-based function present in `supabase/functions/process-pdf/`; end-to-end flow unverified
 - `[!]` gemini-chat — legacy dead reference from pre-Puter.js migration
 
 ## Database
 - `[X]` 20+ tables — profiles, admins, summaries, courses, enrollments, quizzes, quiz_answers, quiz_attempts, reviews, news, appeals, notifications, messages, ai_summaries, chats, trw_categories, trw_courses, trw_memberships, trw_access_codes, trw_progress, audit_logs, system_logs, rate_limits, analytics_events, platform_settings, password_reset_tokens
 - `[X]` Views — review_details, summaries_with_ratings
-- `[X]` 8 numbered migrations (001-008) + ~30 archived in `migrations.old/`
+- `[X]` Timestamped SQL migrations in `supabase/migrations/` (baseline, storage buckets, content seed chain); legacy numbered chain (001–019) archived in `supabase/migrations-archive/numbered-chain-001-019/`
+- `[X]` Subject anchoring — `subject_id` FK columns with name-normalized backfill and `sync_subject_id()` triggers on `subject_lectures`, `summaries`, `quizzes` (`supabase/migrations/20261107030416_subject_anchoring.sql`)
 - `[X]` Seed data for development (`supabase/seed.sql`)
 - `[X]` Drizzle schema — profiles, subjects, subjectLectures, videos, files (`src/lib/admin-db/schema.ts`)
 - `[!]` `schema_dump.sql` is empty (0 lines) — no database documentation
-- `[!]` `src/types/generated-database.ts` is empty (0 lines)
+- `[X]` Generated database types regenerated at `packages/shared/src/types/database.generated.ts` (2892 lines; refreshed in spec 038)
 - `[!]` `src/types/supabase.ts` is empty (0 lines)
 - `[!]` `analytics`, `system_logs`, `platform_settings` tables used in code but not defined in `src/types/database.ts`
 
@@ -262,13 +270,12 @@
 - `[X]` TRW hooks: useTRWMembership, useTRWCourses, useTRWCourseDetails, useTRWCategories, useTRWProgress, useRedeemAccessCode
 
 ## Type Definitions
-- `[X]` Database types (`src/types/database.ts` — 735 lines)
+- `[X]` Cross-platform database types in `packages/shared/src/types/` — hand-written `database.ts` + generated `database.generated.ts` (2892 lines); `src/types/database.ts` is a backward-compat re-export shim
 - `[X]` Component prop types, API response types (`src/types/`)
-- `[!]` `src/types/generated-database.ts` — empty file, unused
 - `[!]` `src/types/supabase.ts` — empty file, unused
 
 ## Constants & Config
 - `[X]` Subject definitions (`src/constants/subjects.config.ts`) — all Arabic, no English
 - `[X]` Academic constants (`src/constants/academic.ts`)
-- `[X]` Tailwind config with brand colors and RTL plugin (`tailwind.config.js`)
+- `[X]` Tailwind v4 CSS-first configuration with brand tokens (`src/index.css` — `@import "tailwindcss"` + `@theme`)
 - `[X]` Next.js config with webpack aliases for next-intl (`next.config.mjs`)

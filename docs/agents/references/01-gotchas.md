@@ -1,5 +1,5 @@
 <!--
-  Masar X — Project Gotchas (verified 2026-09-05)
+  Masar X — Project Gotchas (verified 2026-09-05; partially re-verified 2026-11-07)
   Full gotcha reference extracted from AGENTS.md (which now only indexes this).
   Each gotcha is dated, has a "Why" rationale, and an action checklist.
   Read by topic; never read this entire file unless debugging a class of issues.
@@ -23,17 +23,18 @@
 ## 1. next-intl `useRouter` from `@/navigation` leaks into the server bundle
 
 - **Trigger:** You call `router.push(...)` from a page component at the **top of the component body** (not inside `useEffect` or event handlers), using the `useRouter` re-exported from `@/navigation`.
-- **Why:** `src/navigation.ts` re-exports `useRouter` from `next-intl/navigation` via `createNavigation(routing)`. Without `"use client"` at the top of `src/navigation.ts`, webpack 16.2.1 treats the re-exported `useRouter` as server-safe and hoists it into the server bundle, throwing `useRouter is not supported in Server Components`. Additionally `next-intl@4.9.0` + `next@16.2.1` has a webpack dynamic-import warning in `dist/esm/production/extractor/format/index.js`.
+- **Why:** `src/navigation.ts` re-exports `useRouter` from `next-intl/navigation` via `createNavigation(routing)`. Without `"use client"` at the top of `src/navigation.ts`, webpack under next@16.4.3 treats the re-exported `useRouter` as server-safe and hoists it into the server bundle, throwing `useRouter is not supported in Server Components`. Additionally `next-intl@^4.14.7` + `next@16.4.3` has a webpack dynamic-import warning in `dist/esm/production/extractor/format/index.js` (versions as of 2026-11-07).
 - **Fix:**
   1. Keep `"use client"` at the top of `src/navigation.ts` (commit `bd8a1d3`).
-  2. In pages that call `useRouter()` at the top of the body (currently only `login/page.tsx` and `signup/page.tsx`), import directly from `next/navigation` and prepend the locale manually: `router.push(\`/${locale}/${page}\`)`. See commit `122c692`.
+  2. In pages that call `useRouter()` at the top of the body, import directly from `next/navigation` and prepend the locale manually: `router.push(\`/${locale}/${page}\`)`. See commit `122c692`.
+    - Page audit (verified 2026-11-07 — re-verify pages before trusting this list): `[locale]/login/page.tsx` and `[locale]/signup/page.tsx` follow the safe pattern (import from `next/navigation`); `[locale]/quiz-attempts/page.tsx` and `[locale]/subjects/page.tsx` still import `useRouter` from `@/navigation`.
 - **Symptom:** Build fails with `useRouter is not supported in Server Components` or the dev server throws on render of the affected page.
 
-## 2. BOM (U+FEFF) in `@supabase/ssr@0.8.0` cookies breaks undici
+## 2. BOM (U+FEFF) in `@supabase/ssr` cookies breaks undici
 
-- **Trigger:** Next.js 16 + `@supabase/ssr@0.8.0` server emits Set-Cookie values that occasionally start with U+FEFF (UTF-8 BOM).
+- **Trigger:** Next.js 16 + `@supabase/ssr` server emits Set-Cookie values that occasionally start with U+FEFF (UTF-8 BOM). (First observed on 0.8.0; current version is ^0.12.7, verified 2026-11-07.)
 - **Why:** `undici`'s `Headers.set` throws `TypeError: Cannot convert argument to a ByteString because the character at index 0 has a value of 65279`. This bubbles up as 500 on every page that calls `supabase.auth.getUser()` (the entire `/[locale]` layout profile fetch + `/api/auth/sync`).
-- **Fix:** In `src/lib/supabase/server.ts`, strip U+FEFF from both `getAll()` (existing cookies) and `setAll()` (new cookies). See commits `3cd749e` and `efe0059`.
+- **Fix:** In `src/lib/supabase/server.ts`, strip U+FEFF from both `getAll()` (existing cookies) and `setAll()` (new cookies). The strip is still present as of 2026-11-07. See commits `3cd749e` and `efe0059`.
 - **Symptom:** Grep Vercel logs for `ByteString` or `65279`, especially under `.next/server/chunks/6350.js` (supabase ssr chunk).
 
 ## 3. OAuth callback route MUST live under `[locale]`
@@ -100,7 +101,7 @@
 
 - **Trigger:** `pnpm --filter desktop exec electron-builder install-app-deps` fails with `Cannot compute electron version from installed node modules`.
 - **Why:** `electron-builder install-app-deps` needs an exact version (no `^`, no `~`).
-- **Fix:** Use `"electron": "32.2.0"` (exact) in `apps/desktop/package.json`.
+- **Fix:** Use `"electron": "44.4.5"` (exact) in `apps/desktop/package.json`.
 
 ## 12. Vercel: `cache purge` + `redeploy` for pnpm path-format mismatches
 
@@ -111,7 +112,7 @@
 ## 13. Cloudflare MCPs documented in AGENTS.md are NOT loaded in MiniMax Code sessions
 
 - **Trigger:** You try to use `cloudflare-api` / `cloudflare-docs` / `cloudflare-browser` MCPs.
-- **Why:** Those are configured in the OpenCode profile (`C:\Users\FOTE\.config\opencode\opencode.jsonc`) — a separate config from MiniMax Code's MCP config at `C:\Users\FOTE\.minimax\mcp\mcp.json` (verified 2026-08-24: only `opencode`, `matrix`, `playwright`, `cu`, `trash` are loaded).
+- **Why:** Those are configured in the OpenCode profile (`C:\Users\FOTE\.config\opencode\opencode.jsonc`) — a separate config from MiniMax Code's MCP config at `C:\Users\FOTE\.minimax\mcp\mcp.json` (verified 2026-11-07: ~14 servers enabled — the original `opencode`, `matrix`, `playwright`, `cu`, `trash` plus `supabase` ×2, `github`, `vercel`, `sentry`, `upstash`, `cloudinary`, `obsidian`, `chrome-devtools`; the `cloudflare-api` / `cloudflare-docs` / `cloudflare-browser` trio is still `enabled: false`).
 - **Fix:** Run `mavis mcp list` at session start. If it returns `{"servers": []}`, no MCPs are available regardless of what AGENTS.md claims. Fall back to direct HTTP calls or the corresponding CLI (`wrangler` for Cloudflare, `vercel` for Vercel, `gh` for GitHub, `supabase` for Supabase). Confirm tool availability with `Get-Command <tool>` before relying on it.
 
 ## 14. Windows env var propagation: `setx` and `[Environment]::SetEnvironmentVariable(..., "User")` do NOT update running processes
@@ -144,11 +145,11 @@
 ## 17. `electron-builder` default `artifactName` includes the version
 
 - **Trigger:** You hardcode `/releases/latest/download/<bare-name>` in the website.
-- **Why:** `electron-builder` defaults `artifactName` to `"${productName}-${version}-${arch}.${ext}"`. GitHub's `/releases/latest/download/<name>` endpoint is **literal** — no fuzzy matching, no strip-the-version. `.../Masar-X-Setup-x64.exe` 404s because the actual file is `Masar-X-Setup-0.5.8-x64.exe`.
+- **Why:** `electron-builder` defaults `artifactName` to `"${productName}-${version}-${arch}.${ext}"`. GitHub's `/releases/latest/download/<name>` endpoint is **literal** — no fuzzy matching, no strip-the-version. `.../Masar-X-Setup-x64.exe` 404s because the actual file is `Masar-X-Setup-0.5.8-x64.exe`. (The 0.5.8-suffixed name is historical/illustrative — since v0.5.9 this project strips `${version}` from `artifactName`; see Fix 1.)
 - **Fix (two layered defenses in this project):**
   1. `electron-builder.yml` strips `${version}` from `artifactName` (top-level, `nsis`, `portable`). From v0.5.9+, file names are stable across versions.
   2. The website's `getLatestReleaseUrls()` in `apps/web/src/lib/github-releases.ts` queries the GitHub Releases API directly, falls back to parsing `latest.yml`. Caching: `next: { revalidate: 3600 }`.
-- **Diagnostic:** `gh api repos/fotedev/Masar-x-next/releases/latest --jq '.assets[].name'` — if names contain `-0.5.8-` but your URL doesn't, that's the gotcha. (Old references to `fotedev/masarx-releases` in git history mean the archived artifacts repo.)
+- **Diagnostic:** `gh api repos/fotedev/Masar-x-next/releases/latest --jq '.assets[].name'` — if names contain a version suffix but your URL doesn't, that's the gotcha. (Verified 2026-11-07: `electron-builder.yml`'s `artifactName` is version-stripped, so current asset names carry no version; version-suffixed examples here illustrate the upstream default only. Old references to `fotedev/masarx-releases` in git history mean the archived artifacts repo.)
 
 ## 18. `pnpm/action-setup@v4` cannot find `packageManager` when source is checked out into a subdirectory
 
@@ -197,7 +198,7 @@
 
 - **Trigger:** You add a dependency (`pnpm --filter web add <pkg>`), the lockfile updates correctly, but `node_modules/<pkg>/package.json` is never created. `pnpm` exits 0. The new dep fails `TS2307: Cannot find module '<pkg>'` despite being in the lockfile.
 - **Why:** The project pins `pnpm@9.15.4` (root `package.json#packageManager`). pnpm 9 uses the legacy `onlyBuiltDependencies` ARRAY syntax in `pnpm-workspace.yaml`. The newer `allowBuilds` MAP syntax is pnpm v11+ only. When `allowBuilds` is present in a pnpm 9 workspace config, pnpm parses it silently, treats every entry as `false` (or fails to evaluate the map), and effectively disables postinstall approval for **every** native module in the workspace. On a workspace with `1916+` transitive packages (incl. `electron`, `better-sqlite3`, `sharp`, `@swc/core`, `@parcel/watcher`, `esbuild`, `unrs-resolver`), pnpm then hangs in postinstall resolution for 10+ minutes at ~1.5 GB constant RAM. The output appears to "complete" (exit 0) because the lockfile write succeeded, but the disk tree is half-written.
-- **Fix:** Use `onlyBuiltDependencies: [...]` (array) in `pnpm-workspace.yaml` for `pnpm 9`. Current content (verified 2026-09-05):
+- **Fix:** Use `onlyBuiltDependencies: [...]` (array) in `pnpm-workspace.yaml` for `pnpm 9`. Current content (verified 2026-11-07):
   ```yaml
   onlyBuiltDependencies:
     - sharp
@@ -206,7 +207,7 @@
     - esbuild
     - unrs-resolver
     - electron
-    - better-sqlite3
+    - "@sentry/cli"
   ```
 - **When upgrading to pnpm v11+:** swap back to the `allowBuilds:` map. Verify the swap with `pnpm install --frozen-lockfile` (no add/remove) before merging — confirm that `electron`'s postinstall binary download completes and that `node_modules/electron/dist/electron.exe` exists.
 - **Symptom / how to diagnose:**

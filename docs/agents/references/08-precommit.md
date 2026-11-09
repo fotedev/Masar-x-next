@@ -7,8 +7,8 @@ Before opening a PR:
 - [ ] `pnpm test` passes
 - [ ] No hardcoded Arabic strings added (grep `apps/web/src --include='*.tsx' --include='*.ts'` for non-comment lines containing Arabic chars)
 - [ ] No new deps without updating root `pnpm-lock.yaml` via `pnpm install`
-- [ ] If the task hits a §10 trigger: a spec exists in `specs/NNN_name/` and was approved by the user **before** code changes
-- [ ] If you touched `supabase/`: new migration uses the next sequential `NNN_` number + file order stays chronological
+- [ ] If the task hits a §10 trigger: a spec exists in a numbered `specs/` dir (separators vary, e.g. `038-subject-anchoring`) and was approved by the user **before** code changes
+- [ ] If you touched `supabase/`: new migration is timestamped `YYYYMMDDHHMMSS_name.sql` in `supabase/migrations/` (legacy sequential `NNN_` chain archived at `supabase/migrations-archive/numbered-chain-001-019/`)
 - [ ] If you touched `ThemeScript.tsx`: re-read [01-gotchas.md](./01-gotchas.md) §19 before any change
 
 **Back to:** [AGENTS.md](../../../AGENTS.md)

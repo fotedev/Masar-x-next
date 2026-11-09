@@ -1,6 +1,8 @@
 # Masar X — Performance Audit (2026-11-02)
 
-**Scope:** monorepo-wide (web, Supabase backend, edge functions, desktop, mobile) · **Method:** production build + local Lighthouse runs + 20 parallel domain auditors + coordinator spot-checks · **Status:** analysis & docs only — zero code changed, nothing committed.
+**Scope:** monorepo-wide (web, Supabase backend, edge functions, desktop, mobile) · **Method:** production build + local Lighthouse runs + 20 parallel domain auditors + coordinator spot-checks · **Status:** analysis & docs only at time of writing — zero code changed; docs committed in PR #175 (`a4b77b4`).
+
+> **Update (2026-11-07):** remediation driven by this audit has landed — P0 fixes (PRs #175/#176), Wave-1A quizzes-SSR + materials wall (PR #177), Wave-1B news CLS + port coordination (PR #178), Wave-1C chat interaction + quizzes memoization (PR #186); edge functions remain owner-owned and remaining waves/findings are open. Wave-by-wave status: [enhancement-plan.md](./enhancement-plan.md).
 
 ---
 
