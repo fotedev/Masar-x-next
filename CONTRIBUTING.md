@@ -10,6 +10,7 @@ Thanks for contributing. This document covers the workflows specific to this mon
 - [Adding a new shared package](#adding-a-new-shared-package)
 - [Adding a new user story](#adding-a-new-user-story)
 - [Before you open a PR](#before-you-open-a-pr)
+- [Licensing](#licensing)
 
 ## Development setup
 
@@ -89,3 +90,9 @@ Open your PR against `main` using the [PR template](./.github/PULL_REQUEST_TEMPL
 - New env vars are documented in `.env.example` (with scope comments) — never committed as real values.
 - Any change touching `packages/shared/` states whether it alters a cross-platform contract.
 - Spec-affecting changes update the relevant files under `specs/`.
+
+## Licensing
+
+- **Code you contribute is licensed under the GNU AGPL-3.0 by submission.** By opening a PR you agree that your contribution is licensed to this project and its users under the terms of [LICENSE](./LICENSE) and [NOTICE.md](./NOTICE.md).
+- **Educational content and the brand are out of scope.** Per [NOTICE.md](./NOTICE.md), exam/question data, course/subject seeds, the materials catalog, and Masar X brand assets are excluded from the AGPL grant. Do not contribute exam or question content unless it is yours to contribute, and never include third-party copyrighted material (PDFs, sheets, screenshots) in any commit.
+- **Third-party dependencies keep their own licenses.** Check a dependency's license before adding it; GPL-family and AGPL-compatible licenses are preferred, and anything that conflicts with AGPL-3.0 needs an owner decision first.
