@@ -37,10 +37,15 @@ Study summaries, interactive courses, quizzes, AI-powered assistance, and comple
 ## Features
 
 - **Learning tools** — study summaries, interactive courses, quizzes, and grade tracking for university students.
+- **Exam materials library** — `/materials` static-manifest library seeded to production: 17 real exams with 242 verified questions.
+- **Cohort schedules** — `/schedules` weekly timetables covering academic years 1–4.
 - **AI-powered assistance** — study help served through a hardened server-side boundary (provider keys never reach a client).
 - **Bilingual by design** — full English/Arabic localization with RTL support via `next-intl`.
 - **Cross-platform** — one Supabase backend and one shared package powering web, desktop, and mobile apps.
 - **Secure foundations** — Row Level Security everywhere, secrets split by runtime, mechanical enforcement in CI (secret scanning, import restrictions, endpoint grep).
+- **Server-authoritative quiz grading** — quiz attempts are graded server-side, so scores cannot be forged from a client.
+- **Subject anchoring** — lectures, summaries, and quizzes are linked to subjects through a database-enforced `subject_id` layer.
+- **Rate limiting and analytics** — Upstash-backed rate limiting and usage analytics on the server boundary.
 - **Type-safe end to end** — generated database types plus Zod schemas shared across every client.
 
 ## Download
