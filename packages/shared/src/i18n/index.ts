@@ -50,7 +50,6 @@ import arFileDropzone from "../messages/ar/fileDropzone.json";
 import arFooter from "../messages/ar/footer.json";
 import arHeader from "../messages/ar/header.json";
 import arHome from "../messages/ar/home.json";
-import arInstructorDashboard from "../messages/ar/instructorDashboard.json";
 import arLectureSelect from "../messages/ar/lectureSelect.json";
 import arMetadata from "../messages/ar/metadata.json";
 import arMobileNav from "../messages/ar/mobileNav.json";
@@ -101,7 +100,6 @@ import enFileDropzone from "../messages/en/fileDropzone.json";
 import enFooter from "../messages/en/footer.json";
 import enHeader from "../messages/en/header.json";
 import enHome from "../messages/en/home.json";
-import enInstructorDashboard from "../messages/en/instructorDashboard.json";
 import enLectureSelect from "../messages/en/lectureSelect.json";
 import enMetadata from "../messages/en/metadata.json";
 import enMobileNav from "../messages/en/mobileNav.json";
@@ -156,7 +154,6 @@ const arMessages = {
   footer: arFooter,
   header: arHeader,
   home: arHome,
-  instructorDashboard: arInstructorDashboard,
   lectureSelect: arLectureSelect,
   metadata: arMetadata,
   mobileNav: arMobileNav,
@@ -221,7 +218,6 @@ const enMessages: Record<I18nNamespace, unknown> = {
   footer: enFooter,
   header: enHeader,
   home: enHome,
-  instructorDashboard: enInstructorDashboard,
   lectureSelect: enLectureSelect,
   metadata: enMetadata,
   mobileNav: enMobileNav,
