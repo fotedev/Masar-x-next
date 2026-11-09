@@ -54,8 +54,20 @@ values ('00000000-0000-0000-0000-0000000000c1', 'RLS harness course',
         '00000000-0000-0000-0000-0000000000a1');
 ```
 
-The `auth.users` insert also creates empty `profiles` rows via the
-`on_auth_user_created` trigger — expected. For real sign-in flows use the
+On a REAL Supabase project the `auth.users` insert also creates empty
+`profiles` rows via the `on_auth_user_created` trigger. The migration chain
+(baseline, spec 031) does NOT recreate that trigger on rebuilt clusters, so
+the seed must create the two profiles itself — `ON CONFLICT DO NOTHING` keeps
+it safe on real Supabase where the trigger already made them:
+
+```sql
+insert into public.profiles (id, full_name) values
+  ('00000000-0000-0000-0000-0000000000a1', 'RLS harness user A'),
+  ('00000000-0000-0000-0000-0000000000a2', 'RLS harness user B')
+on conflict (id) do nothing;
+```
+
+For real sign-in flows use the
 Supabase Auth admin API instead of direct inserts; the harness only needs the
 rows to exist so RLS verdicts are exact (RLS is checked before foreign keys on
 INSERT, so an unsatisfied foreign key would make a negative test

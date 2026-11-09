@@ -100,6 +100,7 @@ supabase/**/.temp/
 supabase/migrations.backup/
 *.sql
 !supabase/migrations/**/*.sql
+!supabase/tests/**/*.sql
 
 # Scripts and Tools
 notebooklm_extractor.js
