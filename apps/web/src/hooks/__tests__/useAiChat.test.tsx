@@ -449,7 +449,8 @@ describe("student_agent gating", () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0].type).toBe("assistant");
-    expect(result.current.messages[0].content).toContain("المادة");
+    // Nudge copy is i18n now (spec 041 #208) — echo mock pins the key.
+    expect(result.current.messages[0].content).toContain("studentAgentNeedsSubject");
   });
 });
 

@@ -108,7 +108,7 @@ describe("QuizPlayerResults", () => {
     const user = userEvent.setup();
     const onSubmitForReview = vi.fn();
     const { rerender } = renderResults({ showSubmitForReview: false });
-    expect(screen.queryByText("إرسال للمراجعة")).toBeNull();
+    expect(screen.queryByText("submitForReview")).toBeNull();
 
     rerender(
       <QuizPlayerResults
@@ -117,7 +117,7 @@ describe("QuizPlayerResults", () => {
         onSubmitForReview={onSubmitForReview}
       />,
     );
-    const submitBtn = screen.getByRole("button", { name: "إرسال للمراجعة" });
+    const submitBtn = screen.getByRole("button", { name: "submitForReview" });
     expect(submitBtn).toBeEnabled();
     await user.click(submitBtn);
     expect(onSubmitForReview).toHaveBeenCalledTimes(1);
@@ -130,10 +130,10 @@ describe("QuizPlayerResults", () => {
       onSubmitForReview: vi.fn(),
     });
     // in-flight label replaces the action label while submitting
-    expect(screen.getByRole("button", { name: "جاري الإرسال" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "submittingForReview" })).toBeDisabled();
 
     rerender(<QuizPlayerResults {...baseProps} showSubmitForReview />);
-    expect(screen.getByRole("button", { name: "إرسال للمراجعة" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "submitForReview" })).toBeDisabled();
   });
 
   it("renders the review section only when a quizId is provided", () => {

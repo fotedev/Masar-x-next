@@ -554,19 +554,20 @@ describe('summarizeLoadedData (retired chunk path)', () => {
 });
 
 describe('getPuterStatus', () => {
-  it('prefers the SDK probe and falls back to the explicit localStorage flag', async () => {
-    const aiAssistant = await loadAssistant();
+  // getPuterStatus moved to @/lib/puter (spec 041 #204 puter consolidation);
+  // the new contract is { isReady, isSignedIn }. Without a loaded SDK the
+  // localStorage flag is the only sign-in signal, which is what a unit test
+  // can drive.
+  it('reports ready-in-browser and falls back to the explicit localStorage flag', async () => {
+    vi.resetModules();
+    const { getPuterStatus } = await import('@/lib/puter');
 
-    expect(aiAssistant.getPuterStatus()).toEqual({
-      isAIWorking: true,
-      isSignedIn: false,
-      status: 'puter_js',
-    });
+    expect(getPuterStatus()).toEqual({ isReady: true, isSignedIn: false });
 
     localStorage.setItem('puter_signed_in', '1');
-    expect(aiAssistant.getPuterStatus().isSignedIn).toBe(true);
+    expect(getPuterStatus().isSignedIn).toBe(true);
 
     localStorage.removeItem('puter_signed_in');
-    expect(aiAssistant.getPuterStatus().isSignedIn).toBe(false);
+    expect(getPuterStatus().isSignedIn).toBe(false);
   });
 });

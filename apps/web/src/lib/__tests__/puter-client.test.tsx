@@ -81,17 +81,17 @@ describe('extractPuterChatText — non-streaming extractor', () => {
     ).resolves.toBe('مرحبا بك');
   });
 
-  it('extracts error strings from error-shaped responses', async () => {
+  it('throws on error-shaped responses (P1.10: errors never surface as chat text)', async () => {
     const { extractPuterChatText } = await freshModule();
-    await expect(extractPuterChatText({ error: 'boom' })).resolves.toBe('boom');
-    await expect(extractPuterChatText({ error: { message: 'inner boom' } })).resolves.toBe(
+    await expect(extractPuterChatText({ error: 'boom' })).rejects.toThrow('boom');
+    await expect(extractPuterChatText({ error: { message: 'inner boom' } })).rejects.toThrow(
       'inner boom',
     );
   });
 
-  it('treats a plain-string message as text (non-record message falls to error branch)', async () => {
+  it('treats a plain-string message as an error shape (throws, P1.10)', async () => {
     const { extractPuterChatText } = await freshModule();
-    await expect(extractPuterChatText({ message: 'string message' })).resolves.toBe(
+    await expect(extractPuterChatText({ message: 'string message' })).rejects.toThrow(
       'string message',
     );
   });

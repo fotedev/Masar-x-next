@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+// The component reads user-facing strings via useTranslations (spec 041
+// i18n batch) — the namespace-echo mock pins the keys it renders.
+vi.mock("next-intl", () => nextIntlMockFactory());
+import { nextIntlMockFactory } from "@/test/mocks/next-intl";
+
 import { ReviewForm } from "../ReviewForm";
 
 const USER = { id: "u-1" };
@@ -31,7 +36,7 @@ describe("ReviewForm", () => {
   it("guest sees the login-required notice instead of the form", () => {
     renderForm({ user: null });
     expect(
-      screen.getByText("يجب عليك تسجيل الدخول لتتمكن من إضافة مراجعة"),
+      screen.getByText("reviews.loginRequired"),
     ).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
@@ -44,7 +49,7 @@ describe("ReviewForm", () => {
 
   it("submit is disabled while the review is empty", () => {
     renderForm();
-    const submit = screen.getByRole("button", { name: /نشر المراجعة/ });
+    const submit = screen.getByRole("button", { name: /reviews\.submit/ });
     expect(submit).toBeDisabled();
   });
 
@@ -60,10 +65,10 @@ describe("ReviewForm", () => {
     baseProps.onSubmit.mockResolvedValue(undefined);
     renderForm();
 
-    const textarea = screen.getByPlaceholderText("شاركنا رأيك...");
+    const textarea = screen.getByPlaceholderText("reviews.placeholder");
     await user.type(textarea, "  ممتاز جدا  ");
     await user.click(starButtons()[3]); // 4 stars
-    await user.click(screen.getByRole("button", { name: /نشر المراجعة/ }));
+    await user.click(screen.getByRole("button", { name: /reviews\.submit/ }));
 
     await waitFor(() =>
       expect(baseProps.onSubmit).toHaveBeenCalledWith("ممتاز جدا", 4),
@@ -81,8 +86,8 @@ describe("ReviewForm", () => {
     );
     const { container } = renderForm();
 
-    await user.type(screen.getByPlaceholderText("شاركنا رأيك..."), "waiting");
-    await user.click(screen.getByRole("button", { name: /نشر المراجعة/ }));
+    await user.type(screen.getByPlaceholderText("reviews.placeholder"), "waiting");
+    await user.click(screen.getByRole("button", { name: /reviews\.submit/ }));
     // while submitting the label swaps to a spinner — query by type=submit
     const submit = container.querySelector('button[type="submit"]');
     expect(submit).toBeDisabled();
@@ -95,9 +100,9 @@ describe("ReviewForm", () => {
     baseProps.onSubmit.mockRejectedValueOnce(new Error("boom"));
     renderForm();
 
-    const textarea = screen.getByPlaceholderText("شاركنا رأيك...");
+    const textarea = screen.getByPlaceholderText("reviews.placeholder");
     await user.type(textarea, "kept content");
-    await user.click(screen.getByRole("button", { name: /نشر المراجعة/ }));
+    await user.click(screen.getByRole("button", { name: /reviews\.submit/ }));
 
     await waitFor(() => expect(textarea).toHaveValue("kept content"));
     expect(baseProps.onSubmit).toHaveBeenCalledTimes(1);
@@ -106,11 +111,11 @@ describe("ReviewForm", () => {
   it("cancel button renders only when onCancel is provided", async () => {
     const user = userEvent.setup();
     const { rerender } = renderForm();
-    expect(screen.queryByRole("button", { name: "إلغاء" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "reviews.cancel" })).toBeNull();
 
     const onCancel = vi.fn();
     rerender(<ReviewForm {...baseProps} onCancel={onCancel} />);
-    await user.click(screen.getByRole("button", { name: "إلغاء" }));
+    await user.click(screen.getByRole("button", { name: "reviews.cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

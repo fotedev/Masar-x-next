@@ -17,7 +17,10 @@ const { quizServiceMock, authState } = await vi.hoisted(async () => {
 
 vi.mock("@/lib/quiz", () => ({ quizService: quizServiceMock }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => authState }));
+// The hook reads user-facing strings via useTranslations (spec 041 i18n batch).
+vi.mock("next-intl", () => nextIntlMockFactory());
 
+import { nextIntlMockFactory } from "@/test/mocks/next-intl";
 import { useQuizAttempt } from "../useQuizAttempt";
 
 const QUIZ_ID = "quiz-1";
@@ -194,10 +197,9 @@ describe("saveAnswer", () => {
     expect(stored["q9"]).toMatchObject({ selected_option: 1, is_correct: false });
 
     expect(quizServiceMock.saveAnswer).toHaveBeenCalledWith("att-1", "q9", 1, false);
-    // Non-Error rejection → Arabic fallback message.
-    expect(result.current.error).toBe(
-      "فشل حفظ الإجابة في السحابة. سيتم الاحتفاظ بها محلياً.",
-    );
+    // Non-Error rejection → i18n fallback key (spec 041 i18n batch); the
+    // namespace-echo mock surfaces the raw key.
+    expect(result.current.error).toBe("quizzes.saveAnswerCloudError");
     expect(result.current.saving).toBe(false);
   });
 
@@ -246,7 +248,9 @@ describe("saveAnswer", () => {
 
     expect(quizServiceMock.saveAnswer).not.toHaveBeenCalled();
     expect(sessionStorage.getItem(attemptKey(USER_ID))).toContain("q1");
-    expect(result.current.error).toBeNull();
+    // Init failures now surface an error banner (spec 040 PR-2 #201) — the
+    // seeded "no attempt" rejection is expected to still be showing here.
+    expect(result.current.error).toBe("no attempt");
   });
 });
 
@@ -324,7 +328,7 @@ describe("finishAttempt", () => {
       is_local: true,
       score: 2,
       total_questions: 10,
-      quizzes: { title: "امتحان" },
+      quizzes: { title: "quizzes.defaultExamTitle" },
     });
     expect(history[0].id).toMatch(/^local_\d+$/);
     expect(sessionStorage.getItem(`quiz_attempt_${QUIZ_ID}_guest`)).toBeNull();
@@ -359,7 +363,7 @@ describe("finishAttempt", () => {
     expect(result.current.error).toBe("An unknown error occurred");
   });
 
-  it("quizTitle defaults to 'امتحان' when not provided", async () => {
+  it("quizTitle falls back to the i18n default-exam title when not provided", async () => {
     const { result } = await renderLoaded({ quizTitle: undefined });
 
     await act(async () => {
@@ -367,7 +371,7 @@ describe("finishAttempt", () => {
     });
 
     const history = JSON.parse(sessionStorage.getItem("quiz_history") || "[]");
-    expect(history[0].quizzes.title).toBe("امتحان");
+    expect(history[0].quizzes.title).toBe("quizzes.defaultExamTitle");
   });
 });
 

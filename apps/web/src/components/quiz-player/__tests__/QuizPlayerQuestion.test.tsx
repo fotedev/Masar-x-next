@@ -156,9 +156,13 @@ describe("QuizPlayerQuestion", () => {
     expect(screen.queryByText("saved")).toBeNull();
   });
 
-  it("reveals the explanation once the question is answered", () => {
+  it("never ships the explanation mid-quiz (spec 040 PR-3 #202: the answer key no longer reaches the client)", () => {
+    // Mid-quiz explanation reveal was REMOVED on purpose: explanations
+    // typically restate the answer, and the key no longer ships to the
+    // client. Even an answered question with an explanation present must
+    // not render it.
     const { rerender } = renderQuestion({ isAnswered: true, selectedOption: 1 });
-    expect(screen.getByText("Basic arithmetic")).toBeInTheDocument();
+    expect(screen.queryByText("Basic arithmetic")).toBeNull();
 
     rerender(<QuizPlayerQuestion {...baseProps} />);
     expect(screen.queryByText("Basic arithmetic")).toBeNull();

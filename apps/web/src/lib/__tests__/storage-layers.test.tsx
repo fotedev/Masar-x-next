@@ -30,9 +30,11 @@ describe('academic-utils — academicCache (sessionStorage, T030 PII rules)', ()
 
     academicCache.setUserAcademic('user-42', { level: 2, semester: 1, department_id: 'd1' });
 
-    const raw = sessionStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+    // Entries are keyed per user (review D4, spec 040 PR-2) — the PAYLOAD
+    // still never contains the userId (PII rule unchanged).
+    const raw = sessionStorage.getItem(`${USER_ACADEMIC_CACHE_KEY}:user-42`);
     expect(raw).not.toBeNull();
-    expect(raw).not.toContain('user-42'); // PII: userId never persisted
+    expect(raw).not.toContain('user-42'); // PII: userId never persisted in the payload
     expect(academicCache.getUserAcademic('user-42')).toEqual({
       level: 2,
       semester: 1,
@@ -50,7 +52,7 @@ describe('academic-utils — academicCache (sessionStorage, T030 PII rules)', ()
     vi.advanceTimersByTime(7 * 24 * 60 * 60 * 1000 + 1);
     expect(academicCache.getUserAcademic('u')).toBeNull();
     // The stale entry stays in storage; only the read treats it as missing.
-    expect(sessionStorage.getItem(USER_ACADEMIC_CACHE_KEY)).not.toBeNull();
+    expect(sessionStorage.getItem(`${USER_ACADEMIC_CACHE_KEY}:u`)).not.toBeNull();
   });
 
   it('returns null for missing and corrupted cache entries', async () => {
@@ -59,7 +61,7 @@ describe('academic-utils — academicCache (sessionStorage, T030 PII rules)', ()
     );
     expect(academicCache.getUserAcademic('u')).toBeNull();
 
-    sessionStorage.setItem(USER_ACADEMIC_CACHE_KEY, '{not json');
+    sessionStorage.setItem(`${USER_ACADEMIC_CACHE_KEY}:u`, '{not json');
     expect(academicCache.getUserAcademic('u')).toBeNull();
   });
 

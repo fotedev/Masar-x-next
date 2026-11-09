@@ -92,7 +92,7 @@ describe("EditSummaryModal", () => {
   it("renders the dialog with the form fields and hands props to the hook", () => {
     const onSave = baseProps.onSave;
     renderModal();
-    expect(screen.getByText("تعديل الملخص")).toBeInTheDocument();
+    expect(screen.getByText("editSummary.pageTitle")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Linear Algebra")).toBeInTheDocument();
 
     expect(editState.lastProps.current).toMatchObject({
@@ -113,7 +113,7 @@ describe("EditSummaryModal", () => {
 
   it("submit routes through the hook's handleSubmit", () => {
     renderModal();
-    fireEvent.submit(screen.getByRole("button", { name: "حفظ التغييرات" }).closest("form")!);
+    fireEvent.submit(screen.getByRole("button", { name: "editSummary.saveButton" }).closest("form")!);
     expect(editState.handleSubmit).toHaveBeenCalledTimes(1);
     // onSave itself is only invoked by the real hook — the modal never calls it directly
     expect(baseProps.onSave).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe("EditSummaryModal", () => {
     const user = (await import("@testing-library/user-event")).default.setup();
     const { container } = renderModal();
 
-    await user.click(screen.getByRole("button", { name: "إلغاء" }));
+    await user.click(screen.getByRole("button", { name: "editSummary.cancel" }));
     expect(baseProps.onClose).toHaveBeenCalledTimes(1);
 
     const xButton = container.querySelector(".lucide-x")?.closest("button");
@@ -134,13 +134,13 @@ describe("EditSummaryModal", () => {
 
   it("loading state disables submit and swaps the label", () => {
     const { rerender } = renderModal();
-    const submit = screen.getByRole("button", { name: "حفظ التغييرات" });
+    const submit = screen.getByRole("button", { name: "editSummary.saveButton" });
     expect(submit).toBeEnabled();
 
     editState.loading = true;
     rerender(<EditSummaryModal {...baseProps} />);
-    expect(screen.getByRole("button", { name: "جاري الحفظ..." })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "حفظ التغييرات" })).toBeNull();
+    expect(screen.getByRole("button", { name: "editSummary.saving" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "editSummary.saveButton" })).toBeNull();
   });
 
   it("forwards the same callback identities to the hook across re-renders", () => {

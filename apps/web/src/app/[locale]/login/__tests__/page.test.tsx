@@ -1,20 +1,20 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setMockIntlLocale, nextIntlMockFactory } from "@/test/mocks/next-intl";
 
 const mocks = vi.hoisted(() => ({
   authState: {
-    signIn: undefined as unknown as ReturnType<typeof vi.fn>,
-    signInWithGoogle: undefined as unknown as ReturnType<typeof vi.fn>,
+    signIn: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
+    signInWithGoogle: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
     user: null as { id: string } | null,
   },
   analyticsState: {
-    trackEvent: undefined as unknown as ReturnType<typeof vi.fn>,
-    logError: undefined as unknown as ReturnType<typeof vi.fn>,
+    trackEvent: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
+    logError: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
   },
-  resetPasswordForEmail: undefined as unknown as ReturnType<typeof vi.fn>,
-  routerPush: undefined as unknown as ReturnType<typeof vi.fn>,
+  resetPasswordForEmail: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
+  routerPush: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({

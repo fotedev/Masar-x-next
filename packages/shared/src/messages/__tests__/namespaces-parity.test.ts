@@ -35,10 +35,20 @@ function flatten(obj: unknown, prefix = ''): string[] {
 
 function placeholders(value: string): string[] {
   // Interpolation placeholders are identifier-shaped ({count}, {lectureKey}).
+  // ICU argument selectors ({count, plural, ...} — spec 041 #208 uses them,
+  // e.g. home.reviewsCount in en) expose the same identifier before the
+  // comma, so both forms must map to the same placeholder set.
   // The JSONs also contain locale-specific display tokens like
   // `{# فلاتر نشطة}` / `{ملخص واحد}` inside braces — those are rendered
   // text, not TranslationValues keys, and legitimately differ per locale.
-  return (value.match(/\{[a-zA-Z_][a-zA-Z0-9_]*\}/g) ?? []).sort();
+  const names = [
+    ...new Set(
+      [...value.matchAll(/\{([a-zA-Z_][a-zA-Z0-9_]*)(?=[,}])/g)].map(
+        (m) => m[1],
+      ),
+    ),
+  ].sort();
+  return names.map((n) => `{${n}}`);
 }
 
 describe('MESSAGE_NAMESPACES contract', () => {

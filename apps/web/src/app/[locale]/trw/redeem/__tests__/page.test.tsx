@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi , type Mock } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setMockIntlLocale, nextIntlMockFactory } from "@/test/mocks/next-intl";
 
 const mocks = vi.hoisted(() => ({
-  mutate: undefined as unknown as ReturnType<typeof vi.fn>,
+  mutate: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
   isPending: false,
-  toastSuccess: undefined as unknown as ReturnType<typeof vi.fn>,
-  toastError: undefined as unknown as ReturnType<typeof vi.fn>,
-  routerPush: undefined as unknown as ReturnType<typeof vi.fn>,
+  toastSuccess: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
+  toastError: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
+  routerPush: undefined as unknown as Mock<(...args: unknown[]) => unknown>,
 }));
 
 vi.mock("@/hooks/trw/useRedeemAccessCode", () => ({

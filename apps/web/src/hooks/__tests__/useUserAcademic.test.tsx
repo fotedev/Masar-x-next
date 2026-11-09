@@ -17,7 +17,10 @@ const { chain, authState } = await vi.hoisted(async () => {
 vi.mock("@/lib/supabase", () => ({ supabase: chain.supabase }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => authState }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+// The hook reads user-facing strings via useTranslations (spec 041 i18n batch).
+vi.mock("next-intl", () => nextIntlMockFactory());
 
+import { nextIntlMockFactory } from "@/test/mocks/next-intl";
 import { useUserAcademic } from "../useUserAcademic";
 import {
   academicCache,
@@ -210,10 +213,12 @@ describe("executeWithRetry (profile fetch)", () => {
     expect(profilesCalls()).toHaveLength(3);
     expect(result.current.fetchFailed).toBe(false);
     expect(result.current.academic.level).toBe(1);
-    // Success refreshes the cooldown gate and the cache.
+    // Success refreshes the cooldown gate and the cache. Cache entries are
+    // keyed per user (review D4, spec 040 PR-2) — read the keyed entry.
     expect(Number(sessionStorage.getItem(ACADEMIC_FETCH_KEY))).toBe(Date.now());
     expect(
-      JSON.parse(sessionStorage.getItem(USER_ACADEMIC_CACHE_KEY)!).data.level,
+      JSON.parse(sessionStorage.getItem(`${USER_ACADEMIC_CACHE_KEY}:u-1`)!)
+        .data.level,
     ).toBe(1);
   });
 });
@@ -457,27 +462,35 @@ describe("cross-tab re-sync", () => {
     expect(result.current.academic.level).toBe(2);
 
     // Another tab wrote a newer cache: mirror it via the storage event.
+    // Entries are keyed per user (review D4) — the listener matches the
+    // keyed key for the signed-in user only.
     sessionStorage.setItem(
-      USER_ACADEMIC_CACHE_KEY,
+      `${USER_ACADEMIC_CACHE_KEY}:u-1`,
       JSON.stringify({
         data: { level: 5, semester: 2, department_id: null },
         timestamp: Date.now(),
       }),
     );
     await act(async () => {
-      window.dispatchEvent(new StorageEvent("storage", { key: USER_ACADEMIC_CACHE_KEY }));
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: `${USER_ACADEMIC_CACHE_KEY}:u-1` }),
+      );
     });
     expect(result.current.academic.level).toBe(5);
 
-    // Unrelated storage keys are ignored.
+    // Unrelated storage keys are ignored (even a DIFFERENT user's keyed
+    // entry must not leak into this identity's state).
     sessionStorage.setItem(
-      USER_ACADEMIC_CACHE_KEY,
+      `${USER_ACADEMIC_CACHE_KEY}:u-2`,
       JSON.stringify({
         data: { level: 9, semester: 2, department_id: null },
         timestamp: Date.now(),
       }),
     );
     await act(async () => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: `${USER_ACADEMIC_CACHE_KEY}:u-2` }),
+      );
       window.dispatchEvent(new StorageEvent("storage", { key: "something_else" }));
     });
     expect(result.current.academic.level).toBe(5);

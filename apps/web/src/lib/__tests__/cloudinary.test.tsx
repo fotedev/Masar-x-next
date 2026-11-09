@@ -266,9 +266,9 @@ describe('uploadToCloudinary — progress reporting', () => {
     xhr.onload!();
     await promise;
 
-    expect(onProgress.mock.calls[0]).toEqual([0, 'تحويل الملف...']);
-    expect(onProgress).toHaveBeenCalledWith(30, 'جاري رفع الملف...');
-    expect(onProgress.mock.calls[onProgress.mock.calls.length - 1]).toEqual([100, 'تم الرفع بنجاح']);
+    expect(onProgress.mock.calls[0]).toEqual([0, 'converting']);
+    expect(onProgress).toHaveBeenCalledWith(30, 'uploading');
+    expect(onProgress.mock.calls[onProgress.mock.calls.length - 1]).toEqual([100, 'uploaded']);
   });
 
   it('clamps the computed upload percentage at 99 and handles non-computable progress', async () => {
@@ -278,11 +278,11 @@ describe('uploadToCloudinary — progress reporting', () => {
     const xhr = lastXhr();
 
     xhr.upload.onprogress?.({ lengthComputable: false } as ProgressEvent);
-    expect(onProgress).toHaveBeenCalledWith(50, 'جاري رفع الملف...');
+    expect(onProgress).toHaveBeenCalledWith(50, 'uploading');
 
     xhr.upload.onprogress?.({ lengthComputable: true, loaded: 10, total: 1 } as ProgressEvent);
     // rawPct = 1000 → overall 30 + 700 → clamped to 99
-    expect(onProgress).toHaveBeenCalledWith(99, 'جاري رفع الملف...');
+    expect(onProgress).toHaveBeenCalledWith(99, 'uploading');
 
     xhr.status = 200;
     xhr.responseText = JSON.stringify(successPayload);
