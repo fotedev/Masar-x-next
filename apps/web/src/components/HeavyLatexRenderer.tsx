@@ -3,12 +3,20 @@
 
 import { Fragment, useMemo } from "react";
 import "katex/dist/katex.min.css";
-import { InlineMath, BlockMath } from "react-katex";
+import katex from "katex";
 
 interface HeavyLatexRendererProps {
   text: string;
   className?: string;
 }
+
+// Direct katex.renderToString — react-katex is gone (peer-pinned katex ^0.16,
+// blocking the 0.18+ security floor). throwOnError: false renders malformed
+// model-output LaTeX as error-styled source instead of crashing the bubble.
+// KaTeX's default settings never emit raw HTML/links (trust: false), so the
+// markup injected below is katex-generated and safe.
+const renderMath = (value: string, displayMode: boolean): string =>
+  katex.renderToString(value, { displayMode, throwOnError: false });
 
 export default function HeavyLatexRenderer({
   text,
@@ -60,7 +68,12 @@ export default function HeavyLatexRenderer({
 
     return inlineParts.map((p, idx) => {
       if (p.type === "inline") {
-        return <InlineMath key={idx} math={p.value} />;
+        return (
+          <span
+            key={idx}
+            dangerouslySetInnerHTML={{ __html: renderMath(p.value, false) }}
+          />
+        );
       }
       return <Fragment key={idx}>{p.value}</Fragment>;
     });
@@ -68,17 +81,21 @@ export default function HeavyLatexRenderer({
 
   return (
     // dir="ltr" (HTML dir implies bidi isolation) keeps formulas intact
-    // inside Arabic bubbles — katex 0.16's CSS ships no direction rule, so
+    // inside Arabic bubbles — KaTeX's CSS ships no direction rule, so
     // without this the math inherits the bubble's rtl and renders mirrored
     // (`E = mc^2` came out as `²mc = E`).
     <span className={className} dir="ltr">
       {parts.map((p, idx) => {
         if (p.type === "block") {
-          return <BlockMath key={idx} math={p.value} />;
+          return (
+            <span
+              key={idx}
+              dangerouslySetInnerHTML={{ __html: renderMath(p.value, true) }}
+            />
+          );
         }
         return <Fragment key={idx}>{renderInline(p.value)}</Fragment>;
       })}
     </span>
   );
 }
-
