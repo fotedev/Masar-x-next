@@ -4,14 +4,14 @@ Invariant I11 in practice: no agent starts writing or modifying code for any tas
 
 ## When a formal spec is required (triggers)
 
-- Refactoring or splitting any file over ~300 lines (current examples: `apps/web/src/app/[locale]/add-summary/page.tsx` at 945 lines, `apps/web/src/app/[locale]/profile/page.tsx` at 813).
+- Refactoring or splitting any file over ~300 lines (current example: `apps/web/src/app/[locale]/profile/page.tsx` at 814 lines).
 - Any change to API contracts, database schemas/migrations, or auth flows.
 - Cross-cutting architectural changes: caching, state management, runtime/environment upgrades (e.g. a major Electron version bump).
 - New features spanning more than one component or route.
 
 ## Spec anatomy
 
-Specs live in `specs/NNN_name/`. Numbering is **dynamic auto-increment, derived from disk only**: inspect the `specs/` directory, take the highest existing `NNN` prefix, and generate the next number as `max + 1`, zero-padded to three digits (`String(max + 1).padStart(3, "0")`). Never assume, pin, or recall a spec number from memory or prior instructions — the disk is the single source of truth (same convention as `NNN_` migrations, see [07-quirks.md](./07-quirks.md)). Follow the established SpecKit layout of the existing spec directories (`spec.md`, `tasks.md`, `checklists/`). A spec must cover:
+Specs live in `specs/NNN_name/`. Numbering is **dynamic auto-increment, derived from disk only**: inspect the `specs/` directory, take the highest existing `NNN` prefix, and generate the next number as `max + 1`, zero-padded to three digits (`String(max + 1).padStart(3, "0")`). Never assume, pin, or recall a spec number from memory or prior instructions — the disk is the single source of truth (see [07-quirks.md](./07-quirks.md) for the related — and different — migration-naming convention). Follow the established SpecKit layout of the existing spec directories (`spec.md`, `tasks.md`, `checklists/`). A spec must cover:
 
 1. **Context & problem statement** — what is wrong today and why change it.
 2. **Architecture & design** — components created/modified, each with a single responsibility; data flow; contracts (types / interfaces / Zod schemas).
