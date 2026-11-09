@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { logger } from "../lib/logger";
 import { VideoWithRatings } from "../types/database";
 
 export function useTopVideos(limit = 10) {
@@ -21,7 +22,8 @@ export function useTopVideos(limit = 10) {
         if (error) throw error;
 
         setVideos(data || []);
-      } catch {
+      } catch (err) {
+        logger.error("Failed to fetch top videos:", err);
         setVideos([]);
       } finally {
         setLoading(false);

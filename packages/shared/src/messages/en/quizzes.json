@@ -10,6 +10,7 @@
   "excellent": "Great! Excellent performance.",
   "score": "Result",
   "answers": "Answers",
+  "answersReview": "Your answers",
   "questionsCountLabel": "Number of Questions",
   "time": "Time",
   "timeLabel": "Time",
@@ -146,6 +147,10 @@
   "confirmDeleteMessageWithTitle": "The exam \"{title}\" will be permanently deleted and this action cannot be undone.",
   "confirmDeleteMessage": "The exam will be permanently deleted and this action cannot be undone.",
   "deleting": "Deleting...",
+  "submitForReview": "Submit for Review",
+  "submittingForReview": "Submitting...",
+  "saveAnswerCloudError": "Failed to save the answer to the cloud. It will be kept locally.",
+  "defaultExamTitle": "Exam",
   "form": {
     "minQuestionsError": "The exam must contain at least one question",
     "trueOption": "True",
@@ -154,5 +159,6 @@
     "imageTooLargeDesc": "The image \"{name}\" exceeds the allowed limit (5MB)",
     "imageUploadError": "An error occurred while uploading the image",
     "tryAgain": "Please try again."
-  }
+  },
+  "deleteQuizConfirm": "Are you sure you want to delete this exam?"
 }

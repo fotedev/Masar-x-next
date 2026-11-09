@@ -542,3 +542,35 @@ jobs:
 
       - name: Lint all workflow files
         run: actionlint -color
+
+  # ---------------------------------------------------------------------
+  # Dependency audit (spec 041 R22): the 2026-11-07 review found zero
+  # dependency-audit coverage in any of the 4 workflows. Started REPORT-ONLY
+  # (the first run measured 59 prod advisories — gating would have reddened
+  # every PR); spec 042 (#209 + #215) burned it down to 7 with 0 criticals,
+  # so this is now a CRITICAL-ONLY GATE: fails on any critical advisory.
+  # high stays report-visible (3 deferred highs: image-size x2 build-time,
+  # zod compiler-plugin, node-forge unpatched — see specs/042). Raise to
+  # --audit-level=high when the deferred set clears (Expo SDK 53 upgrade).
+  # ---------------------------------------------------------------------
+  deps-audit:
+    name: deps-audit (critical gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          # No cache:'pnpm' here — this job never installs, so no pnpm store
+          # ever materializes and setup-node's save step errors the job
+          # ("path specified for caching does not exist").
+
+      # Reads the lockfile only — no install needed.
+      - name: Audit production dependencies (critical gate)
+        run: pnpm audit --prod --audit-level=critical

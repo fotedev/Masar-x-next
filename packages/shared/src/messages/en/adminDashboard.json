@@ -207,5 +207,10 @@
     "statusPending": "Pending",
     "statusDraft": "Draft",
     "statusRejected": "Rejected"
+  },
+  "subjectCard": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "professorLabel": "{gender, select, female {Dr.} other {Dr.}}"
   }
 }

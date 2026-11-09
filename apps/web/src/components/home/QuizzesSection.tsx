@@ -52,7 +52,7 @@ function getQuizMeta(quiz: Quiz): QuizMeta {
   }
   const record = quiz as unknown as Record<string, unknown>;
   const str = (v: unknown) => (typeof v === "string" ? v : "");
-  const subject = str(parsed.subject) || str(quiz.subject) || "عام";
+  const subject = str(parsed.subject) || str(quiz.subject);
   const dept = str(parsed.department) || str(record.department);
   const year = str(parsed.year) || str(record.year);
   const meta: QuizMeta = {
@@ -75,6 +75,7 @@ export function QuizzesSection({
   const shouldReduceMotion = useReducedMotion();
   const isRTL = locale === "ar";
   const showHeaderLink = displayQuizzes.length > 0;
+  const generalSubject = tHome("generalSubject");
 
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
@@ -160,7 +161,7 @@ export function QuizzesSection({
                   <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                     <BookOpen className="w-3.5 h-3.5 text-brand-blue" />
                     <span className="truncate">
-                      {getQuizMeta(quiz).subject}
+                      {getQuizMeta(quiz).subject || generalSubject}
                     </span>
                   </div>
                 </div>

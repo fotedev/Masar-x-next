@@ -15,5 +15,10 @@
   "actionSubjects": "المواد الدراسية",
   "actionQuizzes": "بنك الاختبارات",
   "actionNews": "آخر الأخبار",
-  "actionActivity": "نشاطك الأخير"
+  "actionActivity": "نشاطك الأخير",
+  "reviewsCount": "{count} تقييم",
+  "noReviewsYet": "لم يتم تقييمها بعد",
+  "askZane": "اسأل زين",
+  "generalSubject": "عام",
+  "uploading": "جاري الرفع..."
 }

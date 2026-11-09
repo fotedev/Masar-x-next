@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -60,7 +61,13 @@ const mockBrowserWindowInstance = {
   },
 };
 
-const BrowserWindowMock = vi.fn().mockImplementation(() => mockBrowserWindowInstance);
+// vitest 5: spies are only constructible (`new MockFn()`) when the
+// implementation is a `function`/`class` — arrow impls throw
+// "is not a constructor" (vitest warns about exactly this). The options
+// param keeps mock.calls' tuple non-empty (typed accesses below index it).
+const BrowserWindowMock = vi.fn(function (_options?: Record<string, unknown>) {
+  return mockBrowserWindowInstance;
+});
 (BrowserWindowMock as any).getAllWindows = vi.fn().mockReturnValue([]);
 
 const mockApp = {
@@ -189,6 +196,20 @@ const mockServer = {
 
 vi.mock('node:net', () => ({
   createServer: vi.fn(() => mockServer),
+  // Spec 041 R13 — startProductionServer now gates success on waitForPort
+  // (real net.connect probes). Simulate an already-listening port so the
+  // production path resolves immediately; a microtask avoids depending on
+  // this suite's (real) timer handling.
+  connect: vi.fn(() => {
+    const socket = new EventEmitter();
+    (socket as unknown as { setTimeout: (ms: number, cb: () => void) => void }).setTimeout =
+      vi.fn();
+    (socket as unknown as { destroy: () => void }).destroy = vi.fn();
+    (socket as unknown as { removeAllListeners: (ev?: string) => void }).removeAllListeners =
+      vi.fn();
+    queueMicrotask(() => socket.emit('connect'));
+    return socket;
+  }),
 }));
 
 const mockHttpListen = vi.fn().mockImplementation((_req: unknown, res: any) => {
@@ -305,7 +326,9 @@ describe('T017 — Electron main process contract', () => {
     // breaks the listen-callback contract. The mocks are designed to be
     // stable across tests; if you need a per-test reset, re-establish the
     // mockImplementation explicitly here.
-    BrowserWindowMock.mockImplementation(() => mockBrowserWindowInstance);
+    BrowserWindowMock.mockImplementation(function () {
+      return mockBrowserWindowInstance;
+    });
     (BrowserWindowMock as any).getAllWindows = vi.fn().mockReturnValue([]);
     NextMock.mockImplementation(() => mockNextHandler);
     // R12 — keep loadURL mock isolated so retry-budget assertions are

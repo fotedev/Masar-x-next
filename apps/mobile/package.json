@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.js",
   "description": "Masar X mobile app - Expo (managed workflow) React Native client (research.md A3; spec FR-006..FR-013).",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "start": "expo start",
     "dev": "expo start",
@@ -42,6 +43,6 @@
     "sharp": "^0.35.4",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.72.1",
-    "vitest": "^2.1.8"
+    "vitest": "^5.1.0"
   }
 }

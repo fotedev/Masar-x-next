@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
@@ -20,10 +21,20 @@ interface ContentFormOptions {
 }
 
 export function useContentForm({ onSuccess, action }: ContentFormOptions) {
+  const tCommon = useTranslations("common");
   const [state, formAction, isPending] = useActionState(action, null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+
+  // Stable Cloudinary stage keys -> translated labels. The lib emits keys,
+  // not display copy; the hook translates at the setter because the render
+  // consumer (AddFileForm) expects a display string.
+  const stageLabels: Record<string, string> = {
+    converting: tCommon("uploadStages.converting"),
+    uploading: tCommon("uploadStages.uploading"),
+    uploaded: tCommon("uploadStages.uploaded"),
+  };
 
   useEffect(() => {
     if (state?.success) {
@@ -47,7 +58,7 @@ export function useContentForm({ onSuccess, action }: ContentFormOptions) {
           folder,
           onProgress: (progress, stage) => {
             setUploadProgress(progress);
-            setUploadStage(stage);
+            setUploadStage(stageLabels[stage] ?? stage);
           },
         });
 

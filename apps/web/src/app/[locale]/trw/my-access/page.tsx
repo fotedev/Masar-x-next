@@ -12,13 +12,15 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Calendar, CheckCircle2, ShieldCheck, User } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 
 export default function MyAccessPage() {
+  const t = useTranslations("trwAccess");
   const { data: membership } = useTRWMembership();
 
   return (
     <div className="container py-12 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">My TRW Access</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("title")}</h1>
 
       <TRWAccessGate>
         {membership && (
@@ -29,9 +31,11 @@ export default function MyAccessPage() {
                   <ShieldCheck className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">Active Membership</CardTitle>
+                  <CardTitle className="text-2xl">
+                    {t("activeMembership")}
+                  </CardTitle>
                   <CardDescription>
-                    You have full access to authorized content.
+                    {t("activeMembershipDesc")}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -40,16 +44,16 @@ export default function MyAccessPage() {
                   <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Plan Type</p>
+                      <p className="text-sm font-medium">{t("planType")}</p>
                       <Badge variant="outline" className="mt-1">
-                        {membership.plan?.name || "Standard Access"}
+                        {membership.plan?.name || t("standardAccess")}
                       </Badge>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Granted At</p>
+                      <p className="text-sm font-medium">{t("grantedAt")}</p>
                       <p className="text-sm text-muted-foreground">
                         {format(new Date(membership.granted_at), "PPP")}
                       </p>
@@ -61,20 +65,20 @@ export default function MyAccessPage() {
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
                     <div>
-                      <p className="text-sm font-medium">Status</p>
+                      <p className="text-sm font-medium">{t("status")}</p>
                       <p className="text-sm text-green-600 font-semibold uppercase tracking-wider">
-                        Verified & Active
+                        {t("verifiedActive")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm font-medium">Expires At</p>
+                      <p className="text-sm font-medium">{t("expiresAt")}</p>
                       <p className="text-sm text-muted-foreground">
                         {membership.expires_at
                           ? format(new Date(membership.expires_at), "PPP")
-                          : "Never (Permanent)"}
+                          : t("neverExpires")}
                       </p>
                     </div>
                   </div>
@@ -83,12 +87,14 @@ export default function MyAccessPage() {
             </Card>
 
             <div className="grid gap-4">
-              <h2 className="text-xl font-semibold">Membership Benefits</h2>
+              <h2 className="text-xl font-semibold">
+                {t("membershipBenefits")}
+              </h2>
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
-                  "Full Access to Categories",
-                  "Exclusive Course Content",
-                  "Personal Progress Tracking",
+                  t("benefits.fullAccess"),
+                  t("benefits.exclusiveContent"),
+                  t("benefits.progressTracking"),
                 ].map((benefit) => (
                   <Card key={benefit} className="bg-card/50">
                     <CardContent className="p-4 flex items-center gap-3">

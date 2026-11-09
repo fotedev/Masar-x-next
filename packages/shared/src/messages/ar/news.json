@@ -92,5 +92,8 @@
   "statusUpdateSuccess": "تم تحديث حالة الخبر",
   "statusUpdateError": "حدث خطأ أثناء تحديث حالة الخبر",
   "deleteSuccess": "تم حذف الخبر بنجاح",
-  "deleteError": "حدث خطأ أثناء حذف الخبر"
+  "deleteError": "حدث خطأ أثناء حذف الخبر",
+  "removeImage": "إزالة الصورة",
+  "imageAlt": "{title} - صورة {number}",
+  "unknown": "غير معروف"
 }

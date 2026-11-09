@@ -1,12 +1,15 @@
 import {
   useState,
   useEffect,
+  useCallback,
+  useMemo,
   createContext,
   useContext,
   type ReactNode,
 } from "react";
 import { getLogoPath } from "../DynamicLogo";
 import { registerServiceWorker } from "@/lib/sw-register";
+import { useTranslations } from "next-intl";
 
 interface NotificationContextType {
   permission: NotificationPermission;
@@ -36,6 +39,7 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
+  const t = useTranslations("notifications");
   const [permission, setPermission] =
     useState<NotificationPermission>("default");
   const [showPrompt, setShowPrompt] = useState(false);
@@ -68,61 +72,65 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     registerServiceWorker();
   }, []);
 
-  const requestPermission = async (): Promise<NotificationPermission> => {
-    if (!isSupported) return "denied";
+  const requestPermission =
+    useCallback(async (): Promise<NotificationPermission> => {
+      if (!isSupported) return "denied";
 
-    try {
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      setShowPrompt(false);
+      try {
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        setShowPrompt(false);
 
-      // Service Worker registration is handled by the dedicated mount
-      // effect above; no need to re-register on every permission grant.
+        // Service Worker registration is handled by the dedicated mount
+        // effect above; no need to re-register on every permission grant.
 
-      return result;
-    } catch {
-      return "denied";
-    }
-  };
+        return result;
+      } catch {
+        return "denied";
+      }
+    }, [isSupported]);
 
-  const sendNotification = (
-    title: string,
-    options: NotificationOptions = {},
-  ) => {
-    if (!isSupported || permission !== "granted") return;
+  const sendNotification = useCallback(
+    (title: string, options: NotificationOptions = {}) => {
+      if (!isSupported || permission !== "granted") return;
 
-    const defaultOptions: NotificationOptions = {
-      body: "إشعار جديد من Masar X",
-      icon: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
-      badge: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
-      tag: "masarx-notification",
-      requireInteraction: false,
-      ...options,
-    };
+      const defaultOptions: NotificationOptions = {
+        body: t("defaultBody"),
+        icon: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
+        badge: getLogoPath(typeof window !== "undefined" ? document.documentElement.lang || "ar" : "ar"),
+        tag: "masarx-notification",
+        requireInteraction: false,
+        ...options,
+      };
 
-    if (document.visibilityState === "visible") {
-      new Notification(title, defaultOptions);
-    } else {
-      navigator.serviceWorker.controller?.postMessage({
-        type: "NOTIFICATION_REQUEST",
-        payload: { title, ...defaultOptions },
-      });
-    }
-  };
+      if (document.visibilityState === "visible") {
+        new Notification(title, defaultOptions);
+      } else {
+        navigator.serviceWorker.controller?.postMessage({
+          type: "NOTIFICATION_REQUEST",
+          payload: { title, ...defaultOptions },
+        });
+      }
+    },
+    [isSupported, permission, t],
+  );
 
-  const dismissPrompt = () => {
+  const dismissPrompt = useCallback(() => {
     setShowPrompt(false);
     localStorage.setItem("notification-prompt-dismissed", "true");
-  };
+  }, []);
 
-  const value: NotificationContextType = {
-    permission,
-    requestPermission,
-    sendNotification,
-    showNotificationPrompt: showPrompt,
-    dismissPrompt,
-    isSupported,
-  };
+  const value: NotificationContextType = useMemo(
+    () => ({
+      permission,
+      requestPermission,
+      sendNotification,
+      showNotificationPrompt: showPrompt,
+      dismissPrompt,
+      isSupported,
+    }),
+    [permission, requestPermission, sendNotification, showPrompt, dismissPrompt, isSupported],
+  );
 
   return (
     <NotificationContext.Provider value={value}>

@@ -8,7 +8,7 @@
 
 Study summaries, interactive courses, quizzes, AI-powered assistance, and complete learning management — bilingual (English / العربية) by design.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%E2%89%A524-brightgreen?logo=node.js&logoColor=white)](./README.md#prerequisites)
 [![pnpm workspace](https://img.shields.io/badge/pnpm-monorepo-F69220?logo=pnpm&logoColor=white)](./pnpm-workspace.yaml)
 [![Web](https://img.shields.io/badge/web-live-black?logo=vercel)](./README.md#project-status)
@@ -233,4 +233,4 @@ Secrets are split by runtime: the service-role key and AI provider keys stay ser
 
 ## License
 
-Released under the [MIT License](./LICENSE).
+Source code is released under the [GNU AGPL-3.0](./LICENSE) (effective 2026-11-07; earlier commits were distributed under MIT). The [educational content](./NOTICE.md#2-educational-content--all-rights-reserved) (exams, questions, materials catalog) and the [Masar X brand](./NOTICE.md#3-brand--all-rights-reserved) are **not** covered by that grant — see [NOTICE.md](./NOTICE.md).

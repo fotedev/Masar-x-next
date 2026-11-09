@@ -13,7 +13,7 @@
  * using a stubbed SDK; the policy / registry / 6 call sites are 3b's concern.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import {
   PuterProvider,
@@ -28,13 +28,16 @@ import type { NormalizedError } from '../types';
 // per-test without depending on the real SDK.
 // ---------------------------------------------------------------------------
 
+// vitest 5: bare `ReturnType<typeof vi.fn>` (= Mock<Procedure | Constructable>)
+// no longer assigns to concrete member signatures — type the mocks by their
+// real call shapes so the stub satisfies PuterClientLike.
 interface StubbedClient {
   ai: {
-    chat: ReturnType<typeof vi.fn>;
-    listModels?: ReturnType<typeof vi.fn>;
+    chat: Mock<(prompt: string, options?: unknown) => Promise<unknown>>;
+    listModels?: Mock<() => Promise<unknown[]>>;
   };
   auth: {
-    isSignedIn: ReturnType<typeof vi.fn>;
+    isSignedIn: Mock<() => boolean>;
   };
   /** tracks how many times `ai.chat` was called — used by AC21. */
   chatCalls: number;

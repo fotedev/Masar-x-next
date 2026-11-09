@@ -6,6 +6,7 @@
   "type": "module",
   "main": "dist/apps/desktop/src/main/index.js",
   "description": "Masar X — An integrated educational platform for university students.",
+  "license": "AGPL-3.0-only",
   "//": "dev: `electron .` runs the compiled main (dist/) which auto-detects dev mode via app.isPackaged and loads http://localhost:3000 - start `pnpm dev:web` first, and compile the main process once (pnpm --filter desktop build). JSON has no comments, so this field documents the dev script (spec 004 desktop-dev gap).",
   "scripts": {
     "dev": "electron .",
@@ -29,12 +30,12 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "2.1.9",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "5.1.0",
     "electron": "44.4.5",
     "electron-builder": "^25.1.8",
     "sharp": "^0.35.5",
     "typescript": "^5.5.3",
-    "vitest": "^2.1.8"
+    "vitest": "^5.1.0"
   }
 }

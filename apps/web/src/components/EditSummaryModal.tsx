@@ -1,5 +1,6 @@
 
 import { X, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type {
   Summary,
   SummaryUpdate,
@@ -22,6 +23,7 @@ export function EditSummaryModal({
   onClose,
   onSave,
 }: EditSummaryModalProps) {
+  const t = useTranslations("editSummary");
   const {
     formData,
     setFormData,
@@ -54,7 +56,7 @@ export function EditSummaryModal({
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            تعديل الملخص
+            {t("pageTitle")}
           </h2>
           <button
             onClick={onClose}
@@ -97,7 +99,7 @@ export function EditSummaryModal({
               onClick={onClose}
               className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              إلغاء
+              {t("cancel")}
             </button>
             <button
               type="submit"
@@ -107,12 +109,12 @@ export function EditSummaryModal({
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>جاري الحفظ...</span>
+                  <span>{t("saving")}</span>
                 </>
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  <span>حفظ التغييرات</span>
+                  <span>{t("saveButton")}</span>
                 </>
               )}
             </button>

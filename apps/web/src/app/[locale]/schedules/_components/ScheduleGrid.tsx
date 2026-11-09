@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { ScheduleSheet } from "@/lib/schedules";
 
 /**
@@ -11,14 +11,14 @@ import type { ScheduleSheet } from "@/lib/schedules";
  * subject/staff/room) — 100% fidelity to the source grid.
  */
 export function ScheduleGrid({ sheet }: { sheet: ScheduleSheet }) {
-  const locale = useLocale();
+  const t = useTranslations("schedules");
   const [head, ...body] = useMemo(() => sheet.rows, [sheet.rows]);
 
   return (
     <div className="space-y-2" data-testid="schedules-grid">
       <p className="text-xs text-slate-500 dark:text-slate-400">
         {sheet.tab ? `${sheet.tab} · ` : ""}
-        {locale === "ar" ? "المصدر: الجدول المُعلن للطلاب" : "Source: the student-announced timetable"}
+        {t("sourceNote")}
       </p>
       <div className="overflow-auto max-h-[70vh] rounded-xl border border-slate-200 dark:border-slate-700">
         <table className="w-full border-collapse text-xs sm:text-sm">

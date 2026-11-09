@@ -10,6 +10,7 @@
   "excellent": "رائع! أداء متميز جداً.",
   "score": "النتيجة",
   "answers": "الإجابات",
+  "answersReview": "مراجعة إجاباتك",
   "questionsCountLabel": "عدد الأسئلة",
   "time": "الوقت",
   "timeLabel": "الوقت",
@@ -146,6 +147,10 @@
   "confirmDeleteMessageWithTitle": "سيتم حذف \"{title}\" نهائيًا ولا يمكن التراجع عن هذا الإجراء.",
   "confirmDeleteMessage": "سيتم حذف الاختبار نهائيًا ولا يمكن التراجع عن هذا الإجراء.",
   "deleting": "جارٍ الحذف...",
+  "submitForReview": "إرسال للمراجعة",
+  "submittingForReview": "جاري الإرسال",
+  "saveAnswerCloudError": "فشل حفظ الإجابة في السحابة. سيتم الاحتفاظ بها محلياً.",
+  "defaultExamTitle": "امتحان",
   "form": {
     "minQuestionsError": "يجب أن يحتوي الامتحان على سؤال واحد على الأقل",
     "trueOption": "صح",
@@ -154,5 +159,6 @@
     "imageTooLargeDesc": "حجم الصورة \"{name}\" يتجاوز الحد المسموح به (5MB)",
     "imageUploadError": "حدث خطأ أثناء رفع الصورة",
     "tryAgain": "يرجى المحاولة مرة أخرى."
-  }
+  },
+  "deleteQuizConfirm": "هل أنت متأكد أنك تريد حذف هذا الامتحان؟"
 }

@@ -66,8 +66,15 @@ describe("puter error classifiers", () => {
     expect(isPuterTransportError("websocket is closed before the connection")).toBe(true);
     expect(isPuterTransportError("Failed to fetch")).toBe(true);
     expect(isPuterTransportError("request timed out")).toBe(true);
+    // Merged from the former lib/puter.ts classifier (spec 041): the SDK
+    // surfaces warmup/sign-in socket failures as 400s and bare disconnects.
+    expect(isPuterTransportError("Error: 400 bad request")).toBe(true);
+    expect(isPuterTransportError("connection refused")).toBe(true);
+    expect(isPuterTransportError("client disconnected")).toBe(true);
+    expect(isPuterTransportError("network error")).toBe(true);
     // Model errors are NOT transport errors even when transport-shaped words appear.
     expect(isPuterTransportError("Model does not exist")).toBe(false);
+    expect(isPuterTransportError("ERROR_400_FROM_DELEGATE")).toBe(false);
   });
 
   it("claude-like model detection", () => {

@@ -32,10 +32,13 @@ export const DEFAULT_ACADEMIC: UserAcademic = {
 };
 
 export const academicCache = {
-  getUserAcademic: (_userId: string): UserAcademic | null => {
+  getUserAcademic: (userId: string): UserAcademic | null => {
     try {
-      // T030: Using sessionStorage instead of localStorage for PII protection
-      const cached = sessionStorage.getItem(USER_ACADEMIC_CACHE_KEY);
+      // Keyed per user: the next identity on this tab must never read the
+      // previous one's academic state (review 2026-11-07 D4).
+      const cached = sessionStorage.getItem(
+        `${USER_ACADEMIC_CACHE_KEY}:${userId}`
+      );
       if (!cached) return null;
       const parsed = JSON.parse(cached);
       // T030: Removed userId from cache to avoid PII in storage
@@ -47,12 +50,12 @@ export const academicCache = {
     }
   },
 
-  setUserAcademic: (_userId: string, data: UserAcademic) => {
+  setUserAcademic: (userId: string, data: UserAcademic) => {
     try {
-      // T030: Using sessionStorage instead of localStorage for PII protection
-      // T030: Removed userId from stored data to avoid PII in client storage
+      // T030: sessionStorage (not localStorage) for PII protection; keyed
+      // per user so identities cannot read each other's state (review D4).
       sessionStorage.setItem(
-        USER_ACADEMIC_CACHE_KEY,
+        `${USER_ACADEMIC_CACHE_KEY}:${userId}`,
         JSON.stringify({
           data,
           timestamp: Date.now(),

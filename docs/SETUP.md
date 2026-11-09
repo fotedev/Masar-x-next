@@ -688,7 +688,7 @@ pnpm --filter web test:e2e
 
 ## License
 
-MIT License - Free to use and modify for educational institutions and learning platforms.
+Source code is licensed under the GNU AGPL-3.0 — see [LICENSE](../LICENSE). Educational content and the Masar X brand are not covered by that grant; see [NOTICE.md](../NOTICE.md).
 
 ## Acknowledgments
 

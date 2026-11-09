@@ -18,5 +18,6 @@
   "selectLectureFirst": "يرجى اختيار محاضرة أولاً",
   "adminOnly": "هذه الصفحة متاحة للمشرفين فقط",
   "lectureNotFound": "المحاضرة \"{lectureKey}\" غير موجودة في مادة \"{subject}\"",
-  "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة"
+  "lectureMismatch": "هذه المحاضرة لا تنتمي للمادة المختارة",
+  "loading": "جاري التحميل..."
 }

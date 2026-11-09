@@ -14,8 +14,7 @@ import { DriveViewer } from "./_components/DriveViewer";
 export default function MaterialsPage() {
   const t = useTranslations("materials");
   const locale = useLocale();
-  const { terms, term, setTerm, filteredSubjects, fileCount } =
-    useMaterialsData();
+  const { filteredSubjects, fileCount } = useMaterialsData();
 
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(null);
@@ -71,33 +70,11 @@ export default function MaterialsPage() {
       </div>
 
       {!selected && (
-        <>
-          {terms.length > 1 && (
-            <div className="flex flex-wrap justify-center gap-2">
-              <TermChip
-                active={term === "all"}
-                label={t("allTerms")}
-                onClick={() => setTerm("all")}
-              />
-              {terms.map((key) => {
-                const [level, semester] = key.split("-").map(Number);
-                return (
-                  <TermChip
-                    key={key}
-                    active={term === key}
-                    label={t("term", { level, semester })}
-                    onClick={() => setTerm(key)}
-                  />
-                );
-              })}
-            </div>
-          )}
-          <SubjectGrid
-            subjects={filteredSubjects}
-            fileCount={fileCount}
-            onSelect={selectSubject}
-          />
-        </>
+        <SubjectGrid
+          subjects={filteredSubjects}
+          fileCount={fileCount}
+          onSelect={selectSubject}
+        />
       )}
 
       {selected && (
@@ -208,30 +185,5 @@ export default function MaterialsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function TermChip({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors ${
-        active
-          ? "bg-brand-blue text-white border-brand-blue"
-          : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-blue"
-      }`}
-    >
-      {label}
-    </button>
   );
 }
