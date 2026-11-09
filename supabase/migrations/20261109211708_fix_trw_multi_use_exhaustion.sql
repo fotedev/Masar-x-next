@@ -18,10 +18,11 @@
 -- recomputed together). is_active = is_active AND (new_count < max_uses)
 -- also keeps a manually-deactivated code deactivated.
 --
--- APPLICATION: repo-file only for now — apply to production via the
--- supabase-masarx MCP apply_migration (which writes the ledger row and
--- should then rename this file 1:1 to the ledger version). Owner decision
--- tracked in spec 040.
+-- APPLICATION: APPLIED to production 2026-11-09 via the supabase-masarx
+-- MCP apply_migration — ledger version 20261109211708 (this file renamed
+-- 1:1 from its authoring-time 20261108000000 stamp to match the ledger).
+-- Pre-probe: buggy two-statement body live, 0 multi-use codes (zero blast
+-- radius). Post-probe: atomic body live, old form gone, ledger row present.
 
 CREATE OR REPLACE FUNCTION public.trw_redeem_access_code(p_code text)
  RETURNS jsonb
