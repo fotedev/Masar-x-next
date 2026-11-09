@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Executed (2026-11-08) — approved in-session 2026-11-07; all waves landed; W7 found + fixed a latent trw_redeem_access_code exhaustion bug (repo-file migration, prod apply = owner decision) |
+| Status | **Merged (squash `d5f1128c`, PR #212, 2026-11-09)** — approved in-session 2026-11-07; all waves landed; W7 found + fixed a latent trw_redeem_access_code exhaustion bug — migration prod-applied 2026-11-09 (ledger version `20261109211708`, file renamed 1:1 to match) |
 | Type | Test infrastructure + coverage campaign (no production behavior changes except: `MESSAGE_NAMESPACES` drift fix, pure-helper exports for testability, data-testid attributes) |
 | Origin | 10-agent parallel audit of unit-test coverage across the monorepo (2026-11-07) |
 
