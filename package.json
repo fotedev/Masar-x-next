@@ -34,7 +34,11 @@
       "decode-uri-component": "0.5.1",
       "@xmldom/xmldom": "0.8.15",
       "node-forge": "1.4.1",
-      "joi": "17.13.9"
+      "joi": "17.13.9",
+      "tar": "7.5.21",
+      "uuid": "11.1.1",
+      "fast-xml-parser": "5.7.0",
+      "postal-mime": "4.0.8"
     }
   }
 }
