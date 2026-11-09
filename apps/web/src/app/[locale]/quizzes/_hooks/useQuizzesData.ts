@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheTTL } from "@/lib/queryCache";
+import { logger } from "@/lib/logger";
 import type { Quiz, Summary } from "@/types/database";
 import type { QuizFormData } from "../_types";
 
@@ -42,8 +43,9 @@ export function useQuizzesData(props: {
         const dataRows = data || [];
         setQuizzes(dataRows);
         queryCache.set(cacheKey, dataRows, cacheTTL.quizzes || 1800000);
-      } catch {
-        // ignore
+      } catch (err) {
+        // surfaced via logger until an i18n key exists
+        logger.error("Failed to load quizzes:", err);
       } finally {
         setLoading(false);
       }
@@ -67,8 +69,9 @@ export function useQuizzesData(props: {
 
       if (error) throw error;
       setSummaries(data || []);
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to load summaries:", err);
     }
   }, [summarySubject, summaryDepartment]);
 
@@ -129,6 +132,9 @@ export function useQuizzesData(props: {
         const questionsToInsert = formData.questions.map((q, index) => ({
           quiz_id: editingQuiz.id,
           question: q.question,
+          // Stored quiz content (Arabic true-false options written to
+          // quiz_questions.options) — data, not UI copy; players select by
+          // index. Do not "i18n" this (review 2026-11-07 d13).
           options: q.type === "true-false" ? ["صح", "خطأ"] : q.options,
           correct_answer: q.correctAnswer,
           explanation: q.explanation,
@@ -187,11 +193,13 @@ export function useQuizzesData(props: {
   );
 
   const loadQuizForEdit = useCallback(async (quiz: Quiz) => {
-    const { data: questions, error } = await supabase
-      .from("quiz_questions")
-      .select("*")
-      .eq("quiz_id", quiz.id)
-      .order("order_index");
+    // Spec 040: quiz_questions SELECT no longer exposes correct_answer to
+    // any client role — the admin edit path reads the full rows through the
+    // admin-gated definer RPC (PR-1).
+    const { data: questions, error } = await supabase.rpc(
+      "admin_list_quiz_questions",
+      { p_quiz_id: quiz.id },
+    );
 
     if (error) throw error;
 
@@ -234,6 +242,8 @@ export function useQuizzesData(props: {
       summaryId: quiz.summary_id || "",
       questions: (questions || []).map(
         (q: NonNullable<typeof questions>[number]) => {
+          // Content-shape detection against STORED options — data literal,
+          // not UI copy (see the insert site above).
           const isTrueFalse =
             Array.isArray(q.options) &&
             q.options.length === 2 &&

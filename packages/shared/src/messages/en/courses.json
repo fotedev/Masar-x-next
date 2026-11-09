@@ -32,6 +32,10 @@
   "savingInProgress": "Saving in progress...",
   "update": "Update",
   "create": "Create",
+  "enrolledCount": "{count} Students",
+  "instructorLabel": "Instructor: {name}",
+  "unpublish": "Unpublish",
+  "publish": "Publish course",
   "toasts": {
     "addSuccess": "Course added successfully",
     "addError": "Failed to add the course",

@@ -101,6 +101,11 @@ export function QuizPlayer({
   const [serverResult, setServerResult] = useState<{
     score: number;
     totalQuestions: number;
+    answers: Array<{
+      question_id: string;
+      selected_option: number;
+      is_correct: boolean;
+    }>;
   } | null>(null);
 
   const finishAndCapture = useCallback(
@@ -172,6 +177,7 @@ export function QuizPlayer({
         quizId={quizId}
         score={serverResult?.score ?? score}
         totalQuestions={serverResult?.totalQuestions ?? questions.length}
+        gradedAnswers={serverResult?.answers}
         endedByTimeout={runtime.endedByTimeout}
         timeTakenSeconds={timeTaken}
         isGuest={isGuest}

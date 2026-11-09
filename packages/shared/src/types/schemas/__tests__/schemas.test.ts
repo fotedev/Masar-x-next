@@ -117,12 +117,22 @@ describe("NewsSchema", () => {
 });
 
 describe("QuizSchema", () => {
-  it("defaults status to draft", () => {
+  it("defaults status to pending", () => {
     const parsed = QuizSchema.parse({
       id: UUID,
       title: "Cardio quiz",
     });
-    expect(parsed.status).toBe("draft");
+    expect(parsed.status).toBe("pending");
+  });
+
+  it("rejects a status outside the DB check (pending/approved/rejected)", () => {
+    // "draft" was the pre-spec-041 default and contradicted the DB constraint.
+    expect(
+      QuizSchema.safeParse({ id: UUID, title: "Q", status: "draft" }).success,
+    ).toBe(false);
+    expect(
+      QuizSchema.safeParse({ id: UUID, title: "Q", status: "approved" }).success,
+    ).toBe(true);
   });
 
   it("rejects a malformed year", () => {

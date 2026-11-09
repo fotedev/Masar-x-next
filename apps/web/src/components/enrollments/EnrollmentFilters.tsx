@@ -1,4 +1,5 @@
 
+import { useTranslations } from "next-intl";
 import { Button } from "../ui";
 import { Search } from "lucide-react";
 
@@ -15,11 +16,13 @@ export function EnrollmentFilters({
   activeFilter,
   setActiveFilter,
 }: EnrollmentFiltersProps) {
+  const t = useTranslations("enrollments");
+
   const filters = [
-    { id: "all", label: "الكل" },
-    { id: "pending", label: "في الانتظار" },
-    { id: "active", label: "نشط" },
-    { id: "rejected", label: "مرفوض" },
+    { id: "all", label: t("filterAll") },
+    { id: "pending", label: t("statusPending") },
+    { id: "active", label: t("statusActive") },
+    { id: "rejected", label: t("statusRejected") },
   ];
 
   return (
@@ -28,7 +31,7 @@ export function EnrollmentFilters({
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input
           type="text"
-          placeholder="بحث باسم الطالب أو الكورس..."
+          placeholder={t("searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pr-10 pl-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"

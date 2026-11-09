@@ -39,8 +39,6 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     footer: () => import("masarx-shared/messages/ar/footer.json"),
     header: () => import("masarx-shared/messages/ar/header.json"),
     home: () => import("masarx-shared/messages/ar/home.json"),
-    instructorDashboard: () =>
-      import("masarx-shared/messages/ar/instructorDashboard.json"),
     lectureSelect: () => import("masarx-shared/messages/ar/lectureSelect.json"),
     metadata: () => import("masarx-shared/messages/ar/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/ar/mobileNav.json"),
@@ -65,6 +63,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     summaries: () => import("masarx-shared/messages/ar/summaries.json"),
     theme: () => import("masarx-shared/messages/ar/theme.json"),
     titlebar: () => import("masarx-shared/messages/ar/titlebar.json"),
+    trwAccess: () => import("masarx-shared/messages/ar/trwAccess.json"),
     trwRedeem: () => import("masarx-shared/messages/ar/trwRedeem.json"),
     waitlist: () => import("masarx-shared/messages/ar/waitlist.json"),
   },
@@ -92,8 +91,6 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     footer: () => import("masarx-shared/messages/en/footer.json"),
     header: () => import("masarx-shared/messages/en/header.json"),
     home: () => import("masarx-shared/messages/en/home.json"),
-    instructorDashboard: () =>
-      import("masarx-shared/messages/en/instructorDashboard.json"),
     lectureSelect: () => import("masarx-shared/messages/en/lectureSelect.json"),
     metadata: () => import("masarx-shared/messages/en/metadata.json"),
     mobileNav: () => import("masarx-shared/messages/en/mobileNav.json"),
@@ -118,6 +115,7 @@ const MESSAGE_LOADERS: Record<string, Record<string, MessageLoader>> = {
     summaries: () => import("masarx-shared/messages/en/summaries.json"),
     theme: () => import("masarx-shared/messages/en/theme.json"),
     titlebar: () => import("masarx-shared/messages/en/titlebar.json"),
+    trwAccess: () => import("masarx-shared/messages/en/trwAccess.json"),
     trwRedeem: () => import("masarx-shared/messages/en/trwRedeem.json"),
     waitlist: () => import("masarx-shared/messages/en/waitlist.json"),
   },

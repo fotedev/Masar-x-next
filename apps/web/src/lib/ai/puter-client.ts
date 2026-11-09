@@ -5,6 +5,7 @@
  */
 
 import { notePuterTransportFailure, PUTER_UNAVAILABLE_UNTIL_KEY } from './circuit-breaker';
+import { asErrorMessage } from './errors';
 
 export type PuterClientLike = {
   auth: {
@@ -221,15 +222,15 @@ export const extractPuterChatText = async (response: unknown): Promise<string> =
       }
     }
 
-    // Try to extract content from error responses
-    if (isRecord(response)) {
-      const error = response.error || response.message;
-      if (typeof error === 'string') {
-        return error;
-      }
-      if (isRecord(error) && typeof error.message === 'string') {
-        return error.message;
-      }
+    // Error responses must never surface as successful assistant text
+    // (review 2026-11-07 P1.10): the old code returned the error string and
+    // it rendered verbatim as a chat bubble. Throw instead so callers route
+    // through the error-classification ladder (transport / auth / funds).
+    const isErrorShape =
+      response.error !== undefined || typeof response.message === 'string';
+    if (isErrorShape) {
+      const err = response.error !== undefined ? response.error : response.message;
+      throw new Error(asErrorMessage(err));
     }
   }
 

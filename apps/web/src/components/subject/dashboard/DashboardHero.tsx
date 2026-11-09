@@ -6,6 +6,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface DashboardHeroProps {
   isRTL: boolean;
@@ -35,6 +36,8 @@ export function DashboardHero({
   onBackToSubjects,
   onEditSubject,
 }: DashboardHeroProps) {
+  const t = useTranslations("subjectPage");
+
   return (
     <>
       <motion.div
@@ -98,13 +101,12 @@ export function DashboardHero({
                           : tSubjectPage("professorLabelMale");
 
                       const finalLabel = label.startsWith("subjectPage.")
-                        ? dashboardData.professorGender === "female"
-                          ? isRTL
-                            ? "دكتورة"
-                            : "Dr."
-                          : isRTL
-                            ? "دكتور"
-                            : "Dr."
+                        ? t("hero.professorLabel", {
+                            gender:
+                              dashboardData.professorGender === "female"
+                                ? "female"
+                                : "male",
+                          })
                         : label;
 
                       return `${finalLabel} ${profName}`;

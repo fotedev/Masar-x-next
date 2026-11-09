@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 import { queryCache } from "../lib/queryCache";
@@ -18,6 +19,7 @@ import {
 } from "../lib/academic-utils";
 
 export function useUserAcademic() {
+  const t = useTranslations("profile");
   const { user, loading: authLoading } = useAuth();
 
   const [academic, setAcademic] = useState<UserAcademic>(DEFAULT_ACADEMIC);
@@ -126,6 +128,9 @@ export function useUserAcademic() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      // Reset so the NEXT identity on this tab re-initializes (review
+      // 2026-11-07 D4: the ref previously latched across user switches).
+      hasInitialized.current = false;
       setAcademic(DEFAULT_ACADEMIC);
       setLoading(false);
       return;
@@ -202,7 +207,7 @@ export function useUserAcademic() {
           const remaining = Math.ceil((rlStats.blockUntil - now) / 1000);
           return {
             success: false,
-            message: `يرجى الانتظار ${remaining} ثانية قبل تحديث بياناتك مرة أخرى.`,
+            message: t("academicUpdateRateLimited", { seconds: remaining }),
           };
         }
         rlStats.count++;
@@ -245,13 +250,12 @@ export function useUserAcademic() {
           userId: user.id,
           next,
         });
-        const msg =
-          "حدث خطأ أثناء حفظ المعلومات الأكاديمية. الرجاء المحاولة مرة أخرى.";
+        const msg = t("academicUpdateErrorRetry");
         toast.error(msg);
         return { success: false, message: msg };
       }
     },
-    [user, executeWithRetry],
+    [user, executeWithRetry, t],
   );
 
   useEffect(() => {

@@ -13,6 +13,12 @@ export function QuizPlayerResults(props: {
   quizId?: string;
   score: number;
   totalQuestions: number;
+  /** Per-question server grading (spec 040) — present for authed attempts. */
+  gradedAnswers?: Array<{
+    question_id: string;
+    selected_option: number;
+    is_correct: boolean;
+  }>;
   endedByTimeout: boolean;
   timeTakenSeconds: number;
   isGuest: boolean;
@@ -26,6 +32,7 @@ export function QuizPlayerResults(props: {
     quizId,
     score,
     totalQuestions,
+    gradedAnswers,
     endedByTimeout,
     timeTakenSeconds,
     isGuest,
@@ -103,6 +110,28 @@ export function QuizPlayerResults(props: {
         </div>
       </div>
 
+      {gradedAnswers && gradedAnswers.length > 0 && (
+        <div className="mt-8 text-start">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
+            {t("answersReview")}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {gradedAnswers.map((a, i) => (
+              <span
+                key={a.question_id}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+                  a.is_correct
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                    : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                }`}
+              >
+                {i + 1}. {a.is_correct ? "✓" : "✗"}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isGuest && (
         <div className="mb-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl flex items-start gap-3 text-start">
           <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
@@ -147,12 +176,12 @@ export function QuizPlayerResults(props: {
             {isSubmittingForReview ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                جاري الإرسال
+                {t("submittingForReview")}
               </>
             ) : (
               <>
                 <UploadCloud className="w-5 h-5" />
-                إرسال للمراجعة
+                {t("submitForReview")}
               </>
             )}
           </button>

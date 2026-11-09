@@ -68,7 +68,7 @@ export const ChatContainer = memo(function ChatContainer({
   const heroLottieInstanceId = useId();
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const assistantName = locale.toLowerCase().startsWith("ar") ? "زين" : "ZANE";
+  const assistantName = t("assistantName");
 
   // Lottie state machine ref for chat state integration
   const lottieRef = useRef<DotLottie | null>(null);

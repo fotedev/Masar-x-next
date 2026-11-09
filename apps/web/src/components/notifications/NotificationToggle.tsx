@@ -3,6 +3,7 @@ import { Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useBrowserNotifications } from "./NotificationProvider";
+import { logger } from "@/lib/logger";
 
 export function NotificationToggle() {
   const t = useTranslations("notifications");
@@ -44,8 +45,9 @@ export function NotificationToggle() {
           tag: "test-notification",
         });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Notification permission toggle failed:", err);
     } finally {
       setIsLoading(false);
     }

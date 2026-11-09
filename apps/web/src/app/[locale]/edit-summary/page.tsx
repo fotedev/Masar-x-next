@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/navigation";
 import { Upload, Save, CheckCircle, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { uploadToCloudinary } from "@/lib/cloudinary";
@@ -19,12 +20,12 @@ function EditSummaryContent() {
   const commonT = useTranslations("common");
   const onboardingT = useTranslations("onboarding");
   const locale = useLocale();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const summaryId =
-    (params?.summaryId as string) || (searchParams?.get("id") as string);
+  // This route is flat — `params.summaryId` never exists; the id always
+  // arrives via `?id=` (review 2026-11-07 D2).
+  const summaryId = searchParams?.get("id");
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { sendNotification } = useBrowserNotifications();
   const { levels, getDepartmentsForLevelName } = useAcademicOptions();
   const [semester, setSemester] = useState<number>(1);
@@ -57,6 +58,15 @@ function EditSummaryContent() {
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [uploadStage, setUploadStage] = useState<string | null>(null);
 
+  // Stable Cloudinary stage keys -> translated labels. The lib emits keys,
+  // not display copy; unknown values (e.g. the display string pre-set via
+  // t("uploadingPdf") before the upload starts) fall through unchanged.
+  const stageLabels: Record<string, string> = {
+    converting: commonT("uploadStages.converting"),
+    uploading: commonT("uploadStages.uploading"),
+    uploaded: commonT("uploadStages.uploaded"),
+  };
+
   const availableDepartments = useMemo(() => {
     if (!formData.year) return [];
     return getDepartmentsForLevelName(formData.year);
@@ -82,7 +92,19 @@ function EditSummaryContent() {
 
   useEffect(() => {
     const fetchSummary = async () => {
-      if (!summaryId || !user) return;
+      // Wait for the auth session to resolve before deciding anything —
+      // otherwise a signed-out visitor stares at a spinner forever and a
+      // resolved guest gets no redirect (review 2026-11-07 D2).
+      if (authLoading) return;
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      if (!summaryId) {
+        setError(t("loadError"));
+        setLoading(false);
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -117,7 +139,7 @@ function EditSummaryContent() {
     };
 
     fetchSummary();
-  }, [summaryId, user, isAdmin, t]);
+  }, [summaryId, user, authLoading, isAdmin, t, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -393,7 +415,11 @@ function EditSummaryContent() {
             {uploadProgress !== null && (
               <div className="mb-3">
                 <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-2">
-                  <span>{uploadStage || t("uploadingPdf")}</span>
+                  <span>
+                    {uploadStage
+                      ? (stageLabels[uploadStage] ?? uploadStage)
+                      : t("uploadingPdf")}
+                  </span>
                   <span>{Math.round(uploadProgress)}%</span>
                 </div>
                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

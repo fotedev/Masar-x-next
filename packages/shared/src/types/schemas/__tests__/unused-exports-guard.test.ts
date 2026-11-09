@@ -32,25 +32,34 @@ describe('schemas/index.ts — no dead exports', () => {
     ].map((m) => m[1]);
     expect(exports.length).toBeGreaterThan(0);
 
-    // Run a grep across apps/ and packages/. Exclude the schemas file
-    // itself (where each symbol is declared) and the test file.
     // __dirname = packages/shared/src/types/schemas/__tests__
     // To reach repo root we climb: __tests__ → schemas → types → shared → packages → repo root = 6 levels.
     const repoRoot = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
-    const grep = execSync(
-      `grep -rln --include="*.ts" --include="*.tsx" -E "${exports.join('|')}" apps packages`,
-      { cwd: repoRoot, encoding: 'utf8' },
-    );
-    const referencingFiles = grep.split('\n').filter(Boolean);
 
-    // The schemas file itself is always a reference, plus the test file.
+    // The schemas file itself is always a reference, plus this test file.
+    // (The former path built from `__dirname + '/__tests__-guard.test.ts'`
+    // doubled the __tests__ segment, so the allowlist entry never matched.)
     const schemasRel = path.relative(repoRoot, SCHEMAS_FILE).replace(/\\/g, '/');
-    const testRel = path
-      .relative(repoRoot, __dirname + '/__tests__-guard.test.ts')
-      .replace(/\\/g, '/');
+    const testRel = path.relative(repoRoot, __filename).replace(/\\/g, '/');
     const allowedNonConsuming = new Set([schemasRel, testRel]);
 
     for (const symbol of exports) {
+      // Per-symbol, word-bounded grep. The previous single grep over the
+      // union of ALL export names was vacuous: any file referencing one
+      // symbol made every symbol "referenced". Grep exits 1 (and execSync
+      // throws) when there are no matches — that means zero referencing
+      // files for this symbol.
+      let referencingFiles: string[] = [];
+      try {
+        const grep = execSync(
+          `grep -rln --include="*.ts" --include="*.tsx" -E "\\b${symbol}\\b" apps packages`,
+          { cwd: repoRoot, encoding: 'utf8' },
+        );
+        referencingFiles = grep.split('\n').filter(Boolean);
+      } catch {
+        referencingFiles = [];
+      }
+
       // Find at least one referencing file outside the allowed set.
       const hasExternalConsumer = referencingFiles.some((f) => {
         const norm = f.replace(/\\/g, '/');

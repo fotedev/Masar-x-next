@@ -10,7 +10,7 @@ interface VideosSectionProps {
   loading: boolean;
   subjectsLoading: boolean;
   displayVideos: VideoWithRatings[];
-  tHome: (key: string) => string;
+  tHome: (key: string, values?: Record<string, string | number>) => string;
   onNavigate: (page: string, id?: string) => void;
 }
 
@@ -150,8 +150,8 @@ export function VideosSection({
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 leading-relaxed">
                   {video.reviews_count
-                    ? `${video.reviews_count} تقييم`
-                    : "لم يتم تقييمها بعد"}
+                    ? tHome("reviewsCount", { count: video.reviews_count })
+                    : tHome("noReviewsYet")}
                 </p>
               </div>
             </motion.div>

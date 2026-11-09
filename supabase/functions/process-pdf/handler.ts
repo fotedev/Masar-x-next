@@ -1,5 +1,5 @@
 ﻿// @ts-nocheck: Deno runtime types
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0"
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2'
 import { buildCorsHeaders } from '../_shared/cors.ts';
 import { getBearerToken } from '../_shared/auth.ts';

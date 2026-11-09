@@ -4,6 +4,7 @@ import { defineRouting } from "next-intl/routing";
 
 import { updateSession } from "./lib/supabase/proxy";
 import { logger } from "./lib/logger";
+import { isDesktopHostForbidden, isLocalHost } from "./lib/desktop-host";
 
 const routing = defineRouting({
   locales: ["ar", "en"],
@@ -26,35 +27,8 @@ function generateNonce(): string {
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function isLocalHost(host: string | null): boolean {
-  if (!host) return false;
-  const lower = host.toLowerCase();
-
-  // IPv6 loopback — the Host header for an IPv6 literal is bracketed and
-  // has the port after the closing bracket: `[::1]:3000`. Strip the
-  // bracketed part first, then check the literal. We also accept a bare
-  // `::1` (non-conformant per RFC 9110, but some clients send it that
-  // way and treating it as loopback is the safer default).
-  if (lower.startsWith("[")) {
-    const end = lower.indexOf("]");
-    if (end < 0) return false;
-    const literal = lower.slice(1, end);
-    if (literal === "::1") return true;
-    return false;
-  }
-  if (lower === "::1") return true;
-
-  // Strip the port for IPv4 / hostname (Host is `hostname[:port]` per RFC 9110).
-  const hostname = lower.split(":", 1)[0] ?? "";
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return true;
-  }
-  // IPv4 loopback range 127.0.0.0/8.
-  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) {
-    return true;
-  }
-  return false;
-}
+// isLocalHost lives in ./lib/desktop-host (shared with the desktop Host
+// guard, spec 041 R18).
 
 function getCspHeader(nonce: string, host: string | null = null): string {
   // Use a more robust check for production environment at the edge
@@ -167,6 +141,13 @@ export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const nonce = generateNonce();
   const host = request.headers.get("host");
+
+  // R18 (spec 041): desktop loopback Host guard — DNS-rebinding defense for
+  // the standalone server the Electron app spawns. Only active in desktop
+  // mode; missing Host fails closed. See ./lib/desktop-host.
+  if (isDesktopHostForbidden(host)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   try {
     const requestHeaders = new Headers(request.headers);

@@ -124,7 +124,12 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     },
     onMutate: async ({ id, showOnHome }) => {
       await queryClient.cancelQueries({ queryKey: ["subjects"] });
-      const previousSubjects = queryClient.getQueryData(["subjects"]);
+      // Snapshot every ["subjects", {...}] variant (the queries are keyed
+      // with level/semester/auth params, so getQueryData(["subjects"]) is
+      // always undefined and rollback could never restore anything).
+      const previousSubjects = queryClient.getQueriesData<Subject[]>({
+        queryKey: ["subjects"],
+      });
 
       queryClient.setQueriesData(
         { queryKey: ["subjects"] },
@@ -138,12 +143,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       return { previousSubjects };
     },
     onError: (error, _variables, context) => {
-      if (context?.previousSubjects) {
-        queryClient.setQueriesData(
-          { queryKey: ["subjects"] },
-          context.previousSubjects,
-        );
-      }
+      context?.previousSubjects?.forEach(([queryKey, previous]) => {
+        queryClient.setQueriesData({ queryKey }, previous);
+      });
       logger.error("Failed to update subject visibility", error);
     },
     onSettled: () => {
@@ -167,7 +169,12 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     },
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: ["subjects"] });
-      const previousSubjects = queryClient.getQueryData(["subjects"]);
+      // Snapshot every ["subjects", {...}] variant (the queries are keyed
+      // with level/semester/auth params, so getQueryData(["subjects"]) is
+      // always undefined and rollback could never restore anything).
+      const previousSubjects = queryClient.getQueriesData<Subject[]>({
+        queryKey: ["subjects"],
+      });
 
       queryClient.setQueriesData(
         { queryKey: ["subjects"] },
@@ -179,12 +186,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       return { previousSubjects };
     },
     onError: (error, _variables, context) => {
-      if (context?.previousSubjects) {
-        queryClient.setQueriesData(
-          { queryKey: ["subjects"] },
-          context.previousSubjects,
-        );
-      }
+      context?.previousSubjects?.forEach(([queryKey, previous]) => {
+        queryClient.setQueriesData({ queryKey }, previous);
+      });
       logger.error("Failed to update subject", error);
     },
     onSettled: () => {
@@ -204,7 +208,12 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     },
     onMutate: async (newSubject) => {
       await queryClient.cancelQueries({ queryKey: ["subjects"] });
-      const previousSubjects = queryClient.getQueryData(["subjects"]);
+      // Snapshot every ["subjects", {...}] variant (the queries are keyed
+      // with level/semester/auth params, so getQueryData(["subjects"]) is
+      // always undefined and rollback could never restore anything).
+      const previousSubjects = queryClient.getQueriesData<Subject[]>({
+        queryKey: ["subjects"],
+      });
 
       const optimisticSubject: Subject = {
         id: `optimistic-${Date.now()}`,
@@ -242,12 +251,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       return { previousSubjects };
     },
     onError: (error, _variables, context) => {
-      if (context?.previousSubjects) {
-        queryClient.setQueriesData(
-          { queryKey: ["subjects"] },
-          context.previousSubjects,
-        );
-      }
+      context?.previousSubjects?.forEach(([queryKey, previous]) => {
+        queryClient.setQueriesData({ queryKey }, previous);
+      });
       logger.error("Failed to create subject", error);
     },
     onSettled: () => {
@@ -262,7 +268,12 @@ export function useSubjects(params: UseSubjectsParams = {}) {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["subjects"] });
-      const previousSubjects = queryClient.getQueryData(["subjects"]);
+      // Snapshot every ["subjects", {...}] variant (the queries are keyed
+      // with level/semester/auth params, so getQueryData(["subjects"]) is
+      // always undefined and rollback could never restore anything).
+      const previousSubjects = queryClient.getQueriesData<Subject[]>({
+        queryKey: ["subjects"],
+      });
 
       queryClient.setQueriesData(
         { queryKey: ["subjects"] },
@@ -274,12 +285,9 @@ export function useSubjects(params: UseSubjectsParams = {}) {
       return { previousSubjects };
     },
     onError: (error, _variables, context) => {
-      if (context?.previousSubjects) {
-        queryClient.setQueriesData(
-          { queryKey: ["subjects"] },
-          context.previousSubjects,
-        );
-      }
+      context?.previousSubjects?.forEach(([queryKey, previous]) => {
+        queryClient.setQueriesData({ queryKey }, previous);
+      });
       logger.error("Failed to delete subject", error);
     },
     onSettled: () => {

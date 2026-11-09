@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { quizService } from "../lib/quiz";
+import { logger } from "../lib/logger";
 
 type Quiz = {
   id: string;
@@ -12,7 +13,11 @@ type Question = {
   id: string;
   question: string;
   options: string[];
-  correct_answer: number;
+  /**
+   * Optional: DB-sourced questions never carry the answer key (spec 040
+   * column grants); only locally-generated quizzes (quizData path) know it.
+   */
+  correct_answer?: number;
   explanation?: string;
   image_url?: string;
 };
@@ -86,8 +91,9 @@ export function useQuizPlayerData(props: {
       setQuiz(quiz);
       setQuestions(questions);
       trackEvent("quiz_loaded", { quiz_id: quizId, title: quiz.title });
-    } catch {
-      // ignore
+    } catch (err) {
+      // surfaced via logger until an i18n key exists
+      logger.error("Failed to load quiz:", err);
     } finally {
       setLoading(false);
     }

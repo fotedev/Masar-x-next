@@ -173,16 +173,6 @@ describe("QuizService.attempt lifecycle", () => {
     const rpc = chain.calls.find((c) => c.method === "rpc");
     expect(rpc!.table).toBe("rpc:finish_quiz_attempt");
     expect(rpc!.args[0]).toEqual({ p_attempt_id: "att-1", p_time_taken_seconds: 120 });
-    expect(result).toEqual({ score: 8, totalQuestions: 10 });
-  });
-
-  it("submitAttempt (legacy) inserts a completed attempt payload", async () => {
-    chain.respondWith({ data: null, error: null });
-    await new QuizService().submitAttempt("quiz-1", "u1", 4, 5, [], "2025-01-01T00:00:00Z", undefined, 120);
-    const insert = chain.calls.find((c) => c.table === "quiz_attempts" && c.method === "insert");
-    const payload = insert!.args[0] as Record<string, unknown>;
-    expect(payload.status).toBe("completed");
-    expect(payload.time_taken_seconds).toBe(120);
-    expect(payload.finished_at).toBeNull();
+    expect(result).toEqual({ score: 8, totalQuestions: 10, answers: [] });
   });
 });

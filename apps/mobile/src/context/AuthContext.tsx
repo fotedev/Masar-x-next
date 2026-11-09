@@ -25,6 +25,7 @@ import {
   clearLocalAuthSession,
   saveLocalAuthSession,
 } from "../auth-storage";
+import { cacheClearAll } from "../read-cache";
 import { getSupabaseClient, isSupabaseConfigured, WEB_ORIGIN } from "../lib/supabase";
 
 type Session = NonNullable<
@@ -141,6 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     await clearLocalAuthSession().catch(() => {});
+    // Review 2026-11-07 P1.6: read/study caches must not survive a sign-out
+    // — the next identity on this device must not see the previous one's rows.
+    await cacheClearAll().catch(() => {});
   }, []);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);

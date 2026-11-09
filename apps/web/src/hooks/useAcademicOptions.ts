@@ -2,20 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { cacheTTL, queryCache } from "../lib/queryCache";
 import { logger } from "../lib/logger";
+import type { AcademicLevel, Department } from "../lib/academic-utils";
 // Removed hardcoded imports as per user request to rely solely on DB tables
 
-export type AcademicLevelOption = {
-  id: string;
-  name: string;
-  level_number: number | null;
+// Spec 041 (P1.7): the option shapes extend the canonical row types in
+// lib/academic-utils instead of redeclaring divergent duplicates.
+export type AcademicLevelOption = AcademicLevel & {
   is_active: boolean;
   sort_order: number;
 };
 
-export type DepartmentOption = {
-  id: string;
-  academic_level_id?: string | null;
-  name: string;
+export type DepartmentOption = Department & {
   is_active: boolean;
   sort_order: number;
 };

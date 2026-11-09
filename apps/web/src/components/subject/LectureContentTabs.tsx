@@ -34,7 +34,7 @@ export function VideosList({ videos, onDelete, t }: VideosListProps) {
               {v.title}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {v.language === "en" ? "English" : "عربي"}
+              {v.language === "en" ? t("videoLanguageEn") : t("videoLanguageAr")}
             </span>
           </div>
           <div className="flex items-center gap-2">

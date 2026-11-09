@@ -79,8 +79,8 @@ export function useNotifications() {
 
       // Cache the result
       queryCache.set(cacheKey, notificationData, cacheTTL.notifications);
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.error("fetchNotifications failed:", err);
     } finally {
       // Clear inflight request when done
       if (userId) inflightRequests.delete(userId);
@@ -102,8 +102,8 @@ export function useNotifications() {
         prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.error("markAsRead failed:", err);
     }
   };
 
@@ -123,8 +123,8 @@ export function useNotifications() {
 
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.error("markAllAsRead failed:", err);
     }
   };
 
@@ -146,8 +146,8 @@ export function useNotifications() {
       if (deletedNotification && !deletedNotification.read) {
         setUnreadCount((prev) => Math.max(0, prev - 1));
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      logger.error("deleteNotification failed:", err);
     }
   };
 

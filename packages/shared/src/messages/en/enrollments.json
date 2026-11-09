@@ -4,5 +4,15 @@
   "statusRejected": "Rejected",
   "viewProof": "View Proof",
   "accept": "Accept",
-  "reject": "Reject"
+  "reject": "Reject",
+  "filterAll": "All",
+  "searchPlaceholder": "Search by student or course name...",
+  "unnamedCourse": "Unnamed course",
+  "studentFallback": "Student",
+  "loadError": "Failed to load enrollment requests",
+  "approveSuccess": "Request approved successfully",
+  "rejectSuccess": "Request rejected",
+  "processError": "Failed to process the request",
+  "paymentProofAlt": "Payment proof",
+  "close": "Close"
 }

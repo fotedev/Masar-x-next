@@ -4,12 +4,14 @@ import { toast } from "sonner";
 import { supabase } from "../lib/supabase";
 import { QuizWithRatings } from "../types/database";
 import { queryCache, cacheTTL } from "../lib/queryCache";
+import { confirmToast } from "../lib/confirmToast";
 
 // Keep track of the inflight request to deduplicate simultaneous calls
 let inflightRequest: Promise<QuizWithRatings[]> | null = null;
 
 export function useQuizzes() {
     const t = useTranslations("quizzes");
+    const tCommon = useTranslations("common");
     const [quizzes, setQuizzes] = useState<QuizWithRatings[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -63,7 +65,15 @@ export function useQuizzes() {
 
     const deleteQuiz = async (id: string) => {
         try {
-            if (!confirm("هل أنت متأكد أنك تريد حذف هذا الامتحان؟")) return;
+            // confirmToast (not window.confirm) since spec 041: the native
+            // dialog is not translatable and breaks the app's styling.
+            if (
+                !(await confirmToast(t("deleteQuizConfirm"), {
+                    confirmLabel: tCommon("confirm"),
+                    cancelLabel: tCommon("cancel"),
+                }))
+            )
+                return;
 
             const { error } = await supabase
                 .from("quizzes")

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { supabase } from "@/lib/supabase";
 import { queryCache, cacheKeys, cacheTTL } from "@/lib/queryCache";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ interface UseEnrollmentsProps {
 }
 
 export function useEnrollments({ instructorId }: UseEnrollmentsProps) {
+  const t = useTranslations("enrollments");
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
@@ -78,20 +80,20 @@ export function useEnrollments({ instructorId }: UseEnrollmentsProps) {
 
           const formattedData = (data as RawEnrollment[]).map((e) => ({
             ...e,
-            course_title: e.courses?.title || "كورس غير محدد",
-            student_name: e.profiles?.display_name || "طالب",
+            course_title: e.courses?.title || t("unnamedCourse"),
+            student_name: e.profiles?.display_name || t("studentFallback"),
             instructor_id: e.courses?.instructor_id,
           }));
           setEnrollments(formattedData);
           queryCache.set(cacheKey, formattedData, cacheTTL.enrollments);
         }
       } catch {
-        toast.error("حدث خطأ في تحميل طلبات التسجيل");
+        toast.error(t("loadError"));
       } finally {
         setLoading(false);
       }
     },
-    [instructorId],
+    [instructorId, t],
   );
 
   useEffect(() => {
@@ -117,13 +119,13 @@ export function useEnrollments({ instructorId }: UseEnrollmentsProps) {
       if (error) throw error;
 
       toast.success(
-        action === "approve" ? "تم قبول الطلب بنجاح" : "تم رفض الطلب",
+        action === "approve" ? t("approveSuccess") : t("rejectSuccess"),
       );
 
       queryCache.delete(cacheKeys.enrollments(instructorId));
       fetchEnrollments(true);
     } catch {
-      toast.error("حدث خطأ في معالجة الطلب");
+      toast.error(t("processError"));
     } finally {
       setProcessing(null);
     }
