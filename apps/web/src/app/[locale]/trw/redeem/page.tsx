@@ -79,6 +79,7 @@ export default function RedeemPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Input
+              data-testid="trw-redeem-input"
               placeholder={t("placeholder")}
               value={code}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -89,6 +90,7 @@ export default function RedeemPage() {
             />
           </div>
           <Button
+            data-testid="trw-redeem-submit"
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-11"
             onClick={handleRedeem}
             disabled={isPending || !code.trim()}

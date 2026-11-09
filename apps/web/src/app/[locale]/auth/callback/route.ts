@@ -6,7 +6,8 @@ const SUPPORTED_LOCALES = ['ar', 'en'] as const
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 const DEFAULT_LOCALE: SupportedLocale = 'ar'
 
-function normalizeLocale(raw: string | undefined): SupportedLocale {
+// spec 040: exported for unit tests — behavior unchanged.
+export function normalizeLocale(raw: string | undefined): SupportedLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(raw ?? '')
     ? (raw as SupportedLocale)
     : DEFAULT_LOCALE
@@ -16,11 +17,24 @@ function normalizeLocale(raw: string | undefined): SupportedLocale {
 // may arrive with `next` that already carries a locale prefix (e.g. the
 // middleware redirected to `/ar/login?next=/en/subjects/math`), or with
 // an unprefixed path (e.g. `/login` after the auth-gate redirect).
-function localizeNext(next: string, locale: SupportedLocale): string {
+// spec 040: exported for unit tests — behavior unchanged.
+export function localizeNext(next: string, locale: SupportedLocale): string {
   if (next === '/') return `/${locale}`
   if (next.startsWith(`/${locale}`)) return next
   const path = next.startsWith('/') ? next : `/${next}`
   return `/${locale}${path}`
+}
+
+// spec 040: extracted verbatim from the inline IIFE in GET so the
+// open-redirect sanitizer is unit-testable — behavior unchanged.
+export function sanitizeNext(raw: string | null): string {
+  const next = raw ?? '/'
+  if (typeof next !== 'string') return '/'
+  if (!next.startsWith('/')) return '/'
+  if (next.startsWith('//')) return '/'
+  if (next.includes('://')) return '/'
+  if (next.toLowerCase().startsWith('/\\')) return '/'
+  return next
 }
 
 export async function GET(
@@ -33,15 +47,7 @@ export async function GET(
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   // if "next" is in search params, use it as the redirection URL
-  const next = (() => {
-    const raw = searchParams.get('next') ?? '/'
-    if (typeof raw !== 'string') return '/'
-    if (!raw.startsWith('/')) return '/'
-    if (raw.startsWith('//')) return '/'
-    if (raw.includes('://')) return '/'
-    if (raw.toLowerCase().startsWith('/\\')) return '/'
-    return raw
-  })()
+  const next = sanitizeNext(searchParams.get('next'))
 
   if (code) {
     const supabase = await createClient()

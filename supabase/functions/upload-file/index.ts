@@ -1,6 +1,13 @@
 // @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2'
 import { buildCorsHeaders } from '../_shared/cors.ts'
+import {
+    estimateBase64Size,
+    extractCloudinaryErrorMessage,
+    isAllowedContentType,
+    MAX_UPLOAD_BYTES,
+    sanitizeFileName,
+} from './pure.ts'
 
 interface UploadRequest {
     file: string // base64 encoded file
@@ -89,24 +96,7 @@ Deno.serve(async (req: Request) => {
             )
         }
 
-        const allowedContentTypes = new Set([
-            'application/pdf',
-            'image/png',
-            'image/jpeg',
-            'image/webp',
-            'image/gif',
-            'image/avif',
-            'image/tiff',
-            'image/bmp',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'text/plain',
-            'application/zip',
-            'application/x-zip-compressed'
-        ])
-        if (!allowedContentTypes.has(contentType)) {
+        if (!isAllowedContentType(contentType)) {
             return new Response(
                 JSON.stringify({ error: 'Unsupported file type' }),
                 {
@@ -117,8 +107,8 @@ Deno.serve(async (req: Request) => {
         }
 
         // Validate file size (base64 is ~33% larger than original)
-        const estimatedFileSize = (file.length * 0.75) // Rough estimation
-        if (estimatedFileSize > 50 * 1024 * 1024) { // 50MB limit
+        const estimatedFileSize = estimateBase64Size(file) // Rough estimation
+        if (estimatedFileSize > MAX_UPLOAD_BYTES) { // 50MB limit
             return new Response(
                 JSON.stringify({ error: 'File too large. Maximum size is 50MB.' }),
                 {
@@ -168,7 +158,7 @@ Deno.serve(async (req: Request) => {
         formData.append('upload_preset', uploadPreset)
         formData.append('folder', folder)
         // Use a unique public_id to avoid collisions
-        const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const sanitizedFileName = sanitizeFileName(fileName)
         formData.append('public_id', `${userId}_${Date.now()}_${sanitizedFileName}`)
 
         console.log('Uploading to Cloudinary:', {
@@ -221,18 +211,7 @@ Deno.serve(async (req: Request) => {
                 errorData = { message: 'Failed to parse error response' }
             }
 
-            const errorDataObj = (typeof errorData === 'object' && errorData !== null)
-                ? (errorData as Record<string, unknown>)
-                : null
-            const nestedError = (errorDataObj && typeof errorDataObj.error === 'object' && errorDataObj.error !== null)
-                ? (errorDataObj.error as Record<string, unknown>)
-                : null
-            const errorMessage =
-                (errorDataObj && typeof errorDataObj.message === 'string' && errorDataObj.message.trim() !== ''
-                    ? errorDataObj.message
-                    : (nestedError && typeof nestedError.message === 'string' && nestedError.message.trim() !== ''
-                        ? nestedError.message
-                        : 'Unknown error'))
+            const errorMessage = extractCloudinaryErrorMessage(errorData)
 
             console.error('Cloudinary upload failed:', {
                 status: cloudinaryResponse.status,

@@ -51,6 +51,7 @@ import arFooter from "../messages/ar/footer.json";
 import arHeader from "../messages/ar/header.json";
 import arHome from "../messages/ar/home.json";
 import arLectureSelect from "../messages/ar/lectureSelect.json";
+import arMaterials from "../messages/ar/materials.json";
 import arMetadata from "../messages/ar/metadata.json";
 import arMobileNav from "../messages/ar/mobileNav.json";
 import arNav from "../messages/ar/nav.json";
@@ -65,12 +66,14 @@ import arPwa from "../messages/ar/pwa.json";
 import arQuizAttempts from "../messages/ar/quizAttempts.json";
 import arQuizzes from "../messages/ar/quizzes.json";
 import arReviews from "../messages/ar/reviews.json";
+import arSchedules from "../messages/ar/schedules.json";
 import arSubjectMetadata from "../messages/ar/subjectMetadata.json";
 import arSubjectPage from "../messages/ar/subjectPage.json";
 import arSubjects from "../messages/ar/subjects.json";
 import arSubjectsTab from "../messages/ar/subjectsTab.json";
 import arSummaries from "../messages/ar/summaries.json";
 import arTheme from "../messages/ar/theme.json";
+import arTrwAccess from "../messages/ar/trwAccess.json";
 import arTrwRedeem from "../messages/ar/trwRedeem.json";
 import arDesktopStudyWorkspace from "../messages/ar/desktopStudyWorkspace.json";
 import arDesktopUpdates from "../messages/ar/desktopUpdates.json";
@@ -101,6 +104,7 @@ import enFooter from "../messages/en/footer.json";
 import enHeader from "../messages/en/header.json";
 import enHome from "../messages/en/home.json";
 import enLectureSelect from "../messages/en/lectureSelect.json";
+import enMaterials from "../messages/en/materials.json";
 import enMetadata from "../messages/en/metadata.json";
 import enMobileNav from "../messages/en/mobileNav.json";
 import enNav from "../messages/en/nav.json";
@@ -115,12 +119,14 @@ import enPwa from "../messages/en/pwa.json";
 import enQuizAttempts from "../messages/en/quizAttempts.json";
 import enQuizzes from "../messages/en/quizzes.json";
 import enReviews from "../messages/en/reviews.json";
+import enSchedules from "../messages/en/schedules.json";
 import enSubjectMetadata from "../messages/en/subjectMetadata.json";
 import enSubjectPage from "../messages/en/subjectPage.json";
 import enSubjects from "../messages/en/subjects.json";
 import enSubjectsTab from "../messages/en/subjectsTab.json";
 import enSummaries from "../messages/en/summaries.json";
 import enTheme from "../messages/en/theme.json";
+import enTrwAccess from "../messages/en/trwAccess.json";
 import enTrwRedeem from "../messages/en/trwRedeem.json";
 import enDesktopStudyWorkspace from "../messages/en/desktopStudyWorkspace.json";
 import enDesktopUpdates from "../messages/en/desktopUpdates.json";
@@ -155,6 +161,7 @@ const arMessages = {
   header: arHeader,
   home: arHome,
   lectureSelect: arLectureSelect,
+  materials: arMaterials,
   metadata: arMetadata,
   mobileNav: arMobileNav,
   nav: arNav,
@@ -169,12 +176,14 @@ const arMessages = {
   quizAttempts: arQuizAttempts,
   quizzes: arQuizzes,
   reviews: arReviews,
+  schedules: arSchedules,
   subjectMetadata: arSubjectMetadata,
   subjectPage: arSubjectPage,
   subjects: arSubjects,
   subjectsTab: arSubjectsTab,
   summaries: arSummaries,
   theme: arTheme,
+  trwAccess: arTrwAccess,
   trwRedeem: arTrwRedeem,
   desktopStudyWorkspace: arDesktopStudyWorkspace,
   desktopUpdates: arDesktopUpdates,
@@ -185,9 +194,9 @@ const arMessages = {
 
 /**
  * Namespace names present in the shared registry, derived from the JSON
- * files on disk. Note: currently a superset of MESSAGE_NAMESPACES in
- * src/messages/types.ts (that hand-maintained list does not include
- * "downloads" yet).
+ * files on disk. Kept in lockstep with MESSAGE_NAMESPACES in
+ * src/messages/types.ts (locked by the parity test in
+ * src/messages/__tests__/namespaces-parity.test.ts).
  */
 export type I18nNamespace = keyof typeof arMessages;
 
@@ -219,6 +228,7 @@ const enMessages: Record<I18nNamespace, unknown> = {
   header: enHeader,
   home: enHome,
   lectureSelect: enLectureSelect,
+  materials: enMaterials,
   metadata: enMetadata,
   mobileNav: enMobileNav,
   nav: enNav,
@@ -233,12 +243,14 @@ const enMessages: Record<I18nNamespace, unknown> = {
   quizAttempts: enQuizAttempts,
   quizzes: enQuizzes,
   reviews: enReviews,
+  schedules: enSchedules,
   subjectMetadata: enSubjectMetadata,
   subjectPage: enSubjectPage,
   subjects: enSubjects,
   subjectsTab: enSubjectsTab,
   summaries: enSummaries,
   theme: enTheme,
+  trwAccess: enTrwAccess,
   trwRedeem: enTrwRedeem,
   desktopStudyWorkspace: enDesktopStudyWorkspace,
   desktopUpdates: enDesktopUpdates,

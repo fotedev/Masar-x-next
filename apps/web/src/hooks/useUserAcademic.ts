@@ -16,6 +16,7 @@ import {
   ACADEMIC_FETCH_KEY,
   FETCH_COOLDOWN,
   RATE_LIMIT_KEY,
+  USER_ACADEMIC_CACHE_KEY,
 } from "../lib/academic-utils";
 
 export function useUserAcademic() {
@@ -45,7 +46,10 @@ export function useUserAcademic() {
 
     const onCustomUpdate = () => syncFromCache();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "masarx_user_academic_cache") syncFromCache();
+      // Cache entries are keyed per user (review D4) — match THIS user's
+      // key, not the unkeyed prefix (cross-tab re-sync regression caught by
+      // the spec 040 suite after the D4 change keyed the writes).
+      if (e.key === `${USER_ACADEMIC_CACHE_KEY}:${user?.id}`) syncFromCache();
     };
 
     window.addEventListener(

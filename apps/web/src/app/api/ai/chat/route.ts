@@ -16,7 +16,8 @@ import { logger } from '@/lib/logger';
  * Protected: Requires authentication + rate limiting
  */
 
-const chatRequestSchema = z.object({
+// spec 040: exported for unit tests — behavior unchanged.
+export const chatRequestSchema = z.object({
   prompt: z
     .string()
     .min(1, 'Missing or invalid prompt')
@@ -31,7 +32,8 @@ type ChatRequest = z.infer<typeof chatRequestSchema>;
  * System prompt per chat mode.
  * Keep concise — the model produces the actual response.
  */
-function buildSystemPrompt(mode: ChatRequest['mode']): string {
+// spec 040: exported for unit tests — behavior unchanged.
+export function buildSystemPrompt(mode: ChatRequest['mode']): string {
   switch (mode) {
     case 'cs_assistant':
       return "You are a computer science tutor. Answer concisely in the user's language. Show code examples when relevant.";

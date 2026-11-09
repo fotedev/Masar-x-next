@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 // Same contract as /api/mcp: fail-closed in production without a secret.
 let healthSecretWarned = false;
 
-function isAuthorized(request: Request): boolean {
+// spec 040: exported for unit tests — behavior unchanged.
+export function isAuthorized(request: Request): boolean {
   const secret = process.env.HEALTH_CHECK_SECRET;
   if (!secret && process.env.NODE_ENV === "production") {
     if (!healthSecretWarned) {

@@ -208,6 +208,7 @@ export default function LoginPage() {
 
         {(error || success) && (
           <div
+            data-testid="login-error-banner"
             className={`mb-8 p-4 rounded-2xl text-sm font-bold animate-in fade-in slide-in-from-top-2 duration-300 ${
               error
                 ? "bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400"
@@ -278,6 +279,7 @@ export default function LoginPage() {
               <input
                 id="login-email"
                 name="email"
+                data-testid="login-email"
                 type="email"
                 required
                 autoComplete="email"
@@ -298,6 +300,7 @@ export default function LoginPage() {
                 <input
                   id="login-password"
                   name="password"
+                  data-testid="login-password"
                   type={showPassword ? "text" : "password"}
                   required
                   autoComplete="current-password"
@@ -336,6 +339,7 @@ export default function LoginPage() {
             </div>
             <button
               type="submit"
+              data-testid="login-submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 bg-brand-blue hover:bg-brand-sky text-white px-6 py-4 rounded-2xl font-bold shadow-lg shadow-brand-blue/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
