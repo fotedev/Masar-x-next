@@ -122,6 +122,15 @@ updates:
       # dedicated vitest upgrade, never via autodrift.
       - dependency-name: "@vitest/coverage-v8"
         versions: [">= 6"]
+      # uuid >= 12 is held (PR #222): uuid 12 removed CommonJS support — v14
+      # is ESM-only and expects global crypto. The root override forces uuid
+      # across the tree, and its only consumers here are the CJS
+      # require('uuid') packages of the expo chain (@expo/bunyan, @expo/cli,
+      # xcode) — zero direct imports in our source, no advisory cleared.
+      # Dependabot's 14.0.3 PR failed 7 CI jobs (mobile/test/ESLint/e2e/
+      # gitleaks/next build/workspaces). Moves with the Expo SDK 53 campaign.
+      - dependency-name: uuid
+        versions: [">= 12"]
       # --- Holds wave 2, 2026-10-18 (same owner-approved cleanup: majors
       # dependabot re-proposed after #132/#111/#126/#142 landed; PRs
       # #136/#137/#138/#139/#140/#141/#143) — each entry reversible, delete
