@@ -18,6 +18,7 @@
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm --filter web test:e2e",
     "seed:launch": "node scripts/seed-mvp-launch.mjs",
     "types:generate": "supabase gen types typescript --linked > packages/shared/src/types/database.generated.ts"
   },
