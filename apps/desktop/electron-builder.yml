@@ -121,6 +121,16 @@ extraResources:
     to: "web"
     filter:
       - "**/*"
+  # electron-builder 26 regression (PR #8562, unfixed through 26.18.1):
+  # createFilter() returns false for any path whose relative name is exactly
+  # "node_modules", so the standalone entry above silently drops the whole
+  # root node_modules (the packaged server then dies on `Cannot find module
+  # 'next'`). Re-included as its own entry — the rejection only fires when
+  # node_modules is a CHILD of `from`; upstream issue still open.
+  - from: "../web/.next/standalone/node_modules"
+    to: "web/node_modules"
+    filter:
+      - "**/*"
   - from: "../web/.next/static"
     to: "web/apps/web/.next/static"
     filter:
