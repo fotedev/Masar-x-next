@@ -25,6 +25,10 @@ Installers, portable builds, and update manifests for each tagged version are pu
 - Content-table audit added `updated_at` timestamps and audit coverage (#187)
 - License: MIT → AGPL-3.0 for code; educational content and brand assets are All Rights Reserved via `NOTICE.md` (#192)
 
+### Removed
+
+- Real-exam seed SQL migrations withdrawn from the repository history (copyright withdrawal — spec 043); production quiz data unchanged
+
 ## [0.6.0] - 2026-09-23
 
 ### Added

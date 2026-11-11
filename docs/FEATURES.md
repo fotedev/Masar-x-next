@@ -36,7 +36,7 @@
 
 ## Materials Library & Schedules
 - `[X]` `/materials` exam library — subject grid, group chips, and Drive file viewer backed by a static manifest (`src/app/[locale]/materials/page.tsx`)
-- `[X]` 17 real exams with 242 verified questions seeded to production via idempotent, title-guarded migrations (`supabase/migrations/20261103222513_seed_real_exams.sql` … `20261103223556_seed_real_exams_part2c.sql`)
+- `[X]` Exam bank seeded to production via idempotent, title-guarded migrations (seed SQL withdrawn from the repository — spec 043)
 - `[X]` `/schedules` weekly cohort timetables (years 1–4) rendered from static gviz-extracted data (`src/app/[locale]/schedules/page.tsx`, `src/lib/schedules/`)
 
 ## Courses

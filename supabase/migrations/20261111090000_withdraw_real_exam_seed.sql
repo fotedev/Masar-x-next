@@ -1,0 +1,14 @@
+-- Spec 043 — withdraw the real-exam seed migrations (copyright).
+--
+-- The four seed migrations timestamped 2026-11-03 were removed from the
+-- repository on 2026-11-11 by a history rewrite (see
+-- specs/043-seed-data-purge/spec.md). Their production ledger rows are
+-- deleted in the same reconciliation, so this row documents the withdrawal
+-- and keeps the ledger chain contiguous.
+--
+-- No schema or data change. The seeded quizzes remain in production by owner
+-- decision; fresh environments replaying this directory will not contain
+-- them (see supabase/migrations/README.md, "Withdrawn seed migrations").
+--
+-- NOTE: the production ledger row for this migration is inserted through the
+-- Supabase Management API as part of the spec 043 reconciliation.

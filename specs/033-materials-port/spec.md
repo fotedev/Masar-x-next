@@ -8,6 +8,11 @@
 > | Type | Feature port (new route + static data + seed migration) |
 > | Input | `sandbox/drive-materials/` reference implementation (gate-green: validate 17/242, verify-preview OK, SMOKE PASS); `docs/port-decisions.md` gate answers |
 
+> **2026-11-11 (spec 043):** the real-exam seed SQL files this spec created were
+> **withdrawn from the repository** (copyright) — removed from every commit by a
+> history rewrite; production quiz data is unchanged. Historical text below is
+> preserved as-is.
+
 ## Problem
 
 The Drive materials corpus (20 subjects / 84 files, term-tagged level+semester) and the
@@ -34,7 +39,7 @@ in the gitignored sandbox preview. Students cannot reach any of it from the real
    `apps/web/src/i18n/request.ts` `MESSAGE_LOADERS`. Every user-facing string both locales.
 4. **Seed migrations** (owner gates 2+3: visibility same as existing approved quizzes;
    status `approved` immediately):
-   - `20261103222513_seed_real_exams.sql` + `..._part2a/2b/2c.sql`: 17 quizzes + 242
+   - Withdrawn seed migrations (spec 043): 17 quizzes + 242
      questions from the sandbox JSONs, one idempotent guarded CTE per quiz
      (`WHERE NOT EXISTS (SELECT 1 FROM quizzes WHERE title = $title) RETURNING id` →
      `INSERT INTO quiz_questions ... SELECT ... FROM (VALUES ...) , q`).
@@ -89,6 +94,6 @@ in the gitignored sandbox preview. Students cannot reach any of it from the real
 2. Manifest copy + `DriveManifestSchema` + accessor.
 3. `materials.json` (ar/en) + `request.ts` loader + nav items.
 4. `/materials` page + `_hooks/useMaterialsData.ts` + `_components/{SubjectGrid,GroupChips,DriveViewer}.tsx`.
-5. Seed-migration generator (`.tmp/`, uncommitted) → `20261104000000_seed_real_exams.sql`.
+5. Seed-migration generator (`.tmp/`, uncommitted) → withdrawn (spec 043).
 6. E2E spec; typecheck/lint/build; MCP apply; count verification.
 7. PR + AGENTS.md ledger row + claim cleanup.

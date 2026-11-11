@@ -28,9 +28,8 @@ licensed under the AGPL. They are © 2026 Masar X, all rights reserved.
 Redistribution, republication, or derivative use of this content is not
 permitted without prior written permission:
 
-- Exam and question seed data in `supabase/migrations/20261103222513_seed_real_exams.sql`,
-  `20261103223120_seed_real_exams_part2a.sql`, `20261103223457_seed_real_exams_part2b.sql`,
-  `20261103223556_seed_real_exams_part2c.sql`, and `20261103225128_seed_y2s1_subjects.sql`
+- Exam and question content published on the platform (its seed data files were
+  removed from this repository in spec 043; production content unchanged)
 - Course/subject catalog seed data in `supabase/seed.sql`
 - The study-materials catalog `apps/web/src/lib/materials/manifest.json`
   (the underlying study materials themselves are the property of their original

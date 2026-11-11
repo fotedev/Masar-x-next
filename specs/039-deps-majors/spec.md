@@ -11,7 +11,7 @@
 
 The repo has four open major-bump PRs that regular CI can't decide: three are not simple version bumps (one targets the wrong assumption, one is blocked by a framework pairing, one moves types ahead of every runtime), and one is a real migration. Merging any of them blind either breaks CI (#159, #157) or leaves an untested release path (#158). This spec records the verified fact base and the workstreams, so each bump lands as a reviewed, gated change instead of a parked guess.
 
-**Live state verified 2026-11-07** (code read at main `eb0277f`; CI = each PR's latest check runs):
+**Live state verified 2026-11-07** (code read at main `6cf3b95` — pre-purge `eb0277f`; CI = each PR's latest check runs):
 
 | PR | Bump | PR CI | Reality |
 |---|---|---|---|

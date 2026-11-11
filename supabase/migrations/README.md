@@ -30,6 +30,22 @@ A fresh environment (local dev, a new Supabase project, CI) is built as:
    it could not rebuild production (hard breaks at 010–013, ~30 production
    tables had no DDL in it at all).
 
+## Withdrawn seed migrations (spec 043)
+
+The four real-exam seed migrations timestamped 2026-11-03 were **withdrawn
+from this repository on 2026-11-11** (copyright — see
+`specs/043-seed-data-purge/spec.md`; a history rewrite removed them from
+every commit). Their production ledger rows were deleted the same day, and
+`20261111090000_withdraw_real_exam_seed.sql` documents the withdrawal.
+
+Consequences:
+
+- A fresh environment replaying this directory reproduces the production
+  **schema** but not the exam seed data — the seeded quizzes exist only in
+  the production database (kept there by owner decision).
+- The chain remains append-only: keep timestamping forward from the last
+  applied version.
+
 ## Rebuilding and verifying
 
 With any PostgreSQL 17 instance (local, docker, portable):

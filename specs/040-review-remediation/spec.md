@@ -1,7 +1,7 @@
 # Spec 040 — Review Remediation (security + correctness)
 
 **Status**: Approved 2026-11-08 (owner approved the remediation plan in session; scope locked to 28 review-critical findings + ~12 quick-win warnings; i18n batch deferred).
-**Source**: Full-code review 2026-11-07 (`.tmp/full-code-review-2026-11-07/`, baseline `eb0277f`), all critical findings personally verified against source.
+**Source**: Full-code review 2026-11-07 (`.tmp/full-code-review-2026-11-07/`, baseline `6cf3b95` — pre-purge `eb0277f`), all critical findings personally verified against source.
 **Rollout**: 4 sequential PRs, each merged after CI green + `update-branch` (I14 worktrees at `../masarx-wt/`, no primary-checkout writes). After each merge: prod application per PR (DB migrations via Supabase MCP; edge function deploys via CLI).
 
 ## PR-1 `fix/security-hardening` (DB + edge)

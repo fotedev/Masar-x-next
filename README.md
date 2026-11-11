@@ -37,7 +37,7 @@ Study summaries, interactive courses, quizzes, AI-powered assistance, and comple
 ## Features
 
 - **Learning tools** — study summaries, interactive courses, quizzes, and grade tracking for university students.
-- **Exam materials library** — `/materials` static-manifest library seeded to production: 17 real exams with 242 verified questions.
+- **Exam materials library** — `/materials` static-manifest library linking approved study materials and exam content to their Drive sources.
 - **Cohort schedules** — `/schedules` weekly timetables covering academic years 1–4.
 - **AI-powered assistance** — study help served through a hardened server-side boundary (provider keys never reach a client).
 - **Bilingual by design** — full English/Arabic localization with RTL support via `next-intl`.
