@@ -219,6 +219,29 @@
 
 ---
 
+## 22. Fresh worktrees have no `apps/web/.env.local` — authed e2e specs die before running
+
+- **Trigger:** You run the Playwright suite in a freshly created worktree (`../masarx-wt/<slug>` per I14) and every authed spec (ai-chat-send, ai-chat-history, quiz-finish, trw-redeem) fails before any navigation.
+- **Why:** `.env.local` is gitignored, so worktrees don't get it. The authed specs derive the Supabase session-cookie name (`sb-<ref>-auth-token`) from `NEXT_PUBLIC_SUPABASE_URL` — env first, else parsed from `apps/web/.env.local` (via `apps/web/e2e/helpers/auth.ts`) — and throw when neither exists. The URL value is never used for network auth; cookie-name derivation is the only consumer. Run contract: [12-e2e-testing.md](./12-e2e-testing.md).
+- **Fix:** Copy the primary checkout's `apps/web/.env.local` into the worktree's `apps/web/`, or export `NEXT_PUBLIC_SUPABASE_URL` for the test run.
+- **Symptom:** `Error: e2e/helpers/auth: NEXT_PUBLIC_SUPABASE_URL not found (env or apps/web/.env.local) — cannot derive the supabase-js session-cookie name` (pre-consolidation runs threw the same message prefixed `ai-chat-history.spec:` / `quiz-finish.spec:` etc.).
+
+## 23. `reuseExistingServer: true` makes a stale :3000 server look like a valid suite result
+
+- **Trigger:** An e2e run is green (or red) in ways that don't match your code changes, and something is already LISTENing on :3000.
+- **Why:** The Playwright config reuses an existing server on the port instead of spawning `pnpm dev` (`apps/web/playwright.config.ts` webServer, `reuseExistingServer: true`). A leftover dev/prod server from a previous session serves OLD code — your changes are never exercised (phantom green) or your fixes look broken (phantom red). Bit PR #183's e2e verification (2026-11-07).
+- **Fix:** Before running the suite, kill whatever holds :3000 (`netstat -ano | grep :3000` → `taskkill /PID <pid> /T /F`), or pin a fresh server explicitly via `E2E_BASE_URL`.
+- **Symptom:** Playwright output shows no webServer boot/spawn lines; test behavior contradicts the tree under test.
+
+## 24. A dev server can LISTEN on :3000 while accepting zero connections (event-loop wedge)
+
+- **Trigger:** `curl http://localhost:3000` hangs or returns 000 (IPv4 AND ::1) while `netstat` shows LISTENING and the dev log shows no new entries; the owner's browser tab keeps its established HMR socket.
+- **Why:** `pnpm dev`'s event loop can wedge while the socket stays open — the port check lies. Not a proxy problem (ProxyEnable=0 was verified). Reproduced and root-caused 2026-09-16.
+- **Fix:** Kill the wedged node process (`taskkill /PID <pid> /T /F`), `rm -rf apps/web/.next`, cold restart — a healthy boot answers 200 in ~5 s. Diagnosis order: curl first (server-wedge vs browser-wedge), then netstat.
+- **Symptom:** "server not reachable" from Playwright's webServer boot despite LISTENING; 60 s curl hangs on both stacks.
+
+---
+
 ## What's been retired (kept for archaeology only)
 
 The following patterns were once issues but are now either fixed or no longer relevant. Listed here so you don't try to "re-fix" them:

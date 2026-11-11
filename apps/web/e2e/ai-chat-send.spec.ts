@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+
+import { seedAuthedSession } from "./helpers/auth";
 
 /**
  * AI assistant send → /api/ai/chat fallback ladder (specs 008/011/040).
@@ -63,73 +63,9 @@ const PUTER_API_ORIGIN = "https://transport.puter.com";
 // Direct window.puter.authToken injection value (see sendMessageAndArmPuter).
 const FORCED_PUTER_TOKEN = "e2e-forced-puter-token";
 
-function resolveSupabaseRef(): string {
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  if (!url) {
-    for (const file of [".env.local", ".env.development", ".env"]) {
-      try {
-        const raw = readFileSync(path.resolve(process.cwd(), file), "utf8");
-        url = raw.match(/^NEXT_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
-        if (url) break;
-      } catch {
-        // file missing — try the next candidate
-      }
-    }
-  }
-  if (!url) {
-    throw new Error(
-      "ai-chat-send.spec: NEXT_PUBLIC_SUPABASE_URL not found (env or apps/web/.env.local) — cannot derive the supabase-js localStorage key",
-    );
-  }
-  return new URL(url).hostname.split(".")[0];
-}
-
-function buildSeededSession() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expiresIn = 60 * 60 * 24 * 30;
-  const expiresAt = nowSec + expiresIn;
-  const b64url = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-  const accessToken = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({
-    sub: USER_ID,
-    exp: expiresAt,
-    aud: "authenticated",
-    role: "authenticated",
-  })}.mock-signature`;
-  return {
-    access_token: accessToken,
-    token_type: "bearer",
-    expires_in: expiresIn,
-    expires_at: expiresAt,
-    refresh_token: "mock-refresh-token",
-    user: {
-      id: USER_ID,
-      aud: "authenticated",
-      role: "authenticated",
-      email: "e2e-user@example.com",
-      phone: "",
-      app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: { full_name: "E2E User" },
-      identities: [],
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    },
-  };
-}
-
-async function seedAuthedSession(page: Page, baseURL?: string) {
-  const storageKey = `sb-${resolveSupabaseRef()}-auth-token`;
-  const session = buildSeededSession();
-  await page.route("**/auth/v1/token?*", (route) => route.fulfill({ json: session }));
-  await page.route("**/auth/v1/user", (route) => route.fulfill({ json: session.user }));
-  await page.route("**/api/auth/sync", (route) => route.fulfill({ json: { ok: true } }));
-  await page.context().addCookies([
-    {
-      name: storageKey,
-      value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`,
-      domain: new URL(baseURL ?? "http://localhost:3000").hostname,
-      path: "/",
-    },
-  ]);
+// Shared seeded-cookie auth (e2e/helpers/auth.ts) + this spec's puter seeds.
+async function seedPuterAssistantSession(page: Page, baseURL?: string) {
+  await seedAuthedSession(page, { baseURL, userId: USER_ID });
   // cs_assistant is the mode whose fallback ladder reaches /api/ai/chat.
   // Pin a NON-claude model: the default (zane_ai_selected_model absent →
   // claude-sonnet-4-6) makes executeWithPuter assert Puter sign-in and
@@ -245,7 +181,7 @@ test.describe("AI assistant send (authed, seeded cookie)", () => {
       });
     });
 
-    await seedAuthedSession(page, baseURL);
+    await seedPuterAssistantSession(page, baseURL);
     await page.goto("/en/ai-assistant");
 
     await expect(page.getByTestId("chat-input-textarea")).toBeVisible();
@@ -274,7 +210,7 @@ test.describe("AI assistant send (authed, seeded cookie)", () => {
       return route.fulfill({ status: 500, body: "mocked fallback outage" });
     });
 
-    await seedAuthedSession(page, baseURL);
+    await seedPuterAssistantSession(page, baseURL);
     await page.goto("/en/ai-assistant");
 
     await expect(page.getByTestId("chat-input-textarea")).toBeVisible();

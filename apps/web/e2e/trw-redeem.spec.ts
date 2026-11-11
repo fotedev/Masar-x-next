@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+
+import { seedAuthedSession } from "./helpers/auth";
 
 /**
  * TRW access-code redeem (spec 040 Wave 9).
@@ -10,9 +10,9 @@ import { expect, test, type Page } from "@playwright/test";
  * visitor reaches the form directly — scenario (a) pins that.
  *
  * The authed scenarios drive the trw_redeem_access_code RPC through its
- * three outcomes, using the same seeded-cookie auth as ai-chat-history
- * (sb-<ref>-auth-token cookie from @supabase/ssr createBrowserClient, so
- * getSession() resolves with zero /auth/v1 calls). The RPC responses are
+ * three outcomes, using the shared seeded-cookie auth helper
+ * (e2e/helpers/auth.ts): an `sb-<ref>-auth-token` cookie (`@supabase/ssr`
+ * cookieEncoding), so getSession() resolves with zero /auth/v1 calls. The RPC responses are
  * route-mocked (the hook is a client-side supabase.rpc call, fully
  * interceptable — no SSR fetch on this page).
  *
@@ -29,77 +29,6 @@ const ACCESS_CODE = "TRW-E2E1-TEST";
 const TRW_SUCCESS_TOAST = "تم تفعيل الاشتراك بنجاح في خطة premium_yearly.";
 const TRW_INVALID_TOAST = "الكود غير صحيح، منتهي الصلاحية، أو تم استنفد عدد مرات الاستخدام.";
 const TRW_ALREADY_TOAST = "لقد قمت بتفعيل هذا الكود مسبقاً.";
-
-function resolveSupabaseRef(): string {
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  if (!url) {
-    for (const file of [".env.local", ".env.development", ".env"]) {
-      try {
-        const raw = readFileSync(path.resolve(process.cwd(), file), "utf8");
-        url = raw.match(/^NEXT_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
-        if (url) break;
-      } catch {
-        // file missing — try the next candidate
-      }
-    }
-  }
-  if (!url) {
-    throw new Error(
-      "trw-redeem.spec: NEXT_PUBLIC_SUPABASE_URL not found (env or apps/web/.env.local) — cannot derive the supabase-js localStorage key",
-    );
-  }
-  return new URL(url).hostname.split(".")[0];
-}
-
-function buildSeededSession() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expiresIn = 60 * 60 * 24 * 30;
-  const expiresAt = nowSec + expiresIn;
-  const b64url = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-  const accessToken = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({
-    sub: USER_ID,
-    exp: expiresAt,
-    aud: "authenticated",
-    role: "authenticated",
-  })}.mock-signature`;
-  return {
-    access_token: accessToken,
-    token_type: "bearer",
-    expires_in: expiresIn,
-    expires_at: expiresAt,
-    refresh_token: "mock-refresh-token",
-    user: {
-      id: USER_ID,
-      aud: "authenticated",
-      role: "authenticated",
-      email: "e2e-user@example.com",
-      phone: "",
-      app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: { full_name: "E2E User" },
-      identities: [],
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    },
-  };
-}
-
-async function seedAuthedSession(page: Page, baseURL?: string) {
-  // Same cookie shape ai-chat-history.spec.ts seeds: `base64-` + base64url
-  // JSON under `sb-<ref>-auth-token` (@supabase/ssr cookieEncoding).
-  const storageKey = `sb-${resolveSupabaseRef()}-auth-token`;
-  const session = buildSeededSession();
-  await page.route("**/auth/v1/token?*", (route) => route.fulfill({ json: session }));
-  await page.route("**/auth/v1/user", (route) => route.fulfill({ json: session.user }));
-  await page.route("**/api/auth/sync", (route) => route.fulfill({ json: { ok: true } }));
-  await page.context().addCookies([
-    {
-      name: storageKey,
-      value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`,
-      domain: new URL(baseURL ?? "http://localhost:3000").hostname,
-      path: "/",
-    },
-  ]);
-}
 
 /** Register the redeem RPC mock — registered after the rest catch-all so it wins (LIFO). */
 async function mockRedeemRpc(
@@ -144,7 +73,7 @@ test.describe("TRW redeem page", () => {
           json: { id: USER_ID, level: 3, semester: 1, department_id: DEPARTMENT_ID },
         }),
       );
-      await seedAuthedSession(page, baseURL);
+      await seedAuthedSession(page, { baseURL, userId: USER_ID });
     });
 
     test("success response toasts the plan and routes to /non-academic", async ({ page }) => {
