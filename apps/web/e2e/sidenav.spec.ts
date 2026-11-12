@@ -77,8 +77,12 @@ test.describe("sidenav rail (web mode)", () => {
     await logoToggle.click();
     await expect(logoToggle).toHaveAttribute("aria-expanded", "true");
 
-    const expanded = await rail.boundingBox();
-    expect(expanded?.width).toBe(240);
+    // The toggle is debounced and the width animates over 300ms — poll to
+    // the settled width instead of reading the box once (CI's prod build
+    // hydrates faster than dev and would catch the transition mid-flight).
+    await expect
+      .poll(async () => (await rail.boundingBox())?.width, { timeout: 5_000 })
+      .toBe(240);
   });
 
   test("expansion persists across a reload", async ({ page }) => {
@@ -92,11 +96,19 @@ test.describe("sidenav rail (web mode)", () => {
       "aria-expanded",
       "true",
     );
+    await expect
+      .poll(async () => (await rail.boundingBox())?.width, { timeout: 5_000 })
+      .toBe(240);
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByRole("complementary")).toBeVisible({ timeout: 15_000 });
-    const box = await page.getByRole("complementary").boundingBox();
-    expect(box?.width).toBe(240);
+    // After reload the persisted expanded state applies post-mount with a
+    // width transition — poll to the settled width, never read once.
+    await expect
+      .poll(async () => (await page.getByRole("complementary").boundingBox())?.width, {
+        timeout: 5_000,
+      })
+      .toBe(240);
   });
 
   test("below-lg viewport swaps the rail for the mobile top bar", async ({
@@ -159,13 +171,16 @@ test.describe("sidenav rail (desktop-mode simulation, spec 045)", () => {
     expect(collapsed?.y).toBe(32);
     expect(collapsed?.width).toBe(64);
 
-    // The logo toggle still works inside the shell.
+    // The logo toggle still works inside the shell (debounced + animated,
+    // so poll to the settled width).
     await rail.locator("button[aria-expanded]").click();
     await expect(rail.locator("button[aria-expanded]")).toHaveAttribute(
       "aria-expanded",
       "true",
     );
-    expect((await rail.boundingBox())?.width).toBe(240);
+    await expect
+      .poll(async () => (await rail.boundingBox())?.width, { timeout: 5_000 })
+      .toBe(240);
 
     // Content clears the rail: the desktop root gained the lg:ps offset.
     const mainBox = await page.locator("main").boundingBox();
