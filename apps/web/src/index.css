@@ -428,6 +428,29 @@ html[dir="rtl"] [lang="en"] {
   display: none;
 }
 
+/* Spec 046: real .scrollbar-none utility. ChatHeader already references the
+   class, but no Tailwind scrollbar plugin is installed, so it was a no-op and
+   overflowing surfaces fell back to the global 8px webkit scrollbar (an
+   unstyled light bar in dark mode). */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Spec 046 hardening: color-scheme normally arrives pre-paint via the
+   ThemeScript inline style (documentElement.style.colorScheme); these
+   declarations keep native widgets dark without JS as a fallback. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
 /* Spec 011 bidi isolation: mixed-direction markdown. `unicode-bidi:
    plaintext` gives each block its own first-strong base direction, so a
    fully-English sentence inside an Arabic reply lays out LTR (its colon and

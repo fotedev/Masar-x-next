@@ -136,7 +136,7 @@ export function ChatScrollbar({
           onPointerMove={onThumbPointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
-          className="pointer-events-auto absolute left-0 w-1.5 cursor-pointer touch-none rounded-full bg-slate-400/60 transition-colors hover:bg-cyan-500/80 dark:bg-slate-500/60 dark:hover:bg-cyan-400/80"
+          className="pointer-events-auto absolute left-0 w-1.5 cursor-pointer touch-none rounded-full bg-slate-400/60 transition-colors hover:bg-cyan-500/80 dark:bg-slate-600/50 dark:hover:bg-cyan-400/80"
           style={{ height: thumb.height, transform: `translateY(${thumb.top}px)` }}
         />
       </div>
