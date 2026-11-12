@@ -59,6 +59,13 @@
   --color-brand-orange: rgb(var(--brand-orange));
   --color-brand-purple: #8b5cf6;
   --color-primary-foreground: hsl(var(--primary-foreground));
+  /* spec 046 follow-up 3: --border tokens exist (:root/.dark) but were never
+     wired into @theme, so `border-border` generated NO CSS and every site
+     (titlebar, workspace dividers, UpdateToast) fell back to the base-layer
+     #e5e7eb — a bright line on the dark shell. Only border wired here; the
+     rest of the shadcn token layer (bg-background/muted/accent, text-*,
+     ring-ring) is still dead (~98 sites) — separate follow-up spec. */
+  --color-border: hsl(var(--border));
 
   /* font sizes (v3 fontSize overrides — exact pairs) */
   --text-xs: 0.75rem;
@@ -426,6 +433,29 @@ html[dir="rtl"] [lang="en"] {
 
 .chat-scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+/* Spec 046: real .scrollbar-none utility. ChatHeader already references the
+   class, but no Tailwind scrollbar plugin is installed, so it was a no-op and
+   overflowing surfaces fell back to the global 8px webkit scrollbar (an
+   unstyled light bar in dark mode). */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Spec 046 hardening: color-scheme normally arrives pre-paint via the
+   ThemeScript inline style (documentElement.style.colorScheme); these
+   declarations keep native widgets dark without JS as a fallback. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
 }
 
 /* Spec 011 bidi isolation: mixed-direction markdown. `unicode-bidi:

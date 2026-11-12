@@ -106,14 +106,19 @@ html[data-masarx-desktop="true"] .masarx-titlebar {
 }
 
 /* ---------- FR-018: slim, application-styled scrollbars ----------
-   scrollbar-gutter: stable reserves the gutter even when no scrollbar is
-   present, so layout does not shift as panes overflow and recover.
+   Standard scrollbar-width/color serve standards-compliant engines (in
+   Chromium they are inert while any ::-webkit-scrollbar rule matches, so
+   the webkit blocks below do the real work). Spec 046: scrollbar-gutter
+   is NOT blanket-applied — reserving gutters on overflow:hidden shells
+   (body, Layout root, main) mis-paints a light strip at the viewport edge
+   (chromium 1459802). Real scroll panes opt in inline: LectureListColumn
+   and AssistantPanel set scrollbarGutter: stable, which is what keeps
+   FR-018's no-layout-shift guarantee where it can actually shift.
    The selectors below are all inside [data-masarx-desktop="true"] so they
    do nothing in a browser. */
 [data-masarx-desktop="true"] * {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
-  scrollbar-gutter: stable;
 }
 
 [data-masarx-desktop="true"] *::-webkit-scrollbar {
