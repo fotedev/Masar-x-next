@@ -52,6 +52,30 @@ dark-themed app, from two unrelated renderers:
 **Out:** any change to FR-018's thumb palette in desktop mode (its light thumb
 was not the reported strip); redesigning the ChatScrollbar feature (spec 011).
 
+## Follow-up (2026-11-12, post-reinstall) — the strip persisted
+
+Reinstalling this spec's fixes did not clear the owner's line on
+`/en/subjects`. Pixel forensics (column-brightness read of the owner's
+screenshot + shipped-CSS audit) identified a **second, independent renderer**:
+
+- The line is the `.modern-card`'s own 1px glass border painted on the
+  window's **last pixel column** (x=1279, y≈148..575 = the card box, straight
+  segment inside the 24px rounded corners; computed rgb(21,27,41) —
+  `--glass-border: rgba(241,245,249,0.08)` over the card background).
+- Desktop `main` has no horizontal padding (`Layout.tsx` desktop variant:
+  `relative flex min-h-0 w-full flex-1 flex-col overflow-hidden`), so
+  edge-to-edge cards put their border flush on the window edge. Browser mode
+  never shows this (`px-3 sm:px-6 lg:px-8` insets the card to ≈x=1248).
+- The shipped bundle was verified to contain **zero** `scrollbar-gutter` rules
+  — the first fix above was real but addressed a different artifact.
+
+**Fix:** the desktop `main` variant gains `pe-4` (16px inline-end inset), so
+card borders sit 16px inside the window edge on every desktop page (subjects
+list, home, …). RTL-aware via the logical property; the rail's start offset
+lives on the root div (spec 045) and the ZANE/workspace flex chains keep
+their full-height geometry (verified visually on the real app, including
+`/subjects/[subject]`).
+
 ## Verification
 
 1. Worktree gates green (typecheck, lint, web vitest).

@@ -104,7 +104,7 @@ export function Layout({ children }: LayoutProps) {
       <main
         className={
           isDesktop
-            ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden"
+            ? "relative flex min-h-0 w-full flex-1 flex-col overflow-hidden pe-4"
             : isAdminRoute
               ? "h-full w-full min-h-0"
               : isAssistantRoute
