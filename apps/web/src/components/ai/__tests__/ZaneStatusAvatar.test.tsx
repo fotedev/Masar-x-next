@@ -59,6 +59,10 @@ describe("ZaneStatusAvatar (spec 048)", () => {
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("pointer-events-none");
     expect(root.className).toContain("max-lg:top-3");
-    expect(root.className).toContain("lg:flex-col");
+    // Spec 048 narrow-viewport fix: the avatar stacks vertically at ALL
+    // sizes (flex-col is unconditional) so the pill overlaps its bottom
+    // edge — never side-by-side.
+    expect(root.className).toContain("flex-col");
+    expect(root.className).not.toContain("lg:flex-col");
   });
 });

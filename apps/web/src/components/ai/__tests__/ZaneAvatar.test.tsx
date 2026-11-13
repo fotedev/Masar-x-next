@@ -88,8 +88,8 @@ describe("ZaneAvatar (spec 048)", () => {
     const els = videos(container);
     expect(bySrc(els, "zane-idle-face.mp4")?.style.opacity).toBe("0");
     expect(bySrc(els, "zane-typing-close.mp4")?.style.opacity).toBe("1");
-    const playedSrcs = playSpy.mock.instances.map((i) =>
-      (i as HTMLVideoElement).getAttribute("src"),
+    const playedSrcs = playSpy.mock.instances.map((el: object) =>
+      (el as HTMLVideoElement).getAttribute("src"),
     );
     expect(playedSrcs.at(-1)).toContain("zane-typing-close.mp4");
   });
