@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ProfileFormSchema } from '../validation/profile';
-import { pickReactionEvent } from '../ai-assistant-reactions';
 import { isAdminRole } from '../auth/roles';
 
 describe('ProfileFormSchema — fullName rules', () => {
@@ -93,42 +92,8 @@ describe('ProfileFormSchema — website/avatar URL refine', () => {
   });
 });
 
-describe('pickReactionEvent — keyword priority ladder', () => {
-  it('fires alert for error keywords in any mode (highest priority)', () => {
-    expect(pickReactionEvent('Sorry, I cannot help with that', 'cs_assistant')).toBe('alertClick');
-    expect(pickReactionEvent('حدث خطأ أثناء المعالجة', 'student_agent')).toBe('alertClick');
-    expect(pickReactionEvent('Request timeout while streaming', 'group_rag')).toBe('alertClick');
-  });
-
-  it('error keywords win over celebration keywords', () => {
-    expect(pickReactionEvent('correct — but there was an error', 'student_agent')).toBe(
-      'alertClick',
-    );
-  });
-
-  it('fires jump for celebration keywords only in student_agent mode', () => {
-    expect(pickReactionEvent('إجابة صحيحة تماماً، أحسنت!', 'student_agent')).toBe('jumpClick');
-    expect(pickReactionEvent('That is correct, well done!', 'student_agent')).toBe('jumpClick');
-    // Same content in other modes falls through the ladder — and being under
-    // 30 chars it lands on "no" rather than "yes".
-    expect(pickReactionEvent('That is correct, well done!', 'cs_assistant')).toBe('noClick');
-  });
-
-  it('fires no for very short replies (denials / one-liners)', () => {
-    expect(pickReactionEvent('ok', 'cs_assistant')).toBe('noClick');
-    expect(pickReactionEvent('لا', 'student_agent')).toBe('noClick');
-  });
-
-  it('fires yes for ordinary long replies', () => {
-    expect(pickReactionEvent('هذا شرح تفصيلي طويل نسبياً للمفهوم المطلوب', 'cs_assistant')).toBe(
-      'yesClick',
-    );
-  });
-
-  it('is case-insensitive for Latin keywords', () => {
-    expect(pickReactionEvent('FATAL crash reported', 'group_rag')).toBe('alertClick');
-  });
-});
+// Spec 048: pickReactionEvent deleted with the dotLottie state machine —
+// the video avatar has no reaction events.
 
 describe('isAdminRole', () => {
   it('accepts exactly the three admin roles', () => {

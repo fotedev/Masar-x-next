@@ -45,10 +45,6 @@ vi.mock("@/components/ai/LazyMarkdown", async () => {
   };
 });
 
-vi.mock("@/components/ai/LottiePlayer", () => ({
-  LottiePlayer: () => null,
-}));
-
 vi.mock("@/lib/puter", () => ({
   initPuterDiagnostics: vi.fn(),
   signInToPuter: vi.fn(),
@@ -73,7 +69,6 @@ const baseProps = {
   message: msg(),
   isLatestAssistant: false,
   isLoading: false,
-  mode: "cs_assistant" as const,
   onRetry: undefined as undefined | (() => void),
 };
 
@@ -101,6 +96,18 @@ describe("ChatMessageItem", () => {
     renderItem({ message: msg({ type: "user", content: "hello from user" }) });
     expect(screen.getByText("hello from user")).toBeInTheDocument();
     expect(screen.queryByText("Plain reply")).toBeNull();
+  });
+
+  // Spec 048: per-message avatars are gone — the single status avatar lives
+  // in ZaneStatusAvatar (ChatContainer).
+  it("assistant messages render no per-message avatar circle", () => {
+    const { container } = renderItem();
+    expect(container.querySelector(".from-indigo-500")).toBeNull();
+  });
+
+  it("user messages keep their 32/36px avatar circle (spec 012)", () => {
+    const { container } = renderItem({ message: msg({ type: "user", content: "hi" }) });
+    expect(container.querySelector(".from-indigo-500")).not.toBeNull();
   });
 
   it("assistant messages flow through the markdown renderer", () => {
