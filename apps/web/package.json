@@ -24,13 +24,10 @@
     "setup-subjects": "node scripts/setup-subjects.js",
     "check:auth-routes": "node scripts/auth-route-check.mjs",
     "db:diagnose": "node scripts/db-diagnose.cjs",
-    "migrate:academic": "node scripts/migrate-academic-metadata.mjs",
-    "lottie-patch": "node scripts/apply-lottie-patch.mjs",
-    "postinstall": "node scripts/apply-lottie-patch.mjs"
+    "migrate:academic": "node scripts/migrate-academic-metadata.mjs"
   },
   "dependencies": {
     "@heyputer/puter.js": "^2.6.5",
-    "@lottiefiles/dotlottie-react": "^0.18.7",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@radix-ui/react-switch": "^1.4.1",
     "@supabase/ssr": "^0.12.7",

@@ -1,18 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useId, useRef, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
+import { useState, useEffect, useCallback, useRef, Children, memo, type FC, type ReactNode, type HTMLAttributes, isValidElement } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { User, Copy, Check, Code, Eye, LogIn, RotateCcw } from "lucide-react";
 import { getTextDirection } from "@/utils/textDirection";
 import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
-import { useInViewport } from "@/hooks/useInViewport";
 import { initPuterDiagnostics, signInToPuter, getPuterStatus } from "@/lib/puter";
 import { CANNED_ERROR_PREFIXES } from "@/lib/ai/canned-messages";
 import { motion, AnimatePresence } from "framer-motion";
-import { LottiePlayer, type DotLottie } from "./LottiePlayer";
-import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
-import type { AiAssistantMode } from "@/lib/ai-assistant";
 import {
   completeOpenFences,
   normalizeLatexDelimiters,
@@ -37,8 +33,6 @@ interface ChatMessageItemProps {
   isLatestAssistant?: boolean;
   /** Whether the AI is currently generating a response. */
   isLoading?: boolean;
-  /** Current AI assistant mode (used to pick the right reaction event). */
-  mode?: AiAssistantMode;
   /** Re-sends the last user prompt. Only offered on the latest error bubble. */
   onRetry?: () => void;
 }
@@ -173,7 +167,6 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   onUiMessage,
   isLatestAssistant = false,
   isLoading = false,
-  mode = "cs_assistant",
   onRetry,
 }) => {
   const locale = useLocale();
@@ -185,19 +178,6 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const [isPuterSigningIn, setIsPuterSigningIn] = useState(false);
   const [puterIsSignedIn, setPuterIsSignedIn] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lottiePlayerRef = useRef<DotLottie | null>(null);
-  const wasLoadingRef = useRef(false);
-  // Stable per-instance key for the bubble's LottiePlayer. The key changes
-  // every time the parent re-mounts the bubble (e.g. when switching between
-  // assistants with messages), which forces a clean rebuild of the WASM
-  // player and avoids the "Failed to load animation" race condition that
-  // happens when a stale canvas is reused.
-  const lottieInstanceId = useId();
-  // Spec 036 Track C: the dotLottie engine unmounts while the bubble avatar is
-  // off-screen (one shared IntersectionObserver, 200px margin so the animation
-  // is live before the message scrolls into view). The latest assistant
-  // message always animates regardless of scroll position.
-  const { ref: avatarRef, inView: avatarInView } = useInViewport<HTMLDivElement>();
 
   type ZaneUiButton = { label: string; message: string };
   type ZaneUiPayload = { type: "buttons"; title?: string; buttons: ZaneUiButton[] };
@@ -255,62 +235,8 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
 
 
 
-  // Drive the bubble avatar's Lottie state machine based on chat state.
-  // Only the latest assistant message reacts (thinking / yes / no / alert / jump).
-  // Older bubbles stay on their default "idle" loop.
-  //
-  // Note: we intentionally ignore `hasUserInput` here — the bubble avatar
-  // represents the assistant's *last delivered* message, so it should only
-  // react when the AI is actually generating a new response (`isLoading`).
-  // The hero Lottie in ChatContainer is the surface that reacts to typing.
-  useEffect(() => {
-    if (isUser || !isLatestAssistant) {
-      wasLoadingRef.current = isLoading;
-      return;
-    }
-    const player = lottiePlayerRef.current;
-    if (!player) return;
-
-    const safeFire = (event: string) => {
-      try {
-        player.stateMachineFireEvent(event);
-      } catch {
-        // state machine may not be ready; ignore
-      }
-    };
-
-    const aiJustFinished = wasLoadingRef.current && !isLoading;
-    wasLoadingRef.current = isLoading;
-
-    if (aiJustFinished) {
-      const event = pickReactionEvent(message.content, mode);
-      safeFire(event);
-      return;
-    }
-
-    if (isLoading) {
-      safeFire("thinkClick");
-    }
-  }, [isLoading, isLatestAssistant, isUser, message.content, mode]);
-
-  // The state machine's "thinking" segment is finite and auto-transitions
-  // back to "idle" via the `thinkingComplete` event (see `StateMachine1.json`
-  // in `public/animations/ai-robo.lottie`). To keep the bubble avatar
-  // locked in "thinking" for the entire generation, we re-fire `thinkClick`
-  // on a short interval while `isLoading` stays true.
-  useEffect(() => {
-    if (isUser || !isLatestAssistant || !isLoading) return;
-    const interval = setInterval(() => {
-      const player = lottiePlayerRef.current;
-      if (!player) return;
-      try {
-        player.stateMachineFireEvent("thinkClick");
-      } catch {
-        // state machine may not be ready; ignore
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [isLoading, isLatestAssistant, isUser]);
+  // Spec 048: per-message avatar removed — the single status avatar lives in
+  // ZaneStatusAvatar (ChatContainer); bubbles render content only.
 
   const extractZaneUiBlocks = (text: string): { cleaned: string; ui: ZaneUiPayload[] } => {
     const raw = String(text ?? "");
@@ -631,38 +557,13 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
           isUser ? "max-w-[85%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%]" : "w-full"
         } ${directionClass}`}
       >
-        <div
-          ref={avatarRef}
-          className={`shrink-0 rounded-full overflow-hidden flex items-center justify-center mt-1 ${
-            isUser
-              ? // Spec 012: 32/36px user avatar — the 48/64px circle dwarfed
-                // short messages. The bot avatar keeps its size (Lottie room).
-                "w-8 h-8 sm:w-9 sm:h-9 bg-linear-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20"
-              : "w-12 h-12 sm:w-16 sm:h-16 bg-transparent"
-          }`}
-        >
-          {isUser ? (
+        {/* Spec 048: no per-message assistant avatar — users keep the 32/36px
+            circle (spec 012), assistant replies flow on the canvas. */}
+        {isUser && (
+          <div className="shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex items-center justify-center mt-1 bg-linear-to-br from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-600 text-white shadow-md border border-white/20">
             <User className="w-4 h-4 sm:w-5 sm:h-5" />
-          ) : avatarInView || isLatestAssistant ? (
-            <LottiePlayer
-              key={lottieInstanceId}
-              src="/animations/ai-robo.lottie"
-              animationId="Main Scene"
-              stateMachineId="StateMachine1"
-              autoplay
-              loop
-              dotLottieRefCallback={(player: DotLottie | null) => {
-                lottiePlayerRef.current = player;
-              }}
-              className="w-full h-full"
-            />
-          ) : (
-            // Spec 036 Track C: off-screen placeholder — same box so there is
-            // no layout shift; the animated player remounts before the bubble
-            // scrolls into view.
-            <div className="w-full h-full rounded-full bg-linear-to-br from-indigo-500 to-indigo-600" />
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex flex-col gap-1 min-w-0 flex-1 group/bubble">
           <div
             className={`relative break-words text-[15px] sm:text-[16px] leading-7 sm:leading-[1.75] ${
