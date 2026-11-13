@@ -52,6 +52,7 @@ import AIAssistantScreen from "../src/screens/AIAssistantScreen";
 import LoginScreen from "../src/screens/LoginScreen";
 import NewsScreen from "../src/screens/NewsScreen";
 import ProfileScreen from "../src/screens/ProfileScreen";
+import SchedulesScreen from "../src/screens/SchedulesScreen";
 import QuizzesScreen from "../src/screens/QuizzesScreen";
 import QuizPlayScreen from "../src/screens/QuizPlayScreen";
 import QuizAttemptsScreen from "../src/screens/QuizAttemptsScreen";
@@ -64,6 +65,7 @@ export type MainTabsParamList = {
   Subjects: undefined;
   Quizzes: undefined;
   News: undefined;
+  Schedules: undefined;
   AI: undefined;
   Profile: undefined;
 };
@@ -92,6 +94,7 @@ const TAB_ICONS: Record<
   Subjects: { focused: "book", unfocused: "book-outline" },
   Quizzes: { focused: "checkmark-circle", unfocused: "checkmark-circle-outline" },
   News: { focused: "newspaper", unfocused: "newspaper-outline" },
+  Schedules: { focused: "calendar", unfocused: "calendar-outline" },
   AI: { focused: "sparkles", unfocused: "sparkles-outline" },
   Profile: { focused: "person", unfocused: "person-outline" },
 };
@@ -105,8 +108,9 @@ function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.subtle,
-        // Roomy bar + compact labels so five Arabic labels never overlap.
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        // Roomy bar + compact labels so six Arabic labels never overlap
+        // (spec 047 added the Schedules tab as the sixth).
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
         tabBarStyle: { height: 64, paddingTop: 6, paddingBottom: 8 },
         tabBarIcon: ({ focused, color, size }) => {
           const icons = TAB_ICONS[route.name];
@@ -123,6 +127,7 @@ function MainTabs() {
       <Tabs.Screen name="Subjects" component={SubjectsScreen} options={{ title: t("mobile", "tabs.subjects") }} />
       <Tabs.Screen name="Quizzes" component={QuizzesScreen} options={{ title: t("mobile", "tabs.quizzes") }} />
       <Tabs.Screen name="News" component={NewsScreen} options={{ title: t("mobile", "tabs.news") }} />
+      <Tabs.Screen name="Schedules" component={SchedulesScreen} options={{ title: t("mobile", "tabs.schedules") }} />
       <Tabs.Screen name="AI" component={AIAssistantScreen} options={{ title: t("mobile", "tabs.ai") }} />
       <Tabs.Screen name="Profile" component={ProfileScreen} options={{ title: t("mobile", "tabs.profile") }} />
     </Tabs.Navigator>
