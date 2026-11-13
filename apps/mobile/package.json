@@ -25,6 +25,7 @@
     "@react-navigation/native-stack": "^6.11.0",
     "@sentry/react-native": "^6",
     "expo": "~51.0.28",
+    "expo-av": "~14.0.7",
     "expo-constants": "~16.0.2",
     "expo-dev-client": "~4.0.29",
     "expo-localization": "~15.0.3",
@@ -39,8 +40,8 @@
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
-    "@vitest/coverage-v8": "5.1.0",
     "@types/react": "^19.2.14",
+    "@vitest/coverage-v8": "5.1.0",
     "eslint": "^9.39.4",
     "sharp": "^0.35.4",
     "typescript": "^5.5.4",
