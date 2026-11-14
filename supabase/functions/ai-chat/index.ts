@@ -58,7 +58,14 @@ import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1"
 import { buildCorsHeaders } from '../_shared/cors.ts';
 // Pure helpers (forbidden-header guard, SSE frames, Accept parsing, usage
 // mapping) live in pure.ts so they are testable without env/SDK imports.
-import { acceptsSse, findForbiddenHeader, mapUsage, sseFrame } from './pure.ts';
+import {
+  acceptsSse,
+  buildSystemInstruction,
+  findForbiddenHeader,
+  mapUsage,
+  sseFrame,
+  wrapUserMessage,
+} from './pure.ts';
 import { createAdminClient } from '../_shared/auth.ts';
 import { checkRateLimit } from '../_shared/net.ts';
 
@@ -121,13 +128,16 @@ interface StreamLogContext {
 function streamGeminiResponse(
   req: Request,
   prompt: string,
+  systemInstruction: string,
   logCtx: StreamLogContext,
 ): Response {
   // Aborted from cancel() below when the client disconnects, so Gemini stops
   // generating for a response nobody is reading.
   const abortController = new AbortController();
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: AI_MODEL });
+  // Spec 050 (issue #242): the role boundary + data rule ride on the model's
+  // systemInstruction so the user message cannot overwrite them.
+  const model = genAI.getGenerativeModel({ model: AI_MODEL, systemInstruction });
 
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -354,7 +364,10 @@ serve(async (req) => {
       ? 'Respond in Arabic (Modern Standard Arabic).'
       : 'Respond in English.';
 
-    const prompt = `${languageInstruction}\n\nUser: ${body.userMessage}`;
+    // Spec 050 (issue #242): instructions live on systemInstruction; the
+    // user message is DATA inside its delimited channel.
+    const systemInstruction = buildSystemInstruction(languageInstruction);
+    const prompt = wrapUserMessage(body.userMessage);
 
     // 5a. Streaming mode: `Accept: text/event-stream` (the shared client's
     //     streamAiMessage sends this header). Every guard above has already
@@ -362,7 +375,7 @@ serve(async (req) => {
     //     validation, and rate-limit failures return the same non-2xx JSON
     //     error body in both modes.
     if (acceptsSse(req.headers.get('accept'))) {
-      return streamGeminiResponse(req, prompt, {
+      return streamGeminiResponse(req, prompt, systemInstruction, {
         userId: user.id,
         conversationId: body.conversationId,
         language: body.context.language,
@@ -371,9 +384,10 @@ serve(async (req) => {
       });
     }
 
-    // 5b. JSON mode (original v1 behavior, unchanged).
+    // 5b. JSON mode (original v1 behavior, unchanged apart from the 050
+    //     systemInstruction + wrapped user message).
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: AI_MODEL });
+    const model = genAI.getGenerativeModel({ model: AI_MODEL, systemInstruction });
     const result = await model.generateContent(prompt);
     const text = result.response.text();
     const response: AiResponse = {
