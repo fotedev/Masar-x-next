@@ -120,4 +120,11 @@ Final gate before PR: **full web vitest + typecheck + lint green after the last 
 
 ## Aftermath
 
-(to be filled post-implementation — deviations from this spec, surprises, follow-ups)
+Implemented 2026-11-14 (commits T1…T5 + lint fixup, branch `feat/050-zane-prompt-hardening`):
+
+- **D4 revised (found during T2):** both web UI call sites already refused over-cap sends with a `promptTooLong` toast (`page.tsx:170`, `AssistantPanel.tsx:78`) — the issue audit's "no client-side cap at all" was stale at the UI level. The refusal UX is kept (converting to silent truncation would be an unrequested product change); what shipped is the `useAiChat.sendMessage` backstop slice + `PROMPT_TRUNCATION_MARKER`. The `combinePromptWithAttachments` cap param was dropped as dead code — shared package untouched (mobile byte-identical).
+- **Regex lesson (T3):** a single-adjective override pattern (`ignore (all|any|previous…) (instructions…)`) misses "disregard **all prior** prompts" — the alternation locks at the first adjective's position and cannot skip ahead. Fixed with a filler-word pattern: verb + up to 3 `\w+` fillers + noun (en/ar).
+- **summarize-chat content newlines kept (T4):** multi-line messages are legitimate, so content passes through verbatim under the `<conversation>` data rule; only SENDER names are sanitized (a newline in a display name could forge a "Name: content" attribution line).
+- **ai-chat `mapUsage` untouched** — only additive helpers in `pure.ts`; both Gemini modes (stream/JSON) got `systemInstruction` + `<user_message>` wrapping; the 50k cap unchanged.
+- Gates at final commit: web vitest 85 files / 1025 tests, typecheck clean, lint 0 errors (49 pre-existing warnings = main baseline), `deno check` all functions, edge Deno tests 124/124.
+- **Deploy handover:** `ai-chat` + `summarize-chat` are owner-deployed — the PR ships source; the owner applies the deploy.
