@@ -28,7 +28,7 @@ describe('validateZaneUiPayload — acceptance', () => {
   });
 
   it('accepts a payload without a title', () => {
-    const { title, ...withoutTitle } = validPayload;
+    const { title: _title, ...withoutTitle } = validPayload;
     const out = validateZaneUiPayload(withoutTitle);
     expect(out).toEqual({ type: 'buttons', buttons: validPayload.buttons });
     expect(out?.title).toBeUndefined();
