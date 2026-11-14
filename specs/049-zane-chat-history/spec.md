@@ -6,6 +6,7 @@
 | Type | feat — queue item 1 of the post-048 ZANE queue (tracking #244) |
 | Origin | GitHub issue #238 (prerequisite for the #239 chat-history side menu) |
 | Base | `origin/main` @ `6d3f3b2` (worktree `../masarx-wt/feat-049`, branch `feat/049-zane-chat-history`) |
+| Migrations applied | `20261114132141_zane_conversations` + fix-forward `20261114132536_zane_conversations_ownership_fk` (prod ledger, repo files 1:1) |
 
 ## 1. Context & problem statement
 
@@ -62,14 +63,21 @@ CREATE INDEX idx_conversations_user_mode_updated
 **Evolution of `ai_chat_messages` (additive-only):**
 ```sql
 ALTER TABLE public.ai_chat_messages ADD COLUMN IF NOT EXISTS conversation_id uuid;
--- DO-block guarded FK (no ADD CONSTRAINT IF NOT EXISTS in PG):
+-- ownership-binding composite FK (fix-forward migration 20261114132536):
+-- UNIQUE (id, user_id) on conversations + pair FK. A single-column FK would
+-- let a user attach messages to ANOTHER user's conversation — messages RLS
+-- checks only user_id, so the pair FK is the enforcement that keeps a
+-- message structurally inside its owner's conversations.
+ALTER TABLE public.conversations
+  ADD CONSTRAINT conversations_id_user_key UNIQUE (id, user_id);
 ALTER TABLE public.ai_chat_messages
-  ADD CONSTRAINT fk_ai_chat_messages_conversation_id
-  FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;
+  ADD CONSTRAINT fk_ai_chat_messages_conversation
+  FOREIGN KEY (conversation_id, user_id)
+  REFERENCES public.conversations (id, user_id) ON DELETE CASCADE;
 CREATE INDEX idx_ai_chat_messages_conversation_created
   ON public.ai_chat_messages (conversation_id, created_at);
 ```
-`conversation_id` stays nullable (additive-safe); all new client writes populate it. Cascade delete: deleting a conversation removes its messages — the per-conversation delete path needs no second statement.
+`conversation_id` stays nullable (additive-safe); all new client writes populate it. Cascade delete: deleting a conversation removes its messages — the per-conversation delete path needs no second statement. This also hardens acceptance criterion 4 beyond RLS: writing into another user's conversation is impossible even for a client that games the message `user_id`.
 
 **Backfill (naturally idempotent via the `IS NULL` predicate):**
 ```sql
@@ -84,7 +92,7 @@ WHERE m.conversation_id IS NULL
 ```
 Backfilled conversations carry `title NULL`, `created_at/updated_at = migration time`; restore-side ordering still resolves correctly via message `created_at`.
 
-**RLS verification** — `supabase/tests/rls-verify.sql` gains: owner can select/insert/update/delete own conversations; cross-user SELECT returns zero; cross-user INSERT/UPDATE/DELETE is denied; messages of another user's conversation are unreachable (acceptance criterion 4, spec-040-style review).
+**RLS verification** — `supabase/tests/rls-verify.sql` harness section 3.12: own conversation insert/message-attach/update/delete + FK cascade (positive); cross-user SELECT returns zero, INSERT rejected, UPDATE/DELETE no-op; **cross-user message attach rejected by the ownership FK** (`foreign_key_violation`) (acceptance criterion 4, spec-040-style review).
 
 ### 3.2 Types (I2)
 

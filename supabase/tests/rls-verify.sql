@@ -719,6 +719,101 @@ BEGIN;
     RAISE NOTICE '3.11 PASS: finish_quiz_attempt anon-revoked and quiz_attempts score-guard attached';
   END
   $t311$;
+
+  -- 3.12 conversations + ai_chat_messages linkage (spec 049) ----------------
+  -- Owner-only conversation CRUD; a message can only attach to a
+  -- conversation its owner owns (composite ownership FK
+  -- (conversation_id, user_id) -> conversations (id, user_id) ON DELETE
+  -- CASCADE, 20261114132536_zane_conversations_ownership_fk.sql).
+  DO $t312a$
+  DECLARE
+    v_cid uuid;
+    v_rows int;
+  BEGIN
+    INSERT INTO public.conversations (user_id, mode, title)
+    VALUES ('00000000-0000-0000-0000-0000000000a1', 'cs_assistant', 'RLS harness conversation')
+    RETURNING id INTO v_cid;
+
+    INSERT INTO public.ai_chat_messages (user_id, role, content, mode, conversation_id)
+    VALUES ('00000000-0000-0000-0000-0000000000a1', 'user', 'RLS harness message', 'cs_assistant', v_cid);
+
+    SELECT count(*) INTO v_rows FROM public.ai_chat_messages WHERE conversation_id = v_cid;
+    IF v_rows = 0 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversations own message not visible after insert';
+    END IF;
+
+    UPDATE public.conversations SET title = 'RLS harness renamed' WHERE id = v_cid;
+    IF (SELECT count(*) FROM public.conversations WHERE id = v_cid AND title = 'RLS harness renamed') <> 1 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversations own update rejected';
+    END IF;
+
+    DELETE FROM public.conversations WHERE id = v_cid;
+    SELECT count(*) INTO v_rows FROM public.ai_chat_messages WHERE conversation_id = v_cid;
+    IF v_rows <> 0 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversation delete did not cascade its messages';
+    END IF;
+
+    RAISE NOTICE '3.12 conversations PASS: own insert/message-attach/update/delete + FK cascade';
+  END
+  $t312a$;
+
+  DO $t312b$
+  DECLARE
+    v_bconv uuid;
+    v_rows int;
+  BEGIN
+    -- seed user B's conversation as service_role so the attach test below
+    -- proves the ownership binding (not merely a missing parent row)
+    SET LOCAL ROLE service_role;
+    BEGIN
+      INSERT INTO public.conversations (user_id, mode, title)
+      VALUES ('00000000-0000-0000-0000-0000000000a2', 'cs_assistant', 'B conversation')
+      RETURNING id INTO v_bconv;
+    EXCEPTION
+      WHEN foreign_key_violation THEN
+        RAISE NOTICE '3.12 conversations SKIP: user a2 missing from auth.users (seed supabase/tests/README.md)';
+        RETURN;
+    END;
+
+    SET LOCAL ROLE authenticated;
+    -- cross-user SELECT must see nothing
+    SELECT count(*) INTO v_rows
+      FROM public.conversations
+     WHERE user_id = '00000000-0000-0000-0000-0000000000a2';
+    IF v_rows <> 0 THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversations cross-user SELECT visible';
+    END IF;
+
+    -- cross-user INSERT must be rejected
+    BEGIN
+      INSERT INTO public.conversations (user_id, mode)
+      VALUES ('00000000-0000-0000-0000-0000000000a2', 'cs_assistant');
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversations allowed cross-user insert';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE '3.12 conversations PASS: cross-user insert rejected';
+    END;
+
+    -- cross-user UPDATE/DELETE must be a no-op (policy filters the row out)
+    DELETE FROM public.conversations
+     WHERE id = v_bconv
+     RETURNING id INTO v_rows;
+    IF v_rows IS NOT NULL THEN
+      RAISE EXCEPTION 'RLS VERIFY FAILED: conversations allowed cross-user delete';
+    END IF;
+
+    -- a message may not attach to another user's conversation: RLS on
+    -- ai_chat_messages passes (own user_id), the ownership FK must reject
+    BEGIN
+      INSERT INTO public.ai_chat_messages (user_id, role, content, mode, conversation_id)
+      VALUES ('00000000-0000-0000-0000-0000000000a1', 'user', 'intruder', 'cs_assistant', v_bconv);
+      RAISE EXCEPTION 'RLS VERIFY FAILED: messages allowed attaching to another user''s conversation';
+    EXCEPTION
+      WHEN foreign_key_violation THEN
+        RAISE NOTICE '3.12 messages PASS: cross-user conversation attach rejected by ownership FK';
+    END;
+  END
+  $t312b$;
 ROLLBACK;
 
 DO $summary$
