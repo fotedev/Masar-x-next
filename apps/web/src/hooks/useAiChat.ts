@@ -149,6 +149,22 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     conversationIdRef.current = id;
     setConversationId(id);
   }, []);
+
+  // Newest-page load for a conversation, shared by the restore effect and
+  // switchConversation (query + mapping; callers own the cancellation/seq
+  // guards and the pagination-counter application).
+  const fetchConversationNewestPage = useCallback(async (userId: string, conversationId: string) => {
+    const { data, error } = await supabase
+      .from("ai_chat_messages")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .range(0, CHAT_PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = (data || []) as SupabaseChatMessage[];
+    return { rows, loadedMessages: mapRowsToMessages(rows) };
+  }, []);
   const [mode, setModeState] = useState<AiAssistantMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("zane_ai_last_mode");
@@ -234,20 +250,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         }
         setCurrentConversation(current.id);
 
-        const { data, error } = await supabase
-          .from("ai_chat_messages")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("conversation_id", current.id)
-          .order("created_at", { ascending: false })
-          .range(0, CHAT_PAGE_SIZE - 1);
+        const { rows, loadedMessages } = await fetchConversationNewestPage(user.id, current.id);
 
         if (cancelled) return;
-        if (error) throw error;
-
-        const rows = (data || []) as SupabaseChatMessage[];
-        const loadedMessages = mapRowsToMessages(rows);
-
         loadedCountRef.current = loadedMessages.length;
         setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
         setMessages(loadedMessages);
@@ -263,7 +268,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     loadSupabaseMessages();
     return () => { cancelled = true; };
-  }, [user?.id, mode, setCurrentConversation]);
+  }, [user?.id, mode, setCurrentConversation, fetchConversationNewestPage]);
 
   // Spec 011: fetch the next older page inside the retained window and
   // PREPEND it. The scroll anchor is preserved by ChatContainer's layout
@@ -584,19 +589,8 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     setCurrentConversation(id);
     conversationEnsureRef.current = null;
     try {
-      const { data, error } = await supabase
-        .from("ai_chat_messages")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("conversation_id", id)
-        .order("created_at", { ascending: false })
-        .range(0, CHAT_PAGE_SIZE - 1);
+      const { rows, loadedMessages } = await fetchConversationNewestPage(user.id, id);
       if (seq !== switchSeqRef.current) return;
-      if (error) throw error;
-
-      const rows = (data || []) as SupabaseChatMessage[];
-      const loadedMessages = mapRowsToMessages(rows);
-
       loadedCountRef.current = loadedMessages.length;
       setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
       setMessages(loadedMessages);
@@ -607,7 +601,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     } finally {
       if (seq === switchSeqRef.current) setIsReady(true);
     }
-  }, [user?.id, setCurrentConversation]);
+  }, [user?.id, setCurrentConversation, fetchConversationNewestPage]);
 
   // Spec 049: remove a conversation server-side (ownership FK cascade takes
   // its messages) and, when it is the one on screen, reset the transcript.
