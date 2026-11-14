@@ -119,12 +119,22 @@ const loadRealPuterClient = async (): Promise<PuterClient> => {
   if (!puterImportPromise) {
     puterImportPromise = (async () => {
       try {
+        // Issue #243: the SDK's startup banner ("Submit this app to the Puter
+        // App Store…") prints during module evaluation, BEFORE the awaited
+        // import resolves — so the instance-level flag set below is always
+        // too late. The bundle checks `this.quiet || globalThis.PUTER_QUIET`
+        // inside printDevCTA, so the pre-load global is the only switch that
+        // can win the race. Best-effort, guarded against a changed surface.
+        try {
+          (globalThis as unknown as { PUTER_QUIET?: boolean }).PUTER_QUIET = true;
+        } catch {
+          // banner suppression is cosmetic — never block init on it
+        }
         const m = await import('@heyputer/puter.js');
         const client = (m.puter as unknown as PuterClient) ?? null;
         if (!client) throw new Error('Failed to initialize Puter client');
-        // Spec 012: silence the SDK's startup banner ("Submit this app to
-        // the Puter App Store…"). The SDK documents `puter.quiet = true` as
-        // the switch; best-effort, guarded against a changed surface.
+        // Belt-and-braces: silence the SDK's banner for any path that reads
+        // the instance flag after load (spec 012).
         try {
           (m.puter as unknown as { quiet?: boolean }).quiet = true;
         } catch {
