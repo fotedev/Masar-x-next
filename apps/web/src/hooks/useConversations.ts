@@ -25,6 +25,29 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
   const [hasMore, setHasMore] = useState(false);
   const loadedCountRef = useRef(0);
 
+  const queryPage = useCallback(async (userId: string, offset: number): Promise<Conversation[]> => {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("id, user_id, mode, title, created_at, updated_at")
+      .eq("user_id", userId)
+      .eq("mode", mode)
+      .order("updated_at", { ascending: false })
+      .range(offset, offset + CHAT_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    return ((data || []) as Conversation[]).filter((row) => typeof row?.id === "string");
+  }, [mode]);
+
+  const applyPage = useCallback((rows: Conversation[], offset: number) => {
+    loadedCountRef.current = offset + rows.length;
+    setHasMore(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedCountRef.current));
+    if (offset === 0) {
+      setConversations(rows);
+    } else {
+      setConversations((prev) => [...prev, ...rows]);
+    }
+  }, []);
+
   const fetchPage = useCallback(async (offset: number, signal: { cancelled: boolean }) => {
     if (!user?.id) {
       loadedCountRef.current = 0;
@@ -34,25 +57,9 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("conversations")
-        .select("id, user_id, mode, title, created_at, updated_at")
-        .eq("user_id", user.id)
-        .eq("mode", mode)
-        .order("updated_at", { ascending: false })
-        .range(offset, offset + CHAT_PAGE_SIZE - 1);
-
+      const rows = await queryPage(user.id, offset);
       if (signal.cancelled) return;
-      if (error) throw error;
-
-      const rows = ((data || []) as Conversation[]).filter((row) => typeof row?.id === "string");
-      loadedCountRef.current = offset + rows.length;
-      setHasMore(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedCountRef.current));
-      if (offset === 0) {
-        setConversations(rows);
-      } else {
-        setConversations((prev) => [...prev, ...rows]);
-      }
+      applyPage(rows, offset);
     } catch (e) {
       if (!signal.cancelled) {
         logger.error("Failed to load conversations", e);
@@ -62,7 +69,7 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
     } finally {
       if (!signal.cancelled) setLoading(false);
     }
-  }, [user?.id, mode]);
+  }, [user?.id, queryPage, applyPage]);
 
   useEffect(() => {
     const signal = { cancelled: false };
