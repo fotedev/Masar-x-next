@@ -8,6 +8,10 @@ import { LatexRenderer } from "@/components/LatexRenderer";
 import { LazyMarkdown } from "@/components/ai/LazyMarkdown";
 import { initPuterDiagnostics, signInToPuter, getPuterStatus } from "@/lib/puter";
 import { CANNED_ERROR_PREFIXES } from "@/lib/ai/canned-messages";
+import {
+  validateZaneUiPayload,
+  type ZaneUiPayload as ZaneUiPayloadType,
+} from "@/lib/ai/zane-ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   completeOpenFences,
@@ -179,8 +183,10 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
   const [puterIsSignedIn, setPuterIsSignedIn] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  type ZaneUiButton = { label: string; message: string };
-  type ZaneUiPayload = { type: "buttons"; title?: string; buttons: ZaneUiButton[] };
+  // Spec 050: zane-ui payload types + validation moved to lib/ai/zane-ui.ts —
+  // model output is future input, so blocks are validated before rendering
+  // (invalid blocks render no buttons, same disposition as malformed JSON).
+  type ZaneUiPayload = ZaneUiPayloadType;
 
   const PUTER_AUTH_MARKER = "__PUTER_AUTH_REQUIRED__";
   const isPuterAuthRequiredMessage =
@@ -244,13 +250,9 @@ export const ChatMessageItem: FC<ChatMessageItemProps> = memo(({
     const cleaned = raw.replace(/```zane-ui\s*([\s\S]*?)```/g, (_m, json) => {
       try {
         const parsed = JSON.parse(String(json ?? "").trim()) as unknown;
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          (parsed as { type?: unknown }).type === "buttons" &&
-          Array.isArray((parsed as { buttons?: unknown }).buttons)
-        ) {
-          ui.push(parsed as ZaneUiPayload);
+        const validated = validateZaneUiPayload(parsed);
+        if (validated) {
+          ui.push(validated);
         }
       } catch {
         // ignore invalid blocks
