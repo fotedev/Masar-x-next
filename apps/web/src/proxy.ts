@@ -258,6 +258,13 @@ export const config = {
     // `<!DOCTYPE html>`), and the library's WebAssembly.instantiate()
     // blows up with "expected magic word 00 61 73 6d, found 3c 21
     // 44 4f" because it's trying to parse HTML as a binary module.
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm)$).*)",
+    //
+    // Media + text extensions are excluded for the same class of reason
+    // (spec 048): /zane/*.mp4 avatar clips hit next-intl's locale
+    // redirect and came back as the HTML 404 page on production while
+    // the .png poster (already excluded) loaded, and /llms.txt 404ed
+    // the same way. Static media/text files under public/ must bypass
+    // the proxy and be served straight from the CDN.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm|mp4|webm|mp3|ogg|wav|txt)$).*)",
   ],
 };
