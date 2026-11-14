@@ -34,6 +34,18 @@ interface SupabaseChatMessage {
   created_at: string;
 }
 
+// DB row → transcript message mapping shared by every paged history read
+// (restore, loadOlder, switchConversation).
+const mapRowsToMessages = (rows: SupabaseChatMessage[]): ChatMessage[] =>
+  rows
+    .map((msg) => ({
+      id: msg.id,
+      type: msg.role as "user" | "assistant",
+      content: msg.content,
+      timestamp: new Date(msg.created_at)
+    }))
+    .reverse();
+
 // Spec 008: fire-and-forget inserts must never throw into the chat flow, but
 // failures are surfaced to the logger (previously the .then() was discarded).
 // Spec 049: rows link to their conversation — the ownership FK
@@ -234,14 +246,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         if (error) throw error;
 
         const rows = (data || []) as SupabaseChatMessage[];
-        const loadedMessages = rows
-          .map((msg) => ({
-            id: msg.id,
-            type: msg.role as "user" | "assistant",
-            content: msg.content,
-            timestamp: new Date(msg.created_at)
-          }))
-          .reverse();
+        const loadedMessages = mapRowsToMessages(rows);
 
         loadedCountRef.current = loadedMessages.length;
         setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
@@ -286,14 +291,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       if (error) throw error;
 
       const rows = (data || []) as SupabaseChatMessage[];
-      const older = rows
-        .map((msg) => ({
-          id: msg.id,
-          type: msg.role as "user" | "assistant",
-          content: msg.content,
-          timestamp: new Date(msg.created_at)
-        }))
-        .reverse();
+      const older = mapRowsToMessages(rows);
 
       loadedCountRef.current = range.start + older.length;
       setHasMoreOlder(hasMoreAfterLoad(older.length, range.end - range.start + 1, loadedCountRef.current));
@@ -597,14 +595,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       if (error) throw error;
 
       const rows = (data || []) as SupabaseChatMessage[];
-      const loadedMessages = rows
-        .map((msg) => ({
-          id: msg.id,
-          type: msg.role as "user" | "assistant",
-          content: msg.content,
-          timestamp: new Date(msg.created_at)
-        }))
-        .reverse();
+      const loadedMessages = mapRowsToMessages(rows);
 
       loadedCountRef.current = loadedMessages.length;
       setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
