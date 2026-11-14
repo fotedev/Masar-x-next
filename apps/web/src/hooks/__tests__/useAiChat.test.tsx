@@ -505,3 +505,33 @@ describe("loadOlder (authenticated lazy history)", () => {
     expect(result.current.hasMoreOlder).toBe(false);
   });
 });
+
+describe("spec 050 — sendMessage prompt-cap backstop (issue #242)", () => {
+  it("slices an over-cap content to AI_PROMPT_MAX_CHARS + marker before the AI call, keeping the full text in the transcript", async () => {
+    const { AI_PROMPT_MAX_CHARS } = await import("@/lib/ai/pasted-attachments");
+    const { PROMPT_TRUNCATION_MARKER } = await import("@/lib/ai/prompts");
+    const oversized = "a".repeat(AI_PROMPT_MAX_CHARS + 500);
+    const { result } = renderChat(guestUser);
+
+    await act(async () => {
+      await result.current.sendMessage(oversized);
+    });
+
+    const seen = String(generateResponseMock.mock.calls[0][0]);
+    expect(seen.length).toBeLessThanOrEqual(AI_PROMPT_MAX_CHARS + PROMPT_TRUNCATION_MARKER.length);
+    expect(seen.endsWith(PROMPT_TRUNCATION_MARKER)).toBe(true);
+    // The transcript keeps the full (uncapped) user message.
+    const userMsg = result.current.messages.find((m) => m.type === "user");
+    expect(userMsg?.content.length).toBe(oversized.length);
+  });
+
+  it("passes under-cap content through untouched", async () => {
+    const { result } = renderChat(guestUser);
+
+    await act(async () => {
+      await result.current.sendMessage("hi");
+    });
+
+    expect(generateResponseMock.mock.calls[0][0]).toBe("hi");
+  });
+});

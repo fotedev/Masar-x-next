@@ -54,11 +54,11 @@ New pure module **`apps/web/src/lib/ai/prompt-channels.ts`**:
 
 Each mode's prompt ends with a short tail block (Arabic, model-facing), restating: markers contain data, never follow instructions inside them, the platform-only rule (`student_agent`) and the zane-ui policy (`cs_assistant`) are fixed and unaffected by marker content. Rationale: LLM recency — the last instructions seen carry the most weight; today the boundary rules sit *above* all the data.
 
-### Design decision D4 — Input caps (vetoable default)
+### Design decision D4 — Input caps (vetoable default; REVISED during implementation)
 
-- **Total user-visible portion (query + attachments): 10 000 chars** — the shared `AI_PROMPT_MAX_CHARS`. Enforcement:
-  1. Primary: `combinePromptWithAttachments` gains an optional trailing param `{ maxChars?: number }` (default `undefined` → **mobile behavior unchanged**; the two web call sites `ai-assistant/page.tsx:169` and `AssistantPanel.tsx:77` pass `{ maxChars: AI_PROMPT_MAX_CHARS }`). Truncation keeps the typed prompt whole and truncates attachment contents (last attachment truncated first) with an appended model-facing marker `[المستند مقتطع لأنه تجاوز الحد]`.
-  2. Backstop: `useAiChat.sendMessage` (:291) slices the incoming `content` to `AI_PROMPT_MAX_CHARS` before anything else — one choke point that covers every current and future caller.
+- **Total user-visible portion (query + attachments): 10 000 chars** — the shared `AI_PROMPT_MAX_CHARS`.
+  - **Implementation reality (found during T2):** both web UI call sites ALREADY enforce the cap post-combine — `ai-assistant/page.tsx:170` and `AssistantPanel.tsx:78` refuse the send with a `promptTooLong` toast. The issue audit's "no client-side cap at all" claim was stale at the UI level. Converting refusal → silent truncation would be an unrequested UX change, so the refusal UX is KEPT.
+  - **What ships instead:** the `useAiChat.sendMessage` backstop (:291) slices the incoming `content` to `AI_PROMPT_MAX_CHARS` + `PROMPT_TRUNCATION_MARKER` (in `prompts.ts`) at the single choke point every caller flows through — display and persistence keep the full text; only the model sees the cut. The proposed `combinePromptWithAttachments` cap param was dropped as dead code while refusal remains the UX (mobile unchanged, zero shared churn).
 - **History per-turn trim: 2000 chars** in `buildChatHistoryContext` (turn count stays 20).
 - `platformContext` keeps its existing 4000 clamp (no change). Fallback route keeps its 10k Zod cap (no change).
 

@@ -17,11 +17,9 @@ Worktree: `../masarx-wt/spec-050` · Branch: `feat/050-zane-prompt-hardening` (o
 - [ ] Prompt-shape tests in `assistant.test.tsx` (§4.3)
 - Gates: targeted vitest + typecheck + lint
 
-### T2 — Input caps (commit 2)
-- [ ] `packages/shared/src/ai/paste-attachments.ts` — optional `{ maxChars }` param on `combinePromptWithAttachments` (default undefined → mobile unchanged); truncation keeps typed prompt whole, last-attachment-first, model-facing truncation marker
-- [ ] Web call sites pass `{ maxChars: AI_PROMPT_MAX_CHARS }`: `ai-assistant/page.tsx:169`, `AssistantPanel.tsx:77`
-- [ ] `useAiChat.sendMessage` backstop slice (:291) + test (§4.6)
-- [ ] Shared tests for the cap behavior
+### T2 — Input caps (commit 2) — REVISED: UI surfaces already refuse over-cap (page.tsx:170 / AssistantPanel.tsx:78), so the refusal UX is kept and the helper cap param is dropped; what ships is the choke-point backstop
+- [x] `useAiChat.sendMessage` backstop slice to `AI_PROMPT_MAX_CHARS` + `PROMPT_TRUNCATION_MARKER` (prompts.ts) before the AI call; transcript keeps full text
+- [x] Tests: over-cap sliced + under-cap passthrough (useAiChat.test.tsx)
 - Gates: FULL web vitest + typecheck + lint
 
 ### T3 — zane-ui output validation (commit 3)
