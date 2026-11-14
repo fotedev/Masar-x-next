@@ -3,6 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2'
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.24.1"
 import { buildCorsHeaders } from '../_shared/cors.ts';
+import {
+  SUMMARIZE_DATA_RULE,
+  buildConversationText,
+  wrapConversationChannel,
+} from './pure.ts';
 
 interface ImportantMessage {
   id: string;
@@ -97,18 +102,26 @@ serve(async (req) => {
 
     // Initialize Gemini AI
     const genAI = new GoogleGenerativeAI(Deno.env.get('GEMINI_API_KEY') ?? '')
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+    // Spec 050 (issue #242): the conversation is DATA between users — the
+    // data rule rides on systemInstruction so message content cannot
+    // overwrite the summarization task or the JSON contract.
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-pro',
+      systemInstruction: SUMMARIZE_DATA_RULE,
+    })
 
-    // Prepare conversation text for AI analysis
-    const conversationText = chronologicalMessages
-      .map(msg => {
-        const senderName = msg.sender?.raw_user_meta_data?.display_name ||
+    // Prepare conversation text for AI analysis — sender names sanitized,
+    // per-message + total caps (spec 050; caps live in pure.ts, tested
+    // offline).
+    const conversationText = buildConversationText(
+      chronologicalMessages.map(msg => ({
+        senderName:
+          msg.sender?.raw_user_meta_data?.display_name ||
           msg.sender?.raw_user_meta_data?.name ||
-          msg.sender?.email?.split('@')[0] ||
-          'مستخدم'
-        return `${senderName}: ${msg.content}`
-      })
-      .join('\n')
+          msg.sender?.email?.split('@')[0],
+        content: msg.content,
+      })),
+    )
 
     // AI Prompt for summarization and important message detection
     const prompt = `
@@ -118,7 +131,7 @@ serve(async (req) => {
     2. تحديد الرسائل المهمة مع السياق الكامل لكل رسالة مهمة
 
     المحادثة:
-    ${conversationText}
+    ${wrapConversationChannel(conversationText)}
 
     يرجى تقديم النتيجة بتنسيق JSON بالشكل التالي:
     {
