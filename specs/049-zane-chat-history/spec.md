@@ -143,6 +143,10 @@ See [plan.md](./plan.md). Commits:
 3. `chore(types): regenerate database.generated.ts for conversations (spec 049)`
 4. `feat(web): conversation-aware chat persistence + list/switch/delete (spec 049)`
 
+## Aftermath (CI-surfaced interaction fix, same PR)
+
+The CI prod-build e2e exposed a pre-existing fragility in the chat scroll hook that this PR's timing shift tipped into a deterministic failure (chat opened ~568px above the newest message, jump pill up; stable across retries, unreproducible locally on Windows — CI traces show the "Scroll to latest" pill rendered at failure). Mechanism: Chrome's scroll anchoring delivers its scroll event BEFORE the ResizeObserver callback for the same reflow; a late-arriving asset (markdown chunk, fonts, hero media metadata) reflows the transcript after the one-shot stick, the measured distance flips `isNearBottom`, and the open view strands because every later re-pin is gated on near-bottom. Fix in `useChatScroll.ts`: an open-sequence grace window — until real user intent (wheel/touch/key/pointer) or an UPWARD scroll (anchoring while pinned only adjusts downward, so upward is always navigation), any content OR scroller resize re-pins to the bottom; the scroller itself is now observed too (header media settling shifts the distance math without touching the observed content child). Unit-tested in `useChatScroll.test.tsx` (anchoring-flip simulation, grace termination, near-bottom semantics preserved). Out-of-scope items below are unchanged.
+
 ## Out of scope (queued, not dropped)
 
 - #239 side menu + Muse-style avatar home (list UI, "new chat", localized untitled/legacy labels, i18n keys).
