@@ -79,6 +79,27 @@ const mkMsg = (i: number, type: "user" | "assistant" = "user") => ({
 const guestUser = null;
 const authUser = { id: "u-1" } as unknown as User;
 
+// Spec 049: seed the restore's current-conversation pick (the restore queries
+// conversations with .order().limit(1) — the mock resolves by table+method).
+const seedCurrentConversation = (id: string, updatedAt = "2026-01-02T00:00:00.000Z") => {
+  chain.respondWith(
+    {
+      data: [
+        {
+          id,
+          user_id: "u-1",
+          mode: MODE_A,
+          title: null,
+          created_at: "2026-01-01T00:00:00.000Z",
+          updated_at: updatedAt,
+        },
+      ],
+      error: null,
+    },
+    { table: "conversations", method: "limit" },
+  );
+};
+
 function renderChat(user: unknown) {
   return renderHook(({ u }: { u: unknown }) => useAiChat(u as User | null, vi.fn()), {
     initialProps: { u: user },
@@ -94,6 +115,10 @@ beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
   chain.calls.length = 0;
+  // respondWith results are matched most-recent-first and otherwise leak
+  // across tests (spec 049: a seeded conversation from one test made a later
+  // test's restore pick it up) — reset them alongside the call log.
+  chain.resetResponses();
   generateResponseMock.mockResolvedValue("reply");
   // Authenticated chat loads resolve empty by default.
   chain.respondWith({ data: [], error: null }, { table: "ai_chat_messages", method: "range" });
@@ -268,23 +293,31 @@ describe("deletion via clearChat only", () => {
     ).toEqual([]);
   });
 
-  it("user clearChat issues a DB delete scoped by user_id and mode", async () => {
+  it("user clearChat deletes the current conversation — FK cascade takes its messages (spec 049)", async () => {
+    seedCurrentConversation("c-1");
     const { result } = renderChat(authUser);
     await waitFor(() => expect(result.current.isReady).toBe(true));
+    expect(result.current.conversationId).toBe("c-1");
 
     await act(async () => {
       await result.current.clearChat();
     });
 
-    const from = chain.calls.find(
-      (c) => c.table === "ai_chat_messages" && c.method === "delete",
+    const del = chain.calls.find(
+      (c) => c.table === "conversations" && c.method === "delete",
     );
-    expect(from).toBeDefined();
+    expect(del).toBeDefined();
     const eqs = chain.calls
-      .filter((c) => c.table === "ai_chat_messages" && c.method === "eq")
+      .filter((c) => c.table === "conversations" && c.method === "eq")
       .map((c) => c.args);
     expect(eqs).toContainEqual(["user_id", "u-1"]);
-    expect(eqs).toContainEqual(["mode", MODE_A]);
+    expect(eqs).toContainEqual(["id", "c-1"]);
+    // Message rows are removed by the ownership-FK cascade — no direct
+    // ai_chat_messages delete anymore.
+    expect(
+      chain.calls.some((c) => c.table === "ai_chat_messages" && c.method === "delete"),
+    ).toBe(false);
+    expect(result.current.conversationId).toBeNull();
     // Users never write the guest localStorage key.
     expect(chatWrites()).toHaveLength(0);
     expect(chatRemovals()).toHaveLength(0);
@@ -466,6 +499,7 @@ describe("loadOlder (authenticated lazy history)", () => {
       })).reverse();
 
     // Initial newest page: 30 rows → hasMoreOlder true (full page, under cap).
+    seedCurrentConversation("c-1");
     chain.respondWith(
       { data: rows(30, 0), error: null },
       { table: "ai_chat_messages", method: "range" },
@@ -503,5 +537,244 @@ describe("loadOlder (authenticated lazy history)", () => {
 
     expect(chain.calls.length).toBe(callsBefore);
     expect(result.current.hasMoreOlder).toBe(false);
+  });
+});
+
+describe("conversation identity (spec 049)", () => {
+  const convRow = (id: string, updatedAt: string) => ({
+    id,
+    user_id: "u-1",
+    mode: MODE_A,
+    title: null as string | null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: updatedAt,
+  });
+  const msgRows = (n: number, convId = "c-1") =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `m${i}`,
+      role: i % 2 === 0 ? "user" : "assistant",
+      content: `c${i}`,
+      conversation_id: convId,
+      created_at: new Date(2026, 0, 1, 0, 0, i).toISOString(),
+    })).reverse();
+
+  it("restore picks the most recently active conversation and loads its newest page", async () => {
+    // Deliberately unsorted payload — the pick must use updated_at, not order.
+    chain.respondWith(
+      { data: [convRow("c-old", "2026-01-01T00:00:00.000Z"), convRow("c-new", "2026-01-05T00:00:00.000Z")], error: null },
+      { table: "conversations", method: "limit" },
+    );
+    chain.respondWith(
+      { data: msgRows(3, "c-new"), error: null },
+      { table: "ai_chat_messages", method: "range" },
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    expect(result.current.conversationId).toBe("c-new");
+    expect(result.current.messages).toHaveLength(3);
+    const eqs = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "eq")
+      .map((c) => c.args);
+    expect(eqs).toContainEqual(["conversation_id", "c-new"]);
+    // Conversation identity replaces the mode filter on message queries.
+    expect(eqs).not.toContainEqual(["mode", MODE_A]);
+  });
+
+  it("restore with no conversations yet stays empty and ready without a message query", async () => {
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationId).toBeNull();
+    expect(
+      chain.calls.some((c) => c.table === "ai_chat_messages" && c.method === "range"),
+    ).toBe(false);
+    // Restore only reads — the persistence policy (spec 036 lesson) extends
+    // to the conversation entity: no conversations writes on mount.
+    expect(
+      chain.calls.some(
+        (c) => c.table === "conversations" && ["insert", "update", "delete"].includes(c.method),
+      ),
+    ).toBe(false);
+  });
+
+  it("first signed-in send creates the conversation (titled) and links both rows", async () => {
+    chain.respondWith({ data: { id: "c-1" }, error: null }, { table: "conversations", method: "single" });
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("ما هي الشجرة الثنائية؟");
+    });
+    await waitFor(() =>
+      expect(
+        chain.calls.filter((c) => c.table === "ai_chat_messages" && c.method === "insert"),
+      ).toHaveLength(2),
+    );
+
+    const convInserts = chain.calls.filter((c) => c.table === "conversations" && c.method === "insert");
+    expect(convInserts).toHaveLength(1);
+    expect(convInserts[0].args[0]).toEqual({
+      user_id: "u-1",
+      mode: MODE_A,
+      title: "ما هي الشجرة الثنائية؟",
+    });
+    // ensureConversation chain: insert → select("id") → single()
+    expect(chain.calls.some((c) => c.table === "conversations" && c.method === "single")).toBe(true);
+
+    const msgInserts = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "insert")
+      .map((c) => c.args[0] as Record<string, unknown>);
+    // The user insert is fire-and-forget (its ensureConversation awaits a
+    // microtask), so under the instant mock it can land AFTER the assistant
+    // insert — assert per role, not by index.
+    const userInsert = msgInserts.find((m) => m.role === "user");
+    const assistantInsert = msgInserts.find((m) => m.role === "assistant");
+    expect(userInsert).toMatchObject({
+      content: "ما هي الشجرة الثنائية؟",
+      conversation_id: "c-1",
+    });
+    expect(assistantInsert).toMatchObject({ content: "reply", conversation_id: "c-1" });
+    expect(result.current.conversationId).toBe("c-1");
+  });
+
+  it("a failed conversation create still inserts rows unlinked (spec-008 fire-and-forget)", async () => {
+    chain.respondWith(
+      { data: null, error: { message: "rls denied" } },
+      { table: "conversations", method: "single" },
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("hi");
+    });
+    await waitFor(() =>
+      expect(
+        chain.calls.filter((c) => c.table === "ai_chat_messages" && c.method === "insert"),
+      ).toHaveLength(2),
+    );
+
+    expect(chain.calls.filter((c) => c.table === "conversations" && c.method === "insert")).toHaveLength(1);
+    const msgInserts = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "insert")
+      .map((c) => c.args[0] as Record<string, unknown>);
+    // Order-independent (see the linked-rows test above).
+    expect(msgInserts.find((m) => m.role === "user")).toMatchObject({ conversation_id: null });
+    expect(msgInserts.find((m) => m.role === "assistant")).toMatchObject({ conversation_id: null });
+    expect(result.current.conversationId).toBeNull();
+  });
+
+  it("subsequent sends reuse the existing conversation (no second create)", async () => {
+    chain.respondWith({ data: { id: "c-1" }, error: null }, { table: "conversations", method: "single" });
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("first");
+    });
+    await waitFor(() =>
+      expect(
+        chain.calls.filter((c) => c.table === "ai_chat_messages" && c.method === "insert"),
+      ).toHaveLength(2),
+    );
+    await act(async () => {
+      await result.current.sendMessage("second");
+    });
+    await waitFor(() =>
+      expect(
+        chain.calls.filter((c) => c.table === "ai_chat_messages" && c.method === "insert"),
+      ).toHaveLength(4),
+    );
+
+    expect(chain.calls.filter((c) => c.table === "conversations" && c.method === "insert")).toHaveLength(1);
+    expect(result.current.conversationId).toBe("c-1");
+  });
+
+  it("prune is scoped to the conversation, not the mode", async () => {
+    seedCurrentConversation("c-1");
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("hi");
+    });
+    await waitFor(() =>
+      expect(
+        chain.calls.filter((c) => c.table === "ai_chat_messages" && c.method === "insert"),
+      ).toHaveLength(2),
+    );
+
+    // The overflow probe selects ids scoped by conversation_id (no mode filter).
+    const probeIdx = chain.calls.findIndex(
+      (c) =>
+        c.table === "ai_chat_messages" &&
+        c.method === "select" &&
+        JSON.stringify(c.args) === '["id"]',
+    );
+    expect(probeIdx).toBeGreaterThan(-1);
+    const eqAfterProbe = chain.calls[probeIdx + 1];
+    expect(eqAfterProbe.method).toBe("eq");
+    expect(eqAfterProbe.args).toEqual(["conversation_id", "c-1"]);
+  });
+
+  it("switchConversation loads that conversation's transcript", async () => {
+    seedCurrentConversation("c-1");
+    chain.respondWith(
+      { data: msgRows(2, "c-1"), error: null },
+      { table: "ai_chat_messages", method: "range" },
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    expect(result.current.messages).toHaveLength(2);
+
+    // Switch target: distinct rows for its newest page.
+    chain.respondWith(
+      { data: msgRows(2, "c-2").map((r, i) => ({ ...r, id: `o${i}` })), error: null },
+      { table: "ai_chat_messages", method: "range" },
+    );
+    await act(async () => {
+      await result.current.switchConversation("c-2");
+    });
+
+    expect(result.current.conversationId).toBe("c-2");
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.messages.every((m) => m.id.startsWith("o"))).toBe(true);
+    expect(result.current.isReady).toBe(true);
+  });
+
+  it("deleteConversation removes server-side and resets the transcript when current", async () => {
+    seedCurrentConversation("c-1");
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.deleteConversation("c-1");
+    });
+
+    const del = chain.calls.find((c) => c.table === "conversations" && c.method === "delete");
+    expect(del).toBeDefined();
+    const eqs = chain.calls
+      .filter((c) => c.table === "conversations" && c.method === "eq")
+      .map((c) => c.args);
+    expect(eqs).toContainEqual(["user_id", "u-1"]);
+    expect(eqs).toContainEqual(["id", "c-1"]);
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationId).toBeNull();
+  });
+
+  it("mount and auth transitions never write conversations (event-driven policy)", async () => {
+    const utils = renderChat(guestUser);
+    utils.rerender({ u: authUser });
+    await waitFor(() => expect(utils.result.current.isReady).toBe(true));
+    utils.rerender({ u: guestUser });
+
+    const convWrites = chain.calls.filter(
+      (c) => c.table === "conversations" && ["insert", "update", "delete"].includes(c.method),
+    );
+    expect(convWrites).toHaveLength(0);
+    expect(chatWrites()).toHaveLength(0);
+    expect(chatRemovals()).toHaveLength(0);
   });
 });

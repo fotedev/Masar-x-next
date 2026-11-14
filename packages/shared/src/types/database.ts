@@ -37,6 +37,10 @@ export type AppealInsert = Database['public']['Tables']['appeals']['Insert']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
 
+// Conversations (spec 049 — zane server-backed chat history)
+export type Conversation = Database['public']['Tables']['conversations']['Row']
+export type ConversationInsert = Database['public']['Tables']['conversations']['Insert']
+
 // Reviews
 export type ReviewInsert = Database['public']['Tables']['reviews']['Insert']
 
