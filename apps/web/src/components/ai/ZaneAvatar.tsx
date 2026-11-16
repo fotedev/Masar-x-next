@@ -29,11 +29,11 @@ const safePlay = (el: HTMLVideoElement) => {
 const VIDEOS: Record<ZaneStatus, { src: string; poster: string }> = {
   idle: {
     src: "/zane/zane-idle-face.mp4",
-    poster: "/zane/zane-idle-face-poster.png",
+    poster: "/zane/zane-idle-face-poster.webp",
   },
   working: {
     src: "/zane/zane-typing-close.mp4",
-    poster: "/zane/zane-typing-close-poster.png",
+    poster: "/zane/zane-typing-close-poster.webp",
   },
 };
 
