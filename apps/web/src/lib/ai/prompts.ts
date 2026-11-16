@@ -27,3 +27,12 @@ export const ZANE_UI_INSTRUCTION = `
 - قيمة message هي النص الذي سيتم إرساله عند الضغط.
 - لا تضع أكثر من بلوك zane-ui واحد في الرد.
 `;
+
+/**
+ * Appended when useAiChat's backstop slices an over-cap prompt (spec 050,
+ * issue #242). The UI surfaces already refuse over-cap sends with a toast;
+ * this backstop covers callers that bypass those guards — truncating beats
+ * handing the SDK an unbounded string. Model-facing, so it lives here.
+ */
+export const PROMPT_TRUNCATION_MARKER =
+  '…[الرسالة مقتطعة لأنها تجاوزت حد الطول]';
