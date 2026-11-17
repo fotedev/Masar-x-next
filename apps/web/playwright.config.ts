@@ -29,6 +29,10 @@ export default defineConfig({
     : {
         command: "pnpm dev",
         url: `http://localhost:${PORT}`,
+        // E2E_PORT must reach the dev server itself, not just the readiness
+        // URL — `next dev` reads the PORT env, so without this a non-default
+        // E2E_PORT waits 180s on a port the server never opens.
+        env: { ...process.env, PORT: String(PORT) },
         reuseExistingServer: true,
         timeout: 180_000,
       },

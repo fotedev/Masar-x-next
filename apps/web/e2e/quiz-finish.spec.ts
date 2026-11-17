@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { seedAuthedSession } from "./helpers/auth";
 
 /**
  * Authed quiz loop → server-authoritative finish (spec 030 contract).
@@ -67,75 +67,6 @@ const ATTEMPT_ROW = {
   answers: [],
 };
 
-function resolveSupabaseRef(): string {
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  if (!url) {
-    for (const file of [".env.local", ".env.development", ".env"]) {
-      try {
-        const raw = readFileSync(path.resolve(process.cwd(), file), "utf8");
-        url = raw.match(/^NEXT_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
-        if (url) break;
-      } catch {
-        // file missing — try the next candidate
-      }
-    }
-  }
-  if (!url) {
-    throw new Error(
-      "quiz-finish.spec: NEXT_PUBLIC_SUPABASE_URL not found (env or apps/web/.env.local) — cannot derive the supabase-js localStorage key",
-    );
-  }
-  return new URL(url).hostname.split(".")[0];
-}
-
-function buildSeededSession() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expiresIn = 60 * 60 * 24 * 30;
-  const expiresAt = nowSec + expiresIn;
-  const b64url = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-  const accessToken = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({
-    sub: USER_ID,
-    exp: expiresAt,
-    aud: "authenticated",
-    role: "authenticated",
-  })}.mock-signature`;
-  return {
-    access_token: accessToken,
-    token_type: "bearer",
-    expires_in: expiresIn,
-    expires_at: expiresAt,
-    refresh_token: "mock-refresh-token",
-    user: {
-      id: USER_ID,
-      aud: "authenticated",
-      role: "authenticated",
-      email: "e2e-user@example.com",
-      phone: "",
-      app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: { full_name: "E2E User" },
-      identities: [],
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    },
-  };
-}
-
-async function seedAuthedSession(page: Page, baseURL?: string) {
-  const storageKey = `sb-${resolveSupabaseRef()}-auth-token`;
-  const session = buildSeededSession();
-  await page.route("**/auth/v1/token?*", (route) => route.fulfill({ json: session }));
-  await page.route("**/auth/v1/user", (route) => route.fulfill({ json: session.user }));
-  await page.route("**/api/auth/sync", (route) => route.fulfill({ json: { ok: true } }));
-  await page.context().addCookies([
-    {
-      name: storageKey,
-      value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`,
-      domain: new URL(baseURL ?? "http://localhost:3000").hostname,
-      path: "/",
-    },
-  ]);
-}
-
 test("authed quiz loop finishes with the server-graded score (7/10 → 70%)", async ({
   page,
   baseURL,
@@ -173,7 +104,7 @@ test("authed quiz loop finishes with the server-graded score (7/10 → 70%)", as
     route.fulfill({ json: { score: 7, total_questions: 10 } }),
   );
 
-  await seedAuthedSession(page, baseURL);
+  await seedAuthedSession(page, { baseURL, userId: USER_ID });
   await page.goto(`/ar/quiz-play/${QUIZ_ID}`);
 
   await expect(page.getByTestId("quiz-start-button")).toBeVisible();
