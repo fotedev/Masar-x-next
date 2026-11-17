@@ -141,12 +141,22 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // chat-history side menu marks the active conversation).
   const [conversationId, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
-  // In-flight conversation-ensure promise of the current send (spec 049): the
-  // user-row insert chains on it and the assistant-row insert joins it, so
-  // both rows link deterministically without the send spinner ever waiting
-  // on a persistence round-trip.
-  const conversationEnsureRef = useRef<Promise<string | null> | null>(null);
-  const switchSeqRef = useRef(0);
+  // Spec 049: in-flight conversation-ensure promise of the current send. The
+  // user-row insert chains on it and the assistant-row insert joins THE
+  // CAPTURED INSTANCE, so both rows link deterministically without the send
+  // spinner ever waiting on a persistence round-trip. Keyed to its
+  // (userId, mode) context — a resolved promise from mode A must never serve
+  // a mode-B send (CodeRabbit Major: stale ensure reuse stored B's messages
+  // in A's conversation).
+  const conversationEnsureRef = useRef<{ key: string; promise: Promise<string | null> } | null>(null);
+  // Transcript lifecycle generation (CodeRabbit Major fixes): one monotonic
+  // counter every transcript-replacing transition bumps — restore (mount /
+  // mode / user change), switchConversation, clearChat, deleteConversation of
+  // the active thread. An async completion (loaded page, created conversation,
+  // streamed reply) may only touch shared state while its captured generation
+  // is still current — the hard-bug-08 sentinel discipline, extended past the
+  // mode guard to conversation switches, clears, and deletes.
+  const lifecycleRef = useRef(0);
   const setCurrentConversation = useCallback((id: string | null) => {
     conversationIdRef.current = id;
     setConversationId(id);
@@ -216,6 +226,10 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   useEffect(() => {
     if (!user?.id) return;
 
+    lifecycleRef.current += 1;
+    const gen = lifecycleRef.current;
+    conversationEnsureRef.current = null; // new (user, mode) context — no stale reuse
+
     setIsReady(false);
     setMessages([]);
     loadedCountRef.current = 0;
@@ -223,6 +237,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     setCurrentConversation(null);
 
     let cancelled = false;
+    // Superseded = unmounted OR a newer transcript transition (clear, switch,
+    // delete) bumped the generation while this restore was in flight.
+    const stale = () => cancelled || gen !== lifecycleRef.current;
 
     const loadSupabaseMessages = async () => {
       try {
@@ -240,31 +257,31 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
           .order("updated_at", { ascending: false })
           .limit(1);
 
-        if (cancelled) return;
+        if (stale()) return;
         if (convError) throw convError;
 
         const current = pickCurrentConversation((convs || []) as Conversation[]);
         if (!current) {
           // No conversation yet for this mode — an empty, ready chat. The
           // first send creates one (event-driven, never on mount).
-          setIsReady(true);
+          if (!stale()) setIsReady(true);
           return;
         }
         setCurrentConversation(current.id);
 
         const { rows, loadedMessages } = await fetchConversationNewestPage(user.id, current.id);
 
-        if (cancelled) return;
+        if (stale()) return;
         loadedCountRef.current = loadedMessages.length;
         setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
         setMessages(loadedMessages);
       } catch (e) {
-        if (!cancelled) {
+        if (!stale()) {
           logger.error("Failed to load Supabase messages", e);
           setMessages([]);
         }
       } finally {
-        if (!cancelled) setIsReady(true);
+        if (!stale()) setIsReady(true);
       }
     };
 
@@ -286,6 +303,9 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
 
     loadingOlderRef.current = true;
     setLoadingOlder(true);
+    // A switch/clear/delete during the fetch must not prepend the old
+    // conversation's rows into whatever transcript is current now.
+    const gen = lifecycleRef.current;
     try {
       const { data, error } = await supabase
         .from("ai_chat_messages")
@@ -300,6 +320,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       const rows = (data || []) as SupabaseChatMessage[];
       const older = mapRowsToMessages(rows);
 
+      if (gen !== lifecycleRef.current) return;
       loadedCountRef.current = range.start + older.length;
       setHasMoreOlder(hasMoreAfterLoad(older.length, range.end - range.start + 1, loadedCountRef.current));
       if (older.length > 0) {
@@ -392,6 +413,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     };
 
     const currentMode = modeRef.current;
+    const sendGen = lifecycleRef.current;
     pendingPersistRef.current = true;
     setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
@@ -404,7 +426,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     const assistantMsgId = `assistant_${Date.now()}`;
     let streamStarted = false;
     const flushStream = (full: string) => {
-      if (modeRef.current !== currentMode) return;
+      if (modeRef.current !== currentMode || lifecycleRef.current !== sendGen) return;
       if (!streamStarted) {
         streamStarted = true;
         setMessages(prev => [
@@ -434,25 +456,39 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     // conversation is ensured first — lazily, inside this send event only —
     // so the row can link to it; a failed create logs and leaves the
     // exchange unlinked instead of blocking the UI. The ensure promise is
-    // shared (and reused while in-flight) so the assistant insert below
-    // joins the same identity instead of racing the ref write.
+    // keyed to (user, mode) and reused while in-flight, so the assistant
+    // insert joins the same identity instead of racing the ref write.
+    // CodeRabbit Major: a promise created for (mode A, user X) is never
+    // reused for another context — the key check recreates instead. Guests
+    // never reach the persist path; the default resolved-null keeps the
+    // assistant-side join a no-op for them.
+    let ensurePromise: Promise<string | null> = Promise.resolve(null);
     if (user) {
-      const ensurePromise =
-        conversationIdRef.current != null
-          ? Promise.resolve(conversationIdRef.current)
-          : (conversationEnsureRef.current ??= ensureConversation(
-              user.id,
-              mode,
-              deriveConversationTitle(content),
-            ).then((id) => {
-              if (id) setCurrentConversation(id);
-              else conversationEnsureRef.current = null; // allow a fresh attempt on the next send
-              return id;
-            }));
-      conversationEnsureRef.current = ensurePromise;
+      const ensureKey = `${user.id}:${currentMode}`;
+      if (conversationEnsureRef.current?.key !== ensureKey) conversationEnsureRef.current = null;
+      if (conversationIdRef.current != null) {
+        ensurePromise = Promise.resolve(conversationIdRef.current);
+      } else if (conversationEnsureRef.current) {
+        ensurePromise = conversationEnsureRef.current.promise;
+      } else {
+        ensurePromise = ensureConversation(user.id, currentMode, deriveConversationTitle(content)).then(
+          (id) => {
+            if (id) {
+              // Only the lifecycle this creation started under may adopt the
+              // id — a clear/switch mid-create must not reactivate the
+              // produced conversation into the emptied view.
+              if (lifecycleRef.current === sendGen) setCurrentConversation(id);
+            } else if (conversationEnsureRef.current?.promise === ensurePromise) {
+              conversationEnsureRef.current = null; // allow a fresh attempt on the next send
+            }
+            return id;
+          },
+        );
+        conversationEnsureRef.current = { key: ensureKey, promise: ensurePromise };
+      }
       void ensurePromise
         .then((ensured) => {
-          insertChatRow(user.id, mode, ensured, { role: "user", content: content.trim() });
+          insertChatRow(user.id, currentMode, ensured, { role: "user", content: content.trim() });
         })
         .catch((e) => logger.warn("chat conversation ensure chain failed", e));
     }
@@ -506,8 +542,24 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         onDelta: (full) => deltaThrottle.update(full),
       });
 
-      // Avoid setting state if another request was started or mode changed
-      if (modeRef.current !== currentMode) {
+      // Persist the reply to its ORIGINATING conversation regardless of UI
+      // state (CodeRabbit Major 3: join the send's captured ensure outcome
+      // for both row inserts — reading the mutable ref here would link the
+      // reply to a later send's conversation or drop the link entirely after
+      // a switch). UI application below stays guarded.
+      if (user) {
+        void Promise.resolve(ensurePromise)
+          .catch(() => null)
+          .then((ensured) => {
+            insertChatRow(user.id, currentMode, ensured ?? null, { role: "assistant", content: response });
+            if (ensured) pruneChatOverflow(ensured);
+          });
+      }
+
+      // Avoid setting state if the mode or the transcript lifecycle moved on
+      // (mode switch, conversation switch, clear, delete — CodeRabbit Major:
+      // a reply must never be appended to a transcript it was not asked in).
+      if (modeRef.current !== currentMode || lifecycleRef.current !== sendGen) {
         deltaThrottle.cancel();
         return;
       }
@@ -523,26 +575,12 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         pendingPersistRef.current = true;
         setMessages(prev => [...prev, assistantMsg]);
       }
-
-      // Background save assistant response to Supabase, then enforce the
-      // retention cap (spec 008 §2, now per conversation — spec 049). The
-      // row insert joins the send's ensure outcome (deterministic id, no
-      // ref race) and stays fire-and-forget — the spinner clears without
-      // waiting on any persistence round-trip. Even when the conversation
-      // create failed the row is attempted (unlinked, conversation_id
-      // null); only the prune needs a real conversation to scope to.
-      if (user) {
-        void Promise.resolve(conversationEnsureRef.current)
-          .catch(() => null)
-          .then((ensured) => {
-            insertChatRow(user.id, mode, ensured ?? null, { role: "assistant", content: response });
-            if (ensured) pruneChatOverflow(ensured);
-          });
-      }
-
     } catch (_e) {
       logger.error("Failed to send AI message", _e);
       deltaThrottle.cancel();
+      // Same supersession guard as the response path — an error bubble from a
+      // dead send must not paint into whatever transcript is current now.
+      if (modeRef.current !== currentMode || lifecycleRef.current !== sendGen) return;
       pendingPersistRef.current = true;
       if (streamStarted) {
         // Rare: an error after partial text was shown (streamPuterChat returns
@@ -568,7 +606,18 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     setMessages([]);
     loadedCountRef.current = 0;
     setHasMoreOlder(false);
+    // The clear is itself a transcript transition: bump the generation so any
+    // pending restore/switch/creation completes against a stale lifecycle and
+    // drops its result instead of repopulating the emptied view. isReady is
+    // set here because the superseded loads' finally blocks no longer will.
+    lifecycleRef.current += 1;
+    setIsReady(true);
     const previous = conversationIdRef.current;
+    // A creation still in flight will produce a conversation AFTER the clear
+    // (CodeRabbit Major: clearChat saw no previous id and deleted nothing, so
+    // the cleared exchange stayed server-side) — capture it and remove the
+    // stranded exchange once it materializes.
+    const pendingCreation = conversationEnsureRef.current;
     setCurrentConversation(null);
     conversationEnsureRef.current = null;
     if (user && previous) {
@@ -584,6 +633,19 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     } else if (!user) {
       localStorage.removeItem(storageKey);
     }
+    if (user && pendingCreation) {
+      void pendingCreation.promise
+        .then((id) => {
+          if (id) {
+            return supabase
+              .from("conversations")
+              .delete()
+              .eq("user_id", user.id)
+              .eq("id", id);
+          }
+        })
+        .catch((e) => logger.warn("pending conversation cleanup failed", e));
+    }
   }, [user, storageKey, setCurrentConversation]);
 
   // Spec 049: swap the transcript to another conversation of this user —
@@ -593,7 +655,10 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // listed; the next send still writes under the CURRENT mode.
   const switchConversation = useCallback(async (id: string) => {
     if (!user?.id) return;
-    const seq = ++switchSeqRef.current;
+    // Bumping the shared generation (instead of a switch-only seq) is the
+    // CodeRabbit Major fix: a pending page load must be invalidated not only
+    // by another switch but by clearChat and deleteConversation too.
+    const gen = ++lifecycleRef.current;
     setIsReady(false);
     setMessages([]);
     loadedCountRef.current = 0;
@@ -602,16 +667,16 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     conversationEnsureRef.current = null;
     try {
       const { rows, loadedMessages } = await fetchConversationNewestPage(user.id, id);
-      if (seq !== switchSeqRef.current) return;
+      if (gen !== lifecycleRef.current) return;
       loadedCountRef.current = loadedMessages.length;
       setHasMoreOlder(hasMoreAfterLoad(rows.length, CHAT_PAGE_SIZE, loadedMessages.length));
       setMessages(loadedMessages);
     } catch (e) {
-      if (seq !== switchSeqRef.current) return;
+      if (gen !== lifecycleRef.current) return;
       logger.error("Failed to switch conversation", e);
       setMessages([]);
     } finally {
-      if (seq === switchSeqRef.current) setIsReady(true);
+      if (gen === lifecycleRef.current) setIsReady(true);
     }
   }, [user?.id, setCurrentConversation, fetchConversationNewestPage]);
 
@@ -620,9 +685,13 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   const deleteConversation = useCallback(async (id: string) => {
     if (!user?.id) return;
     if (conversationIdRef.current === id) {
+      // Same transition discipline as clearChat: pending loads must not
+      // repopulate the transcript of a deleted conversation.
+      lifecycleRef.current += 1;
       setMessages([]);
       loadedCountRef.current = 0;
       setHasMoreOlder(false);
+      setIsReady(true);
       setCurrentConversation(null);
       conversationEnsureRef.current = null;
     }

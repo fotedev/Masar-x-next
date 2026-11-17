@@ -605,7 +605,7 @@ describe("conversation identity (spec 049)", () => {
     await waitFor(() => expect(result.current.isReady).toBe(true));
 
     await act(async () => {
-      await result.current.sendMessage("ما هي الشجرة الثنائية؟");
+      await result.current.sendMessage("What is a binary tree?");
     });
     await waitFor(() =>
       expect(
@@ -618,7 +618,7 @@ describe("conversation identity (spec 049)", () => {
     expect(convInserts[0].args[0]).toEqual({
       user_id: "u-1",
       mode: MODE_A,
-      title: "ما هي الشجرة الثنائية؟",
+      title: "What is a binary tree?",
     });
     // ensureConversation chain: insert → select("id") → single()
     expect(chain.calls.some((c) => c.table === "conversations" && c.method === "single")).toBe(true);
@@ -632,7 +632,7 @@ describe("conversation identity (spec 049)", () => {
     const userInsert = msgInserts.find((m) => m.role === "user");
     const assistantInsert = msgInserts.find((m) => m.role === "assistant");
     expect(userInsert).toMatchObject({
-      content: "ما هي الشجرة الثنائية؟",
+      content: "What is a binary tree?",
       conversation_id: "c-1",
     });
     expect(assistantInsert).toMatchObject({ content: "reply", conversation_id: "c-1" });
@@ -776,6 +776,116 @@ describe("conversation identity (spec 049)", () => {
     expect(convWrites).toHaveLength(0);
     expect(chatWrites()).toHaveLength(0);
     expect(chatRemovals()).toHaveLength(0);
+  });
+
+  // ── CodeRabbit Major race fixes (spec 049 review, 2026-11-17) ──────────────
+  it("a send after a mode switch creates a conversation for the NEW mode (no stale ensure reuse)", async () => {
+    chain.respondWith({ data: { id: "c-A" }, error: null }, { table: "conversations", method: "single" });
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("first in mode A");
+    });
+    await waitFor(() =>
+      expect(chain.calls.filter((c) => c.table === "conversations" && c.method === "insert")).toHaveLength(1),
+    );
+    expect(result.current.conversationId).toBe("c-A");
+
+    // Mode switch: the restore clears the conversation identity; the stale
+    // mode-A ensure promise must NOT serve mode B's first send (pre-fix:
+    // B's rows landed in c-A and reloading B showed an empty transcript).
+    act(() => result.current.setMode("group_rag"));
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    chain.respondWith({ data: { id: "c-B" }, error: null }, { table: "conversations", method: "single" });
+
+    await act(async () => {
+      await result.current.sendMessage("first in mode B");
+    });
+    await waitFor(() =>
+      expect(chain.calls.filter((c) => c.table === "conversations" && c.method === "insert")).toHaveLength(2),
+    );
+
+    const convInserts = chain.calls.filter((c) => c.table === "conversations" && c.method === "insert");
+    expect(convInserts[1].args[0]).toMatchObject({ mode: "group_rag", title: "first in mode B" });
+    const bInserts = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "insert")
+      .map((c) => c.args[0] as Record<string, unknown>)
+      .filter((m) => m.mode === "group_rag");
+    expect(bInserts.length).toBeGreaterThanOrEqual(1);
+    expect(bInserts.every((m) => m.conversation_id === "c-B")).toBe(true);
+    expect(result.current.conversationId).toBe("c-B");
+  });
+
+  it("clearChat during a pending creation removes the produced conversation (no stranded exchange)", async () => {
+    chain.respondWith({ data: { id: "c-pending" }, error: null }, { table: "conversations", method: "single" });
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    let send!: Promise<void>;
+    await act(async () => {
+      send = result.current.sendMessage("stray exchange");
+      // Same tick as the send: the creation is queued but not resolved, so
+      // clearChat sees no previous id and deletes nothing itself — pre-fix
+      // the produced conversation later reactivated the cleared view and the
+      // exchange stayed server-side, returning after a reload.
+      await result.current.clearChat();
+      await send;
+    });
+    await act(async () => {
+      await nextFrame();
+    });
+
+    // The pending-creation cleanup deleted the conversation the send produced.
+    const deletes = chain.calls.filter((c) => c.table === "conversations" && c.method === "delete");
+    expect(deletes.length).toBeGreaterThanOrEqual(1);
+    const eqs = chain.calls
+      .filter((c) => c.table === "conversations" && c.method === "eq")
+      .map((c) => c.args);
+    expect(eqs).toContainEqual(["id", "c-pending"]);
+    // The transcript stays empty and the produced id is never adopted.
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationId).toBeNull();
+  });
+
+  it("a reply completing after a conversation switch persists to the originating conversation, not the active one", async () => {
+    seedCurrentConversation("c-1");
+    let resolveGen!: (value: string) => void;
+    generateResponseMock.mockImplementation(
+      () => new Promise<string>((resolve) => {
+        resolveGen = resolve;
+      }),
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      void result.current.sendMessage("asked in c-1");
+    });
+
+    // Switch away before the reply lands (same mode — the old mode-only
+    // guard accepted the reply and appended it to the switched-to thread,
+    // persisting it unlinked after the switch cleared the ensure ref).
+    await act(async () => {
+      await result.current.switchConversation("c-2");
+    });
+    expect(result.current.conversationId).toBe("c-2");
+
+    await act(async () => {
+      resolveGen("late reply");
+      await nextFrame();
+    });
+
+    // The reply must NOT repaint the switched-to transcript...
+    expect(result.current.messages.some((m) => m.content === "late reply")).toBe(false);
+    // ...must not steal the active id...
+    expect(result.current.conversationId).toBe("c-2");
+    // ...and must persist bound to the conversation the send started in.
+    const assistantInsert = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "insert")
+      .map((c) => c.args[0] as Record<string, unknown>)
+      .find((m) => m.content === "late reply");
+    expect(assistantInsert).toMatchObject({ conversation_id: "c-1" });
   });
 });
 

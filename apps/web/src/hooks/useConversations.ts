@@ -24,6 +24,12 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const loadedCountRef = useRef(0);
+  // Shared request generation (CodeRabbit Major): the effect load, loadMore
+  // and refresh all bump it at start; a completion may only write rows or
+  // pagination state while its generation is still current — a slow loadMore
+  // for a superseded list can never append stale rows to (or replace) a newer
+  // fetch's result (mode change, refresh, newer loadMore).
+  const requestGenRef = useRef(0);
 
   const queryPage = useCallback(async (userId: string, offset: number): Promise<Conversation[]> => {
     const { data, error } = await supabase
@@ -48,7 +54,8 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
     }
   }, []);
 
-  const fetchPage = useCallback(async (offset: number, signal: { cancelled: boolean }) => {
+  const fetchPage = useCallback(async (offset: number) => {
+    const gen = ++requestGenRef.current;
     if (!user?.id) {
       loadedCountRef.current = 0;
       setConversations([]);
@@ -58,34 +65,31 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
     setLoading(true);
     try {
       const rows = await queryPage(user.id, offset);
-      if (signal.cancelled) return;
+      if (requestGenRef.current !== gen) return;
       applyPage(rows, offset);
     } catch (e) {
-      if (!signal.cancelled) {
-        logger.error("Failed to load conversations", e);
-        if (offset === 0) setConversations([]);
-        setHasMore(false);
-      }
+      if (requestGenRef.current !== gen) return;
+      logger.error("Failed to load conversations", e);
+      if (offset === 0) setConversations([]);
+      setHasMore(false);
     } finally {
-      if (!signal.cancelled) setLoading(false);
+      // Only the winning request owns the loading flag — a superseded one
+      // must not clear it out from under the newer fetch.
+      if (requestGenRef.current === gen) setLoading(false);
     }
   }, [user?.id, queryPage, applyPage]);
 
   useEffect(() => {
-    const signal = { cancelled: false };
-    fetchPage(0, signal);
-    return () => {
-      signal.cancelled = true;
-    };
+    fetchPage(0);
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
-    await fetchPage(loadedCountRef.current, { cancelled: false });
+    await fetchPage(loadedCountRef.current);
   }, [fetchPage, loading, hasMore]);
 
   const refresh = useCallback(async () => {
-    await fetchPage(0, { cancelled: false });
+    await fetchPage(0);
   }, [fetchPage]);
 
   return { conversations, loading, hasMore, loadMore, refresh };
