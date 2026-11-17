@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { aiAssistant } from "@/lib/ai-assistant";
 import type { AiAssistantMode, AiChatHistoryTurn } from "@/lib/ai-assistant";
 import { createDeltaThrottle } from "@/lib/ai/delta-throttle";
+import { AI_PROMPT_MAX_CHARS } from "@/lib/ai/pasted-attachments";
+import { PROMPT_TRUNCATION_MARKER } from "@/lib/ai/prompts";
 import { CHAT_HISTORY_CAP, CHAT_PAGE_SIZE, hasMoreAfterLoad, nextOlderRange } from "@/lib/chat-pagination";
 import { buildStudentContext } from "@/lib/student-agent/contextBuilder";
 import { cannedMessagesFor } from "@/lib/ai/canned-messages";
@@ -388,7 +390,17 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         return built.context;
       })();
 
-    const response = await aiAssistant.generateResponse(content, undefined, {
+    // Spec 050 backstop (issue #242): the UI surfaces refuse over-cap sends
+    // with a toast before reaching here, but sendMessage is the single choke
+    // point for every caller — mirror the fallback route's 10k Zod cap so a
+    // bypassing caller can never hand the Puter path an unbounded string.
+    // Display and persistence keep the full text; only the model sees the cut.
+    const promptForModel =
+      content.length > AI_PROMPT_MAX_CHARS
+        ? `${content.slice(0, AI_PROMPT_MAX_CHARS)}${PROMPT_TRUNCATION_MARKER}`
+        : content;
+
+    const response = await aiAssistant.generateResponse(promptForModel, undefined, {
         mode,
         chatHistory: historyTurns,
         platformContext,

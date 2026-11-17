@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useMemo, useCallback, memo, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useMemo, useCallback, memo, type RefObject } from "react";
 import { useLocale } from "next-intl";
 import {
   BookOpen,
@@ -7,11 +7,10 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { ChatMessageItem } from "./ChatMessageItem";
-import type { AiAssistantMode } from "@/lib/ai-assistant";
 import { motion, useReducedMotion } from "framer-motion";
-import { LottiePlayer, type DotLottie } from "./LottiePlayer";
 import { ChatScrollbar } from "./ChatScrollbar";
-import { pickReactionEvent } from "@/lib/ai-assistant-reactions";
+import { ZaneAvatar } from "./ZaneAvatar";
+import { ZaneStatusAvatar } from "./ZaneStatusAvatar";
 
 interface ChatMessage {
   id: string;
@@ -29,12 +28,10 @@ interface ChatContainerProps {
   messagesEndRef: RefObject<HTMLDivElement>;
   t: (key: string) => string;
   isInitialState?: boolean;
-  mode?: AiAssistantMode;
   onSuggestionClick?: (suggestion: string) => void;
   onUiMessage?: (message: string) => void;
   /** Re-sends the last user prompt (offered on the latest error bubble). */
   onRetry?: () => void;
-  hasUserInput?: boolean;
   /** Spec 011 lazy sync: older pages remain inside the retained window. */
   hasMoreOlder?: boolean;
   loadingOlder?: boolean;
@@ -51,122 +48,19 @@ export const ChatContainer = memo(function ChatContainer({
   messagesEndRef,
   t,
   isInitialState = false,
-  mode = "cs_assistant",
   onSuggestionClick,
   onUiMessage,
   onRetry,
-  hasUserInput = false,
   hasMoreOlder = false,
   loadingOlder = false,
   onLoadOlder,
 }: ChatContainerProps) {
   const shouldReduceMotion = useReducedMotion();
-  // Stable per-instance key for the hero LottiePlayer. The key is derived
-  // from both the mode and a unique id so that switching between
-  // assistants always forces a clean re-mount of the WASM player and
-  // avoids the "Failed to load animation" race condition.
-  const heroLottieInstanceId = useId();
   const locale = useLocale();
   const isRTL = locale === "ar";
   const assistantName = t("assistantName");
 
-  // Lottie state machine ref for chat state integration
-  const lottieRef = useRef<DotLottie | null>(null);
-  // Separate ref for the typing-indicator avatar so we can drive it
-  // independently (it should always play the "thinking" state while visible).
-  const thinkingLottieRef = useRef<DotLottie | null>(null);
-
-  // When the typing-indicator Lottie mounts, push it into the "thinking"
-  // state right away. The state machine starts in "idle" by default, so we
-  // have to fire `thinkClick` once initialization is complete.
-  const handleThinkingLottieRef = useCallback((player: DotLottie | null) => {
-    thinkingLottieRef.current = player;
-    if (!player) return;
-    const fire = () => {
-      try {
-        player.stateMachineFireEvent("thinkClick");
-      } catch {
-        // state machine may not be ready; ignore
-      }
-    };
-    fire();
-    // Retry once on the next tick in case the state machine wasn't fully
-    // initialized when the ref was first set.
-    setTimeout(fire, 50);
-  }, []);
-
-  // The state machine's "thinking" segment is finite and auto-transitions
-  // back to "idle" via the `thinkingComplete` event (see `StateMachine1.json`
-  // in `public/animations/ai-robo.lottie`). The hero stays in "thinking"
-  // because the user typing constantly re-fires `thinkClick` through the
-  // `hasUserInput` dependency. The typing indicator has no such driver, so
-  // we re-fire `thinkClick` on a short interval for the duration of
-  // `isLoading` to keep the avatar locked in "thinking".
-  useEffect(() => {
-    if (!isLoading) return;
-    const interval = setInterval(() => {
-      const player = thinkingLottieRef.current;
-      if (!player) return;
-      try {
-        player.stateMachineFireEvent("thinkClick");
-      } catch {
-        // state machine may not be ready; ignore
-      }
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  // Track the previous loading state and the last response we reacted to
-  // so we can detect the transition from "AI is thinking" → "AI just answered"
-  // and pick the right reaction (yes / no / alert) based on the response content.
-  const wasLoadingRef = useRef(false);
-  const lastReactedMessageIdRef = useRef<string | null>(null);
-
-  // Drive the Lottie animation based on the chat state.
-  // - Initial state (no input, no loading, no messages) → no event fired,
-  //   the default "idle" state plays on its own.
-  // - User typing or AI thinking → "thinking" segment.
-  // - AI just answered → react with yes / no / alert depending on the reply.
-  useEffect(() => {
-    const player = lottieRef.current;
-    if (!player) return;
-
-    const safeFire = (event: string) => {
-      try {
-        player.stateMachineFireEvent(event);
-      } catch {
-        // state machine may not be ready; ignore
-      }
-    };
-
-    // Detect the moment the AI finishes a response
-    const aiJustFinished = wasLoadingRef.current && !isLoading;
-    wasLoadingRef.current = isLoading;
-
-    if (aiJustFinished && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (
-        lastMessage &&
-        lastMessage.type === "assistant" &&
-        lastMessage.id !== lastReactedMessageIdRef.current
-      ) {
-        lastReactedMessageIdRef.current = lastMessage.id;
-        const event = pickReactionEvent(lastMessage.content, mode);
-        safeFire(event);
-      }
-      return;
-    }
-
-    // While typing or while the AI is generating → thinking
-    if (isLoading || hasUserInput) {
-      safeFire("thinkClick");
-    }
-    // Initial state: do nothing, let the default "idle" state play.
-  }, [isLoading, hasUserInput, messages, mode]);
-
-  // Index of the latest assistant message in the list. Used so only the most
-  // recent AI bubble drives the avatar's state-machine events; older bubbles
-  // stay on their default "idle" loop.
+  // Index of the latest assistant message in the list (retry gating).
   const lastAssistantIndex = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       if (messages[i]?.type === "assistant") return i;
@@ -221,6 +115,11 @@ export const ChatContainer = memo(function ChatContainer({
 
   return (
     <div className="relative flex min-h-0 w-full flex-1 flex-col">
+      {/* Spec 048: the single status avatar — docked head block on lg+,
+          floating top-center overlay on narrow viewports (Muse-style). */}
+      {messages.length > 0 && (
+        <ZaneStatusAvatar status={isLoading ? "working" : "idle"} />
+      )}
       {/* Spec 012: no CSS scroll-smooth on the scroller — it makes the browser
           animate programmatic scrollTop writes (incl. scrollbar drags), so the
           thumb tracked the pointer only after release. All smoothness is
@@ -236,7 +135,9 @@ export const ChatContainer = memo(function ChatContainer({
             : "overflow-y-auto overflow-x-hidden chat-scrollbar-hidden pb-6 sm:pb-12"
         }`}
       >
-      <div dir={isRTL ? "rtl" : "ltr"} className="flex min-h-full w-full max-w-4xl mx-auto flex-col">
+      {/* Spec 048: top padding only while the floating narrow-viewport avatar
+          is shown, so the first message clears it and scrolls underneath. */}
+      <div dir={isRTL ? "rtl" : "ltr"} className={`flex min-h-full w-full max-w-4xl mx-auto flex-col${messages.length > 0 ? " max-lg:pt-40" : ""}`}>
       {messages.length === 0 ? (
         <motion.div
           initial="hidden"
@@ -257,7 +158,7 @@ export const ChatContainer = memo(function ChatContainer({
           }
           className="flex flex-col items-center justify-center text-center space-y-3 sm:space-y-5 max-w-2xl px-2 sm:px-4 my-auto w-full mx-auto"
         >
-          {/* Lottie AI Hero Animation */}
+          {/* Spec 048: status-avatar hero — the idle video, 128px */}
           <motion.div
             variants={
               shouldReduceMotion
@@ -266,20 +167,7 @@ export const ChatContainer = memo(function ChatContainer({
             }
             className="w-full flex items-center justify-center"
           >
-            <div className="w-48 h-48 md:w-56 md:h-56">
-              <LottiePlayer
-                key={`${mode}-${heroLottieInstanceId}`}
-                src="/animations/ai-robo.lottie"
-                animationId="Main Scene"
-                stateMachineId="StateMachine1"
-                autoplay
-                loop
-                dotLottieRefCallback={(player: DotLottie | null) => {
-                  lottieRef.current = player;
-                }}
-                className="w-full h-full"
-              />
-            </div>
+            <ZaneAvatar status="idle" className="h-32 w-32" />
           </motion.div>
 
           {/* ZANE Brand + Welcome Title */}
@@ -408,7 +296,6 @@ export const ChatContainer = memo(function ChatContainer({
               onUiMessage={onUiMessage}
               isLatestAssistant={index === lastAssistantIndex}
               isLoading={isLoading}
-              mode={mode}
               onRetry={onRetry}
             />
           ))}
@@ -416,31 +303,14 @@ export const ChatContainer = memo(function ChatContainer({
               the typing indicator (spec 011). */}
           {isLoading && !messages.some((m) => m.streaming) && (
             <div
-              className={`flex gap-2.5 sm:gap-4 w-[95%] sm:w-auto max-w-[95%] sm:max-w-[88%] md:max-w-[82%] lg:max-w-[75%] ${isRTL ? "justify-end flex-row-reverse" : "justify-start"} animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}
+              className={`w-fit bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-xs border border-slate-100 dark:border-slate-700 flex items-center animate-in ${isRTL ? "slide-in-from-right-2" : "slide-in-from-left-2"} duration-300`}
             >
-              <div
-                className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex items-center justify-center mt-1 bg-transparent"
-                aria-hidden="true"
-              >
-                <LottiePlayer
-                  key={mode}
-                  src="/animations/ai-robo.lottie"
-                  animationId="Main Scene"
-                  stateMachineId="StateMachine1"
-                  autoplay
-                  loop
-                  dotLottieRefCallback={handleThinkingLottieRef}
-                  className="w-full h-full"
-                />
-              </div>
-              <div
-                className={`bg-white dark:bg-slate-800 rounded-2xl ${isRTL ? "rounded-tl-none" : "rounded-tr-none"} px-4 py-3 shadow-xs border border-slate-100 dark:border-slate-700 flex items-center`}
-              >
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></span>
-                </div>
+              {/* Spec 048: dots-only typing bubble — the status avatar (with
+                  the "is working" label) is the single animation surface. */}
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></span>
               </div>
             </div>
           )}

@@ -34,6 +34,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import MathText from "../components/MathText";
+import { ZaneAvatarRN } from "../components/ZaneAvatarRN";
 import { useI18n } from "../context/I18nContext";
 import { useTheme } from "../context/ThemeContext";
 import type { Palette } from "../lib/theme";
@@ -296,15 +297,40 @@ export default function AIAssistantScreen() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          ListHeaderComponent={messages.length === 0 ? listHeader : null}
-          contentContainerStyle={styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-        />
+        <View style={styles.listArea}>
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            ListHeaderComponent={messages.length === 0 ? listHeader : null}
+            contentContainerStyle={[styles.list, styles.listAvatarClearance]}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          />
+          {/* Spec 048: the single status avatar — Muse-mobile floating
+              overlay (visible from the start, idle when empty). Messages
+              scroll underneath; listAvatarClearance pads the content past
+              it, and pointerEvents="none" keeps bubbles interactive under
+              the pill. */}
+          <View pointerEvents="none" style={styles.zaneOverlay}>
+            <View style={styles.zaneCircle}>
+              <ZaneAvatarRN status={sending ? "working" : "idle"} />
+            </View>
+            <View style={styles.zanePill}>
+              <Text style={styles.zanePillName}>{t("aiAssistant", "assistantName")}</Text>
+              <Text
+                style={[
+                  styles.zanePillStatus,
+                  sending ? styles.zanePillStatusWorking : styles.zanePillStatusIdle,
+                ]}
+              >
+                {sending
+                  ? t("aiAssistant", "statusWorking")
+                  : t("aiAssistant", "statusConnected")}
+              </Text>
+            </View>
+          </View>
+        </View>
 
         <View style={styles.composerWrap}>
         {attachments.length > 0 ? (
@@ -393,6 +419,36 @@ const createStyles = (colors: Palette) =>
   },
   bannerText: { color: colors.bannerText, fontSize: 13, fontWeight: "600" },
   list: { padding: 16, paddingBottom: 24 },
+  listArea: { flex: 1, position: "relative" },
+  // Clears the floating status avatar (top 8 + 140 circle + pill − overlap).
+  listAvatarClearance: { paddingTop: 184 },
+  zaneOverlay: {
+    position: "absolute",
+    top: 8,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
+    elevation: 10,
+  },
+  zaneCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    overflow: "hidden",
+  },
+  zanePill: {
+    marginTop: -14,
+    alignItems: "center",
+    borderRadius: 16,
+    backgroundColor: "rgba(24, 24, 27, 0.92)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  zanePillName: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
+  zanePillStatus: { fontSize: 11, fontWeight: "600", marginTop: 1 },
+  zanePillStatusIdle: { color: "#4ADE80" },
+  zanePillStatusWorking: { color: "#A1A1AA" },
   welcome: { alignItems: "center", paddingVertical: 24 },
   welcomeTitle: { fontSize: 18, fontWeight: "700", color: colors.ink, textAlign: "center" },
   disclaimer: {
