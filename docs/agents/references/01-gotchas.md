@@ -237,7 +237,7 @@
 
 - **Trigger:** `curl http://localhost:3000` hangs or returns 000 (IPv4 AND ::1) while `netstat` shows LISTENING and the dev log shows no new entries; the owner's browser tab keeps its established HMR socket.
 - **Why:** `pnpm dev`'s event loop can wedge while the socket stays open — the port check lies. Not a proxy problem (ProxyEnable=0 was verified). Reproduced and root-caused 2026-09-16.
-- **Fix:** Kill the wedged node process (`taskkill /PID <pid> /T /F`), `rm -rf apps/web/.next`, cold restart — a healthy boot answers 200 in ~5 s. Diagnosis order: curl first (server-wedge vs browser-wedge), then netstat.
+- **Fix:** Kill the wedged node process (`taskkill /PID <pid> /T /F`), then — with owner approval per I9 — move `apps/web/.next` to `.trash/` (never direct-delete it), cold restart — a healthy boot answers 200 in ~5 s. Diagnosis order: curl first (server-wedge vs browser-wedge), then netstat.
 - **Symptom:** "server not reachable" from Playwright's webServer boot despite LISTENING; 60 s curl hangs on both stacks.
 
 ---

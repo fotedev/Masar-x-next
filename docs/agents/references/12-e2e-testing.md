@@ -45,7 +45,7 @@ only).
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | **Required before any authed spec runs** — used ONLY to derive the `sb-<ref>-auth-token` cookie name, never for network auth. Resolved from the env, else parsed from `apps/web/.env.local` / `.env.development` / `.env` (cwd = `apps/web`). Gitignored → fresh worktrees must copy `apps/web/.env.local` in, or export the variable ([01-gotchas.md §22](./01-gotchas.md)). |
 | `E2E_BASE_URL` | Overrides baseURL AND disables the local webServer (CI mode). |
-| `E2E_PORT` | Local webServer port (default 3000). |
+| `E2E_PORT` | Local webServer port (default 3000) — forwarded to the managed dev server via its `PORT` env, so the spawned `pnpm dev` listens on the same port the readiness URL polls. 
 | `E2E_PROD_URL`, `E2E_PROD_QUIZ_ID` | Opt-in live-production smoke (`prod-smoke.spec.ts`); unset = skipped. |
 
 ## Auth architecture (read before writing an authed spec)
@@ -92,7 +92,7 @@ branch the network-mock design makes unnecessary).
    bundled Chromium with `--no-proxy-server` is the verified path (memory:
    live-verification-env, 2026-09-17).
 5. **A listening :3000 can still be a wedged server** (curl 000, no log
-   entries) — kill the node PID + `rm -rf apps/web/.next` before blaming the
+   entries) — kill the node PID and, with owner approval per I9, move `apps/web/.next` to `.trash/` before blaming the
    suite ([01-gotchas.md §24](./01-gotchas.md)).
 
 **Back to:** [AGENTS.md](../../../AGENTS.md)
