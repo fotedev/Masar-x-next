@@ -52,7 +52,7 @@ jobs:
       - name: Fallow audit
         # v3, pinned to the tag's commit (spec 041 R22 — mutable tag pins are
         # a supply-chain surface; same treatment as lighthouse-ci-action).
-        uses: fallow-rs/fallow@34269241152fa2e7e6a9de1aba698dcae93035b3
+        uses: fallow-rs/fallow@ab762fb12b040889025f7d52902d86c3a26911c0
         with:
           command: audit
           fail-on-issues: false
