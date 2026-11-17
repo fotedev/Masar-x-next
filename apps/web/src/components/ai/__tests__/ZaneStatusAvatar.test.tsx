@@ -65,4 +65,31 @@ describe("ZaneStatusAvatar (spec 048)", () => {
     expect(root.className).toContain("flex-col");
     expect(root.className).not.toContain("lg:flex-col");
   });
+
+  it("issue #240: the docked lg+ presentation is a plain 96px circle with the text hidden", () => {
+    const { container } = render(<ZaneStatusAvatar status="idle" />);
+    const root = container.firstElementChild as HTMLElement;
+    // 96px at lg+ (narrow-viewport size untouched)
+    const avatar = root.querySelector("video")?.parentElement as HTMLElement | null;
+    expect(avatar?.className).toContain("lg:h-24");
+    expect(avatar?.className).toContain("lg:w-24");
+    expect(avatar?.className).not.toContain("lg:h-32");
+    // The name/status block is lg+-hidden (mobile pill keeps it)
+    const textBlock = Array.from(root.children).find((el) =>
+      (el as HTMLElement).className.includes("max-lg:rounded-2xl"),
+    ) as HTMLElement;
+    expect(textBlock.className).toContain("lg:hidden");
+    // The information survives as a native tooltip
+    expect(root.getAttribute("title")).toBe(
+      "aiAssistant.assistantName — aiAssistant.statusConnected",
+    );
+  });
+
+  it("issue #240: the tooltip flips to the working label while loading", () => {
+    const { container } = render(<ZaneStatusAvatar status="working" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute("title")).toBe(
+      "aiAssistant.assistantName — aiAssistant.statusWorking",
+    );
+  });
 });

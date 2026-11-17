@@ -89,7 +89,10 @@ self.addEventListener("fetch", (event) => {
         if (cached) return cached;
         try {
           const response = await fetch(request);
-          if (response.ok) {
+          // Issue #237: only complete 200s are cacheable — Response.ok is
+          // true for any 2xx including 206 partial responses, which
+          // Cache.put rejects with a TypeError.
+          if (response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((c) => c.put(request, clone));
           }
@@ -107,7 +110,14 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       try {
         const response = await fetch(request);
-        if (response.ok && url.protocol.startsWith("http")) {
+        // Issue #237: only complete 200s are cacheable — Response.ok is true
+        // for any 2xx including 206 partial responses (media Range requests),
+        // which Cache.put rejects with a TypeError.
+        if (
+          response.status === 200 &&
+          !request.headers.has("range") &&
+          url.protocol.startsWith("http")
+        ) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((c) => c.put(request, clone));
         }
