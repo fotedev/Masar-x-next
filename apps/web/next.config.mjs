@@ -12,6 +12,44 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
+// Spec 044 (desktop blank-page hotfix): the v0.6.0 installer shipped a web
+// standalone built without the public Supabase env vars — every page request
+// threw inside the Supabase client and rendered the bare global-error page
+// ("Something went wrong!"). That build was packaged from a git worktree that
+// lacked apps/web/.env.local (untracked files don't propagate to worktrees),
+// and a CI release would fail the same way if the release.yml secrets went
+// unset, because `next build` silently succeeds with empty values. Fail the
+// build loudly instead: NEXT_PUBLIC_* values reach the browser bundle only
+// through build-time inlining, so a bundle built without them cannot be
+// repaired at runtime. Fires only on real production builds (NEXT_PHASE is
+// set by the Next CLI); `next dev` and `next start` are unaffected.
+// Detected empirically on next 16.4.5 (Turbopack): NEXT_PHASE is undefined
+// while the config is evaluated, NODE_ENV is "production" and the CLI verb is
+// visible as process.argv[2] === "build". Keep the documented NEXT_PHASE
+// check for engines/versions where it is set, with the argv verb as fallback.
+// `next dev` (NODE_ENV=development) and `next start` (argv[2] === "start")
+// never match, and the packaged desktop standalone embeds the config and
+// does not re-evaluate this file at all.
+const isProductionBuild =
+  process.env.NODE_ENV === "production" &&
+  (process.env.NEXT_PHASE === "phase-production-build" || process.argv?.[2] === "build");
+
+if (isProductionBuild) {
+  const missing = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"].filter(
+    (key) => !process.env[key],
+  );
+  if (missing.length > 0) {
+    throw new Error(
+      `[masarx web] Refusing production build: ${missing.join(", ")} is not set. ` +
+        "These values are inlined into the client bundle at build time and cannot be " +
+        "injected at runtime — a bundle built without them renders the bare " +
+        "global-error page on every request. Locally they come from apps/web/.env.local " +
+        "(copy it into git worktrees); in CI they come from the repo secrets wired in " +
+        ".github/workflows/release.yml. See specs/044-desktop-env-guard.",
+    );
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

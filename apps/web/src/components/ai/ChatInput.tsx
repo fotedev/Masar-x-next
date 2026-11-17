@@ -269,7 +269,7 @@ export function ChatInput({
               onPaste={handlePaste}
                 placeholder={placeholder}
                 dir={inputMessage ? "auto" : isRTL ? "rtl" : "ltr"}
-              className={`w-full max-h-[160px] bg-transparent border-0 focus:ring-0 outline-hidden focus:outline-hidden resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800 ${
+              className={`w-full max-h-[160px] bg-transparent border-0 focus:ring-0 outline-hidden focus:outline-hidden resize-none text-slate-900 dark:text-white leading-relaxed placeholder:text-slate-400 dark:placeholder:text-slate-400 font-medium text-base scrollbar-none ${
                 isInitialState
                   ? "min-h-[52px] sm:min-h-[60px] py-2 px-1 sm:px-1.5 text-base sm:text-lg"
                   : "min-h-[24px] py-1 px-0.5 sm:px-1 text-base"
