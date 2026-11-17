@@ -120,26 +120,32 @@ export type Database = {
       ai_chat_messages: {
         Row: {
           content: string
+          conversation_id: string | null
           created_at: string
           id: string
           mode: string
           role: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           content: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
           mode?: string
           role: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           content?: string
+          conversation_id?: string | null
           created_at?: string
           id?: string
           mode?: string
           role?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -156,6 +162,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_roles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ai_chat_messages_conversation"
+            columns: ["conversation_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -524,6 +537,48 @@ export type Database = {
           views_count?: number | null
         }
         Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       course_files: {
         Row: {
@@ -2687,6 +2742,25 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_quiz_questions: {
+        Args: { p_quiz_id: string }
+        Returns: {
+          correct_answer: number
+          explanation: string | null
+          id: string
+          image_url: string | null
+          options: Json
+          order_index: number | null
+          question: string
+          quiz_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "quiz_questions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_migrate_student_semesters: {
         Args: { p_overwrite_manual?: boolean; p_target_semester: number }
         Returns: number
@@ -2738,6 +2812,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      prune_audit_logs: { Args: { p_days?: number }; Returns: number }
       redeem_system_access_code: {
         Args: { p_access_key: string }
         Returns: Json
@@ -2745,6 +2820,10 @@ export type Database = {
       set_user_role: {
         Args: { new_role: string; user_id: string }
         Returns: undefined
+      }
+      storage_course_materials_readable: {
+        Args: { p_name: string; p_user: string }
+        Returns: boolean
       }
       trw_redeem_access_code: { Args: { p_code: string }; Returns: Json }
       update_user_display_name: {

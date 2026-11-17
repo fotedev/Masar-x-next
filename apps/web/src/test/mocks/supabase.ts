@@ -33,6 +33,8 @@ export interface RecordedChain {
   };
   /** Set the result the next awaited chain resolves with (per table+method). */
   respondWith: (result: SupabaseQueryResult, match?: { table?: string; method?: string }) => void;
+  /** Drop all queued respondWith results (spec 049: they otherwise leak across tests). */
+  resetResponses: () => void;
 }
 
 /**
@@ -115,6 +117,9 @@ export function createSupabaseMock(initial: SupabaseQueryResult = { data: [], er
     supabase: supabase as unknown as RecordedChain['supabase'],
     respondWith: (result, match) => {
       responses.push({ result, match });
+    },
+    resetResponses: () => {
+      responses.length = 0;
     },
   };
 }

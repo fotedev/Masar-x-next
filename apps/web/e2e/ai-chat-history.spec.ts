@@ -16,6 +16,8 @@ import { seedAuthedSession } from "./helpers/auth";
  *   - offset=30&limit=30 → the first older page, fetched only when the top
  *                          sentinel enters the viewport on scroll-up
  *   - offset>=60         → [] (ends the pagination)
+ * Since spec 049 the restore first picks the current conversation — the
+ * conversations route serves that one row (owner/mode matching the session).
  * Every other rest/v1 read (profiles, subjects, quizzes, ...) returns [].
  *
  * The fix under test (useChatScroll): the one-shot stick-to-bottom measures
@@ -28,8 +30,11 @@ import { seedAuthedSession } from "./helpers/auth";
 
 const USER_ID = "00000000-0000-4000-8000-00000000e2e0";
 const DEPARTMENT_ID = "00000000-0000-4000-8000-00000000d3p7";
+const CONVERSATION_ID = "00000000-0000-4000-8000-00000000c011";
 const ERROR_BOUNDARY = /Application error|Something went wrong|حدث خطأ|حدث شيء ما|عذراً/;
-const LONG_ANSWER = "إجابة المساعد الطويلة والمفصلة بتنسيق ماركداون واضح. ";
+// Latin fixture (repo guideline: no inline Arabic in .ts) — the scroll
+// contract under test only needs repeated long content and the MSG-N markers.
+const LONG_ANSWER = "Long detailed assistant answer with clear markdown formatting. ";
 
 // Newest first (index 0 = newest created_at) — matches the hook's
 // `created_at desc` query. Labels count DOWN so MSG-59 is the newest message
@@ -41,7 +46,7 @@ const ROWS = Array.from({ length: 60 }, (_, i) => ({
   role: i % 2 === 0 ? "user" : "assistant",
   content:
     i % 2 === 0
-      ? `MSG-${59 - i} سؤال المستخدم رقم ${59 - i}`
+      ? `MSG-${59 - i} user question number ${59 - i}`
       : `MSG-${59 - i} ${LONG_ANSWER.repeat(25)}`,
   mode: "cs_assistant",
   created_at: new Date(Date.UTC(2026, 8, 1) + (60 - i) * 60_000).toISOString(),
@@ -58,6 +63,24 @@ test("ai assistant opens at the latest message and lazily fetches older pages on
   // Catch-all for the page's incidental reads (subjects, quizzes…)
   // — registered FIRST so the specific handlers below win.
   await page.route("**/rest/v1/**", (route) => route.fulfill({ json: [] }));
+  // Spec 049: the restore picks the current conversation BEFORE loading its
+  // messages — serve the one conversation the seeded rows belong to (the
+  // hook filters ai_chat_messages by conversation_id, which this mock's
+  // offset/limit handler ignores).
+  await page.route("**/rest/v1/conversations*", (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: CONVERSATION_ID,
+          user_id: USER_ID,
+          mode: "cs_assistant",
+          title: null,
+          created_at: ROWS[0].created_at,
+          updated_at: ROWS[0].created_at,
+        },
+      ],
+    }),
+  );
   // A filled profile keeps AcademicOnboardingGate from bouncing to
   // /onboarding/academic (it fires when level/semester are unknown-null).
   // useUserAcademic reads it with .maybeSingle(), hence the object shape.

@@ -168,10 +168,12 @@ describe("SignUpPage", () => {
     await user.click(submitButton());
 
     const wait = await screen.findByText(/lockoutWait/);
-    // Deflake: a second can tick between seeding the lockout timestamp and
-    // this assertion — assert the remaining window range, not the exact value.
+    // Deflake + regression guard (CodeRabbit minor): a second can tick between
+    // seeding the lockout timestamp and this assertion, so allow a small
+    // elapsed-time window — but a displayed value near 1s must FAIL (the
+    // restored duration must actually reflect the seeded 150s minus elapsed).
     const seconds = Number(wait.textContent?.match(/"seconds":(\d+)/)?.[1] ?? 0);
-    expect(seconds).toBeGreaterThan(0);
+    expect(seconds).toBeGreaterThanOrEqual(145);
     expect(seconds).toBeLessThanOrEqual(150);
     expect(mocks.authState.signUp).not.toHaveBeenCalled();
   });
@@ -188,10 +190,11 @@ describe("SignUpPage", () => {
     }
 
     const lockout = await screen.findByText(/lockoutRepeated/);
-    // Same deflake as above — a second can tick during the 20-click loop.
+    // CodeRabbit minor: the repeated-failure message is computed once from the
+    // fixed 5-minute lockoutDuration — the countdown does not change it — so
+    // assert the exact value; loose bounds would accept a 1s regression.
     const seconds = Number(lockout.textContent?.match(/"seconds":(\d+)/)?.[1] ?? 0);
-    expect(seconds).toBeGreaterThan(0);
-    expect(seconds).toBeLessThanOrEqual(300);
+    expect(seconds).toBe(300);
     expect(storedAttempts()?.count).toBe(20);
   });
 
