@@ -39,13 +39,15 @@ html[data-masarx-desktop="true"] .masarx-titlebar {
   flex: 0 0 32px;
 }
 
-/* Hide the web marketing header in the desktop shell. CustomTitlebar
-   owns the chrome (US3); the logo / nav / login cluster is a website
-   surface and must not sit under the title strip (FR-019, visual gate).
-   Selector is `.z-header` so the custom <header class="masarx-titlebar">
-   is NOT matched. */
+/* Spec 045: the sidenav rail renders inside the desktop shell now, and
+   `.z-header` belongs to it (SideNav aside) plus the below-lg mobile top
+   bar — the marketing header this rule used to hide was deleted in
+   PR #183. Both fixed elements must start BELOW the 32px drag-region
+   titlebar: otherwise the rail's logo toggle (top of the aside) sits
+   under the `-webkit-app-region: drag` strip and a click drags the
+   window instead of expanding the rail. */
 [data-masarx-desktop="true"] .z-header {
-  display: none !important;
+  top: var(--masarx-titlebar-h);
 }
 
 [data-masarx-desktop="true"] .masarx-titlebar {
