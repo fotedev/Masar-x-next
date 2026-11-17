@@ -75,13 +75,16 @@ export function Layout({ children }: LayoutProps) {
   // after JS has finished loading.
   const isDesktop = useIsDesktopRuntime();
 
-  // Desktop shell (spec 005 US2/US3): CustomTitlebar owns the chrome, so
-  // the web nav shell (side rail + mobile top bar) is skipped the same
-  // way Footer / PWA / NotificationPrompt already are. Hydration-safe:
-  // isDesktop is false on SSR + first paint, so the first HTML matches
-  // the browser; the chrome disappears one frame later inside Electron.
-  // Padding drops from the 56px web top bar to the 32px titlebar so the
-  // three-column workspace can fill the remaining viewport (FR-017).
+  // Desktop shell (spec 005 US2/US3, amended by spec 045): CustomTitlebar
+  // owns the window chrome, and the web-only marketing surfaces (Footer /
+  // PWA / NotificationPrompt) stay skipped — but the sidenav rail DOES
+  // render in the desktop shell now (owner decision 2026-11-12: the
+  // packaged app had no navigation at all once the marketing header was
+  // replaced by the rail in PR #183). desktop-shell.css offsets the rail
+  // below the 32px titlebar so its logo toggle never lands in the drag
+  // region. Hydration-safe: isDesktop is false on SSR + first paint, so
+  // the first HTML matches the browser; the chrome settles one frame
+  // later inside Electron (FR-011).
   //
   // Web nav (owner decision 2026-11-05): collapsible side rail on ≥lg.
   // The rail width is shared through --sidenav-w (set by AppNav), so the
@@ -91,7 +94,7 @@ export function Layout({ children }: LayoutProps) {
     <div
       className={
         isDesktop
-          ? "flex h-screen w-screen flex-col overflow-hidden bg-background pt-8"
+          ? "flex h-screen w-screen flex-col overflow-hidden bg-background pt-8 lg:ps-[var(--sidenav-w,4rem)] transition-[padding] duration-300"
           : isAdminRoute
             ? "h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-900"
             : isAssistantRoute
@@ -99,7 +102,7 @@ export function Layout({ children }: LayoutProps) {
               : "min-h-dvh bg-slate-50 dark:bg-brand-navy flex flex-col pt-[calc(56px+env(safe-area-inset-top))] lg:pt-0 lg:ps-[var(--sidenav-w,4rem)] transition-[padding,background-color] duration-300"
       }
     >
-      {!isDesktop && !isAdminRoute && <AppNav />}
+      {!isAdminRoute && <AppNav />}
       {!isAdminRoute && <AcademicOnboardingGate />}
       <main
         className={
