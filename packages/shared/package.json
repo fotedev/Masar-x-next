@@ -13,6 +13,7 @@
     "./supabase/*": "./src/supabase/*",
     "./types": "./src/types/index.ts",
     "./types/*": "./src/types/*",
+    "./schedules": "./src/schedules/index.ts",
     "./ai": "./src/ai/index.ts",
     "./ai/*": "./src/ai/*",
     "./i18n": "./src/i18n/index.ts",

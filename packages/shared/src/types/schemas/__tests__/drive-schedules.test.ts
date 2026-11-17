@@ -225,7 +225,7 @@ describe('REAL production data contract (spec 040)', () => {
   });
 
   it('every timetable JSON satisfies ScheduleSheetSchema', () => {
-    const schedulesDir = path.join(repoRoot, 'apps/web/src/lib/schedules');
+    const schedulesDir = path.join(repoRoot, 'packages/shared/src/schedules/data');
     const files = fs
       .readdirSync(schedulesDir)
       .filter((f) => f.startsWith('timetable-') && f.endsWith('.json'));
