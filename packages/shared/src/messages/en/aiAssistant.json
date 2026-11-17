@@ -117,5 +117,7 @@
     "puterUnavailable": "⚠️ The AI service is currently unavailable. Please try again later.",
     "needsLogin": "__PUTER_AUTH_REQUIRED__\n⚠️ Sign in to Puter to enable this model{modelSuffix}.\n\nPress the \"Sign In\" button below and try again."
   },
-  "studentAgentNeedsSubject": "I can only answer from platform content. Choose a subject from the list first, then resend your question."
+  "studentAgentNeedsSubject": "I can only answer from platform content. Choose a subject from the list first, then resend your question.",
+  "statusConnected": "Connected",
+  "statusWorking": "is working"
 }
