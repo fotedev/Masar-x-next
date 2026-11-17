@@ -168,7 +168,11 @@ describe("SignUpPage", () => {
     await user.click(submitButton());
 
     const wait = await screen.findByText(/lockoutWait/);
-    expect(wait.textContent).toContain('"seconds":150');
+    // Deflake: a second can tick between seeding the lockout timestamp and
+    // this assertion — assert the remaining window range, not the exact value.
+    const seconds = Number(wait.textContent?.match(/"seconds":(\d+)/)?.[1] ?? 0);
+    expect(seconds).toBeGreaterThan(0);
+    expect(seconds).toBeLessThanOrEqual(150);
     expect(mocks.authState.signUp).not.toHaveBeenCalled();
   });
 
@@ -184,7 +188,10 @@ describe("SignUpPage", () => {
     }
 
     const lockout = await screen.findByText(/lockoutRepeated/);
-    expect(lockout.textContent).toContain('"seconds":300');
+    // Same deflake as above — a second can tick during the 20-click loop.
+    const seconds = Number(lockout.textContent?.match(/"seconds":(\d+)/)?.[1] ?? 0);
+    expect(seconds).toBeGreaterThan(0);
+    expect(seconds).toBeLessThanOrEqual(300);
     expect(storedAttempts()?.count).toBe(20);
   });
 

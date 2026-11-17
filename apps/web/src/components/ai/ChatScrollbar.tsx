@@ -8,9 +8,12 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from "react";
-
-const MIN_THUMB_PX = 36;
-const TRACK_INSET_PX = 8; // inset-y-2 on the overlay
+import {
+  TRACK_INSET_PX,
+  dragRatio,
+  scrollTopForRatio,
+  thumbHeight,
+} from "@/lib/chat-scrollbar";
 
 /**
  * Overlay scrollbar for the chat stream (spec 011). The native scrollbar
@@ -26,8 +29,10 @@ export function ChatScrollbar({
 }) {
   const [thumb, setThumb] = useState<{ height: number; top: number }>({ height: 0, top: 0 });
   const [visible, setVisible] = useState(false);
-  const dragState = useRef<{ startY: number; startScrollTop: number } | null>(null);
-  const trackHRef = useRef(0);
+  // Issue #241: the drag is POSITION-based — fresh track geometry is captured
+  // at pointerdown (the old delta-based drag relied on trackHRef/thumb math
+  // that could desync from the rendered thumb, leaving the end unreachable).
+  const dragState = useRef<{ trackTop: number; trackH: number; thumbH: number } | null>(null);
 
   const update = useCallback(() => {
     const el = containerRef.current;
@@ -40,8 +45,7 @@ export function ChatScrollbar({
       return;
     }
     const trackH = clientHeight - TRACK_INSET_PX * 2;
-    trackHRef.current = trackH;
-    const height = Math.max(MIN_THUMB_PX, (clientHeight / scrollHeight) * trackH);
+    const height = thumbHeight(clientHeight, scrollHeight, trackH);
     const top = (scrollTop / scrollable) * (trackH - height);
     setVisible(true);
     setThumb({ height, top });
@@ -64,19 +68,10 @@ export function ChatScrollbar({
     };
   }, [containerRef, update]);
 
-  const thumbHeightNow = () =>
-    Math.max(
-      MIN_THUMB_PX,
-      (() => {
-        const el = containerRef.current;
-        if (!el || el.scrollHeight <= 0) return MIN_THUMB_PX;
-        return (el.clientHeight / el.scrollHeight) * trackHRef.current;
-      })(),
-    );
-
   const onThumbPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     const el = containerRef.current;
-    if (!el || trackHRef.current <= 0) return;
+    const track = e.currentTarget.parentElement;
+    if (!el || !track || thumb.height <= 0) return;
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -84,18 +79,23 @@ export function ChatScrollbar({
     // smooth scroll-behavior would animate the direct scrollTop writes below
     // and delay the drag (spec 012).
     el.style.scrollBehavior = "auto";
-    dragState.current = { startY: e.clientY, startScrollTop: el.scrollTop };
+    const rect = track.getBoundingClientRect();
+    dragState.current = {
+      trackTop: rect.top,
+      trackH: rect.height,
+      // The currently RENDERED thumb height — visuals and drag math agree by
+      // construction instead of through a ref that can go stale.
+      thumbH: thumb.height,
+    };
   };
 
   const onThumbPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const drag = dragState.current;
     const el = containerRef.current;
     if (!drag || !el) return;
-    const trackH = trackHRef.current;
     const scrollable = el.scrollHeight - el.clientHeight;
-    const denominator = trackH - thumbHeightNow();
-    const ratio = denominator > 0 ? (e.clientY - drag.startY) / denominator : 0;
-    el.scrollTop = drag.startScrollTop + ratio * scrollable;
+    // Fresh per move: streamed content can change the scroll span mid-drag.
+    el.scrollTop = scrollTopForRatio(dragRatio(e.clientY, drag.trackTop, drag.thumbH, drag.trackH), scrollable);
   };
 
   const endDrag = () => {
@@ -108,16 +108,12 @@ export function ChatScrollbar({
   const onTrackPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return;
     const el = containerRef.current;
-    if (!el || trackHRef.current <= 0) return;
+    if (!el || thumb.height <= 0) return;
     const scrollable = el.scrollHeight - el.clientHeight;
     if (scrollable <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const clickY = e.clientY - rect.top;
-    const thumbH = thumbHeightNow();
-    const denominator = trackHRef.current - thumbH;
-    const ratio = denominator > 0 ? (clickY - thumbH / 2) / denominator : 0;
-    const clamped = Math.min(1, Math.max(0, ratio));
-    el.scrollTo({ top: clamped * scrollable, behavior: "smooth" });
+    const ratio = dragRatio(e.clientY, rect.top, thumb.height, rect.height);
+    el.scrollTo({ top: scrollTopForRatio(ratio, scrollable), behavior: "smooth" });
   };
 
   if (!visible) return null;
