@@ -16,6 +16,7 @@ vi.mock('next-intl/routing', () => ({
 
 import {
   appendSetCookies,
+  config,
   generateNonce,
   getCspHeader,
   isRedirectResponse,
@@ -222,5 +223,32 @@ describe('appendSetCookies — chunked Supabase cookie merge', () => {
     const target = new Headers();
     appendSetCookies(target, new Headers());
     expect(target.getSetCookie()).toHaveLength(0);
+  });
+});
+
+describe('config.matcher — static-file exclusions', () => {
+  const matcher = new RegExp(config.matcher[0]);
+
+  // Spec 048: media/text assets under public/ must bypass the proxy.
+  // Routing /zane/*.mp4 through next-intl returned the HTML 404 page on
+  // production while the .png poster (already excluded) loaded; /llms.txt
+  // 404ed the same way. Same failure class as the .wasm exclusion above.
+  it.each([
+    '/zane/zane-idle-face.mp4',
+    '/zane/zane-typing-close.mp4',
+    '/llms.txt',
+    '/dotlottie-player.wasm',
+    '/favicon.ico',
+    '/robots.txt',
+  ])('%s → excluded (served statically, never locale-redirected)', (path) => {
+    expect(matcher.test(path)).toBe(false);
+  });
+
+  it.each([
+    '/en/ai-assistant',
+    '/ar/subjects',
+    '/en/news/some-slug.mp4-lookalike',
+  ])('%s → matched (still routed through the proxy)', (path) => {
+    expect(matcher.test(path)).toBe(true);
   });
 });

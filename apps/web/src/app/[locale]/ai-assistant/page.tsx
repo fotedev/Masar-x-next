@@ -279,11 +279,9 @@ export default function AiAssistantPage() {
             messagesEndRef={messagesEndRef}
             t={t}
             isInitialState={isInitialState}
-            mode={mode}
             onSuggestionClick={handleSuggestionClick}
             onUiMessage={handleUiMessage}
             onRetry={handleRetryLast}
-            hasUserInput={inputMessage.trim().length > 0 || pastedAttachments.length > 0}
             hasMoreOlder={hasMoreOlder}
             loadingOlder={loadingOlder}
             onLoadOlder={loadOlder}
