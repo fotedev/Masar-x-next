@@ -163,4 +163,43 @@ describe("useChatScroll grace window (spec 049)", () => {
     expect(ro.observed).toContain(el);
     expect(ro.observed).toContain(getByTestId("content"));
   });
+
+  // CodeRabbit minor (spec 049 review): ordinary typing in the composer is
+  // not transcript navigation — it must NOT end the opening grace window.
+  it("typing in an editable control does NOT end the grace window", () => {
+    const { getByTestId, rerender } = render(<Harness messages={[]} />);
+    const el = getByTestId("scroller") as HTMLElement;
+    setMetrics(el, 600, 600, 0);
+    rerender(<Harness messages={["m1"]} />);
+
+    // The user types in the composer BEFORE the late assets reflow.
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "a", bubbles: true }));
+    input.remove();
+
+    // The late reflow flips the measured distance — the RO must still re-pin.
+    setMetrics(el, 5200, 600, 4032);
+    fireScroll(el);
+    const callsBeforeRo = scrollToMock.mock.calls.length;
+    roInstances[roInstances.length - 1]!.fire();
+    expect(scrollToMock.mock.calls.length).toBeGreaterThan(callsBeforeRo);
+    expect(scrollToMock).toHaveBeenLastCalledWith({ top: 5200, behavior: "instant" });
+  });
+
+  it("scroll-navigation keys from a non-editable target still end the grace window", () => {
+    const { getByTestId, rerender } = render(<Harness messages={[]} />);
+    const el = getByTestId("scroller") as HTMLElement;
+    setMetrics(el, 600, 600, 0);
+    rerender(<Harness messages={["m1"]} />);
+
+    // PageUp outside any editable control = transcript navigation.
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp", bubbles: true }));
+
+    setMetrics(el, 5200, 600, 4032);
+    fireScroll(el);
+    const callsBeforeRo = scrollToMock.mock.calls.length;
+    roInstances[roInstances.length - 1]!.fire();
+    expect(scrollToMock.mock.calls.length).toBe(callsBeforeRo);
+  });
 });

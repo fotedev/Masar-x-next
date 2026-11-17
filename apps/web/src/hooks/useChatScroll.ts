@@ -4,6 +4,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
 
+// Keys that mean "I am navigating the transcript". Typing in the composer is
+// NOT navigation (CodeRabbit minor): an ordinary keydown used to end the
+// opening grace window permanently, so a user who typed before the late
+// assets reflowed could be stranded above the newest message — the resize
+// callback then refused to re-pin because grace was already over.
+const SCROLL_NAV_KEYS = new Set(["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  return (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.tagName === "SELECT" ||
+    el.isContentEditable === true
+  );
+};
+
 /**
  * Scroll behavior for the chat stream (spec 011).
  *
@@ -62,6 +80,15 @@ export function useChatScroll(messages: readonly unknown[]) {
     userTookControlRef.current = true;
   }, []);
 
+  // Window-level keydown, filtered: only transcript-navigation keys from a
+  // non-editable target end the grace window (CodeRabbit minor — ordinary
+  // typing must not count as navigation, and keys pressed inside the
+  // composer/inputs are never transcript navigation).
+  const onKeyDownIntent = useCallback((e: KeyboardEvent) => {
+    if (isEditableTarget(e.target)) return;
+    if (SCROLL_NAV_KEYS.has(e.key)) userTookControlRef.current = true;
+  }, []);
+
   const onScroll = useCallback(() => {
     const el = containerRef.current;
     // An UPWARD scroll is always navigation (user, or the loadOlder
@@ -99,7 +126,7 @@ export function useChatScroll(messages: readonly unknown[]) {
       el.addEventListener("wheel", onUserIntent, { passive: true });
       el.addEventListener("touchstart", onUserIntent, { passive: true });
       el.addEventListener("pointerdown", onUserIntent, { passive: true });
-      window.addEventListener("keydown", onUserIntent);
+      window.addEventListener("keydown", onKeyDownIntent);
       scrollElRef.current = el;
     }
 
@@ -119,7 +146,7 @@ export function useChatScroll(messages: readonly unknown[]) {
     ro.observe(content);
     ro.observe(el);
     resizeObserverRef.current = ro;
-  }, [messages, onScroll, onUserIntent, stickToBottom]);
+  }, [messages, onScroll, onUserIntent, onKeyDownIntent, stickToBottom]);
 
   // Hook teardown: the sync effect above intentionally returns no cleanup
   // (it fully re-syncs by identity), so unmount tears down here once.
@@ -132,11 +159,11 @@ export function useChatScroll(messages: readonly unknown[]) {
       el?.removeEventListener("wheel", onUserIntent);
       el?.removeEventListener("touchstart", onUserIntent);
       el?.removeEventListener("pointerdown", onUserIntent);
-      window.removeEventListener("keydown", onUserIntent);
+      window.removeEventListener("keydown", onKeyDownIntent);
       scrollElRef.current = null;
       observedContentRef.current = null;
     },
-    [onScroll, onUserIntent],
+    [onScroll, onUserIntent, onKeyDownIntent],
   );
 
   return { containerRef, isNearBottom, stickToBottom };
