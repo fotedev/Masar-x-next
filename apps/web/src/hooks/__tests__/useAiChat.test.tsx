@@ -887,6 +887,36 @@ describe("conversation identity (spec 049)", () => {
       .find((m) => m.content === "late reply");
     expect(assistantInsert).toMatchObject({ conversation_id: "c-1" });
   });
+
+  it("a trigger-assigned conversation from a failed create is adopted and cleaned on clear", async () => {
+    // ensureConversation fails, but the 20261117225500 trigger links the row
+    // server-side — the insert reads its assigned conversation_id back.
+    chain.respondWith({ data: null, error: { message: "rls denied" } }, { table: "conversations", method: "single" });
+    chain.respondWith(
+      { data: { conversation_id: "c-trigger" }, error: null },
+      { table: "ai_chat_messages", method: "single" },
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage("orphaned exchange");
+    });
+    // The client adopts the server-assigned identity it never created.
+    await waitFor(() => expect(result.current.conversationId).toBe("c-trigger"));
+
+    await act(async () => {
+      await result.current.clearChat();
+    });
+    // clearChat knows the adopted thread (via the adopted current id) and
+    // removes it — the exchange cannot return after a reload.
+    const eqs = chain.calls
+      .filter((c) => c.table === "conversations" && c.method === "eq")
+      .map((c) => c.args);
+    expect(eqs).toContainEqual(["id", "c-trigger"]);
+    expect(result.current.conversationId).toBeNull();
+    expect(result.current.messages).toEqual([]);
+  });
 });
 
 describe("spec 050 — sendMessage prompt-cap backstop (issue #242)", () => {

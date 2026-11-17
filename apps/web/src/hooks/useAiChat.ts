@@ -59,11 +59,19 @@ const insertChatRow = (
   conversationId: string | null,
   row: { role: "user" | "assistant"; content: string },
 ) => {
-  supabase
+  // Reads the row back so the caller learns the conversation the server-side
+  // trigger (20261117225500) may have assigned when conversation_id was null.
+  return supabase
     .from("ai_chat_messages")
     .insert({ user_id: userId, role: row.role, content: row.content, mode: chatMode, conversation_id: conversationId })
-    .then(({ error }) => {
-      if (error) logger.warn("ai_chat_messages insert failed", { error });
+    .select("conversation_id")
+    .single()
+    .then(({ data, error }) => {
+      if (error) {
+        logger.warn("ai_chat_messages insert failed", { error });
+        return null;
+      }
+      return ((data as { conversation_id: string | null } | null)?.conversation_id) ?? null;
     });
 };
 
@@ -149,6 +157,11 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
   // a mode-B send (CodeRabbit Major: stale ensure reuse stored B's messages
   // in A's conversation).
   const conversationEnsureRef = useRef<{ key: string; promise: Promise<string | null> } | null>(null);
+  // Conversation the server-side trigger assigned to a failed-create row
+  // (CodeRabbit follow-up): the client didn't know this id when the row went
+  // out, so it is remembered here until clearChat can remove the stranded
+  // exchange. Reset on every transcript transition.
+  const orphanConversationRef = useRef<string | null>(null);
   // Transcript lifecycle generation (CodeRabbit Major fixes): one monotonic
   // counter every transcript-replacing transition bumps — restore (mount /
   // mode / user change), switchConversation, clearChat, deleteConversation of
@@ -229,6 +242,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     lifecycleRef.current += 1;
     const gen = lifecycleRef.current;
     conversationEnsureRef.current = null; // new (user, mode) context — no stale reuse
+    orphanConversationRef.current = null;
 
     setIsReady(false);
     setMessages([]);
@@ -487,8 +501,19 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         conversationEnsureRef.current = { key: ensureKey, promise: ensurePromise };
       }
       void ensurePromise
-        .then((ensured) => {
-          insertChatRow(user.id, currentMode, ensured, { role: "user", content: content.trim() });
+        .then((ensured) =>
+          insertChatRow(user.id, currentMode, ensured, { role: "user", content: content.trim() }),
+        )
+        .then((assignedId) => {
+          // The server-side trigger (20261117225500) links even failed-create
+          // rows to a conversation. Adopt that id under the send's lifecycle
+          // and remember it so clearChat can remove the stranded exchange
+          // (CodeRabbit follow-up to the trigger fix).
+          if (assignedId && lifecycleRef.current === sendGen && conversationIdRef.current == null) {
+            setCurrentConversation(assignedId);
+            orphanConversationRef.current = assignedId;
+            pruneChatOverflow(assignedId);
+          }
         })
         .catch((e) => logger.warn("chat conversation ensure chain failed", e));
     }
@@ -618,7 +643,12 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     // the cleared exchange stayed server-side) — capture it and remove the
     // stranded exchange once it materializes.
     const pendingCreation = conversationEnsureRef.current;
+    // The trigger-assigned fallback conversation (failed create + server-side
+    // link) belongs to this thread too — without deleting it the cleared
+    // exchange returns on reload.
+    const orphanId = orphanConversationRef.current;
     setCurrentConversation(null);
+    orphanConversationRef.current = null;
     conversationEnsureRef.current = null;
     if (user && previous) {
       // Spec 049: clearing removes the CURRENT conversation — the ownership
@@ -632,6 +662,13 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
         .eq("id", previous);
     } else if (!user) {
       localStorage.removeItem(storageKey);
+    }
+    if (user && orphanId && orphanId !== previous) {
+      await supabase
+        .from("conversations")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("id", orphanId);
     }
     if (user && pendingCreation) {
       void pendingCreation.promise
@@ -664,6 +701,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     loadedCountRef.current = 0;
     setHasMoreOlder(false);
     setCurrentConversation(id);
+    orphanConversationRef.current = null;
     conversationEnsureRef.current = null;
     try {
       const { rows, loadedMessages } = await fetchConversationNewestPage(user.id, id);
@@ -693,6 +731,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
       setHasMoreOlder(false);
       setIsReady(true);
       setCurrentConversation(null);
+      orphanConversationRef.current = null;
       conversationEnsureRef.current = null;
     }
     const { error } = await supabase

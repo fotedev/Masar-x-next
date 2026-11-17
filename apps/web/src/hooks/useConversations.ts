@@ -57,9 +57,13 @@ export function useConversations(user: User | null | undefined, mode: AiAssistan
   const fetchPage = useCallback(async (offset: number) => {
     const gen = ++requestGenRef.current;
     if (!user?.id) {
+      // Logout mid-fetch: this call is the newest generation, so the superseded
+      // request's finally will never clear `loading` — clear it here (CodeRabbit
+      // minor on the generation rewrite).
       loadedCountRef.current = 0;
       setConversations([]);
       setHasMore(false);
+      setLoading(false);
       return;
     }
     setLoading(true);
