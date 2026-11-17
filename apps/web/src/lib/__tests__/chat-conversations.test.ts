@@ -18,7 +18,9 @@ const mkConv = (id: string, updatedAt: string): Conversation => ({
 
 describe("deriveConversationTitle", () => {
   it("keeps a short message as-is", () => {
-    expect(deriveConversationTitle("ما هو BST؟")).toBe("ما هو BST؟");
+    // Non-Arabic fixture per the repo guideline (no inline Arabic in .ts) —
+    // the derivation is whitespace/length logic, language-agnostic.
+    expect(deriveConversationTitle("what is a BST?")).toBe("what is a BST?");
     expect(deriveConversationTitle("explain quicksort")).toBe("explain quicksort");
   });
 

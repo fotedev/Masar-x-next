@@ -33,7 +33,9 @@ const USER_ID = "00000000-0000-4000-8000-00000000e2e0";
 const DEPARTMENT_ID = "00000000-0000-4000-8000-00000000d3p7";
 const CONVERSATION_ID = "00000000-0000-4000-8000-00000000c011";
 const ERROR_BOUNDARY = /Application error|Something went wrong|حدث خطأ|حدث شيء ما|عذراً/;
-const LONG_ANSWER = "إجابة المساعد الطويلة والمفصلة بتنسيق ماركداون واضح. ";
+// Latin fixture (repo guideline: no inline Arabic in .ts) — the scroll
+// contract under test only needs repeated long content and the MSG-N markers.
+const LONG_ANSWER = "Long detailed assistant answer with clear markdown formatting. ";
 
 // Newest first (index 0 = newest created_at) — matches the hook's
 // `created_at desc` query. Labels count DOWN so MSG-59 is the newest message
@@ -45,7 +47,7 @@ const ROWS = Array.from({ length: 60 }, (_, i) => ({
   role: i % 2 === 0 ? "user" : "assistant",
   content:
     i % 2 === 0
-      ? `MSG-${59 - i} سؤال المستخدم رقم ${59 - i}`
+      ? `MSG-${59 - i} user question number ${59 - i}`
       : `MSG-${59 - i} ${LONG_ANSWER.repeat(25)}`,
   mode: "cs_assistant",
   created_at: new Date(Date.UTC(2026, 8, 1) + (60 - i) * 60_000).toISOString(),
