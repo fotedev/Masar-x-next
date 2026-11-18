@@ -2,7 +2,7 @@
 
 This document is a **human-readable snapshot** of the active branch protection
 [Ruleset](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets)
-for the `main` branch on `Masar-X/masar-x`. The actual source of truth
+for the `main` branch on `Masar-X/Masar-x`. The actual source of truth
 lives in the GitHub UI / API (Rulesets are not stored in the repo).
 
 > **Ruleset ID:** `20299668` &nbsp;·&nbsp; **Name:** `Main Branch Protection` &nbsp;·&nbsp; **Enforcement:** `active` &nbsp;·&nbsp; **Target:** `refs/heads/main`
@@ -28,7 +28,7 @@ checks report `success` from the latest commit on the PR head:
 | `workflow-lint` | GitHub Actions — workflow `CI` (`workflow-lint` job) | actionlint over `.github/workflows/` + shellcheck on inline run scripts |
 
 > **Both `e2e` and `workflow-lint` were added by the owner via the GitHub UI on
-> 2026-09-20** and verified via `gh api repos/Masar-X/masar-x/rulesets/20299668`
+> 2026-09-20** and verified via `gh api repos/Masar-X/Masar-x/rulesets/20299668`
 > (enforcement `active`, 7 required contexts total). Background: the agent-side
 > ruleset PATCH path is a proven token-class dead end (404 with classic `repo`
 > scope, 2026-09-17 and 2026-09-19). The `workflow-lint` gate catches unparseable
@@ -76,11 +76,11 @@ The following can bypass any rule:
 1. Apply the change via the GitHub UI **or** `gh api`:
    ```bash
    # Example: get current
-   gh api repos/Masar-X/masar-x/rulesets/20299668
+   gh api repos/Masar-X/Masar-x/rulesets/20299668
 
    # Example: update (PUT full ruleset body)
    gh api --method PUT \
-       repos/Masar-X/masar-x/rulesets/20299668 \
+       repos/Masar-X/Masar-x/rulesets/20299668 \
        --input ruleset.json
    ```
 2. Update this file to mirror the new state.

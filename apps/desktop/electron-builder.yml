@@ -272,7 +272,7 @@ linux:
 
 # Auto-update channel (T023) — GitHub Releases feed.
 # The release artifacts (NSIS .exe, portable .exe, latest.yml, blockmaps)
-# are published to this same repo (`Masar-X/masar-x` — moved from the
+# are published to this same repo (`Masar-X/Masar-x` — moved from the
 # personal `fotedev/Masar-x-next` account into the Masar-X org, spec 052;
 # GitHub redirects the old URLs), which is
 # PUBLIC, so anonymous `electron-updater` clients and the website's
@@ -284,7 +284,7 @@ linux:
 # was removed in 2026-09 — see `docs/agents/references/02-release-pipeline.md`.
 #
 # `electron-updater` reads from the GitHub Releases API for
-# `Masar-X/masar-x`. `releaseType: release` → stable channel,
+# `Masar-X/Masar-x`. `releaseType: release` → stable channel,
 # `releaseType: prerelease` → beta channel. The release workflow uses the
 # built-in `GITHUB_TOKEN` (`permissions: contents: write`) — no PAT needed.
 # publisherName on Windows must match the code-signing certificate's CN.

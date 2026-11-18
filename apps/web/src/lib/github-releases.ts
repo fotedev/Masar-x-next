@@ -1,7 +1,7 @@
 /**
  * GitHub Releases helpers for Masar X desktop app.
  *
- * Releases live on this same (public) repo `Masar-X/masar-x`, so
+ * Releases live on this same (public) repo `Masar-X/Masar-x`, so
  * the marketing site and `electron-updater` can fetch them without auth.
  * (The repo moved from the personal `fotedev/Masar-x-next` account into
  * the Masar-X org — spec 052; GitHub redirects the old URLs. Before that
@@ -19,7 +19,7 @@
  * also fails, the page shows a clear error instead of broken links.
  */
 
-const RELEASES_REPO = "Masar-X/masar-x";
+const RELEASES_REPO = "Masar-X/Masar-x";
 const API_LATEST = `https://api.github.com/repos/${RELEASES_REPO}/releases/latest`;
 const META_URL = `https://github.com/${RELEASES_REPO}/releases/latest/download/latest.yml`;
 const RELEASES_PAGE = `https://github.com/${RELEASES_REPO}/releases/latest`;

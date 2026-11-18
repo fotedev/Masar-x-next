@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Installers, portable builds, and update manifests for each tagged version are published as [GitHub Releases](https://github.com/Masar-X/masar-x/releases) on this repository. (Releases ≤ v0.5.x went to the separate public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository, now archived read-only.)
+Installers, portable builds, and update manifests for each tagged version are published as [GitHub Releases](https://github.com/Masar-X/Masar-x/releases) on this repository. (Releases ≤ v0.5.x went to the separate public [`fotedev/masarx-releases`](https://github.com/fotedev/masarx-releases/releases) repository, now archived read-only.)
 
 ## [Unreleased]
 

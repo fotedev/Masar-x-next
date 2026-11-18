@@ -4,7 +4,7 @@
 # Tag-triggered pipeline that builds the Electron desktop installers
 # (NSIS + Portable), generates electron-updater metadata (`latest.yml`,
 # `*.blockmap`), and publishes everything as a GitHub Release on THIS
-# repo (`Masar-X/masar-x`).
+# repo (`Masar-X/Masar-x`).
 #
 # History: the source repo used to be PRIVATE, so releases were published
 # to a separate public repo (`fotedev/masarx-releases`) via a
@@ -18,7 +18,7 @@
 # How the publish works (electron-builder does it all)
 # ----------------------------------------------------
 # The `apps/desktop/electron-builder.yml` `publish:` block targets
-# `Masar-X/masar-x`. The `build:all` script in
+# `Masar-X/Masar-x`. The `build:all` script in
 # `apps/desktop/package.json` invokes `electron-builder --win --x64`
 # WITHOUT `--publish never`, so the default `onTagOrDraft` mode kicks
 # in: on a tag, electron-builder generates the `.exe`, the `latest.yml` /
@@ -141,7 +141,7 @@ jobs:
         # electron-builder uses its default `onTagOrDraft` mode:
         # on a tag, it generates the `latest.yml` + `*.blockmap`
         # metadata AND creates the GitHub Release on
-        # `Masar-X/masar-x` (per the `publish:` block in
+        # `Masar-X/Masar-x` (per the `publish:` block in
         # `apps/desktop/electron-builder.yml`). On non-tag runs
         # (e.g. `workflow_dispatch`), it just builds the .exe files
         # and skips publish.

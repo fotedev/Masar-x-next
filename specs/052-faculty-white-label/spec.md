@@ -12,7 +12,7 @@
   - Static `apps/web/public/manifest.json` with `"name": "Masar X"`; **no `<link rel="manifest">` is injected anywhere** (Next only injects it for `app/manifest.ts`).
   - Footer `brandTitle` — Masar X only.
   - `NEXT_PUBLIC_COLLEGE_NAME` is declared in `.env.example` but referenced nowhere (stale hook).
-- **Decisions (owner):** one repo + `NEXT_PUBLIC_FACULTY` presets (core fallback; `fcai-asnu` primary; `bis` secondary); SEO name **"FCAI ASNU X"** with short form **"ASNU X"**; the sidemenu keeps the Masar X logo untouched; repo moves to **Masar-X/masar-x** via GitHub transfer (owner action; this PR is merge-gated on it); license stays AGPL-3.0-only.
+- **Decisions (owner):** one repo + `NEXT_PUBLIC_FACULTY` presets (core fallback; `fcai-asnu` primary; `bis` secondary); SEO name **"FCAI ASNU X"** with short form **"ASNU X"**; the sidemenu keeps the Masar X logo untouched; repo moves to **Masar-X/Masar-x** via GitHub transfer (owner action; this PR is merge-gated on it); license stays AGPL-3.0-only.
 
 ## 2. Architecture & design
 
@@ -41,7 +41,7 @@
 
 ### 2.3 Repo-slug sweep (⚠ merge-gated on the GitHub transfer)
 
-`fotedev/Masar-x-next` → `Masar-X/masar-x` in: `apps/desktop/electron-builder.yml` (`publish.owner/repo` + comments), `apps/web/src/lib/github-releases.ts` (`RELEASES_REPO`), `apps/web/src/app/[locale]/downloads/page.tsx` (releases URL), `apps/web/src/lib/__tests__/github-releases.test.ts` (fixtures), `README.md` (releases links), `docs/agents/references/02-release-pipeline.md`, `docs/agents/references/01-gotchas.md` (live pipeline notes), `docs/desktop-readiness.md`, `.github/RULESET.md`. Historical docs stay untouched (`docs/MVP_REPORT.md`, deprecated `docs/releases/CUT-CHECKLIST.md`).
+`fotedev/Masar-x-next` → `Masar-X/Masar-x` in: `apps/desktop/electron-builder.yml` (`publish.owner/repo` + comments), `apps/web/src/lib/github-releases.ts` (`RELEASES_REPO`), `apps/web/src/app/[locale]/downloads/page.tsx` (releases URL), `apps/web/src/lib/__tests__/github-releases.test.ts` (fixtures), `README.md` (releases links), `docs/agents/references/02-release-pipeline.md`, `docs/agents/references/01-gotchas.md` (live pipeline notes), `docs/desktop-readiness.md`, `.github/RULESET.md`. Historical docs stay untouched (`docs/MVP_REPORT.md`, deprecated `docs/releases/CUT-CHECKLIST.md`).
 
 ### 2.4 Config & docs
 
@@ -77,4 +77,4 @@
 | C3 | `feat(web)`: site-url, metadata, robots.ts, manifest.ts, proxy matcher, rewrite, footer, tests | web `tsc` + `lint` + `vitest` |
 | C4 | `chore/docs`: repo-slug sweep + `.env.example` + BRANDING §9 | web `tsc`/`lint` |
 
-**Merge gate: the PR merges only after the owner transfers `fotedev/Masar-x-next` → `Masar-X/masar-x`.** The electron-builder publish block and release URLs switch at merge time; merging before the transfer would break desktop auto-update and download links until the transfer lands.
+**Merge gate: the PR merges only after the owner transfers `fotedev/Masar-x-next` → the Masar-X org.** The electron-builder publish block and release URLs switch at merge time; merging before the transfer would break desktop auto-update and download links until the transfer lands. *(Gate satisfied 2026-11-19 — the transfer landed with canonical name `Masar-X/Masar-x`; all slug strings in this PR were aligned to that case.)*

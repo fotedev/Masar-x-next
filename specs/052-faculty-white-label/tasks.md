@@ -31,5 +31,5 @@
 - Gates: web `tsc`/`lint`.
 
 ## Post-merge (owner)
-- [ ] T20 GitHub transfer `fotedev/Masar-x-next` → `Masar-X/masar-x` (must land BEFORE this PR merges — see spec §5 gate).
+- [x] T20 GitHub transfer — **DONE by owner 2026-11-19**; canonical repo is `Masar-X/Masar-x` (old URLs redirect). Merge gate satisfied.
 - [ ] T21 Vercel: verify prod deploy after transfer; create the faculty Vercel project (`NEXT_PUBLIC_FACULTY=fcai-asnu` + its own Supabase project + `NEXT_PUBLIC_SITE_URL`).
