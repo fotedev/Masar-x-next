@@ -58,7 +58,11 @@ describe("ZaneStatusAvatar (spec 048)", () => {
     const { container } = render(<ZaneStatusAvatar status="idle" />);
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("pointer-events-none");
-    expect(root.className).toContain("max-lg:top-3");
+    // Spec 051: the floating classes are unconditional now (no max-lg:
+    // prefixes) — the docked lg+ surface no longer exists.
+    expect(root.className).toContain("top-3");
+    expect(root.className).toContain("lg:hidden");
+    expect(root.className).not.toContain("lg:pointer-events-auto");
     // Spec 048 narrow-viewport fix: the avatar stacks vertically at ALL
     // sizes (flex-col is unconditional) so the pill overlaps its bottom
     // edge — never side-by-side.
@@ -66,30 +70,21 @@ describe("ZaneStatusAvatar (spec 048)", () => {
     expect(root.className).not.toContain("lg:flex-col");
   });
 
-  it("issue #240: the docked lg+ presentation is a plain 96px circle with the text hidden", () => {
+  it("spec 051: floating-only — no docked circle, no tooltip, text pill unconditional", () => {
     const { container } = render(<ZaneStatusAvatar status="idle" />);
     const root = container.firstElementChild as HTMLElement;
-    // 96px at lg+ (narrow-viewport size untouched)
+    // The avatar keeps its narrow-viewport size; no lg: docked variants.
     const avatar = root.querySelector("video")?.parentElement as HTMLElement | null;
-    expect(avatar?.className).toContain("lg:h-24");
-    expect(avatar?.className).toContain("lg:w-24");
-    expect(avatar?.className).not.toContain("lg:h-32");
-    // The name/status block is lg+-hidden (mobile pill keeps it)
+    expect(avatar?.className).toContain("h-28");
+    expect(avatar?.className).not.toContain("lg:h-24");
+    expect(avatar?.className).not.toContain("lg:w-24");
+    // The name/status pill renders unconditionally (its only surface is the
+    // floating overlay) and the redundant native tooltip is gone — the pill
+    // already shows the name + status.
     const textBlock = Array.from(root.children).find((el) =>
-      (el as HTMLElement).className.includes("max-lg:rounded-2xl"),
+      (el as HTMLElement).className.includes("rounded-2xl"),
     ) as HTMLElement;
-    expect(textBlock.className).toContain("lg:hidden");
-    // The information survives as a native tooltip
-    expect(root.getAttribute("title")).toBe(
-      "aiAssistant.assistantName — aiAssistant.statusConnected",
-    );
-  });
-
-  it("issue #240: the tooltip flips to the working label while loading", () => {
-    const { container } = render(<ZaneStatusAvatar status="working" />);
-    const root = container.firstElementChild as HTMLElement;
-    expect(root.getAttribute("title")).toBe(
-      "aiAssistant.assistantName — aiAssistant.statusWorking",
-    );
+    expect(textBlock.className).not.toContain("lg:hidden");
+    expect(root.getAttribute("title")).toBeNull();
   });
 });
