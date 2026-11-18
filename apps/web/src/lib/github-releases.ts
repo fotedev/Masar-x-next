@@ -1,10 +1,12 @@
 /**
  * GitHub Releases helpers for Masar X desktop app.
  *
- * Releases live on this same (public) repo `fotedev/Masar-x-next`, so
+ * Releases live on this same (public) repo `Masar-X/masar-x`, so
  * the marketing site and `electron-updater` can fetch them without auth.
- * (Previously, while the source repo was private, artifacts went to the
- * separate public `fotedev/masarx-releases` repo — now archived read-only.)
+ * (The repo moved from the personal `fotedev/Masar-x-next` account into
+ * the Masar-X org — spec 052; GitHub redirects the old URLs. Before that
+ * move, artifacts went to the separate public `fotedev/masarx-releases`
+ * repo — now archived read-only.)
  *
  * Why dynamic URLs: `electron-builder` defaults to version-suffixed
  * asset names (`Masar-X-Setup-0.5.8-x64.exe`). GitHub's
@@ -17,7 +19,7 @@
  * also fails, the page shows a clear error instead of broken links.
  */
 
-const RELEASES_REPO = "fotedev/Masar-x-next";
+const RELEASES_REPO = "Masar-X/masar-x";
 const API_LATEST = `https://api.github.com/repos/${RELEASES_REPO}/releases/latest`;
 const META_URL = `https://github.com/${RELEASES_REPO}/releases/latest/download/latest.yml`;
 const RELEASES_PAGE = `https://github.com/${RELEASES_REPO}/releases/latest`;

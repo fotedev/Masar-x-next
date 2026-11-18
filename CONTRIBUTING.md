@@ -34,7 +34,7 @@ pnpm test
 
 ## Releases and installers
 
-Built installers — NSIS setup `.exe`, portable `.exe`, Android `.apk`, `latest.yml`, and blockmaps — are automatically published by the release pipeline as [GitHub Releases](https://github.com/fotedev/Masar-x-next/releases) on this same repository.
+Built installers — NSIS setup `.exe`, portable `.exe`, Android `.apk`, `latest.yml`, and blockmaps — are automatically published by the release pipeline as [GitHub Releases](https://github.com/Masar-X/masar-x/releases) on this same repository.
 
 - Users get installer download links from the [Download section](./README.md#download) of the README.
 - (`fotedev/masarx-releases`, the separate artifacts repo used while this repo was private, is archived read-only and no longer receives releases.)
