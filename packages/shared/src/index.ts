@@ -18,6 +18,7 @@
 export * from "./supabase/index";
 export * from "./ai/index";
 export * from "./i18n/index";
+export * from "./branding/faculties";
 // `types` is intentionally NOT re-exported as `*` here — it has its own
 // `index.ts` that consumers import via the `@masarx-shared/types` path so
 // that the contract for what's exposed (Database row types vs. Zod schemas

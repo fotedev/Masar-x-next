@@ -45,6 +45,7 @@ import arCourses from "../messages/ar/courses.json";
 import arDownloads from "../messages/ar/downloads.json";
 import arEditSummary from "../messages/ar/editSummary.json";
 import arErrorBoundary from "../messages/ar/errorBoundary.json";
+import arFaculty from "../messages/ar/faculty.json";
 import arFaq from "../messages/ar/faq.json";
 import arFileDropzone from "../messages/ar/fileDropzone.json";
 import arFooter from "../messages/ar/footer.json";
@@ -98,6 +99,7 @@ import enCourses from "../messages/en/courses.json";
 import enDownloads from "../messages/en/downloads.json";
 import enEditSummary from "../messages/en/editSummary.json";
 import enErrorBoundary from "../messages/en/errorBoundary.json";
+import enFaculty from "../messages/en/faculty.json";
 import enFaq from "../messages/en/faq.json";
 import enFileDropzone from "../messages/en/fileDropzone.json";
 import enFooter from "../messages/en/footer.json";
@@ -155,6 +157,7 @@ const arMessages = {
   downloads: arDownloads,
   editSummary: arEditSummary,
   errorBoundary: arErrorBoundary,
+  faculty: arFaculty,
   faq: arFaq,
   fileDropzone: arFileDropzone,
   footer: arFooter,
@@ -222,6 +225,7 @@ const enMessages: Record<I18nNamespace, unknown> = {
   downloads: enDownloads,
   editSummary: enEditSummary,
   errorBoundary: enErrorBoundary,
+  faculty: enFaculty,
   faq: enFaq,
   fileDropzone: enFileDropzone,
   footer: enFooter,
