@@ -919,6 +919,108 @@ describe("conversation identity (spec 049)", () => {
   });
 });
 
+describe("startNewConversation (spec 051 — side menu new chat)", () => {
+  const msgRows = (n: number, convId = "c-1") =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `m${i}`,
+      role: i % 2 === 0 ? "user" : "assistant",
+      content: `c${i}`,
+      conversation_id: convId,
+      created_at: new Date(2026, 0, 1, 0, 0, i).toISOString(),
+    })).reverse();
+
+  it("resets the transcript and identity with zero writes", async () => {
+    seedCurrentConversation("c-1");
+    chain.respondWith(
+      { data: msgRows(2), error: null },
+      { table: "ai_chat_messages", method: "range" },
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.conversationId).toBe("c-1");
+
+    // Setup traffic must not count against the action's write log.
+    chain.calls.length = 0;
+    clearWriteLog();
+
+    act(() => result.current.startNewConversation());
+
+    expect(result.current.messages).toEqual([]);
+    expect(result.current.conversationId).toBeNull();
+    expect(result.current.isReady).toBe(true);
+    expect(result.current.hasMoreOlder).toBe(false);
+    // Zero writes: the conversation stays server-side for the history list —
+    // only the explicit delete/clear actions ever remove it (event-driven
+    // policy, spec 049/051).
+    expect(
+      chain.calls.filter(
+        (c) =>
+          (c.table === "conversations" || c.table === "ai_chat_messages") &&
+          ["insert", "update", "delete"].includes(c.method),
+      ),
+    ).toHaveLength(0);
+    expect(chatWrites()).toHaveLength(0);
+    expect(chatRemovals()).toHaveLength(0);
+  });
+
+  it("an in-flight streamed reply does not paint into the emptied transcript (generation guard)", async () => {
+    seedCurrentConversation("c-1");
+    let resolveGen!: (value: string) => void;
+    generateResponseMock.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveGen = resolve;
+        }),
+    );
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    await act(async () => {
+      void result.current.sendMessage("asked in c-1");
+    });
+    // New chat BEFORE the reply lands: the send's captured lifecycle is now
+    // stale — the same discipline as clearChat/switchConversation.
+    act(() => result.current.startNewConversation());
+    expect(result.current.messages).toEqual([]);
+
+    await act(async () => {
+      resolveGen("late reply");
+      await nextFrame();
+    });
+
+    // The stale reply must not repaint the fresh transcript...
+    expect(result.current.messages.some((m) => m.content === "late reply")).toBe(false);
+    expect(result.current.conversationId).toBeNull();
+    // ...but it still persists to the conversation the send started in
+    // (switch semantics — the history list keeps the exchange).
+    const assistantInsert = chain.calls
+      .filter((c) => c.table === "ai_chat_messages" && c.method === "insert")
+      .map((c) => c.args[0] as Record<string, unknown>)
+      .find((m) => m.content === "late reply");
+    expect(assistantInsert).toMatchObject({ conversation_id: "c-1" });
+  });
+
+  it("the next send after a fresh start creates a new conversation (ensure chain re-armed)", async () => {
+    seedCurrentConversation("c-1");
+    const { result } = renderChat(authUser);
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    act(() => result.current.startNewConversation());
+    chain.respondWith({ data: { id: "c-new" }, error: null }, { table: "conversations", method: "single" });
+
+    await act(async () => {
+      await result.current.sendMessage("fresh start");
+    });
+    await waitFor(() =>
+      expect(chain.calls.filter((c) => c.table === "conversations" && c.method === "insert")).toHaveLength(1),
+    );
+    expect(result.current.conversationId).toBe("c-new");
+    const convInsert = chain.calls.find((c) => c.table === "conversations" && c.method === "insert");
+    expect(convInsert?.args[0]).toMatchObject({ mode: MODE_A, title: "fresh start" });
+  });
+});
+
 describe("spec 050 — sendMessage prompt-cap backstop (issue #242)", () => {
   it("slices an over-cap content to AI_PROMPT_MAX_CHARS + marker before the AI call, keeping the full text in the transcript", async () => {
     const { AI_PROMPT_MAX_CHARS } = await import("@/lib/ai/pasted-attachments");

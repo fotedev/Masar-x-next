@@ -742,6 +742,24 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     if (error) logger.warn("conversations delete failed", { error });
   }, [user?.id, setCurrentConversation]);
 
+  // Spec 051: start a fresh transcript WITHOUT destroying the current
+  // conversation — clearChat minus the deletes. Same transcript-transition
+  // discipline: bump the generation so an in-flight reply or conversation
+  // creation completes against a stale lifecycle (its UI paint is dropped; it
+  // still persists server-side to its originating conversation exactly like a
+  // switch). Zero writes: the old conversation stays in the history list, the
+  // next send re-ensures a fresh one via the existing chain.
+  const startNewConversation = useCallback(() => {
+    lifecycleRef.current += 1;
+    setMessages([]);
+    loadedCountRef.current = 0;
+    setHasMoreOlder(false);
+    setIsReady(true);
+    setCurrentConversation(null);
+    orphanConversationRef.current = null;
+    conversationEnsureRef.current = null;
+  }, [setCurrentConversation]);
+
   const setMode = useCallback((next: AiAssistantMode | ((prev: AiAssistantMode) => AiAssistantMode)) => {
     setModeState((prev) => {
       const actualNext = typeof next === "function" ? next(prev) : next;
@@ -774,5 +792,7 @@ export function useAiChat(user: User | null | undefined, trackEvent: (event: str
     conversationId,
     switchConversation,
     deleteConversation,
+    // Spec 051: fresh transcript for the side menu's new-chat action
+    startNewConversation,
   };
 }
