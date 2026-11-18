@@ -15,27 +15,27 @@ Worktree: `../masarx-wt/spec-051` · Branch: `feat/051-zane-side-menu` (spec + i
 ## Tasks
 
 ### T1 — `startNewConversation()` in useAiChat (commit 1)
-- [ ] Bump `lifecycleRef`, reset transcript state + ensure/orphan refs, zero writes, re-arm ensure chain; test the no-write invariant + generation-bump stale-reply rejection + fresh-conversation creation
-- Gates: targeted vitest + typecheck + lint
+- [x] Bump `lifecycleRef`, reset transcript state + ensure/orphan refs, zero writes, re-arm ensure chain; test the no-write invariant + generation-bump stale-reply rejection + fresh-conversation creation
+- Gates: targeted vitest + typecheck + lint — GREEN (f18f90f)
 
 ### T2 — ConversationList + ConversationPanel (commit 2)
-- [ ] `components/ai/ConversationPanel.tsx` (+ list subcomponent): header (ZaneAvatar circle h-10 + name + status), rows (noTitle fallback + updated_at), active highlight, switch/delete/new-chat actions (confirm-toast), skeleton/empty/guest states, loadMore on panel-scroller end, `refresh()` after new-chat
-- [ ] New i18n keys en+ar (D7 list)
-- Gates: FULL web vitest + typecheck + lint
+- [x] `components/ai/ConversationPanel.tsx` (+ list subcomponent): header (ZaneAvatar circle h-10 + name + status), rows (noTitle fallback + updated_at), active highlight, switch/delete/new-chat actions (confirm-toast), skeleton/empty/guest states, loadMore on panel-scroller end, `refresh()` after new-chat
+- [x] New i18n keys en+ar (D7 list)
+- Gates: FULL web vitest + typecheck + lint — GREEN (d3e37ce; 92 files / 1097 tests)
 
 ### T3 — Page-shell wiring + docked-stack removal (commit 3)
-- [ ] Page: lg+ row wrapper, panel as last flex child (end-side mirror via flex-row), chat column flex-1 min-h-0; `!isReady` spinner moves inside the chat column so the panel stays mounted
-- [ ] `ZaneStatusAvatar` lg+ docked presentation deleted (root `lg:hidden`, floating classes unconditional); ChatContainer render site + `max-lg:pt-40` untouched
-- [ ] Floating top-start history toggle (<lg, signed-in only) opening the drawer (T4)
-- Gates: FULL web vitest + typecheck + lint
+- [x] Page: lg+ row wrapper, panel as last flex child (end-side mirror via flex-row), chat column flex-1 min-h-0; `!isReady` spinner moves inside the chat column so the panel stays mounted
+- [x] `ZaneStatusAvatar` lg+ docked presentation deleted (root `lg:hidden`, floating classes unconditional); ChatContainer render site + `max-lg:pt-40` untouched
+- [x] Floating top-start history toggle (<lg, signed-in only) opening the drawer (T4)
+- Gates: FULL web vitest + typecheck + lint — GREEN (9c21f02; 92 files / 1096 tests)
 
 ### T4 — Narrow-viewport drawer (commit 4)
-- [ ] Drawer hosting the same ConversationList; MobileNav-style overlay portaled to body (document pointerdown + containment, backdrop click, Escape, focus, scroll lock), start/end RTL-aware slide from the panel side
-- Gates: FULL web vitest + typecheck + lint + local prod-build e2e (chat-touching)
+- [x] Drawer hosting the same ConversationList; MobileNav-style overlay portaled to body (document pointerdown + containment, backdrop click, Escape, focus, scroll lock), start/end RTL-aware slide from the panel side
+- Gates: FULL web vitest + typecheck + lint + e2e — GREEN (c043226; 93 files / 1103 tests; e2e ai-chat-history + ai-chat-send against a fresh dev server of this branch)
 
 ## Post-implementation
 
-- [ ] Aftermath section in spec.md
+- [x] Aftermath section in spec.md
 - [ ] PR closes #239 (references #244, #245) → CI green → stop (owner merges)
 
 ## Rules

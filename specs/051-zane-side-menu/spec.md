@@ -97,4 +97,11 @@ Final gate: FULL web vitest + typecheck + lint green after the last commit (re-r
 
 ## Aftermath
 
-(to be filled post-implementation)
+Landed on this PR (spec + implementation, one squash merge):
+- `docs(specs)` — owner-approved amendments: D3 gains the `lifecycleRef` bump (CodeRabbit pre-approval note), D4 toggle = floating top-start icon.
+- `feat(zane): startNewConversation in useAiChat` — T1: clearChat minus the deletes, generation-bumped, zero writes.
+- `feat(zane): ConversationList + ConversationPanel` — T2 + locale-aware relative timestamps (new `lib/conversation-time.ts`).
+- `feat(zane): wire side panel into the page shell; drop docked stack` — T3: lg+ row (panel last → RTL mirror), spinner inside the chat column, floating-only avatar.
+- `feat(zane): conversation drawer for narrow viewports` — T4: portaled end-side drawer on the admin-drawer pattern; selection/fresh-start close it.
+
+Gates: web vitest 93 files / 1103 tests green (main baseline 92/1096) + shared messages parity 102 green; typecheck + lint (0 errors, baseline warnings); e2e `ai-chat-history` + `ai-chat-send` green against a fresh dev server of this branch. Page-shell class assertions live in the ConversationPanel/drawer unit tests + the e2e — the page itself has no unit test (its dynamic ssr:false modals make jsdom hosting heavy; the e2e covers the shell).
