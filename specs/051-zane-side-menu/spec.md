@@ -2,8 +2,8 @@
 
 **Issue:** #239 (ZANE queue item 2, Lane A — tracking #244)
 **Type:** feature (spec-first)
-**Status:** DRAFT — awaiting owner approval
-**Depends on:** #238 / spec 049 (PR #245) — the server-backed conversation data layer. **Implementation starts only after #245 merges**; this branch carries the spec until then (no stacking).
+**Status:** approved for implementation on this branch (owner, 2026-11-18 — same-branch flow: spec amendments + implementation commits join PR #254; single squash merge)
+**Depends on:** #238 / spec 049 (PR #245) — the server-backed conversation data layer. **MERGED 2026-11-17 (`482beec74`)**; this branch synced with main via a regular merge commit (no history rewrite, I16).
 
 ## 1. Context & problem statement
 
@@ -36,14 +36,14 @@ Panel header: compact `ZaneAvatar` circle (h-10 w-10) + `assistantName` + status
 ### Design decision D3 — Conversation list + actions (vetoable default)
 
 - Rows: `noTitle`-fallback title + short `updated_at`; active row highlighted via `conversationId` match; click → `switchConversation(id)`.
-- **New chat**: `useAiChat` gains `startNewConversation()` — resets transcript state (`setMessages([])`, `setCurrentConversation(null)`, `conversationEnsureRef.current = null`, `setIsReady(true)`). Zero writes (event-driven rule intact): the next `sendMessage` creates the fresh conversation via the existing ensure chain. Header button (plus icon).
+- **New chat**: `useAiChat` gains `startNewConversation()` — the same transcript-transition discipline as `clearChat` minus deletes: bump `lifecycleRef` (an in-flight streamed reply is dropped from the UI — CodeRabbit pre-approval note; it still persists server-side to its originating conversation, exactly like switch semantics), reset messages/counters, `setCurrentConversation(null)`, clear `conversationEnsureRef` + `orphanConversationRef`, `setIsReady(true)`. Zero writes (event-driven rule intact): the next `sendMessage` creates the fresh conversation via the existing ensure chain; the panel calls `refresh()` after the reset so a materialized in-flight conversation shows up. Header button (plus icon).
 - **Delete**: per-row trash icon → existing confirm-toast pattern → `await deleteConversation(id)` then `refresh()` (one re-query; simplest correct list sync).
 - **Pagination**: `loadMore()` on the panel scroller approaching its end (`hasMore` gate) — the panel owns its own `overflow-y-auto`; the transcript scroller and its spec-012/scrollbar logic are untouched (separate scrollers).
 - Wire-through: the page (which owns `useAiChat`) passes the conversation API + `useConversations` state to the panel as props — no new context/store.
 
 ### Design decision D4 — Mobile counterpart: drawer with the same list (vetoable default)
 
-`<lg`: a panel-toggle button in `ChatHeader` opens a drawer (slide-in from the panel side, RTL-aware via start/end) hosting the **same `ConversationList`** with header D2. Drawer follows the MobileNav overlay pattern: document-level `pointerdown` + containment-check dismissal (never a `fixed` overlay inside a `backdrop-blur` ancestor — repo lesson). Focus/Escape handled; body scroll lock while open.
+`<lg`: a **floating history icon button at the top-start overlay** (`lg:hidden absolute top-3 start-3 z-20`, mirroring the top-center avatar pill) opens a drawer (slide-in from the panel side, RTL-aware via start/end) hosting the **same `ConversationList`** with header D2. (Owner decision 2026-11-18: `ChatHeader` renders only when `!isInitialState` and only for student_agent mode / generatedQuiz — the default `cs_assistant` mode and the empty state have no header at all, so the toggle needs a home that is always reachable.) Drawer follows the MobileNav overlay pattern with a portal to `document.body` (never a `fixed` overlay inside a `backdrop-blur` ancestor — repo lesson): backdrop click + document-level `pointerdown` containment-check dismissal, Focus/Escape handled, body scroll lock while open.
 
 ### Design decision D5 — Auth boundary (vetoable default)
 
@@ -70,13 +70,13 @@ Loading → skeleton rows; empty → `noConversations` hint + new-chat affordanc
 ## 4. Test specification
 
 1. **ConversationPanel.test.tsx**: renders rows from mocked `useConversations` (title fallback via `noTitle`), active-row highlight from `conversationId`, click → `switchConversation`, delete → confirm → `deleteConversation` + `refresh`, new-chat → `startNewConversation`, skeleton while loading, empty state, guest sign-in hint, `loadMore` near scroller end.
-2. **Drawer test** (<lg): toggle opens the drawer hosting the same list; containment-dismiss + Escape close; toggle hidden for guests.
+2. **Drawer test** (<lg): floating top-start toggle opens the drawer hosting the same list; containment-dismiss + Escape close; toggle hidden for guests; selection closes the drawer.
 3. **Page-shell test / class assertions**: panel is `hidden lg:flex`, end-side via flex order, chat column keeps `flex-1 min-h-0`.
-4. **useAiChat.test.tsx**: `startNewConversation` resets state, writes nothing (asserts the no-write invariant from the mock write-log), and the next `sendMessage` creates a new conversation (ensure chain re-arms).
+4. **useAiChat.test.tsx**: `startNewConversation` resets state, bumps the transcript lifecycle generation (an in-flight streamed reply must not paint into the emptied transcript), writes nothing (asserts the no-write invariant from the mock write-log), and the next `sendMessage` creates a new conversation (ensure chain re-arms).
 5. **ZaneStatusAvatar.test.tsx**: docked-lg assertions replaced by floating-only assertions (no `lg:h-24` anymore — the component no longer renders docked).
 6. **i18n drift check** (existing MESSAGE_NAMESPACES test covers key parity en↔ar automatically).
 
-## 5. Atomic execution plan (commits, AFTER #245 merges + spec approval)
+## 5. Atomic execution plan (commits — #245 merged; branch synced with main via merge `a6576e7`)
 
 | # | Commit | Contents | Gates |
 |---|---|---|---|
