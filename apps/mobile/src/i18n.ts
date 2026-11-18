@@ -37,6 +37,7 @@ import arQuizAttempts from "masarx-shared/messages/ar/quizAttempts.json";
 import arNews from "masarx-shared/messages/ar/news.json";
 import arReviews from "masarx-shared/messages/ar/reviews.json";
 import arErrorBoundary from "masarx-shared/messages/ar/errorBoundary.json";
+import arSchedules from "masarx-shared/messages/ar/schedules.json";
 import enCommon from "masarx-shared/messages/en/common.json";
 import enAuth from "masarx-shared/messages/en/auth.json";
 import enAiAssistant from "masarx-shared/messages/en/aiAssistant.json";
@@ -50,6 +51,7 @@ import enQuizAttempts from "masarx-shared/messages/en/quizAttempts.json";
 import enNews from "masarx-shared/messages/en/news.json";
 import enReviews from "masarx-shared/messages/en/reviews.json";
 import enErrorBoundary from "masarx-shared/messages/en/errorBoundary.json";
+import enSchedules from "masarx-shared/messages/en/schedules.json";
 
 export type Locale = "ar" | "en";
 export type Dir = "rtl" | "ltr";
@@ -72,6 +74,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     news: arNews,
     reviews: arReviews,
     errorBoundary: arErrorBoundary,
+    schedules: arSchedules,
   },
   en: {
     common: enCommon,
@@ -87,6 +90,7 @@ const REGISTRY: Record<Locale, Record<string, unknown>> = {
     news: enNews,
     reviews: enReviews,
     errorBoundary: enErrorBoundary,
+    schedules: enSchedules,
   },
 };
 
@@ -104,6 +108,7 @@ const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "tabs.quizzes": "الاختبارات",
     "tabs.news": "الأخبار",
     "tabs.ai": "المساعد الذكي",
+    "tabs.schedules": "الجداول",
     "tabs.profile": "حسابي",
     "offline.banner": "غير متصل - يتم عرض نسخة محفوظة",
     "offline.aiQueued": "غير متصل. سيتم إرسال الرسالة عند عودة الاتصال.",
@@ -184,6 +189,7 @@ const MOBILE_STRINGS: Record<Locale, Record<string, string>> = {
     "tabs.quizzes": "Quizzes",
     "tabs.news": "News",
     "tabs.ai": "AI Tutor",
+    "tabs.schedules": "Schedules",
     "tabs.profile": "Profile",
     "offline.banner": "Offline - showing saved version",
     "offline.aiQueued": "Offline. Your message will be sent when back online.",

@@ -150,15 +150,16 @@ jobs:
         # since the release lives in this same (now public) repo.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # T3.4 pipeline validation (2026-11-10): forces electron-builder to
-          # create the GitHub release as a PRE-release. Stable-channel
+          # T3.4 pipeline validation (2026-11-10) temporarily set
+          # `EP_PRE_RELEASE: "true"` here so electron-builder marked the
+          # validation tag v0.6.0-test.1 as a GitHub pre-release (stable
           # electron-updater clients resolve "latest" via /releases/latest,
-          # which GitHub excludes prerelease releases from, so the 0.5.9
-          # installed base and the website's /releases/latest/download links
-          # never see this validation build. REMOVE this line for the real
-          # v0.6.0 release (see electron-publish gitHubPublisher.ts: env takes
-          # precedence over the publish config's `releaseType`).
-          EP_PRE_RELEASE: "true"
+          # which GitHub excludes pre-releases from). Removed for v0.6.1
+          # (spec 044 follow-up) so the release publishes on the stable
+          # channel and auto-updaters pick it up. Re-add
+          # `EP_PRE_RELEASE: "true"` (electron-publish gitHubPublisher.ts:
+          # env takes precedence over the publish config's `releaseType`)
+          # for any future validation tag.
         run: pnpm --filter desktop run build:all
 
       - name: List build artifacts

@@ -1,22 +1,23 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { expect, test, type Page, type Request } from "@playwright/test";
+import { expect, test, type Request } from "@playwright/test";
+
+import { seedAuthedSession } from "./helpers/auth";
 
 /**
  * AI assistant chat history (specs 008/011) — open at the latest message +
  * scroll-up lazy fetch from ai_chat_messages.
  *
  * Route-mocked like guest-quiz.spec.ts, but the Supabase session itself is
- * seeded in localStorage: supabase-js v2's getSession() reads storage without
- * network, so no /auth/v1 call is needed to appear logged in. The storage key
- * is the default `sb-<ref>-auth-token`, with <ref> derived from the Supabase
- * URL the dev server bundle uses (env var, else parsed from .env.local).
+ * seeded via the shared helper (e2e/helpers/auth.ts): an `sb-<ref>-auth-token`
+ * cookie (`@supabase/ssr` cookieEncoding) + belt-and-braces /auth/v1 mocks,
+ * so supabase-js getSession() resolves the user with zero auth network calls.
  *
  * ai_chat_messages serves 60 fabricated rows (newest first):
  *   - offset=0&limit=30  → the initial newest page (spec 011 open contract)
  *   - offset=30&limit=30 → the first older page, fetched only when the top
  *                          sentinel enters the viewport on scroll-up
  *   - offset>=60         → [] (ends the pagination)
+ * Since spec 049 the restore first picks the current conversation — the
+ * conversations route serves that one row (owner/mode matching the session).
  * Every other rest/v1 read (profiles, subjects, quizzes, ...) returns [].
  *
  * The fix under test (useChatScroll): the one-shot stick-to-bottom measures
@@ -29,8 +30,11 @@ import { expect, test, type Page, type Request } from "@playwright/test";
 
 const USER_ID = "00000000-0000-4000-8000-00000000e2e0";
 const DEPARTMENT_ID = "00000000-0000-4000-8000-00000000d3p7";
+const CONVERSATION_ID = "00000000-0000-4000-8000-00000000c011";
 const ERROR_BOUNDARY = /Application error|Something went wrong|حدث خطأ|حدث شيء ما|عذراً/;
-const LONG_ANSWER = "إجابة المساعد الطويلة والمفصلة بتنسيق ماركداون واضح. ";
+// Latin fixture (repo guideline: no inline Arabic in .ts) — the scroll
+// contract under test only needs repeated long content and the MSG-N markers.
+const LONG_ANSWER = "Long detailed assistant answer with clear markdown formatting. ";
 
 // Newest first (index 0 = newest created_at) — matches the hook's
 // `created_at desc` query. Labels count DOWN so MSG-59 is the newest message
@@ -42,91 +46,11 @@ const ROWS = Array.from({ length: 60 }, (_, i) => ({
   role: i % 2 === 0 ? "user" : "assistant",
   content:
     i % 2 === 0
-      ? `MSG-${59 - i} سؤال المستخدم رقم ${59 - i}`
+      ? `MSG-${59 - i} user question number ${59 - i}`
       : `MSG-${59 - i} ${LONG_ANSWER.repeat(25)}`,
   mode: "cs_assistant",
   created_at: new Date(Date.UTC(2026, 8, 1) + (60 - i) * 60_000).toISOString(),
 }));
-
-function resolveSupabaseRef(): string {
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-  if (!url) {
-    for (const file of [".env.local", ".env.development", ".env"]) {
-      try {
-        const raw = readFileSync(path.resolve(process.cwd(), file), "utf8");
-        url = raw.match(/^NEXT_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
-        if (url) break;
-      } catch {
-        // file missing — try the next candidate
-      }
-    }
-  }
-  if (!url) {
-    throw new Error(
-      "ai-chat-history.spec: NEXT_PUBLIC_SUPABASE_URL not found (env or apps/web/.env.local) — cannot derive the supabase-js localStorage key",
-    );
-  }
-  return new URL(url).hostname.split(".")[0];
-}
-
-function buildSeededSession() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const expiresIn = 60 * 60 * 24 * 30;
-  const expiresAt = nowSec + expiresIn;
-  const b64url = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString("base64url");
-  const accessToken = `${b64url({ alg: "HS256", typ: "JWT" })}.${b64url({
-    sub: USER_ID,
-    exp: expiresAt,
-    aud: "authenticated",
-    role: "authenticated",
-  })}.mock-signature`;
-  return {
-    access_token: accessToken,
-    token_type: "bearer",
-    expires_in: expiresIn,
-    expires_at: expiresAt,
-    refresh_token: "mock-refresh-token",
-    user: {
-      id: USER_ID,
-      aud: "authenticated",
-      role: "authenticated",
-      email: "e2e-user@example.com",
-      phone: "",
-      app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: { full_name: "E2E User" },
-      identities: [],
-      created_at: "2026-01-01T00:00:00Z",
-      updated_at: "2026-01-01T00:00:00Z",
-    },
-  };
-}
-
-async function seedAuthedSession(page: Page, baseURL?: string) {
-  // The web runtime builds its client through @supabase/ssr's
-  // createBrowserClient, which persists the session in a COOKIE (not
-  // localStorage): name `sb-<ref>-auth-token`, value `base64-` + base64url
-  // JSON (createStorageFromOptions cookieEncoding: "base64url"). Seeding that
-  // exact shape lets getSession() resolve the user with zero /auth/v1 calls.
-  const storageKey = `sb-${resolveSupabaseRef()}-auth-token`;
-  const session = buildSeededSession();
-  // Belt and braces: far-future expiry means gotrue should never refresh, but
-  // if it does, don't let a fake refresh token 400 against the real project
-  // and silently sign the user out mid-test.
-  await page.route("**/auth/v1/token?*", (route) => route.fulfill({ json: session }));
-  await page.route("**/auth/v1/user", (route) => route.fulfill({ json: session.user }));
-  await page.route("**/api/auth/sync", (route) => route.fulfill({ json: { ok: true } }));
-  await page.context().addCookies([
-    {
-      name: storageKey,
-      value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}`,
-      domain: new URL(baseURL ?? "http://localhost:3000").hostname,
-      path: "/",
-    },
-  ]);
-  await page.addInitScript(() => {
-    window.localStorage.setItem("zane_ai_last_mode", "cs_assistant");
-  });
-}
 
 test("ai assistant opens at the latest message and lazily fetches older pages on scroll-up", async ({
   page,
@@ -139,6 +63,24 @@ test("ai assistant opens at the latest message and lazily fetches older pages on
   // Catch-all for the page's incidental reads (subjects, quizzes…)
   // — registered FIRST so the specific handlers below win.
   await page.route("**/rest/v1/**", (route) => route.fulfill({ json: [] }));
+  // Spec 049: the restore picks the current conversation BEFORE loading its
+  // messages — serve the one conversation the seeded rows belong to (the
+  // hook filters ai_chat_messages by conversation_id, which this mock's
+  // offset/limit handler ignores).
+  await page.route("**/rest/v1/conversations*", (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: CONVERSATION_ID,
+          user_id: USER_ID,
+          mode: "cs_assistant",
+          title: null,
+          created_at: ROWS[0].created_at,
+          updated_at: ROWS[0].created_at,
+        },
+      ],
+    }),
+  );
   // A filled profile keeps AcademicOnboardingGate from bouncing to
   // /onboarding/academic (it fires when level/semester are unknown-null).
   // useUserAcademic reads it with .maybeSingle(), hence the object shape.
@@ -155,7 +97,11 @@ test("ai assistant opens at the latest message and lazily fetches older pages on
     route.fulfill({ json: ROWS.slice(offset, offset + limit) });
   });
 
-  await seedAuthedSession(page, baseURL);
+  await seedAuthedSession(page, { baseURL, userId: USER_ID });
+  // cs_assistant keeps the seeded chat in the mode the assertions target.
+  await page.addInitScript(() => {
+    window.localStorage.setItem("zane_ai_last_mode", "cs_assistant");
+  });
   await page.goto("/en/ai-assistant");
 
   const scroller = page.getByTestId("chat-messages-scroller");

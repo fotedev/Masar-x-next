@@ -4,6 +4,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const NEAR_BOTTOM_THRESHOLD_PX = 100;
 
+// Keys that mean "I am navigating the transcript". Typing in the composer is
+// NOT navigation (CodeRabbit minor): an ordinary keydown used to end the
+// opening grace window permanently, so a user who typed before the late
+// assets reflowed could be stranded above the newest message — the resize
+// callback then refused to re-pin because grace was already over.
+const SCROLL_NAV_KEYS = new Set(["PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  return (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.tagName === "SELECT" ||
+    el.isContentEditable === true
+  );
+};
+
 /**
  * Scroll behavior for the chat stream (spec 011).
  *
@@ -31,6 +49,15 @@ export function useChatScroll(messages: readonly unknown[]) {
   const observedContentRef = useRef<Element | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const scrollElRef = useRef<HTMLDivElement | null>(null);
+  // Open-sequence control (surfaced by spec 049's CI prod e2e): until the
+  // user takes control, any content OR scroller resize re-pins the view.
+  // Late-arriving assets (markdown chunk, fonts, hero media metadata) reflow
+  // the transcript after the one-shot stick, and Chrome's scroll anchoring
+  // can deliver its scroll event BEFORE the ResizeObserver callback for the
+  // same reflow — the measured distance then flips isNearBottom and the open
+  // view strands (CI: chat opens ~568px above the newest message, pill up).
+  const userTookControlRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
 
   const stickToBottom = useCallback((behavior: ScrollBehavior = "instant") => {
     const el = containerRef.current;
@@ -49,7 +76,29 @@ export function useChatScroll(messages: readonly unknown[]) {
     setIsNearBottom(near);
   }, []);
 
-  const onScroll = useCallback(() => measure(), [measure]);
+  const onUserIntent = useCallback(() => {
+    userTookControlRef.current = true;
+  }, []);
+
+  // Window-level keydown, filtered: only transcript-navigation keys from a
+  // non-editable target end the grace window (CodeRabbit minor — ordinary
+  // typing must not count as navigation, and keys pressed inside the
+  // composer/inputs are never transcript navigation).
+  const onKeyDownIntent = useCallback((e: KeyboardEvent) => {
+    if (isEditableTarget(e.target)) return;
+    if (SCROLL_NAV_KEYS.has(e.key)) userTookControlRef.current = true;
+  }, []);
+
+  const onScroll = useCallback(() => {
+    const el = containerRef.current;
+    // An UPWARD scroll is always navigation (user, or the loadOlder
+    // programmatic jump): while pinned, anchoring only ever adjusts
+    // scrollTop downward as content above grows, so an upward move ends the
+    // grace window safely. The user-intent events below end it too.
+    if (el && el.scrollTop < lastScrollTopRef.current) userTookControlRef.current = true;
+    lastScrollTopRef.current = el?.scrollTop ?? 0;
+    measure();
+  }, [measure]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -74,6 +123,10 @@ export function useChatScroll(messages: readonly unknown[]) {
     if (el && scrollElRef.current !== el) {
       scrollElRef.current?.removeEventListener("scroll", onScroll);
       el.addEventListener("scroll", onScroll, { passive: true });
+      el.addEventListener("wheel", onUserIntent, { passive: true });
+      el.addEventListener("touchstart", onUserIntent, { passive: true });
+      el.addEventListener("pointerdown", onUserIntent, { passive: true });
+      window.addEventListener("keydown", onKeyDownIntent);
       scrollElRef.current = el;
     }
 
@@ -81,16 +134,19 @@ export function useChatScroll(messages: readonly unknown[]) {
     if (observedContentRef.current === content) return;
     resizeObserverRef.current?.disconnect();
     observedContentRef.current = content;
-    if (!content) {
+    if (!content || !el) {
       resizeObserverRef.current = null;
       return;
     }
     const ro = new ResizeObserver(() => {
-      if (isNearBottomRef.current) stickToBottom("instant");
+      if (isNearBottomRef.current || !userTookControlRef.current) stickToBottom("instant");
     });
+    // Observe the scroller too: header media settling changes clientHeight —
+    // the distance math — without any content resize or scroll event.
     ro.observe(content);
+    ro.observe(el);
     resizeObserverRef.current = ro;
-  }, [messages, onScroll, stickToBottom]);
+  }, [messages, onScroll, onUserIntent, onKeyDownIntent, stickToBottom]);
 
   // Hook teardown: the sync effect above intentionally returns no cleanup
   // (it fully re-syncs by identity), so unmount tears down here once.
@@ -98,11 +154,16 @@ export function useChatScroll(messages: readonly unknown[]) {
     () => () => {
       resizeObserverRef.current?.disconnect();
       resizeObserverRef.current = null;
-      scrollElRef.current?.removeEventListener("scroll", onScroll);
+      const el = scrollElRef.current;
+      el?.removeEventListener("scroll", onScroll);
+      el?.removeEventListener("wheel", onUserIntent);
+      el?.removeEventListener("touchstart", onUserIntent);
+      el?.removeEventListener("pointerdown", onUserIntent);
+      window.removeEventListener("keydown", onKeyDownIntent);
       scrollElRef.current = null;
       observedContentRef.current = null;
     },
-    [onScroll],
+    [onScroll, onUserIntent, onKeyDownIntent],
   );
 
   return { containerRef, isNearBottom, stickToBottom };

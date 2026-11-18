@@ -38,4 +38,7 @@ export type {
   CourseWithInstructor,
   AdminNews,
   AdminQuiz,
+  // Conversations (spec 049 — zane server-backed chat history)
+  Conversation,
+  ConversationInsert,
 } from "./database";
