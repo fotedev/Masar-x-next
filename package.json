@@ -35,12 +35,23 @@
       "ajv@8.11.0": "8.20.0",
       "decode-uri-component": "0.5.1",
       "@xmldom/xmldom": "0.8.15",
-      "node-forge": "1.4.1",
+      "node-forge": "1.4.3",
       "joi": "17.13.9",
       "tar": "7.5.21",
       "uuid": "11.1.1",
-      "fast-xml-parser": "5.7.0",
-      "postal-mime": "4.0.8"
+      "fast-xml-parser": "5.12.0",
+      "postal-mime": "4.0.8",
+      "hono@4.13.14": "4.13.16",
+      "@hono/node-server@2.1.5": "2.1.6",
+      "undici@7.30.0": "7.30.2",
+      "zod-validation-error@2.1.0": "4.0.2",
+      "zod@3.25.76": "4.6.7",
+      "minimatch@9.0.9": "11.0.1",
+      "minimatch@10.2.6": "11.0.1",
+      "glob@10.5.0": "14.0.2",
+      "glob@11.1.0": "14.0.2",
+      "app-builder-lib@25.1.8": "26.18.0",
+      "builder-util-runtime@9.2.10": "9.7.0"
     }
   }
 }
