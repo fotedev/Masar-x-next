@@ -119,5 +119,12 @@
   },
   "studentAgentNeedsSubject": "لا يمكنني الإجابة من المنصة بدون اختيار المادة أولاً. اختر المادة من القائمة ثم أعد إرسال سؤالك.",
   "statusConnected": "متصل",
-  "statusWorking": "يعمل الآن..."
+  "statusWorking": "يعمل الآن...",
+  "chatHistory": "سجل المحادثات",
+  "newChat": "محادثة جديدة",
+  "deleteConversation": "حذف المحادثة",
+  "deleteConversationConfirm": "هل تريد حذف هذه المحادثة؟ سيتم حذف رسائلها نهائيًا.",
+  "noConversations": "لا توجد محادثات بعد. ابدأ محادثة جديدة.",
+  "signInToSeeHistory": "سجّل الدخول لعرض سجل محادثاتك.",
+  "loadingConversations": "جارٍ تحميل المحادثات…"
 }
