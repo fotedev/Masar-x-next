@@ -175,6 +175,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      // Spec 052: the PWA manifest moved to the generated app/manifest.ts
+      // route (/manifest.webmanifest). Stale /manifest.json links (cached
+      // SW clients, bookmarks) keep resolving; the proxy matcher excludes
+      // both paths so next-intl never locale-redirects them.
+      {
+        source: "/manifest.json",
+        destination: "/manifest.webmanifest",
+      },
+    ];
+  },
   async headers() {
     // NOTE: Content-Security-Policy is intentionally omitted here.
     // It is set per-request with a fresh nonce in src/proxy.ts,

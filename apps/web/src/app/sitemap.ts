@@ -1,7 +1,11 @@
 import { createSupabaseClient, type SupabaseClient } from "masarx-shared/supabase";
 import { MetadataRoute } from "next";
 
-const baseUrl = "https://masarx.vercel.app";
+import { SITE_URL } from "@/lib/site-url";
+
+// Spec 052: was hardcoded to masarx.vercel.app — each faculty deployment
+// generates its own sitemap under its own NEXT_PUBLIC_SITE_URL.
+const baseUrl = SITE_URL;
 
 // Lazy client factory: instantiating at module level breaks the build
 // when env vars aren't inlined yet (Next.js "Collecting page data" phase).

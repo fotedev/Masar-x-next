@@ -12,13 +12,39 @@ import { cookies, headers } from "next/headers";
 import ThemeScript from "@/components/ThemeScript";
 import "@/styles/html-clip.css";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://masarx.vercel.app";
+import { SITE_URL } from "@/lib/site-url";
+import {
+  resolveFacultyPresetIdFromEnv,
+  type FacultyPresetId,
+} from "masarx-shared";
 
 import { getTranslations } from "next-intl/server";
 import { getLocale } from "next-intl/server";
 
 type Locale = "ar" | "en";
+
+/**
+ * Spec 052: the brand strings the metadata surfaces. Faculty deployments
+ * (NEXT_PUBLIC_FACULTY set) swap in their preset from the `faculty`
+ * namespace; core keeps the exact metadata.json values (BRANDING.md §2).
+ */
+interface MetadataBrand {
+  title: string;
+  siteName: string;
+  titleSuffix: string;
+}
+
+async function getFacultyBrand(
+  locale: Locale,
+  facultyId: FacultyPresetId,
+): Promise<MetadataBrand> {
+  const ft = await getTranslations({ locale, namespace: "faculty" });
+  return {
+    title: ft(`${facultyId}.seoTitle`),
+    siteName: ft(`${facultyId}.displayName`),
+    titleSuffix: ft(`${facultyId}.titleSuffix`),
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -29,11 +55,20 @@ export async function generateMetadata({
   const locale = rawLocale as Locale;
   const t = await getTranslations({ locale, namespace: "metadata" });
 
+  const facultyId = resolveFacultyPresetIdFromEnv();
+  const brand: MetadataBrand = facultyId
+    ? await getFacultyBrand(locale, facultyId)
+    : { title: t("title"), siteName: t("siteName"), titleSuffix: t("siteName") };
+
   return {
     metadataBase: new URL(SITE_URL),
+    // NOTE: `applicationName` is intentionally NOT set — Next 16.4.6's
+    // metadata resolver no longer renders it (verified 2026-11-19 in the
+    // dev-server HTML); og:site_name covers the application name for
+    // crawlers and PWA install reads /manifest.webmanifest directly.
     title: {
-      default: t("title"),
-      template: `%s | ${t("siteName")}`,
+      default: brand.title,
+      template: `%s | ${brand.titleSuffix}`,
     },
     description: t("description"),
     keywords: t("keywords"),
@@ -45,13 +80,13 @@ export async function generateMetadata({
       apple: "/apple-touch-icon.png",
     },
     openGraph: {
-      title: t("title"),
+      title: brand.title,
       description: `${t("slogan")} — ${t("description")}`,
-      siteName: t("siteName"),
-      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: t("siteName") }],
+      siteName: brand.siteName,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: brand.siteName }],
     },
     twitter: {
-      title: t("title"),
+      title: brand.title,
       description: `${t("slogan")} — ${t("description")}`,
       card: "summary_large_image",
       images: ["/og-image.png"],
