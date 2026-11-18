@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Trash2, Wrench, Zap } from "lucide-react";
 import { useRouter } from "@/navigation";
@@ -20,9 +20,11 @@ import { ZaneAvatar, type ZaneStatus } from "./ZaneAvatar";
 interface ConversationPanelHeaderProps {
   status: ZaneStatus;
   onNewChat?: () => void;
+  /** Extra trailing control (the narrow-viewport drawer's close button). */
+  trailing?: ReactNode;
 }
 
-export function ConversationPanelHeader({ status, onNewChat }: ConversationPanelHeaderProps) {
+export function ConversationPanelHeader({ status, onNewChat, trailing }: ConversationPanelHeaderProps) {
   const t = useTranslations("aiAssistant");
   const statusLabel = status === "working" ? t("statusWorking") : t("statusConnected");
 
@@ -60,6 +62,7 @@ export function ConversationPanelHeader({ status, onNewChat }: ConversationPanel
           <Plus className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
+      {trailing}
     </div>
   );
 }

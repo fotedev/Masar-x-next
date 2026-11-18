@@ -14,6 +14,7 @@ import { ChatContainer } from "@/components/ai/ChatContainer";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { AIErrorBoundary } from "@/components/AIErrorBoundary";
 import { ConversationPanel } from "@/components/ai/ConversationPanel";
+import { ConversationHistoryDrawer } from "@/components/ai/ConversationHistoryDrawer";
 import { useChatScroll } from "@/hooks/useChatScroll";
 import { ArrowDown, History } from "lucide-react";
 import { aiAssistant } from "@/lib/ai-assistant";
@@ -362,6 +363,24 @@ export default function AiAssistantPage() {
         </div>
 
         <ConversationPanel
+          conversations={conversations}
+          activeId={conversationId}
+          loading={conversationsLoading}
+          hasMore={conversationsHasMore}
+          loadMore={loadMoreConversations}
+          refresh={refreshConversations}
+          onSwitch={switchConversation}
+          onDelete={deleteConversation}
+          onNewChat={startNewConversation}
+          status={isLoading ? "working" : "idle"}
+          isSignedIn={Boolean(user?.id)}
+        />
+
+        {/* Spec 051: narrow-viewport counterpart hosting the same list;
+            selection and fresh-start close it (the drawer owns that). */}
+        <ConversationHistoryDrawer
+          open={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
           conversations={conversations}
           activeId={conversationId}
           loading={conversationsLoading}
