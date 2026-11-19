@@ -14,21 +14,21 @@
 
 ## Release distribution (current)
 
-The project is **public** (`fotedev/Masar-x-next`), so desktop installers
+The project is **public** (`Masar-X/Masar-x`), so desktop installers
 and mobile builds publish directly as GitHub Releases on this same repo —
 anonymous downloads and `electron-updater` work with no auth, no PAT, and
 no second repo.
 
 | Repo | Visibility | Contents |
 |---|---|---|
-| `fotedev/Masar-x-next` | **Public** | All source code, GitHub Actions workflows (CI + release), releases (NSIS `.exe`, portable `.exe`, mobile `.apk` when ready, `latest.yml`, `*.blockmap`) |
+| `Masar-X/Masar-x` | **Public** | All source code, GitHub Actions workflows (CI + release), releases (NSIS `.exe`, portable `.exe`, mobile `.apk` when ready, `latest.yml`, `*.blockmap`) |
 | `fotedev/masarx-releases` | **Public, archived read-only** | Old artifacts from the private-repo era (≤ v0.5.x); no new releases |
 
 **Why this works:**
 
-- `electron-builder`'s `publish:` block targets `fotedev/Masar-x-next` directly.
+- `electron-builder`'s `publish:` block targets `Masar-X/Masar-x` directly.
 - `electron-updater` reads the latest release from the public repo — no GitHub auth needed for end users.
-- The website links directly to `https://github.com/fotedev/Masar-x-next/releases/latest` (resolved dynamically via `apps/web/src/lib/github-releases.ts`).
+- The website links directly to `https://github.com/Masar-X/Masar-x/releases/latest` (resolved dynamically via `apps/web/src/lib/github-releases.ts`).
 
 **History (pre-2026-09):** the source repo was PRIVATE, so releases went to
 the separate public `fotedev/masarx-releases` repo via a `GH_RELEASES_TOKEN`
@@ -67,8 +67,8 @@ git tag v0.7.0
 git push origin v0.7.0
 
 # 3. Watch the run (~7-8 min)
-gh run watch --repo fotedev/Masar-x-next
-# Output: https://github.com/fotedev/Masar-x-next/releases/tag/v0.7.0
+gh run watch --repo Masar-X/Masar-x
+# Output: https://github.com/Masar-X/Masar-x/releases/tag/v0.7.0
 ```
 
 To smoke-test without publishing: run the workflow manually from the

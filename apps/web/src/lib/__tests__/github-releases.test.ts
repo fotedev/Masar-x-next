@@ -100,16 +100,16 @@ describe('getLatestReleaseUrls — API-asset path', () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
         tag_name: 'v0.5.8',
-        html_url: 'https://github.com/fotedev/Masar-x-next/releases/tag/v0.5.8',
+        html_url: 'https://github.com/Masar-X/Masar-x/releases/tag/v0.5.8',
         assets: [
           {
             name: 'Masar-X-Setup-0.5.8-x64.exe',
-            browser_download_url: 'https://github.com/fotedev/Masar-x-next/releases/download/v0.5.8/Masar-X-Setup-0.5.8-x64.exe',
+            browser_download_url: 'https://github.com/Masar-X/Masar-x/releases/download/v0.5.8/Masar-X-Setup-0.5.8-x64.exe',
             size: 127926272,
           },
           {
             name: 'Masar-X-Portable-0.5.8-x64.exe',
-            browser_download_url: 'https://github.com/fotedev/Masar-x-next/releases/download/v0.5.8/Masar-X-Portable-0.5.8-x64.exe',
+            browser_download_url: 'https://github.com/Masar-X/Masar-x/releases/download/v0.5.8/Masar-X-Portable-0.5.8-x64.exe',
             size: 90000000,
           },
         ],
@@ -119,7 +119,7 @@ describe('getLatestReleaseUrls — API-asset path', () => {
     const urls = await getLatestReleaseUrls();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.github.com/repos/fotedev/Masar-x-next/releases/latest',
+      'https://api.github.com/repos/Masar-X/Masar-x/releases/latest',
       { headers: { Accept: 'application/vnd.github+json' }, next: { revalidate: 3600 } },
     );
     expect(urls.version).toBe('0.5.8');
@@ -127,7 +127,7 @@ describe('getLatestReleaseUrls — API-asset path', () => {
     expect(urls.windowsPortable).toContain('Masar-X-Portable-0.5.8-x64.exe');
     expect(urls.installerSizeBytes).toBe(127926272);
     expect(urls.portableSizeBytes).toBe(90000000);
-    expect(urls.releasesPage).toBe('https://github.com/fotedev/Masar-x-next/releases/tag/v0.5.8');
+    expect(urls.releasesPage).toBe('https://github.com/Masar-X/Masar-x/releases/tag/v0.5.8');
   });
 
   it('strips only a leading "v" from the tag and falls back to "latest"', async () => {
@@ -180,15 +180,15 @@ describe('getLatestReleaseUrls — API-asset path', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(urls.version).toBe('0.5.9');
     expect(urls.windowsInstaller).toBe(
-      'https://github.com/fotedev/Masar-x-next/releases/latest/download/Masar-X-Setup-0.5.9-x64.exe',
+      'https://github.com/Masar-X/Masar-x/releases/latest/download/Masar-X-Setup-0.5.9-x64.exe',
     );
     expect(urls.windowsPortable).toBe(
-      'https://github.com/fotedev/Masar-x-next/releases/latest/download/Masar-X-Portable-0.5.9-x64.exe',
+      'https://github.com/Masar-X/Masar-x/releases/latest/download/Masar-X-Portable-0.5.9-x64.exe',
     );
     expect(urls.installerSizeBytes).toBe(123456789);
     expect(urls.portableSizeBytes).toBe(87654321);
     // YAML path has no per-release HTML URL → the static releases page.
-    expect(urls.releasesPage).toBe('https://github.com/fotedev/Masar-x-next/releases/latest');
+    expect(urls.releasesPage).toBe('https://github.com/Masar-X/Masar-x/releases/latest');
   });
 
   it('constructs the portable name from the version when the files block omits it', async () => {
@@ -199,7 +199,7 @@ describe('getLatestReleaseUrls — API-asset path', () => {
 
     const urls = await getLatestReleaseUrls();
     expect(urls.windowsPortable).toBe(
-      'https://github.com/fotedev/Masar-x-next/releases/latest/download/Masar-X-Portable-1.2.3-x64.exe',
+      'https://github.com/Masar-X/Masar-x/releases/latest/download/Masar-X-Portable-1.2.3-x64.exe',
     );
     expect(urls.portableSizeBytes).toBe(0);
   });

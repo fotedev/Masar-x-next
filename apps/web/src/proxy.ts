@@ -265,6 +265,12 @@ export const config = {
     // the .png poster (already excluded) loaded, and /llms.txt 404ed
     // the same way. Static media/text files under public/ must bypass
     // the proxy and be served straight from the CDN.
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm|mp4|webm|mp3|ogg|wav|txt)$).*)",
+    //
+    // manifest.webmanifest is excluded for the same class of reason
+    // (spec 052): the generated app/manifest.ts route must not be
+    // locale-redirected, or PWA installs get the HTML 404 page.
+    // manifest.json stays excluded so the next.config rewrite to the
+    // generated route also bypasses the proxy.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.json|manifest.webmanifest|robots.txt|sitemap.xml|animations|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|wasm|mp4|webm|mp3|ogg|wav|txt)$).*)",
   ],
 };

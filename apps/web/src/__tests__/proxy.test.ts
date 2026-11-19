@@ -233,6 +233,11 @@ describe('config.matcher — static-file exclusions', () => {
   // Routing /zane/*.mp4 through next-intl returned the HTML 404 page on
   // production while the .png poster (already excluded) loaded; /llms.txt
   // 404ed the same way. Same failure class as the .wasm exclusion above.
+  //
+  // Spec 052: the generated manifest route (app/manifest.ts →
+  // /manifest.webmanifest) must not be locale-redirected or PWA installs
+  // receive the HTML 404 page; /manifest.json stays excluded so the
+  // next.config rewrite to the generated route also bypasses the proxy.
   it.each([
     '/zane/zane-idle-face.mp4',
     '/zane/zane-typing-close.mp4',
@@ -240,6 +245,8 @@ describe('config.matcher — static-file exclusions', () => {
     '/dotlottie-player.wasm',
     '/favicon.ico',
     '/robots.txt',
+    '/manifest.webmanifest',
+    '/manifest.json',
   ])('%s → excluded (served statically, never locale-redirected)', (path) => {
     expect(matcher.test(path)).toBe(false);
   });

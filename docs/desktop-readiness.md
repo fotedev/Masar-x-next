@@ -43,7 +43,7 @@ Everything is committed and pushed except the tag. When ready:
 ```bash
 git tag v0.6.0
 git push origin v0.6.0
-gh run watch --repo fotedev/Masar-x-next   # ~7-8 min, publishes NSIS + portable + latest.yml
+gh run watch --repo Masar-X/Masar-x   # ~7-8 min, publishes NSIS + portable + latest.yml
 ```
 
 `electron-updater` clients on v0.5.9 will pick up v0.6.0 automatically from `latest.yml`.

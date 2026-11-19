@@ -1,7 +1,7 @@
 # Masar X — Brand Identity (Single Source of Truth)
 
 > **القاعدة:** أي وصف للمنصة في الكود أو الوثائق أو الـ AI يجب أن يطابق هذا الملف حرفياً. ممنوع اختراع صياغات بديلة.
-> Last updated: 2026-09-26
+> Last updated: 2026-11-19
 
 ## 1. الاسم الرسمي
 
@@ -43,7 +43,7 @@
 - `packages/shared/src/messages/{ar,en}/metadata.json`
 - `packages/shared/src/messages/{ar,en}/footer.json`
 - `packages/shared/src/messages/{ar,en}/faq.json`
-- `apps/web/public/manifest.json`
+- `apps/web/src/app/manifest.ts` (الـ manifest الآن مسار مُولَّد — النصوص من `pwa.json` والاسم من `faculty.json`/core — spec 052)
 - `apps/web/public/llms.txt`
 - الهيرو والفوتر والـ FAQ في الواجهة
 
@@ -104,3 +104,15 @@
 - في metadata للـ og/twitter: يُسبَق السلوجان للوصف الرسمي بالصيغة `«السلوجان — الوصف الرسمي»`.
 - مواضع حالية: `metadata.json` {ar,en} مفتاح `slogan`، `llms.txt`، وصف og/twitter في `layout.tsx`.
 - الترتيب الإلزامي للميزات (§4) والتعريف الرسمي (§2) يسريان على أي جملة تسويقية جديدة تُكتب حول السلوجان.
+
+## 9. العلامات الفرعية للكليات (Faculty Sub-brands) — مقفلة 2026-11-19 (spec 052)
+
+منصة **مسار إكس** هي العلامة الأم (master brand)؛ كل نسخة كلية/جامعة تُشغَّل من **نفس المستودع** عبر متغير البيئة `NEXT_PUBLIC_FACULTY` وتحمل اسمًا فرعيًا بنمط **«الكلية» X** — لا توجد forks لكل كلية (قرار المالك 2026-11-18).
+
+- **العلامة الأم لا تُستبدل أبدًا:** الـ sidemenu يبقى بالـ lockup الأفقي الرسمي (§7.3) في كل النسخ، والفوتر يضيف سطر «مشغَّل بواسطة مسار إكس / Powered by Masar X»، واللوجو والألوان والأصول (§7) كما هي.
+- **صيغة التسمية الرسمية:** `«اختصار الكلية» «اختصار الجامعة» X` كاسم كامل للـ SEO، وصيغة قصيرة `«اختصار الجامعة» X` للـ manifest short_name.
+- **النسخة الأولى:** `FCAI ASNU X` / `ASNU X` (كلية الحاسبات والذكاء الاصطناعي — جامعة أسيوط الأهلية).
+- **مصدر الحقيقة الوحيد للنصوص:** `packages/shared/src/messages/{ar,en}/faculty.json` — تُعدَّل صياغة بقرار المالك فقط. **إضافة نسخة كلية جديدة (preset):** أضف مفاتيحها في ملفي `faculty.json` (ar + en) **وأضِف معرّفها إلى `FACULTY_PRESET_IDS` في `packages/shared/src/branding/faculties.ts`** — أما تسجيل `MESSAGE_NAMESPACES` وسجل `i18n` (عقد الأسماء الثلاثي) فلا يُطلب إلا عند إضافة namespace جديد، لا عند إضافة preset داخل نفس الـ namespace.
+- العنوان الافتراضي للنسخة (bilingual): EN `FCAI ASNU X · Masar X — Faculty of Computers & AI (Assiut National University)` — AR `مسار إكس (FCAI ASNU X) — كلية الحاسبات والذكاء الاصطناعي جامعة أسيوط الأهلية`.
+- **قواعد تسري على كل نسخة:** التعريف الرسمي (§2)، ترتيب الميزات (§4)، العبارات الممنوعة (§5)، والسلوجان (§8) — النسخة الفرعية لا تُعرِّف المنصة أبدًا بأي صياغة مخالفة.
+- بلا نسخة كلية (`NEXT_PUBLIC_FACULTY` غير مضبوط أو قيمة غير معروفة): كل الأسطح تعرض هوية مسار إكس الأساسية كما هي.

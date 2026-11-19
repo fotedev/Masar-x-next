@@ -2,5 +2,12 @@
   "title": "Install App",
   "description": "Install Masar X as an app on your phone for quick access",
   "install": "Install",
-  "later": "Later"
+  "later": "Later",
+  "manifestDescription": "Masar X — Integrated University Learning Platform: study materials, lectures, summaries, question banks and quizzes, courses, and an AI tutor",
+  "manifestShortcutSummaries": "New paths",
+  "manifestShortcutSummariesShort": "Paths",
+  "manifestShortcutSummariesDescription": "View the new paths",
+  "manifestShortcutNews": "News",
+  "manifestShortcutNewsShort": "News",
+  "manifestShortcutNewsDescription": "View the latest news"
 }

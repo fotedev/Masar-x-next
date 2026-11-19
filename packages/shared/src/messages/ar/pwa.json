@@ -2,5 +2,12 @@
   "title": "تثبيت التطبيق",
   "description": "قم بتثبيت مسار إكس كتطبيق على هاتفك للوصول السريع",
   "install": "تثبيت",
-  "later": "لاحقاً"
+  "later": "لاحقاً",
+  "manifestDescription": "مسار إكس — منصتك الجامعية المتكاملة: مواد، شروحات، ملخصات، بنوك أسئلة، ومساعد ذكي",
+  "manifestShortcutSummaries": "المسارات الجديدة",
+  "manifestShortcutSummariesShort": "مسارات",
+  "manifestShortcutSummariesDescription": "عرض المسارات الجديدة",
+  "manifestShortcutNews": "الأخبار",
+  "manifestShortcutNewsShort": "أخبار",
+  "manifestShortcutNewsDescription": "عرض الأخبار الجديدة"
 }

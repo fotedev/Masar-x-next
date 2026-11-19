@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { Heart } from "lucide-react";
+import { resolveFacultyPresetIdFromEnv } from "masarx-shared";
 import { FooterBrand } from "./footer/FooterBrand";
 import { FooterLinks } from "./footer/FooterLinks";
 import { FooterSupport } from "./footer/FooterSupport";
@@ -10,9 +11,18 @@ import { FooterDeveloper } from "./footer/FooterDeveloper";
 export function Footer() {
   const tFooter = useTranslations("footer");
   const tNav = useTranslations("nav");
+  const tFaculty = useTranslations("faculty");
   const locale = useLocale();
   const phoneNumber = "201207688761";
   const whatsappUrl = `https://wa.me/${phoneNumber}`;
+
+  // Spec 052: faculty instances show their sub-brand name + the master
+  // brand line; core renders exactly as before.
+  const facultyId = resolveFacultyPresetIdFromEnv();
+  const facultyName = facultyId ? tFaculty(`${facultyId}.displayName`) : null;
+  const facultyPoweredBy = facultyId
+    ? tFaculty(`${facultyId}.poweredBy`)
+    : null;
 
   const localePrefix = locale === "en" ? "/en" : "/ar";
 
@@ -23,7 +33,11 @@ export function Footer() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 mb-12">
-          <FooterBrand t={tFooter} />
+          <FooterBrand
+            t={tFooter}
+            facultyName={facultyName}
+            facultyPoweredBy={facultyPoweredBy}
+          />
 
           <FooterLinks tFooter={tFooter} tNav={tNav} localePrefix={localePrefix} />
 
