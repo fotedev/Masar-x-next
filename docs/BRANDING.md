@@ -81,7 +81,7 @@
 | `masarx-mark.svg` | نسخة حرفية من `masarx-mark.svg` الماستر للسياقات المربعة |
 
 إعادة توليد كل أصول الويب: `node apps/web/scripts/generate-icons.mjs` (بعد `node apps/web/scripts/brand/build-masters.mjs` عند تغيير الأصل).
-إعادة توليد أيقونة الديسكتوب: `pnpm --filter desktop icons:generate` (من `apps/desktop/scripts/generate-icon.mjs` — سلّم ICO 16–256 + الماستر، تايِل أبيض بزوايا مستديرة).
+إعادة توليد أيقونة الديسكتوب: `pnpm --filter desktop icons:generate` (من `apps/desktop/scripts/generate-icon.mjs` — سلّم ICO 16–256 + الماستر، علامة شفافة بنفس نمط أيقونات الويب «any» — قرار المالك 2026-11-19، المواصفة 053).
 
 ### 7.3 قواعد الاستخدام الإلزامية
 

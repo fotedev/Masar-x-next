@@ -163,3 +163,30 @@ html[data-masarx-desktop="true"] .masarx-titlebar {
 [data-masarx-desktop="true"] .dark *::-webkit-scrollbar-thumb:hover {
   background: rgba(226, 232, 240, 0.4);
 }
+
+/* ---------- Spec 053: home dashboard width parity ----------
+   The web <main> caps content at max-w-7xl (~1216px usable) with symmetric
+   horizontal padding (px-3 / sm:px-6 / lg:px-8); the desktop variant is
+   intentionally full-bleed, which stretched the home grid — the "Ask ZANE
+   AI" hero reached ~780px on a maximized 1920px window vs ~490px in the
+   browser. Cap the home page only, scoped under the desktop marker so
+   browser rendering is untouched (FR-011 by construction). Desktop main's
+   pe-4 (spec 046) stays: it insets the column 16px further on the inline
+   end, imperceptible at ≥1280px windows. */
+[data-masarx-desktop="true"] .home-shell {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  [data-masarx-desktop="true"] .home-shell {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-masarx-desktop="true"] .home-shell {
+    padding-inline: 2rem;
+  }
+}

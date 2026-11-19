@@ -177,7 +177,7 @@ export default function HomeClient() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="home-shell space-y-10">
       {/* Quick Actions & Navigation Hub */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
         {/* ZANE AI Shortcut */}

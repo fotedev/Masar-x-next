@@ -3,14 +3,15 @@
 // masters and rasterization approach as apps/web/scripts/generate-icons.mjs
 // (BRANDING.md §7.2). Deterministic: re-run to regenerate.
 //
-// Default tile: white rounded square (r = 22.5% of the side) with the mark
-// centered at 70% of the side (≥12% breathing room per BRANDING.md §7.3);
-// small ICO frames scale the mark up so the knot stays legible.
-// Alternatives: --style=transparent (mark only) | --style=square (white
+// Default style: transparent — bare mark at 92% of the side, the PWA "any"
+// icon look (owner decision 2026-11-19, spec 053).
+// Legacy tile styles: --style=squircle (white rounded square, r = 22.5% of
+// the side, mark at 70% — ≥12% breathing room per BRANDING.md §7.3, scaled
+// up at small ICO sizes so the knot stays legible) | --style=square (white
 // full-bleed, mobile style) — every run also writes a side-by-side comparison
 // sheet plus per-frame previews to build/.icon-preview/ (untracked scratch).
 //
-// Usage: node scripts/generate-icon.mjs [--style=transparent|square] [--verify-only]
+// Usage: node scripts/generate-icon.mjs [--style=squircle|transparent|square] [--verify-only]
 
 import fs from "node:fs";
 import path from "node:path";
@@ -26,7 +27,7 @@ const PREVIEW = path.join(BUILD, ".icon-preview");
 const args = process.argv.slice(2);
 const verifyOnly = args.includes("--verify-only");
 const styleArg = args.find((a) => a.startsWith("--style="));
-const style = styleArg ? styleArg.split("=")[1] : "squircle";
+const style = styleArg ? styleArg.split("=")[1] : "transparent";
 if (!["squircle", "transparent", "square"].includes(style)) {
   console.error(`unknown --style=${style} (expected squircle | transparent | square)`);
   process.exit(1);
