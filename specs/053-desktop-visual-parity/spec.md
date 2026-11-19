@@ -76,3 +76,35 @@
   imperceptible.
 - Repo context: origin now points at `Masar-X/Masar-x` (org transfer);
   open PRs #254/#259/#260/#261 are untouched by this branch.
+
+## Follow-up (2026-11-19, evening) — "still white" on the desktop + ICO frame hardening
+
+**Why the desktop still showed the white icon:** the new build had never been
+installed — `Masar X.lnk` (Nov 18) still targeted the old exe at
+`AppData\Local\Programs\Masar X\Masar X.exe`; the rebuilt
+`Masar X-Setup-x64.exe` sat uninstalled in the worktree's `out/`. The two other
+Masar icons on the desktop are unrelated: **"Masar X (1)"** is an **Edge PWA
+shortcut** (`msedge_proxy.exe --app-url=https://masarx.vercel.app/`) whose
+`.ico` Edge bakes itself — probed byte-level: fully transparent art, BMP/DIB
+frames ≤64 + PNG 256, no dark tile baked (its dark desktop tile was a stale
+icon-cache rendering, cleared by a cache refresh); **masarx_next**'s dark tile
+is the owner's own `C:\ICONS\masarx-folder-dark-256.ico` via the repo-root
+`desktop.ini`.
+
+**Hardening (this follow-up):** the hand-rolled `buildIco()` wrote PNG frames
+for every size; PNG-in-ICO frames below 256 are mishandled by some shell icon
+consumers (alpha dropped → transparent art renders as a black tile — invisible
+while the art was opaque white). The writer now emits the battle-tested layout
+Chromium itself uses for PWA shortcut icons: **BMP/DIB (BITMAPINFOHEADER +
+32bpp straight BGRA bottom-up + zeroed 1bpp AND mask) for 16–128, PNG only for
+256**. The verifier is format-aware (frame format/bpp/dims) and gained a
+**corner-alpha assertion per style** (≤8 for transparent/squircle, 255 for
+square) read straight from the ICO bytes, so an alpha-dropping writer can never
+pass again.
+
+**Install + cache:** the rebuilt Setup was installed over the old per-user
+install (assisted wizard driven via computer-use — note: `/S` is ignored by
+this assisted installer, it opens the wizard and idles), icon cache refreshed
+with `ie4uinit.exe -show`, and the installed exe's icon decodes transparent
+through the GDI shell path (corner alpha 0). Desktop/taskbar visual
+confirmation: owner eyeball.
