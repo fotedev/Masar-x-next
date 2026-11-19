@@ -152,7 +152,8 @@ win:
   # Multi-size .ico (16/24/32/48/64/128/256) generated from the locked
   # brand mark (promo_assets/brand-new/masarx-mark.svg) via
   # `pnpm --filter desktop icons:generate` (scripts/generate-icon.mjs —
-  # white squircle tile + mark, same approach as the web icon ladder).
+  # transparent mark only, matching the web "any" icon ladder;
+  # owner decision 2026-11-19, spec 053).
   # electron-builder picks this up for the EXE icon shown in
   # Explorer/Taskbar/Start Menu.
   icon: build/icon.ico

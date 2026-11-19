@@ -3,14 +3,15 @@
 // masters and rasterization approach as apps/web/scripts/generate-icons.mjs
 // (BRANDING.md §7.2). Deterministic: re-run to regenerate.
 //
-// Default tile: white rounded square (r = 22.5% of the side) with the mark
-// centered at 70% of the side (≥12% breathing room per BRANDING.md §7.3);
-// small ICO frames scale the mark up so the knot stays legible.
-// Alternatives: --style=transparent (mark only) | --style=square (white
+// Default style: transparent — bare mark at 92% of the side, the PWA "any"
+// icon look (owner decision 2026-11-19, spec 053).
+// Legacy tile styles: --style=squircle (white rounded square, r = 22.5% of
+// the side, mark at 70% — ≥12% breathing room per BRANDING.md §7.3, scaled
+// up at small ICO sizes so the knot stays legible) | --style=square (white
 // full-bleed, mobile style) — every run also writes a side-by-side comparison
 // sheet plus per-frame previews to build/.icon-preview/ (untracked scratch).
 //
-// Usage: node scripts/generate-icon.mjs [--style=transparent|square] [--verify-only]
+// Usage: node scripts/generate-icon.mjs [--style=squircle|transparent|square] [--verify-only]
 
 import fs from "node:fs";
 import path from "node:path";
@@ -26,7 +27,7 @@ const PREVIEW = path.join(BUILD, ".icon-preview");
 const args = process.argv.slice(2);
 const verifyOnly = args.includes("--verify-only");
 const styleArg = args.find((a) => a.startsWith("--style="));
-const style = styleArg ? styleArg.split("=")[1] : "squircle";
+const style = styleArg ? styleArg.split("=")[1] : "transparent";
 if (!["squircle", "transparent", "square"].includes(style)) {
   console.error(`unknown --style=${style} (expected squircle | transparent | square)`);
   process.exit(1);
@@ -77,23 +78,61 @@ async function composeIcon(px, forStyle, scaleOverride) {
 }
 
 // ---------------------------------------------------------------- ICO writer
+// Frame-format rule (spec 053 follow-up, 2026-11-19): BMP/DIB for every frame
+// below 256, PNG only for the 256 frame — the same layout Chromium/Edge emit
+// for PWA shortcut icons. PNG-in-ICO frames below 256 are mishandled by some
+// shell icon consumers, which drop the alpha channel and render a transparent
+// icon as a black tile. The DIB (BITMAPINFOHEADER + 32bpp straight BGRA rows
+// bottom-up + 1bpp AND mask) is the format every Windows icon consumer has
+// rendered correctly for decades; the alpha byte carries transparency and the
+// zeroed AND mask defers to it.
+async function pngToDib(png) {
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const px = info.width;
+  if (px !== info.height) throw new Error(`dib source not square: ${info.width}x${info.height}`);
+  const rowBytes = px * 4;
+  const maskRow = Math.ceil(px / 32) * 4;
+  const bih = Buffer.alloc(40);
+  bih.writeUInt32LE(40, 0);             // biSize
+  bih.writeUInt32LE(px, 4);             // biWidth
+  bih.writeUInt32LE(px * 2, 8);         // biHeight = XOR plane + AND mask
+  bih.writeUInt16LE(1, 12);             // biPlanes
+  bih.writeUInt16LE(32, 14);            // biBitCount
+  bih.writeUInt32LE(0, 16);             // biCompression = BI_RGB
+  bih.writeUInt32LE(px * rowBytes, 20); // biSizeImage (XOR plane)
+  const xor = Buffer.alloc(px * rowBytes);
+  for (let y = 0; y < px; y++) {
+    const src = (px - 1 - y) * rowBytes; // bottom-up rows
+    for (let x = 0; x < px; x++) {
+      const s = src + x * 4;
+      const d = y * rowBytes + x * 4;
+      xor[d] = data[s + 2];     // B
+      xor[d + 1] = data[s + 1]; // G
+      xor[d + 2] = data[s];     // R
+      xor[d + 3] = data[s + 3]; // A (straight, not premultiplied)
+    }
+  }
+  const andMask = Buffer.alloc(maskRow * px); // all zero: the alpha byte governs
+  return Buffer.concat([bih, xor, andMask]);
+}
+
 function buildIco(frames) {
-  // frames: [{size, png}] — PNG-in-ICO (Vista+); 256 encoded as 0
+  // frames: [{size, blob}] — blob is BMP/DIB for sizes < 256, PNG for 256
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0); header.writeUInt16LE(1, 2); header.writeUInt16LE(frames.length, 4);
   const dir = Buffer.alloc(16 * frames.length);
   let offset = 6 + 16 * frames.length;
   const blobs = [];
-  frames.forEach(({ size, png }, i) => {
+  frames.forEach(({ size, blob }, i) => {
     const b = i * 16;
     dir[b] = size >= 256 ? 0 : size;
     dir[b + 1] = size >= 256 ? 0 : size;
     dir.writeUInt16LE(1, b + 4);  // planes
     dir.writeUInt16LE(32, b + 6); // bpp
-    dir.writeUInt32LE(png.length, b + 8);
+    dir.writeUInt32LE(blob.length, b + 8);
     dir.writeUInt32LE(offset, b + 12);
-    offset += png.length;
-    blobs.push(png);
+    offset += blob.length;
+    blobs.push(blob);
   });
   return Buffer.concat([header, dir, ...blobs]);
 }
@@ -108,8 +147,19 @@ function parseIco(buf) {
     const len = buf.readUInt32LE(b + 8);
     const off = buf.readUInt32LE(b + 12);
     const blob = buf.subarray(off, off + len);
-    // PNG IHDR: width/height at bytes 16..23, big-endian
-    frames.push({ size, pngW: blob.readUInt32BE(16), pngH: blob.readUInt32BE(20), len });
+    const isPng = blob.length > 8 && blob[0] === 0x89 && blob.subarray(1, 4).toString("latin1") === "PNG";
+    const frame = { size, format: isPng ? "PNG" : "BMP", len, off };
+    if (isPng) {
+      // PNG IHDR: width/height at bytes 16..23, big-endian
+      frame.width = blob.readUInt32BE(16);
+      frame.height = blob.readUInt32BE(20);
+    } else {
+      // BITMAPINFOHEADER: width @4, height = biHeight/2 (XOR + AND) @8, bpp @14
+      frame.width = blob.readUInt32LE(4);
+      frame.height = blob.readUInt32LE(8) / 2;
+      frame.bpp = blob.readUInt16LE(14);
+    }
+    frames.push(frame);
   }
   return frames;
 }
@@ -155,15 +205,41 @@ async function verify() {
   check(fs.existsSync(masterPath), "build/icon-master.png missing — run without --verify-only first");
   if (failures) return;
 
-  const frames = parseIco(fs.readFileSync(icoPath));
+  const ico = fs.readFileSync(icoPath);
+  const frames = parseIco(ico);
   check(frames.length === ICO_SIZES.length, `ico frame count ${frames.length} !== ${ICO_SIZES.length}`);
   frames.forEach((f, i) => {
     check(f.size === ICO_SIZES[i], `frame ${i}: size ${f.size} !== ${ICO_SIZES[i]}`);
-    check(f.pngW === f.size && f.pngH === f.size, `frame ${i}: png dims ${f.pngW}x${f.pngH} !== ${f.size}`);
+    check(f.width === f.size && f.height === f.size, `frame ${i}: dims ${f.width}x${f.height} !== ${f.size}`);
+    // Frame-format rule: BMP/DIB below 256 (shell alpha safety), PNG for 256.
+    const wantFormat = f.size >= 256 ? "PNG" : "BMP";
+    check(f.format === wantFormat, `frame ${i}: format ${f.format} !== ${wantFormat}`);
+    if (f.format === "BMP") check(f.bpp === 32, `frame ${i}: bpp ${f.bpp} !== 32`);
   });
 
   const m = await sharp(masterPath).metadata();
   check(m.width === MASTER_PX && m.height === MASTER_PX, `master ${m.width}x${m.height} !== ${MASTER_PX}`);
+
+  // Corner-alpha probe straight from the ICO bytes: transparent/squircle art
+  // must carry real transparency in every frame — an opaque corner is exactly
+  // what a dropped alpha channel (black tile on the desktop/taskbar) looks like.
+  const expectOpaque = style === "square";
+  for (const f of frames) {
+    const blob = ico.subarray(f.off, f.off + f.len);
+    let corners;
+    if (f.format === "PNG") {
+      const { data, info } = await sharp(blob).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      const at = (x, y) => data[(y * info.width + x) * 4 + 3];
+      corners = [at(0, 0), at(info.width - 1, 0), at(0, info.height - 1), at(info.width - 1, info.height - 1)];
+    } else {
+      const px = f.size;
+      const at = (x, y) => blob[40 + (px - 1 - y) * px * 4 + x * 4 + 3];
+      corners = [at(0, 0), at(px - 1, 0), at(0, px - 1), at(px - 1, px - 1)];
+    }
+    corners.forEach((a, j) =>
+      check(expectOpaque ? a === 255 : a <= 8, `frame ${f.size}: corner ${j} alpha ${a} (want ${expectOpaque ? 255 : "≤8"})`),
+    );
+  }
 
   // 16px silhouette probe (same as the web ladder): full-size mark at 16px must
   // keep a sane alpha band and all three hue families
@@ -196,7 +272,7 @@ if (!verifyOnly) {
   const icoFrames = [];
   for (const size of ICO_SIZES) {
     const png = await composeIcon(size, style);
-    icoFrames.push({ size, png });
+    icoFrames.push({ size, png, blob: size >= 256 ? png : await pngToDib(png) });
     fs.writeFileSync(path.join(PREVIEW, `frame-${size}.png`), png);
   }
   fs.writeFileSync(path.join(BUILD, "icon.ico"), buildIco(icoFrames));
