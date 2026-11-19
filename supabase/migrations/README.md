@@ -45,6 +45,11 @@ Consequences:
   the production database (kept there by owner decision).
 - The chain remains append-only: keep timestamping forward from the last
   applied version.
+- On 2026-11-19 the prod-only seeded rows got their first data migration:
+  `20261119215921_strip_real_suffix_quiz_metadata.sql` strips the
+  "(حقيقي)" title suffix and replaces the internal build-note text inside
+  the JSON description envelopes with a neutral Arabic line. It matches
+  nothing on a fresh replay (no seed data) and stays for chain parity.
 
 ## Rebuilding and verifying
 

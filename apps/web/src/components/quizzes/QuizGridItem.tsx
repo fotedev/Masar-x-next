@@ -4,7 +4,7 @@ import { Play, BookOpen, Edit, Trash2, Clock, Layout } from "lucide-react";
 import { Quiz } from "@/types/database";
 
 interface QuizGridItemProps {
-  quiz: Quiz & { questions?: unknown[] };
+  quiz: Quiz & { quiz_questions?: { count: number }[] };
   meta: {
     subject: string;
     department: string;
@@ -36,6 +36,8 @@ export const QuizGridItem = memo(function QuizGridItem({
   const durationMinutes = quiz.duration_seconds
     ? Math.round(quiz.duration_seconds / 60)
     : null;
+  // PostgREST count embed from the listing query: [{ count }] per row.
+  const questionCount = Number(quiz.quiz_questions?.[0]?.count ?? 0);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow group">
@@ -96,7 +98,7 @@ export const QuizGridItem = memo(function QuizGridItem({
           <div className="flex items-center gap-1.5">
             <Layout className="w-4 h-4" />
             <span>
-              {Array.isArray(quiz.questions) ? quiz.questions.length : 0}{" "}
+              {questionCount}{" "}
               {t("questions")}
             </span>
           </div>
