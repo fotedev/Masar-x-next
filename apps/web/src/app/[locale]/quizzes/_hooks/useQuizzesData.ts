@@ -30,7 +30,12 @@ export function useQuizzesData(props: {
 
       try {
         setLoading(true);
-        let query = supabase.from("quizzes").select("*");
+        // quiz_questions(count) feeds the listing card's question counter —
+        // the row type has no questions field, so the card used to always
+        // render "0 questions".
+        let query = supabase
+          .from("quizzes")
+          .select("*, quiz_questions(count)");
         if (!isAdmin) {
           query = query.eq("status", "approved");
         }
