@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Footer } from "./Footer";
+import { isFooterRoute } from "./footer/footerRoutes";
 import { PWAInstallPrompt } from "./PWAInstallPrompt";
 import { NotificationPrompt } from "./NotificationManager";
 import { AcademicOnboardingGate } from "./AcademicOnboardingGate";
@@ -142,7 +143,10 @@ export function Layout({ children }: LayoutProps) {
           and must not leak into the Electron shell (FR-019, FR-011). */}
       {!isDesktop && !isAdminRoute && <PWAInstallPrompt />}
       {!isDesktop && !isAdminRoute && <NotificationPrompt />}
-      {!isDesktop && !isAdminRoute && !isAssistantRoute && <Footer />}
+      {/* Footer scope (owner decision 2026-11-20): info/utility routes only —
+          studying pages ship footer-free by default (footerRoutes.ts).
+          isAdminRoute / isAssistantRoute are subsumed by the allowlist. */}
+      {!isDesktop && isFooterRoute(pathWithoutLocale) && <Footer />}
     </div>
   );
 }
