@@ -63,6 +63,7 @@ import {
   buildSystemInstruction,
   findForbiddenHeader,
   mapUsage,
+  resolveAiChatPlatformName,
   sseFrame,
   wrapUserMessage,
 } from './pure.ts';
@@ -366,7 +367,12 @@ serve(async (req) => {
 
     // Spec 050 (issue #242): instructions live on systemInstruction; the
     // user message is DATA inside its delimited channel.
-    const systemInstruction = buildSystemInstruction(languageInstruction);
+    // Spec 055: the tenant brand resolves from the allowlisted faculty id
+    // (server-set by the web proxy); unknown/missing → core platform.
+    const systemInstruction = buildSystemInstruction(
+      languageInstruction,
+      resolveAiChatPlatformName(body.context.facultyId),
+    );
     const prompt = wrapUserMessage(body.userMessage);
 
     // 5a. Streaming mode: `Accept: text/event-stream` (the shared client's

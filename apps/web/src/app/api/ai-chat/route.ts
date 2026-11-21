@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { resolveFacultyPresetIdFromEnv } from 'masarx-shared';
 import {
   invalidRequestBody,
   requireAuthenticatedUser,
@@ -86,6 +87,18 @@ export async function POST(req: NextRequest) {
         parsed.error.issues[0]?.message ?? 'Invalid payload',
       );
     }
+
+    // Spec 055: the tenant brand travels to the edge as a server-resolved
+    // faculty preset id, not client free text — the proxy OVERWRITES any
+    // client-supplied facultyId with the build-time preset (or undefined,
+    // which JSON.stringify drops, keeping the payload unchanged on core
+    // deployments). The edge exact-allowlists the id (defense in depth).
+    const context = parsed.data.context;
+    if (context !== null && typeof context === 'object' && !Array.isArray(context)) {
+      (context as { facultyId?: string }).facultyId =
+        resolveFacultyPresetIdFromEnv() ?? undefined;
+    }
+
     await recordAIChatRequest(user.id);
 
     // Lean metrics: accepted AI request (Redis counter, best-effort)
