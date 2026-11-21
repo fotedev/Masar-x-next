@@ -17,6 +17,10 @@ export interface AiRequest {
    *  - language preference (so the AI responds in the user's language)
    *  - app version (so the AI can refuse to answer on unsupported builds)
    *  - device class (so long responses can be marked as streamable for mobile)
+   *  - faculty preset id (so ZANE's system instruction names the active
+   *    tenant — spec 055; server-resolved by the web proxy, omitted by
+   *    mobile/desktop, and exact-allowlisted by the edge function so a
+   *    client-supplied value can never inject a brand)
    *
    * No PII, no auth tokens, no secrets.
    */
@@ -24,6 +28,7 @@ export interface AiRequest {
     language: "ar" | "en";
     appVersion: string;
     deviceClass: "desktop" | "mobile" | "web";
+    facultyId?: string;
   };
 }
 

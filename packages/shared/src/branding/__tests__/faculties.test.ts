@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FACULTY_PRESET_IDS, resolveFacultyPresetId, resolveFacultyPresetIdFromEnv } from "../faculties";
@@ -5,6 +8,18 @@ import { FACULTY_PRESET_IDS, resolveFacultyPresetId, resolveFacultyPresetIdFromE
 // Spec 052 — the faculty white-label resolver is the single switch every
 // brand surface reads; a wrong value must degrade to core branding, never
 // crash a deployment.
+
+// Spec 055 — prompt strings live in the same `faculty` namespace as the
+// marketing strings but under a dedicated key, so the two can drift
+// independently (ZANE's voice vs marketing copy).
+const here = path.dirname(fileURLToPath(import.meta.url));
+const facultyJson = (locale: "ar" | "en") =>
+  JSON.parse(
+    fs.readFileSync(
+      path.resolve(here, "../../messages", locale, "faculty.json"),
+      "utf8",
+    ),
+  ) as Record<string, Record<string, unknown>>;
 
 describe("resolveFacultyPresetId — core fallback", () => {
   it.each([undefined, null, "", "   "])(
@@ -65,5 +80,27 @@ describe("resolveFacultyPresetIdFromEnv", () => {
   it("unknown env var → null (falls back to core)", () => {
     vi.stubEnv("NEXT_PUBLIC_FACULTY", "typo-faculty");
     expect(resolveFacultyPresetIdFromEnv()).toBeNull();
+  });
+});
+
+describe("faculty.json — promptPlatformName shape (spec 055)", () => {
+  it.each(["ar", "en"] as const)(
+    "%s: every preset has a non-empty string promptPlatformName",
+    (locale) => {
+      const table = facultyJson(locale);
+      for (const id of FACULTY_PRESET_IDS) {
+        const value = table[id]?.promptPlatformName;
+        expect(value, `${locale}/${id}.promptPlatformName missing`).toEqual(
+          expect.any(String),
+        );
+        expect((value as string).trim().length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  it("ar and en tables carry the same preset ids", () => {
+    expect(Object.keys(facultyJson("ar")).sort()).toEqual(
+      Object.keys(facultyJson("en")).sort(),
+    );
   });
 });

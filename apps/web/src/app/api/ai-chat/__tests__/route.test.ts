@@ -220,6 +220,46 @@ describe('forwarding to the Edge Function', () => {
     expect(recordRequestMock).toHaveBeenCalledWith('u-proxy');
     expect(recordAiQuestionMock).toHaveBeenCalledWith('u-proxy');
   });
+
+  it('spec 055: injects the server-resolved faculty id into context when a preset is active', async () => {
+    vi.stubEnv('NEXT_PUBLIC_FACULTY', 'fcai-asnu');
+
+    await route.POST(
+      post({ conversationId: 'c1', userMessage: 'hi', context: { language: 'ar', appVersion: '1', deviceClass: 'web' } }),
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.context.facultyId).toBe('fcai-asnu');
+  });
+
+  it('spec 055: overwrites any client-supplied facultyId (server-resolved, zero trust)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_FACULTY', 'bis');
+
+    await route.POST(
+      post({
+        conversationId: 'c1',
+        userMessage: 'hi',
+        context: { language: 'en', appVersion: '1', deviceClass: 'web', facultyId: 'spoofed-preset' },
+      }),
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.context.facultyId).toBe('bis');
+  });
+
+  it('spec 055: no preset env → no facultyId in the forwarded payload (byte-identical body)', async () => {
+    await route.POST(
+      post({ conversationId: 'c1', userMessage: 'hi', context: { language: 'en', appVersion: '1', deviceClass: 'web' } }),
+    );
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect('facultyId' in body.context).toBe(false);
+    expect(body).toEqual({
+      conversationId: 'c1',
+      userMessage: 'hi',
+      context: { language: 'en', appVersion: '1', deviceClass: 'web' },
+    });
+  });
 });
 
 describe('upstream response passthrough', () => {

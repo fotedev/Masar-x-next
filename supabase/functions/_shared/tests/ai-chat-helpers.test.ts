@@ -7,13 +7,21 @@
  */
 import {
   acceptsSse,
+  AI_CHAT_CORE_PLATFORM,
+  AI_CHAT_FACULTY_PLATFORMS,
   buildSystemInstruction,
   findForbiddenHeader,
   FORBIDDEN_HEADERS,
   mapUsage,
+  resolveAiChatPlatformName,
   sseFrame,
   wrapUserMessage,
 } from "../../ai-chat/pure.ts";
+// Spec 055 drift guard: the edge duplicates the faculty ids from the
+// shared preset contract (the deployed edge bundle cannot import
+// packages/shared TS), so the harness imports the dependency-free source
+// and pins the two id sets together.
+import { FACULTY_PRESET_IDS } from "../../../../packages/shared/src/branding/faculties.ts";
 
 function assertEquals(actual: unknown, expected: unknown, msg: string): void {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) {
@@ -207,4 +215,85 @@ Deno.test("wrapUserMessage: wraps the message in its data channel verbatim", () 
     true,
     "content verbatim (escaping happens on the model side of the boundary, not by destruction)",
   );
+});
+
+// ---------------------------------------------------------------------------
+// Spec 055: tenant brand in the system instruction — the platform name
+// resolves from the request's allowlisted faculty id; everything else is
+// the core brand. The id map duplicates the shared preset contract.
+// ---------------------------------------------------------------------------
+
+Deno.test("resolveAiChatPlatformName: allowlisted ids map to their platform names", () => {
+  for (const [id, name] of Object.entries(AI_CHAT_FACULTY_PLATFORMS)) {
+    assertEquals(resolveAiChatPlatformName(id), name, `id ${id} → ${name}`);
+  }
+});
+
+Deno.test("resolveAiChatPlatformName: everything else degrades to the core brand", () => {
+  const core: [unknown, string][] = [
+    [undefined, "missing"],
+    [null, "null"],
+    [42, "wrong type"],
+    [{}, "object"],
+    ["", "empty string"],
+    ["fcai-asnu ", "trailing whitespace (no normalization)"],
+    [" fcai-asnu", "leading whitespace"],
+    ["FCAI-ASNU", "case mismatch (exact match only)"],
+    ["not-a-faculty", "unknown id"],
+  ];
+  for (const [raw, label] of core) {
+    assertEquals(resolveAiChatPlatformName(raw), AI_CHAT_CORE_PLATFORM, label);
+  }
+});
+
+Deno.test("buildSystemInstruction: default platform name is the pre-055 literal", () => {
+  const instruction = buildSystemInstruction("Respond in English.");
+  assertEquals(
+    instruction.startsWith(
+      "You are the Zane assistant inside the Masar X platform. ",
+    ),
+    true,
+    "byte-identical pre-055 prefix",
+  );
+});
+
+Deno.test("buildSystemInstruction: allowlisted faculty id substitutes the platform name", () => {
+  const instruction = buildSystemInstruction(
+    "Respond in Arabic (Modern Standard Arabic).",
+    resolveAiChatPlatformName("fcai-asnu"),
+  );
+  assertEquals(
+    instruction.startsWith(
+      "You are the Zane assistant inside the FCAI ASNU X platform. ",
+    ),
+    true,
+    "tenant platform name in the role boundary",
+  );
+  // 050 regression surface untouched: language rule + data rule still ride
+  // on the same instruction.
+  assertEquals(
+    instruction.includes("Respond in Arabic (Modern Standard Arabic)."),
+    true,
+    "language rule preserved",
+  );
+  assertEquals(
+    instruction.includes("<user_message>"),
+    true,
+    "data-channel rule preserved",
+  );
+});
+
+Deno.test("spec 055 drift guard: edge faculty ids === shared FACULTY_PRESET_IDS", () => {
+  assertEquals(
+    Object.keys(AI_CHAT_FACULTY_PLATFORMS).sort(),
+    [...FACULTY_PRESET_IDS].sort(),
+    "edge allowlist must mirror the shared preset ids",
+  );
+  for (const id of FACULTY_PRESET_IDS) {
+    assertEquals(
+      typeof AI_CHAT_FACULTY_PLATFORMS[id],
+      "string",
+      `every preset id has an edge platform name (${id})`,
+    );
+  }
 });

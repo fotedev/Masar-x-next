@@ -4,13 +4,15 @@
     "shortName": "ASNU X",
     "seoTitle": "FCAI ASNU X · Masar X — Faculty of Computers & AI (Assiut National University)",
     "titleSuffix": "FCAI ASNU X",
-    "poweredBy": "Powered by Masar X"
+    "poweredBy": "Powered by Masar X",
+    "promptPlatformName": "FCAI ASNU X"
   },
   "bis": {
     "displayName": "BIS X",
     "shortName": "BIS X",
     "seoTitle": "BIS X · Masar X",
     "titleSuffix": "BIS X",
-    "poweredBy": "Powered by Masar X"
+    "poweredBy": "Powered by Masar X",
+    "promptPlatformName": "BIS X"
   }
 }

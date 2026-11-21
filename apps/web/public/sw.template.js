@@ -209,7 +209,9 @@ self.addEventListener("push", (event) => {
     const data = event.data.json();
 
     const options = {
-      body: data.body || "إشعار جديد من Masar X",
+      // Spec 055: brand-neutral fallbacks — one service worker serves every
+      // tenant; push senders own the real title/body.
+      body: data.body || "إشعار جديد",
       icon: data.icon || "/favicon.svg",
       badge: "/favicon.svg",
       tag: data.tag || "masarx-push",
@@ -228,7 +230,10 @@ self.addEventListener("push", (event) => {
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title || "Masar X", options)
+      // Empty title fallback (spec 055): the browser renders the site's
+      // own context for an untitled notification — no hardcoded brand, so
+      // one service worker serves every tenant.
+      self.registration.showNotification(data.title || "", options)
     );
   }
 });
