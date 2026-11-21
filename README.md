@@ -17,8 +17,9 @@ Study summaries, interactive courses, quizzes, AI-powered assistance, and comple
 
 </div>
 
-<!-- TODO: add a product screenshot below once captured, e.g.
-     <img src="docs/images/screenshot-web.png" alt="Masar X web dashboard" width="800" /> -->
+<div align="center">
+  <img src="docs/images/screenshot-web.png" alt="Masar X web dashboard — ZANE AI assistant, study materials, quiz bank" width="800" />
+</div>
 
 ## Table of contents
 
