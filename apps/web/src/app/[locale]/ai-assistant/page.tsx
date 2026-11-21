@@ -6,14 +6,17 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useAiChat } from "@/hooks/useAiChat";
+import { useConversations } from "@/hooks/useConversations";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useQuizzes } from "@/hooks/useQuizzes";
 import { ChatHeader } from "@/components/ai/ChatHeader";
 import { ChatContainer } from "@/components/ai/ChatContainer";
 import { ChatInput } from "@/components/ai/ChatInput";
 import { AIErrorBoundary } from "@/components/AIErrorBoundary";
+import { ConversationPanel } from "@/components/ai/ConversationPanel";
+import { ConversationHistoryDrawer } from "@/components/ai/ConversationHistoryDrawer";
 import { useChatScroll } from "@/hooks/useChatScroll";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, History } from "lucide-react";
 import { aiAssistant } from "@/lib/ai-assistant";
 import {
   AI_PROMPT_MAX_CHARS,
@@ -70,7 +73,20 @@ export default function AiAssistantPage() {
     loadOlder,
     hasMoreOlder,
     loadingOlder,
+    conversationId,
+    switchConversation,
+    deleteConversation,
+    startNewConversation,
   } = useAiChat(user, trackEvent);
+
+  // Spec 051: the side menu's read side — paged, mode-scoped conversation list.
+  const {
+    conversations,
+    loading: conversationsLoading,
+    hasMore: conversationsHasMore,
+    loadMore: loadMoreConversations,
+    refresh: refreshConversations,
+  } = useConversations(user, mode);
 
   const [selectedModel, setSelectedModel] = useState(() => {
     if (typeof window !== "undefined") {
@@ -133,6 +149,7 @@ export default function AiAssistantPage() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showPuterSettings, setShowPuterSettings] = useState(false);
   const [showGeneratedQuizModal, setShowGeneratedQuizModal] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [generatedQuiz, setGeneratedQuiz] = useState<LocalGeneratedQuiz | null>(
     null,
   );
@@ -240,88 +257,141 @@ export default function AiAssistantPage() {
     void clearChat();
   }, [clearChat]);
 
-  if (!isReady) {
-    return (
-      <div className="flex items-center justify-center min-h-dvh-safe">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
   return (
     <AIErrorBoundary>
-      <div
-        className="flex h-full min-h-0 w-full flex-col"
-      >
-        {!isInitialState && (
-          <ChatHeader
-            mode={mode}
-            studentSelectedSubject={studentSelectedSubject}
-            setStudentSelectedSubject={setStudentSelectedSubject}
-            studentSubjects={studentSubjects}
-            studentSelectedQuizId={studentSelectedQuizId}
-            setStudentSelectedQuizId={setStudentSelectedQuizId}
-            studentQuizzes={studentQuizzes}
-            studentQuizzesLoading={studentQuizzesLoading}
-            onStartQuiz={handleStartQuiz}
-            generatedQuiz={generatedQuiz}
-            onShowGeneratedQuizModal={handleShowGeneratedQuizModal}
-            safeLocalGeneratedQuizzesCount={0}
-            t={t}
-          />
-        )}
+      {/* Spec 051: chat column + side panel. The panel renders last so the
+          plain lg:flex-row mirrors it to the end side in RTL automatically. */}
+      <div className="flex h-full min-h-0 w-full flex-col lg:flex-row">
+        {/* The restore/switch spinner stays inside the chat column so the
+            conversation panel never flashes during a switch (spec 051). */}
+        <div className="flex h-full min-h-0 w-full flex-col lg:min-w-0 lg:flex-1">
+          {!isReady ? (
+            <div className="flex items-center justify-center min-h-dvh-safe">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+          ) : (
+            <>
+              {!isInitialState && (
+                <ChatHeader
+                  mode={mode}
+                  studentSelectedSubject={studentSelectedSubject}
+                  setStudentSelectedSubject={setStudentSelectedSubject}
+                  studentSubjects={studentSubjects}
+                  studentSelectedQuizId={studentSelectedQuizId}
+                  setStudentSelectedQuizId={setStudentSelectedQuizId}
+                  studentQuizzes={studentQuizzes}
+                  studentQuizzesLoading={studentQuizzesLoading}
+                  onStartQuiz={handleStartQuiz}
+                  generatedQuiz={generatedQuiz}
+                  onShowGeneratedQuizModal={handleShowGeneratedQuizModal}
+                  safeLocalGeneratedQuizzesCount={0}
+                  t={t}
+                />
+              )}
 
-        <div className="relative flex min-h-0 w-full flex-1 flex-col">
-          <ChatContainer
-            messages={messages}
-            isLoading={isLoading}
-            messagesContainerRef={messagesContainerRef}
-            messagesEndRef={messagesEndRef}
-            t={t}
-            isInitialState={isInitialState}
-            onSuggestionClick={handleSuggestionClick}
-            onUiMessage={handleUiMessage}
-            onRetry={handleRetryLast}
-            hasMoreOlder={hasMoreOlder}
-            loadingOlder={loadingOlder}
-            onLoadOlder={loadOlder}
-          />
+              <div className="relative flex min-h-0 w-full flex-1 flex-col">
+                {/* Spec 051: floating history toggle — ChatHeader is absent
+                    in the default mode and on the empty state, so the
+                    drawer's entry point lives on the top-start overlay,
+                    mirroring the top-center avatar pill. */}
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => setIsHistoryOpen(true)}
+                    aria-haspopup="dialog"
+                    aria-expanded={isHistoryOpen}
+                    aria-label={t("chatHistory")}
+                    title={t("chatHistory")}
+                    className="lg:hidden absolute top-3 start-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-white/90 text-slate-600 shadow-lg backdrop-blur-md transition-colors hover:border-cyan-500/40 hover:text-cyan-600 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-300 dark:hover:text-cyan-400"
+                  >
+                    <History className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                )}
+                <ChatContainer
+                  messages={messages}
+                  isLoading={isLoading}
+                  messagesContainerRef={messagesContainerRef}
+                  messagesEndRef={messagesEndRef}
+                  t={t}
+                  isInitialState={isInitialState}
+                  onSuggestionClick={handleSuggestionClick}
+                  onUiMessage={handleUiMessage}
+                  onRetry={handleRetryLast}
+                  hasMoreOlder={hasMoreOlder}
+                  loadingOlder={loadingOlder}
+                  onLoadOlder={loadOlder}
+                />
 
-          {/* Spec 011: floating jump-to-latest pill while scrolled away from
-              the bottom. Hidden while detached during the hero state. */}
-          {!isInitialState && !isNearBottom && (
-            <button
-              type="button"
-              onClick={() => stickToBottom("smooth")}
-              className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-600 shadow-lg backdrop-blur-md transition-colors hover:border-cyan-500/40 hover:text-cyan-600 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-300 dark:hover:text-cyan-400"
-            >
-              <ArrowDown className="h-3.5 w-3.5" />
-              {t("scrollToEnd")}
-            </button>
+                {/* Spec 011: floating jump-to-latest pill while scrolled away from
+                    the bottom. Hidden while detached during the hero state. */}
+                {!isInitialState && !isNearBottom && (
+                  <button
+                    type="button"
+                    onClick={() => stickToBottom("smooth")}
+                    className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-600 shadow-lg backdrop-blur-md transition-colors hover:border-cyan-500/40 hover:text-cyan-600 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-300 dark:hover:text-cyan-400"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                    {t("scrollToEnd")}
+                  </button>
+                )}
+              </div>
+
+              <ChatInput
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                isLoading={isLoading}
+                onSendMessage={handleSendMessage}
+                inputRef={inputRef}
+                t={t}
+                isInitialState={isInitialState}
+                user={user}
+                mode={mode}
+                setMode={setMode}
+                selectedModel={selectedModel}
+                setSelectedModel={handleModelChange}
+                onSummarizeChat={handleSummarizeChat}
+                onClearChat={handleClearChat}
+                isSummarizing={isSummarizing}
+                hasChatData={messages.length > 0}
+                onOpenPuterSettings={handleOpenPuterSettings}
+                pastedAttachments={pastedAttachments}
+                onAddPastedText={handleAddPastedText}
+                onRemoveAttachment={handleRemoveAttachment}
+              />
+            </>
           )}
         </div>
 
-        <ChatInput
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          isLoading={isLoading}
-          onSendMessage={handleSendMessage}
-          inputRef={inputRef}
-          t={t}
-          isInitialState={isInitialState}
-          user={user}
-          mode={mode}
-          setMode={setMode}
-          selectedModel={selectedModel}
-          setSelectedModel={handleModelChange}
-          onSummarizeChat={handleSummarizeChat}
-          onClearChat={handleClearChat}
-          isSummarizing={isSummarizing}
-          hasChatData={messages.length > 0}
-          onOpenPuterSettings={handleOpenPuterSettings}
-          pastedAttachments={pastedAttachments}
-          onAddPastedText={handleAddPastedText}
-          onRemoveAttachment={handleRemoveAttachment}
+        <ConversationPanel
+          conversations={conversations}
+          activeId={conversationId}
+          loading={conversationsLoading}
+          hasMore={conversationsHasMore}
+          loadMore={loadMoreConversations}
+          refresh={refreshConversations}
+          onSwitch={switchConversation}
+          onDelete={deleteConversation}
+          onNewChat={startNewConversation}
+          status={isLoading ? "working" : "idle"}
+          isSignedIn={Boolean(user?.id)}
+        />
+
+        {/* Spec 051: narrow-viewport counterpart hosting the same list;
+            selection and fresh-start close it (the drawer owns that). */}
+        <ConversationHistoryDrawer
+          open={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          conversations={conversations}
+          activeId={conversationId}
+          loading={conversationsLoading}
+          hasMore={conversationsHasMore}
+          loadMore={loadMoreConversations}
+          refresh={refreshConversations}
+          onSwitch={switchConversation}
+          onDelete={deleteConversation}
+          onNewChat={startNewConversation}
+          status={isLoading ? "working" : "idle"}
+          isSignedIn={Boolean(user?.id)}
         />
 
         {showPuterSettings && (

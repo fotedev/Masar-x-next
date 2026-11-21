@@ -119,5 +119,12 @@
   },
   "studentAgentNeedsSubject": "I can only answer from platform content. Choose a subject from the list first, then resend your question.",
   "statusConnected": "Connected",
-  "statusWorking": "is working"
+  "statusWorking": "is working",
+  "chatHistory": "Chat history",
+  "newChat": "New chat",
+  "deleteConversation": "Delete conversation",
+  "deleteConversationConfirm": "Delete this conversation? Its messages will be permanently removed.",
+  "noConversations": "No conversations yet. Start a new chat to begin.",
+  "signInToSeeHistory": "Sign in to see your chat history.",
+  "loadingConversations": "Loading conversations…"
 }
