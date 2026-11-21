@@ -12,6 +12,8 @@ import { useIsDesktopRuntime } from "@/lib/desktop/useIsDesktopRuntime";
 
 interface LayoutProps {
   children: ReactNode;
+  /** Live repo star count from the server layout (spec 054); forwarded to the footer's star badge. */
+  repoStars?: number | null;
 }
 
 const AppNav = dynamic(
@@ -27,7 +29,7 @@ const PageTransition = dynamic(() =>
   import("./PageTransition").then((m) => m.PageTransition),
 );
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, repoStars }: LayoutProps) {
   const pathname = usePathname();
   const localeMatch = pathname?.match(/^\/(ar|en)(\/|$)/);
   const localePrefix = localeMatch ? `/${localeMatch[1]}` : "";
@@ -146,7 +148,9 @@ export function Layout({ children }: LayoutProps) {
       {/* Footer scope (owner decision 2026-11-20): info/utility routes only —
           studying pages ship footer-free by default (footerRoutes.ts).
           isAdminRoute / isAssistantRoute are subsumed by the allowlist. */}
-      {!isDesktop && isFooterRoute(pathWithoutLocale) && <Footer />}
+      {!isDesktop && isFooterRoute(pathWithoutLocale) && (
+        <Footer repoStars={repoStars} />
+      )}
     </div>
   );
 }

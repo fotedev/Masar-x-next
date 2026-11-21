@@ -7,6 +7,7 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import { type ReactNode } from "react";
 import { isAdminRole } from "@/lib/auth/roles";
+import { getRepoStars } from "@/lib/github-stars";
 import { logger } from "@/lib/logger";
 
 type Locale = "ar" | "en";
@@ -91,9 +92,14 @@ export default async function LocaleLayout({
   // Spec 033 Track C (audit MID-2): messages and auth are independent —
   // run them concurrently instead of serializing the auth roundtrip
   // behind the (cached) message loads.
-  const [messages, user] = await Promise.all([
+  // Spec 054: the repo star count rides alongside them — getRepoStars is
+  // data-cached (revalidate 3600, ~1 upstream call/hour) and never throws,
+  // so it can't fail the layout; any failure resolves null → the footer
+  // renders the plain star link.
+  const [messages, user, repoStars] = await Promise.all([
     getMessages({ locale: typedLocale }),
     getCachedUser(),
+    getRepoStars(),
   ]);
 
   let profile = null;
@@ -129,7 +135,13 @@ export default async function LocaleLayout({
       messages={messages}
       timeZone="Africa/Cairo"
     >
-      <AppProviders dir={dir} user={user} profile={profile} isAdmin={isAdmin}>
+      <AppProviders
+        dir={dir}
+        user={user}
+        profile={profile}
+        isAdmin={isAdmin}
+        repoStars={repoStars}
+      >
         {children}
       </AppProviders>
     </NextIntlClientProvider>
