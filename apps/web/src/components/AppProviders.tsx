@@ -21,9 +21,18 @@ type Props = {
   user: User | null;
   profile: ProfileRow | null;
   isAdmin: boolean;
+  /** Live repo star count from the server layout (spec 054); forwarded to the footer's star badge. */
+  repoStars?: number | null;
 };
 
-export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
+export function AppProviders({
+  children,
+  dir,
+  user,
+  profile,
+  isAdmin,
+  repoStars,
+}: Props) {
   return (
     <AuthProvider 
       initialUser={user} 
@@ -58,7 +67,7 @@ export function AppProviders({ children, dir, user, profile, isAdmin }: Props) {
               `,
                 }}
               />
-              <Layout>{children}</Layout>
+              <Layout repoStars={repoStars}>{children}</Layout>
               <Toaster 
                 position="top-center" 
                 dir={dir} 

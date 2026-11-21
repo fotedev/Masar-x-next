@@ -31,6 +31,14 @@ describe("FooterBrand — faculty sub-brand (spec 052)", () => {
     expect(screen.getByText("FCAI ASNU X")).toBeInTheDocument();
     expect(screen.queryByText("footer.brandTitle")).not.toBeInTheDocument();
     expect(screen.getByText("footer.brandDescription")).toBeInTheDocument();
+    // Spec 054 (FR-5): the powered-by line links to the Masar-X org; the
+    // accessible name states the destination (visible text unchanged).
+    const poweredByLink = screen.getByRole("link", {
+      name: "footer.githubOrgAria",
+    });
+    expect(poweredByLink).toHaveAttribute("href", "https://github.com/Masar-X");
+    expect(poweredByLink).toHaveAttribute("target", "_blank");
+    expect(poweredByLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(screen.getByText("Powered by Masar X")).toBeInTheDocument();
   });
 

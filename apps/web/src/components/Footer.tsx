@@ -8,7 +8,12 @@ import { FooterLinks } from "./footer/FooterLinks";
 import { FooterSupport } from "./footer/FooterSupport";
 import { FooterDeveloper } from "./footer/FooterDeveloper";
 
-export function Footer() {
+interface FooterProps {
+  /** Live repo star count from the server layout (spec 054); undefined/null = plain star link. */
+  repoStars?: number | null;
+}
+
+export function Footer({ repoStars }: FooterProps) {
   const tFooter = useTranslations("footer");
   const tNav = useTranslations("nav");
   const tFaculty = useTranslations("faculty");
@@ -43,7 +48,7 @@ export function Footer() {
 
           <FooterSupport tFooter={tFooter} whatsappUrl={whatsappUrl} />
 
-          <FooterDeveloper tFooter={tFooter} />
+          <FooterDeveloper tFooter={tFooter} repoStars={repoStars} locale={locale} />
         </div>
 
         {/* Bottom Bar */}

@@ -1,4 +1,5 @@
 import { DynamicLogo } from "../DynamicLogo";
+import { GITHUB_ORG_URL } from "../../lib/github-stars";
 
 type TranslationValues = Record<string, string | number | Date>;
 type TranslationFn = (key: string, values?: TranslationValues) => string;
@@ -35,13 +36,20 @@ export function FooterBrand({
       >
         {t("brandDescription")}
       </p>
+      {/* Spec 054 (FR-5): the preset-sourced powered-by line now links to
+          the Masar-X org. Still faculty-scoped only (core shows no
+          powered-by line), per BRANDING.md §9 / spec 052. */}
       {facultyName && facultyPoweredBy ? (
-        <p
-          className="text-xs font-medium text-slate-500 dark:text-slate-500"
+        <a
+          href={GITHUB_ORG_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("githubOrgAria")}
+          className="w-fit block text-xs font-medium text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
           dir="auto"
         >
           {facultyPoweredBy}
-        </p>
+        </a>
       ) : null}
     </div>
   );
