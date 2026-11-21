@@ -48,4 +48,21 @@ test.describe("footer route scope (web mode)", () => {
       await expect(page.locator("footer"), `${route} has no footer`).toHaveCount(0);
     }
   });
+
+  test("footer links to the Masar-X org + star badge (spec 054)", async ({ page }) => {
+    await mockGuestApi(page);
+
+    await page.goto("/en", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("body")).not.toContainText(ERROR_BOUNDARY);
+    const footer = page.locator("footer");
+    await expect(footer, "/en keeps the footer").toBeVisible({ timeout: 15_000 });
+    // API-outcome-agnostic: both anchors render whether or not the cached
+    // star fetch succeeded (the count is simply omitted on failure).
+    await expect(
+      footer.locator('a[href="https://github.com/Masar-X"]'),
+    ).toBeVisible();
+    await expect(
+      footer.locator('a[href="https://github.com/Masar-X/Masar-x"]'),
+    ).toBeVisible();
+  });
 });
